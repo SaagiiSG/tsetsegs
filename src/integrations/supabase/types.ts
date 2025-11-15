@@ -17,27 +17,33 @@ export type Database = {
       batches: {
         Row: {
           created_at: string
+          fb_group_link: string | null
           id: string
           room: Database["public"]["Enums"]["room_number"]
           schedule: string
           start_date: string
           teacher: Database["public"]["Enums"]["teacher_name"]
+          unique_link_id: string
         }
         Insert: {
           created_at?: string
+          fb_group_link?: string | null
           id?: string
           room: Database["public"]["Enums"]["room_number"]
           schedule: string
           start_date: string
           teacher: Database["public"]["Enums"]["teacher_name"]
+          unique_link_id?: string
         }
         Update: {
           created_at?: string
+          fb_group_link?: string | null
           id?: string
           room?: Database["public"]["Enums"]["room_number"]
           schedule?: string
           start_date?: string
           teacher?: Database["public"]["Enums"]["teacher_name"]
+          unique_link_id?: string
         }
         Relationships: []
       }

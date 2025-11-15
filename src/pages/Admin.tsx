@@ -25,6 +25,7 @@ const Admin = () => {
   const [schedule, setSchedule] = useState("");
   const [room, setRoom] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [fbGroupLink, setFbGroupLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [batches, setBatches] = useState<any[]>([]);
 
@@ -49,7 +50,7 @@ const Admin = () => {
   };
 
   const handleCreateBatch = async () => {
-    if (!studentList.trim() || !teacher || !schedule || !room || !startDate) {
+    if (!studentList.trim() || !teacher || !schedule || !room || !startDate || !fbGroupLink.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -72,7 +73,7 @@ const Admin = () => {
         return;
       }
 
-      // Create batch
+      // Create batch with unique link
       const { data: batch, error: batchError } = await supabase
         .from("batches")
         .insert({
@@ -80,18 +81,20 @@ const Admin = () => {
           schedule,
           room: room as "1105" | "905",
           start_date: startDate,
+          unique_link_id: generateUniqueId(),
+          fb_group_link: fbGroupLink.trim(),
         })
         .select()
         .single();
 
       if (batchError) throw batchError;
 
-      // Create students
+      // Create students (without unique_link_id)
       const studentsData = students.map((student: any) => ({
         batch_id: batch.id,
         name: student.name,
         phone: student.phone,
-        unique_link_id: generateUniqueId(),
+        unique_link_id: "", // Not used anymore
       }));
 
       const { error: studentsError } = await supabase
@@ -106,6 +109,7 @@ const Admin = () => {
       setSchedule("");
       setRoom("");
       setStartDate("");
+      setFbGroupLink("");
       fetchBatches();
     } catch (error: any) {
       toast.error(error.message);
@@ -115,22 +119,23 @@ const Admin = () => {
   };
 
   const handleExportCSV = async () => {
-    const allStudents: any[] = [];
+    const rows: string[] = ["Phone,Message"];
+    
     batches.forEach(batch => {
+      const batchLink = `${window.location.origin}/batch/${batch.unique_link_id}`;
+      const messageTemplate = `Сайн байна уу? Flowers Talent Agency-д тавтай морил! 🌸\n\nТаны ангийн мэдээллийг энд дарж үзнэ үү:\n${batchLink}\n\nХаяг: Их Наяд Зүүн Өндөр 1114\nУтас: 80660314, 88559876`;
+      
       batch.students.forEach((student: any) => {
-        allStudents.push({
-          phone: student.phone,
-          link: `${window.location.origin}/student/${student.unique_link_id}`,
-        });
+        rows.push(`${student.phone},"${messageTemplate}"`);
       });
     });
 
-    const csv = "Phone,Link\n" + allStudents.map(s => `${s.phone},${s.link}`).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "student-links.csv";
+    a.download = "student-messages.csv";
     a.click();
     toast.success("CSV exported successfully!");
   };
@@ -218,6 +223,18 @@ const Admin = () => {
                   className="mt-1"
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="fbGroup">Facebook Group Link</Label>
+              <Input
+                id="fbGroup"
+                type="url"
+                placeholder="https://www.facebook.com/groups/..."
+                value={fbGroupLink}
+                onChange={(e) => setFbGroupLink(e.target.value)}
+                className="mt-1"
+              />
             </div>
 
             <Button

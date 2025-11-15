@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink, CheckCircle, Clock } from "lucide-react";
+import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface BatchListProps {
@@ -10,16 +10,6 @@ interface BatchListProps {
 }
 
 export const BatchList = ({ batches }: BatchListProps) => {
-  const copyLink = (linkId: string) => {
-    const link = `${window.location.origin}/student/${linkId}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Link copied to clipboard!");
-  };
-
-  const openLink = (linkId: string) => {
-    window.open(`/student/${linkId}`, '_blank');
-  };
-
   return (
     <div className="space-y-4">
       {batches.map((batch) => (
@@ -40,44 +30,52 @@ export const BatchList = ({ batches }: BatchListProps) => {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {batch.students?.map((student: any) => (
-                <div
-                  key={student.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-accent/10 rounded-lg">
+              <div>
+                <p className="font-medium">Batch Link</p>
+                <p className="text-sm text-muted-foreground">
+                  Share this link with all students in this batch
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const link = `${window.location.origin}/batch/${batch.unique_link_id}`;
+                    navigator.clipboard.writeText(link);
+                    toast.success("Batch link copied!");
+                  }}
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div>
-                      {student.accessed ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <Clock className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </div>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/batch/${batch.unique_link_id}`, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-medium mb-2">Students ({batch.students?.length || 0}):</p>
+              <div className="space-y-2">
+                {batch.students?.map((student: any) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  >
                     <div>
                       <p className="font-medium">{student.name}</p>
                       <p className="text-sm text-muted-foreground">{student.phone}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyLink(student.unique_link_id)}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openLink(student.unique_link_id)}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

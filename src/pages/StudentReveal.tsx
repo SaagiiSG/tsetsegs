@@ -2,28 +2,25 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, User, Sparkles } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Sparkles, Facebook } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/flowers-hero.jpg";
 
 const StudentReveal = () => {
   const { id } = useParams();
-  const [student, setStudent] = useState<any>(null);
   const [batch, setBatch] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
-    const fetchStudent = async () => {
+    const fetchBatch = async () => {
       if (!id) return;
 
-      const { data: studentData, error } = await supabase
-        .from("students")
-        .select(`
-          *,
-          batches (*)
-        `)
+      const { data: batchData, error } = await supabase
+        .from("batches")
+        .select("*")
         .eq("unique_link_id", id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(error);
@@ -31,24 +28,14 @@ const StudentReveal = () => {
         return;
       }
 
-      setStudent(studentData);
-      setBatch(studentData.batches);
-
-      // Mark as accessed
-      if (!studentData.accessed) {
-        await supabase
-          .from("students")
-          .update({ accessed: true, accessed_at: new Date().toISOString() })
-          .eq("id", studentData.id);
-      }
-
+      setBatch(batchData);
       setIsLoading(false);
       
       // Trigger reveal animation after short delay
       setTimeout(() => setShowReveal(true), 500);
     };
 
-    fetchStudent();
+    fetchBatch();
   }, [id]);
 
   if (isLoading) {
@@ -62,7 +49,7 @@ const StudentReveal = () => {
     );
   }
 
-  if (!student || !batch) {
+  if (!batch) {
     return (
       <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -110,51 +97,105 @@ const StudentReveal = () => {
             </div>
             
             <div className="space-y-2">
-              <p className="text-2xl md:text-3xl font-semibold text-foreground">
-                {student.name}
-              </p>
-              <p className="text-muted-foreground">
-                Your class assignment is ready!
+              <p className="text-lg text-muted-foreground">
+                SAT Math сургалтанд тавтай морил!
               </p>
             </div>
           </div>
 
-          {/* Reveal Cards */}
-          <div className="grid gap-4">
-            {[
-              { icon: User, label: "Teacher", value: batch.teacher, delay: "delay-100" },
-              { icon: Clock, label: "Schedule", value: batch.schedule, delay: "delay-200" },
-              { icon: MapPin, label: "Classroom", value: `Room ${batch.room}`, delay: "delay-300" },
-              { icon: Calendar, label: "Start Date", value: new Date(batch.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), delay: "delay-500" },
-            ].map((item, index) => (
-              <Card
-                key={index}
-                className={`shadow-soft transition-all duration-700 ${showReveal ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'} ${item.delay}`}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-petal flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{item.label}</p>
-                      <p className="text-xl font-semibold">{item.value}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Assignment Details Card */}
+          <Card className={`shadow-glow transition-all duration-700 delay-300 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <CardContent className="p-8 space-y-6">
+              <div className="text-center pb-4 border-b border-border/50">
+                <h2 className="text-2xl font-bold bg-gradient-petal bg-clip-text text-transparent">
+                  Таны ангийн мэдээлэл
+                </h2>
+              </div>
 
-          {/* Footer Message */}
-          <div className={`text-center transition-all duration-700 delay-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <p className="text-lg text-muted-foreground">
-              We're excited to have you join us! 🎉
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              See you on your first day!
-            </p>
-          </div>
+              <div className="grid gap-6">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
+                  <User className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Teacher</p>
+                    <p className="text-lg font-semibold">{batch.teacher}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
+                  <Clock className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Schedule</p>
+                    <p className="text-lg font-semibold">{batch.schedule}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
+                  <MapPin className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Room</p>
+                    <p className="text-lg font-semibold">Room {batch.room}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {batch.room === "1105" ? "11th floor" : "9th floor"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
+                  <Calendar className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Start Date</p>
+                    <p className="text-lg font-semibold">
+                      {new Date(batch.start_date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Facebook Group Section */}
+          {batch.fb_group_link && (
+            <Card className={`shadow-glow transition-all duration-700 delay-500 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Facebook className="w-5 h-5" />
+                  <h3 className="text-lg font-semibold">Facebook Group</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Тус групт бидний хэрэглэх ном, цээжлэх үгс, шалгалтад бүртгүүлэх заавар, 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.
+                </p>
+                <Button
+                  asChild
+                  className="w-full bg-gradient-petal hover:opacity-90 transition-opacity"
+                >
+                  <a href={batch.fb_group_link} target="_blank" rel="noopener noreferrer">
+                    Групт нэгдэх
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Contact Information */}
+          <Card className={`shadow-glow transition-all duration-700 delay-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <CardContent className="p-6 space-y-3">
+              <h3 className="text-lg font-semibold">Холбоо барих</h3>
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span>Хаяг: Их Наяд Зүүн Өндөр 1114</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-primary">📞</span>
+                  <span>Утас: 80660314, 88559876</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -162,3 +203,4 @@ const StudentReveal = () => {
 };
 
 export default StudentReveal;
+
