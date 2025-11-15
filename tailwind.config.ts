@@ -65,25 +65,46 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "petal-fall": {
+          "0%": { transform: "translateY(-100%) rotate(0deg)", opacity: "0" },
+          "50%": { opacity: "1" },
+          "100%": { transform: "translateY(100vh) rotate(360deg)", opacity: "0" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.4s ease-out",
+        "scale-in": "scale-in 0.3s ease-out",
+        "petal-fall": "petal-fall 8s linear infinite",
+        "shimmer": "shimmer 3s linear infinite",
+      },
+      backgroundImage: {
+        "gradient-petal": "var(--gradient-petal)",
+        "gradient-soft": "var(--gradient-soft)",
+      },
+      boxShadow: {
+        "soft": "var(--shadow-soft)",
+        "glow": "var(--shadow-glow)",
       },
     },
   },
