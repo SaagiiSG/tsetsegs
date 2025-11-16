@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, User, Sparkles, Facebook } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Sparkles, Facebook, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/flowers-hero.jpg";
 
@@ -40,10 +40,15 @@ const StudentReveal = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
-        <div className="text-center space-y-4 animate-fade-in">
-          <Sparkles className="w-16 h-16 text-primary mx-auto animate-pulse" />
-          <p className="text-xl text-muted-foreground">Loading your assignment...</p>
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
+        <div className="text-center space-y-6 animate-fade-in">
+          <div className="relative">
+            <Sparkles className="w-20 h-20 text-primary mx-auto animate-pulse" />
+            <div className="absolute inset-0 bg-primary/20 blur-xl animate-pulse" />
+          </div>
+          <p className="text-2xl font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Preparing your magical reveal...
+          </p>
         </div>
       </div>
     );
@@ -51,10 +56,11 @@ const StudentReveal = () => {
 
   if (!batch) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-2">Link Not Found</h2>
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full shadow-2xl">
+          <CardContent className="p-8 text-center space-y-4">
+            <Sparkles className="w-16 h-16 text-muted-foreground mx-auto" />
+            <h2 className="text-2xl font-bold">Link Not Found</h2>
             <p className="text-muted-foreground">This invitation link is invalid or has expired.</p>
           </CardContent>
         </Card>
@@ -62,142 +68,184 @@ const StudentReveal = () => {
     );
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-soft relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 relative overflow-hidden">
       {/* Animated petals background */}
       <div className="absolute inset-0 pointer-events-none">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-4 h-4 bg-primary/20 rounded-full animate-petal-fall"
+            className="absolute w-6 h-6 bg-primary/10 rounded-full blur-sm"
             style={{
               left: `${Math.random() * 100}%`,
-              animationDelay: `${i * 1.5}s`,
-              animationDuration: `${8 + Math.random() * 4}s`,
+              animation: `float ${8 + Math.random() * 4}s ease-in-out infinite`,
+              animationDelay: `${i * 1}s`,
+              top: `${-20 + Math.random() * 120}%`,
             }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full space-y-8">
-          {/* Welcome Header */}
-          <div className={`text-center space-y-4 transition-all duration-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="relative w-full h-48 rounded-2xl overflow-hidden shadow-glow mb-6">
-              <img
-                src={heroImage}
-                alt="Flowers"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end justify-center pb-6">
-                <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
-                  Welcome to Family of Tsetsegs 🌸
-                </h1>
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 py-12">
+        <div className="max-w-3xl w-full space-y-8">
+          {/* Welcome Header with Hero Image */}
+          <div className={`transition-all duration-1000 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <Card className="overflow-hidden shadow-2xl border-2">
+              <div className="relative h-64 md:h-80">
+                <img
+                  src={heroImage}
+                  alt="Flowers"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent flex items-end justify-center pb-8">
+                  <h1 className="text-4xl md:text-5xl font-bold text-center px-4">
+                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent drop-shadow-lg">
+                      Welcome to Family of Tsetsegs
+                    </span>
+                    <span className="ml-2 text-4xl">🌸</span>
+                  </h1>
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-lg text-muted-foreground">
-                SAT Math сургалтанд тавтай морил!
-              </p>
-            </div>
+            </Card>
           </div>
 
-          {/* Assignment Details Card */}
-          <Card className={`shadow-glow transition-all duration-700 delay-300 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <CardContent className="p-8 space-y-6">
-              <div className="text-center pb-4 border-b border-border/50">
-                <h2 className="text-2xl font-bold bg-gradient-petal bg-clip-text text-transparent">
-                  Таны ангийн мэдээлэл
-                </h2>
-              </div>
+          {/* Assignment Details */}
+          <div className={`transition-all duration-1000 delay-300 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <Card className="shadow-xl border-2">
+              <CardContent className="p-8 space-y-6">
+                <div className="text-center space-y-2 pb-4 border-b">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide">Your Class Assignment</p>
+                  <h2 className="text-2xl font-bold text-primary">Class Details</h2>
+                </div>
 
-              <div className="grid gap-6">
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
-                  <User className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Teacher</p>
-                    <p className="text-lg font-semibold">{batch.teacher}</p>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <User className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Teacher</p>
+                      <p className="font-semibold text-lg">{batch.teacher}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-secondary/5 border border-secondary/20">
+                    <div className="p-3 bg-secondary/10 rounded-lg">
+                      <Clock className="w-6 h-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Schedule</p>
+                      <p className="font-semibold">{batch.schedule}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/5 border border-accent/20">
+                    <div className="p-3 bg-accent/10 rounded-lg">
+                      <MapPin className="w-6 h-6 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Classroom</p>
+                      <p className="font-semibold text-lg">{batch.room}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <Calendar className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Start Date</p>
+                      <p className="font-semibold">{formatDate(batch.start_date)}</p>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
-                  <Clock className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Schedule</p>
-                    <p className="text-lg font-semibold">{batch.schedule}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
-                  <MapPin className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Room</p>
-                    <p className="text-lg font-semibold">Room {batch.room}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {batch.room === "1105" ? "11th floor" : "9th floor"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/10 transition-all hover:bg-accent/20">
-                  <Calendar className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Start Date</p>
-                    <p className="text-lg font-semibold">
-                      {new Date(batch.start_date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Facebook Group Section */}
-          {batch.fb_group_link && (
-            <Card className={`shadow-glow transition-all duration-700 delay-500 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-2 text-primary">
-                  <Facebook className="w-5 h-5" />
-                  <h3 className="text-lg font-semibold">Facebook Group</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Тус групт бидний хэрэглэх ном, цээжлэх үгс, шалгалтад бүртгүүлэх заавар, 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.
-                </p>
-                <Button
-                  asChild
-                  className="w-full bg-gradient-petal hover:opacity-90 transition-opacity"
-                >
-                  <a href={batch.fb_group_link} target="_blank" rel="noopener noreferrer">
-                    Групт нэгдэх
-                  </a>
-                </Button>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Facebook Group */}
+          {batch.fb_group_link && (
+            <div className={`transition-all duration-1000 delay-500 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <Card className="shadow-xl border-2 border-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="p-4 bg-primary/10 rounded-full">
+                      <Facebook className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="font-semibold text-lg mb-1">Join Our Class Community</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Connect with your classmates and stay updated
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => window.open(batch.fb_group_link, '_blank')}
+                      size="lg"
+                      className="shadow-lg"
+                    >
+                      Join Facebook Group
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
-          {/* Contact Information */}
-          <Card className={`shadow-glow transition-all duration-700 delay-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <CardContent className="p-6 space-y-3">
-              <h3 className="text-lg font-semibold">Холбоо барих</h3>
-              <div className="space-y-2 text-sm">
-                <p className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  <span>Хаяг: Их Наяд Зүүн Өндөр 1114</span>
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="text-primary">📞</span>
-                  <span>Утас: 80660314, 88559876</span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Location Info */}
+          <div className={`transition-all duration-1000 delay-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <Card className="shadow-xl">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-accent/10 rounded-lg">
+                    <MapPinned className="w-6 h-6 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">Our Location</h3>
+                    <p className="text-muted-foreground mb-3">
+                      Флауэрс таланд агенци хөгжлийн төв<br />
+                      Эйч.Би.Си Төв, 11 давхар, Зайсан толгой, Улаанбаатар
+                    </p>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-muted-foreground">
+                        <strong>Phone:</strong> 7711-0000, 8989-0000
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Footer Message */}
+          <div className={`text-center transition-all duration-1000 delay-900 ${showReveal ? 'opacity-100' : 'opacity-0'}`}>
+            <p className="text-muted-foreground">
+              We're excited to have you join us! See you in class! ✨
+            </p>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0.6;
+          }
+        }
+      `}</style>
     </div>
   );
 };

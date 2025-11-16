@@ -55,11 +55,11 @@ const Index = () => {
                   Manage student batches, create assignments, and generate invitation links.
                 </p>
                 <Button
-                  onClick={() => navigate("/admin")}
+                  onClick={() => navigate("/login")}
                   variant="secondary"
                   className="w-full mt-4"
                 >
-                  Go to Admin Dashboard
+                  Admin Login
                 </Button>
               </div>
             </div>
