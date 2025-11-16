@@ -16,33 +16,36 @@ export type Database = {
     Tables: {
       batches: {
         Row: {
+          batch_name: string | null
           created_at: string
           fb_group_link: string | null
           id: string
-          room: Database["public"]["Enums"]["room_number"]
+          room: string | null
           schedule: string
           start_date: string
-          teacher: Database["public"]["Enums"]["teacher_name"]
+          teacher: string | null
           unique_link_id: string
         }
         Insert: {
+          batch_name?: string | null
           created_at?: string
           fb_group_link?: string | null
           id?: string
-          room: Database["public"]["Enums"]["room_number"]
+          room?: string | null
           schedule: string
           start_date: string
-          teacher: Database["public"]["Enums"]["teacher_name"]
+          teacher?: string | null
           unique_link_id?: string
         }
         Update: {
+          batch_name?: string | null
           created_at?: string
           fb_group_link?: string | null
           id?: string
-          room?: Database["public"]["Enums"]["room_number"]
+          room?: string | null
           schedule?: string
           start_date?: string
-          teacher?: Database["public"]["Enums"]["teacher_name"]
+          teacher?: string | null
           unique_link_id?: string
         }
         Relationships: []
@@ -88,14 +91,63 @@ export type Database = {
           },
         ]
       }
+      teachers: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       room_number: "1105" | "905"
       teacher_name: "Saran-Ochir" | "Altan-Erdene" | "Manlai"
     }
@@ -225,6 +277,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       room_number: ["1105", "905"],
       teacher_name: ["Saran-Ochir", "Altan-Erdene", "Manlai"],
     },
