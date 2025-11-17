@@ -39,11 +39,25 @@ export function TeacherManagement() {
   }, []);
 
   const fetchTeachers = async () => {
-    const { data } = await supabase
+    const { data: teachersData } = await supabase
       .from('teachers')
-      .select('*, batches:batches(count)')
+      .select('*')
       .order('name');
-    if (data) setTeachers(data);
+    
+    if (teachersData) {
+      // Count batches for each teacher
+      const teachersWithCount = await Promise.all(
+        teachersData.map(async (teacher) => {
+          const { count } = await supabase
+            .from('batches')
+            .select('*', { count: 'exact', head: true })
+            .eq('teacher', teacher.name);
+          
+          return { ...teacher, batchCount: count || 0 };
+        })
+      );
+      setTeachers(teachersWithCount);
+    }
   };
 
   const handleAddTeacher = async () => {
@@ -119,7 +133,7 @@ export function TeacherManagement() {
   };
 
   const getBatchCount = (teacher: any) => {
-    return teacher.batches?.[0]?.count || 0;
+    return teacher.batchCount || 0;
   };
 
   return (
