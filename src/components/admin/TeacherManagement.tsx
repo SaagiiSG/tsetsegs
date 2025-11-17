@@ -24,13 +24,17 @@ import {
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, UserPlus, Users2 } from 'lucide-react';
+import { Trash2, UserPlus, Users2, Pencil } from 'lucide-react';
 
 export function TeacherManagement() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
   const [deletingTeacher, setDeletingTeacher] = useState<any>(null);
   const { toast } = useToast();
 
@@ -88,6 +92,40 @@ export function TeacherManagement() {
       setNewName('');
       setNewPhone('');
       setShowAddDialog(false);
+      fetchTeachers();
+    }
+  };
+
+  const handleEditTeacher = async () => {
+    if (!editName || !editPhone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('teachers')
+      .update({ name: editName, phone: editPhone })
+      .eq('id', editingTeacher.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update teacher",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Teacher updated successfully"
+      });
+      setShowEditDialog(false);
+      setEditingTeacher(null);
+      setEditName('');
+      setEditPhone('');
       fetchTeachers();
     }
   };
@@ -167,13 +205,27 @@ export function TeacherManagement() {
                     <TableCell>{teacher.phone}</TableCell>
                     <TableCell className="text-center">{getBatchCount(teacher)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingTeacher(teacher)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingTeacher(teacher);
+                            setEditName(teacher.name);
+                            setEditPhone(teacher.phone);
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletingTeacher(teacher)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -218,6 +270,44 @@ export function TeacherManagement() {
             <Button onClick={handleAddTeacher}>
               Add Teacher
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Teacher Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Teacher</DialogTitle>
+            <DialogDescription>
+              Update teacher information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Teacher name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+976-0000-0000"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditTeacher}>Update Teacher</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
