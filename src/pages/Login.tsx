@@ -12,7 +12,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, user, isAdmin } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn, signUp, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,19 +38,37 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive"
-        });
+      if (isSignUp) {
+        const { error } = await signUp(email, password);
+        
+        if (error) {
+          toast({
+            title: "Sign Up Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Account Created",
+            description: "Please contact admin to grant access.",
+          });
+          setIsSignUp(false);
+        }
       } else {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!"
-        });
+        const { error } = await signIn(email, password);
+        
+        if (error) {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Login Successful",
+            description: "Welcome back!"
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -71,9 +90,9 @@ export default function Login() {
               <Flower2 className="w-8 h-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardTitle className="text-2xl">{isSignUp ? "Create Account" : "Admin Login"}</CardTitle>
           <CardDescription>
-            Enter your credentials to access the admin dashboard
+            {isSignUp ? "Sign up for a new admin account" : "Enter your credentials to access the admin dashboard"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,7 +122,16 @@ export default function Login() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? (isSignUp ? "Creating Account..." : "Logging in...") : (isSignUp ? "Sign Up" : "Login")}
+            </Button>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => setIsSignUp(!isSignUp)}
+              disabled={isLoading}
+            >
+              {isSignUp ? "Already have an account? Login" : "Need an account? Sign Up"}
             </Button>
           </form>
         </CardContent>
