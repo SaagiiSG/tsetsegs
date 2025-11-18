@@ -226,7 +226,10 @@ const StudentReveal = () => {
 
       {showConfetti && <Confetti width={width} height={height} />}
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3">
+      <div 
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3"
+        style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+      >
         <Button
           variant="outline"
           size="icon"
