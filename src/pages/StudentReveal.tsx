@@ -55,7 +55,7 @@ const translations = {
       room: "Room",
       startDate: "Start Date",
       location: "Location",
-      address: "Их Наяд Зүүн Өндөр 1114, 1105 (11th floor) тоот",
+      address: "Их Наяд Зүүн Өндөр",
       joinGroup: "Join Facebook Group",
       joinGroupDesc: "Connect with your classmates",
     },
