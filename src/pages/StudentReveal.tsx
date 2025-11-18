@@ -223,29 +223,30 @@ const StudentReveal = () => {
           backgroundSize: "50px 50px",
         }}
       />
-      <div className="fixed bottom-0 right-3 z-50">
-        {showConfetti && <Confetti width={width} height={height} />}
-        <div className="fixed bottom-6 right-6 z-50 flex gap-3">
+      
+      {showConfetti && <Confetti width={width} height={height} />}
+      
+      <div className="fixed bottom-6 right-6 z-50 flex gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsMuted(!isMuted)}
+          className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
+        >
+          {isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}
+        </Button>
+        {currentPanel > -1 && (
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={restart}
             className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
           >
-            {isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}
+            <RotateCcw className="h-5 w-5 text-gold" />
           </Button>
-          {currentPanel > -1 && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={restart}
-              className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
-            >
-              <RotateCcw className="h-5 w-5 text-gold" />
-            </Button>
-          )}
-        </div>
+        )}
       </div>
+      
       <AnimatePresence mode="wait">
         {currentPanel === -1 && (
           <motion.div
