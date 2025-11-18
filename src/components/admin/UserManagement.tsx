@@ -36,16 +36,16 @@ export function UserManagement() {
     try {
       setIsLoading(true);
       
-      // Fetch all users from auth.users
-      const { data: authUsers, error: authError } = await supabase.rpc('get_all_users');
+      // Fetch all users with their admin status
+      const { data: authUsers, error: authError } = await supabase
+        .rpc('get_all_users') as { data: Array<{ id: string; email: string; created_at: string }> | null; error: any };
       
       if (authError) {
-        // Fallback: try direct query (will only work if user has service role)
-        console.error('RPC error, trying direct query:', authError);
+        console.error('Error fetching users:', authError);
         toast({
-          title: 'Info',
-          description: 'Using limited user view. Some features may not be available.',
-          variant: 'default',
+          title: 'Error',
+          description: 'Failed to fetch users. Make sure you have admin privileges.',
+          variant: 'destructive',
         });
         return;
       }
@@ -61,7 +61,7 @@ export function UserManagement() {
       const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
 
       // Combine data
-      const usersWithRoles: User[] = (authUsers || []).map((authUser: any) => ({
+      const usersWithRoles: User[] = (authUsers || []).map((authUser) => ({
         id: authUser.id,
         email: authUser.email,
         created_at: authUser.created_at,

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BatchCard } from '@/components/admin/BatchCard';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
+import { UserManagement } from '@/components/admin/UserManagement';
 import { LogOut, GraduationCap } from 'lucide-react';
 
 const Admin = () => {
@@ -53,10 +54,11 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="batches" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="batches">Batches</TabsTrigger>
             <TabsTrigger value="create">Create Batch</TabsTrigger>
             <TabsTrigger value="teachers">Teachers</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="batches" className="space-y-4">
@@ -87,6 +89,10 @@ const Admin = () => {
 
           <TabsContent value="teachers">
             <TeacherManagement />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement />
           </TabsContent>
         </Tabs>
       </main>
