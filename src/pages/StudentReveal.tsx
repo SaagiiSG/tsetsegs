@@ -427,13 +427,13 @@ const Panel2 = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ 
-          opacity: 0.3,
-          scale: window.innerWidth < 768 ? 0.5 : 0.6
+          opacity: 0.25,
+          scale: window.innerWidth < 768 ? 0.8 : 1.2
         }}
         transition={{ duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
         className="absolute"
       >
-        <img src={flowersLogo} alt="Flowers" className="w-48 sm:w-64" />
+        <img src={flowersLogo} alt="Flowers" className="w-64 sm:w-96" />
       </motion.div>
 
       <motion.div
