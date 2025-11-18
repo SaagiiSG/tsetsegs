@@ -134,7 +134,7 @@ const StudentReveal = () => {
 
   useEffect(() => {
     const fetchBatch = async () => {
-      const { data, error } = await supabase.from("batches").select("*").eq("unique_link_id", id).single();
+      const { data, error } = await supabase.from("batches").select("*").eq("unique_link_id", id).maybeSingle();
       if (error) {
         console.error(error);
         setIsLoading(false);
