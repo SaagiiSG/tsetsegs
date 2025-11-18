@@ -30,7 +30,7 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
   const { toast } = useToast();
 
   const handleCopyLink = () => {
-    const batchLink = `${window.location.origin}/batch/${batch.unique_link_id}`;
+    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
     navigator.clipboard.writeText(batchLink);
     toast({
       title: "Link Copied",
@@ -95,7 +95,7 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
   };
 
   const getSmsTemplate = () => {
-    const batchLink = `${window.location.origin}/batch/${batch.unique_link_id}`;
+    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
     return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
 
 Class Info: ${batchLink}
