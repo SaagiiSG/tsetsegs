@@ -218,7 +218,7 @@ const StudentReveal = () => {
     );
 
   return (
-    <div className="h-screen bg-reveal-bg relative overflow-hidden">
+    <div className="h-full bg-reveal-bg relative overflow-hidden">
       <div
         className="fixed inset-0 opacity-10 bottom-0"
         style={{
