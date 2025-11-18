@@ -71,45 +71,75 @@ const StudentReveal = () => {
     }
   };
 
-  // Background music
+  // Lofi beat background music
   useEffect(() => {
     if (!batch) return;
 
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Create uplifting chord progression
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = isMuted ? 0 : 0.08;
+    gainNode.gain.value = isMuted ? 0 : 0.12;
     gainNode.connect(audioContext.destination);
-    
-    // Main oscillator for ambient pad
-    const osc1 = audioContext.createOscillator();
-    osc1.type = 'sine';
-    osc1.frequency.value = 220; // A3
-    
-    const osc2 = audioContext.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.value = 277; // C#4
-    
-    const osc3 = audioContext.createOscillator();
-    osc3.type = 'sine';
-    osc3.frequency.value = 330; // E4
-    
-    osc1.connect(gainNode);
-    osc2.connect(gainNode);
-    osc3.connect(gainNode);
-    
-    osc1.start();
-    osc2.start();
-    osc3.start();
-    
-    setBgMusic(osc1);
+
+    // Bass loop
+    const playBass = () => {
+      const bass = audioContext.createOscillator();
+      const bassGain = audioContext.createGain();
+      bass.type = 'triangle';
+      bass.frequency.value = 110; // A2
+      bassGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      bass.connect(bassGain);
+      bassGain.connect(gainNode);
+      bass.start(audioContext.currentTime);
+      bass.stop(audioContext.currentTime + 0.5);
+    };
+
+    // Kick drum
+    const playKick = () => {
+      const kick = audioContext.createOscillator();
+      const kickGain = audioContext.createGain();
+      kick.frequency.setValueAtTime(150, audioContext.currentTime);
+      kick.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      kickGain.gain.setValueAtTime(0.5, audioContext.currentTime);
+      kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      kick.connect(kickGain);
+      kickGain.connect(gainNode);
+      kick.start(audioContext.currentTime);
+      kick.stop(audioContext.currentTime + 0.5);
+    };
+
+    // Hi-hat
+    const playHiHat = () => {
+      const hihat = audioContext.createOscillator();
+      const hihatGain = audioContext.createGain();
+      hihat.type = 'square';
+      hihat.frequency.value = 10000;
+      hihatGain.gain.setValueAtTime(0.05, audioContext.currentTime);
+      hihatGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      hihat.connect(hihatGain);
+      hihatGain.connect(gainNode);
+      hihat.start(audioContext.currentTime);
+      hihat.stop(audioContext.currentTime + 0.1);
+    };
+
+    // Beat pattern (lofi rhythm)
+    const beatInterval = setInterval(() => {
+      playKick();
+      playBass();
+      setTimeout(() => playHiHat(), 125);
+      setTimeout(() => playHiHat(), 250);
+      setTimeout(() => playKick(), 500);
+      setTimeout(() => playHiHat(), 625);
+      setTimeout(() => playHiHat(), 750);
+    }, 1000);
+
     setBgMusicGain(gainNode);
 
     return () => {
-      osc1.stop();
-      osc2.stop();
-      osc3.stop();
+      clearInterval(beatInterval);
       audioContext.close();
     };
   }, [batch]);
@@ -117,7 +147,7 @@ const StudentReveal = () => {
   // Update music volume when mute changes
   useEffect(() => {
     if (bgMusicGain) {
-      bgMusicGain.gain.value = isMuted ? 0 : 0.08;
+      bgMusicGain.gain.value = isMuted ? 0 : 0.12;
     }
   }, [isMuted, bgMusicGain]);
 
@@ -149,11 +179,16 @@ const StudentReveal = () => {
     if (currentPanel === 0 && batch) {
       setShowConfetti(true);
       playSound('achievement');
-      setTimeout(() => playSound('whoosh'), 400);
+      
+      // Particle explosion sounds
+      for (let i = 0; i < 8; i++) {
+        setTimeout(() => playSound('whoosh'), 100 + i * 80);
+      }
+      
       const timer = setTimeout(() => {
         setCurrentPanel(1);
         setShowConfetti(false);
-      }, 6000); // Increased to 6 seconds
+      }, 6000);
       return () => clearTimeout(timer);
     }
     
@@ -161,7 +196,7 @@ const StudentReveal = () => {
       playSound('swell');
       const timer = setTimeout(() => {
         setCurrentPanel(2);
-      }, 6000); // Increased to 6 seconds
+      }, 6000);
       return () => clearTimeout(timer);
     }
   }, [currentPanel, batch]);
