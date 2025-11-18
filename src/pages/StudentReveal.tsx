@@ -142,7 +142,7 @@ const StudentReveal = () => {
           <motion.div key="p0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex flex-col items-center justify-center relative z-10 px-6">
             {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}>
-              <img src={flowersLogo} alt="Flowers" className="w-48 mx-auto" />
+              <img src={flowersLogo} alt="Flowers" className="w-56 mx-auto" />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="text-center mt-4">
               <h1 className="text-3xl md:text-4xl font-light text-white mb-3">{t.grandEntrance.welcome}</h1>
