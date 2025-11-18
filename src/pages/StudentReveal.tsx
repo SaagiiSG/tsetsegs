@@ -217,7 +217,7 @@ const StudentReveal = () => {
   return (
     <div className="h-screen bg-reveal-bg relative overflow-hidden">
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-10 bottom-0"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
           backgroundSize: "50px 50px",
