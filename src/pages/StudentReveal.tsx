@@ -359,7 +359,7 @@ const StudentReveal = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <img src={flowersLogo} alt="Flowers" className="w-48" />
+              <img src={flowersLogo} alt="Flowers" className="w-50 -mb-12" />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -458,6 +458,7 @@ const StudentReveal = () => {
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
                     <CountUp start={0} end={30} duration={2.5} delay={0.5} suffix="+" />
+                    students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.score1400}</p>
                 </div>
@@ -472,6 +473,7 @@ const StudentReveal = () => {
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
                     <CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" />
+                    students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.score1300}</p>
                 </div>
@@ -485,7 +487,7 @@ const StudentReveal = () => {
                 <Calculator className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
-                    <CountUp start={0} end={400} duration={2.5} delay={0.9} suffix="+" />
+                    <CountUp start={0} end={400} duration={2.5} delay={0.9} suffix="+" /> students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.scoreMath}</p>
                 </div>
