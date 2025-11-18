@@ -309,7 +309,7 @@ const StudentReveal = () => {
   );
 };
 
-// Panel 1: Grand Entrance - Rocket Explosion Effect
+// Panel 1: Grand Entrance - Rocket Explosion Effect (Mobile Optimized)
 const Panel1 = () => {
   return (
     <motion.div
@@ -317,14 +317,14 @@ const Panel1 = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="absolute inset-0 flex items-center justify-center p-8"
+      className="absolute inset-0 flex items-center justify-center p-4 sm:p-8"
     >
-      {/* Rocket explosion particles */}
+      {/* Rocket explosion particles - fewer on mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(40)].map((_, i) => (
+        {[...Array(window.innerWidth < 768 ? 25 : 40)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-3 h-3 rounded-full"
+            className="absolute w-2 h-2 sm:w-3 sm:h-3 rounded-full"
             style={{
               background: i % 3 === 0 ? '#FFD700' : i % 3 === 1 ? '#FFA500' : '#FFFFFF',
               left: '50%',
@@ -333,8 +333,8 @@ const Panel1 = () => {
             initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
             animate={{
               scale: [0, 1.5, 0],
-              x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 800],
-              y: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 800],
+              x: [(Math.random() - 0.5) * 50, (Math.random() - 0.5) * (window.innerWidth < 768 ? 400 : 800)],
+              y: [(Math.random() - 0.5) * 50, (Math.random() - 0.5) * (window.innerWidth < 768 ? 400 : 800)],
               opacity: [1, 0.8, 0],
             }}
             transition={{
@@ -346,7 +346,7 @@ const Panel1 = () => {
         ))}
       </div>
 
-      <div className="text-center space-y-12 relative z-10">
+      <div className="text-center space-y-6 sm:space-y-12 relative z-10 max-w-lg sm:max-w-none">
         <motion.div
           initial={{ scale: 0, opacity: 0, rotateY: -180 }}
           animate={{ scale: 1, opacity: 1, rotateY: 0 }}
@@ -359,9 +359,9 @@ const Panel1 = () => {
           }}
           className="relative"
         >
-          <img src={flowersLogo} alt="Flowers Talent Agency" className="w-64 md:w-96 mx-auto" />
+          <img src={flowersLogo} alt="Flowers Talent Agency" className="w-48 sm:w-64 md:w-96 mx-auto" />
           <motion.div
-            className="absolute inset-0 bg-gold/40 blur-3xl -z-10"
+            className="absolute inset-0 bg-gold/40 blur-2xl sm:blur-3xl -z-10"
             animate={{ 
               scale: [1, 1.3, 1],
               opacity: [0.4, 0.6, 0.4]
@@ -374,9 +374,9 @@ const Panel1 = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
-          className="space-y-4"
+          className="space-y-2 sm:space-y-4 px-4"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-white leading-tight">
             Congratulations on securing<br />
             <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent drop-shadow-lg">
               your seat at Tsetsegs!
@@ -388,7 +388,7 @@ const Panel1 = () => {
   );
 };
 
-// Panel 2: Legacy Message - Elegant Smooth Transitions
+// Panel 2: Legacy Message - Mobile Optimized
 const Panel2 = () => {
   return (
     <motion.div
@@ -396,14 +396,14 @@ const Panel2 = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="absolute inset-0 flex items-center justify-center p-8"
+      className="absolute inset-0 flex items-center justify-center p-4 sm:p-8"
     >
-      {/* Floating particles - golden for dark bg */}
+      {/* Floating particles - fewer on mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(window.innerWidth < 768 ? 15 : 30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-gold rounded-full"
+            className="absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gold rounded-full"
             animate={{
               y: [0, -120, 0],
               x: [0, Math.random() * 60 - 30, 0],
@@ -423,13 +423,13 @@ const Panel2 = () => {
         ))}
       </div>
 
-      {/* Small logo in corner - smooth transition */}
+      {/* Small logo in corner - adjusted for mobile */}
       <motion.div
         initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
         animate={{ 
           opacity: 1,
-          scale: 0.25, 
-          x: -window.innerWidth * 0.38, 
+          scale: window.innerWidth < 768 ? 0.15 : 0.25, 
+          x: window.innerWidth < 768 ? -window.innerWidth * 0.35 : -window.innerWidth * 0.38, 
           y: -window.innerHeight * 0.43
         }}
         transition={{ duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
@@ -442,9 +442,9 @@ const Panel2 = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
-        className="text-center space-y-8 max-w-4xl px-4"
+        className="text-center space-y-4 sm:space-y-8 max-w-xs sm:max-w-4xl px-4"
       >
-        <h2 className="text-4xl md:text-7xl font-bold text-white leading-tight">
+        <h2 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white leading-tight">
           Your journey to be part of{' '}
           <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent">
             Tsetsegs's legacy
@@ -481,23 +481,23 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="absolute inset-0 flex items-center justify-center p-8 overflow-y-auto"
+      className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 overflow-y-auto"
       onClick={(e) => {
         e.stopPropagation();
         onNext();
       }}
     >
-      <div className="max-w-2xl w-full py-12">
+      <div className="max-w-2xl w-full py-8 sm:py-12">
         <motion.h2
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-3xl md:text-5xl font-bold text-center mb-16 text-white"
+          className="text-2xl sm:text-3xl md:text-5xl font-bold text-center mb-8 sm:mb-16 text-white px-4"
         >
           Join Our Elite Community
         </motion.h2>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 px-4">
           {[
             { icon: Target, number: 1500, label: "Score Achievers", sub: "8 students reached this milestone", delay: 0.5 },
             { icon: BookOpen, number: 1400, label: "High Performers", sub: "30+ students in this elite group", delay: 0.9 },
@@ -512,20 +512,20 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
                 duration: 0.8,
                 ease: [0.43, 0.13, 0.23, 0.96]
               }}
-              className="bg-black/40 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gold/30 hover:border-gold transition-all duration-500 hover:scale-[1.02]"
+              className="bg-black/40 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl border border-gold/30 hover:border-gold transition-all duration-500 active:scale-[0.98] sm:hover:scale-[1.02]"
             >
-              <div className="flex items-center gap-6">
-                <stat.icon className="w-16 h-16 text-gold flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="text-6xl font-bold text-white mb-1">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <stat.icon className="w-12 h-12 sm:w-16 sm:h-16 text-gold flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-4xl sm:text-6xl font-bold text-white mb-0.5 sm:mb-1">
                     {countersStarted ? (
                       <CountUp end={stat.number} duration={2.5} suffix="+" />
                     ) : (
                       "0"
                     )}
                   </div>
-                  <div className="text-2xl font-semibold text-white mb-1">{stat.label}</div>
-                  <div className="text-sm text-gray-400">{stat.sub}</div>
+                  <div className="text-lg sm:text-2xl font-semibold text-white mb-0.5 sm:mb-1">{stat.label}</div>
+                  <div className="text-xs sm:text-sm text-gray-400">{stat.sub}</div>
                 </div>
               </div>
             </motion.div>
@@ -536,7 +536,7 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2 }}
-          className="text-center mt-12 text-gray-400 text-lg"
+          className="text-center mt-8 sm:mt-12 text-gray-400 text-base sm:text-lg"
         >
           Tap to continue
         </motion.p>
@@ -545,7 +545,7 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
   );
 };
 
-// Panel 4: Class Details - Matching Premium Style
+// Panel 4: Class Details - Mobile Optimized
 const Panel4 = ({ batch, formatDate, onRestart }: any) => {
   return (
     <motion.div
@@ -553,19 +553,19 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="absolute inset-0 flex items-center justify-center p-8 overflow-y-auto"
+      className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 overflow-y-auto"
     >
-      <div className="max-w-2xl w-full space-y-6 py-12">
+      <div className="max-w-2xl w-full space-y-4 sm:space-y-6 py-8 sm:py-12">
         <motion.h2
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-          className="text-4xl font-bold text-center mb-8 text-white"
+          className="text-2xl sm:text-4xl font-bold text-center mb-6 sm:mb-8 text-white px-4"
         >
           Your Class Details
         </motion.h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 px-4">
           {[
             { icon: User, label: "Your Teacher", value: batch.teacher, delay: 0.4 },
             { icon: Calendar, label: "Class Schedule", value: batch.schedule, delay: 0.6 },
@@ -586,12 +586,12 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
                 duration: 0.6,
                 ease: [0.43, 0.13, 0.23, 0.96]
               }}
-              className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gold/20 flex items-start gap-4 hover:border-gold/40 transition-all duration-300"
+              className="bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gold/20 flex items-start gap-3 sm:gap-4 hover:border-gold/40 transition-all duration-300"
             >
-              <item.icon className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
-              <div>
-                <div className="font-semibold text-white mb-1">{item.label}</div>
-                <div className="text-gray-300 whitespace-pre-line">{item.value}</div>
+              <item.icon className="w-5 h-5 sm:w-6 sm:h-6 text-gold flex-shrink-0 mt-0.5 sm:mt-1" />
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-white mb-1 text-sm sm:text-base">{item.label}</div>
+                <div className="text-gray-300 whitespace-pre-line text-sm sm:text-base">{item.value}</div>
               </div>
             </motion.div>
           ))}
@@ -604,10 +604,10 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
               duration: 0.6,
               ease: [0.43, 0.13, 0.23, 0.96]
             }}
-            className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gold/20"
+            className="bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gold/20"
           >
-            <div className="font-semibold text-white mb-3">📝 What to Bring</div>
-            <ul className="space-y-2 text-gray-300">
+            <div className="font-semibold text-white mb-2 sm:mb-3 text-sm sm:text-base">📝 What to Bring</div>
+            <ul className="space-y-1.5 sm:space-y-2 text-gray-300 text-sm sm:text-base">
               <li>• Pen</li>
               <li>• Notebook</li>
               <li>• Yourself!</li>
@@ -626,7 +626,7 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
             >
               <Button
                 asChild
-                className="w-full h-16 text-lg font-semibold bg-gold hover:bg-gold-glow text-black shadow-xl shadow-gold/40 hover:shadow-2xl hover:shadow-gold/50 transition-all duration-300"
+                className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold bg-gold hover:bg-gold-glow text-black shadow-xl shadow-gold/40 hover:shadow-2xl hover:shadow-gold/50 transition-all duration-300 active:scale-95"
               >
                 <a href={batch.fb_group_link} target="_blank" rel="noopener noreferrer">
                   <Facebook className="mr-2 h-5 w-5" />
@@ -640,13 +640,13 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.6, duration: 0.8 }}
-            className="text-center space-y-4 pt-4"
+            className="text-center space-y-3 sm:space-y-4 pt-4"
           >
-            <p className="text-2xl font-bold text-white">🎉 See you soon at Tsetsegs!</p>
+            <p className="text-xl sm:text-2xl font-bold text-white">🎉 See you soon at Tsetsegs!</p>
             
             <button
               onClick={onRestart}
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gold transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gold transition-colors active:scale-95"
             >
               <RotateCcw className="w-4 h-4" />
               Replay celebration
