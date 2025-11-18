@@ -632,6 +632,35 @@ const StudentReveal = () => {
                   </Button>
                 </motion.div>
               )}
+              
+              <motion.div
+                className="space-y-4 mt-8"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.1, duration: 0.5 }}
+              >
+                <p className="text-white text-center text-lg font-medium">
+                  {t.classDetails.latestNews}
+                </p>
+                <div className="flex items-center justify-center gap-6">
+                  <a
+                    href="https://www.instagram.com/tsetsegs.talent.agency/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-16 h-16 rounded-full bg-gold/20 hover:bg-gold/30 border-2 border-gold flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <Instagram className="w-8 h-8 text-gold" />
+                  </a>
+                  <a
+                    href="https://www.facebook.com/tsetsegs.agency"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-16 h-16 rounded-full bg-gold/20 hover:bg-gold/30 border-2 border-gold flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <Facebook className="w-8 h-8 text-gold" />
+                  </a>
+                </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
