@@ -43,8 +43,8 @@ All colors MUST be HSL.
     --shadow-soft: 0 4px 24px -8px hsl(345 75% 65% / 0.15);
     --shadow-glow: 0 0 40px hsl(345 75% 65% / 0.2);
     
-    --gold: 51 100% 50%;
-    --gold-glow: 48 100% 67%;
+    --gold: 43 88% 58%;
+    --gold-glow: 43 95% 68%;
     --beige: 42 47% 95%;
     --cream: 45 100% 98%;
 

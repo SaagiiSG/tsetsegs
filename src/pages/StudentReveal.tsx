@@ -18,6 +18,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import flowersLogo from "@/assets/flowers-logo.png";
 
 const StudentReveal = () => {
   const { id } = useParams();
@@ -91,16 +92,16 @@ const StudentReveal = () => {
     fetchBatch();
   }, [id]);
 
-  // Auto-advance logic
+  // Auto-advance logic - slower, more premium timing
   useEffect(() => {
     if (currentPanel === 0 && batch) {
       setShowConfetti(true);
       playSound('achievement');
-      playSound('whoosh');
+      setTimeout(() => playSound('whoosh'), 400);
       const timer = setTimeout(() => {
         setCurrentPanel(1);
         setShowConfetti(false);
-      }, 4000);
+      }, 6000); // Increased to 6 seconds
       return () => clearTimeout(timer);
     }
     
@@ -108,7 +109,7 @@ const StudentReveal = () => {
       playSound('swell');
       const timer = setTimeout(() => {
         setCurrentPanel(2);
-      }, 4000);
+      }, 6000); // Increased to 6 seconds
       return () => clearTimeout(timer);
     }
   }, [currentPanel, batch]);
@@ -179,7 +180,15 @@ const StudentReveal = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center space-y-6"
         >
-          <div className="text-6xl">🌸</div>
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <img src={flowersLogo} alt="Flowers Talent Agency" className="w-48 mx-auto" />
+          </motion.div>
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -196,7 +205,7 @@ const StudentReveal = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-beige to-cream flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <div className="text-6xl">🌸</div>
+          <img src={flowersLogo} alt="Flowers Talent Agency" className="w-48 mx-auto opacity-50" />
           <h2 className="text-2xl font-bold">Link Not Found</h2>
           <p className="text-muted-foreground">This invitation link is invalid or has expired.</p>
         </div>
@@ -230,7 +239,7 @@ const StudentReveal = () => {
           e.stopPropagation();
           setIsMuted(!isMuted);
         }}
-        className="fixed top-4 right-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
+        className="fixed top-20 right-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -252,8 +261,8 @@ const StudentReveal = () => {
         )}
       </AnimatePresence>
 
-      {/* Progress Dots */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-40">
+      {/* Progress Bars - Instagram Story Style */}
+      <div className="fixed top-4 left-0 right-0 flex gap-2 z-40 px-4">
         {[0, 1, 2, 3].map((index) => (
           <button
             key={index}
@@ -261,52 +270,72 @@ const StudentReveal = () => {
               e.stopPropagation();
               goToPanel(index);
             }}
-            className={`transition-all duration-300 rounded-full ${
-              currentPanel === index
-                ? 'w-12 h-3 bg-gold shadow-lg shadow-gold/50'
-                : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
-            }`}
+            className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden relative"
             aria-label={`Go to panel ${index + 1}`}
-          />
+          >
+            <motion.div
+              className="absolute inset-0 bg-white origin-left"
+              initial={{ scaleX: 0 }}
+              animate={{ 
+                scaleX: currentPanel === index ? 1 : currentPanel > index ? 1 : 0 
+              }}
+              transition={{ 
+                duration: currentPanel === index && index < 2 ? 6 : 0.3,
+                ease: "linear"
+              }}
+            />
+          </button>
         ))}
       </div>
     </div>
   );
 };
 
-// Panel 1: Grand Entrance
+// Panel 1: Grand Entrance - Smooth Premium Animation
 const Panel1 = () => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -100 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
       className="absolute inset-0 flex items-center justify-center p-8"
     >
-      <div className="text-center space-y-8">
+      <div className="text-center space-y-12">
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          initial={{ scale: 0, opacity: 0, rotateY: -180 }}
+          animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+          transition={{ 
+            delay: 0.5, 
+            duration: 1.2,
+            type: "spring", 
+            stiffness: 100,
+            damping: 15
+          }}
           className="relative"
         >
-          <div className="text-9xl mb-4">🌸</div>
+          <img src={flowersLogo} alt="Flowers Talent Agency" className="w-64 md:w-96 mx-auto" />
           <motion.div
-            className="absolute inset-0 bg-gold/20 blur-3xl"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute inset-0 bg-gold/30 blur-3xl -z-10"
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
         </motion.div>
         
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 1.5, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
           className="space-y-4"
         >
           <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
             Congratulations on securing<br />
-            <span className="text-gold drop-shadow-lg">your seat at Tsetsegs!</span>
+            <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent drop-shadow-lg">
+              your seat at Tsetsegs!
+            </span>
           </h1>
         </motion.div>
       </div>
@@ -314,30 +343,32 @@ const Panel1 = () => {
   );
 };
 
-// Panel 2: Legacy Message
+// Panel 2: Legacy Message - Elegant Smooth Transitions
 const Panel2 = () => {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -100 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
       className="absolute inset-0 flex items-center justify-center p-8"
     >
-      {/* Floating particles */}
+      {/* Floating particles - more subtle */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-gold/20 rounded-full"
+            className="absolute w-2 h-2 bg-gold/30 rounded-full"
             animate={{
-              y: [0, -100, 0],
-              x: [0, Math.random() * 50 - 25, 0],
-              opacity: [0, 1, 0],
+              y: [0, -120, 0],
+              x: [0, Math.random() * 60 - 30, 0],
+              opacity: [0, 0.8, 0],
             }}
             transition={{
-              duration: 4 + Math.random() * 2,
+              duration: 5 + Math.random() * 3,
               repeat: Infinity,
-              delay: i * 0.2,
+              delay: i * 0.15,
+              ease: "easeInOut"
             }}
             style={{
               left: `${Math.random() * 100}%`,
@@ -347,24 +378,30 @@ const Panel2 = () => {
         ))}
       </div>
 
-      {/* Small logo in corner */}
+      {/* Small logo in corner - smooth transition */}
       <motion.div
-        initial={{ scale: 1, x: 0, y: 0 }}
-        animate={{ scale: 0.4, x: -window.innerWidth * 0.35, y: -window.innerHeight * 0.4 }}
-        className="absolute text-6xl"
+        initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        animate={{ 
+          opacity: 1,
+          scale: 0.25, 
+          x: -window.innerWidth * 0.38, 
+          y: -window.innerHeight * 0.43
+        }}
+        transition={{ duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
+        className="absolute"
       >
-        🌸
+        <img src={flowersLogo} alt="Flowers" className="w-64" />
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="text-center space-y-8 max-w-3xl"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
+        className="text-center space-y-8 max-w-4xl px-4"
       >
-        <h2 className="text-5xl md:text-7xl font-bold text-foreground leading-tight">
+        <h2 className="text-4xl md:text-7xl font-bold text-foreground leading-tight">
           Your journey to be part of{' '}
-          <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent drop-shadow-lg">
+          <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent">
             Tsetsegs's legacy
           </span>{' '}
           starts here
@@ -374,68 +411,78 @@ const Panel2 = () => {
   );
 };
 
-// Panel 3: Stats Showcase
+// Panel 3: Stats Showcase - Vertical Layout, Smooth Reveals
 const Panel3 = ({ batch, playSound, onNext }: any) => {
   const [countersStarted, setCountersStarted] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => setCountersStarted(true), 300);
+    setTimeout(() => setCountersStarted(true), 600);
   }, []);
 
   useEffect(() => {
     if (countersStarted) {
-      const interval = setInterval(() => playSound('tick'), 100);
+      const interval = setInterval(() => playSound('tick'), 150);
       setTimeout(() => {
         clearInterval(interval);
         playSound('achievement');
-      }, 2000);
+      }, 2500);
       return () => clearInterval(interval);
     }
   }, [countersStarted]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      className="absolute inset-0 flex items-center justify-center p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
+      className="absolute inset-0 flex items-center justify-center p-8 overflow-y-auto"
       onClick={(e) => {
         e.stopPropagation();
         onNext();
       }}
     >
-      <div className="max-w-5xl w-full">
+      <div className="max-w-2xl w-full py-12">
         <motion.h2
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-5xl font-bold text-center mb-12 text-foreground"
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="text-3xl md:text-5xl font-bold text-center mb-16 text-foreground"
         >
           Join Our Elite Community
         </motion.h2>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {[
-            { icon: Target, number: 1500, label: "Score Achievers", sub: "8 students reached this milestone", delay: 0 },
-            { icon: BookOpen, number: 1400, label: "High Performers", sub: "30+ students in this elite group", delay: 0.2 },
-            { icon: Calculator, number: 700, label: "Math Masters", sub: "400+ students conquered the section", delay: 0.4 },
+            { icon: Target, number: 1500, label: "Score Achievers", sub: "8 students reached this milestone", delay: 0.5 },
+            { icon: BookOpen, number: 1400, label: "High Performers", sub: "30+ students in this elite group", delay: 0.9 },
+            { icon: Calculator, number: 700, label: "Math Masters", sub: "400+ students conquered the section", delay: 1.3 },
           ].map((stat, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: stat.delay }}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-gold/20 hover:border-gold/50 transition-all hover:scale-105"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ 
+                delay: stat.delay,
+                duration: 0.8,
+                ease: [0.43, 0.13, 0.23, 0.96]
+              }}
+              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gold/30 hover:border-gold transition-all duration-500 hover:scale-[1.02]"
             >
-              <stat.icon className="w-12 h-12 text-gold mx-auto mb-4" />
-              <div className="text-5xl font-bold text-foreground mb-2">
-                {countersStarted ? (
-                  <CountUp end={stat.number} duration={2} suffix="+" />
-                ) : (
-                  "0"
-                )}
+              <div className="flex items-center gap-6">
+                <stat.icon className="w-16 h-16 text-gold flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="text-6xl font-bold text-foreground mb-1">
+                    {countersStarted ? (
+                      <CountUp end={stat.number} duration={2.5} suffix="+" />
+                    ) : (
+                      "0"
+                    )}
+                  </div>
+                  <div className="text-2xl font-semibold text-foreground mb-1">{stat.label}</div>
+                  <div className="text-sm text-muted-foreground">{stat.sub}</div>
+                </div>
               </div>
-              <div className="text-xl font-semibold text-foreground mb-2">{stat.label}</div>
-              <div className="text-sm text-muted-foreground">{stat.sub}</div>
             </motion.div>
           ))}
         </div>
@@ -443,8 +490,8 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center mt-8 text-muted-foreground"
+          transition={{ delay: 2 }}
+          className="text-center mt-12 text-muted-foreground text-lg"
         >
           Tap to continue
         </motion.p>
