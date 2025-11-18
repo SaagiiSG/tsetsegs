@@ -1,16 +1,72 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, User, Sparkles, Facebook, MapPinned } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
+import CountUp from "react-countup";
+import { 
+  User, 
+  Calendar, 
+  MapPin, 
+  Facebook, 
+  Target, 
+  BookOpen, 
+  Calculator,
+  Volume2,
+  VolumeX,
+  RotateCcw
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/flowers-hero.jpg";
 
 const StudentReveal = () => {
   const { id } = useParams();
   const [batch, setBatch] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showReveal, setShowReveal] = useState(false);
+  const [currentPanel, setCurrentPanel] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useWindowSize();
+
+  // Sound effects (using data URIs for simple beeps - replace with actual sound files)
+  const playSound = (type: string) => {
+    if (isMuted) return;
+    
+    // Simple beep sounds - in production, replace with actual audio files
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    switch(type) {
+      case 'achievement':
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.3;
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+        break;
+      case 'whoosh':
+        oscillator.frequency.value = 400;
+        gainNode.gain.value = 0.2;
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.15);
+        break;
+      case 'swell':
+        oscillator.frequency.value = 200;
+        gainNode.gain.value = 0.15;
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+        break;
+      case 'tick':
+        oscillator.frequency.value = 600;
+        gainNode.gain.value = 0.1;
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.05);
+        break;
+    }
+  };
 
   useEffect(() => {
     const fetchBatch = async () => {
@@ -30,40 +86,120 @@ const StudentReveal = () => {
 
       setBatch(batchData);
       setIsLoading(false);
-      
-      // Trigger reveal animation after short delay
-      setTimeout(() => setShowReveal(true), 500);
     };
 
     fetchBatch();
   }, [id]);
 
+  // Auto-advance logic
+  useEffect(() => {
+    if (currentPanel === 0 && batch) {
+      setShowConfetti(true);
+      playSound('achievement');
+      playSound('whoosh');
+      const timer = setTimeout(() => {
+        setCurrentPanel(1);
+        setShowConfetti(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+    
+    if (currentPanel === 1) {
+      playSound('swell');
+      const timer = setTimeout(() => {
+        setCurrentPanel(2);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPanel, batch]);
+
+  const nextPanel = () => {
+    if (currentPanel < 3) {
+      setCurrentPanel(currentPanel + 1);
+    }
+  };
+
+  const prevPanel = () => {
+    if (currentPanel > 0) {
+      setCurrentPanel(currentPanel - 1);
+    }
+  };
+
+  const goToPanel = (index: number) => {
+    setCurrentPanel(index);
+  };
+
+  const restart = () => {
+    setCurrentPanel(0);
+  };
+
+  // Touch gesture handlers
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      nextPanel();
+    }
+    if (touchStart - touchEnd < -75) {
+      prevPanel();
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextPanel();
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevPanel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPanel]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
-        <div className="text-center space-y-6 animate-fade-in">
-          <div className="relative">
-            <Sparkles className="w-20 h-20 text-primary mx-auto animate-pulse" />
-            <div className="absolute inset-0 bg-primary/20 blur-xl animate-pulse" />
-          </div>
-          <p className="text-2xl font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Preparing your magical reveal...
-          </p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-beige to-cream flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-6"
+        >
+          <div className="text-6xl">🌸</div>
+          <motion.p
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-2xl font-bold text-foreground"
+          >
+            Loading your celebration...
+          </motion.p>
+        </motion.div>
       </div>
     );
   }
 
   if (!batch) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full shadow-2xl">
-          <CardContent className="p-8 text-center space-y-4">
-            <Sparkles className="w-16 h-16 text-muted-foreground mx-auto" />
-            <h2 className="text-2xl font-bold">Link Not Found</h2>
-            <p className="text-muted-foreground">This invitation link is invalid or has expired.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-beige to-cream flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <div className="text-6xl">🌸</div>
+          <h2 className="text-2xl font-bold">Link Not Found</h2>
+          <p className="text-muted-foreground">This invitation link is invalid or has expired.</p>
+        </div>
       </div>
     );
   }
@@ -78,175 +214,341 @@ const StudentReveal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 relative overflow-hidden">
-      {/* Animated petals background */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(12)].map((_, i) => (
-          <div
+    <div
+      className="min-h-screen bg-gradient-to-br from-beige to-cream relative overflow-hidden"
+      onClick={currentPanel < 2 ? nextPanel : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Confetti */}
+      {showConfetti && <Confetti width={width} height={height} numberOfPieces={200} recycle={false} />}
+
+      {/* Mute Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsMuted(!isMuted);
+        }}
+        className="fixed top-4 right-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
+        aria-label={isMuted ? "Unmute" : "Mute"}
+      >
+        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+      </button>
+
+      {/* Panels */}
+      <AnimatePresence mode="wait">
+        {currentPanel === 0 && (
+          <Panel1 key="panel1" />
+        )}
+        {currentPanel === 1 && (
+          <Panel2 key="panel2" />
+        )}
+        {currentPanel === 2 && (
+          <Panel3 key="panel3" batch={batch} playSound={playSound} onNext={nextPanel} />
+        )}
+        {currentPanel === 3 && (
+          <Panel4 key="panel4" batch={batch} formatDate={formatDate} onRestart={restart} />
+        )}
+      </AnimatePresence>
+
+      {/* Progress Dots */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-40">
+        {[0, 1, 2, 3].map((index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              goToPanel(index);
+            }}
+            className={`transition-all duration-300 rounded-full ${
+              currentPanel === index
+                ? 'w-12 h-3 bg-gold shadow-lg shadow-gold/50'
+                : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+            }`}
+            aria-label={`Go to panel ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Panel 1: Grand Entrance
+const Panel1 = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="absolute inset-0 flex items-center justify-center p-8"
+    >
+      <div className="text-center space-y-8">
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="relative"
+        >
+          <div className="text-9xl mb-4">🌸</div>
+          <motion.div
+            className="absolute inset-0 bg-gold/20 blur-3xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="space-y-4"
+        >
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
+            Congratulations on securing<br />
+            <span className="text-gold drop-shadow-lg">your seat at Tsetsegs!</span>
+          </h1>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Panel 2: Legacy Message
+const Panel2 = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="absolute inset-0 flex items-center justify-center p-8"
+    >
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
             key={i}
-            className="absolute w-6 h-6 bg-primary/10 rounded-full blur-sm"
+            className="absolute w-2 h-2 bg-gold/20 rounded-full"
+            animate={{
+              y: [0, -100, 0],
+              x: [0, Math.random() * 50 - 25, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 2,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
             style={{
               left: `${Math.random() * 100}%`,
-              animation: `float ${8 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${i * 1}s`,
-              top: `${-20 + Math.random() * 120}%`,
+              top: `${50 + Math.random() * 50}%`,
             }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 py-12">
-        <div className="max-w-3xl w-full space-y-8">
-          {/* Welcome Header with Hero Image */}
-          <div className={`transition-all duration-1000 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Card className="overflow-hidden shadow-2xl border-2">
-              <div className="relative h-64 md:h-80">
-                <img
-                  src={heroImage}
-                  alt="Flowers"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent flex items-end justify-center pb-8">
-                  <h1 className="text-4xl md:text-5xl font-bold text-center px-4">
-                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent drop-shadow-lg">
-                      Welcome to Family of Tsetsegs
-                    </span>
-                    <span className="ml-2 text-4xl">🌸</span>
-                  </h1>
-                </div>
+      {/* Small logo in corner */}
+      <motion.div
+        initial={{ scale: 1, x: 0, y: 0 }}
+        animate={{ scale: 0.4, x: -window.innerWidth * 0.35, y: -window.innerHeight * 0.4 }}
+        className="absolute text-6xl"
+      >
+        🌸
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="text-center space-y-8 max-w-3xl"
+      >
+        <h2 className="text-5xl md:text-7xl font-bold text-foreground leading-tight">
+          Your journey to be part of{' '}
+          <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent drop-shadow-lg">
+            Tsetsegs's legacy
+          </span>{' '}
+          starts here
+        </h2>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Panel 3: Stats Showcase
+const Panel3 = ({ batch, playSound, onNext }: any) => {
+  const [countersStarted, setCountersStarted] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setCountersStarted(true), 300);
+  }, []);
+
+  useEffect(() => {
+    if (countersStarted) {
+      const interval = setInterval(() => playSound('tick'), 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        playSound('achievement');
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [countersStarted]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="absolute inset-0 flex items-center justify-center p-8"
+      onClick={(e) => {
+        e.stopPropagation();
+        onNext();
+      }}
+    >
+      <div className="max-w-5xl w-full">
+        <motion.h2
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl md:text-5xl font-bold text-center mb-12 text-foreground"
+        >
+          Join Our Elite Community
+        </motion.h2>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { icon: Target, number: 1500, label: "Score Achievers", sub: "8 students reached this milestone", delay: 0 },
+            { icon: BookOpen, number: 1400, label: "High Performers", sub: "30+ students in this elite group", delay: 0.2 },
+            { icon: Calculator, number: 700, label: "Math Masters", sub: "400+ students conquered the section", delay: 0.4 },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: stat.delay }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-gold/20 hover:border-gold/50 transition-all hover:scale-105"
+            >
+              <stat.icon className="w-12 h-12 text-gold mx-auto mb-4" />
+              <div className="text-5xl font-bold text-foreground mb-2">
+                {countersStarted ? (
+                  <CountUp end={stat.number} duration={2} suffix="+" />
+                ) : (
+                  "0"
+                )}
               </div>
-            </Card>
-          </div>
+              <div className="text-xl font-semibold text-foreground mb-2">{stat.label}</div>
+              <div className="text-sm text-muted-foreground">{stat.sub}</div>
+            </motion.div>
+          ))}
+        </div>
 
-          {/* Assignment Details */}
-          <div className={`transition-all duration-1000 delay-300 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Card className="shadow-xl border-2">
-              <CardContent className="p-8 space-y-6">
-                <div className="text-center space-y-2 pb-4 border-b">
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">Your Class Assignment</p>
-                  <h2 className="text-2xl font-bold text-primary">Class Details</h2>
-                </div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="text-center mt-8 text-muted-foreground"
+        >
+          Tap to continue
+        </motion.p>
+      </div>
+    </motion.div>
+  );
+};
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <User className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Teacher</p>
-                      <p className="font-semibold text-lg">{batch.teacher}</p>
-                    </div>
-                  </div>
+// Panel 4: Class Details
+const Panel4 = ({ batch, formatDate, onRestart }: any) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="absolute inset-0 flex items-center justify-center p-8 overflow-y-auto"
+    >
+      <div className="max-w-2xl w-full space-y-6 py-12">
+        <motion.h2
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-bold text-center mb-8 text-foreground"
+        >
+          Your Class Details
+        </motion.h2>
 
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-secondary/5 border border-secondary/20">
-                    <div className="p-3 bg-secondary/10 rounded-lg">
-                      <Clock className="w-6 h-6 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Schedule</p>
-                      <p className="font-semibold">{batch.schedule}</p>
-                    </div>
-                  </div>
+        <div className="space-y-4">
+          {[
+            { icon: User, label: "Your Teacher", value: batch.teacher, delay: 0 },
+            { icon: Calendar, label: "Class Schedule", value: batch.schedule, delay: 0.1 },
+            { 
+              icon: MapPin, 
+              label: "Location", 
+              value: `Их Наяд Зүүн Өндөр 1114\nRoom ${batch.room}, ${batch.room === '1105' ? '11th' : '9th'} Floor`, 
+              delay: 0.2 
+            },
+            { icon: Calendar, label: "First Day", value: formatDate(batch.start_date), delay: 0.3 },
+          ].map((item, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: item.delay }}
+              className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gold/10 flex items-start gap-4"
+            >
+              <item.icon className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
+              <div>
+                <div className="font-semibold text-foreground mb-1">{item.label}</div>
+                <div className="text-foreground whitespace-pre-line">{item.value}</div>
+              </div>
+            </motion.div>
+          ))}
 
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-accent/5 border border-accent/20">
-                    <div className="p-3 bg-accent/10 rounded-lg">
-                      <MapPin className="w-6 h-6 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Classroom</p>
-                      <p className="font-semibold text-lg">{batch.room}</p>
-                    </div>
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gold/10"
+          >
+            <div className="font-semibold text-foreground mb-3">📝 What to Bring</div>
+            <ul className="space-y-2 text-foreground">
+              <li>• Pen</li>
+              <li>• Notebook</li>
+              <li>• Yourself!</li>
+            </ul>
+          </motion.div>
 
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <Calendar className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Start Date</p>
-                      <p className="font-semibold">{formatDate(batch.start_date)}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Facebook Group */}
           {batch.fb_group_link && (
-            <div className={`transition-all duration-1000 delay-500 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <Card className="shadow-xl border-2 border-primary/20">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row items-center gap-4">
-                    <div className="p-4 bg-primary/10 rounded-full">
-                      <Facebook className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="flex-1 text-center md:text-left">
-                      <h3 className="font-semibold text-lg mb-1">Join Our Class Community</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Connect with your classmates and stay updated
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={() => window.open(batch.fb_group_link, '_blank')}
-                      size="lg"
-                      className="shadow-lg"
-                    >
-                      Join Facebook Group
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Button
+                asChild
+                className="w-full h-14 text-lg font-semibold bg-gold hover:bg-gold-glow text-foreground shadow-lg shadow-gold/30"
+              >
+                <a href={batch.fb_group_link} target="_blank" rel="noopener noreferrer">
+                  <Facebook className="mr-2 h-5 w-5" />
+                  Join Our Community
+                </a>
+              </Button>
+            </motion.div>
           )}
 
-          {/* Location Info */}
-          <div className={`transition-all duration-1000 delay-700 ${showReveal ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Card className="shadow-xl">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-accent/10 rounded-lg">
-                    <MapPinned className="w-6 h-6 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-2">Our Location</h3>
-                    <p className="text-muted-foreground mb-3">
-                      Флауэрс таланд агенци хөгжлийн төв<br />
-                      Эйч.Би.Си Төв, 11 давхар, Зайсан толгой, Улаанбаатар
-                    </p>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-muted-foreground">
-                        <strong>Phone:</strong> 7711-0000, 8989-0000
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Footer Message */}
-          <div className={`text-center transition-all duration-1000 delay-900 ${showReveal ? 'opacity-100' : 'opacity-0'}`}>
-            <p className="text-muted-foreground">
-              We're excited to have you join us! See you in class! ✨
-            </p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-center space-y-4 pt-4"
+          >
+            <p className="text-2xl font-bold text-foreground">🎉 See you soon at Tsetsegs!</p>
+            
+            <button
+              onClick={onRestart}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Replay celebration
+            </button>
+          </motion.div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 0.3;
-          }
-          50% {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0.6;
-          }
-        }
-      `}</style>
-    </div>
+    </motion.div>
   );
 };
 
