@@ -457,7 +457,7 @@ const StudentReveal = () => {
                 <Target className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
-                    <CountUp start={0} end={30} duration={2.5} delay={0.5} suffix="+" />
+                    <CountUp start={0} end={30} duration={2.5} delay={0.5} suffix="+ " />
                     students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.score1400}</p>
@@ -472,7 +472,7 @@ const StudentReveal = () => {
                 <Target className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
-                    <CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" />
+                    <CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+ " />
                     students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.score1300}</p>
@@ -487,7 +487,7 @@ const StudentReveal = () => {
                 <Calculator className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="text-4xl font-bold text-gold">
-                    <CountUp start={0} end={400} duration={2.5} delay={0.9} suffix="+" /> students
+                    <CountUp start={0} end={400} duration={2.5} delay={0.9} suffix="+ " /> students
                   </div>
                   <p className="text-xl text-white font-medium">{t.stats.scoreMath}</p>
                 </div>
