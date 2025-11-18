@@ -226,7 +226,7 @@ const StudentReveal = () => {
       
       {showConfetti && <Confetti width={width} height={height} />}
       
-      <div className="fixed bottom-6 left-6 z-50 flex gap-3">
+      <div className="fixed bottom-6 left-6 z-50 flex gap-3" style={{ position: 'fixed', bottom: '1.5rem', left: '1.5rem' }}>
         <Button
           variant="outline"
           size="icon"
