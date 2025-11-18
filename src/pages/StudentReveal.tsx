@@ -82,7 +82,7 @@ const translations = {
     numberOne: {
       title: "Монголын #1",
       subtitle: "SAT MAТH бэлтгэлийн төв",
-      message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол.",
+      message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч",
     },
     classDetails: {
       title: "Таны ангийн мэдээлэл",
@@ -226,9 +226,9 @@ const StudentReveal = () => {
 
       {showConfetti && <Confetti width={width} height={height} />}
 
-      <div 
+      <div
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3"
-        style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+        style={{ position: "fixed", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)", zIndex: 50 }}
       >
         <Button
           variant="outline"
