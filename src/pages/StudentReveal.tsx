@@ -16,7 +16,7 @@ const translations = {
   en: {
     loading: "Loading your celebration...",
     chooseLanguage: "Choose Your Language",
-    grandEntrance: { welcome: "Welcome to", family: "Family of Tsetsegs", subtitle: "Your Journey Begins Here" },
+    grandEntrance: { welcome: "Welcome to", family: "Family of Tsetsegs" },
     legacy: { title: "A Legacy of Excellence", message: "You are now part of a tradition that transforms dreams into reality. Together, we will unlock your potential and pave your path to success.", quote: "\"Every great achievement begins with the decision to try.\"" },
     stats: { title: "Our Achievements", score1400: "1400+ SAT Score", students1400: "30+ students", score1300: "1300+ SAT Score", students1300: "100+ students", scoreMath: "700+ SAT Math", studentsMath: "400+ students" },
     numberOne: { title: "Mongolia's #1", subtitle: "SAT Prep Center", message: "Leading the nation in SAT preparation and student success. Join the best and become the best." },
@@ -25,7 +25,7 @@ const translations = {
   mn: {
     loading: "Баярын мэндчилгээ уншиж байна...",
     chooseLanguage: "Хэл сонгох",
-    grandEntrance: { welcome: "Тавтай морил", family: "Цэцэгсийн гэр бүлд", subtitle: "Таны аялал эхэллээ" },
+    grandEntrance: { welcome: "Тавтай морил", family: "Цэцэгсийн гэр бүлд" },
     legacy: { title: "Амжилтын уламжлал", message: "Та одоо мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг болсон. Хамтдаа бид таны боломжийг нээж, амжилтын замыг тавих болно.", quote: "\"Бүх агуу амжилт туршиж үзэх шийдвэрээс эхэлдэг.\"" },
     stats: { title: "Бидний амжилтууд", score1400: "1400+ SAT оноо", students1400: "30+ сурагч", score1300: "1300+ SAT оноо", students1300: "100+ сурагч", scoreMath: "700+ SAT Математик", studentsMath: "400+ сурагч" },
     numberOne: { title: "Монголын #1", subtitle: "SAT бэлтгэлийн төв", message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол." },
@@ -56,31 +56,6 @@ const StudentReveal = () => {
   useEffect(() => { if (audioRef.current) audioRef.current.muted = isMuted; }, [isMuted]);
   useEffect(() => { if (language && audioRef.current && currentPanel >= 0) audioRef.current.play().catch(e => console.log('Audio:', e)); }, [language, currentPanel]);
 
-  const playSound = (type: string) => {
-    if (isMuted) return;
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    switch(type) {
-      case 'salute': osc.frequency.setValueAtTime(800, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15); gain.gain.setValueAtTime(0.4, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3); osc.start(); osc.stop(ctx.currentTime + 0.3); break;
-      case 'achievement': osc.frequency.value = 800; gain.gain.value = 0.3; osc.start(); osc.stop(ctx.currentTime + 0.1); break;
-      case 'whoosh': osc.frequency.value = 400; gain.gain.value = 0.2; osc.start(); osc.stop(ctx.currentTime + 0.15); break;
-      case 'swell': osc.frequency.value = 200; gain.gain.value = 0.15; osc.start(); osc.stop(ctx.currentTime + 0.3); break;
-      case 'tick': osc.frequency.value = 600; gain.gain.value = 0.1; osc.start(); osc.stop(ctx.currentTime + 0.05); break;
-      case 'surprise': 
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.1);
-        osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-        break;
-    }
-  };
-
   useEffect(() => {
     const fetchBatch = async () => {
       const { data, error } = await supabase.from("batches").select("*").eq("unique_link_id", id).single();
@@ -94,14 +69,12 @@ const StudentReveal = () => {
   useEffect(() => {
     if (currentPanel === 0 && batch && language) { 
       setShowConfetti(true); 
-      playSound('salute'); 
-      setTimeout(() => playSound('achievement'), 200); 
       const t = setTimeout(() => { setCurrentPanel(1); setShowConfetti(false); }, 6000); 
       return () => clearTimeout(t); 
     }
-    if (currentPanel === 1) { playSound('swell'); const t = setTimeout(() => setCurrentPanel(2), 6000); return () => clearTimeout(t); }
-    if (currentPanel === 2) { playSound('tick'); const t = setTimeout(() => setCurrentPanel(3), 6000); return () => clearTimeout(t); }
-    if (currentPanel === 3) { playSound('achievement'); const t = setTimeout(() => setCurrentPanel(4), 6000); return () => clearTimeout(t); }
+    if (currentPanel === 1) { const t = setTimeout(() => setCurrentPanel(2), 6000); return () => clearTimeout(t); }
+    if (currentPanel === 2) { const t = setTimeout(() => setCurrentPanel(3), 6000); return () => clearTimeout(t); }
+    if (currentPanel === 3) { const t = setTimeout(() => setCurrentPanel(4), 6000); return () => clearTimeout(t); }
   }, [currentPanel, batch, language]);
 
   const nextPanel = () => { if (currentPanel < 4) setCurrentPanel(currentPanel + 1); };
@@ -173,7 +146,6 @@ const StudentReveal = () => {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="space-y-4">
                 <h1 className="text-3xl md:text-4xl font-light text-white">{t.grandEntrance.welcome}</h1>
                 <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
-                <p className="text-2xl text-white font-light">{t.grandEntrance.subtitle}</p>
               </motion.div>
             </div>
           </motion.div>
