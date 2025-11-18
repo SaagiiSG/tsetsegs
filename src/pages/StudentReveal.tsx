@@ -27,6 +27,8 @@ const StudentReveal = () => {
   const [currentPanel, setCurrentPanel] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [bgMusic, setBgMusic] = useState<OscillatorNode | null>(null);
+  const [bgMusicGain, setBgMusicGain] = useState<GainNode | null>(null);
   const { width, height } = useWindowSize();
 
   // Sound effects (using data URIs for simple beeps - replace with actual sound files)
@@ -68,6 +70,56 @@ const StudentReveal = () => {
         break;
     }
   };
+
+  // Background music
+  useEffect(() => {
+    if (!batch) return;
+
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create uplifting chord progression
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = isMuted ? 0 : 0.08;
+    gainNode.connect(audioContext.destination);
+    
+    // Main oscillator for ambient pad
+    const osc1 = audioContext.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.value = 220; // A3
+    
+    const osc2 = audioContext.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = 277; // C#4
+    
+    const osc3 = audioContext.createOscillator();
+    osc3.type = 'sine';
+    osc3.frequency.value = 330; // E4
+    
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    osc3.connect(gainNode);
+    
+    osc1.start();
+    osc2.start();
+    osc3.start();
+    
+    setBgMusic(osc1);
+    setBgMusicGain(gainNode);
+
+    return () => {
+      osc1.stop();
+      osc2.stop();
+      osc3.stop();
+      audioContext.close();
+    };
+  }, [batch]);
+
+  // Update music volume when mute changes
+  useEffect(() => {
+    if (bgMusicGain) {
+      bgMusicGain.gain.value = isMuted ? 0 : 0.08;
+    }
+  }, [isMuted, bgMusicGain]);
 
   useEffect(() => {
     const fetchBatch = async () => {
