@@ -265,7 +265,7 @@ const StudentReveal = () => {
         }}
       />
       {showConfetti && <Confetti width={width} height={height} />}
-      <div className="fixed top-8 right-6 z-50 flex gap-3">
+      <div className="fixed top-12 right-6 z-50 flex gap-3">
         <Button
           variant="outline"
           size="icon"
@@ -308,25 +308,27 @@ const StudentReveal = () => {
                 transition={{ duration: 3, repeat: Infinity }}
               />
               <div className="space-y-6">
-              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gold">{translations.en.chooseLanguage}</h1>
-              <p className="text-lg md:text-xl text-gold/80">{translations.mn.chooseLanguage}</p>
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gold">
+                  {translations.en.chooseLanguage}
+                </h1>
+                <p className="text-lg md:text-xl text-gold/80">{translations.mn.chooseLanguage}</p>
               </div>
-            <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center">
-              <Button
-                size="lg"
-                onClick={() => handleLanguageSelect("en")}
-                className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-lg md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105"
-              >
-                English
-              </Button>
-              <Button
-                size="lg"
-                onClick={() => handleLanguageSelect("mn")}
-                className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-lg md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105"
-              >
-                Монгол
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center">
+                <Button
+                  size="lg"
+                  onClick={() => handleLanguageSelect("en")}
+                  className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-lg md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105"
+                >
+                  English
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={() => handleLanguageSelect("mn")}
+                  className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-lg md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105"
+                >
+                  Монгол
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -388,16 +390,16 @@ const StudentReveal = () => {
             transition={{ duration: 0.6 }}
             className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6"
           >
-          <motion.div
-            className="max-w-4xl space-y-8 md:space-y-12 text-center px-4"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            <motion.h2
-              className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold mb-6 md:mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            <motion.div
+              className="max-w-4xl space-y-8 md:space-y-12 text-center px-4"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
+              <motion.h2
+                className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold mb-6 md:mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
                 {t.legacy.title}
