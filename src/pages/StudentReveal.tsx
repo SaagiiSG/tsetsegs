@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 import CountUp from "react-countup";
-import { User, Calendar, MapPin, Facebook, Trophy, Volume2, VolumeX, RotateCcw } from "lucide-react";
+import { User, Calendar, MapPin, Facebook, Trophy, Volume2, VolumeX, RotateCcw, Target, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
@@ -190,29 +190,32 @@ const StudentReveal = () => {
           </motion.div>
         )}
         {currentPanel === 2 && language && (
-          <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <div className="max-w-7xl w-full">
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-24" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
-              <div className="flex flex-col md:flex-row justify-center items-stretch gap-6">
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="flex-1 max-w-sm bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <div className="text-center space-y-4">
-                    <div className="text-6xl font-bold text-gold"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.score1400}</p>
-                    <p className="text-lg text-white/90">{t.stats.students1400}</p>
+          <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
+            <div className="max-w-4xl w-full">
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
+              <div className="space-y-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-3xl p-10">
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.5 }}>
+                  <Target className="w-16 h-16 text-gold flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-5xl font-bold text-gold mb-2"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div>
+                    <p className="text-2xl text-white font-medium mb-1">{t.stats.score1400}</p>
+                    <p className="text-base text-white/90">{t.stats.students1400}</p>
                   </div>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="flex-1 max-w-sm bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <div className="text-center space-y-4">
-                    <div className="text-6xl font-bold text-gold"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.score1300}</p>
-                    <p className="text-lg text-white/90">{t.stats.students1300}</p>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
+                  <Target className="w-16 h-16 text-gold flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-5xl font-bold text-gold mb-2"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div>
+                    <p className="text-2xl text-white font-medium mb-1">{t.stats.score1300}</p>
+                    <p className="text-base text-white/90">{t.stats.students1300}</p>
                   </div>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="flex-1 max-w-sm bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <div className="text-center space-y-4">
-                    <div className="text-6xl font-bold text-gold"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.scoreMath}</p>
-                    <p className="text-lg text-white/90">{t.stats.studentsMath}</p>
+                <motion.div className="flex items-center gap-6" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
+                  <Calculator className="w-16 h-16 text-gold flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-5xl font-bold text-gold mb-2"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div>
+                    <p className="text-2xl text-white font-medium mb-1">{t.stats.scoreMath}</p>
+                    <p className="text-base text-white/90">{t.stats.studentsMath}</p>
                   </div>
                 </motion.div>
               </div>
