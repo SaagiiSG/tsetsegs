@@ -10,6 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { z } from 'zod';
+
+const studentSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, "Phone must contain only numbers and valid characters").max(20, "Phone must be less than 20 characters")
+});
 
 interface BatchStudentsTableProps {
   students: any[];
@@ -48,11 +54,22 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
   const handleEditStudent = async () => {
     if (!editingStudent) return;
 
+    const validation = studentSchema.safeParse({ name: editName, phone: editPhone });
+    
+    if (!validation.success) {
+      toast({
+        title: "Invalid Input",
+        description: validation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('students')
       .update({
-        name: editName,
-        phone: editPhone
+        name: validation.data.name,
+        phone: validation.data.phone
       })
       .eq('id', editingStudent.id);
 
