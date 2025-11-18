@@ -123,6 +123,16 @@ const StudentReveal = () => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [currentPanel]);
 
+  const handleScreenClick = (e: React.MouseEvent) => {
+    const screenWidth = window.innerWidth;
+    const clickX = e.clientX;
+    if (clickX < screenWidth / 2) {
+      prevPanel();
+    } else {
+      nextPanel();
+    }
+  };
+
   if (isLoading) return (
     <div className="min-h-screen bg-reveal-bg flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
@@ -136,7 +146,7 @@ const StudentReveal = () => {
   if (!batch) return <div className="min-h-screen bg-reveal-bg flex items-center justify-center"><p className="text-xl text-gold">Batch not found</p></div>;
 
   return (
-    <div className="min-h-screen bg-reveal-bg relative overflow-hidden" onTouchStart={e => setTouchStart(e.targetTouches[0].clientX)} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (touchStart - touchEnd > 75) nextPanel(); if (touchStart - touchEnd < -75) prevPanel(); }}>
+    <div className="min-h-screen bg-reveal-bg relative overflow-hidden" onClick={handleScreenClick} onTouchStart={e => setTouchStart(e.targetTouches[0].clientX)} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (touchStart - touchEnd > 75) nextPanel(); if (touchStart - touchEnd < -75) prevPanel(); }}>
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
       {showConfetti && <Confetti width={width} height={height} />}
       <div className="fixed top-6 right-6 z-50 flex gap-3">
@@ -158,13 +168,13 @@ const StudentReveal = () => {
         )}
         {currentPanel === 0 && language && (
           <motion.div key="p0" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <div className="text-center space-y-6 max-w-4xl">
+            <div className="text-center space-y-12 max-w-4xl">
               {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
-              <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
+              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
               <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.8 }} className="space-y-6">
-                <h1 className="text-3xl md:text-4xl font-light text-white">{t.grandEntrance.welcome}</h1>
+                <h1 className="text-3xl md:text-4xl font-light text-gold/90">{t.grandEntrance.welcome}</h1>
                 <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
-                <p className="text-2xl text-white font-light">{t.grandEntrance.subtitle}</p>
+                <p className="text-2xl text-gold/70 font-light">{t.grandEntrance.subtitle}</p>
               </motion.div>
             </div>
           </motion.div>
@@ -184,13 +194,13 @@ const StudentReveal = () => {
             <div className="max-w-6xl w-full">
               <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-20" initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>{t.stats.title}</motion.h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
                   <Calculator className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-xl text-gold/70">{t.stats.avgScore}</p>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                <motion.div initial={{ scale: 0, rotate: 10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.7, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
                   <Target className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.students1300}</p><p className="text-sm text-gold/50">{t.stats.studentsDesc}</p>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.9, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
                   <BookOpen className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.yearsExp}</p>
                 </motion.div>
               </div>
@@ -228,23 +238,18 @@ const StudentReveal = () => {
         )}
       </AnimatePresence>
       {currentPanel >= 0 && language && (
-        <>
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 flex gap-2 z-50 w-full max-w-md px-6">
-            {[0, 1, 2, 3, 4].map(i => (
-              <div key={i} className="flex-1 h-1 bg-gold/20 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full bg-gold" 
-                  initial={{ width: "0%" }}
-                  animate={{ width: currentPanel > i ? "100%" : currentPanel === i ? "100%" : "0%" }}
-                  transition={{ duration: currentPanel === i ? 6 : 0.3 }}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-50">
-            {[0, 1, 2, 3, 4].map(i => <button key={i} onClick={() => goToPanel(i)} className={`w-3 h-3 rounded-full transition-all ${currentPanel === i ? 'bg-gold w-8' : 'bg-gold/30 hover:bg-gold/50'}`} aria-label={`Panel ${i + 1}`} />)}
-          </div>
-        </>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 flex gap-2 z-50 w-full max-w-md px-6">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} className="flex-1 h-1 bg-gold/20 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gold" 
+                initial={{ width: "0%" }}
+                animate={{ width: currentPanel > i ? "100%" : currentPanel === i ? "100%" : "0%" }}
+                transition={{ duration: currentPanel === i ? 6 : 0.3 }}
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
