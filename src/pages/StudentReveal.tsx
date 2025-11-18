@@ -616,6 +616,7 @@ const StudentReveal = () => {
               </motion.div>
               {batch.fb_group_link && (
                 <motion.div
+                  className="max-w-md mx-auto"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 1.0, duration: 0.5 }}
