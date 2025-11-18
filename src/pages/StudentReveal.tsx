@@ -81,7 +81,7 @@ const translations = {
     },
     numberOne: {
       title: "Монголын #1",
-      subtitle: "SAT MAТ бэлтгэлийн төв",
+      subtitle: "SAT MAТH бэлтгэлийн төв",
       message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол.",
     },
     classDetails: {
@@ -223,10 +223,10 @@ const StudentReveal = () => {
           backgroundSize: "50px 50px",
         }}
       />
-      
+
       {showConfetti && <Confetti width={width} height={height} />}
-      
-      <div className="fixed bottom-6 left-6 z-50 flex gap-3" style={{ position: 'fixed', bottom: '1.5rem', left: '1.5rem' }}>
+
+      <div className="fixed bottom-6 left-6 z-50 flex gap-3">
         <Button
           variant="outline"
           size="icon"
@@ -246,7 +246,7 @@ const StudentReveal = () => {
           </Button>
         )}
       </div>
-      
+
       <AnimatePresence mode="wait">
         {currentPanel === -1 && (
           <motion.div
