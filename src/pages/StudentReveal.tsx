@@ -562,7 +562,7 @@ const StudentReveal = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20"
+            className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6 pt-24 md:pt-28 pb-12 md:pb-20"
           >
             <motion.div
               className="max-w-3xl w-full space-y-6"
