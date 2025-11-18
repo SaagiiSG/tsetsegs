@@ -565,13 +565,13 @@ const StudentReveal = () => {
             className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6 pt-24 md:pt-28 pb-12 md:pb-20"
           >
             <motion.div
-              className="max-w-3xl w-full space-y-6"
+              className="max-w-3xl md:max-w-4xl w-full space-y-6 mx-auto"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.8 }}
             >
               <motion.h2
-                className="text-5xl md:text-6xl font-bold text-center text-gold mb-12"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold text-center text-gold mb-6 md:mb-12"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
@@ -579,51 +579,51 @@ const StudentReveal = () => {
                 {t.classDetails.title}
               </motion.h2>
               <motion.div
-                className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8"
+                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
               >
-                <User className="w-12 h-12 text-gold flex-shrink-0" />
+                <User className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-base">{t.classDetails.teacher}</p>
-                  <p className="text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
+                  <p className="text-white text-sm md:text-base">{t.classDetails.teacher}</p>
+                  <p className="text-lg md:text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
                 </div>
               </motion.div>
               <motion.div
-                className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8"
+                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
               >
-                <Calendar className="w-12 h-12 text-gold flex-shrink-0" />
+                <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-base">{t.classDetails.schedule}</p>
-                  <p className="text-xl font-semibold text-gold">{batch.schedule}</p>
+                  <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
+                  <p className="text-base md:text-xl font-semibold text-gold">{batch.schedule}</p>
                 </div>
               </motion.div>
               <motion.div
-                className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8"
+                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
-                <MapPin className="w-12 h-12 text-gold flex-shrink-0" />
+                <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-base">{t.classDetails.room}</p>
-                  <p className="text-2xl font-bold text-gold">{batch.room || "TBA"}</p>
+                  <p className="text-white text-sm md:text-base">{t.classDetails.room}</p>
+                  <p className="text-lg md:text-2xl font-bold text-gold">{batch.room || "TBA"}</p>
                 </div>
               </motion.div>
               <motion.div
-                className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8"
+                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.8, duration: 0.5 }}
               >
-                <Calendar className="w-12 h-12 text-gold flex-shrink-0" />
+                <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-base">{t.classDetails.startDate}</p>
-                  <p className="text-xl font-semibold text-gold">
+                  <p className="text-white text-sm md:text-base">{t.classDetails.startDate}</p>
+                  <p className="text-base md:text-xl font-semibold text-gold">
                     {new Date(batch.start_date).toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
                       year: "numeric",
                       month: "long",
@@ -633,15 +633,15 @@ const StudentReveal = () => {
                 </div>
               </motion.div>
               <motion.div
-                className="flex items-start gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8"
+                className="flex items-start gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.9, duration: 0.5 }}
               >
-                <MapPin className="w-12 h-12 text-gold flex-shrink-0 mt-1" />
+                <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-base">{t.classDetails.location}</p>
-                  <p className="text-lg text-white">{t.classDetails.address}</p>
+                  <p className="text-white text-sm md:text-base">{t.classDetails.location}</p>
+                  <p className="text-sm md:text-lg text-white">{t.classDetails.address}</p>
                 </div>
               </motion.div>
               {batch.fb_group_link && (
