@@ -169,45 +169,10 @@ const StudentReveal = () => {
     }
   }, [currentPanel]);
 
-  const nextPanel = () => {
-    if (currentPanel < 4) setCurrentPanel(currentPanel + 1);
-  };
-  const prevPanel = () => {
-    if (currentPanel > -1) setCurrentPanel(currentPanel - 1);
-  };
-  const goToPanel = (i: number) => setCurrentPanel(i);
   const restart = () => setCurrentPanel(0);
   const handleLanguageSelect = (lang: Language) => {
     setLanguage(lang);
     setCurrentPanel(0);
-  };
-
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " ") {
-        e.preventDefault();
-        nextPanel();
-      }
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        prevPanel();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [currentPanel]);
-
-  const handleScreenClick = (e: React.MouseEvent) => {
-    const screenWidth = window.innerWidth;
-    const clickX = e.clientX;
-    if (clickX < screenWidth / 2) {
-      prevPanel();
-    } else {
-      nextPanel();
-    }
   };
 
   if (isLoading)
@@ -250,16 +215,7 @@ const StudentReveal = () => {
     );
 
   return (
-    <div
-      className="min-h-screen bg-reveal-bg relative overflow-hidden"
-      onClick={handleScreenClick}
-      onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
-      onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
-      onTouchEnd={() => {
-        if (touchStart - touchEnd > 75) nextPanel();
-        if (touchStart - touchEnd < -75) prevPanel();
-      }}
-    >
+    <div className="min-h-screen bg-reveal-bg relative overflow-hidden">
       <div
         className="absolute inset-0 opacity-10"
         style={{
@@ -268,7 +224,7 @@ const StudentReveal = () => {
         }}
       />
       {showConfetti && <Confetti width={width} height={height} />}
-      <div className="fixed top-6 right-6 z-50 flex gap-3">
+      <div className="fixed top-8 right-6 z-50 flex gap-3">
         <Button
           variant="outline"
           size="icon"
