@@ -191,34 +191,32 @@ const StudentReveal = () => {
         )}
         {currentPanel === 2 && language && (
           <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
-            <div className="max-w-4xl w-full">
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
-              <div className="space-y-10 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-3xl p-14">
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.5 }}>
-                  <Target className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-3">
-                    <div className="text-5xl font-bold text-gold"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.score1400}</p>
-                    <p className="text-base text-white/90">{t.stats.students1400}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
-                  <Target className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-3">
-                    <div className="text-5xl font-bold text-gold"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.score1300}</p>
-                    <p className="text-base text-white/90">{t.stats.students1300}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-center gap-10" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
-                  <Calculator className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-3">
-                    <div className="text-5xl font-bold text-gold"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div>
-                    <p className="text-2xl text-white font-medium">{t.stats.scoreMath}</p>
-                    <p className="text-base text-white/90">{t.stats.studentsMath}</p>
-                  </div>
-                </motion.div>
-              </div>
+            <div className="max-w-4xl w-full space-y-6">
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-12" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.5 }}>
+                <Target className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="text-4xl font-bold text-gold"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div>
+                  <p className="text-xl text-white font-medium">{t.stats.score1400}</p>
+                  <p className="text-sm text-white/90">{t.stats.students1400}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
+                <Target className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="text-4xl font-bold text-gold"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div>
+                  <p className="text-xl text-white font-medium">{t.stats.score1300}</p>
+                  <p className="text-sm text-white/90">{t.stats.students1300}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
+                <Calculator className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="text-4xl font-bold text-gold"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div>
+                  <p className="text-xl text-white font-medium">{t.stats.scoreMath}</p>
+                  <p className="text-sm text-white/90">{t.stats.studentsMath}</p>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -238,46 +236,44 @@ const StudentReveal = () => {
         )}
         {currentPanel === 4 && language && (
           <motion.div key="p4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
-            <motion.div className="max-w-3xl w-full" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }}>
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.6 }}>{t.classDetails.title}</motion.h2>
-              <div className="space-y-10 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-3xl p-14">
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}>
-                  <User className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-white text-lg">{t.classDetails.teacher}</p>
-                    <p className="text-3xl font-bold text-gold">{batch.teacher || "TBA"}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
-                  <Calendar className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-white text-lg">{t.classDetails.schedule}</p>
-                    <p className="text-2xl font-semibold text-gold">{batch.schedule}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7, duration: 0.5 }}>
-                  <MapPin className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-white text-lg">{t.classDetails.room}</p>
-                    <p className="text-3xl font-bold text-gold">{batch.room || "TBA"}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-center gap-10 pb-10 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
-                  <Calendar className="w-16 h-16 text-gold flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-white text-lg">{t.classDetails.startDate}</p>
-                    <p className="text-2xl font-semibold text-gold">{new Date(batch.start_date).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="flex items-start gap-10" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}>
-                  <MapPin className="w-16 h-16 text-gold flex-shrink-0 mt-1" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-white text-lg">{t.classDetails.location}</p>
-                    <p className="text-xl text-white">{t.classDetails.address}</p>
-                  </div>
-                </motion.div>
-                {batch.fb_group_link && <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.0, duration: 0.5 }} className="pt-6"><Button onClick={() => window.open(batch.fb_group_link, '_blank')} className="w-full bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold py-8 text-xl rounded-xl backdrop-blur-sm transition-all hover:scale-105"><Facebook className="w-6 h-6 mr-3" /><div className="text-left"><div className="font-bold">{t.classDetails.joinGroup}</div><div className="text-sm opacity-80">{t.classDetails.joinGroupDesc}</div></div></Button></motion.div>}
-              </div>
+            <motion.div className="max-w-3xl w-full space-y-6" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }}>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-12" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.6 }}>{t.classDetails.title}</motion.h2>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}>
+                <User className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-white text-base">{t.classDetails.teacher}</p>
+                  <p className="text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
+                <Calendar className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-white text-base">{t.classDetails.schedule}</p>
+                  <p className="text-xl font-semibold text-gold">{batch.schedule}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7, duration: 0.5 }}>
+                <MapPin className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-white text-base">{t.classDetails.room}</p>
+                  <p className="text-2xl font-bold text-gold">{batch.room || "TBA"}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
+                <Calendar className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-white text-base">{t.classDetails.startDate}</p>
+                  <p className="text-xl font-semibold text-gold">{new Date(batch.start_date).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+              </motion.div>
+              <motion.div className="flex items-start gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}>
+                <MapPin className="w-12 h-12 text-gold flex-shrink-0 mt-1" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-white text-base">{t.classDetails.location}</p>
+                  <p className="text-lg text-white">{t.classDetails.address}</p>
+                </div>
+              </motion.div>
+              {batch.fb_group_link && <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.0, duration: 0.5 }}><Button onClick={() => window.open(batch.fb_group_link, '_blank')} className="w-full bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold py-8 text-xl rounded-xl backdrop-blur-sm transition-all hover:scale-105"><Facebook className="w-6 h-6 mr-3" /><div className="text-left"><div className="font-bold">{t.classDetails.joinGroup}</div><div className="text-sm opacity-80">{t.classDetails.joinGroupDesc}</div></div></Button></motion.div>}
             </motion.div>
           </motion.div>
         )}
