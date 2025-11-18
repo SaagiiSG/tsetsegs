@@ -47,6 +47,9 @@ All colors MUST be HSL.
     --gold-glow: 43 95% 68%;
     --beige: 42 47% 95%;
     --cream: 45 100% 98%;
+    
+    --reveal-bg: 0 0% 5%;
+    --reveal-grid: 43 88% 58%;
 
     --sidebar-background: 0 0% 98%;
 
