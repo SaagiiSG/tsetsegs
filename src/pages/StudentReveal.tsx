@@ -139,15 +139,15 @@ const StudentReveal = () => {
           </motion.div>
         )}
         {currentPanel === 0 && language && (
-          <motion.div key="p0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <div className="text-center space-y-6 max-w-4xl">
-              {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="space-y-4">
-                <h1 className="text-3xl md:text-4xl font-light text-white">{t.grandEntrance.welcome}</h1>
-                <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
-              </motion.div>
-            </div>
+          <motion.div key="p0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex flex-col items-center justify-center relative z-10 px-6">
+            {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="mb-6">
+              <img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="text-center">
+              <h1 className="text-3xl md:text-4xl font-light text-white mb-4">{t.grandEntrance.welcome}</h1>
+              <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
+            </motion.div>
           </motion.div>
         )}
         {currentPanel === 1 && language && (
