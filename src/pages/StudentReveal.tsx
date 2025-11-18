@@ -152,6 +152,9 @@ const StudentReveal = () => {
       }, 6000);
       return () => clearTimeout(t);
     }
+  }, [currentPanel, batch, language]);
+
+  useEffect(() => {
     if (currentPanel === 1) {
       const t = setTimeout(() => setCurrentPanel(2), 6000);
       return () => clearTimeout(t);
@@ -164,7 +167,7 @@ const StudentReveal = () => {
       const t = setTimeout(() => setCurrentPanel(4), 6000);
       return () => clearTimeout(t);
     }
-  }, [currentPanel, batch, language]);
+  }, [currentPanel]);
 
   const nextPanel = () => {
     if (currentPanel < 4) setCurrentPanel(currentPanel + 1);
