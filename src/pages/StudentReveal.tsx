@@ -174,11 +174,17 @@ const StudentReveal = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-beige to-cream flex items-center justify-center">
+      <div className="min-h-screen bg-reveal-bg flex items-center justify-center relative overflow-hidden">
+        {/* Golden grid background */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }} />
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-6"
+          className="text-center space-y-6 relative z-10"
         >
           <motion.div
             animate={{ 
@@ -192,7 +198,7 @@ const StudentReveal = () => {
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-2xl font-bold text-foreground"
+            className="text-2xl font-bold text-gold"
           >
             Loading your celebration...
           </motion.p>
@@ -203,11 +209,17 @@ const StudentReveal = () => {
 
   if (!batch) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-beige to-cream flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
+      <div className="min-h-screen bg-reveal-bg flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Golden grid background */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }} />
+        
+        <div className="text-center space-y-4 relative z-10">
           <img src={flowersLogo} alt="Flowers Talent Agency" className="w-48 mx-auto opacity-50" />
-          <h2 className="text-2xl font-bold">Link Not Found</h2>
-          <p className="text-muted-foreground">This invitation link is invalid or has expired.</p>
+          <h2 className="text-2xl font-bold text-white">Link Not Found</h2>
+          <p className="text-gray-400">This invitation link is invalid or has expired.</p>
         </div>
       </div>
     );
@@ -224,14 +236,20 @@ const StudentReveal = () => {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-beige to-cream relative overflow-hidden"
+      className="min-h-screen bg-reveal-bg relative overflow-hidden"
       onClick={currentPanel < 2 ? nextPanel : undefined}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Golden grid background */}
+      <div className="absolute inset-0 opacity-5" style={{
+        backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
+        backgroundSize: '50px 50px'
+      }} />
+      
       {/* Confetti */}
-      {showConfetti && <Confetti width={width} height={height} numberOfPieces={200} recycle={false} />}
+      {showConfetti && <Confetti width={width} height={height} numberOfPieces={200} recycle={false} colors={['#FFD700', '#FFA500', '#FFFFFF', '#B8860B']} />}
 
       {/* Mute Button */}
       <button
@@ -239,10 +257,10 @@ const StudentReveal = () => {
           e.stopPropagation();
           setIsMuted(!isMuted);
         }}
-        className="fixed top-20 right-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
+        className="fixed top-20 right-4 z-50 p-2 bg-white/10 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/20 transition-all border border-gold/30"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
-        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        {isMuted ? <VolumeX className="w-5 h-5 text-gold" /> : <Volume2 className="w-5 h-5 text-gold" />}
       </button>
 
       {/* Panels */}
@@ -291,7 +309,7 @@ const StudentReveal = () => {
   );
 };
 
-// Panel 1: Grand Entrance - Smooth Premium Animation
+// Panel 1: Grand Entrance - Rocket Explosion Effect
 const Panel1 = () => {
   return (
     <motion.div
@@ -301,7 +319,34 @@ const Panel1 = () => {
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
       className="absolute inset-0 flex items-center justify-center p-8"
     >
-      <div className="text-center space-y-12">
+      {/* Rocket explosion particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(40)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-3 h-3 rounded-full"
+            style={{
+              background: i % 3 === 0 ? '#FFD700' : i % 3 === 1 ? '#FFA500' : '#FFFFFF',
+              left: '50%',
+              top: '50%',
+            }}
+            initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+            animate={{
+              scale: [0, 1.5, 0],
+              x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 800],
+              y: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 800],
+              opacity: [1, 0.8, 0],
+            }}
+            transition={{
+              duration: 2,
+              delay: 0.3 + i * 0.02,
+              ease: "easeOut"
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center space-y-12 relative z-10">
         <motion.div
           initial={{ scale: 0, opacity: 0, rotateY: -180 }}
           animate={{ scale: 1, opacity: 1, rotateY: 0 }}
@@ -316,10 +361,10 @@ const Panel1 = () => {
         >
           <img src={flowersLogo} alt="Flowers Talent Agency" className="w-64 md:w-96 mx-auto" />
           <motion.div
-            className="absolute inset-0 bg-gold/30 blur-3xl -z-10"
+            className="absolute inset-0 bg-gold/40 blur-3xl -z-10"
             animate={{ 
               scale: [1, 1.3, 1],
-              opacity: [0.3, 0.5, 0.3]
+              opacity: [0.4, 0.6, 0.4]
             }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -331,7 +376,7 @@ const Panel1 = () => {
           transition={{ delay: 1.5, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
           className="space-y-4"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
             Congratulations on securing<br />
             <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent drop-shadow-lg">
               your seat at Tsetsegs!
@@ -353,12 +398,12 @@ const Panel2 = () => {
       transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
       className="absolute inset-0 flex items-center justify-center p-8"
     >
-      {/* Floating particles - more subtle */}
+      {/* Floating particles - golden for dark bg */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-gold/30 rounded-full"
+            className="absolute w-2 h-2 bg-gold rounded-full"
             animate={{
               y: [0, -120, 0],
               x: [0, Math.random() * 60 - 30, 0],
@@ -399,7 +444,7 @@ const Panel2 = () => {
         transition={{ delay: 0.8, duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
         className="text-center space-y-8 max-w-4xl px-4"
       >
-        <h2 className="text-4xl md:text-7xl font-bold text-foreground leading-tight">
+        <h2 className="text-4xl md:text-7xl font-bold text-white leading-tight">
           Your journey to be part of{' '}
           <span className="bg-gradient-to-r from-gold via-gold-glow to-gold bg-clip-text text-transparent">
             Tsetsegs's legacy
@@ -447,7 +492,7 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-3xl md:text-5xl font-bold text-center mb-16 text-foreground"
+          className="text-3xl md:text-5xl font-bold text-center mb-16 text-white"
         >
           Join Our Elite Community
         </motion.h2>
@@ -467,20 +512,20 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
                 duration: 0.8,
                 ease: [0.43, 0.13, 0.23, 0.96]
               }}
-              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gold/30 hover:border-gold transition-all duration-500 hover:scale-[1.02]"
+              className="bg-black/40 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gold/30 hover:border-gold transition-all duration-500 hover:scale-[1.02]"
             >
               <div className="flex items-center gap-6">
                 <stat.icon className="w-16 h-16 text-gold flex-shrink-0" />
                 <div className="flex-1">
-                  <div className="text-6xl font-bold text-foreground mb-1">
+                  <div className="text-6xl font-bold text-white mb-1">
                     {countersStarted ? (
                       <CountUp end={stat.number} duration={2.5} suffix="+" />
                     ) : (
                       "0"
                     )}
                   </div>
-                  <div className="text-2xl font-semibold text-foreground mb-1">{stat.label}</div>
-                  <div className="text-sm text-muted-foreground">{stat.sub}</div>
+                  <div className="text-2xl font-semibold text-white mb-1">{stat.label}</div>
+                  <div className="text-sm text-gray-400">{stat.sub}</div>
                 </div>
               </div>
             </motion.div>
@@ -491,7 +536,7 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2 }}
-          className="text-center mt-12 text-muted-foreground text-lg"
+          className="text-center mt-12 text-gray-400 text-lg"
         >
           Tap to continue
         </motion.p>
@@ -500,59 +545,69 @@ const Panel3 = ({ batch, playSound, onNext }: any) => {
   );
 };
 
-// Panel 4: Class Details
+// Panel 4: Class Details - Matching Premium Style
 const Panel4 = ({ batch, formatDate, onRestart }: any) => {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -100 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
       className="absolute inset-0 flex items-center justify-center p-8 overflow-y-auto"
     >
       <div className="max-w-2xl w-full space-y-6 py-12">
         <motion.h2
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold text-center mb-8 text-foreground"
+          transition={{ delay: 0.2, duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
+          className="text-4xl font-bold text-center mb-8 text-white"
         >
           Your Class Details
         </motion.h2>
 
         <div className="space-y-4">
           {[
-            { icon: User, label: "Your Teacher", value: batch.teacher, delay: 0 },
-            { icon: Calendar, label: "Class Schedule", value: batch.schedule, delay: 0.1 },
+            { icon: User, label: "Your Teacher", value: batch.teacher, delay: 0.4 },
+            { icon: Calendar, label: "Class Schedule", value: batch.schedule, delay: 0.6 },
             { 
               icon: MapPin, 
               label: "Location", 
               value: `Их Наяд Зүүн Өндөр 1114\nRoom ${batch.room}, ${batch.room === '1105' ? '11th' : '9th'} Floor`, 
-              delay: 0.2 
+              delay: 0.8 
             },
-            { icon: Calendar, label: "First Day", value: formatDate(batch.start_date), delay: 0.3 },
+            { icon: Calendar, label: "First Day", value: formatDate(batch.start_date), delay: 1.0 },
           ].map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: item.delay }}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gold/10 flex items-start gap-4"
+              transition={{ 
+                delay: item.delay,
+                duration: 0.6,
+                ease: [0.43, 0.13, 0.23, 0.96]
+              }}
+              className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gold/20 flex items-start gap-4 hover:border-gold/40 transition-all duration-300"
             >
               <item.icon className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <div className="font-semibold text-foreground mb-1">{item.label}</div>
-                <div className="text-foreground whitespace-pre-line">{item.value}</div>
+                <div className="font-semibold text-white mb-1">{item.label}</div>
+                <div className="text-gray-300 whitespace-pre-line">{item.value}</div>
               </div>
             </motion.div>
           ))}
 
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gold/10"
+            transition={{ 
+              delay: 1.2,
+              duration: 0.6,
+              ease: [0.43, 0.13, 0.23, 0.96]
+            }}
+            className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gold/20"
           >
-            <div className="font-semibold text-foreground mb-3">📝 What to Bring</div>
-            <ul className="space-y-2 text-foreground">
+            <div className="font-semibold text-white mb-3">📝 What to Bring</div>
+            <ul className="space-y-2 text-gray-300">
               <li>• Pen</li>
               <li>• Notebook</li>
               <li>• Yourself!</li>
@@ -561,13 +616,17 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
 
           {batch.fb_group_link && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ 
+                delay: 1.4,
+                duration: 0.6,
+                ease: [0.43, 0.13, 0.23, 0.96]
+              }}
             >
               <Button
                 asChild
-                className="w-full h-14 text-lg font-semibold bg-gold hover:bg-gold-glow text-foreground shadow-lg shadow-gold/30"
+                className="w-full h-16 text-lg font-semibold bg-gold hover:bg-gold-glow text-black shadow-xl shadow-gold/40 hover:shadow-2xl hover:shadow-gold/50 transition-all duration-300"
               >
                 <a href={batch.fb_group_link} target="_blank" rel="noopener noreferrer">
                   <Facebook className="mr-2 h-5 w-5" />
@@ -580,14 +639,14 @@ const Panel4 = ({ batch, formatDate, onRestart }: any) => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 1.6, duration: 0.8 }}
             className="text-center space-y-4 pt-4"
           >
-            <p className="text-2xl font-bold text-foreground">🎉 See you soon at Tsetsegs!</p>
+            <p className="text-2xl font-bold text-white">🎉 See you soon at Tsetsegs!</p>
             
             <button
               onClick={onRestart}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gold transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               Replay celebration
