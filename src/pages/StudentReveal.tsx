@@ -45,7 +45,7 @@ const translations = {
     },
     numberOne: {
       title: "Mongolia's #1",
-      subtitle: "SAT Prep Center",
+      subtitle: "SAT MATH Prep Center",
       message: "Leading the nation in SAT preparation and student success. Join the best and become the best.",
     },
     classDetails: {
@@ -81,7 +81,7 @@ const translations = {
     },
     numberOne: {
       title: "Монголын #1",
-      subtitle: "SAT бэлтгэлийн төв",
+      subtitle: "SAT MAТ бэлтгэлийн төв",
       message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол.",
     },
     classDetails: {
