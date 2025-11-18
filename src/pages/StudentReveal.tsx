@@ -217,32 +217,34 @@ const StudentReveal = () => {
   return (
     <div className="h-screen bg-reveal-bg relative overflow-hidden">
       <div
-        className="absolute inset-0 opacity-10 bottom-0"
+        className="fixed inset-0 opacity-10 bottom-0"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
           backgroundSize: "50px 50px",
         }}
       />
-      {showConfetti && <Confetti width={width} height={height} />}
-      <div className="fixed bottom-6 right-6 z-50 flex gap-3">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsMuted(!isMuted)}
-          className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
-        >
-          {isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}
-        </Button>
-        {currentPanel > -1 && (
+      <div classname="fixed bottom-0 right-3">
+        {showConfetti && <Confetti width={width} height={height} />}
+        <div className="fixed bottom-6 right-6 z-50 flex gap-3">
           <Button
             variant="outline"
             size="icon"
-            onClick={restart}
+            onClick={() => setIsMuted(!isMuted)}
             className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
           >
-            <RotateCcw className="h-5 w-5 text-gold" />
+            {isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}
           </Button>
-        )}
+          {currentPanel > -1 && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={restart}
+              className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"
+            >
+              <RotateCcw className="h-5 w-5 text-gold" />
+            </Button>
+          )}
+        </div>
       </div>
       <AnimatePresence mode="wait">
         {currentPanel === -1 && (
