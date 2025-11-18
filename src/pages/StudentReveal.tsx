@@ -18,7 +18,7 @@ const translations = {
     chooseLanguage: "Choose Your Language",
     grandEntrance: { welcome: "Welcome to", family: "Family of Tsetsegs", subtitle: "Your Journey Begins Here" },
     legacy: { title: "A Legacy of Excellence", message: "You are now part of a tradition that transforms dreams into reality. Together, we will unlock your potential and pave your path to success.", quote: "\"Every great achievement begins with the decision to try.\"" },
-    stats: { title: "Our Achievements", avgScore: "Average SAT Score", students1300: "Students with 1300+", studentsDesc: "We have over 100+ students who have scored 1300+", yearsExp: "Years of Excellence" },
+    stats: { title: "Our Achievements", score1400: "1400+ SAT Score", students1400: "30+ students", score1300: "1300+ SAT Score", students1300: "100+ students", scoreMath: "700+ SAT Math", studentsMath: "400+ students" },
     numberOne: { title: "Mongolia's #1", subtitle: "SAT Prep Center", message: "Leading the nation in SAT preparation and student success. Join the best and become the best." },
     classDetails: { title: "Your Class Details", teacher: "Teacher", schedule: "Schedule", room: "Room", startDate: "Start Date", location: "Location", address: "BlueSky Tower, Zaisan, Ulaanbaatar", joinGroup: "Join Facebook Group", joinGroupDesc: "Connect with your classmates" }
   },
@@ -27,7 +27,7 @@ const translations = {
     chooseLanguage: "Хэл сонгох",
     grandEntrance: { welcome: "Тавтай морил", family: "Цэцэгсийн гэр бүлд", subtitle: "Таны аялал эхэллээ" },
     legacy: { title: "Амжилтын уламжлал", message: "Та одоо мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг болсон. Хамтдаа бид таны боломжийг нээж, амжилтын замыг тавих болно.", quote: "\"Бүх агуу амжилт туршиж үзэх шийдвэрээс эхэлдэг.\"" },
-    stats: { title: "Бидний амжилтууд", avgScore: "Дундаж SAT оноо", students1300: "1300+ оноотой сурагчид", studentsDesc: "Манайд 1300+ авсан 100 гаруй сурагч байна", yearsExp: "Туршлагын жил" },
+    stats: { title: "Бидний амжилтууд", score1400: "1400+ SAT оноо", students1400: "30+ сурагч", score1300: "1300+ SAT оноо", students1300: "100+ сурагч", scoreMath: "700+ SAT Математик", studentsMath: "400+ сурагч" },
     numberOne: { title: "Монголын #1", subtitle: "SAT бэлтгэлийн төв", message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол." },
     classDetails: { title: "Таны ангийн мэдээлэл", teacher: "Багш", schedule: "Хуваарь", room: "Тоот", startDate: "Эхлэх огноо", location: "Байршил", address: "BlueSky Tower, Зайсан, Улаанбаатар", joinGroup: "Facebook бүлэгт нэгдэх", joinGroupDesc: "Ангийнхантайгаа холбогдох" }
   }
@@ -195,13 +195,13 @@ const StudentReveal = () => {
               <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-24" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
               <div className="flex flex-col md:flex-row justify-center items-center gap-12 md:gap-24">
                 <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform w-full md:w-80">
-                  <Calculator className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-2xl text-white font-medium">{t.stats.avgScore}</p>
+                  <Target className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.score1400}</p><p className="text-base text-white/90 mt-2">{t.stats.students1400}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform w-full md:w-80">
-                  <Target className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.students1300}</p><p className="text-base text-white/90 mt-2">{t.stats.studentsDesc}</p>
+                  <Target className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.score1300}</p><p className="text-base text-white/90 mt-2">{t.stats.students1300}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform w-full md:w-80">
-                  <BookOpen className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.yearsExp}</p>
+                  <Calculator className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.scoreMath}</p><p className="text-base text-white/90 mt-2">{t.stats.studentsMath}</p>
                 </motion.div>
               </div>
             </div>
