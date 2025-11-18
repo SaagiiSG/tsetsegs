@@ -35,7 +35,6 @@ const StudentReveal = () => {
   const playSound = (type: string) => {
     if (isMuted) return;
     
-    // Simple beep sounds - in production, replace with actual audio files
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -44,6 +43,15 @@ const StudentReveal = () => {
     gainNode.connect(audioContext.destination);
     
     switch(type) {
+      case 'salute':
+        // Military-style salute sound
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.15);
+        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+        break;
       case 'achievement':
         oscillator.frequency.value = 800;
         gainNode.gain.value = 0.3;
@@ -71,75 +79,103 @@ const StudentReveal = () => {
     }
   };
 
-  // Lofi beat background music
+  // Upbeat synth-pop background music
   useEffect(() => {
     if (!batch) return;
 
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = isMuted ? 0 : 0.12;
-    gainNode.connect(audioContext.destination);
+    const masterGain = audioContext.createGain();
+    masterGain.gain.value = isMuted ? 0 : 0.15;
+    masterGain.connect(audioContext.destination);
 
-    // Bass loop
-    const playBass = () => {
-      const bass = audioContext.createOscillator();
-      const bassGain = audioContext.createGain();
-      bass.type = 'triangle';
-      bass.frequency.value = 110; // A2
-      bassGain.gain.setValueAtTime(0.3, audioContext.currentTime);
-      bassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      bass.connect(bassGain);
-      bassGain.connect(gainNode);
-      bass.start(audioContext.currentTime);
-      bass.stop(audioContext.currentTime + 0.5);
+    // Synth lead melody
+    const playMelody = (time: number) => {
+      const notes = [523.25, 587.33, 659.25, 783.99]; // C5, D5, E5, G5
+      notes.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        
+        const startTime = time + i * 0.25;
+        gain.gain.setValueAtTime(0.08, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+        
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(startTime);
+        osc.stop(startTime + 0.25);
+      });
     };
 
-    // Kick drum
-    const playKick = () => {
-      const kick = audioContext.createOscillator();
-      const kickGain = audioContext.createGain();
-      kick.frequency.setValueAtTime(150, audioContext.currentTime);
-      kick.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      kickGain.gain.setValueAtTime(0.5, audioContext.currentTime);
-      kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      kick.connect(kickGain);
-      kickGain.connect(gainNode);
-      kick.start(audioContext.currentTime);
-      kick.stop(audioContext.currentTime + 0.5);
+    // Driving bass line
+    const playBass = (time: number) => {
+      const bassNotes = [130.81, 146.83, 164.81]; // C3, D3, E3
+      bassNotes.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        
+        const startTime = time + i * 0.33;
+        gain.gain.setValueAtTime(0.15, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(startTime);
+        osc.stop(startTime + 0.33);
+      });
     };
 
-    // Hi-hat
-    const playHiHat = () => {
-      const hihat = audioContext.createOscillator();
-      const hihatGain = audioContext.createGain();
-      hihat.type = 'square';
-      hihat.frequency.value = 10000;
-      hihatGain.gain.setValueAtTime(0.05, audioContext.currentTime);
-      hihatGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    // Energetic kick drum
+    const playKick = (time: number) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+      gain.gain.setValueAtTime(0.6, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
       
-      hihat.connect(hihatGain);
-      hihatGain.connect(gainNode);
-      hihat.start(audioContext.currentTime);
-      hihat.stop(audioContext.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.5);
     };
 
-    // Beat pattern (lofi rhythm)
-    const beatInterval = setInterval(() => {
-      playKick();
-      playBass();
-      setTimeout(() => playHiHat(), 125);
-      setTimeout(() => playHiHat(), 250);
-      setTimeout(() => playKick(), 500);
-      setTimeout(() => playHiHat(), 625);
-      setTimeout(() => playHiHat(), 750);
-    }, 1000);
+    // Crisp hi-hats
+    const playHiHat = (time: number) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 10000;
+      gain.gain.setValueAtTime(0.06, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+      
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.05);
+    };
 
-    setBgMusicGain(gainNode);
+    // Main loop
+    const scheduleMusic = () => {
+      const now = audioContext.currentTime;
+      playKick(now);
+      playBass(now);
+      playMelody(now);
+      
+      playHiHat(now + 0.25);
+      playHiHat(now + 0.5);
+      playKick(now + 0.5);
+      playHiHat(now + 0.75);
+    };
+
+    const musicInterval = setInterval(scheduleMusic, 1000);
+    setBgMusicGain(masterGain);
 
     return () => {
-      clearInterval(beatInterval);
+      clearInterval(musicInterval);
       audioContext.close();
     };
   }, [batch]);
@@ -147,7 +183,7 @@ const StudentReveal = () => {
   // Update music volume when mute changes
   useEffect(() => {
     if (bgMusicGain) {
-      bgMusicGain.gain.value = isMuted ? 0 : 0.12;
+      bgMusicGain.gain.value = isMuted ? 0 : 0.15;
     }
   }, [isMuted, bgMusicGain]);
 
@@ -178,11 +214,12 @@ const StudentReveal = () => {
   useEffect(() => {
     if (currentPanel === 0 && batch) {
       setShowConfetti(true);
-      playSound('achievement');
+      playSound('salute');
+      setTimeout(() => playSound('achievement'), 200);
       
       // Particle explosion sounds
       for (let i = 0; i < 8; i++) {
-        setTimeout(() => playSound('whoosh'), 100 + i * 80);
+        setTimeout(() => playSound('whoosh'), 400 + i * 80);
       }
       
       const timer = setTimeout(() => {
