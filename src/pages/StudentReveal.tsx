@@ -167,71 +167,71 @@ const StudentReveal = () => {
           </motion.div>
         )}
         {currentPanel === 0 && language && (
-          <motion.div key="p0" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+          <motion.div key="p0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
             <div className="text-center space-y-12 max-w-4xl">
               {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
-              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
-              <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.8 }} className="space-y-6">
-                <h1 className="text-3xl md:text-4xl font-light text-gold/90">{t.grandEntrance.welcome}</h1>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="space-y-6">
+                <h1 className="text-3xl md:text-4xl font-light text-white">{t.grandEntrance.welcome}</h1>
                 <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
-                <p className="text-2xl text-gold/70 font-light">{t.grandEntrance.subtitle}</p>
+                <p className="text-2xl text-white font-light">{t.grandEntrance.subtitle}</p>
               </motion.div>
             </div>
           </motion.div>
         )}
         {currentPanel === 1 && language && (
-          <motion.div key="p1" initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <motion.div className="max-w-4xl space-y-12 text-center" initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-gold mb-8" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5, type: "spring" }}>{t.legacy.title}</motion.h2>
-              <motion.p className="text-2xl md:text-3xl text-gold/80 leading-relaxed mb-12" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }}>{t.legacy.message}</motion.p>
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.2 }} className="border-l-4 border-gold pl-8 py-4"><p className="text-xl md:text-2xl italic text-gold/70">{t.legacy.quote}</p></motion.div>
+          <motion.div key="p1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <motion.div className="max-w-4xl space-y-12 text-center" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-gold mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }}>{t.legacy.title}</motion.h2>
+              <motion.p className="text-2xl md:text-3xl text-white leading-relaxed mb-12" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.6 }}>{t.legacy.message}</motion.p>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="border-l-4 border-gold pl-8 py-4"><p className="text-xl md:text-2xl italic text-white">{t.legacy.quote}</p></motion.div>
               {[...Array(20)].map((_, i) => <motion.div key={i} className="absolute w-1 h-1 bg-gold/30 rounded-full" animate={{ y: [0, -100, 0], x: Math.random() * 100 - 50, opacity: [0, 1, 0] }} transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }} style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }} />)}
             </motion.div>
           </motion.div>
         )}
         {currentPanel === 2 && language && (
-          <motion.div key="p2" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+          <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
             <div className="max-w-6xl w-full">
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-20" initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>{t.stats.title}</motion.h2>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-20" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <Calculator className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-xl text-gold/70">{t.stats.avgScore}</p>
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <Calculator className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-xl text-white">{t.stats.avgScore}</p>
                 </motion.div>
-                <motion.div initial={{ scale: 0, rotate: 10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.7, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <Target className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.students1300}</p><p className="text-sm text-gold/50">{t.stats.studentsDesc}</p>
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <Target className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-xl text-white">{t.stats.students1300}</p><p className="text-sm text-white/80">{t.stats.studentsDesc}</p>
                 </motion.div>
-                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.9, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <BookOpen className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.yearsExp}</p>
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <BookOpen className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-xl text-white">{t.stats.yearsExp}</p>
                 </motion.div>
               </div>
             </div>
           </motion.div>
         )}
         {currentPanel === 3 && language && (
-          <motion.div key="p3" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <motion.div className="text-center space-y-12 max-w-4xl" initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, type: "spring" }}>
-              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 150 }} className="relative">
+          <motion.div key="p3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <motion.div className="text-center space-y-12 max-w-4xl" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="relative">
                 <motion.div className="absolute inset-0 blur-3xl bg-gold/30 rounded-full" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} /><Trophy className="w-40 h-40 text-gold mx-auto relative z-10" />
               </motion.div>
-              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }} className="space-y-6">
-                <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">{t.numberOne.title}</h1><p className="text-3xl md:text-4xl text-gold/80 font-light">{t.numberOne.subtitle}</p>
+              <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.6 }} className="space-y-6">
+                <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">{t.numberOne.title}</h1><p className="text-3xl md:text-4xl text-white font-light">{t.numberOne.subtitle}</p>
               </motion.div>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="text-2xl text-gold/70 leading-relaxed max-w-2xl mx-auto">{t.numberOne.message}</motion.p>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.6 }} className="text-2xl text-white leading-relaxed max-w-2xl mx-auto">{t.numberOne.message}</motion.p>
               {[...Array(3)].map((_, i) => <motion.div key={i} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-gold/20 rounded-full" initial={{ width: 0, height: 0, opacity: 0.5 }} animate={{ width: 300 + i * 200, height: 300 + i * 200, opacity: 0 }} transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }} />)}
             </motion.div>
           </motion.div>
         )}
         {currentPanel === 4 && language && (
-          <motion.div key="p4" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
-            <motion.div className="max-w-3xl w-full" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>{t.classDetails.title}</motion.h2>
+          <motion.div key="p4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
+            <motion.div className="max-w-3xl w-full" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }}>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.6 }}>{t.classDetails.title}</motion.h2>
               <div className="space-y-8 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-3xl p-10">
-                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }}><User className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.teacher}</p><p className="text-3xl font-bold text-gold">{batch.teacher || "TBA"}</p></div></motion.div>
-                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.schedule}</p><p className="text-2xl font-semibold text-gold">{batch.schedule}</p></div></motion.div>
-                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.room}</p><p className="text-3xl font-bold text-gold">{batch.room || "TBA"}</p></div></motion.div>
-                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.startDate}</p><p className="text-2xl font-semibold text-gold">{new Date(batch.start_date).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div></motion.div>
-                <motion.div className="flex items-start gap-6" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 1.0 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0 mt-1" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.location}</p><p className="text-xl text-gold">{t.classDetails.address}</p></div></motion.div>
-                {batch.fb_group_link && <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.2 }} className="pt-8"><Button onClick={() => window.open(batch.fb_group_link, '_blank')} className="w-full bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold py-8 text-xl rounded-xl backdrop-blur-sm transition-all hover:scale-105"><Facebook className="w-6 h-6 mr-3" /><div className="text-left"><div className="font-bold">{t.classDetails.joinGroup}</div><div className="text-sm opacity-80">{t.classDetails.joinGroupDesc}</div></div></Button></motion.div>}
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}><User className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-white text-lg mb-1">{t.classDetails.teacher}</p><p className="text-3xl font-bold text-gold">{batch.teacher || "TBA"}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-white text-lg mb-1">{t.classDetails.schedule}</p><p className="text-2xl font-semibold text-gold">{batch.schedule}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7, duration: 0.5 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-white text-lg mb-1">{t.classDetails.room}</p><p className="text-3xl font-bold text-gold">{batch.room || "TBA"}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-white text-lg mb-1">{t.classDetails.startDate}</p><p className="text-2xl font-semibold text-gold">{new Date(batch.start_date).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div></motion.div>
+                <motion.div className="flex items-start gap-6" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0 mt-1" /><div className="flex-1"><p className="text-white text-lg mb-1">{t.classDetails.location}</p><p className="text-xl text-white">{t.classDetails.address}</p></div></motion.div>
+                {batch.fb_group_link && <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.0, duration: 0.5 }} className="pt-8"><Button onClick={() => window.open(batch.fb_group_link, '_blank')} className="w-full bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold py-8 text-xl rounded-xl backdrop-blur-sm transition-all hover:scale-105"><Facebook className="w-6 h-6 mr-3" /><div className="text-left"><div className="font-bold">{t.classDetails.joinGroup}</div><div className="text-sm opacity-80">{t.classDetails.joinGroupDesc}</div></div></Button></motion.div>}
               </div>
             </motion.div>
           </motion.div>
