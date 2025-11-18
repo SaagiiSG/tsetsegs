@@ -91,7 +91,7 @@ const translations = {
       room: "Тоот",
       startDate: "Эхлэх огноо",
       location: "Байршил",
-      address: "Их Наяд Зүүн Өндөр 1114, 1105 (11th floor) тоот",
+      address: "Их Наяд Зүүн Өндөр",
       joinGroup: "Facebook бүлэгт нэгдэх",
       joinGroupDesc: "Ангийнхантайгаа холбогдох",
     },
