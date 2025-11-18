@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2, MessageSquare } from 'lucide-react';
 import { BatchStudentsTable } from './BatchStudentsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ interface BatchCardProps {
 export function BatchCard({ batch, onUpdate }: BatchCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSmsTemplate, setShowSmsTemplate] = useState(false);
   const { toast } = useToast();
 
   const handleCopyLink = () => {
@@ -92,6 +94,29 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
     });
   };
 
+  const getSmsTemplate = () => {
+    const batchLink = `${window.location.origin}/batch/${batch.unique_link_id}`;
+    return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
+
+Class Info: ${batchLink}
+
+Тус групт 1. Бидний хэрэглэх ном 2. Цээжлэх үгс 3. Шалгалтад бүртгүүлэх заавар 4. 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.
+
+Танилцах уулзалтанд тавтай морилно уу!
+
+Баярлалаа.
+Хаяг: Их Наяд Зүүн Өндөр 1114, ${batch.room} тоот
+Утас: 80660314, 88559876`;
+  };
+
+  const handleCopySmsTemplate = () => {
+    navigator.clipboard.writeText(getSmsTemplate());
+    toast({
+      title: "Message Copied",
+      description: "SMS template copied to clipboard"
+    });
+  };
+
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow">
@@ -146,6 +171,30 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
                 Delete Batch
               </Button>
             </div>
+
+            <Collapsible open={showSmsTemplate} onOpenChange={setShowSmsTemplate}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  📋 SMS Message Template
+                  {showSmsTemplate ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                  <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">
+                    {getSmsTemplate()}
+                  </pre>
+                  <Button 
+                    onClick={handleCopySmsTemplate} 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    📋 Copy Message
+                  </Button>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {batch.students && batch.students.length > 0 && (
               <BatchStudentsTable students={batch.students} batchId={batch.id} onUpdate={onUpdate} />

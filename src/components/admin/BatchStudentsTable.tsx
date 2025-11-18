@@ -1,29 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, Trash2, CheckCircle2, Circle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Pencil, Trash2, ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface BatchStudentsTableProps {
   students: any[];
@@ -36,7 +22,28 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [deletingStudent, setDeletingStudent] = useState<any>(null);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [destinationBatchId, setDestinationBatchId] = useState('');
+  const [batches, setBatches] = useState<any[]>([]);
+  const [showConfirmTransfer, setShowConfirmTransfer] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchBatches();
+  }, []);
+
+  const fetchBatches = async () => {
+    const { data } = await supabase
+      .from('batches')
+      .select('*')
+      .neq('id', batchId)
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setBatches(data);
+    }
+  };
 
   const handleEditStudent = async () => {
     if (!editingStudent) return;
@@ -95,52 +102,116 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
     setEditPhone(student.phone);
   };
 
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    );
+  };
+
+  const handleOpenMoveDialog = () => {
+    setSelectedStudents([]);
+    setDestinationBatchId('');
+    setShowMoveDialog(true);
+  };
+
+  const handleTransferStudents = async () => {
+    const { error } = await supabase
+      .from('students')
+      .update({ batch_id: destinationBatchId })
+      .in('id', selectedStudents);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to transfer students",
+        variant: "destructive"
+      });
+    } else {
+      const destinationBatch = batches.find(b => b.id === destinationBatchId);
+      toast({
+        title: "Success",
+        description: `Transferred ${selectedStudents.length} student(s) to ${destinationBatch?.batch_name}`
+      });
+      setShowMoveDialog(false);
+      setShowConfirmTransfer(false);
+      setSelectedStudents([]);
+      setDestinationBatchId('');
+      onUpdate();
+    }
+  };
+
+  const handleConfirmTransfer = () => {
+    if (selectedStudents.length === 0 || !destinationBatchId) {
+      toast({
+        title: "Invalid Selection",
+        description: "Please select students and a destination batch",
+        variant: "destructive"
+      });
+      return;
+    }
+    setShowConfirmTransfer(true);
+  };
+
+  const getDestinationBatchName = () => {
+    return batches.find(b => b.id === destinationBatchId)?.batch_name || '';
+  };
+
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell className="font-medium">{student.name}</TableCell>
-                <TableCell>{student.phone}</TableCell>
-                <TableCell className="text-center">
-                  {student.accessed ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-500 inline" />
-                  ) : (
-                    <Circle className="w-4 h-4 text-muted-foreground inline" />
-                  )}
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditDialog(student)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingStudent(student)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </TableCell>
+      <div className="space-y-3">
+        <Button variant="outline" size="sm" onClick={handleOpenMoveDialog}>
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Move Students
+        </Button>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {students.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell className="font-medium">{student.name}</TableCell>
+                  <TableCell>{student.phone}</TableCell>
+                  <TableCell>
+                    {student.accessed ? (
+                      <span className="text-green-600 text-sm">✓ Accessed</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Not accessed</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(student)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingStudent(student)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
+      {/* Edit Student Dialog */}
       <Dialog open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)}>
         <DialogContent>
           <DialogHeader>
@@ -151,17 +222,17 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Name</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="edit-name"
+                id="name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-phone">Phone</Label>
+              <Label htmlFor="phone">Phone</Label>
               <Input
-                id="edit-phone"
+                id="phone"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
               />
@@ -178,6 +249,7 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
         </DialogContent>
       </Dialog>
 
+      {/* Delete Student Dialog */}
       <AlertDialog open={!!deletingStudent} onOpenChange={(open) => !open && setDeletingStudent(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -190,6 +262,95 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteStudent} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Move Students Dialog */}
+      <Dialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Move Students to Another Batch</DialogTitle>
+            <DialogDescription>
+              Select students to transfer and choose the destination batch
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Student Selection */}
+            <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
+              <Label className="text-sm font-medium mb-3 block">Select Students</Label>
+              <div className="space-y-2">
+                {students.map((student) => (
+                  <div key={student.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+                    <Checkbox
+                      id={`student-${student.id}`}
+                      checked={selectedStudents.includes(student.id)}
+                      onCheckedChange={() => toggleStudentSelection(student.id)}
+                    />
+                    <label
+                      htmlFor={`student-${student.id}`}
+                      className="text-sm flex-1 cursor-pointer"
+                    >
+                      {student.name} - {student.phone}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Batch Selection */}
+            <div className="space-y-2">
+              <Label>Destination Batch</Label>
+              <Select value={destinationBatchId} onValueChange={setDestinationBatchId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a batch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {batches.map((batch) => (
+                    <SelectItem key={batch.id} value={batch.id}>
+                      {batch.batch_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedStudents.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {selectedStudents.length} student(s) selected
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMoveDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmTransfer}
+              disabled={selectedStudents.length === 0 || !destinationBatchId}
+            >
+              Transfer Students
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Transfer Dialog */}
+      <AlertDialog open={showConfirmTransfer} onOpenChange={setShowConfirmTransfer}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Transfer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Transfer {selectedStudents.length} student(s) to {getDestinationBatchName()}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTransferStudents}>
+              Confirm Transfer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
