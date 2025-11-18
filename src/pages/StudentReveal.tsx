@@ -65,11 +65,11 @@ const translations = {
   mn: {
     loading: "Баярын мэндчилгээ уншиж байна...",
     chooseLanguage: "Хэл сонгох",
-    grandEntrance: { welcome: "Тавтай морил", family: "Цэцэгсийн гэр бүлд" },
+    grandEntrance: { welcome: "Цэцэгсийн гэр бүлд ", family: "Тавтай морил" },
     legacy: {
       title: "Амжилтын уламжлал",
       message:
-        "Та одоо мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг болсон. Хамтдаа бид таны боломжийг нээж, амжилтын замыг тавих болно.",
+        "Та мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг боллоо. Бид хамтдаа таны боломжийг нээж, амжилтын замыг тавих болно.",
       quote: '"Бүх агуу амжилт туршиж үзэх шийдвэрээс эхэлдэг."',
     },
     stats: {
@@ -84,7 +84,7 @@ const translations = {
     numberOne: {
       title: "Монголын #1",
       subtitle: "SAT MAТH бэлтгэлийн төв",
-      message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч",
+      message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч, Шилдэгтэй нэгдэж, шилдэг бол.",
     },
     classDetails: {
       title: "Таны ангийн мэдээлэл",
@@ -96,7 +96,7 @@ const translations = {
       address: "Их Наяд Зүүн Өндөр",
       joinGroup: "Facebook бүлэгт нэгдэх",
       joinGroupDesc: "Ангийнхантайгаа холбогдох",
-      latestNews: "Цэцэгсээс сүүлийн мэдээ",
+      latestNews: "Цэцэгсээс сошиал хаягууд",
     },
   },
 };
@@ -632,16 +632,14 @@ const StudentReveal = () => {
                   </Button>
                 </motion.div>
               )}
-              
+
               <motion.div
                 className="space-y-4 mt-8"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 1.1, duration: 0.5 }}
               >
-                <p className="text-white text-center text-lg font-medium">
-                  {t.classDetails.latestNews}
-                </p>
+                <p className="text-white text-center text-lg font-medium">{t.classDetails.latestNews}</p>
                 <div className="flex items-center justify-center gap-6">
                   <a
                     href="https://www.instagram.com/tsetsegs.talent.agency/"
