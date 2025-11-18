@@ -96,7 +96,6 @@ const StudentReveal = () => {
       setShowConfetti(true); 
       playSound('salute'); 
       setTimeout(() => playSound('achievement'), 200); 
-      for (let i = 0; i < 8; i++) setTimeout(() => playSound('surprise'), 400 + i * 80); 
       const t = setTimeout(() => { setCurrentPanel(1); setShowConfetti(false); }, 6000); 
       return () => clearTimeout(t); 
     }
@@ -168,10 +167,10 @@ const StudentReveal = () => {
         )}
         {currentPanel === 0 && language && (
           <motion.div key="p0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <div className="text-center space-y-12 max-w-4xl">
+            <div className="text-center space-y-8 max-w-4xl">
               {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="space-y-6">
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="space-y-4">
                 <h1 className="text-3xl md:text-4xl font-light text-white">{t.grandEntrance.welcome}</h1>
                 <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
                 <p className="text-2xl text-white font-light">{t.grandEntrance.subtitle}</p>
@@ -196,25 +195,25 @@ const StudentReveal = () => {
               <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.5 }}>
                 <Target className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="text-4xl font-bold text-gold"><CountUp start={1000} end={1400} duration={2.5} delay={0.5} suffix="+" /></div>
+                  <div className="text-4xl font-bold text-gold">1400+</div>
                   <p className="text-xl text-white font-medium">{t.stats.score1400}</p>
-                  <p className="text-sm text-white/90">{t.stats.students1400}</p>
+                  <p className="text-sm text-white/90"><CountUp start={0} end={30} duration={2.5} delay={0.5} suffix="+ students" /></p>
                 </div>
               </motion.div>
               <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}>
                 <Target className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="text-4xl font-bold text-gold"><CountUp start={800} end={1300} duration={2.5} delay={0.7} suffix="+" /></div>
+                  <div className="text-4xl font-bold text-gold">1300+</div>
                   <p className="text-xl text-white font-medium">{t.stats.score1300}</p>
-                  <p className="text-sm text-white/90">{t.stats.students1300}</p>
+                  <p className="text-sm text-white/90"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+ students" /></p>
                 </div>
               </motion.div>
               <motion.div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-8" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.5 }}>
                 <Calculator className="w-12 h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="text-4xl font-bold text-gold"><CountUp start={400} end={700} duration={2.5} delay={0.9} suffix="+" /></div>
+                  <div className="text-4xl font-bold text-gold">700+</div>
                   <p className="text-xl text-white font-medium">{t.stats.scoreMath}</p>
-                  <p className="text-sm text-white/90">{t.stats.studentsMath}</p>
+                  <p className="text-sm text-white/90"><CountUp start={0} end={400} duration={2.5} delay={0.9} suffix="+ students" /></p>
                 </div>
               </motion.div>
             </div>
