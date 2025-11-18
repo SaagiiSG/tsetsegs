@@ -423,19 +423,17 @@ const Panel2 = () => {
         ))}
       </div>
 
-      {/* Small logo in corner - adjusted for mobile */}
+      {/* Logo stays centered */}
       <motion.div
-        initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        initial={{ opacity: 0, scale: 0.8 }}
         animate={{ 
-          opacity: 1,
-          scale: window.innerWidth < 768 ? 0.15 : 0.25, 
-          x: window.innerWidth < 768 ? -window.innerWidth * 0.35 : -window.innerWidth * 0.38, 
-          y: -window.innerHeight * 0.43
+          opacity: 0.3,
+          scale: window.innerWidth < 768 ? 0.5 : 0.6
         }}
         transition={{ duration: 1, ease: [0.43, 0.13, 0.23, 0.96] }}
         className="absolute"
       >
-        <img src={flowersLogo} alt="Flowers" className="w-64" />
+        <img src={flowersLogo} alt="Flowers" className="w-48 sm:w-64" />
       </motion.div>
 
       <motion.div
