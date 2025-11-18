@@ -25,6 +25,12 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, UserPlus, Users2, Pencil } from 'lucide-react';
+import { z } from 'zod';
+
+const teacherSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, "Phone must contain only numbers and valid characters").max(20, "Phone must be less than 20 characters")
+});
 
 export function TeacherManagement() {
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -65,10 +71,12 @@ export function TeacherManagement() {
   };
 
   const handleAddTeacher = async () => {
-    if (!newName || !newPhone) {
+    const validation = teacherSchema.safeParse({ name: newName, phone: newPhone });
+    
+    if (!validation.success) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields",
+        title: "Invalid Input",
+        description: validation.error.errors[0].message,
         variant: "destructive"
       });
       return;
@@ -76,7 +84,7 @@ export function TeacherManagement() {
 
     const { error } = await supabase
       .from('teachers')
-      .insert({ name: newName, phone: newPhone });
+      .insert({ name: validation.data.name, phone: validation.data.phone });
 
     if (error) {
       toast({
@@ -97,10 +105,12 @@ export function TeacherManagement() {
   };
 
   const handleEditTeacher = async () => {
-    if (!editName || !editPhone) {
+    const validation = teacherSchema.safeParse({ name: editName, phone: editPhone });
+    
+    if (!validation.success) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields",
+        title: "Invalid Input",
+        description: validation.error.errors[0].message,
         variant: "destructive"
       });
       return;
@@ -108,7 +118,7 @@ export function TeacherManagement() {
 
     const { error } = await supabase
       .from('teachers')
-      .update({ name: editName, phone: editPhone })
+      .update({ name: validation.data.name, phone: validation.data.phone })
       .eq('id', editingTeacher.id);
 
     if (error) {

@@ -7,6 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const studentSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, "Phone must contain only numbers and valid characters").max(20, "Phone must be less than 20 characters")
+});
 
 const schedules = [
   'Mon/Wed/Fri 4:40-6:30 PM',
@@ -73,7 +79,18 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
         .map(line => {
           const match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+)$/);
           if (match) {
-            return { name: match[1].trim(), phone: match[2].trim() };
+            const studentData = { name: match[1].trim(), phone: match[2].trim() };
+            // Validate student data
+            const validation = studentSchema.safeParse(studentData);
+            if (!validation.success) {
+              toast({
+                title: "Invalid Student Data",
+                description: `${studentData.name}: ${validation.error.errors[0].message}`,
+                variant: "destructive"
+              });
+              return null;
+            }
+            return studentData;
           }
           return null;
         })
