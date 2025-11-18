@@ -5,19 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 import CountUp from "react-countup";
-import { 
-  User, 
-  Calendar, 
-  MapPin, 
-  Facebook, 
-  Target, 
-  BookOpen, 
-  Calculator,
-  Volume2,
-  VolumeX,
-  RotateCcw,
-  Trophy
-} from "lucide-react";
+import { User, Calendar, MapPin, Facebook, Target, BookOpen, Calculator, Volume2, VolumeX, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
@@ -28,76 +16,20 @@ const translations = {
   en: {
     loading: "Loading your celebration...",
     chooseLanguage: "Choose Your Language",
-    grandEntrance: {
-      welcome: "Welcome to",
-      family: "Family of Tsetsegs",
-      subtitle: "Your Journey Begins Here"
-    },
-    legacy: {
-      title: "A Legacy of Excellence",
-      message: "You are now part of a tradition that transforms dreams into reality. Together, we will unlock your potential and pave your path to success.",
-      quote: "\"Every great achievement begins with the decision to try.\""
-    },
-    stats: {
-      title: "Our Achievements",
-      avgScore: "Average SAT Score",
-      students1300: "Students with 1300+",
-      studentsDesc: "We have over 100+ students who have scored 1300+",
-      yearsExp: "Years of Excellence"
-    },
-    numberOne: {
-      title: "Mongolia's #1",
-      subtitle: "SAT Prep Center",
-      message: "Leading the nation in SAT preparation and student success. Join the best and become the best."
-    },
-    classDetails: {
-      title: "Your Class Details",
-      teacher: "Teacher",
-      schedule: "Schedule",
-      room: "Room",
-      startDate: "Start Date",
-      location: "Location",
-      address: "BlueSky Tower, Zaisan, Ulaanbaatar",
-      joinGroup: "Join Facebook Group",
-      joinGroupDesc: "Connect with your classmates"
-    }
+    grandEntrance: { welcome: "Welcome to", family: "Family of Tsetsegs", subtitle: "Your Journey Begins Here" },
+    legacy: { title: "A Legacy of Excellence", message: "You are now part of a tradition that transforms dreams into reality. Together, we will unlock your potential and pave your path to success.", quote: "\"Every great achievement begins with the decision to try.\"" },
+    stats: { title: "Our Achievements", avgScore: "Average SAT Score", students1300: "Students with 1300+", studentsDesc: "We have over 100+ students who have scored 1300+", yearsExp: "Years of Excellence" },
+    numberOne: { title: "Mongolia's #1", subtitle: "SAT Prep Center", message: "Leading the nation in SAT preparation and student success. Join the best and become the best." },
+    classDetails: { title: "Your Class Details", teacher: "Teacher", schedule: "Schedule", room: "Room", startDate: "Start Date", location: "Location", address: "BlueSky Tower, Zaisan, Ulaanbaatar", joinGroup: "Join Facebook Group", joinGroupDesc: "Connect with your classmates" }
   },
   mn: {
     loading: "Баярын мэндчилгээ уншиж байна...",
     chooseLanguage: "Хэл сонгох",
-    grandEntrance: {
-      welcome: "Тавтай морил",
-      family: "Цэцэгсийн гэр бүлд",
-      subtitle: "Таны аялал эхэллээ"
-    },
-    legacy: {
-      title: "Амжилтын уламжлал",
-      message: "Та одоо мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг болсон. Хамтдаа бид таны боломжийг нээж, амжилтын замыг тавих болно.",
-      quote: "\"Бүх агуу амжилт туршиж үзэх шийдвэрээс эхэлдэг.\""
-    },
-    stats: {
-      title: "Бидний амжилтууд",
-      avgScore: "Дундаж SAT оноо",
-      students1300: "1300+ оноотой сурагчид",
-      studentsDesc: "Манайд 1300+ авсан 100 гаруй сурагч байна",
-      yearsExp: "Туршлагын жил"
-    },
-    numberOne: {
-      title: "Монголын #1",
-      subtitle: "SAT бэлтгэлийн төв",
-      message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол."
-    },
-    classDetails: {
-      title: "Таны ангийн мэдээлэл",
-      teacher: "Багш",
-      schedule: "Хуваарь",
-      room: "Тоот",
-      startDate: "Эхлэх огноо",
-      location: "Байршил",
-      address: "BlueSky Tower, Зайсан, Улаанбаатар",
-      joinGroup: "Facebook бүлэгт нэгдэх",
-      joinGroupDesc: "Ангийнхантайгаа холбогдох"
-    }
+    grandEntrance: { welcome: "Тавтай морил", family: "Цэцэгсийн гэр бүлд", subtitle: "Таны аялал эхэллээ" },
+    legacy: { title: "Амжилтын уламжлал", message: "Та одоо мөрөөдлөө бодит болгодог уламжлалын нэг хэсэг болсон. Хамтдаа бид таны боломжийг нээж, амжилтын замыг тавих болно.", quote: "\"Бүх агуу амжилт туршиж үзэх шийдвэрээс эхэлдэг.\"" },
+    stats: { title: "Бидний амжилтууд", avgScore: "Дундаж SAT оноо", students1300: "1300+ оноотой сурагчид", studentsDesc: "Манайд 1300+ авсан 100 гаруй сурагч байна", yearsExp: "Туршлагын жил" },
+    numberOne: { title: "Монголын #1", subtitle: "SAT бэлтгэлийн төв", message: "SAT бэлтгэл болон сурагчдын амжилтын хувьд улсын тэргүүлэгч. Шилдэгтэй нэгдэж, шилдэг бол." },
+    classDetails: { title: "Таны ангийн мэдээлэл", teacher: "Багш", schedule: "Хуваарь", room: "Тоот", startDate: "Эхлэх огноо", location: "Байршил", address: "BlueSky Tower, Зайсан, Улаанбаатар", joinGroup: "Facebook бүлэгт нэгдэх", joinGroupDesc: "Ангийнхантайгаа холбогдох" }
   }
 };
 
@@ -111,176 +43,96 @@ const StudentReveal = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { width, height } = useWindowSize();
-
   const t = language ? translations[language] : translations.en;
 
   useEffect(() => {
     const audio = new Audio(bgMusicFile);
     audio.loop = true;
-    audio.volume = 0.3;
+    audio.volume = 0.25;
     audioRef.current = audio;
     return () => { audio.pause(); audio.src = ''; };
   }, []);
 
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = isMuted;
-  }, [isMuted]);
-
-  useEffect(() => {
-    if (language && audioRef.current && currentPanel >= 0) {
-      audioRef.current.play().catch(e => console.log('Audio playback failed:', e));
-    }
-  }, [language, currentPanel]);
+  useEffect(() => { if (audioRef.current) audioRef.current.muted = isMuted; }, [isMuted]);
+  useEffect(() => { if (language && audioRef.current && currentPanel >= 0) audioRef.current.play().catch(e => console.log('Audio:', e)); }, [language, currentPanel]);
 
   const playSound = (type: string) => {
     if (isMuted) return;
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     switch(type) {
-      case 'salute':
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.15);
-        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-        break;
-      case 'achievement':
-        oscillator.frequency.value = 800;
-        gainNode.gain.value = 0.3;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-        break;
-      case 'whoosh':
-        oscillator.frequency.value = 400;
-        gainNode.gain.value = 0.2;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.15);
-        break;
-      case 'swell':
-        oscillator.frequency.value = 200;
-        gainNode.gain.value = 0.15;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-        break;
-      case 'tick':
-        oscillator.frequency.value = 600;
-        gainNode.gain.value = 0.1;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.05);
-        break;
+      case 'salute': osc.frequency.setValueAtTime(800, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15); gain.gain.setValueAtTime(0.4, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3); osc.start(); osc.stop(ctx.currentTime + 0.3); break;
+      case 'achievement': osc.frequency.value = 800; gain.gain.value = 0.3; osc.start(); osc.stop(ctx.currentTime + 0.1); break;
+      case 'whoosh': osc.frequency.value = 400; gain.gain.value = 0.2; osc.start(); osc.stop(ctx.currentTime + 0.15); break;
+      case 'swell': osc.frequency.value = 200; gain.gain.value = 0.15; osc.start(); osc.stop(ctx.currentTime + 0.3); break;
+      case 'tick': osc.frequency.value = 600; gain.gain.value = 0.1; osc.start(); osc.stop(ctx.currentTime + 0.05); break;
     }
   };
 
   useEffect(() => {
     const fetchBatch = async () => {
-      const { data: batchData, error } = await supabase
-        .from("batches")
-        .select("*")
-        .eq("unique_link_id", id)
-        .single();
+      const { data, error } = await supabase.from("batches").select("*").eq("unique_link_id", id).single();
       if (error) { console.error(error); setIsLoading(false); return; }
-      setBatch(batchData);
+      setBatch(data);
       setIsLoading(false);
     };
     fetchBatch();
   }, [id]);
 
   useEffect(() => {
-    if (currentPanel === 0 && batch && language) {
-      setShowConfetti(true);
-      playSound('salute');
-      setTimeout(() => playSound('achievement'), 200);
-      for (let i = 0; i < 8; i++) setTimeout(() => playSound('whoosh'), 400 + i * 80);
-      const timer = setTimeout(() => { setCurrentPanel(1); setShowConfetti(false); }, 6000);
-      return () => clearTimeout(timer);
-    }
-    if (currentPanel === 1) {
-      playSound('swell');
-      const timer = setTimeout(() => setCurrentPanel(2), 6000);
-      return () => clearTimeout(timer);
-    }
-    if (currentPanel === 2) {
-      playSound('tick');
-      const timer = setTimeout(() => setCurrentPanel(3), 6000);
-      return () => clearTimeout(timer);
-    }
-    if (currentPanel === 3) {
-      playSound('achievement');
-      const timer = setTimeout(() => setCurrentPanel(4), 6000);
-      return () => clearTimeout(timer);
-    }
+    if (currentPanel === 0 && batch && language) { setShowConfetti(true); playSound('salute'); setTimeout(() => playSound('achievement'), 200); for (let i = 0; i < 8; i++) setTimeout(() => playSound('whoosh'), 400 + i * 80); const t = setTimeout(() => { setCurrentPanel(1); setShowConfetti(false); }, 6000); return () => clearTimeout(t); }
+    if (currentPanel === 1) { playSound('swell'); const t = setTimeout(() => setCurrentPanel(2), 6000); return () => clearTimeout(t); }
+    if (currentPanel === 2) { playSound('tick'); const t = setTimeout(() => setCurrentPanel(3), 6000); return () => clearTimeout(t); }
+    if (currentPanel === 3) { playSound('achievement'); const t = setTimeout(() => setCurrentPanel(4), 6000); return () => clearTimeout(t); }
   }, [currentPanel, batch, language]);
 
   const nextPanel = () => { if (currentPanel < 4) setCurrentPanel(currentPanel + 1); };
   const prevPanel = () => { if (currentPanel > -1) setCurrentPanel(currentPanel - 1); };
-  const goToPanel = (index: number) => setCurrentPanel(index);
+  const goToPanel = (i: number) => setCurrentPanel(i);
   const restart = () => setCurrentPanel(0);
   const handleLanguageSelect = (lang: Language) => { setLanguage(lang); setCurrentPanel(0); };
 
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientX);
-  const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
-  const handleTouchEnd = () => {
-    if (touchStart - touchEnd > 75) nextPanel();
-    if (touchStart - touchEnd < -75) prevPanel();
-  };
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextPanel(); }
       if (e.key === 'ArrowLeft') { e.preventDefault(); prevPanel(); }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [currentPanel]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-reveal-bg flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }} />
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 relative z-10">
-          <motion.div animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-            <img src={flowersLogo} alt="Flowers Talent Agency" className="w-48 mx-auto" />
-          </motion.div>
-          <motion.p animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="text-2xl font-bold text-gold">
-            {t.loading}
-          </motion.p>
-        </motion.div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="min-h-screen bg-reveal-bg flex items-center justify-center relative overflow-hidden">
+      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 relative z-10">
+        <motion.div animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}><img src={flowersLogo} alt="Flowers" className="w-48 mx-auto" /></motion.div>
+        <motion.p animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="text-2xl font-bold text-gold">{t.loading}</motion.p>
+      </motion.div>
+    </div>
+  );
 
   if (!batch) return <div className="min-h-screen bg-reveal-bg flex items-center justify-center"><p className="text-xl text-gold">Batch not found</p></div>;
 
   return (
-    <div className="min-h-screen bg-reveal-bg relative overflow-hidden" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div className="min-h-screen bg-reveal-bg relative overflow-hidden" onTouchStart={e => setTouchStart(e.targetTouches[0].clientX)} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (touchStart - touchEnd > 75) nextPanel(); if (touchStart - touchEnd < -75) prevPanel(); }}>
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `linear-gradient(hsl(var(--gold)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)) 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
       {showConfetti && <Confetti width={width} height={height} />}
       <div className="fixed top-6 right-6 z-50 flex gap-3">
-        <Button variant="outline" size="icon" onClick={() => setIsMuted(!isMuted)} className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm">
-          {isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}
-        </Button>
+        <Button variant="outline" size="icon" onClick={() => setIsMuted(!isMuted)} className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm">{isMuted ? <VolumeX className="h-5 w-5 text-gold" /> : <Volume2 className="h-5 w-5 text-gold" />}</Button>
         {currentPanel > -1 && <Button variant="outline" size="icon" onClick={restart} className="bg-black/40 border-gold/30 hover:bg-black/60 backdrop-blur-sm"><RotateCcw className="h-5 w-5 text-gold" /></Button>}
       </div>
-
       <AnimatePresence mode="wait">
         {currentPanel === -1 && (
-          <motion.div key="language" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+          <motion.div key="lang" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} transition={{ delay: 0.2, type: "spring" }} className="text-center space-y-12 max-w-2xl w-full">
               <motion.img src={flowersLogo} alt="Flowers" className="w-64 mx-auto" animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }} />
-              <div className="space-y-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-gold">{translations.en.chooseLanguage}</h1>
-                <p className="text-xl text-gold/80">{translations.mn.chooseLanguage}</p>
-              </div>
+              <div className="space-y-6"><h1 className="text-4xl md:text-5xl font-bold text-gold">{translations.en.chooseLanguage}</h1><p className="text-xl text-gold/80">{translations.mn.chooseLanguage}</p></div>
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
                 <Button size="lg" onClick={() => handleLanguageSelect('en')} className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-2xl py-8 px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105">English</Button>
                 <Button size="lg" onClick={() => handleLanguageSelect('mn')} className="bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold text-2xl py-8 px-12 rounded-xl backdrop-blur-sm transition-all hover:scale-105">Монгол</Button>
@@ -288,18 +140,78 @@ const StudentReveal = () => {
             </motion.div>
           </motion.div>
         )}
-
-        {/* Panel 0-4 content continues with all panels implemented exactly as planned... */}
-        {/* Due to length constraints, the full implementation continues in the actual file */}
+        {currentPanel === 0 && language && (
+          <motion.div key="p0" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <div className="text-center space-y-12 max-w-4xl">
+              {[...Array(50)].map((_, i) => <motion.div key={i} className="absolute w-2 h-2 bg-gold rounded-full" initial={{ x: 0, y: 0, scale: 0, opacity: 1 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1, 0], opacity: [1, 1, 0] }} transition={{ duration: 2, delay: i * 0.02, ease: "easeOut" }} style={{ left: '50%', top: '50%' }} />)}
+              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.3 }}><img src={flowersLogo} alt="Flowers" className="w-80 mx-auto" /></motion.div>
+              <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.8 }} className="space-y-6">
+                <h1 className="text-3xl md:text-4xl font-light text-gold/90">{t.grandEntrance.welcome}</h1>
+                <motion.h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent" animate={{ backgroundPosition: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} style={{ backgroundSize: '200% auto' }}>{t.grandEntrance.family}</motion.h2>
+                <p className="text-2xl text-gold/70 font-light">{t.grandEntrance.subtitle}</p>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+        {currentPanel === 1 && language && (
+          <motion.div key="p1" initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <motion.div className="max-w-4xl space-y-12 text-center" initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-gold mb-8" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5, type: "spring" }}>{t.legacy.title}</motion.h2>
+              <motion.p className="text-2xl md:text-3xl text-gold/80 leading-relaxed mb-12" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }}>{t.legacy.message}</motion.p>
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.2 }} className="border-l-4 border-gold pl-8 py-4"><p className="text-xl md:text-2xl italic text-gold/70">{t.legacy.quote}</p></motion.div>
+              {[...Array(20)].map((_, i) => <motion.div key={i} className="absolute w-1 h-1 bg-gold/30 rounded-full" animate={{ y: [0, -100, 0], x: Math.random() * 100 - 50, opacity: [0, 1, 0] }} transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }} style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }} />)}
+            </motion.div>
+          </motion.div>
+        )}
+        {currentPanel === 2 && language && (
+          <motion.div key="p2" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <div className="max-w-6xl w-full">
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-20" initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>{t.stats.title}</motion.h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <Calculator className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-xl text-gold/70">{t.stats.avgScore}</p>
+                </motion.div>
+                <motion.div initial={{ scale: 0, rotate: 10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.7, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <Target className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.students1300}</p><p className="text-sm text-gold/50">{t.stats.studentsDesc}</p>
+                </motion.div>
+                <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.9, type: "spring", stiffness: 200 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
+                  <BookOpen className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-xl text-gold/70">{t.stats.yearsExp}</p>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {currentPanel === 3 && language && (
+          <motion.div key="p3" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
+            <motion.div className="text-center space-y-12 max-w-4xl" initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, type: "spring" }}>
+              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: "spring", stiffness: 150 }} className="relative">
+                <motion.div className="absolute inset-0 blur-3xl bg-gold/30 rounded-full" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} /><Trophy className="w-40 h-40 text-gold mx-auto relative z-10" />
+              </motion.div>
+              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }} className="space-y-6">
+                <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">{t.numberOne.title}</h1><p className="text-3xl md:text-4xl text-gold/80 font-light">{t.numberOne.subtitle}</p>
+              </motion.div>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="text-2xl text-gold/70 leading-relaxed max-w-2xl mx-auto">{t.numberOne.message}</motion.p>
+              {[...Array(3)].map((_, i) => <motion.div key={i} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-gold/20 rounded-full" initial={{ width: 0, height: 0, opacity: 0.5 }} animate={{ width: 300 + i * 200, height: 300 + i * 200, opacity: 0 }} transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }} />)}
+            </motion.div>
+          </motion.div>
+        )}
+        {currentPanel === 4 && language && (
+          <motion.div key="p4" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }} transition={{ duration: 0.5 }} className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20">
+            <motion.div className="max-w-3xl w-full" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-16" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>{t.classDetails.title}</motion.h2>
+              <div className="space-y-8 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-3xl p-10">
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }}><User className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.teacher}</p><p className="text-3xl font-bold text-gold">{batch.teacher || "TBA"}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.schedule}</p><p className="text-2xl font-semibold text-gold">{batch.schedule}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.8 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.room}</p><p className="text-3xl font-bold text-gold">{batch.room || "TBA"}</p></div></motion.div>
+                <motion.div className="flex items-center gap-6 pb-6 border-b border-gold/20" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9 }}><Calendar className="w-10 h-10 text-gold flex-shrink-0" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.startDate}</p><p className="text-2xl font-semibold text-gold">{new Date(batch.start_date).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div></motion.div>
+                <motion.div className="flex items-start gap-6" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 1.0 }}><MapPin className="w-10 h-10 text-gold flex-shrink-0 mt-1" /><div className="flex-1"><p className="text-gold/70 text-lg mb-1">{t.classDetails.location}</p><p className="text-xl text-gold">{t.classDetails.address}</p></div></motion.div>
+                {batch.fb_group_link && <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.2 }} className="pt-8"><Button onClick={() => window.open(batch.fb_group_link, '_blank')} className="w-full bg-gold/20 hover:bg-gold/30 text-gold border-2 border-gold py-8 text-xl rounded-xl backdrop-blur-sm transition-all hover:scale-105"><Facebook className="w-6 h-6 mr-3" /><div className="text-left"><div className="font-bold">{t.classDetails.joinGroup}</div><div className="text-sm opacity-80">{t.classDetails.joinGroupDesc}</div></div></Button></motion.div>}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
-
-      {currentPanel >= 0 && language && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-50">
-          {[0, 1, 2, 3, 4].map(index => (
-            <button key={index} onClick={() => goToPanel(index)} className={`w-3 h-3 rounded-full transition-all ${currentPanel === index ? 'bg-gold w-8' : 'bg-gold/30 hover:bg-gold/50'}`} aria-label={`Go to panel ${index + 1}`} />
-          ))}
-        </div>
-      )}
+      {currentPanel >= 0 && language && <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-50">{[0, 1, 2, 3, 4].map(i => <button key={i} onClick={() => goToPanel(i)} className={`w-3 h-3 rounded-full transition-all ${currentPanel === i ? 'bg-gold w-8' : 'bg-gold/30 hover:bg-gold/50'}`} aria-label={`Panel ${i + 1}`} />)}</div>}
     </div>
   );
 };
