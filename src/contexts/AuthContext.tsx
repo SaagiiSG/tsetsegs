@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setIsLoading(false);
       }
+    }).catch(() => {
+      // If auth check fails, still allow app to load (for public pages)
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
