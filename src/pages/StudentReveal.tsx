@@ -191,17 +191,17 @@ const StudentReveal = () => {
         )}
         {currentPanel === 2 && language && (
           <motion.div key="p2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="min-h-screen flex items-center justify-center relative z-10 px-6">
-            <div className="max-w-6xl w-full">
-              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-20" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <Calculator className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-xl text-white">{t.stats.avgScore}</p>
+            <div className="max-w-7xl w-full">
+              <motion.h2 className="text-5xl md:text-6xl font-bold text-center text-gold mb-24" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>{t.stats.title}</motion.h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-20">
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform">
+                  <Calculator className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={800} end={1350} duration={2.5} delay={0.5} /></div><p className="text-2xl text-white font-medium">{t.stats.avgScore}</p>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <Target className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-xl text-white">{t.stats.students1300}</p><p className="text-sm text-white/80">{t.stats.studentsDesc}</p>
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform">
+                  <Target className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={0} end={100} duration={2.5} delay={0.7} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.students1300}</p><p className="text-base text-white/90 mt-2">{t.stats.studentsDesc}</p>
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="text-center space-y-4 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-10 hover:scale-105 transition-transform">
-                  <BookOpen className="w-16 h-16 text-gold mx-auto" /><div className="text-6xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-xl text-white">{t.stats.yearsExp}</p>
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }} className="text-center space-y-6 bg-gold/10 backdrop-blur-sm border-2 border-gold/30 rounded-2xl p-12 hover:scale-105 transition-transform">
+                  <BookOpen className="w-20 h-20 text-gold mx-auto" /><div className="text-7xl font-bold text-gold"><CountUp start={0} end={8} duration={2.5} delay={0.9} suffix="+" /></div><p className="text-2xl text-white font-medium">{t.stats.yearsExp}</p>
                 </motion.div>
               </div>
             </div>
