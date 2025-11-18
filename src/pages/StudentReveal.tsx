@@ -359,7 +359,7 @@ const StudentReveal = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <img src={flowersLogo} alt="Flowers" className="w-50 -mb-12" />
+              <img src={flowersLogo} alt="Flowers" className="w-48" />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
