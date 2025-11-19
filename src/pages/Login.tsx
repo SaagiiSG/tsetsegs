@@ -13,7 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp, user, isAdmin } = useAuth();
+  const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const hasHandledAuth = useRef(false);
@@ -25,22 +25,20 @@ export default function Login() {
       return;
     }
 
-    // Only proceed when loading is complete and we haven't handled this login yet
-    if (isLoading || hasHandledAuth.current) return;
+    // Only proceed when auth loading is complete and we haven't handled this login yet
+    if (authLoading || hasHandledAuth.current) return;
     
-    if (user) {
-      hasHandledAuth.current = true;
-      if (isAdmin) {
-        navigate('/admin');
-      } else {
-        toast({
-          title: "Access Pending",
-          description: "Your account needs admin approval. Please contact an administrator.",
-          variant: "destructive"
-        });
-      }
+    hasHandledAuth.current = true;
+    if (isAdmin) {
+      navigate('/admin');
+    } else {
+      toast({
+        title: "Access Pending",
+        description: "Your account needs admin approval. Please contact an administrator.",
+        variant: "destructive"
+      });
     }
-  }, [user, isAdmin, isLoading, navigate, toast]);
+  }, [user, isAdmin, authLoading, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
