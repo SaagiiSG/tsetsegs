@@ -18,18 +18,10 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && !isLoading) {
-      if (isAdmin) {
-        navigate('/admin');
-      } else {
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin privileges. Please contact an administrator.",
-          variant: "destructive"
-        });
-      }
+    if (user && isAdmin && !isLoading) {
+      navigate('/admin');
     }
-  }, [user, isAdmin, isLoading, navigate, toast]);
+  }, [user, isAdmin, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
