@@ -250,7 +250,7 @@ const StudentReveal = () => {
     );
 
   return (
-    <div className="h-full bg-reveal-bg relative overflow-hidden">
+    <div className="min-h-screen h-screen bg-reveal-bg relative overflow-hidden">
       <div
         className="fixed inset-0 opacity-10 bottom-0"
         style={{
@@ -564,7 +564,7 @@ const StudentReveal = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6 pt-24 md:pt-28 pb-32 md:pb-20"
+            className="h-screen flex items-start justify-center relative z-10 px-4 md:px-6 pt-24 md:pt-28 pb-32 md:pb-20 overflow-y-auto"
           >
             <motion.div
               className="max-w-3xl md:max-w-4xl w-full space-y-6 mx-auto"
