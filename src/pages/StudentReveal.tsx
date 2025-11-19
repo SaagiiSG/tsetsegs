@@ -64,7 +64,9 @@ const translations = {
       location: "Location",
       platform: "Platform",
       discord: "Discord",
-      address: "Их Наяд Зүүн Өндөр",
+      address: "Їх Наяд Зүүн Өндөр",
+      floor11: "11th Floor",
+      floor9: "9th Floor",
       whatToBring: "What to Bring",
       bringPen: "Pen",
       bringNotebook: "Notebook",
@@ -114,6 +116,8 @@ const translations = {
       platform: "Platform",
       discord: "Discord",
       address: "Их Наяд Зүүн Өндөр",
+      floor11: "11-р давхар",
+      floor9: "9-р давхар",
       whatToBring: "Юу авчрах вэ",
       bringPen: "Үзэг",
       bringNotebook: "Дэвтэр",
@@ -660,9 +664,11 @@ const StudentReveal = () => {
                   <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
                   <div className="flex-1 space-y-1">
                     <p className="text-white text-sm md:text-base">{t.classDetails.location}</p>
-                    <p className="text-base md:text-xl font-semibold text-gold">{t.classDetails.address} 1114</p>
+                    <p className="text-base md:text-xl font-semibold text-gold">
+                      {t.classDetails.address} {batch.room?.split(" ")[0] || "TBA"}
+                    </p>
                     <p className="text-sm md:text-base text-white">
-                      {t.classDetails.room} {batch.room?.split(" ")[0] || "TBA"}
+                      {batch.room === "1105" ? t.classDetails.floor11 : t.classDetails.floor9}
                     </p>
                   </div>
                 </motion.div>
