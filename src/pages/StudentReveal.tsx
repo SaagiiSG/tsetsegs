@@ -59,6 +59,7 @@ const translations = {
       mathSchedule: "Math Хичээл",
       mathScheduleOnline: "Math Хичээл (Online)",
       englishSchedule: "English Хичээл (үнэгүй)",
+      englishScheduleOnline: "English Хичээл (үнэгүй - Online)",
       room: "Room",
       startDate: "Start Date",
       location: "Location",
@@ -110,6 +111,7 @@ const translations = {
       mathSchedule: "Math Хичээл",
       mathScheduleOnline: "Math Хичээл (Online)",
       englishSchedule: "English Хичээл (үнэгүй)",
+      englishScheduleOnline: "English Хичээл (үнэгүй - Online)",
       room: "Тоот",
       startDate: "Эхлэх огноо",
       location: "Байршил",
@@ -622,6 +624,7 @@ const StudentReveal = () => {
                       const isMath = trimmedPart.includes("Math");
                       const isEnglish = trimmedPart.includes("English");
                       const isOnline = trimmedPart.includes("Online");
+                      const isBatchOnline = isOnlineClass(batch.schedule);
 
                       // Extract the schedule without the subject label
                       let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
@@ -636,7 +639,8 @@ const StudentReveal = () => {
                           <p className="text-white/80 text-xs md:text-sm mb-1">
                             {isMath && isOnline && t.classDetails.mathScheduleOnline}
                             {isMath && !isOnline && t.classDetails.mathSchedule}
-                            {isEnglish && t.classDetails.englishSchedule}:
+                            {isEnglish && isBatchOnline && t.classDetails.englishScheduleOnline}
+                            {isEnglish && !isBatchOnline && t.classDetails.englishSchedule}:
                           </p>
                           <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
                         </div>
