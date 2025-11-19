@@ -18,10 +18,18 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && isAdmin && !isLoading) {
-      navigate('/admin');
+    if (user && !isLoading) {
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        toast({
+          title: "Access Pending",
+          description: "Your account needs admin approval. Please contact an administrator.",
+          variant: "destructive"
+        });
+      }
     }
-  }, [user, isAdmin, isLoading, navigate]);
+  }, [user, isAdmin, isLoading, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,10 +57,12 @@ export default function Login() {
           });
         } else {
           toast({
-            title: "Account Created",
-            description: "Please contact admin to grant access.",
+            title: "Account Created Successfully",
+            description: "Your account has been created. An administrator will grant you access to the dashboard.",
           });
           setIsSignUp(false);
+          setEmail('');
+          setPassword('');
         }
       } else {
         const { error } = await signIn(email, password);
