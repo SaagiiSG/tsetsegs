@@ -18,7 +18,10 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && !isLoading) {
+    // Only proceed when loading is complete
+    if (isLoading) return;
+    
+    if (user) {
       if (isAdmin) {
         navigate('/admin');
       } else {
