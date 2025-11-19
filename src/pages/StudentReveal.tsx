@@ -696,11 +696,20 @@ const StudentReveal = () => {
                 <div className="flex-1 space-y-1">
                   <p className="text-white text-sm md:text-base">{t.classDetails.startDate}</p>
                   <p className="text-base md:text-xl font-semibold text-gold">
-                    {new Date(batch.start_date).toLocaleDateString(language === "mn" ? "mn-MN" : "en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {language === 'mn' 
+                      ? (() => {
+                          const date = new Date(batch.start_date);
+                          const month = date.getMonth() + 1;
+                          const day = date.getDate();
+                          const year = date.getFullYear();
+                          return `${month} сарын ${day}, ${year}`;
+                        })()
+                      : new Date(batch.start_date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                    }
                   </p>
                 </div>
               </motion.div>
