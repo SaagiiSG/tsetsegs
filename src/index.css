@@ -123,6 +123,6 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-[#333333] text-foreground;
+    @apply bg-background text-foreground;
   }
 }
