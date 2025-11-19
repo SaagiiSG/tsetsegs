@@ -615,23 +615,28 @@ const StudentReveal = () => {
                   <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
                   
                   <div className="space-y-2">
-                    <div>
-                      <p className="text-white/80 text-xs md:text-sm mb-1">
-                        {isOnlineClass(batch.schedule) ? t.classDetails.mathScheduleOnline : t.classDetails.mathSchedule}:
-                      </p>
-                      <p className="text-base md:text-lg font-semibold text-gold">
-                        Даваа/Лхагва/Баасан 18:40-20:30
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-white/80 text-xs md:text-sm mb-1">
-                        {t.classDetails.englishSchedule}:
-                      </p>
-                      <p className="text-base md:text-lg font-semibold text-gold">
-                        Бямба 18:30-20:00
-                      </p>
-                    </div>
+                    {batch.schedule.split('+').map((part, index) => {
+                      const trimmedPart = part.trim();
+                      const isMath = trimmedPart.includes('Math');
+                      const isEnglish = trimmedPart.includes('English');
+                      const isOnline = trimmedPart.includes('Online');
+                      
+                      // Extract the schedule without the subject label
+                      const scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, '').trim();
+                      
+                      return (
+                        <div key={index}>
+                          <p className="text-white/80 text-xs md:text-sm mb-1">
+                            {isMath && isOnline && t.classDetails.mathScheduleOnline}
+                            {isMath && !isOnline && t.classDetails.mathSchedule}
+                            {isEnglish && t.classDetails.englishSchedule}:
+                          </p>
+                          <p className="text-base md:text-lg font-semibold text-gold">
+                            {scheduleText}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>
