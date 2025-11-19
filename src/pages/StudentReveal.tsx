@@ -49,7 +49,8 @@ const translations = {
     numberOne: {
       title: "Mongolia's #1",
       subtitle: "SAT MATH Prep Center",
-      message: "Leading the nation in SAT preparation and student success. Join the best and become the best.",
+      message: "Leading the nation in SAT preparation and student success.",
+      message2: "Join the best and become the best.",
     },
     classDetails: {
       title: "Your Class Details",
@@ -101,7 +102,8 @@ const translations = {
     numberOne: {
       title: "Монголын #1",
       subtitle: "SAT MAТH бэлтгэлийн төв",
-      message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч, Шилдэгтэй нэгдэж, шилдэг бол.",
+      message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч",
+      message2: "Шилдэгтэй нэгдэж, шилдэг бол.",
     },
     classDetails: {
       title: "Таны ангийн мэдээлэл",
@@ -537,14 +539,15 @@ const StudentReveal = () => {
                 </h1>
                 <p className="text-3xl md:text-4xl text-white font-light">{t.numberOne.subtitle}</p>
               </motion.div>
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
-                className="text-2xl text-white leading-relaxed max-w-2xl mx-auto"
+                className="text-2xl text-white leading-relaxed max-w-2xl mx-auto text-center"
               >
-                {t.numberOne.message}
-              </motion.p>
+                <p>{t.numberOne.message}</p>
+                <p className="mt-2">{t.numberOne.message2}</p>
+              </motion.div>
               {[...Array(3)].map((_, i) => (
                 <motion.div
                   key={i}
@@ -630,7 +633,7 @@ const StudentReveal = () => {
                       let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
                       
                       // Add "Бямба" prefix to English classes if they don't have a day specified
-                      if (isEnglish && !scheduleText.includes("Бямба") && !scheduleText.includes("Даваа") && !scheduleText.includes("Маягмар")) {
+                      if (isEnglish && !scheduleText.includes("Бямба") && !scheduleText.includes("Даваа") && !scheduleText.includes("Мягмар")) {
                         scheduleText = "Бямба " + scheduleText;
                       }
 
