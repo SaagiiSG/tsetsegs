@@ -53,7 +53,7 @@ const translations = {
     },
     classDetails: {
       title: "Your Class Details",
-      onlineHeader: "🌐 ONLINE CLASS",
+      onlineHeader: "ONLINE CLASS",
       teacher: "Teacher",
       schedule: "Schedule",
       mathSchedule: "Math Хичээл",
@@ -102,7 +102,7 @@ const translations = {
     },
     classDetails: {
       title: "Таны ангийн мэдээлэл",
-      onlineHeader: "🌐 ONLINE CLASS",
+      onlineHeader: "ONLINE CLASS",
       teacher: "Багш",
       schedule: "Хуваарь",
       mathSchedule: "Math Хичээл",
@@ -584,9 +584,7 @@ const StudentReveal = () => {
                 >
                   <div className="inline-flex items-center gap-3 bg-gradient-to-r from-gold/20 via-gold/30 to-gold/20 border-2 border-gold rounded-2xl px-8 py-4">
                     <Globe className="w-8 h-8 text-gold" />
-                    <h3 className="text-2xl md:text-3xl font-bold text-gold">
-                      {t.classDetails.onlineHeader}
-                    </h3>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gold">{t.classDetails.onlineHeader}</h3>
                   </div>
                 </motion.div>
               )}
@@ -613,17 +611,17 @@ const StudentReveal = () => {
                 <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
                 <div className="flex-1 space-y-3">
                   <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
-                  
+
                   <div className="space-y-2">
-                    {batch.schedule.split('+').map((part, index) => {
+                    {batch.schedule.split("+").map((part, index) => {
                       const trimmedPart = part.trim();
-                      const isMath = trimmedPart.includes('Math');
-                      const isEnglish = trimmedPart.includes('English');
-                      const isOnline = trimmedPart.includes('Online');
-                      
+                      const isMath = trimmedPart.includes("Math");
+                      const isEnglish = trimmedPart.includes("English");
+                      const isOnline = trimmedPart.includes("Online");
+
                       // Extract the schedule without the subject label
-                      const scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, '').trim();
-                      
+                      const scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
+
                       return (
                         <div key={index}>
                           <p className="text-white/80 text-xs md:text-sm mb-1">
@@ -631,9 +629,7 @@ const StudentReveal = () => {
                             {isMath && !isOnline && t.classDetails.mathSchedule}
                             {isEnglish && t.classDetails.englishSchedule}:
                           </p>
-                          <p className="text-base md:text-lg font-semibold text-gold">
-                            {scheduleText}
-                          </p>
+                          <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
                         </div>
                       );
                     })}
@@ -664,9 +660,7 @@ const StudentReveal = () => {
                   <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
                   <div className="flex-1 space-y-1">
                     <p className="text-white text-sm md:text-base">{t.classDetails.location}</p>
-                    <p className="text-base md:text-xl font-semibold text-gold">
-                      {t.classDetails.address} 1114
-                    </p>
+                    <p className="text-base md:text-xl font-semibold text-gold">{t.classDetails.address} 1114</p>
                     <p className="text-sm md:text-base text-white">
                       {t.classDetails.room} {batch.room?.split(" ")[0] || "TBA"}
                     </p>
@@ -707,9 +701,7 @@ const StudentReveal = () => {
                   <ul className="space-y-1 text-white/90 text-xs md:text-sm">
                     <li>• {t.classDetails.bringPen}</li>
                     <li>• {t.classDetails.bringNotebook}</li>
-                    {isOnlineClass(batch.schedule) && (
-                      <li>• {t.classDetails.bringInternet}</li>
-                    )}
+                    {isOnlineClass(batch.schedule) && <li>• {t.classDetails.bringInternet}</li>}
                     <li>• {t.classDetails.bringYourself}</li>
                   </ul>
                 </div>
