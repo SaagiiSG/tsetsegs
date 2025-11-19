@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { isOnlineClass } from '@/lib/classUtils';
 
 const studentSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -21,9 +22,10 @@ const schedules = [
   'Tue/Thu 6:40-8:30 PM + Sat 12:10-2:10 PM',
   'Mon/Wed/Fri 4:40-6:30 PM (Alt)',
   'Mon/Wed/Fri 6:40-8:30 PM (Alt)',
+  'Даваа/Лхагва/Баасан 18:40-20:30 (Math - Online) + Бямба 18:30-20:00 (English - үнэгүй)',
 ];
 
-const rooms = ['1105 (11th floor)', '905 (9th floor)'];
+const rooms = ['1105 (11th floor)', '905 (9th floor)', 'Online'];
 
 interface CreateBatchFormProps {
   onSuccess: () => void;
@@ -43,6 +45,13 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  useEffect(() => {
+    // Auto-set room to "Online" when online schedule is selected
+    if (schedule && isOnlineClass(schedule)) {
+      setRoom('Online');
+    }
+  }, [schedule]);
 
   const fetchTeachers = async () => {
     const { data } = await supabase.from('teachers').select('*').order('name');
@@ -219,7 +228,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="room">Room</Label>
-            <Select value={room} onValueChange={setRoom}>
+            <Select value={room} onValueChange={setRoom} disabled={isOnlineClass(schedule)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select room" />
               </SelectTrigger>

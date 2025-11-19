@@ -7,6 +7,7 @@ import { BatchStudentsTable } from './BatchStudentsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { isOnlineClass } from '@/lib/classUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,6 +97,28 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
 
   const getSmsTemplate = () => {
     const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    
+    if (isOnlineClass(batch.schedule)) {
+      return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
+
+🌐 ONLINE CLASS
+
+Class Info: ${batchLink}
+
+Хичээлийн хуваарь:
+Math (Online): Даваа/Лхагва/Баасан 18:40-20:30
+English (үнэгүй): Бямба 18:30-20:00
+
+Platform: Discord
+
+Тус групт 1. Бидний хэрэглэх ном 2. Цээжлэх үгс 3. Шалгалтад бүртгүүлэх заавар 4. 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.
+
+Танилцах уулзалтанд тавтай морилно уу!
+
+Баярлалаа.
+Утас: 80660314, 88559876`;
+    }
+    
     return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
 
 Class Info: ${batchLink}

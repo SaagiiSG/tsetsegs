@@ -17,10 +17,12 @@ import {
   Target,
   Calculator,
   Instagram,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
+import { isOnlineClass } from "@/lib/classUtils";
 
 type Language = "en" | "mn";
 
@@ -51,15 +53,27 @@ const translations = {
     },
     classDetails: {
       title: "Your Class Details",
+      onlineHeader: "🌐 ONLINE CLASS",
       teacher: "Teacher",
       schedule: "Schedule",
+      mathSchedule: "Math Хичээл",
+      mathScheduleOnline: "Math Хичээл (Online)",
+      englishSchedule: "English Хичээл (үнэгүй)",
       room: "Room",
       startDate: "Start Date",
       location: "Location",
+      platform: "Platform",
+      discord: "Discord",
       address: "Их Наяд Зүүн Өндөр",
+      whatToBring: "What to Bring",
+      bringPen: "Pen",
+      bringNotebook: "Notebook",
+      bringInternet: "Stable internet connection",
+      bringYourself: "Yourself!",
       joinGroup: "Join Facebook Group",
       joinGroupDesc: "Connect with your classmates",
       latestNews: "Latest News from Tsetsegs",
+      seeYou: "🎉 See you soon at Tsetsegs!",
     },
   },
   mn: {
@@ -88,15 +102,27 @@ const translations = {
     },
     classDetails: {
       title: "Таны ангийн мэдээлэл",
+      onlineHeader: "🌐 ONLINE CLASS",
       teacher: "Багш",
       schedule: "Хуваарь",
+      mathSchedule: "Math Хичээл",
+      mathScheduleOnline: "Math Хичээл (Online)",
+      englishSchedule: "English Хичээл (үнэгүй)",
       room: "Тоот",
       startDate: "Эхлэх огноо",
       location: "Байршил",
+      platform: "Platform",
+      discord: "Discord",
       address: "Их Наяд Зүүн Өндөр",
+      whatToBring: "Юу авчрах вэ",
+      bringPen: "Үзэг",
+      bringNotebook: "Дэвтэр",
+      bringInternet: "Тогтвортой интернет холболт",
+      bringYourself: "Өөрийгөө!",
       joinGroup: "Facebook бүлэгт нэгдэх",
       joinGroupDesc: "Ангийнхантайгаа холбогдох",
       latestNews: "Цэцэгсээс сошиал хаягууд",
+      seeYou: "🎉 Тун удахгүй уулзацгаая!",
     },
   },
 };
@@ -548,11 +574,28 @@ const StudentReveal = () => {
               >
                 {t.classDetails.title}
               </motion.h2>
+
+              {isOnlineClass(batch.schedule) && (
+                <motion.div
+                  className="text-center mb-8"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                >
+                  <div className="inline-flex items-center gap-3 bg-gradient-to-r from-gold/20 via-gold/30 to-gold/20 border-2 border-gold rounded-2xl px-8 py-4">
+                    <Globe className="w-8 h-8 text-gold" />
+                    <h3 className="text-2xl md:text-3xl font-bold text-gold">
+                      {t.classDetails.onlineHeader}
+                    </h3>
+                  </div>
+                </motion.div>
+              )}
+
               <motion.div
                 className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
               >
                 <User className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
@@ -560,35 +603,77 @@ const StudentReveal = () => {
                   <p className="text-lg md:text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
                 </div>
               </motion.div>
+
               <motion.div
-                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
-                  <p className="text-base md:text-xl font-semibold text-gold">{batch.schedule}</p>
-                </div>
-              </motion.div>
-              <motion.div
-                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
+                className="flex items-start gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
-                <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-white text-sm md:text-base">{t.classDetails.room}</p>
-                  <p className="text-lg md:text-2xl font-bold text-gold">{batch.room || "TBA"}</p>
+                <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
+                <div className="flex-1 space-y-3">
+                  <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
+                  
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-white/80 text-xs md:text-sm mb-1">
+                        {isOnlineClass(batch.schedule) ? t.classDetails.mathScheduleOnline : t.classDetails.mathSchedule}:
+                      </p>
+                      <p className="text-base md:text-lg font-semibold text-gold">
+                        Даваа/Лхагва/Баасан 18:40-20:30
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-white/80 text-xs md:text-sm mb-1">
+                        {t.classDetails.englishSchedule}:
+                      </p>
+                      <p className="text-base md:text-lg font-semibold text-gold">
+                        Бямба 18:30-20:00
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
+
+              {isOnlineClass(batch.schedule) ? (
+                <motion.div
+                  className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
+                  initial={{ x: -30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                >
+                  <Globe className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <p className="text-white text-sm md:text-base">{t.classDetails.platform}</p>
+                    <p className="text-lg md:text-2xl font-bold text-gold">{t.classDetails.discord}</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="flex items-start gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
+                  initial={{ x: -30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                >
+                  <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
+                  <div className="flex-1 space-y-1">
+                    <p className="text-white text-sm md:text-base">{t.classDetails.location}</p>
+                    <p className="text-base md:text-xl font-semibold text-gold">
+                      {t.classDetails.address} 1114
+                    </p>
+                    <p className="text-sm md:text-base text-white">
+                      {t.classDetails.room} {batch.room?.split(" ")[0] || "TBA"}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
               <motion.div
                 className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
+                transition={{ delay: 0.9, duration: 0.5 }}
               >
                 <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
@@ -602,24 +687,35 @@ const StudentReveal = () => {
                   </p>
                 </div>
               </motion.div>
+
               <motion.div
                 className="flex items-start gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
                 initial={{ x: -30, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.9, duration: 0.5 }}
+                transition={{ delay: 1.0, duration: 0.5 }}
               >
-                <MapPin className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-white text-sm md:text-base">{t.classDetails.location}</p>
-                  <p className="text-sm md:text-lg text-white">{t.classDetails.address}</p>
+                <div className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 flex items-center justify-center text-xl md:text-3xl">
+                  📝
+                </div>
+                <div className="flex-1 space-y-2">
+                  <p className="text-white text-sm md:text-base font-medium">{t.classDetails.whatToBring}</p>
+                  <ul className="space-y-1 text-white/90 text-xs md:text-sm">
+                    <li>• {t.classDetails.bringPen}</li>
+                    <li>• {t.classDetails.bringNotebook}</li>
+                    {isOnlineClass(batch.schedule) && (
+                      <li>• {t.classDetails.bringInternet}</li>
+                    )}
+                    <li>• {t.classDetails.bringYourself}</li>
+                  </ul>
                 </div>
               </motion.div>
+
               {batch.fb_group_link && (
                 <motion.div
                   className="max-w-md mx-auto"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.0, duration: 0.5 }}
+                  transition={{ delay: 1.1, duration: 0.5 }}
                 >
                   <Button
                     onClick={() => window.open(batch.fb_group_link, "_blank")}
@@ -638,7 +734,7 @@ const StudentReveal = () => {
                 className="space-y-4 mt-8"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.1, duration: 0.5 }}
+                transition={{ delay: 1.2, duration: 0.5 }}
               >
                 <p className="text-white text-center text-lg font-medium">{t.classDetails.latestNews}</p>
                 <div className="flex items-center justify-center gap-6">
@@ -660,6 +756,15 @@ const StudentReveal = () => {
                   </a>
                 </div>
               </motion.div>
+
+              <motion.p
+                className="text-center text-lg md:text-xl text-white font-medium pt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.3, duration: 0.5 }}
+              >
+                {t.classDetails.seeYou}
+              </motion.p>
             </motion.div>
           </motion.div>
         )}
