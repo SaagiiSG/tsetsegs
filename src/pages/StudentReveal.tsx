@@ -624,7 +624,12 @@ const StudentReveal = () => {
                       const isOnline = trimmedPart.includes("Online");
 
                       // Extract the schedule without the subject label
-                      const scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
+                      let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
+                      
+                      // Add "Бямба" prefix to English classes if they don't have a day specified
+                      if (isEnglish && !scheduleText.includes("Бямба") && !scheduleText.includes("Даваа") && !scheduleText.includes("Маягмар")) {
+                        scheduleText = "Бямба " + scheduleText;
+                      }
 
                       return (
                         <div key={index}>
