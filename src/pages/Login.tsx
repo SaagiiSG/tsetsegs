@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,29 +16,16 @@ export default function Login() {
   const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const hasHandledAuth = useRef(false);
 
   useEffect(() => {
-    // Reset the flag when user logs out
-    if (!user) {
-      hasHandledAuth.current = false;
-      return;
-    }
-
-    // Only proceed when auth loading is complete and we haven't handled this login yet
-    if (authLoading || hasHandledAuth.current) return;
+    // Wait for auth to finish loading
+    if (authLoading) return;
     
-    hasHandledAuth.current = true;
-    if (isAdmin) {
+    // If user is logged in and is admin, redirect
+    if (user && isAdmin) {
       navigate('/admin');
-    } else {
-      toast({
-        title: "Access Pending",
-        description: "Your account needs admin approval. Please contact an administrator.",
-        variant: "destructive"
-      });
     }
-  }, [user, isAdmin, authLoading, navigate, toast]);
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +74,7 @@ export default function Login() {
             title: "Login Successful",
             description: "Welcome back!"
           });
+          // Navigation will happen via useEffect when isAdmin is loaded
         }
       }
     } catch (error) {
