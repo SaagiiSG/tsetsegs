@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,20 @@ export default function Login() {
   const { signIn, signUp, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const hasHandledAuth = useRef(false);
 
   useEffect(() => {
-    // Only proceed when loading is complete
-    if (isLoading) return;
+    // Reset the flag when user logs out
+    if (!user) {
+      hasHandledAuth.current = false;
+      return;
+    }
+
+    // Only proceed when loading is complete and we haven't handled this login yet
+    if (isLoading || hasHandledAuth.current) return;
     
     if (user) {
+      hasHandledAuth.current = true;
       if (isAdmin) {
         navigate('/admin');
       } else {
