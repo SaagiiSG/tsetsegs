@@ -37,17 +37,17 @@ All colors MUST be HSL.
     --ring: 345 75% 65%;
 
     --radius: 1rem;
-    
+
     --gradient-petal: linear-gradient(135deg, hsl(345 75% 65%), hsl(25 85% 70%));
     --gradient-soft: linear-gradient(180deg, hsl(350 25% 98%), hsl(345 30% 96%));
     --shadow-soft: 0 4px 24px -8px hsl(345 75% 65% / 0.15);
     --shadow-glow: 0 0 40px hsl(345 75% 65% / 0.2);
-    
+
     --gold: 43 88% 58%;
     --gold-glow: 43 95% 68%;
     --beige: 42 47% 95%;
     --cream: 45 100% 98%;
-    
+
     --reveal-bg: 0 0% 5%;
     --reveal-grid: 43 88% 58%;
 
@@ -112,7 +112,9 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -121,6 +123,6 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#333333] text-foreground;
   }
 }
