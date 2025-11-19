@@ -66,7 +66,7 @@ const translations = {
       location: "Location",
       platform: "Platform",
       discord: "Discord",
-      address: "Їх Наяд Зүүн Өндөр",
+      address: "Их Наяд Зүүн Өндөр",
       floor11: "11th Floor",
       floor9: "9th Floor",
       whatToBring: "What to Bring",
@@ -631,9 +631,14 @@ const StudentReveal = () => {
 
                       // Extract the schedule without the subject label
                       let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
-                      
+
                       // Add "Бямба" prefix to English classes if they don't have a day specified
-                      if (isEnglish && !scheduleText.includes("Бямба") && !scheduleText.includes("Даваа") && !scheduleText.includes("Мягмар")) {
+                      if (
+                        isEnglish &&
+                        !scheduleText.includes("Бямба") &&
+                        !scheduleText.includes("Даваа") &&
+                        !scheduleText.includes("Мягмар")
+                      ) {
                         scheduleText = "Бямба " + scheduleText;
                       }
 
@@ -696,7 +701,7 @@ const StudentReveal = () => {
                 <div className="flex-1 space-y-1">
                   <p className="text-white text-sm md:text-base">{t.classDetails.startDate}</p>
                   <p className="text-base md:text-xl font-semibold text-gold">
-                    {language === 'mn' 
+                    {language === "mn"
                       ? (() => {
                           const date = new Date(batch.start_date);
                           const month = date.getMonth() + 1;
@@ -708,8 +713,7 @@ const StudentReveal = () => {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
-                        })
-                    }
+                        })}
                   </p>
                 </div>
               </motion.div>
