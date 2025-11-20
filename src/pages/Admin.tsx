@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BatchCard } from '@/components/admin/BatchCard';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
+import { SetupTeacherAccounts } from '@/components/admin/SetupTeacherAccounts';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { LogOut, GraduationCap, Users } from 'lucide-react';
 
@@ -123,7 +124,8 @@ const Admin = () => {
             <CreateBatchForm onSuccess={fetchBatches} />
           </TabsContent>
 
-          <TabsContent value="teachers">
+          <TabsContent value="teachers" className="space-y-4">
+            <SetupTeacherAccounts />
             <TeacherManagement />
           </TabsContent>
 
