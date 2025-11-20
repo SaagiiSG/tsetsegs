@@ -18,11 +18,8 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Wait for auth to finish loading
-    if (authLoading) return;
-    
     // If user is logged in and is admin, redirect
-    if (user && isAdmin) {
+    if (!authLoading && user && isAdmin) {
       navigate('/admin');
     }
   }, [user, isAdmin, authLoading, navigate]);
