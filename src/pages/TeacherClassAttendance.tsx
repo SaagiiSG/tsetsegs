@@ -375,7 +375,7 @@ export default function TeacherClassAttendance() {
                                 <SelectTrigger className="w-[90px] h-8 text-xs">
                                   <SelectValue placeholder="-" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-background z-50">
+                                <SelectContent className="bg-background z-50 pointer-events-auto">
                                   <SelectItem value="present" className="text-xs">✓ Present</SelectItem>
                                   <SelectItem value="late" className="text-xs">⏰ Late</SelectItem>
                                   <SelectItem value="absent" className="text-xs">✗ Absent</SelectItem>
