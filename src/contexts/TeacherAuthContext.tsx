@@ -114,7 +114,14 @@ export function TeacherAuthProvider({ children }: { children: ReactNode }) {
           .update({ last_login: new Date().toISOString() })
           .eq('username', username);
 
-        return { error: null, needsPasswordChange };
+        // Get fresh temporary_password status after update
+        const { data: teacherData } = await supabase
+          .from('teachers')
+          .select('temporary_password')
+          .eq('username', username)
+          .maybeSingle();
+
+        return { error: null, needsPasswordChange: teacherData?.temporary_password || false };
       }
 
       return { error: { message: 'Login failed' } };
