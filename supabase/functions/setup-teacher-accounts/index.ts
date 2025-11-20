@@ -64,17 +64,20 @@ serve(async (req) => {
           continue
         }
 
-        // Update teacher record
+        // Update teacher record with proper RLS bypass
         const { error: updateError } = await supabaseAdmin
           .from('teachers')
           .update({
             username,
             password_hash: 'managed_by_supabase_auth',
-            temporary_password: false, // These are permanent passwords
+            temporary_password: false,
           })
           .eq('id', teacher.id)
 
-        if (updateError) throw updateError
+        if (updateError) {
+          console.error('Update error:', updateError)
+          throw updateError
+        }
 
         // Add teacher role
         const { error: roleError } = await supabaseAdmin
