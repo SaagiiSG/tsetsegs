@@ -19,21 +19,21 @@ export type Database = {
           batch_id: string
           created_at: string | null
           id: string
-          session_1: boolean | null
-          session_10: boolean | null
-          session_11: boolean | null
-          session_12: boolean | null
-          session_13: boolean | null
-          session_14: boolean | null
-          session_15: boolean | null
-          session_2: boolean | null
-          session_3: boolean | null
-          session_4: boolean | null
-          session_5: boolean | null
-          session_6: boolean | null
-          session_7: boolean | null
-          session_8: boolean | null
-          session_9: boolean | null
+          session_1: Database["public"]["Enums"]["attendance_status"] | null
+          session_10: Database["public"]["Enums"]["attendance_status"] | null
+          session_11: Database["public"]["Enums"]["attendance_status"] | null
+          session_12: Database["public"]["Enums"]["attendance_status"] | null
+          session_13: Database["public"]["Enums"]["attendance_status"] | null
+          session_14: Database["public"]["Enums"]["attendance_status"] | null
+          session_15: Database["public"]["Enums"]["attendance_status"] | null
+          session_2: Database["public"]["Enums"]["attendance_status"] | null
+          session_3: Database["public"]["Enums"]["attendance_status"] | null
+          session_4: Database["public"]["Enums"]["attendance_status"] | null
+          session_5: Database["public"]["Enums"]["attendance_status"] | null
+          session_6: Database["public"]["Enums"]["attendance_status"] | null
+          session_7: Database["public"]["Enums"]["attendance_status"] | null
+          session_8: Database["public"]["Enums"]["attendance_status"] | null
+          session_9: Database["public"]["Enums"]["attendance_status"] | null
           student_id: string
           total_attended: number | null
           updated_at: string | null
@@ -42,21 +42,21 @@ export type Database = {
           batch_id: string
           created_at?: string | null
           id?: string
-          session_1?: boolean | null
-          session_10?: boolean | null
-          session_11?: boolean | null
-          session_12?: boolean | null
-          session_13?: boolean | null
-          session_14?: boolean | null
-          session_15?: boolean | null
-          session_2?: boolean | null
-          session_3?: boolean | null
-          session_4?: boolean | null
-          session_5?: boolean | null
-          session_6?: boolean | null
-          session_7?: boolean | null
-          session_8?: boolean | null
-          session_9?: boolean | null
+          session_1?: Database["public"]["Enums"]["attendance_status"] | null
+          session_10?: Database["public"]["Enums"]["attendance_status"] | null
+          session_11?: Database["public"]["Enums"]["attendance_status"] | null
+          session_12?: Database["public"]["Enums"]["attendance_status"] | null
+          session_13?: Database["public"]["Enums"]["attendance_status"] | null
+          session_14?: Database["public"]["Enums"]["attendance_status"] | null
+          session_15?: Database["public"]["Enums"]["attendance_status"] | null
+          session_2?: Database["public"]["Enums"]["attendance_status"] | null
+          session_3?: Database["public"]["Enums"]["attendance_status"] | null
+          session_4?: Database["public"]["Enums"]["attendance_status"] | null
+          session_5?: Database["public"]["Enums"]["attendance_status"] | null
+          session_6?: Database["public"]["Enums"]["attendance_status"] | null
+          session_7?: Database["public"]["Enums"]["attendance_status"] | null
+          session_8?: Database["public"]["Enums"]["attendance_status"] | null
+          session_9?: Database["public"]["Enums"]["attendance_status"] | null
           student_id: string
           total_attended?: number | null
           updated_at?: string | null
@@ -65,21 +65,21 @@ export type Database = {
           batch_id?: string
           created_at?: string | null
           id?: string
-          session_1?: boolean | null
-          session_10?: boolean | null
-          session_11?: boolean | null
-          session_12?: boolean | null
-          session_13?: boolean | null
-          session_14?: boolean | null
-          session_15?: boolean | null
-          session_2?: boolean | null
-          session_3?: boolean | null
-          session_4?: boolean | null
-          session_5?: boolean | null
-          session_6?: boolean | null
-          session_7?: boolean | null
-          session_8?: boolean | null
-          session_9?: boolean | null
+          session_1?: Database["public"]["Enums"]["attendance_status"] | null
+          session_10?: Database["public"]["Enums"]["attendance_status"] | null
+          session_11?: Database["public"]["Enums"]["attendance_status"] | null
+          session_12?: Database["public"]["Enums"]["attendance_status"] | null
+          session_13?: Database["public"]["Enums"]["attendance_status"] | null
+          session_14?: Database["public"]["Enums"]["attendance_status"] | null
+          session_15?: Database["public"]["Enums"]["attendance_status"] | null
+          session_2?: Database["public"]["Enums"]["attendance_status"] | null
+          session_3?: Database["public"]["Enums"]["attendance_status"] | null
+          session_4?: Database["public"]["Enums"]["attendance_status"] | null
+          session_5?: Database["public"]["Enums"]["attendance_status"] | null
+          session_6?: Database["public"]["Enums"]["attendance_status"] | null
+          session_7?: Database["public"]["Enums"]["attendance_status"] | null
+          session_8?: Database["public"]["Enums"]["attendance_status"] | null
+          session_9?: Database["public"]["Enums"]["attendance_status"] | null
           student_id?: string
           total_attended?: number | null
           updated_at?: string | null
@@ -256,6 +256,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "teacher"
+      attendance_status: "present" | "absent" | "sick" | "late"
       room_number: "1105" | "905"
       teacher_name: "Saran-Ochir" | "Altan-Erdene" | "Manlai"
     }
@@ -386,6 +387,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "teacher"],
+      attendance_status: ["present", "absent", "sick", "late"],
       room_number: ["1105", "905"],
       teacher_name: ["Saran-Ochir", "Altan-Erdene", "Manlai"],
     },

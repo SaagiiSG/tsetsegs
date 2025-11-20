@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,21 +25,21 @@ interface Student {
 interface Attendance {
   id: string;
   student_id: string;
-  session_1: boolean;
-  session_2: boolean;
-  session_3: boolean;
-  session_4: boolean;
-  session_5: boolean;
-  session_6: boolean;
-  session_7: boolean;
-  session_8: boolean;
-  session_9: boolean;
-  session_10: boolean;
-  session_11: boolean;
-  session_12: boolean;
-  session_13: boolean;
-  session_14: boolean;
-  session_15: boolean;
+  session_1: string | null;
+  session_2: string | null;
+  session_3: string | null;
+  session_4: string | null;
+  session_5: string | null;
+  session_6: string | null;
+  session_7: string | null;
+  session_8: string | null;
+  session_9: string | null;
+  session_10: string | null;
+  session_11: string | null;
+  session_12: string | null;
+  session_13: string | null;
+  session_14: string | null;
+  session_15: string | null;
   total_attended: number;
 }
 
@@ -135,17 +135,16 @@ export default function TeacherClassAttendance() {
     }
   };
 
-  const toggleAttendance = async (studentId: string, session: number) => {
+  const updateAttendance = async (studentId: string, session: number, status: string) => {
     const attendanceRecord = attendance[studentId];
     if (!attendanceRecord) return;
 
     const sessionKey = `session_${session}` as keyof Attendance;
-    const newValue = !attendanceRecord[sessionKey];
 
     try {
       const { error } = await supabase
         .from('attendance')
-        .update({ [sessionKey]: newValue })
+        .update({ [sessionKey]: status })
         .eq('id', attendanceRecord.id);
 
       if (error) throw error;
@@ -155,16 +154,12 @@ export default function TeacherClassAttendance() {
         ...prev,
         [studentId]: {
           ...prev[studentId],
-          [sessionKey]: newValue,
+          [sessionKey]: status,
         },
       }));
 
-      // Show subtle saved indicator
-      toast({
-        title: 'Saved',
-        description: `Attendance updated`,
-        duration: 1500,
-      });
+      // Refresh to get updated total_attended
+      fetchData();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -369,14 +364,24 @@ export default function TeacherClassAttendance() {
                         <td className="p-3">{student.phone}</td>
                         {Array.from({ length: 15 }, (_, i) => {
                           const sessionKey = `session_${i + 1}` as keyof Attendance;
-                          const isChecked = !!studentAttendance?.[sessionKey];
+                          const status = studentAttendance?.[sessionKey] as string | null;
                           
                           return (
                             <td key={i} className="p-2 text-center">
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={() => toggleAttendance(student.id, i + 1)}
-                              />
+                              <Select
+                                value={status || ''}
+                                onValueChange={(value) => updateAttendance(student.id, i + 1, value)}
+                              >
+                                <SelectTrigger className="w-[90px] h-8 text-xs">
+                                  <SelectValue placeholder="-" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background z-50">
+                                  <SelectItem value="present" className="text-xs">✓ Present</SelectItem>
+                                  <SelectItem value="late" className="text-xs">⏰ Late</SelectItem>
+                                  <SelectItem value="absent" className="text-xs">✗ Absent</SelectItem>
+                                  <SelectItem value="sick" className="text-xs">🤒 Sick</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </td>
                           );
                         })}
@@ -450,19 +455,40 @@ export default function TeacherClassAttendance() {
         </Card>
 
         <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-          <h3 className="font-semibold mb-2">Attendance Legend:</h3>
+          <h3 className="font-semibold mb-2">Attendance Status Options:</h3>
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-green-600 font-bold">Green (13-15):</span>
-              <span>Excellent attendance</span>
+              <span className="font-bold">✓ Present:</span>
+              <span>Student attended (counts toward total)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-yellow-600 font-bold">Yellow (8-12):</span>
-              <span>Good attendance</span>
+              <span className="font-bold">⏰ Late:</span>
+              <span>Student arrived late (counts toward total)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-red-600 font-bold">Red (&lt;8):</span>
-              <span>Needs improvement</span>
+              <span className="font-bold">✗ Absent:</span>
+              <span>Student did not attend</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">🤒 Sick:</span>
+              <span>Student was sick/excused</span>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-border">
+            <h4 className="font-semibold mb-2">Attendance Legend:</h4>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600 font-bold">Green (13-15):</span>
+                <span>Excellent attendance</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-600 font-bold">Yellow (8-12):</span>
+                <span>Good attendance</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-red-600 font-bold">Red (&lt;8):</span>
+                <span>Needs improvement</span>
+              </div>
             </div>
           </div>
         </div>
