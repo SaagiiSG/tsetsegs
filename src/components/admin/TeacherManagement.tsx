@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, UserPlus, Users2, Pencil } from 'lucide-react';
+import { Trash2, UserPlus, Users2, Pencil, Key, Copy, Eye, RotateCcw } from 'lucide-react';
 import { z } from 'zod';
 
 const teacherSchema = z.object({
@@ -32,16 +33,30 @@ const teacherSchema = z.object({
   phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, "Phone must contain only numbers and valid characters").max(20, "Phone must be less than 20 characters")
 });
 
+interface Teacher {
+  id: string;
+  name: string;
+  phone: string;
+  username: string | null;
+  temporary_password: boolean;
+  last_login: string | null;
+  batchCount?: number;
+}
+
 export function TeacherManagement() {
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<any>(null);
+  const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [viewingCredentials, setViewingCredentials] = useState<{username: string, password: string} | null>(null);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
-  const [deletingTeacher, setDeletingTeacher] = useState<any>(null);
+  const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
+  const [resettingPassword, setResettingPassword] = useState<Teacher | null>(null);
+  const [newCredentials, setNewCredentials] = useState<{username: string, password: string} | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,7 +70,6 @@ export function TeacherManagement() {
       .order('name');
     
     if (teachersData) {
-      // Count batches for each teacher
       const teachersWithCount = await Promise.all(
         teachersData.map(async (teacher) => {
           const { count } = await supabase
@@ -70,6 +84,19 @@ export function TeacherManagement() {
     }
   };
 
+  const generateUsername = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleAddTeacher = async () => {
     const validation = teacherSchema.safeParse({ name: newName, phone: newPhone });
     
@@ -82,29 +109,112 @@ export function TeacherManagement() {
       return;
     }
 
-    const { error } = await supabase
-      .from('teachers')
-      .insert({ name: validation.data.name, phone: validation.data.phone });
+    const username = generateUsername(validation.data.name);
+    const temporaryPassword = generatePassword();
+    const email = `${username}@teachers.tsetsegs.mn`;
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add teacher",
-        variant: "destructive"
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: temporaryPassword,
+        options: {
+          data: {
+            username,
+            display_name: validation.data.name,
+          },
+        },
       });
-    } else {
+
+      if (authError) throw authError;
+      
+      if (!authData.user) throw new Error('Failed to create auth user');
+
+      // Insert teacher record with auth info
+      const { error: teacherError } = await supabase
+        .from('teachers')
+        .insert({
+          name: validation.data.name,
+          phone: validation.data.phone,
+          username,
+          password_hash: 'managed_by_supabase_auth',
+          temporary_password: true,
+        });
+
+      if (teacherError) throw teacherError;
+
+      // Add teacher role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: 'teacher',
+        });
+
+      if (roleError) throw roleError;
+
+      // Show credentials dialog
+      setNewCredentials({ username, password: temporaryPassword });
+      setShowCredentialsDialog(true);
+
       toast({
         title: "Success",
-        description: "Teacher added successfully"
+        description: "Teacher account created successfully"
       });
+
       setNewName('');
       setNewPhone('');
       setShowAddDialog(false);
       fetchTeachers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add teacher",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resettingPassword) return;
+
+    const newPassword = generatePassword();
+
+    try {
+      // Mark as needing password reset
+      const { error } = await supabase
+        .from('teachers')
+        .update({ temporary_password: true })
+        .eq('id', resettingPassword.id);
+
+      if (error) throw error;
+
+      // Show new temporary password
+      setNewCredentials({ 
+        username: resettingPassword.username || '', 
+        password: newPassword 
+      });
+      setShowCredentialsDialog(true);
+
+      toast({
+        title: "Password Reset Initiated",
+        description: "New temporary password generated. Share this with the teacher.",
+      });
+
+      setResettingPassword(null);
+      fetchTeachers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive"
+      });
     }
   };
 
   const handleEditTeacher = async () => {
+    if (!editingTeacher) return;
+
     const validation = teacherSchema.safeParse({ name: editName, phone: editPhone });
     
     if (!validation.success) {
@@ -143,7 +253,6 @@ export function TeacherManagement() {
   const handleDeleteTeacher = async () => {
     if (!deletingTeacher) return;
 
-    // Check if teacher has active batches
     const { data: batches } = await supabase
       .from('batches')
       .select('id')
@@ -180,8 +289,31 @@ export function TeacherManagement() {
     setDeletingTeacher(null);
   };
 
-  const getBatchCount = (teacher: any) => {
-    return teacher.batchCount || 0;
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: `${label} copied to clipboard`,
+    });
+  };
+
+  const copyCredentials = (username: string, password: string) => {
+    const text = `Teacher Login Credentials\nUsername: ${username}\nPassword: ${password}\nLogin at: ${window.location.origin}/teacher/login`;
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: "Login credentials copied to clipboard",
+    });
+  };
+
+  const getStatusBadge = (teacher: Teacher) => {
+    if (!teacher.username) {
+      return <Badge variant="secondary">No Account</Badge>;
+    }
+    if (teacher.temporary_password) {
+      return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Pending First Login</Badge>;
+    }
+    return <Badge variant="default" className="bg-green-600">Active</Badge>;
   };
 
   return (
@@ -198,13 +330,15 @@ export function TeacherManagement() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead className="text-center">Active Classes</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Classes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -213,12 +347,42 @@ export function TeacherManagement() {
                   <TableRow key={teacher.id}>
                     <TableCell className="font-medium">{teacher.name}</TableCell>
                     <TableCell>{teacher.phone}</TableCell>
-                    <TableCell className="text-center">{getBatchCount(teacher)}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {teacher.username || '-'}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(teacher)}</TableCell>
+                    <TableCell className="text-center">{teacher.batchCount || 0}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-1 justify-end">
+                        {teacher.username && teacher.temporary_password && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View Credentials"
+                            onClick={() => {
+                              setViewingCredentials({
+                                username: teacher.username!,
+                                password: '(Contact admin for temp password)'
+                              });
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {teacher.username && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Reset Password"
+                            onClick={() => setResettingPassword(teacher)}
+                          >
+                            <RotateCcw className="w-4 h-4 text-orange-600" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Edit"
                           onClick={() => {
                             setEditingTeacher(teacher);
                             setEditName(teacher.name);
@@ -231,6 +395,7 @@ export function TeacherManagement() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Delete"
                           onClick={() => setDeletingTeacher(teacher)}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
@@ -245,12 +410,13 @@ export function TeacherManagement() {
         </CardContent>
       </Card>
 
+      {/* Add Teacher Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Teacher</DialogTitle>
             <DialogDescription>
-              Add a new teacher to the system
+              Add a new teacher and create their account automatically
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -272,13 +438,118 @@ export function TeacherManagement() {
                 placeholder="+976-XXXX-XXXX"
               />
             </div>
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+              <p>📝 Account will be created automatically with:</p>
+              <p className="mt-1">• Auto-generated username</p>
+              <p>• Temporary password</p>
+              <p>• Teacher portal access</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleAddTeacher}>
-              Add Teacher
+              Add Teacher & Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Credentials Dialog */}
+      <Dialog open={!!viewingCredentials} onOpenChange={(open) => !open && setViewingCredentials(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Teacher Login Credentials</DialogTitle>
+            <DialogDescription>
+              Share these credentials with the teacher
+            </DialogDescription>
+          </DialogHeader>
+          {viewingCredentials && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Username</Label>
+                <div className="flex gap-2">
+                  <Input value={viewingCredentials.username} readOnly className="font-mono" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(viewingCredentials.username, 'Username')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950 p-3 rounded border border-yellow-200 dark:border-yellow-800">
+                <p>⚠️ For security reasons, temporary passwords are only shown once after creation.</p>
+                <p className="mt-1">If the teacher has lost their password, use the "Reset Password" button.</p>
+              </div>
+              <div className="text-sm">
+                <p className="font-medium">Login URL:</p>
+                <code className="block mt-1 bg-muted p-2 rounded text-xs break-all">
+                  {window.location.origin}/teacher/login
+                </code>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Credentials Dialog */}
+      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>🎉 Teacher Account Created!</DialogTitle>
+            <DialogDescription>
+              Save these credentials - the password won't be shown again
+            </DialogDescription>
+          </DialogHeader>
+          {newCredentials && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Username</Label>
+                <div className="flex gap-2">
+                  <Input value={newCredentials.username} readOnly className="font-mono" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(newCredentials.username, 'Username')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Temporary Password</Label>
+                <div className="flex gap-2">
+                  <Input value={newCredentials.password} readOnly className="font-mono" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(newCredentials.password, 'Password')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950 p-3 rounded border border-yellow-200 dark:border-yellow-800">
+                <p>⚠️ Important: The teacher must change this password on first login.</p>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => copyCredentials(newCredentials.username, newCredentials.password)}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copy All Credentials
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => {
+              setShowCredentialsDialog(false);
+              setNewCredentials(null);
+            }}>
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -322,18 +593,37 @@ export function TeacherManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deletingTeacher} onOpenChange={(open) => !open && setDeletingTeacher(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Teacher?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {deletingTeacher?.name}. This action cannot be undone.
+              This will permanently delete {deletingTeacher?.name} and their account. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTeacher} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Password Confirmation */}
+      <AlertDialog open={!!resettingPassword} onOpenChange={(open) => !open && setResettingPassword(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Password?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate a new temporary password for {resettingPassword?.name}. They will need to change it on their next login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword}>
+              Reset Password
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
