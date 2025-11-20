@@ -65,10 +65,20 @@ export function TeacherManagement() {
   }, []);
 
   const fetchTeachers = async () => {
-    const { data: teachersData } = await supabase
+    const { data: teachersData, error } = await supabase
       .from('teachers')
       .select('*')
       .order('name');
+    
+    if (error) {
+      console.error('Error fetching teachers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load teachers. Please refresh the page.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (teachersData) {
       const teachersWithCount = await Promise.all(
