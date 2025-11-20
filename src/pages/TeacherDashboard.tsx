@@ -17,18 +17,23 @@ interface Batch {
 }
 
 export default function TeacherDashboard() {
-  const { teacherName, signOut } = useTeacherAuth();
+  const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchBatches();
-  }, [teacherName]);
+    if (!authLoading) {
+      fetchBatches();
+    }
+  }, [teacherName, authLoading]);
 
   const fetchBatches = async () => {
-    if (!teacherName) return;
+    if (!teacherName) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
