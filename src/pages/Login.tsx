@@ -20,9 +20,21 @@ export default function Login() {
   useEffect(() => {
     // If user is logged in and is admin, redirect
     if (!authLoading && user && isAdmin) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!"
+      });
       navigate('/admin');
+    } else if (!authLoading && user && !isAdmin) {
+      // User logged in but is not admin
+      setIsLoading(false);
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin privileges. Please contact an administrator.",
+        variant: "destructive"
+      });
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +69,7 @@ export default function Login() {
           setEmail('');
           setPassword('');
         }
+        setIsLoading(false);
       } else {
         const { error } = await signIn(email, password);
         
@@ -66,12 +79,10 @@ export default function Login() {
             description: error.message,
             variant: "destructive"
           });
+          setIsLoading(false);
         } else {
-          toast({
-            title: "Login Successful",
-            description: "Welcome back!"
-          });
-          // Navigation will happen via useEffect when isAdmin is loaded
+          // Don't show toast or set loading false yet - wait for role check
+          // The useEffect will handle navigation once isAdmin is determined
         }
       }
     } catch (error) {
@@ -80,7 +91,6 @@ export default function Login() {
         description: "An unexpected error occurred.",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
