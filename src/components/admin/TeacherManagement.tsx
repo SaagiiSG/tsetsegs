@@ -41,6 +41,7 @@ interface Teacher {
   temporary_password: boolean;
   last_login: string | null;
   batchCount?: number;
+  isAdmin?: boolean;
 }
 
 export function TeacherManagement() {
@@ -77,7 +78,10 @@ export function TeacherManagement() {
             .select('*', { count: 'exact', head: true })
             .eq('teacher', teacher.name);
           
-          return { ...teacher, batchCount: count || 0 };
+          // Note: Cannot reliably check admin status from client without service role
+          // Admin status will show "No Account" for now if they don't have teacher portal account
+          
+          return { ...teacher, batchCount: count || 0, isAdmin: false };
         })
       );
       setTeachers(teachersWithCount);
@@ -308,7 +312,7 @@ export function TeacherManagement() {
 
   const getStatusBadge = (teacher: Teacher) => {
     if (!teacher.username) {
-      return <Badge variant="secondary">No Account</Badge>;
+      return <Badge variant="secondary">No Portal Account</Badge>;
     }
     if (teacher.temporary_password) {
       return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Pending First Login</Badge>;
@@ -331,6 +335,14 @@ export function TeacherManagement() {
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-x-auto">
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-t-lg border-b border-blue-200 dark:border-blue-800">
+              <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">ℹ️ About Teacher Accounts:</h3>
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Teachers listed here are those who teach classes. Admin users (like you) who also teach can be added to this list 
+                to create a separate teacher portal account for accessing the Teacher Dashboard. Admin login remains at /login, 
+                Teacher Portal login is at /teacher/login.
+              </p>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>

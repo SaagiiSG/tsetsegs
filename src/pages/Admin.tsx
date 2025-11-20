@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,15 +9,19 @@ import { BatchCard } from '@/components/admin/BatchCard';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
-import { LogOut, GraduationCap } from 'lucide-react';
+import { LogOut, GraduationCap, Users } from 'lucide-react';
 
 const Admin = () => {
   const [batches, setBatches] = useState<any[]>([]);
-  const { signOut } = useAuth();
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [teacherName, setTeacherName] = useState<string | null>(null);
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBatches();
-  }, []);
+    checkIfTeacher();
+  }, [user]);
 
   const fetchBatches = async () => {
     const { data } = await supabase
@@ -29,6 +34,29 @@ const Admin = () => {
 
     if (data) {
       setBatches(data);
+    }
+  };
+
+  const checkIfTeacher = async () => {
+    if (!user?.email) return;
+
+    // Check if the admin's email matches any teacher in the system
+    // For example, if their email is "saranochir.s@gmail.com", check for teacher "Saran-Ochir"
+    const { data: teachers } = await supabase
+      .from('teachers')
+      .select('name, username')
+      .ilike('phone', `%${user.email.split('@')[0]}%`); // Basic check
+
+    // Also check by teacher name matching user's display name
+    const { data: allTeachers } = await supabase
+      .from('teachers')
+      .select('name, username');
+
+    if (allTeachers && allTeachers.length > 0) {
+      // For now, we'll show the teacher portal link if there are any teachers
+      // Admins can access any teacher's view if needed
+      setIsTeacher(true);
+      setTeacherName(allTeachers[0].name);
     }
   };
 
@@ -45,10 +73,18 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground">Admin Dashboard</p>
             </div>
           </div>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex gap-2">
+            {isTeacher && (
+              <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
+                <Users className="w-4 h-4 mr-2" />
+                Teacher Portal
+              </Button>
+            )}
+            <Button variant="outline" onClick={signOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 

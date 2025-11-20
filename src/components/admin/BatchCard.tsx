@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2, MessageSquare, Pencil } from 'lucide-react';
 import { BatchStudentsTable } from './BatchStudentsTable';
+import { EditBatchDialog } from './EditBatchDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -28,6 +29,7 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSmsTemplate, setShowSmsTemplate] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
   const handleCopyLink = () => {
@@ -177,6 +179,10 @@ Class Info: ${batchLink}
         {isExpanded && (
           <CardContent className="space-y-4 pt-0">
             <div className="flex gap-2 flex-wrap">
+              <Button variant="default" size="sm" onClick={() => setShowEditDialog(true)}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit Batch
+              </Button>
               <Button variant="outline" size="sm" onClick={handleCopyLink}>
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Link
@@ -242,6 +248,13 @@ Class Info: ${batchLink}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditBatchDialog
+        batch={batch}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onUpdate={onUpdate}
+      />
     </>
   );
 }
