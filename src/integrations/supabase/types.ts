@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          batch_id: string
+          created_at: string | null
+          id: string
+          session_1: boolean | null
+          session_10: boolean | null
+          session_11: boolean | null
+          session_12: boolean | null
+          session_13: boolean | null
+          session_14: boolean | null
+          session_15: boolean | null
+          session_2: boolean | null
+          session_3: boolean | null
+          session_4: boolean | null
+          session_5: boolean | null
+          session_6: boolean | null
+          session_7: boolean | null
+          session_8: boolean | null
+          session_9: boolean | null
+          student_id: string
+          total_attended: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string | null
+          id?: string
+          session_1?: boolean | null
+          session_10?: boolean | null
+          session_11?: boolean | null
+          session_12?: boolean | null
+          session_13?: boolean | null
+          session_14?: boolean | null
+          session_15?: boolean | null
+          session_2?: boolean | null
+          session_3?: boolean | null
+          session_4?: boolean | null
+          session_5?: boolean | null
+          session_6?: boolean | null
+          session_7?: boolean | null
+          session_8?: boolean | null
+          session_9?: boolean | null
+          student_id: string
+          total_attended?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string | null
+          id?: string
+          session_1?: boolean | null
+          session_10?: boolean | null
+          session_11?: boolean | null
+          session_12?: boolean | null
+          session_13?: boolean | null
+          session_14?: boolean | null
+          session_15?: boolean | null
+          session_2?: boolean | null
+          session_3?: boolean | null
+          session_4?: boolean | null
+          session_5?: boolean | null
+          session_6?: boolean | null
+          session_7?: boolean | null
+          session_8?: boolean | null
+          session_9?: boolean | null
+          student_id?: string
+          total_attended?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batches: {
         Row: {
           batch_name: string | null
@@ -95,20 +182,32 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          last_login: string | null
           name: string
+          password_hash: string | null
           phone: string
+          temporary_password: boolean | null
+          username: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
+          last_login?: string | null
           name: string
+          password_hash?: string | null
           phone: string
+          temporary_password?: boolean | null
+          username?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          last_login?: string | null
           name?: string
+          password_hash?: string | null
           phone?: string
+          temporary_password?: boolean | null
+          username?: string | null
         }
         Relationships: []
       }
