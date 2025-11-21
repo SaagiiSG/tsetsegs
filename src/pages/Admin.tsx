@@ -34,35 +34,35 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-      <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger />
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <GraduationCap className="w-6 h-6 text-primary" />
+    <SidebarProvider>
+      <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+        <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <GraduationCap className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Flowers Talent Agency</h1>
+                <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Flowers Talent Agency</h1>
-              <p className="text-sm text-muted-foreground">Admin Dashboard</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {isTeacher && (
-              <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
-                <Users className="w-4 h-4 mr-2" />
-                Teacher Portal
+            <div className="flex gap-2">
+              {isTeacher && (
+                <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Teacher Portal
+                </Button>
+              )}
+              <Button variant="outline" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
-            )}
-            <Button variant="outline" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <SidebarProvider>
         <div className="flex w-full">
           <AdminSidebar />
           <main className="flex-1 container mx-auto px-4 py-8">
@@ -82,8 +82,8 @@ const Admin = () => {
             </Routes>
           </main>
         </div>
-      </SidebarProvider>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
