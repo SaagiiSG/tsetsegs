@@ -45,19 +45,7 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const dragX = useMotionValue(0);
-  
-  // Transform drag position to next card animation values
-  const nextCardX = useTransform(dragX, [-200, 0], [0, 25]);
-  const nextCardRotate = useTransform(dragX, [-200, 0], [0, 10]);
-  const nextCardScale = useTransform(dragX, [-200, 0], [1, 0.95]);
-  const nextCardOpacity = useTransform(dragX, [-200, 0], [1, 0.4]);
-  
-  // Current card tilts and goes behind when dragged left
-  const currentCardRotate = useTransform(dragX, [-200, 0], [-10, 0]);
-  const currentCardZIndex = useTransform(dragX, [-100, 0], [0, 2]);
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -167,32 +155,27 @@ export default function TeacherStudentCards() {
 
   const handlePrevious = () => {
     if (currentIndex > 0 && !isAnimating) {
-      setDirection("right");
       setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentIndex(currentIndex - 1);
-        setIsAnimating(false);
-      }, 300);
+      setCurrentIndex(currentIndex - 1);
+      setTimeout(() => setIsAnimating(false), 400);
     }
   };
 
   const handleNext = () => {
     if (currentIndex < students.length - 1 && !isAnimating) {
-      setDirection("left");
       setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentIndex(currentIndex + 1);
-        setIsAnimating(false);
-      }, 300);
+      setCurrentIndex(currentIndex + 1);
+      setTimeout(() => setIsAnimating(false), 400);
     }
   };
 
   const handleDragEnd = (_e: any, info: PanInfo) => {
     const threshold = 100;
+    const velocity = info.velocity.x;
     
-    if (info.offset.x > threshold && currentIndex > 0 && !isAnimating) {
+    if ((info.offset.x > threshold || velocity > 500) && currentIndex > 0 && !isAnimating) {
       handlePrevious();
-    } else if (info.offset.x < -threshold && currentIndex < students.length - 1 && !isAnimating) {
+    } else if ((info.offset.x < -threshold || velocity < -500) && currentIndex < students.length - 1 && !isAnimating) {
       handleNext();
     }
   };
@@ -338,7 +321,14 @@ export default function TeacherStudentCards() {
   }
 
   const currentStudent = students[currentIndex];
+  const prevStudent = currentIndex > 0 ? students[currentIndex - 1] : null;
   const nextStudent = currentIndex < students.length - 1 ? students[currentIndex + 1] : null;
+
+  // Prepare data for the 3 cards we'll render
+  const getStudentData = (index: number) => {
+    if (index < 0 || index >= students.length) return null;
+    return { student: students[index], index };
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -373,74 +363,77 @@ export default function TeacherStudentCards() {
         {/* Student Card */}
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-4xl relative" style={{ touchAction: 'pan-y', minHeight: '600px' }}>
-            {/* Next card preview (behind) */}
-            {nextStudent && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                style={{ 
-                  zIndex: 1,
-                  x: nextCardX,
-                  rotate: nextCardRotate,
-                  scale: nextCardScale,
-                  opacity: nextCardOpacity,
-                }}
-              >
-                <StudentCard
-                  student={nextStudent}
-                  currentIndex={currentIndex + 1}
-                  totalStudents={students.length}
-                  attendance={[]}
-                  homework={[]}
-                  practiceTests={[]}
-                  onUpdateStudent={() => {}}
-                  onAttendanceChange={() => {}}
-                  onHomeworkChange={() => {}}
-                  onTestScoreChange={() => {}}
-                />
-              </motion.div>
-            )}
+            <AnimatePresence mode="popLayout" initial={false}>
+              {/* Previous card (bottom of stack) */}
+              {prevStudent && (
+                <motion.div
+                  key={`prev-${prevStudent.id}`}
+                  className="absolute inset-0 pointer-events-none"
+                  initial={{ scale: 0.9, opacity: 0.3, y: 20 }}
+                  animate={{ scale: 0.95, opacity: 0.5, y: 10 }}
+                  exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                  style={{ zIndex: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <StudentCard
+                    student={prevStudent}
+                    currentIndex={currentIndex - 1}
+                    totalStudents={students.length}
+                    attendance={[]}
+                    homework={[]}
+                    practiceTests={[]}
+                    onUpdateStudent={() => {}}
+                    onAttendanceChange={() => {}}
+                    onHomeworkChange={() => {}}
+                    onTestScoreChange={() => {}}
+                  />
+                </motion.div>
+              )}
 
-            {/* Current card */}
-            <AnimatePresence initial={false}>
+              {/* Next card (middle of stack) */}
+              {nextStudent && (
+                <motion.div
+                  key={`next-${nextStudent.id}`}
+                  className="absolute inset-0 pointer-events-none"
+                  initial={{ scale: 0.9, opacity: 0.3, y: 20 }}
+                  animate={{ scale: 0.95, opacity: 0.5, y: 10 }}
+                  exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                  style={{ zIndex: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <StudentCard
+                    student={nextStudent}
+                    currentIndex={currentIndex + 1}
+                    totalStudents={students.length}
+                    attendance={[]}
+                    homework={[]}
+                    practiceTests={[]}
+                    onUpdateStudent={() => {}}
+                    onAttendanceChange={() => {}}
+                    onHomeworkChange={() => {}}
+                    onTestScoreChange={() => {}}
+                  />
+                </motion.div>
+              )}
+
+              {/* Current card (top of stack) */}
               <motion.div
-                key={currentStudent.id}
-                className="relative cursor-grab"
+                key={`current-${currentStudent.id}`}
+                className="relative"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.7}
-                style={{ 
-                  x: dragX, 
-                  rotate: currentCardRotate,
-                  zIndex: currentCardZIndex,
-                }}
+                dragElastic={0.2}
                 onDragEnd={handleDragEnd}
-                initial={{
-                  opacity: direction === "left" ? 0.4 : 0,
-                  x: direction === "left" ? 25 : direction === "right" ? -300 : 0,
-                  scale: direction === "left" ? 0.95 : 0.9,
-                  rotate: direction === "left" ? 10 : 0,
-                }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                  scale: 1,
-                  rotate: 0,
-                }}
-                exit={{
+                initial={{ scale: 1, opacity: 1, x: 0 }}
+                animate={{ scale: 1, opacity: 1, x: 0 }}
+                exit={{ 
+                  x: isAnimating ? (currentIndex > 0 ? 300 : -300) : 0,
                   opacity: 0,
-                  x: direction === "left" ? -300 : 300,
-                  scale: 0.9,
-                  rotate: direction === "left" ? -10 : 10,
+                  transition: { duration: 0.3 }
                 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                }}
-                whileDrag={{
-                  cursor: "grabbing",
-                  zIndex: 2,
-                }}
+                style={{ zIndex: 2 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                whileDrag={{ cursor: "grabbing", scale: 1.02 }}
               >
                 <StudentCard
                   student={currentStudent}
