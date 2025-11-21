@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
 
 interface Student {
   id: string;
@@ -46,6 +46,13 @@ export default function TeacherStudentCards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
+  const dragX = useMotionValue(0);
+  
+  // Transform drag position to next card animation values
+  const nextCardX = useTransform(dragX, [-200, 0], [0, 25]);
+  const nextCardRotate = useTransform(dragX, [-200, 0], [0, 10]);
+  const nextCardScale = useTransform(dragX, [-200, 0], [1, 0.95]);
+  const nextCardOpacity = useTransform(dragX, [-200, 0], [1, 0.4]);
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -357,9 +364,13 @@ export default function TeacherStudentCards() {
             {nextStudent && (
               <motion.div
                 className="absolute inset-0 pointer-events-none"
-                style={{ zIndex: 0 }}
-                initial={{ scale: 0.95, x: 25, opacity: 0.4, rotate: 20 }}
-                animate={{ scale: 0.95, x: 25, opacity: 0.4, rotate: 20 }}
+                style={{ 
+                  zIndex: 0,
+                  x: nextCardX,
+                  rotate: nextCardRotate,
+                  scale: nextCardScale,
+                  opacity: nextCardOpacity,
+                }}
               >
                 <StudentCard
                   student={nextStudent}
@@ -384,27 +395,25 @@ export default function TeacherStudentCards() {
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
+                style={{ x: dragX, zIndex: 1 }}
                 onDragEnd={handleDragEnd}
                 initial={{
                   opacity: direction === "left" ? 0.4 : 0,
                   x: direction === "left" ? 25 : direction === "right" ? -300 : 0,
                   scale: direction === "left" ? 0.95 : 0.9,
-                  rotate: direction === "left" ? 20 : 0,
-                  zIndex: 1,
+                  rotate: direction === "left" ? 10 : 0,
                 }}
                 animate={{
                   opacity: 1,
                   x: 0,
                   scale: 1,
                   rotate: 0,
-                  zIndex: 1,
                 }}
                 exit={{
                   opacity: 0,
                   x: direction === "left" ? -300 : 300,
                   scale: 0.9,
-                  rotate: direction === "left" ? -20 : 20,
-                  zIndex: 0,
+                  rotate: direction === "left" ? -10 : 10,
                 }}
                 transition={{
                   type: "spring",
