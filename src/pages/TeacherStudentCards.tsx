@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
@@ -182,6 +183,18 @@ export default function TeacherStudentCards() {
     }
   };
 
+  // Calculate current week based on batch start date
+  const getCurrentWeek = () => {
+    if (!batch?.start_date) return 15; // Default to all sessions if no start date
+    
+    const startDate = new Date(batch.start_date);
+    const today = new Date();
+    const diffTime = today.getTime() - startDate.getTime();
+    const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+    
+    return Math.max(1, Math.min(diffWeeks + 1, 15)); // Between 1 and 15
+  };
+
   // Calculate alert status for each student
   const getStudentAlertStatus = (studentId: string) => {
     const studentData = studentDataMap.get(studentId);
@@ -190,18 +203,25 @@ export default function TeacherStudentCards() {
       return { hasAlert: false, missedClasses: 0, missedHomework: 0 };
     }
 
+    const currentWeek = getCurrentWeek();
     let missedClasses = 0;
     let missedHomework = 0;
 
-    // Count missed classes (absent or sick)
-    studentData.attendance.forEach(a => {
-      if (a.status === 'absent' || a.status === 'sick') {
+    // Only check sessions 1 through current week where data is marked
+    for (let i = 0; i < currentWeek; i++) {
+      const session = studentData.attendance[i];
+      const hw = studentData.homework[i];
+      
+      // Count attendance misses only if marked
+      if (session && (session.status === 'absent' || session.status === 'sick')) {
         missedClasses++;
       }
-    });
-
-    // Count incomplete homework
-    missedHomework = studentData.homework.filter(h => !h.completed).length;
+      
+      // Count homework misses only if marked as incomplete
+      if (hw && !hw.completed) {
+        missedHomework++;
+      }
+    }
 
     const hasAlert = missedClasses >= 3 || missedHomework >= 3;
     return { hasAlert, missedClasses, missedHomework };
@@ -413,20 +433,33 @@ export default function TeacherStudentCards() {
               <div className="flex">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
+                  const alertStatus = getStudentAlertStatus(student.id);
                   return (
                     <div key={student.id} className="flex-[0_0_100%] min-w-0 px-4">
-                      <StudentCard
-                        student={student}
-                        currentIndex={index}
-                        totalStudents={students.length}
-                        attendance={studentData?.attendance || []}
-                        homework={studentData?.homework || []}
-                        practiceTests={studentData?.practiceTests || []}
-                        onUpdateStudent={handleUpdateStudent}
-                        onAttendanceChange={handleAttendanceChange}
-                        onHomeworkChange={handleHomeworkChange}
-                        onTestScoreChange={handleTestScoreChange}
-                      />
+                      <Card className={alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}>
+                        {alertStatus.hasAlert && (
+                          <div className="p-4 bg-destructive/10 border-b border-destructive/30">
+                            <p className="text-sm font-medium text-destructive">
+                              ⚠️ Alert: 
+                              {alertStatus.missedClasses >= 3 && ` ${alertStatus.missedClasses} classes missed`}
+                              {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' •'}
+                              {alertStatus.missedHomework >= 3 && ` ${alertStatus.missedHomework} homework incomplete`}
+                            </p>
+                          </div>
+                        )}
+                        <StudentCard
+                          student={student}
+                          currentIndex={index}
+                          totalStudents={students.length}
+                          attendance={studentData?.attendance || []}
+                          homework={studentData?.homework || []}
+                          practiceTests={studentData?.practiceTests || []}
+                          onUpdateStudent={handleUpdateStudent}
+                          onAttendanceChange={handleAttendanceChange}
+                          onHomeworkChange={handleHomeworkChange}
+                          onTestScoreChange={handleTestScoreChange}
+                        />
+                      </Card>
                     </div>
                   );
                 })}
