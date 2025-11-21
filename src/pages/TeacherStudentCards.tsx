@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
-import { useSwipeable } from "react-swipeable";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
 interface Student {
   id: string;
@@ -45,6 +45,7 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [direction, setDirection] = useState<"left" | "right" | null>(null);
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -154,21 +155,27 @@ export default function TeacherStudentCards() {
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
+      setDirection("right");
       setCurrentIndex(currentIndex - 1);
     }
   };
 
   const handleNext = () => {
     if (currentIndex < students.length - 1) {
+      setDirection("left");
       setCurrentIndex(currentIndex + 1);
     }
   };
 
-  const handlers = useSwipeable({
-    onSwipedLeft: handleNext,
-    onSwipedRight: handlePrevious,
-    trackMouse: false,
-  });
+  const handleDragEnd = (_e: any, info: PanInfo) => {
+    const threshold = 100;
+    
+    if (info.offset.x > threshold && currentIndex > 0) {
+      handlePrevious();
+    } else if (info.offset.x < -threshold && currentIndex < students.length - 1) {
+      handleNext();
+    }
+  };
 
   const handleUpdateStudent = async (updates: Partial<Student>) => {
     const currentStudent = students[currentIndex];
@@ -343,20 +350,57 @@ export default function TeacherStudentCards() {
         </div>
 
         {/* Student Card */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4" {...handlers}>
-          <div className="w-full max-w-4xl">
-            <StudentCard
-              student={currentStudent}
-              currentIndex={currentIndex}
-              totalStudents={students.length}
-              attendance={attendance}
-              homework={homework}
-              practiceTests={practiceTests}
-              onUpdateStudent={handleUpdateStudent}
-              onAttendanceChange={handleAttendanceChange}
-              onHomeworkChange={handleHomeworkChange}
-              onTestScoreChange={handleTestScoreChange}
-            />
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-4xl relative" style={{ touchAction: 'pan-y' }}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentStudent.id}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.7}
+                onDragEnd={handleDragEnd}
+                initial={{
+                  opacity: 0,
+                  x: direction === "left" ? 300 : direction === "right" ? -300 : 0,
+                  scale: 0.9,
+                }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                  scale: 1,
+                  rotate: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  x: direction === "left" ? -300 : 300,
+                  scale: 0.9,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+                whileDrag={{
+                  cursor: "grabbing",
+                }}
+                style={{
+                  cursor: "grab",
+                }}
+              >
+                <StudentCard
+                  student={currentStudent}
+                  currentIndex={currentIndex}
+                  totalStudents={students.length}
+                  attendance={attendance}
+                  homework={homework}
+                  practiceTests={practiceTests}
+                  onUpdateStudent={handleUpdateStudent}
+                  onAttendanceChange={handleAttendanceChange}
+                  onHomeworkChange={handleHomeworkChange}
+                  onTestScoreChange={handleTestScoreChange}
+                />
+              </motion.div>
+            </AnimatePresence>
 
             {/* Navigation Buttons - Hidden on mobile (swipe instead) */}
             <div className="hidden md:flex justify-center gap-4 mt-6">
@@ -384,7 +428,7 @@ export default function TeacherStudentCards() {
 
             {/* Mobile swipe hint */}
             <div className="md:hidden text-center mt-4 text-sm text-muted-foreground">
-              Swipe left/right to navigate
+              Drag or swipe cards to navigate
             </div>
           </div>
         </div>
