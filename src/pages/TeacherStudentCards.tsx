@@ -357,43 +357,16 @@ export default function TeacherStudentCards() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <Button variant="ghost" onClick={() => navigate("/teacher/dashboard")}>
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to My Classes
-            </Button>
-            <div className="w-32" />
-          </div>
-          
-          <div className="text-center space-y-2">
-            <h1 className="text-xl font-bold">{batch?.batch_name}</h1>
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <span className="font-medium">{students.length}</span> Students
-              </div>
-              {batch?.room && (
-                <div className="flex items-center gap-1">
-                  📍 <span>{batch.room}</span>
-                </div>
-              )}
-              {batch?.start_date && (
-                <div className="flex items-center gap-1">
-                  📅 <span>Starts {new Date(batch.start_date).toLocaleDateString()}</span>
-                </div>
-              )}
-            </div>
-            {batch?.schedule && (
-              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                {batch.schedule}
-              </p>
-            )}
-          </div>
+        <div className="container mx-auto px-4 py-3">
+          <Button variant="ghost" onClick={() => navigate("/teacher/dashboard")}>
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to My Classes
+          </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-80px)]">
+      <div className="flex h-[calc(100vh-60px)]">
         {/* Sidebar - Hidden on mobile */}
         <div className="hidden lg:block">
           <StudentSidebar
