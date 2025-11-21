@@ -52,20 +52,25 @@ export default function TeacherStudentCards() {
     duration: 20,
   });
   
-  // Current student data
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
-  const [homework, setHomework] = useState<Homework[]>([]);
-  const [practiceTests, setPracticeTests] = useState<PracticeTest[]>([]);
+  // All student data mapped by student ID
+  const [studentDataMap, setStudentDataMap] = useState<Map<string, {
+    attendance: Attendance[];
+    homework: Homework[];
+    practiceTests: PracticeTest[];
+  }>>(new Map());
 
   useEffect(() => {
     fetchData();
   }, [batchId]);
 
   useEffect(() => {
+    // Fetch data for all students when students list changes
     if (students.length > 0) {
-      fetchStudentData(students[currentIndex].id);
+      students.forEach(student => {
+        fetchStudentData(student.id);
+      });
     }
-  }, [currentIndex, students]);
+  }, [students]);
 
   useEffect(() => {
     if (emblaApi) {
@@ -119,21 +124,22 @@ export default function TeacherStudentCards() {
         .eq("batch_id", batchId)
         .single();
 
+      const attendance: Attendance[] = [];
       if (attendanceData) {
-        const attendanceArray: Attendance[] = [];
         for (let i = 1; i <= 15; i++) {
-          attendanceArray.push({
+          attendance.push({
             session_number: i,
             status: (attendanceData as any)[`session_${i}`] || null,
           });
         }
-        setAttendance(attendanceArray);
       } else {
         // Initialize empty attendance
-        setAttendance(Array.from({ length: 15 }, (_, i) => ({
-          session_number: i + 1,
-          status: null,
-        })));
+        for (let i = 1; i <= 15; i++) {
+          attendance.push({
+            session_number: i,
+            status: null,
+          });
+        }
       }
 
       // Fetch homework
@@ -144,10 +150,10 @@ export default function TeacherStudentCards() {
         .eq("batch_id", batchId);
 
       const hwMap = new Map(homeworkData?.map(h => [h.session_number, h.completed]) || []);
-      setHomework(Array.from({ length: 15 }, (_, i) => ({
+      const homework: Homework[] = Array.from({ length: 15 }, (_, i) => ({
         session_number: i + 1,
         completed: hwMap.get(i + 1) || false,
-      })));
+      }));
 
       // Fetch practice tests
       const { data: testsData } = await supabase
@@ -157,10 +163,17 @@ export default function TeacherStudentCards() {
         .eq("batch_id", batchId);
 
       const testsMap = new Map(testsData?.map(t => [t.test_number, t.score]) || []);
-      setPracticeTests(Array.from({ length: 6 }, (_, i) => ({
+      const practiceTests: PracticeTest[] = Array.from({ length: 6 }, (_, i) => ({
         test_number: i + 1,
         score: testsMap.get(i + 1) || null,
-      })));
+      }));
+
+      // Update the map with this student's data
+      setStudentDataMap(prev => new Map(prev).set(studentId, {
+        attendance,
+        homework,
+        practiceTests,
+      }));
     } catch (error: any) {
       console.error("Error fetching student data:", error);
     }
@@ -216,9 +229,16 @@ export default function TeacherStudentCards() {
 
       if (error) throw error;
 
-      setAttendance(attendance.map(a =>
-        a.session_number === sessionNumber ? { ...a, status: status as any } : a
-      ));
+      // Update the student data map
+      const studentData = studentDataMap.get(currentStudent.id);
+      if (studentData) {
+        setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+          ...studentData,
+          attendance: studentData.attendance.map(a =>
+            a.session_number === sessionNumber ? { ...a, status: status as any } : a
+          ),
+        }));
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -244,9 +264,16 @@ export default function TeacherStudentCards() {
 
       if (error) throw error;
 
-      setHomework(homework.map(h =>
-        h.session_number === sessionNumber ? { ...h, completed } : h
-      ));
+      // Update the student data map
+      const studentData = studentDataMap.get(currentStudent.id);
+      if (studentData) {
+        setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+          ...studentData,
+          homework: studentData.homework.map(h =>
+            h.session_number === sessionNumber ? { ...h, completed } : h
+          ),
+        }));
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -280,9 +307,16 @@ export default function TeacherStudentCards() {
         if (error) throw error;
       }
 
-      setPracticeTests(practiceTests.map(t =>
-        t.test_number === testNumber ? { ...t, score } : t
-      ));
+      // Update the student data map
+      const studentData = studentDataMap.get(currentStudent.id);
+      if (studentData) {
+        setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+          ...studentData,
+          practiceTests: studentData.practiceTests.map(t =>
+            t.test_number === testNumber ? { ...t, score } : t
+          ),
+        }));
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -341,8 +375,11 @@ export default function TeacherStudentCards() {
         <div className="hidden lg:block">
           <StudentSidebar
             students={students}
-            currentIndex={-1}
-            onSelectStudent={setCurrentIndex}
+            currentIndex={currentIndex}
+            onSelectStudent={(index) => {
+              setCurrentIndex(index);
+              if (emblaApi) emblaApi.scrollTo(index);
+            }}
           />
         </div>
 
@@ -351,22 +388,25 @@ export default function TeacherStudentCards() {
           <div className="w-full max-w-4xl">
             <div className="overflow-hidden" ref={emblaRef}>
               <div className="flex">
-                {students.map((student, index) => (
-                  <div key={student.id} className="flex-[0_0_100%] min-w-0 px-4">
-                    <StudentCard
-                      student={student}
-                      currentIndex={index}
-                      totalStudents={students.length}
-                      attendance={index === currentIndex ? attendance : []}
-                      homework={index === currentIndex ? homework : []}
-                      practiceTests={index === currentIndex ? practiceTests : []}
-                      onUpdateStudent={index === currentIndex ? handleUpdateStudent : () => {}}
-                      onAttendanceChange={index === currentIndex ? handleAttendanceChange : () => {}}
-                      onHomeworkChange={index === currentIndex ? handleHomeworkChange : () => {}}
-                      onTestScoreChange={index === currentIndex ? handleTestScoreChange : () => {}}
-                    />
-                  </div>
-                ))}
+                {students.map((student, index) => {
+                  const studentData = studentDataMap.get(student.id);
+                  return (
+                    <div key={student.id} className="flex-[0_0_100%] min-w-0 px-4">
+                      <StudentCard
+                        student={student}
+                        currentIndex={index}
+                        totalStudents={students.length}
+                        attendance={studentData?.attendance || []}
+                        homework={studentData?.homework || []}
+                        practiceTests={studentData?.practiceTests || []}
+                        onUpdateStudent={handleUpdateStudent}
+                        onAttendanceChange={handleAttendanceChange}
+                        onHomeworkChange={handleHomeworkChange}
+                        onTestScoreChange={handleTestScoreChange}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
