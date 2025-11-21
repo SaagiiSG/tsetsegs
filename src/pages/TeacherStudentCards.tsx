@@ -57,7 +57,7 @@ export default function TeacherStudentCards() {
   
   // Current card tilts and goes behind when dragged left
   const currentCardRotate = useTransform(dragX, [-200, 0], [-10, 0]);
-  const currentCardZIndex = useTransform(dragX, [-100, 0], [0, 1]);
+  const currentCardZIndex = useTransform(dragX, [-100, 0], [0, 2]);
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -365,7 +365,7 @@ export default function TeacherStudentCards() {
         <div className="hidden lg:block">
           <StudentSidebar
             students={students}
-            currentIndex={currentIndex}
+            currentIndex={-1}
             onSelectStudent={setCurrentIndex}
           />
         </div>
@@ -378,7 +378,7 @@ export default function TeacherStudentCards() {
               <motion.div
                 className="absolute inset-0 pointer-events-none"
                 style={{ 
-                  zIndex: 0,
+                  zIndex: 1,
                   x: nextCardX,
                   rotate: nextCardRotate,
                   scale: nextCardScale,
