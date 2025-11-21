@@ -358,23 +358,21 @@ export default function TeacherStudentCards() {
               <motion.div
                 className="absolute inset-0 pointer-events-none"
                 style={{ zIndex: 0 }}
-                initial={{ scale: 0.95, y: 20, opacity: 0.5, rotate: -2 }}
-                animate={{ scale: 0.95, y: 20, opacity: 0.5, rotate: -2 }}
+                initial={{ scale: 0.95, x: 25, opacity: 0.4, rotate: 20 }}
+                animate={{ scale: 0.95, x: 25, opacity: 0.4, rotate: 20 }}
               >
-                <div className="opacity-60 blur-[1px]">
-                  <StudentCard
-                    student={nextStudent}
-                    currentIndex={currentIndex + 1}
-                    totalStudents={students.length}
-                    attendance={[]}
-                    homework={[]}
-                    practiceTests={[]}
-                    onUpdateStudent={() => {}}
-                    onAttendanceChange={() => {}}
-                    onHomeworkChange={() => {}}
-                    onTestScoreChange={() => {}}
-                  />
-                </div>
+                <StudentCard
+                  student={nextStudent}
+                  currentIndex={currentIndex + 1}
+                  totalStudents={students.length}
+                  attendance={[]}
+                  homework={[]}
+                  practiceTests={[]}
+                  onUpdateStudent={() => {}}
+                  onAttendanceChange={() => {}}
+                  onHomeworkChange={() => {}}
+                  onTestScoreChange={() => {}}
+                />
               </motion.div>
             )}
 
@@ -383,26 +381,30 @@ export default function TeacherStudentCards() {
               <motion.div
                 key={currentStudent.id}
                 className="relative cursor-grab"
-                style={{ zIndex: 1 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
                 onDragEnd={handleDragEnd}
                 initial={{
-                  opacity: 0,
-                  x: direction === "left" ? 300 : direction === "right" ? -300 : 0,
-                  scale: 0.9,
+                  opacity: direction === "left" ? 0.4 : 0,
+                  x: direction === "left" ? 25 : direction === "right" ? -300 : 0,
+                  scale: direction === "left" ? 0.95 : 0.9,
+                  rotate: direction === "left" ? 20 : 0,
+                  zIndex: 1,
                 }}
                 animate={{
                   opacity: 1,
                   x: 0,
                   scale: 1,
                   rotate: 0,
+                  zIndex: 1,
                 }}
                 exit={{
                   opacity: 0,
                   x: direction === "left" ? -300 : 300,
                   scale: 0.9,
+                  rotate: direction === "left" ? -20 : 20,
+                  zIndex: 0,
                 }}
                 transition={{
                   type: "spring",
@@ -411,6 +413,7 @@ export default function TeacherStudentCards() {
                 }}
                 whileDrag={{
                   cursor: "grabbing",
+                  zIndex: 2,
                 }}
               >
                 <StudentCard
