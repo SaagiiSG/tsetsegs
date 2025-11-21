@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit2, Check, X } from "lucide-react";
 
@@ -21,7 +20,7 @@ interface Attendance {
 
 interface Homework {
   session_number: number;
-  completed: boolean;
+  status: "completed" | "incomplete" | null;
 }
 
 interface PracticeTest {
@@ -38,7 +37,7 @@ interface StudentCardProps {
   practiceTests: PracticeTest[];
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
-  onHomeworkChange: (session: number, completed: boolean) => void;
+  onHomeworkChange: (session: number, status: string) => void;
   onTestScoreChange: (testNumber: number, score: number | null) => void;
 }
 
@@ -200,22 +199,19 @@ export function StudentCard({
                         </SelectContent>
                       </Select>
 
-                      {/* Homework Checkbox */}
-                      <div className="flex items-center gap-2 pl-2">
-                        <Checkbox
-                          id={`hw-${session.session_number}`}
-                          checked={hw?.completed || false}
-                          onCheckedChange={(checked) => 
-                            onHomeworkChange(session.session_number, checked as boolean)
-                          }
-                        />
-                        <Label
-                          htmlFor={`hw-${session.session_number}`}
-                          className="text-sm cursor-pointer"
-                        >
-                          Homework
-                        </Label>
-                      </div>
+                      {/* Homework Dropdown */}
+                      <Select
+                        value={hw?.status || ""}
+                        onValueChange={(value) => onHomeworkChange(session.session_number, value)}
+                      >
+                        <SelectTrigger className="h-9 text-sm pointer-events-auto">
+                          <SelectValue placeholder="Homework" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50 pointer-events-auto">
+                          <SelectItem value="completed">✓ Done</SelectItem>
+                          <SelectItem value="incomplete">✗ Incomplete</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 );

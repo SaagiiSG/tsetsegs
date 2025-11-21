@@ -24,7 +24,7 @@ interface Attendance {
 
 interface Homework {
   session_number: number;
-  completed: boolean | null;
+  status: "completed" | "incomplete" | null;
 }
 
 interface PracticeTest {
@@ -156,7 +156,7 @@ export default function TeacherStudentCards() {
       const hwMap = new Map(homeworkData?.map(h => [h.session_number, h.completed]) || []);
       const homework: Homework[] = Array.from({ length: 15 }, (_, i) => ({
         session_number: i + 1,
-        completed: hwMap.has(i + 1) ? hwMap.get(i + 1)! : null,
+        status: hwMap.has(i + 1) ? (hwMap.get(i + 1) ? "completed" : "incomplete") : null,
       }));
 
       // Fetch practice tests
@@ -220,9 +220,8 @@ export default function TeacherStudentCards() {
         missedClasses++;
       }
       
-      // Count homework misses - count both explicitly incomplete (false) and unmarked (null)
-      // This matches the visual checkbox state (unchecked = incomplete)
-      if (hw && hw.completed !== true) {
+      // Count homework misses - only count explicitly marked as incomplete
+      if (hw && hw.status === 'incomplete') {
         missedHomework++;
       }
     }
@@ -300,9 +299,10 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handleHomeworkChange = async (sessionNumber: number, completed: boolean) => {
+  const handleHomeworkChange = async (sessionNumber: number, status: string) => {
     const currentStudent = students[currentIndex];
     try {
+      const completed = status === "completed";
       const { error } = await supabase
         .from("homework")
         .upsert({
@@ -322,7 +322,7 @@ export default function TeacherStudentCards() {
         setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
           ...studentData,
           homework: studentData.homework.map(h =>
-            h.session_number === sessionNumber ? { ...h, completed } : h
+            h.session_number === sessionNumber ? { ...h, status: status as any } : h
           ),
         }));
       }
