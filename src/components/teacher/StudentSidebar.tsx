@@ -8,19 +8,42 @@ interface Student {
   phone: string;
 }
 
+interface Batch {
+  schedule: string;
+  start_date: string;
+}
+
 interface StudentSidebarProps {
   students: Student[];
   currentIndex: number;
   onSelectStudent: (index: number) => void;
+  batch: Batch | null;
 }
 
-export function StudentSidebar({ students, currentIndex, onSelectStudent }: StudentSidebarProps) {
+export function StudentSidebar({ students, currentIndex, onSelectStudent, batch }: StudentSidebarProps) {
   return (
     <div className="w-64 border-r bg-card h-full">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b space-y-3">
+        <h3 className="font-semibold text-sm uppercase text-muted-foreground">Class Info</h3>
+        {batch && (
+          <div className="space-y-2 text-xs">
+            <div>
+              <div className="text-muted-foreground">Schedule</div>
+              <div className="text-foreground font-medium">{batch.schedule}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Started</div>
+              <div className="text-foreground font-medium">
+                {new Date(batch.start_date).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="px-4 py-2 border-b">
         <h3 className="font-semibold text-sm uppercase text-muted-foreground">Students</h3>
       </div>
-      <ScrollArea className="h-[calc(100%-60px)]">
+      <ScrollArea className="h-[calc(100%-200px)]">
         <div className="p-2">
           {students.map((student, index) => {
             const displayName = student.last_name 
