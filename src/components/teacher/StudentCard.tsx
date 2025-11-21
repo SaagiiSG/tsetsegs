@@ -60,6 +60,7 @@ export function StudentCard({
     last_name: student.last_name,
     phone: student.phone,
   });
+  const [testInputs, setTestInputs] = useState<Record<number, string>>({});
 
   const handleSave = () => {
     onUpdateStudent(editForm);
@@ -82,6 +83,12 @@ export function StudentCard({
     } else if (!isNaN(parsed) && parsed >= 0 && parsed <= 800) {
       onTestScoreChange(testNumber, parsed);
     }
+    // Clear local input state after save
+    setTestInputs(prev => {
+      const next = { ...prev };
+      delete next[testNumber];
+      return next;
+    });
   };
 
   return (
@@ -229,12 +236,12 @@ export function StudentCard({
                       min="0"
                       max="800"
                       placeholder="___"
-                      value={test.score ?? ""}
+                      value={testInputs[test.test_number] ?? test.score ?? ""}
                       onChange={(e) => {
                         const val = e.target.value;
-                        // Live validation
+                        // Allow typing and validate range
                         if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
-                          // Allow typing
+                          setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                         }
                       }}
                       onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
