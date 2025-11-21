@@ -25,8 +25,23 @@ export function AdminSidebar() {
   return (
     <Sidebar className={open ? 'w-60' : 'w-14'} collapsible="icon">
       <SidebarContent className="pt-4">
+        {/* Logo and Title */}
+        <div className="px-3 pb-4 mb-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+              <GraduationCap className="w-6 h-6 text-primary" />
+            </div>
+            {open && (
+              <div>
+                <h2 className="font-bold text-sm">Flowers Talent Agency</h2>
+                <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <SidebarGroup>
-          <SidebarGroupLabel>Admin</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -38,7 +53,7 @@ export function AdminSidebar() {
                       className="hover:bg-muted/50"
                       activeClassName="bg-muted text-primary font-medium"
                     >
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-6 w-6" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
