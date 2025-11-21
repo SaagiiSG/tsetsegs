@@ -318,6 +318,7 @@ export default function TeacherStudentCards() {
   }
 
   const currentStudent = students[currentIndex];
+  const nextStudent = currentIndex < students.length - 1 ? students[currentIndex + 1] : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -351,10 +352,38 @@ export default function TeacherStudentCards() {
 
         {/* Student Card */}
         <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-4xl relative" style={{ touchAction: 'pan-y' }}>
+          <div className="w-full max-w-4xl relative" style={{ touchAction: 'pan-y', minHeight: '600px' }}>
+            {/* Next card preview (behind) */}
+            {nextStudent && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                style={{ zIndex: 0 }}
+                initial={{ scale: 0.95, y: 20, opacity: 0.5, rotate: -2 }}
+                animate={{ scale: 0.95, y: 20, opacity: 0.5, rotate: -2 }}
+              >
+                <div className="opacity-60 blur-[1px]">
+                  <StudentCard
+                    student={nextStudent}
+                    currentIndex={currentIndex + 1}
+                    totalStudents={students.length}
+                    attendance={[]}
+                    homework={[]}
+                    practiceTests={[]}
+                    onUpdateStudent={() => {}}
+                    onAttendanceChange={() => {}}
+                    onHomeworkChange={() => {}}
+                    onTestScoreChange={() => {}}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Current card */}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={currentStudent.id}
+                className="relative cursor-grab"
+                style={{ zIndex: 1 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
@@ -382,9 +411,6 @@ export default function TeacherStudentCards() {
                 }}
                 whileDrag={{
                   cursor: "grabbing",
-                }}
-                style={{
-                  cursor: "grab",
                 }}
               >
                 <StudentCard
