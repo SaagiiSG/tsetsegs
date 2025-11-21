@@ -13,12 +13,12 @@ interface Batch {
   schedule: string;
   room: string;
   start_date: string;
-  students: { count: number }[];
 }
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,15 +41,32 @@ export default function TeacherDashboard() {
 
     try {
       console.log('Querying batches for teacher:', teacherName);
-      const { data, error } = await supabase
+      const { data: batchesData, error: batchesError } = await supabase
         .from('batches')
-        .select('id, batch_name, schedule, room, start_date, students(count)')
+        .select('id, batch_name, schedule, room, start_date')
         .eq('teacher', teacherName)
         .order('start_date', { ascending: false });
 
-      console.log('Batches query result:', { data, error });
-      if (error) throw error;
-      setBatches(data || []);
+      console.log('Batches query result:', { batchesData, batchesError });
+      if (batchesError) throw batchesError;
+      
+      setBatches(batchesData || []);
+
+      // Fetch student counts for each batch
+      if (batchesData && batchesData.length > 0) {
+        const counts: Record<string, number> = {};
+        for (const batch of batchesData) {
+          const { count, error: countError } = await supabase
+            .from('students')
+            .select('*', { count: 'exact', head: true })
+            .eq('batch_id', batch.id);
+          
+          if (!countError) {
+            counts[batch.id] = count || 0;
+          }
+        }
+        setStudentCounts(counts);
+      }
     } catch (error: any) {
       console.error('Error fetching batches:', error);
       toast({
@@ -68,8 +85,8 @@ export default function TeacherDashboard() {
     navigate('/teacher/login');
   };
 
-  const getStudentCount = (batch: Batch) => {
-    return batch.students[0]?.count || 0;
+  const getStudentCount = (batchId: string) => {
+    return studentCounts[batchId] || 0;
   };
 
   const isOnlineClass = (schedule: string) => {
@@ -110,7 +127,7 @@ export default function TeacherDashboard() {
                     <CardTitle className="text-lg">{batch.batch_name}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
-                      {getStudentCount(batch)} students
+                      {getStudentCount(batch.id)} students
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
