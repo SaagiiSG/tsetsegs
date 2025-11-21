@@ -24,7 +24,7 @@ export function AdminSidebar() {
 
   return (
     <Sidebar className={open ? 'w-60' : 'w-14'} collapsible="icon">
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroup>
           <SidebarGroupLabel>Admin</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -38,7 +38,7 @@ export function AdminSidebar() {
                       className="hover:bg-muted/50"
                       activeClassName="bg-muted text-primary font-medium"
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-5 w-5" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>

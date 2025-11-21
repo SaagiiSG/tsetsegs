@@ -67,10 +67,10 @@ const Admin = () => {
           <AdminSidebar />
           <main className="flex-1 container mx-auto px-4 py-8">
             <Routes>
-              <Route path="/" element={<BatchesView />} />
-              <Route path="/create" element={<CreateBatchForm onSuccess={() => {}} />} />
+              <Route index element={<BatchesView />} />
+              <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
               <Route
-                path="/teachers"
+                path="teachers"
                 element={
                   <div className="space-y-4">
                     <SetupTeacherAccounts />
@@ -78,7 +78,7 @@ const Admin = () => {
                   </div>
                 }
               />
-              <Route path="/users" element={<UserManagement />} />
+              <Route path="users" element={<UserManagement />} />
             </Routes>
           </main>
         </div>
