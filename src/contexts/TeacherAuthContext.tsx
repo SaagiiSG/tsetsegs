@@ -48,21 +48,26 @@ export function TeacherAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           const username = session.user.user_metadata?.username;
           if (username) {
-            await checkTeacherRole(session.user.id, username);
+            setTimeout(() => {
+              checkTeacherRole(session.user.id, username).then(() => {
+                setIsLoading(false);
+              });
+            }, 0);
+          } else {
+            setIsLoading(false);
           }
         } else {
           setTeacherName(null);
           setNeedsPasswordChange(false);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
