@@ -62,18 +62,7 @@ export function StudentCard({
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
 
-  // Calculate alert status
-  let missedClasses = 0;
-  let missedHomework = 0;
-
-  attendance.forEach(a => {
-    if (a.status === 'absent' || a.status === 'sick') {
-      missedClasses++;
-    }
-  });
-
-  missedHomework = homework.filter(h => !h.completed).length;
-  const hasAlert = missedClasses >= 3 || missedHomework >= 3;
+  // Note: Alert calculation is now done in parent component based on current week
 
   const handleSave = () => {
     onUpdateStudent(editForm);
@@ -105,18 +94,8 @@ export function StudentCard({
   };
 
   return (
-    <Card className={hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}>
+    <Card className="shadow-lg">
       <CardHeader className="border-b bg-muted/50">
-        {hasAlert && (
-          <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
-            <p className="text-sm font-medium text-destructive">
-              ⚠️ Alert: 
-              {missedClasses >= 3 && ` ${missedClasses} classes missed`}
-              {missedClasses >= 3 && missedHomework >= 3 && ' •'}
-              {missedHomework >= 3 && ` ${missedHomework} homework incomplete`}
-            </p>
-          </div>
-        )}
         <div className="text-center">
           <p className="text-sm font-medium text-muted-foreground">
             Student {currentIndex + 1} of {totalStudents}
@@ -198,30 +177,31 @@ export function StudentCard({
               Attendance & Homework
             </h3>
 
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {attendance.map((session) => {
                 const hw = homework.find(h => h.session_number === session.session_number);
                 return (
-                  <div key={session.session_number} className="pb-3 border-b last:border-0">
-                    <p className="text-sm font-medium mb-2">Session {session.session_number}</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={session.status || ""}
-                          onValueChange={(value) => onAttendanceChange(session.session_number, value)}
-                        >
-                          <SelectTrigger className="w-full h-9 text-sm pointer-events-auto">
-                            <SelectValue placeholder="Class Attendance" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50 pointer-events-auto">
-                            <SelectItem value="present">✓ Present</SelectItem>
-                            <SelectItem value="late">⏰ Late</SelectItem>
-                            <SelectItem value="absent">✗ Absent</SelectItem>
-                            <SelectItem value="sick">🤒 Sick</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
+                  <div key={session.session_number} className="pb-2 border-b last:border-0">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Session {session.session_number}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Attendance Dropdown */}
+                      <Select
+                        value={session.status || ""}
+                        onValueChange={(value) => onAttendanceChange(session.session_number, value)}
+                      >
+                        <SelectTrigger className="h-9 text-sm pointer-events-auto">
+                          <SelectValue placeholder="Attendance" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50 pointer-events-auto">
+                          <SelectItem value="present">✓ Present</SelectItem>
+                          <SelectItem value="late">⏰ Late</SelectItem>
+                          <SelectItem value="absent">✗ Absent</SelectItem>
+                          <SelectItem value="sick">🤒 Sick</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {/* Homework Checkbox */}
+                      <div className="flex items-center gap-2 pl-2">
                         <Checkbox
                           id={`hw-${session.session_number}`}
                           checked={hw?.completed || false}
@@ -233,7 +213,7 @@ export function StudentCard({
                           htmlFor={`hw-${session.session_number}`}
                           className="text-sm cursor-pointer"
                         >
-                          Homework Done
+                          Homework
                         </Label>
                       </div>
                     </div>
