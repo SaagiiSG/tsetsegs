@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
-import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface Student {
   id: string;
@@ -45,19 +45,12 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
   
-  const dragX = useMotionValue(0);
-  
-  // Next card transforms (moves to center as current drags left)
-  const nextCardX = useTransform(dragX, [-200, 0], [0, 20]);
-  const nextCardRotate = useTransform(dragX, [-200, 0], [0, 5]);
-  const nextCardScale = useTransform(dragX, [-200, 0], [1, 0.95]);
-  const nextCardOpacity = useTransform(dragX, [-200, 0], [1, 0.5]);
-  
-  // Current card transforms (tilts and goes behind as dragged left)
-  const currentCardRotate = useTransform(dragX, [-200, 0], [-15, 0]);
-  const currentCardScale = useTransform(dragX, [-200, 0], [0.95, 1]);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false, 
+    skipSnaps: false,
+    duration: 20,
+  });
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -73,6 +66,14 @@ export default function TeacherStudentCards() {
       fetchStudentData(students[currentIndex].id);
     }
   }, [currentIndex, students]);
+
+  useEffect(() => {
+    if (emblaApi) {
+      emblaApi.on('select', () => {
+        setCurrentIndex(emblaApi.selectedScrollSnap());
+      });
+    }
+  }, [emblaApi]);
 
   const fetchData = async () => {
     try {
@@ -165,32 +166,13 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0 && !isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex(currentIndex - 1);
-      setTimeout(() => setIsAnimating(false), 400);
-    }
-  };
+  const handlePrevious = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
 
-  const handleNext = () => {
-    if (currentIndex < students.length - 1 && !isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex(currentIndex + 1);
-      setTimeout(() => setIsAnimating(false), 400);
-    }
-  };
-
-  const handleDragEnd = (_e: any, info: PanInfo) => {
-    const threshold = 100;
-    const velocity = info.velocity.x;
-    
-    if ((info.offset.x > threshold || velocity > 500) && currentIndex > 0 && !isAnimating) {
-      handlePrevious();
-    } else if ((info.offset.x < -threshold || velocity < -500) && currentIndex < students.length - 1 && !isAnimating) {
-      handleNext();
-    }
-  };
+  const handleNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
 
   const handleUpdateStudent = async (updates: Partial<Student>) => {
     const currentStudent = students[currentIndex];
@@ -333,14 +315,6 @@ export default function TeacherStudentCards() {
   }
 
   const currentStudent = students[currentIndex];
-  const prevStudent = currentIndex > 0 ? students[currentIndex - 1] : null;
-  const nextStudent = currentIndex < students.length - 1 ? students[currentIndex + 1] : null;
-
-  // Prepare data for the 3 cards we'll render
-  const getStudentData = (index: number) => {
-    if (index < 0 || index >= students.length) return null;
-    return { student: students[index], index };
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -372,102 +346,32 @@ export default function TeacherStudentCards() {
           />
         </div>
 
-        {/* Student Card */}
+        {/* Student Card Carousel */}
         <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-4xl relative" style={{ touchAction: 'pan-y', minHeight: '600px' }}>
-            {/* Previous card (bottom of stack - static) */}
-            {prevStudent && (
-              <motion.div
-                key={`prev-${prevStudent.id}`}
-                className="absolute inset-0 pointer-events-none"
-                initial={{ scale: 0.9, opacity: 0.3, y: 20 }}
-                animate={{ scale: 0.9, opacity: 0.3, y: 20 }}
-                style={{ zIndex: 0 }}
-              >
-                <StudentCard
-                  student={prevStudent}
-                  currentIndex={currentIndex - 1}
-                  totalStudents={students.length}
-                  attendance={[]}
-                  homework={[]}
-                  practiceTests={[]}
-                  onUpdateStudent={() => {}}
-                  onAttendanceChange={() => {}}
-                  onHomeworkChange={() => {}}
-                  onTestScoreChange={() => {}}
-                />
-              </motion.div>
-            )}
+          <div className="w-full max-w-4xl">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex">
+                {students.map((student, index) => (
+                  <div key={student.id} className="flex-[0_0_100%] min-w-0 px-4">
+                    <StudentCard
+                      student={student}
+                      currentIndex={index}
+                      totalStudents={students.length}
+                      attendance={index === currentIndex ? attendance : []}
+                      homework={index === currentIndex ? homework : []}
+                      practiceTests={index === currentIndex ? practiceTests : []}
+                      onUpdateStudent={index === currentIndex ? handleUpdateStudent : () => {}}
+                      onAttendanceChange={index === currentIndex ? handleAttendanceChange : () => {}}
+                      onHomeworkChange={index === currentIndex ? handleHomeworkChange : () => {}}
+                      onTestScoreChange={index === currentIndex ? handleTestScoreChange : () => {}}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            {/* Next card (middle - animates as current is dragged) */}
-            {nextStudent && (
-              <motion.div
-                key={`next-${nextStudent.id}`}
-                className="absolute inset-0 pointer-events-none"
-                style={{ 
-                  zIndex: 1,
-                  x: nextCardX,
-                  rotate: nextCardRotate,
-                  scale: nextCardScale,
-                  opacity: nextCardOpacity,
-                }}
-              >
-                <StudentCard
-                  student={nextStudent}
-                  currentIndex={currentIndex + 1}
-                  totalStudents={students.length}
-                  attendance={[]}
-                  homework={[]}
-                  practiceTests={[]}
-                  onUpdateStudent={() => {}}
-                  onAttendanceChange={() => {}}
-                  onHomeworkChange={() => {}}
-                  onTestScoreChange={() => {}}
-                />
-              </motion.div>
-            )}
-
-            {/* Current card (top - draggable with Tinder-style transforms) */}
-            <AnimatePresence mode="popLayout">
-              <motion.div
-                key={currentStudent.id}
-                className="relative cursor-grab active:cursor-grabbing"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={handleDragEnd}
-                style={{ 
-                  x: dragX,
-                  rotate: currentCardRotate,
-                  scale: currentCardScale,
-                  zIndex: 2,
-                }}
-                initial={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
-                exit={{ 
-                  x: currentIndex > 0 ? -400 : 400,
-                  opacity: 0,
-                  rotate: currentIndex > 0 ? -20 : 20,
-                  transition: { duration: 0.3 }
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                <StudentCard
-                  student={currentStudent}
-                  currentIndex={currentIndex}
-                  totalStudents={students.length}
-                  attendance={attendance}
-                  homework={homework}
-                  practiceTests={practiceTests}
-                  onUpdateStudent={handleUpdateStudent}
-                  onAttendanceChange={handleAttendanceChange}
-                  onHomeworkChange={handleHomeworkChange}
-                  onTestScoreChange={handleTestScoreChange}
-                />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation Buttons - Hidden on mobile (swipe instead) */}
-            <div className="hidden md:flex justify-center gap-4 mt-6">
+            {/* Navigation Buttons */}
+            <div className="flex justify-center gap-4 mt-6">
               <Button
                 variant="outline"
                 size="lg"
@@ -476,7 +380,7 @@ export default function TeacherStudentCards() {
                 className="min-w-[160px]"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Previous Student
+                Previous
               </Button>
               <Button
                 variant="default"
@@ -485,14 +389,9 @@ export default function TeacherStudentCards() {
                 disabled={currentIndex === students.length - 1}
                 className="min-w-[160px] bg-primary"
               >
-                Next Student
+                Next
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
-            </div>
-
-            {/* Mobile swipe hint */}
-            <div className="md:hidden text-center mt-4 text-sm text-muted-foreground">
-              Drag or swipe cards to navigate
             </div>
           </div>
         </div>
