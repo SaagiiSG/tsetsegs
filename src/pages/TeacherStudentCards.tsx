@@ -220,8 +220,9 @@ export default function TeacherStudentCards() {
         missedClasses++;
       }
       
-      // Count homework misses - only count explicitly marked as incomplete
-      if (hw && hw.completed === false) {
+      // Count homework misses - count both explicitly incomplete (false) and unmarked (null)
+      // This matches the visual checkbox state (unchecked = incomplete)
+      if (hw && hw.completed !== true) {
         missedHomework++;
       }
     }
