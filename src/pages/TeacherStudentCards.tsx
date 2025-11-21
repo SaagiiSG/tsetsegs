@@ -182,6 +182,31 @@ export default function TeacherStudentCards() {
     }
   };
 
+  // Calculate alert status for each student
+  const getStudentAlertStatus = (studentId: string) => {
+    const studentData = studentDataMap.get(studentId);
+    
+    if (!studentData) {
+      return { hasAlert: false, missedClasses: 0, missedHomework: 0 };
+    }
+
+    let missedClasses = 0;
+    let missedHomework = 0;
+
+    // Count missed classes (absent or sick)
+    studentData.attendance.forEach(a => {
+      if (a.status === 'absent' || a.status === 'sick') {
+        missedClasses++;
+      }
+    });
+
+    // Count incomplete homework
+    missedHomework = studentData.homework.filter(h => !h.completed).length;
+
+    const hasAlert = missedClasses >= 3 || missedHomework >= 3;
+    return { hasAlert, missedClasses, missedHomework };
+  };
+
   const handlePrevious = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
   }, [emblaApi]);
@@ -377,6 +402,7 @@ export default function TeacherStudentCards() {
               if (emblaApi) emblaApi.scrollTo(index);
             }}
             batch={batch}
+            getStudentAlertStatus={getStudentAlertStatus}
           />
         </div>
 
