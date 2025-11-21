@@ -135,7 +135,7 @@ export default function TeacherDashboard() {
                     </div>
                     <Button 
                       className="w-full mt-4" 
-                      onClick={() => navigate(`/teacher/class/${batch.id}`)}
+                      onClick={() => navigate(`/teacher/students/${batch.id}`)}
                     >
                       View Students & Attendance
                     </Button>

@@ -14,6 +14,7 @@ import TeacherLogin from "./pages/TeacherLogin";
 import TeacherChangePassword from "./pages/TeacherChangePassword";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherClassAttendance from "./pages/TeacherClassAttendance";
+import TeacherStudentCards from "./pages/TeacherStudentCards";
 import StudentReveal from "./pages/StudentReveal";
 import NotFound from "./pages/NotFound";
 
@@ -53,6 +54,14 @@ const App = () => (
                 element={
                   <TeacherProtectedRoute>
                     <TeacherClassAttendance />
+                  </TeacherProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/teacher/students/:batchId" 
+                element={
+                  <TeacherProtectedRoute>
+                    <TeacherStudentCards />
                   </TeacherProtectedRoute>
                 } 
               />

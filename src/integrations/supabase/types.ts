@@ -137,13 +137,105 @@ export type Database = {
         }
         Relationships: []
       }
+      homework: {
+        Row: {
+          batch_id: string
+          completed: boolean
+          created_at: string
+          id: string
+          session_number: number
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          session_number: number
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          session_number?: number
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_tests: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          score: number | null
+          student_id: string
+          test_number: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          student_id: string
+          test_number: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          student_id?: string
+          test_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_tests_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_tests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           accessed: boolean
           accessed_at: string | null
           batch_id: string
           created_at: string
+          first_name: string
           id: string
+          last_name: string | null
           name: string
           phone: string
           unique_link_id: string
@@ -153,7 +245,9 @@ export type Database = {
           accessed_at?: string | null
           batch_id: string
           created_at?: string
+          first_name?: string
           id?: string
+          last_name?: string | null
           name: string
           phone: string
           unique_link_id: string
@@ -163,7 +257,9 @@ export type Database = {
           accessed_at?: string | null
           batch_id?: string
           created_at?: string
+          first_name?: string
           id?: string
+          last_name?: string | null
           name?: string
           phone?: string
           unique_link_id?: string
