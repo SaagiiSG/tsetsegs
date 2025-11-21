@@ -24,33 +24,41 @@ export default function TeacherDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('TeacherDashboard - authLoading:', authLoading, 'teacherName:', teacherName);
     if (!authLoading) {
+      console.log('Fetching batches...');
       fetchBatches();
     }
   }, [teacherName, authLoading]);
 
   const fetchBatches = async () => {
+    console.log('fetchBatches called, teacherName:', teacherName);
     if (!teacherName) {
+      console.log('No teacher name, setting loading to false');
       setIsLoading(false);
       return;
     }
 
     try {
+      console.log('Querying batches for teacher:', teacherName);
       const { data, error } = await supabase
         .from('batches')
         .select('id, batch_name, schedule, room, start_date, students(count)')
         .eq('teacher', teacherName)
         .order('start_date', { ascending: false });
 
+      console.log('Batches query result:', { data, error });
       if (error) throw error;
       setBatches(data || []);
     } catch (error: any) {
+      console.error('Error fetching batches:', error);
       toast({
         title: 'Error',
         description: 'Failed to load classes',
         variant: 'destructive',
       });
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
