@@ -403,6 +403,7 @@ export default function TeacherStudentCards() {
               setCurrentIndex(index);
               if (emblaApi) emblaApi.scrollTo(index);
             }}
+            batch={batch}
           />
         </div>
 
