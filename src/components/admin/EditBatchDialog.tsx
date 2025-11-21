@@ -129,6 +129,9 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
+      // Generate a unique link ID for this student
+      const uniqueLinkId = crypto.randomUUID();
+      
       const { error } = await supabase
         .from('students')
         .insert({
@@ -137,7 +140,7 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
           first_name: firstName,
           last_name: lastName,
           phone: validated.phone,
-          unique_link_id: batch.id, // Use batch's unique link
+          unique_link_id: uniqueLinkId,
         });
 
       if (error) {
