@@ -124,16 +124,26 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
     try {
       const validated = studentSchema.parse({ name: newName, phone: newPhone });
       
+      // Split name into first and last name
+      const nameParts = validated.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       const { error } = await supabase
         .from('students')
         .insert({
           batch_id: batch.id,
           name: validated.name,
+          first_name: firstName,
+          last_name: lastName,
           phone: validated.phone,
           unique_link_id: batch.id, // Use batch's unique link
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Student insert error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Success',
@@ -154,7 +164,7 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to add student',
+          description: `Failed to add student: ${error.message || 'Unknown error'}`,
           variant: 'destructive',
         });
       }
