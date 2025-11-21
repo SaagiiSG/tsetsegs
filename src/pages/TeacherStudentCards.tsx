@@ -192,6 +192,9 @@ export default function TeacherStudentCards() {
     const diffTime = today.getTime() - startDate.getTime();
     const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
     
+    // If batch hasn't started yet (negative weeks), return 15 to check all marked sessions
+    if (diffWeeks < 0) return 15;
+    
     return Math.max(1, Math.min(diffWeeks + 1, 15)); // Between 1 and 15
   };
 
@@ -207,17 +210,18 @@ export default function TeacherStudentCards() {
     let missedClasses = 0;
     let missedHomework = 0;
 
-    // Only check sessions 1 through current week where data is marked
-    for (let i = 0; i < currentWeek; i++) {
+    // Check sessions up to current week, but only count those that are actually marked
+    for (let i = 0; i < currentWeek && i < 15; i++) {
       const session = studentData.attendance[i];
       const hw = studentData.homework[i];
       
-      // Count attendance misses only if marked
+      // Count attendance misses only if status is explicitly marked as absent or sick
       if (session && (session.status === 'absent' || session.status === 'sick')) {
         missedClasses++;
       }
       
-      // Count homework misses only if marked as incomplete
+      // Count homework misses - we treat unchecked (false) as incomplete
+      // This means we only count homework that exists and is marked as incomplete
       if (hw && !hw.completed) {
         missedHomework++;
       }
