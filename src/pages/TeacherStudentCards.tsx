@@ -24,7 +24,7 @@ interface Attendance {
 
 interface Homework {
   session_number: number;
-  completed: boolean;
+  completed: boolean | null;
 }
 
 interface PracticeTest {
@@ -156,7 +156,7 @@ export default function TeacherStudentCards() {
       const hwMap = new Map(homeworkData?.map(h => [h.session_number, h.completed]) || []);
       const homework: Homework[] = Array.from({ length: 15 }, (_, i) => ({
         session_number: i + 1,
-        completed: hwMap.get(i + 1) || false,
+        completed: hwMap.has(i + 1) ? hwMap.get(i + 1)! : null,
       }));
 
       // Fetch practice tests
@@ -220,9 +220,8 @@ export default function TeacherStudentCards() {
         missedClasses++;
       }
       
-      // Count homework misses - we treat unchecked (false) as incomplete
-      // This means we only count homework that exists and is marked as incomplete
-      if (hw && !hw.completed) {
+      // Count homework misses - only count explicitly marked as incomplete
+      if (hw && hw.completed === false) {
         missedHomework++;
       }
     }
