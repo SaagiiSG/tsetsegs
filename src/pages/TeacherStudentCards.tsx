@@ -34,6 +34,9 @@ interface PracticeTest {
 interface Batch {
   id: string;
   batch_name: string;
+  schedule: string;
+  room: string;
+  start_date: string;
 }
 
 export default function TeacherStudentCards() {
@@ -87,7 +90,7 @@ export default function TeacherStudentCards() {
       // Fetch batch
       const { data: batchData, error: batchError } = await supabase
         .from("batches")
-        .select("id, batch_name")
+        .select("id, batch_name, schedule, room, start_date")
         .eq("id", batchId)
         .single();
 
@@ -355,16 +358,36 @@ export default function TeacherStudentCards() {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <Button variant="ghost" onClick={() => navigate("/teacher/dashboard")}>
               <ChevronLeft className="h-4 w-4 mr-2" />
               Back to My Classes
             </Button>
-            <div className="text-center">
-              <h1 className="text-lg font-semibold">{batch?.batch_name}</h1>
-              <p className="text-sm text-muted-foreground">{students.length} Students</p>
-            </div>
             <div className="w-32" />
+          </div>
+          
+          <div className="text-center space-y-2">
+            <h1 className="text-xl font-bold">{batch?.batch_name}</h1>
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <span className="font-medium">{students.length}</span> Students
+              </div>
+              {batch?.room && (
+                <div className="flex items-center gap-1">
+                  📍 <span>{batch.room}</span>
+                </div>
+              )}
+              {batch?.start_date && (
+                <div className="flex items-center gap-1">
+                  📅 <span>Starts {new Date(batch.start_date).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+            {batch?.schedule && (
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                {batch.schedule}
+              </p>
+            )}
           </div>
         </div>
       </div>
