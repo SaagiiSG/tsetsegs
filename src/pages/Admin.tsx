@@ -38,16 +38,7 @@ const Admin = () => {
       <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
         <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Flowers Talent Agency</h1>
-                <p className="text-sm text-muted-foreground">Admin Dashboard</p>
-              </div>
-            </div>
+            <SidebarTrigger />
             <div className="flex gap-2">
               {isTeacher && (
                 <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
