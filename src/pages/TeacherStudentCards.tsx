@@ -46,6 +46,7 @@ export default function TeacherStudentCards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const dragX = useMotionValue(0);
   
   // Transform drag position to next card animation values
@@ -53,6 +54,10 @@ export default function TeacherStudentCards() {
   const nextCardRotate = useTransform(dragX, [-200, 0], [0, 10]);
   const nextCardScale = useTransform(dragX, [-200, 0], [1, 0.95]);
   const nextCardOpacity = useTransform(dragX, [-200, 0], [1, 0.4]);
+  
+  // Current card tilts and goes behind when dragged left
+  const currentCardRotate = useTransform(dragX, [-200, 0], [-10, 0]);
+  const currentCardZIndex = useTransform(dragX, [-100, 0], [0, 1]);
   
   // Current student data
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -161,25 +166,33 @@ export default function TeacherStudentCards() {
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
+    if (currentIndex > 0 && !isAnimating) {
       setDirection("right");
-      setCurrentIndex(currentIndex - 1);
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex(currentIndex - 1);
+        setIsAnimating(false);
+      }, 300);
     }
   };
 
   const handleNext = () => {
-    if (currentIndex < students.length - 1) {
+    if (currentIndex < students.length - 1 && !isAnimating) {
       setDirection("left");
-      setCurrentIndex(currentIndex + 1);
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex(currentIndex + 1);
+        setIsAnimating(false);
+      }, 300);
     }
   };
 
   const handleDragEnd = (_e: any, info: PanInfo) => {
     const threshold = 100;
     
-    if (info.offset.x > threshold && currentIndex > 0) {
+    if (info.offset.x > threshold && currentIndex > 0 && !isAnimating) {
       handlePrevious();
-    } else if (info.offset.x < -threshold && currentIndex < students.length - 1) {
+    } else if (info.offset.x < -threshold && currentIndex < students.length - 1 && !isAnimating) {
       handleNext();
     }
   };
@@ -388,14 +401,18 @@ export default function TeacherStudentCards() {
             )}
 
             {/* Current card */}
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence initial={false}>
               <motion.div
                 key={currentStudent.id}
                 className="relative cursor-grab"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
-                style={{ x: dragX, zIndex: 1 }}
+                style={{ 
+                  x: dragX, 
+                  rotate: currentCardRotate,
+                  zIndex: currentCardZIndex,
+                }}
                 onDragEnd={handleDragEnd}
                 initial={{
                   opacity: direction === "left" ? 0.4 : 0,
