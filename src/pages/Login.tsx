@@ -18,8 +18,10 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('Login useEffect - authLoading:', authLoading, 'user:', user, 'isAdmin:', isAdmin);
     // If user is logged in and is admin, redirect
     if (!authLoading && user && isAdmin) {
+      console.log('Redirecting to admin dashboard');
       toast({
         title: "Login Successful",
         description: "Welcome back!"
@@ -27,12 +29,17 @@ export default function Login() {
       navigate('/admin');
     } else if (!authLoading && user && !isAdmin) {
       // User logged in but is not admin
+      console.log('User is not admin, resetting loading');
       setIsLoading(false);
       toast({
         title: "Access Denied",
         description: "You don't have admin privileges. Please contact an administrator.",
         variant: "destructive"
       });
+    } else if (!authLoading && !user) {
+      // No user logged in, ensure loading is false
+      console.log('No user, resetting loading');
+      setIsLoading(false);
     }
   }, [user, isAdmin, authLoading, navigate, toast]);
 
