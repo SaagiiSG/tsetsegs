@@ -18,9 +18,14 @@ interface StudentSidebarProps {
   currentIndex: number;
   onSelectStudent: (index: number) => void;
   batch: Batch | null;
+  getStudentAlertStatus: (studentId: string) => {
+    hasAlert: boolean;
+    missedClasses: number;
+    missedHomework: number;
+  };
 }
 
-export function StudentSidebar({ students, currentIndex, onSelectStudent, batch }: StudentSidebarProps) {
+export function StudentSidebar({ students, currentIndex, onSelectStudent, batch, getStudentAlertStatus }: StudentSidebarProps) {
   return (
     <div className="w-64 border-r bg-card h-full">
       <div className="p-4 border-b space-y-3">
@@ -49,6 +54,8 @@ export function StudentSidebar({ students, currentIndex, onSelectStudent, batch 
             const displayName = student.last_name 
               ? `${student.first_name} ${student.last_name.charAt(0)}.`
               : student.first_name;
+            
+            const alertStatus = getStudentAlertStatus(student.id);
 
             return (
               <button
@@ -58,10 +65,24 @@ export function StudentSidebar({ students, currentIndex, onSelectStudent, batch 
                   "w-full text-left px-3 py-2 rounded-md text-sm transition-colors mb-1",
                   currentIndex === index
                     ? "bg-primary text-primary-foreground font-bold"
+                    : alertStatus.hasAlert
+                    ? "bg-destructive/10 hover:bg-destructive/20 text-destructive font-semibold border border-destructive/30"
                     : "hover:bg-muted"
                 )}
               >
-                {index + 1}. {displayName}
+                <div className="flex items-center justify-between">
+                  <span>{index + 1}. {displayName}</span>
+                  {alertStatus.hasAlert && currentIndex !== index && (
+                    <span className="text-xs">⚠️</span>
+                  )}
+                </div>
+                {alertStatus.hasAlert && currentIndex !== index && (
+                  <div className="text-xs mt-0.5 opacity-90">
+                    {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
+                    {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
+                    {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
+                  </div>
+                )}
               </button>
             );
           })}

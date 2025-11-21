@@ -62,6 +62,19 @@ export function StudentCard({
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
 
+  // Calculate alert status
+  let missedClasses = 0;
+  let missedHomework = 0;
+
+  attendance.forEach(a => {
+    if (a.status === 'absent' || a.status === 'sick') {
+      missedClasses++;
+    }
+  });
+
+  missedHomework = homework.filter(h => !h.completed).length;
+  const hasAlert = missedClasses >= 3 || missedHomework >= 3;
+
   const handleSave = () => {
     onUpdateStudent(editForm);
     setIsEditing(false);
@@ -92,8 +105,18 @@ export function StudentCard({
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card className={hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}>
       <CardHeader className="border-b bg-muted/50">
+        {hasAlert && (
+          <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-sm font-medium text-destructive">
+              ⚠️ Alert: 
+              {missedClasses >= 3 && ` ${missedClasses} classes missed`}
+              {missedClasses >= 3 && missedHomework >= 3 && ' •'}
+              {missedHomework >= 3 && ` ${missedHomework} homework incomplete`}
+            </p>
+          </div>
+        )}
         <div className="text-center">
           <p className="text-sm font-medium text-muted-foreground">
             Student {currentIndex + 1} of {totalStudents}
