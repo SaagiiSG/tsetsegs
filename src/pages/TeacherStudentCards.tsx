@@ -167,7 +167,7 @@ export default function TeacherStudentCards() {
         .eq("batch_id", batchId);
 
       const testsMap = new Map(testsData?.map(t => [t.test_number, t.score]) || []);
-      const practiceTests: PracticeTest[] = Array.from({ length: 6 }, (_, i) => ({
+      const practiceTests: PracticeTest[] = Array.from({ length: 7 }, (_, i) => ({
         test_number: i + 1,
         score: testsMap.get(i + 1) || null,
       }));
