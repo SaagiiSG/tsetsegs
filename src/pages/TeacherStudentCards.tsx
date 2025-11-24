@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
+import { FirstSessionDialog } from "@/components/teacher/FirstSessionDialog";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface Student {
@@ -14,6 +15,10 @@ interface Student {
   first_name: string;
   last_name: string;
   phone: string;
+  parent_phone?: string;
+  math_level?: 'bad' | 'average' | 'good';
+  english_level?: 'bad' | 'average' | 'good';
+  first_session_completed?: boolean;
   batch_id: string;
 }
 
@@ -49,6 +54,8 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFirstSessionDialog, setShowFirstSessionDialog] = useState(false);
+  const [selectedStudentForFirstSession, setSelectedStudentForFirstSession] = useState<Student | null>(null);
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
@@ -101,12 +108,12 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, first_name, last_name, phone, batch_id")
+        .select("id, first_name, last_name, phone, parent_phone, math_level, english_level, first_session_completed, batch_id")
         .eq("batch_id", batchId)
         .order("first_name");
 
       if (studentsError) throw studentsError;
-      setStudents(studentsData || []);
+      setStudents((studentsData || []) as Student[]);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -378,6 +385,59 @@ export default function TeacherStudentCards() {
     }
   };
 
+  const handleFirstSessionSubmit = async (data: {
+    phone: string;
+    parent_phone: string;
+    last_name: string;
+    math_level: 'bad' | 'average' | 'good';
+    english_level: 'bad' | 'average' | 'good';
+  }) => {
+    if (!selectedStudentForFirstSession) return;
+
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update({
+          phone: data.phone,
+          parent_phone: data.parent_phone,
+          last_name: data.last_name,
+          math_level: data.math_level,
+          english_level: data.english_level,
+          first_session_completed: true,
+        })
+        .eq("id", selectedStudentForFirstSession.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setStudents(students.map(s => 
+        s.id === selectedStudentForFirstSession.id 
+          ? { 
+              ...s, 
+              phone: data.phone,
+              parent_phone: data.parent_phone,
+              last_name: data.last_name,
+              math_level: data.math_level,
+              english_level: data.english_level,
+              first_session_completed: true 
+            } 
+          : s
+      ));
+
+      toast({
+        title: "Success",
+        description: "First session data saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -406,10 +466,20 @@ export default function TeacherStudentCards() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate("/teacher/dashboard")}>
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back to My Classes
+          </Button>
+          <Button 
+            variant="default"
+            onClick={() => {
+              setSelectedStudentForFirstSession(currentStudent);
+              setShowFirstSessionDialog(true);
+            }}
+            disabled={currentStudent.first_session_completed}
+          >
+            {currentStudent.first_session_completed ? 'First Session Completed ✓' : 'First Session Intake'}
           </Button>
         </div>
       </div>
@@ -469,6 +539,16 @@ export default function TeacherStudentCards() {
                 })}
               </div>
             </div>
+
+            {/* First Session Dialog */}
+            {selectedStudentForFirstSession && (
+              <FirstSessionDialog
+                open={showFirstSessionDialog}
+                onOpenChange={setShowFirstSessionDialog}
+                studentName={`${selectedStudentForFirstSession.first_name} ${selectedStudentForFirstSession.last_name || ''}`}
+                onSubmit={handleFirstSessionSubmit}
+              />
+            )}
 
             {/* Navigation Buttons */}
             <div className="flex justify-center gap-4 mt-6">

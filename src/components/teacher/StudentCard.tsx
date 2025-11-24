@@ -11,6 +11,10 @@ interface Student {
   first_name: string;
   last_name: string;
   phone: string;
+  parent_phone?: string;
+  math_level?: 'bad' | 'average' | 'good';
+  english_level?: 'bad' | 'average' | 'good';
+  first_session_completed?: boolean;
 }
 
 interface Attendance {
@@ -92,13 +96,28 @@ export function StudentCard({
     });
   };
 
+  const getLevelDisplay = (level?: 'bad' | 'average' | 'good') => {
+    if (!level) return '-';
+    const levelMap = {
+      'bad': 'Needs Work',
+      'average': 'Average',
+      'good': 'Good'
+    };
+    return levelMap[level];
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b bg-muted/50">
-        <div className="text-center">
+        <div className="text-center space-y-1">
           <p className="text-sm font-medium text-muted-foreground">
             Student {currentIndex + 1} of {totalStudents}
           </p>
+          {!student.first_session_completed && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+              <span className="text-xs font-medium text-amber-600">⚠️ First Session Incomplete</span>
+            </div>
+          )}
         </div>
       </CardHeader>
 
@@ -126,7 +145,7 @@ export function StudentCard({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label className="text-xs uppercase text-muted-foreground">First Name</Label>
               {isEditing ? (
@@ -164,6 +183,21 @@ export function StudentCard({
               ) : (
                 <p className="font-medium mt-1">{student.phone}</p>
               )}
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground">Parent Phone</Label>
+              <p className="font-medium mt-1">{student.parent_phone || "-"}</p>
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground">Math Level</Label>
+              <p className="font-medium mt-1">{getLevelDisplay(student.math_level)}</p>
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground">English Level</Label>
+              <p className="font-medium mt-1">{getLevelDisplay(student.english_level)}</p>
             </div>
           </div>
         </div>

@@ -233,10 +233,14 @@ export type Database = {
           accessed_at: string | null
           batch_id: string
           created_at: string
+          english_level: string | null
           first_name: string
+          first_session_completed: boolean | null
           id: string
           last_name: string | null
+          math_level: string | null
           name: string
+          parent_phone: string | null
           phone: string
           unique_link_id: string
         }
@@ -245,10 +249,14 @@ export type Database = {
           accessed_at?: string | null
           batch_id: string
           created_at?: string
+          english_level?: string | null
           first_name?: string
+          first_session_completed?: boolean | null
           id?: string
           last_name?: string | null
+          math_level?: string | null
           name: string
+          parent_phone?: string | null
           phone: string
           unique_link_id: string
         }
@@ -257,10 +265,14 @@ export type Database = {
           accessed_at?: string | null
           batch_id?: string
           created_at?: string
+          english_level?: string | null
           first_name?: string
+          first_session_completed?: boolean | null
           id?: string
           last_name?: string | null
+          math_level?: string | null
           name?: string
+          parent_phone?: string | null
           phone?: string
           unique_link_id?: string
         }
