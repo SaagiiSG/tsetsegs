@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus, Calendar } from 'lucide-react';
+import { Pencil, Trash2, Plus, Calendar, Upload, ChevronDown } from 'lucide-react';
 import { z } from 'zod';
 
 const SCHEDULES = [
@@ -81,6 +83,8 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
   const [newPhone, setNewPhone] = useState('');
   const [removingStudent, setRemovingStudent] = useState<Student | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [bulkInput, setBulkInput] = useState('');
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -240,6 +244,141 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
     setRemovingStudent(null);
   };
 
+  const parseBulkStudentInput = (input: string) => {
+    const lines = input.split('\n').filter(line => line.trim());
+    const results: { student: any; error?: string }[] = [];
+
+    lines.forEach((line, index) => {
+      // Remove leading number and dot/dash (e.g., "1. " or "1 - ")
+      const cleanedLine = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
+      
+      // Try to match patterns like "Name - Phone" or "Name Phone"
+      const patterns = [
+        /^(.+?)\s*[-–—]\s*(\d{8,})$/,  // "Name - Phone" or "Name – Phone"
+        /^(.+?)\s+(\d{8,})$/,           // "Name Phone"
+      ];
+
+      let match = null;
+      for (const pattern of patterns) {
+        match = cleanedLine.match(pattern);
+        if (match) break;
+      }
+
+      if (!match) {
+        results.push({
+          student: null,
+          error: `Line ${index + 1}: Could not parse "${line}". Expected format: "Name - Phone" or "1. Name - Phone"`,
+        });
+        return;
+      }
+
+      const [, name, phone] = match;
+      const trimmedName = name.trim();
+      const trimmedPhone = phone.trim();
+
+      try {
+        const validated = studentSchema.parse({ 
+          name: trimmedName, 
+          phone: trimmedPhone 
+        });
+
+        // Split name into first and last name
+        const nameParts = validated.name.split(/\s+/);
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        results.push({
+          student: {
+            name: validated.name,
+            first_name: firstName,
+            last_name: lastName,
+            phone: validated.phone,
+            unique_link_id: crypto.randomUUID(),
+            batch_id: batch.id,
+          },
+        });
+      } catch (error: any) {
+        if (error instanceof z.ZodError) {
+          results.push({
+            student: null,
+            error: `Line ${index + 1}: ${error.errors[0].message}`,
+          });
+        } else {
+          results.push({
+            student: null,
+            error: `Line ${index + 1}: Validation failed`,
+          });
+        }
+      }
+    });
+
+    return results;
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter student information',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const results = parseBulkStudentInput(bulkInput);
+    const validStudents = results.filter(r => r.student).map(r => r.student);
+    const errors = results.filter(r => r.error);
+
+    if (validStudents.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No valid students found to import',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .insert(validStudents);
+
+      if (error) {
+        console.error('Bulk insert error:', error);
+        throw error;
+      }
+
+      let message = `Successfully added ${validStudents.length} student${validStudents.length > 1 ? 's' : ''}`;
+      if (errors.length > 0) {
+        message += `, ${errors.length} failed`;
+      }
+
+      toast({
+        title: 'Import Complete',
+        description: message,
+      });
+
+      if (errors.length > 0) {
+        console.log('Import errors:', errors.map(e => e.error).join('\n'));
+        toast({
+          title: 'Some entries failed',
+          description: errors.slice(0, 3).map(e => e.error).join('\n'),
+          variant: 'destructive',
+        });
+      }
+
+      setBulkInput('');
+      setIsBulkImportOpen(false);
+      fetchStudents();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to import students: ${error.message || 'Unknown error'}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
@@ -390,15 +529,73 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
             <TabsContent value="students" className="space-y-4 mt-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold">Current Students ({students.length})</h3>
-                <Button
-                  size="sm"
-                  onClick={() => setIsAddingStudent(true)}
-                  disabled={isAddingStudent}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Student
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsBulkImportOpen(!isBulkImportOpen)}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Bulk Import
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsAddingStudent(true)}
+                    disabled={isAddingStudent}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Student
+                  </Button>
+                </div>
               </div>
+
+              {/* Bulk Import Section */}
+              <Collapsible open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
+                <CollapsibleContent>
+                  <div className="border rounded-lg p-4 bg-muted/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">Bulk Import Students</h4>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p className="font-medium">Format (one student per line):</p>
+                      <div className="bg-background/50 rounded p-2 font-mono text-xs">
+                        <div>1. Saruul - 60281897</div>
+                        <div>2. Anudari - 95208802</div>
+                        <div>3. Khaliunaa - 99510071</div>
+                      </div>
+                      <p className="text-xs">You can also omit the number: "Saruul - 60281897"</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Paste Student List</Label>
+                      <Textarea
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        placeholder="1. Saruul - 60281897&#10;2. Anudari - 95208802&#10;3. Khaliunaa - 99510071"
+                        rows={8}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button onClick={handleBulkImport}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import Students
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsBulkImportOpen(false);
+                          setBulkInput('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {isAddingStudent && (
                 <div className="border rounded-lg p-4 bg-muted/50 space-y-3">
