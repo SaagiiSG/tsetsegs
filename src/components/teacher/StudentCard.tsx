@@ -226,30 +226,38 @@ export function StudentCard({
             </h3>
 
             <div className="space-y-4">
-              {practiceTests.map((test) => (
-                <div key={test.test_number}>
-                  <Label className="text-sm">Test {test.test_number}</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="800"
-                      placeholder="___"
-                      value={testInputs[test.test_number] ?? test.score ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        // Allow typing and validate range
-                        if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
-                          setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
-                        }
-                      }}
-                      onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
-                      className="w-24"
-                    />
-                    <span className="text-sm text-muted-foreground">/ 800</span>
+              {practiceTests.map((test) => {
+                // Map test numbers 1-7 to display as 4-10, with test 7 being "Real SAT mock"
+                const getTestLabel = (testNum: number) => {
+                  if (testNum === 7) return "Real SAT mock";
+                  return `Test ${testNum + 3}`; // 1→4, 2→5, 3→6, 4→7, 5→8, 6→9
+                };
+                
+                return (
+                  <div key={test.test_number}>
+                    <Label className="text-sm">{getTestLabel(test.test_number)}</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="800"
+                        placeholder="___"
+                        value={testInputs[test.test_number] ?? test.score ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // Allow typing and validate range
+                          if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                            setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                          }
+                        }}
+                        onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+                        className="w-24"
+                      />
+                      <span className="text-sm text-muted-foreground">/ 800</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
