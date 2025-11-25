@@ -505,7 +505,7 @@ export default function TeacherStudentCards() {
         {/* Student Card Carousel */}
         <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
           <div className="w-full max-w-4xl h-full flex flex-col">
-            <div className="overflow-visible flex-1" ref={emblaRef}>
+            <div className="overflow-visible flex-1 mb-4" ref={emblaRef}>
               <div className="flex h-full">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
@@ -514,7 +514,7 @@ export default function TeacherStudentCards() {
                   return (
                     <div 
                       key={student.id} 
-                      className="flex-[0_0_95%] sm:flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 px-2 md:px-4 h-full overflow-y-auto transition-all duration-300 cursor-pointer"
+                      className="flex-[0_0_98%] sm:flex-[0_0_96%] md:flex-[0_0_92%] lg:flex-[0_0_88%] min-w-0 px-2 md:px-4 h-full transition-all duration-300 cursor-pointer"
                       onClick={() => {
                         if (index !== currentIndex) {
                           emblaApi?.scrollTo(index);
@@ -526,7 +526,7 @@ export default function TeacherStudentCards() {
                         filter: isActive ? 'blur(0px)' : 'blur(2px)',
                       }}
                     >
-                      <Card className={`h-full transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none' : ''}`}>
+                      <Card className={`h-full overflow-y-auto transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none' : ''}`}>
                         {alertStatus.hasAlert && (
                           <div className="p-4 bg-destructive/10 border-b border-destructive/30">
                             <p className="text-sm font-medium text-destructive">
