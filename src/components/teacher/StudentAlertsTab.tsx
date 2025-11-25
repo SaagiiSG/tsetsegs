@@ -45,14 +45,18 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
   const fetchAlerts = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching alerts for teacher:', teacherName);
+      
       // Fetch all batches for this teacher
       const { data: batches, error: batchesError } = await supabase
         .from('batches')
         .select('id, batch_name, start_date')
         .eq('teacher', teacherName);
 
+      console.log('Batches fetched:', batches);
       if (batchesError) throw batchesError;
       if (!batches || batches.length === 0) {
+        console.log('No batches found');
         setAlerts([]);
         setIsLoading(false);
         return;
@@ -66,8 +70,10 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
         .select('id, first_name, last_name, phone, batch_id')
         .in('batch_id', batchIds);
 
+      console.log('Students fetched:', students);
       if (studentsError) throw studentsError;
       if (!students || students.length === 0) {
+        console.log('No students found');
         setAlerts([]);
         setIsLoading(false);
         return;
@@ -86,6 +92,9 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
         .select('*')
         .in('student_id', studentIds);
 
+      console.log('Attendance data:', attendance);
+      console.log('Homework data:', homework);
+      
       if (attendanceError) throw attendanceError;
       if (homeworkError) throw homeworkError;
 
@@ -99,11 +108,18 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
         const studentAttendance = attendance?.filter(a => a.student_id === student.id) || [];
         const studentHomework = homework?.filter(h => h.student_id === student.id) || [];
 
+        console.log(`Checking student ${student.first_name}:`, {
+          attendance: studentAttendance,
+          homework: studentHomework
+        });
+
         // Calculate current week based on batch start date
         const startDate = new Date(batch.start_date);
         const today = new Date();
         const weeksPassed = Math.floor((today.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
         const currentWeek = Math.max(1, Math.min(weeksPassed + 1, 15));
+
+        console.log(`Current week for ${student.first_name}: ${currentWeek}`);
 
         // Count missed classes (only marked sessions up to current week)
         let missedClasses = 0;
@@ -122,8 +138,11 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
           hw => hw.session_number <= currentWeek && hw.completed === false
         ).length;
 
+        console.log(`${student.first_name} - Missed classes: ${missedClasses}, Missed homework: ${missedHomework}`);
+
         // Add to alerts if student has 3+ misses
         if (missedClasses >= 3 || missedHomework >= 3) {
+          console.log(`Adding ${student.first_name} to alerts!`);
           studentAlerts.push({
             student,
             batch,
@@ -132,6 +151,8 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
           });
         }
       }
+
+      console.log('Final alerts:', studentAlerts);
 
       // Sort by total issues (most critical first)
       studentAlerts.sort((a, b) => {
