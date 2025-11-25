@@ -9,6 +9,7 @@ import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
 import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionIntake";
 import useEmblaCarousel from "embla-carousel-react";
+import { useIsTablet } from "@/hooks/use-mobile";
 
 interface Student {
   id: string;
@@ -55,6 +56,7 @@ export default function TeacherStudentCards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showBatchIntake, setShowBatchIntake] = useState(false);
+  const isTablet = useIsTablet();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
@@ -549,29 +551,31 @@ export default function TeacherStudentCards() {
               </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-center gap-2 md:gap-4 mt-3 md:mt-6 pb-2 md:pb-0 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-                className="min-w-[120px] md:min-w-[160px]"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <Button
-                variant="default"
-                size="default"
-                onClick={handleNext}
-                disabled={currentIndex === students.length - 1}
-                className="min-w-[120px] md:min-w-[160px] bg-primary"
-              >
-                Next
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            {/* Navigation Buttons - Hidden on tablet/iPad */}
+            {!isTablet && (
+              <div className="flex justify-center gap-2 md:gap-4 mt-3 md:mt-6 pb-2 md:pb-0 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className="min-w-[120px] md:min-w-[160px]"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={handleNext}
+                  disabled={currentIndex === students.length - 1}
+                  className="min-w-[120px] md:min-w-[160px] bg-primary"
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { X, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
@@ -38,6 +39,7 @@ interface BatchFirstSessionIntakeProps {
 }
 
 export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFirstSessionIntakeProps) {
+  const { toast } = useToast();
   const incompleteStudents = students.filter(s => !s.first_session_completed);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedStudents, setCompletedStudents] = useState<Set<string>>(new Set());
@@ -114,12 +116,17 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
       await onSubmit(currentStudent.id, data);
       setCompletedStudents(prev => new Set(prev).add(currentStudent.id));
       
-      // Move to next student if available
-      if (currentIndex < incompleteStudents.length - 1) {
-        handleNext();
-      }
+      toast({
+        title: "Saved",
+        description: `${currentStudent.first_name}'s information saved successfully`,
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save student information",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -293,7 +300,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
 
                   {/* Submit Button */}
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save & Next"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </form>
               </div>
@@ -307,6 +314,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
         <Button
           size="sm"
           variant="outline"
+          onClick={handlePrevious}
           disabled={currentIndex === 0}
         >
           <ArrowLeft className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -325,6 +333,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
           disabled={currentIndex === incompleteStudents.length - 1}
         >
           <span className="hidden sm:inline">Next</span>
+          <span className="sm:hidden">Next</span>
           <ArrowRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
         </Button>
       </div>
