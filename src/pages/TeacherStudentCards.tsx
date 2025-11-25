@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
-import { FirstSessionDialog } from "@/components/teacher/FirstSessionDialog";
+import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionIntake";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface Student {
@@ -54,8 +54,7 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [showFirstSessionDialog, setShowFirstSessionDialog] = useState(false);
-  const [selectedStudentForFirstSession, setSelectedStudentForFirstSession] = useState<Student | null>(null);
+  const [showBatchIntake, setShowBatchIntake] = useState(false);
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
@@ -385,15 +384,13 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handleFirstSessionSubmit = async (data: {
+  const handleBatchIntakeSubmit = async (studentId: string, data: {
     phone: string;
     parent_phone: string;
     last_name: string;
     math_level: 'bad' | 'average' | 'good';
     english_level: 'bad' | 'average' | 'good';
   }) => {
-    if (!selectedStudentForFirstSession) return;
-
     try {
       const { error } = await supabase
         .from("students")
@@ -405,13 +402,13 @@ export default function TeacherStudentCards() {
           english_level: data.english_level,
           first_session_completed: true,
         })
-        .eq("id", selectedStudentForFirstSession.id);
+        .eq("id", studentId);
 
       if (error) throw error;
 
       // Update local state
       setStudents(students.map(s => 
-        s.id === selectedStudentForFirstSession.id 
+        s.id === studentId 
           ? { 
               ...s, 
               phone: data.phone,
@@ -460,10 +457,17 @@ export default function TeacherStudentCards() {
     );
   }
 
-  const currentStudent = students[currentIndex];
-
   return (
     <div className="min-h-screen bg-background">
+      {/* Batch Intake Modal */}
+      {showBatchIntake && (
+        <BatchFirstSessionIntake
+          students={students}
+          onClose={() => setShowBatchIntake(false)}
+          onSubmit={handleBatchIntakeSubmit}
+        />
+      )}
+
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -473,13 +477,9 @@ export default function TeacherStudentCards() {
           </Button>
           <Button 
             variant="default"
-            onClick={() => {
-              setSelectedStudentForFirstSession(currentStudent);
-              setShowFirstSessionDialog(true);
-            }}
-            disabled={currentStudent.first_session_completed}
+            onClick={() => setShowBatchIntake(true)}
           >
-            {currentStudent.first_session_completed ? 'First Session Completed ✓' : 'First Session Intake'}
+            Batch First Session Intake
           </Button>
         </div>
       </div>
@@ -539,16 +539,6 @@ export default function TeacherStudentCards() {
                 })}
               </div>
             </div>
-
-            {/* First Session Dialog */}
-            {selectedStudentForFirstSession && (
-              <FirstSessionDialog
-                open={showFirstSessionDialog}
-                onOpenChange={setShowFirstSessionDialog}
-                studentName={`${selectedStudentForFirstSession.first_name} ${selectedStudentForFirstSession.last_name || ''}`}
-                onSubmit={handleFirstSessionSubmit}
-              />
-            )}
 
             {/* Navigation Buttons */}
             <div className="flex justify-center gap-4 mt-6">
