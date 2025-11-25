@@ -504,8 +504,8 @@ export default function TeacherStudentCards() {
 
         {/* Student Card Carousel */}
         <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
-          <div className="w-full max-w-4xl h-full flex flex-col">
-            <div className="overflow-visible flex-1 mb-4" ref={emblaRef}>
+          <div className="w-full max-w-4xl flex flex-col" style={{ height: 'calc(100% - 80px)' }}>
+            <div className="overflow-visible h-full mb-4" ref={emblaRef}>
               <div className="flex h-full">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
@@ -514,7 +514,7 @@ export default function TeacherStudentCards() {
                   return (
                     <div 
                       key={student.id} 
-                      className="flex-[0_0_92%] sm:flex-[0_0_88%] md:flex-[0_0_82%] lg:flex-[0_0_75%] min-w-0 px-2 md:px-4 h-full transition-all duration-300 cursor-pointer group"
+                      className="flex-[0_0_94%] sm:flex-[0_0_90%] md:flex-[0_0_86%] lg:flex-[0_0_82%] min-w-0 px-1 md:px-2 h-full transition-all duration-300 cursor-pointer group"
                       onClick={() => {
                         if (index !== currentIndex) {
                           emblaApi?.scrollTo(index);
