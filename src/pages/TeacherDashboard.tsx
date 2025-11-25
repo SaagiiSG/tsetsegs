@@ -5,8 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Users, Calendar, MapPin } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LogOut, Users, Calendar, MapPin, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { StudentAlertsTab } from '@/components/teacher/StudentAlertsTab';
 
 interface Batch {
   id: string;
@@ -22,6 +24,7 @@ export default function TeacherDashboard() {
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [selectedIntake, setSelectedIntake] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('classes');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -137,98 +140,127 @@ export default function TeacherDashboard() {
           </Button>
         </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">My Classes</h2>
-          
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : batches.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                No classes assigned yet
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {/* Filter */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="classes">My Classes</TabsTrigger>
+            <TabsTrigger value="alerts">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Alerts
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="classes" className="space-y-6">
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : batches.length === 0 ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>Filter Classes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={selectedIntake} onValueChange={setSelectedIntake}>
-                    <SelectTrigger className="w-full sm:w-64">
-                      <SelectValue placeholder="Select intake" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Intakes</SelectItem>
-                      {intakes.map((intake) => (
-                        <SelectItem key={intake} value={intake}>
-                          {intake}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? 'es' : ''}
-                  </p>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  No classes assigned yet
                 </CardContent>
               </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Filter */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Filter Classes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Select value={selectedIntake} onValueChange={setSelectedIntake}>
+                      <SelectTrigger className="w-full sm:w-64">
+                        <SelectValue placeholder="Select intake" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Intakes</SelectItem>
+                        {intakes.map((intake) => (
+                          <SelectItem key={intake} value={intake}>
+                            {intake}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? 'es' : ''}
+                    </p>
+                  </CardContent>
+                </Card>
 
-              {/* Batch Cards */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBatches.map((batch) => (
-                  <Card key={batch.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="text-lg">{batch.batch_name}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        {getStudentCount(batch.id)} students
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-start gap-2 text-sm">
-                        <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div>
-                          <p className="font-medium">Schedule:</p>
-                          <p className="text-muted-foreground whitespace-pre-line">{batch.schedule}</p>
+                {/* Batch Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredBatches.map((batch) => (
+                    <Card key={batch.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{batch.batch_name}</CardTitle>
+                        <CardDescription className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          {getStudentCount(batch.id)} students
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-start gap-2 text-sm">
+                          <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          <div>
+                            <p className="font-medium">Schedule:</p>
+                            <p className="text-muted-foreground whitespace-pre-line">{batch.schedule}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {isOnlineClass(batch.schedule) ? (
-                            <span className="font-medium text-primary">🌐 Online Class</span>
-                          ) : (
-                            <>Room {batch.room}</>
-                          )}
-                        </span>
-                      </div>
-                      <div className="text-sm">
-                        <p className="font-medium">Start Date:</p>
-                        <p className="text-muted-foreground">
-                          {new Date(batch.start_date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                      <Button 
-                        className="w-full mt-4" 
-                        onClick={() => navigate(`/teacher/students/${batch.id}`)}
-                      >
-                        View Students & Attendance
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {isOnlineClass(batch.schedule) ? (
+                              <span className="font-medium text-primary">🌐 Online Class</span>
+                            ) : (
+                              <>Room {batch.room}</>
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <p className="font-medium">Start Date:</p>
+                          <p className="text-muted-foreground">
+                            {new Date(batch.start_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        <Button 
+                          className="w-full mt-4" 
+                          onClick={() => navigate(`/teacher/students/${batch.id}`)}
+                        >
+                          View Students & Attendance
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Students Needing Attention
+                </CardTitle>
+                <CardDescription>
+                  Students with 3+ missed classes or homework across all your batches
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {teacherName ? (
+                  <StudentAlertsTab teacherName={teacherName} />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">Loading...</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
