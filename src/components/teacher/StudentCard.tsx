@@ -115,21 +115,19 @@ export function StudentCard({
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b bg-muted/50 sticky top-0 z-10">
-        <div className="space-y-2">
-          {/* Top row: Student count and name */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <p className="text-sm font-medium text-muted-foreground">
-                Student {currentIndex + 1} of {totalStudents}
-              </p>
-              <h2 className="text-lg font-bold">
-                {student.first_name} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
-              </h2>
-            </div>
+        <div className="flex items-center justify-between gap-4">
+          {/* Left side: Student count and name */}
+          <div className="flex items-center gap-4">
+            <p className="text-sm font-medium text-muted-foreground">
+              Student {currentIndex + 1} of {totalStudents}
+            </p>
+            <h2 className="text-lg font-bold">
+              {student.first_name} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
+            </h2>
           </div>
           
-          {/* Warnings row */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Right side: Warnings */}
+          <div className="flex flex-wrap items-center gap-2 justify-end">
             {!student.first_session_completed && (
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
                 <span className="text-xs font-medium text-amber-600">⚠️ First Session Incomplete</span>
