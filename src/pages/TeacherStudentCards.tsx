@@ -514,7 +514,7 @@ export default function TeacherStudentCards() {
                   return (
                     <div 
                       key={student.id} 
-                      className="flex-[0_0_98%] sm:flex-[0_0_96%] md:flex-[0_0_92%] lg:flex-[0_0_88%] min-w-0 px-2 md:px-4 h-full transition-all duration-300 cursor-pointer"
+                      className="flex-[0_0_92%] sm:flex-[0_0_88%] md:flex-[0_0_82%] lg:flex-[0_0_75%] min-w-0 px-2 md:px-4 h-full transition-all duration-300 cursor-pointer group"
                       onClick={() => {
                         if (index !== currentIndex) {
                           emblaApi?.scrollTo(index);
@@ -523,10 +523,10 @@ export default function TeacherStudentCards() {
                       style={{
                         transform: isActive ? 'scale(1)' : 'scale(0.92)',
                         opacity: isActive ? 1 : 0.4,
-                        filter: isActive ? 'blur(0px)' : 'blur(2px)',
+                        filter: isActive ? 'blur(0px)' : 'blur(0.8px)',
                       }}
                     >
-                      <Card className={`h-full overflow-y-auto transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none' : ''}`}>
+                      <Card className={`h-full overflow-y-auto transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none group-hover:scale-105' : ''}`}>
                         {alertStatus.hasAlert && (
                           <div className="p-4 bg-destructive/10 border-b border-destructive/30">
                             <p className="text-sm font-medium text-destructive">
