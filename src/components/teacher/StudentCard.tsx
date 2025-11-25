@@ -116,14 +116,14 @@ export function StudentCard({
     <Card className="shadow-lg">
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between gap-4">
-          {/* Left side: Student count and name */}
-          <div className="flex items-center gap-4">
-            <p className="text-sm font-medium text-muted-foreground">
-              Student {currentIndex + 1} of {totalStudents}
-            </p>
+          {/* Left side: Student name and count */}
+          <div className="flex flex-col gap-1">
             <h2 className="text-lg font-bold">
               {student.first_name} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
             </h2>
+            <p className="text-sm font-medium text-muted-foreground">
+              Student {currentIndex + 1} of {totalStudents}
+            </p>
           </div>
           
           {/* Right side: Warnings */}
