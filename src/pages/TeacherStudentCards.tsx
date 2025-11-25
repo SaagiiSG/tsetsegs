@@ -514,13 +514,19 @@ export default function TeacherStudentCards() {
                   return (
                     <div 
                       key={student.id} 
-                      className="flex-[0_0_95%] sm:flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 px-2 md:px-4 h-full overflow-y-auto transition-all duration-300"
+                      className="flex-[0_0_95%] sm:flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 px-2 md:px-4 h-full overflow-y-auto transition-all duration-300 cursor-pointer"
+                      onClick={() => {
+                        if (index !== currentIndex) {
+                          emblaApi?.scrollTo(index);
+                        }
+                      }}
                       style={{
                         transform: isActive ? 'scale(1)' : 'scale(0.92)',
                         opacity: isActive ? 1 : 0.4,
+                        filter: isActive ? 'blur(0px)' : 'blur(2px)',
                       }}
                     >
-                      <Card className={`h-full transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}`}>
+                      <Card className={`h-full transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none' : ''}`}>
                         {alertStatus.hasAlert && (
                           <div className="p-4 bg-destructive/10 border-b border-destructive/30">
                             <p className="text-sm font-medium text-destructive">
