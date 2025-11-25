@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { X, ArrowLeft, ArrowRight, Check } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
@@ -45,11 +44,6 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const [completedStudents, setCompletedStudents] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: false,
-    skipSnaps: false,
-    duration: 20,
-  });
 
   const currentStudent = incompleteStudents[currentIndex];
 
@@ -74,17 +68,6 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const mathLevel = watch("math_level");
   const englishLevel = watch("english_level");
 
-  // Sync embla carousel with currentIndex
-  useEffect(() => {
-    if (emblaApi) {
-      emblaApi.on('select', () => {
-        const selected = emblaApi.selectedScrollSnap();
-        if (selected !== currentIndex) {
-          setCurrentIndex(selected);
-        }
-      });
-    }
-  }, [emblaApi, currentIndex]);
 
   // Update form when currentIndex changes
   useEffect(() => {
@@ -103,11 +86,8 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const navigateToStudent = useCallback((index: number) => {
     if (index >= 0 && index < incompleteStudents.length) {
       setCurrentIndex(index);
-      if (emblaApi) {
-        emblaApi.scrollTo(index);
-      }
     }
-  }, [emblaApi, incompleteStudents.length]);
+  }, [incompleteStudents.length]);
 
   const handlePrevious = useCallback(() => {
     navigateToStudent(currentIndex - 1);
@@ -199,113 +179,113 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
         </div>
       </div>
 
-      {/* Form Carousel */}
-      <div className="flex-1 overflow-hidden min-h-0" ref={emblaRef}>
-        <div className="flex h-full">
-          {incompleteStudents.map((student, idx) => (
-            <div key={student.id} className="flex-[0_0_100%] min-w-0 p-3 md:p-4 lg:p-6 overflow-y-auto">
-              <div className="max-w-2xl mx-auto">
-                <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
-                  {student.first_name} {student.last_name || ""}
-                </h3>
+      {/* Single Form Outside Carousel */}
+      <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+        {/* Student Name Header */}
+        <div className="px-3 md:px-4 py-3 border-b flex-shrink-0">
+          <h3 className="text-xl md:text-2xl font-semibold text-center">
+            {currentStudent.first_name} {currentStudent.last_name || ""}
+          </h3>
+        </div>
 
-                {/* Only render the form for the current student */}
-                {idx === currentIndex && (
-                  <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 md:space-y-6">
-                    {/* Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Student Phone (8 digits)</Label>
-                      <Input
-                        id="phone"
-                        {...register("phone")}
-                        placeholder="99112233"
-                        maxLength={8}
-                      />
-                      {errors.phone && (
-                        <p className="text-sm text-destructive">{errors.phone.message}</p>
-                      )}
-                    </div>
-
-                    {/* Parent Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_phone">Parent Phone (8 digits)</Label>
-                      <Input
-                        id="parent_phone"
-                        {...register("parent_phone")}
-                        placeholder="88776655"
-                        maxLength={8}
-                      />
-                      {errors.parent_phone && (
-                        <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
-                      )}
-                    </div>
-
-                    {/* Last Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name</Label>
-                      <Input
-                        id="last_name"
-                        {...register("last_name")}
-                        placeholder="Enter last name"
-                      />
-                      {errors.last_name && (
-                        <p className="text-sm text-destructive">{errors.last_name.message}</p>
-                      )}
-                    </div>
-
-                    {/* Math Level */}
-                    <div className="space-y-3">
-                      <Label>Math Level</Label>
-                      <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="bad" id="math-bad" />
-                          <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="average" id="math-average" />
-                          <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="good" id="math-good" />
-                          <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
-                        </div>
-                      </RadioGroup>
-                      {errors.math_level && (
-                        <p className="text-sm text-destructive">{errors.math_level.message}</p>
-                      )}
-                    </div>
-
-                    {/* English Level */}
-                    <div className="space-y-3">
-                      <Label>English Level</Label>
-                      <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="bad" id="english-bad" />
-                          <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="average" id="english-average" />
-                          <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="good" id="english-good" />
-                          <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
-                        </div>
-                      </RadioGroup>
-                      {errors.english_level && (
-                        <p className="text-sm text-destructive">{errors.english_level.message}</p>
-                      )}
-                    </div>
-
-                    {/* Submit Button */}
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? "Saving..." : "Save"}
-                    </Button>
-                  </form>
+        {/* Form Content */}
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6">
+          <div className="max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 md:space-y-6">
+              {/* Phone */}
+              <div className="space-y-2">
+                <Label htmlFor="phone">Student Phone (8 digits)</Label>
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="99112233"
+                  maxLength={8}
+                  autoComplete="off"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-destructive">{errors.phone.message}</p>
                 )}
               </div>
-            </div>
-          ))}
+
+              {/* Parent Phone */}
+              <div className="space-y-2">
+                <Label htmlFor="parent_phone">Parent Phone (8 digits)</Label>
+                <Input
+                  id="parent_phone"
+                  {...register("parent_phone")}
+                  placeholder="88776655"
+                  maxLength={8}
+                  autoComplete="off"
+                />
+                {errors.parent_phone && (
+                  <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
+                )}
+              </div>
+
+              {/* Last Name */}
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  {...register("last_name")}
+                  placeholder="Enter last name"
+                  autoComplete="off"
+                />
+                {errors.last_name && (
+                  <p className="text-sm text-destructive">{errors.last_name.message}</p>
+                )}
+              </div>
+
+              {/* Math Level */}
+              <div className="space-y-3">
+                <Label>Math Level</Label>
+                <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bad" id="math-bad" />
+                    <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="average" id="math-average" />
+                    <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="good" id="math-good" />
+                    <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
+                  </div>
+                </RadioGroup>
+                {errors.math_level && (
+                  <p className="text-sm text-destructive">{errors.math_level.message}</p>
+                )}
+              </div>
+
+              {/* English Level */}
+              <div className="space-y-3">
+                <Label>English Level</Label>
+                <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bad" id="english-bad" />
+                    <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="average" id="english-average" />
+                    <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="good" id="english-good" />
+                    <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
+                  </div>
+                </RadioGroup>
+                {errors.english_level && (
+                  <p className="text-sm text-destructive">{errors.english_level.message}</p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save"}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
 
