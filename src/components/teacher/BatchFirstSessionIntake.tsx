@@ -43,17 +43,20 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedStudents, setCompletedStudents] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
+  // Store form data for each student to preserve changes when switching
+  const [formDataCache, setFormDataCache] = useState<Map<string, Partial<FormData>>>(new Map());
 
   const currentStudent = incompleteStudents[currentIndex];
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     setValue,
     watch,
     reset,
+    getValues,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,11 +71,27 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const mathLevel = watch("math_level");
   const englishLevel = watch("english_level");
 
+  // Auto-save current form data to cache when navigating
+  const saveToCache = useCallback(() => {
+    if (currentStudent && isDirty) {
+      const currentData = getValues();
+      setFormDataCache(prev => new Map(prev).set(currentStudent.id, currentData));
+    }
+  }, [currentStudent, isDirty, getValues]);
 
-  // Update form when currentIndex changes
+  // Load student data from cache or database when currentIndex changes
   useEffect(() => {
     const student = incompleteStudents[currentIndex];
-    if (student) {
+    if (!student) return;
+
+    // Check if we have cached data for this student
+    const cachedData = formDataCache.get(student.id);
+    
+    if (cachedData) {
+      // Load from cache
+      reset(cachedData as FormData);
+    } else {
+      // Load from student object
       reset({
         phone: student.phone || "",
         parent_phone: student.parent_phone || "",
@@ -81,13 +100,15 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
         english_level: student.english_level || undefined,
       });
     }
-  }, [currentIndex, incompleteStudents, reset]);
+  }, [currentIndex]); // Only depend on currentIndex, not the whole array
 
   const navigateToStudent = useCallback((index: number) => {
     if (index >= 0 && index < incompleteStudents.length) {
+      // Auto-save current form data before navigating
+      saveToCache();
       setCurrentIndex(index);
     }
-  }, [incompleteStudents.length]);
+  }, [incompleteStudents.length, saveToCache]);
 
   const handlePrevious = useCallback(() => {
     navigateToStudent(currentIndex - 1);
@@ -102,6 +123,13 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
     try {
       await onSubmit(currentStudent.id, data);
       setCompletedStudents(prev => new Set(prev).add(currentStudent.id));
+      
+      // Remove from cache after successful save
+      setFormDataCache(prev => {
+        const newCache = new Map(prev);
+        newCache.delete(currentStudent.id);
+        return newCache;
+      });
       
       toast({
         title: "Saved",
