@@ -39,6 +39,9 @@ interface StudentCardProps {
   attendance: Attendance[];
   homework: Homework[];
   practiceTests: PracticeTest[];
+  hasAlert?: boolean;
+  missedClasses?: number;
+  missedHomework?: number;
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
@@ -52,6 +55,9 @@ export function StudentCard({
   attendance,
   homework,
   practiceTests,
+  hasAlert,
+  missedClasses,
+  missedHomework,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
@@ -108,16 +114,38 @@ export function StudentCard({
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="border-b bg-muted/50">
-        <div className="text-center space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">
-            Student {currentIndex + 1} of {totalStudents}
-          </p>
-          {!student.first_session_completed && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-              <span className="text-xs font-medium text-amber-600">⚠️ First Session Incomplete</span>
+      <CardHeader className="border-b bg-muted/50 sticky top-0 z-10">
+        <div className="space-y-2">
+          {/* Top row: Student count and name */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                Student {currentIndex + 1} of {totalStudents}
+              </p>
+              <h2 className="text-lg font-bold">
+                {student.first_name} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
+              </h2>
             </div>
-          )}
+          </div>
+          
+          {/* Warnings row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {!student.first_session_completed && (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                <span className="text-xs font-medium text-amber-600">⚠️ First Session Incomplete</span>
+              </div>
+            )}
+            {hasAlert && (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20">
+                <span className="text-xs font-medium text-destructive">
+                  ⚠️ Alert: 
+                  {missedClasses && missedClasses >= 3 && ` ${missedClasses} classes missed`}
+                  {missedClasses && missedClasses >= 3 && missedHomework && missedHomework >= 3 && ' •'}
+                  {missedHomework && missedHomework >= 3 && ` ${missedHomework} homework incomplete`}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
 

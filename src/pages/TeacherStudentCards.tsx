@@ -527,16 +527,6 @@ export default function TeacherStudentCards() {
                       }}
                     >
                       <Card className={`h-full overflow-y-auto transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"} ${!isActive ? 'pointer-events-none group-hover:scale-105' : ''}`}>
-                        {alertStatus.hasAlert && (
-                          <div className="p-4 bg-destructive/10 border-b border-destructive/30">
-                            <p className="text-sm font-medium text-destructive">
-                              ⚠️ Alert: 
-                              {alertStatus.missedClasses >= 3 && ` ${alertStatus.missedClasses} classes missed`}
-                              {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' •'}
-                              {alertStatus.missedHomework >= 3 && ` ${alertStatus.missedHomework} homework incomplete`}
-                            </p>
-                          </div>
-                        )}
                         <StudentCard
                           student={student}
                           currentIndex={index}
@@ -544,6 +534,9 @@ export default function TeacherStudentCards() {
                           attendance={studentData?.attendance || []}
                           homework={studentData?.homework || []}
                           practiceTests={studentData?.practiceTests || []}
+                          hasAlert={alertStatus.hasAlert}
+                          missedClasses={alertStatus.missedClasses}
+                          missedHomework={alertStatus.missedHomework}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
