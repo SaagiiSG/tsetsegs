@@ -117,9 +117,11 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
         const startDate = new Date(batch.start_date);
         const today = new Date();
         const weeksPassed = Math.floor((today.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
-        const currentWeek = Math.max(1, Math.min(weeksPassed + 1, 15));
+        // If batch hasn't started yet or just started, we still need to check the marked sessions
+        // So we use at least week 15 to check all marked sessions
+        const currentWeek = 15; // Check all 15 sessions regardless of calendar week
 
-        console.log(`Current week for ${student.first_name}: ${currentWeek}`);
+        console.log(`Current week for ${student.first_name}: ${currentWeek}, weeksPassed: ${weeksPassed}`);
 
         // Count missed classes (only marked sessions up to current week)
         let missedClasses = 0;
