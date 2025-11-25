@@ -1,17 +1,57 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Phone, ArrowRight } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { StudentCard } from './StudentCard';
+import { toast } from 'sonner';
 
-interface Student {
+interface DbStudent {
   id: string;
   first_name: string;
   last_name: string;
   phone: string;
+  parent_phone: string | null;
   batch_id: string;
+  english_level: string | null;
+  math_level: string | null;
+  first_session_completed: boolean | null;
+}
+
+interface DbAttendance {
+  id: string;
+  student_id: string;
+  batch_id: string;
+  session_1: string | null;
+  session_2: string | null;
+  session_3: string | null;
+  session_4: string | null;
+  session_5: string | null;
+  session_6: string | null;
+  session_7: string | null;
+  session_8: string | null;
+  session_9: string | null;
+  session_10: string | null;
+  session_11: string | null;
+  session_12: string | null;
+  session_13: string | null;
+  session_14: string | null;
+  session_15: string | null;
+}
+
+interface DbHomework {
+  id: string;
+  student_id: string;
+  batch_id: string;
+  session_number: number;
+  completed: boolean;
+}
+
+interface DbPracticeTest {
+  id: string;
+  student_id: string;
+  batch_id: string;
+  test_number: number;
+  score: number | null;
 }
 
 interface Batch {
@@ -21,7 +61,7 @@ interface Batch {
 }
 
 interface StudentAlert {
-  student: Student;
+  student: DbStudent;
   batch: Batch;
   missedClasses: number;
   missedHomework: number;
@@ -34,7 +74,6 @@ interface StudentAlertsTabProps {
 export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
   const [alerts, setAlerts] = useState<StudentAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (teacherName) {
@@ -67,7 +106,7 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
       // Fetch all students in these batches
       const { data: students, error: studentsError } = await supabase
         .from('students')
-        .select('id, first_name, last_name, phone, batch_id')
+        .select('*')
         .in('batch_id', batchIds);
 
       console.log('Students fetched:', students);
@@ -92,11 +131,18 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
         .select('*')
         .in('student_id', studentIds);
 
+      const { data: practiceTests, error: practiceTestsError } = await supabase
+        .from('practice_tests')
+        .select('*')
+        .in('student_id', studentIds);
+
       console.log('Attendance data:', attendance);
       console.log('Homework data:', homework);
+      console.log('Practice tests data:', practiceTests);
       
       if (attendanceError) throw attendanceError;
       if (homeworkError) throw homeworkError;
+      if (practiceTestsError) throw practiceTestsError;
 
       // Calculate alerts for each student
       const studentAlerts: StudentAlert[] = [];
@@ -107,10 +153,12 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
 
         const studentAttendance = attendance?.filter(a => a.student_id === student.id) || [];
         const studentHomework = homework?.filter(h => h.student_id === student.id) || [];
+        const studentPracticeTests = practiceTests?.filter(pt => pt.student_id === student.id) || [];
 
         console.log(`Checking student ${student.first_name}:`, {
           attendance: studentAttendance,
-          homework: studentHomework
+          homework: studentHomework,
+          practiceTests: studentPracticeTests
         });
 
         // Calculate current week based on batch start date
@@ -171,6 +219,224 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
     }
   };
 
+  // Helper functions to transform DB data to StudentCard format
+  const transformAttendance = (dbAttendance: DbAttendance[]): any[] => {
+    if (!dbAttendance[0]) return [];
+    const record = dbAttendance[0];
+    const result = [];
+    for (let i = 1; i <= 15; i++) {
+      const key = `session_${i}` as keyof DbAttendance;
+      result.push({
+        session_number: i,
+        status: record[key] as any,
+      });
+    }
+    return result;
+  };
+
+  const transformHomework = (dbHomework: DbHomework[]): any[] => {
+    return dbHomework.map(hw => ({
+      session_number: hw.session_number,
+      status: hw.completed ? 'completed' : 'incomplete',
+    }));
+  };
+
+  const transformPracticeTests = (dbTests: DbPracticeTest[]): any[] => {
+    return dbTests.map(test => ({
+      test_number: test.test_number,
+      score: test.score,
+    }));
+  };
+
+  const getAlertData = async (studentId: string, batchId: string) => {
+    const { data: attendance } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('batch_id', batchId);
+
+    const { data: homework } = await supabase
+      .from('homework')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('batch_id', batchId);
+
+    const { data: practiceTests } = await supabase
+      .from('practice_tests')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('batch_id', batchId);
+
+    return {
+      attendance: transformAttendance(attendance || []),
+      homework: transformHomework(homework || []),
+      practiceTests: transformPracticeTests(practiceTests || []),
+    };
+  };
+
+  const [alertsData, setAlertsData] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const loadAlertsData = async () => {
+      const data: Record<string, any> = {};
+      for (const alert of alerts) {
+        const key = alert.student.id;
+        data[key] = await getAlertData(alert.student.id, alert.batch.id);
+      }
+      setAlertsData(data);
+    };
+
+    if (alerts.length > 0) {
+      loadAlertsData();
+    }
+  }, [alerts]);
+
+  const handleUpdateStudent = async (studentId: string, updates: any) => {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update(updates)
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      setAlerts(prevAlerts =>
+        prevAlerts.map(alert =>
+          alert.student.id === studentId
+            ? { ...alert, student: { ...alert.student, ...updates } }
+            : alert
+        )
+      );
+      toast.success('Student updated');
+    } catch (error) {
+      console.error('Error updating student:', error);
+      toast.error('Failed to update student');
+    }
+  };
+
+  const handleAttendanceChange = async (
+    studentId: string,
+    batchId: string,
+    session: number,
+    status: string
+  ) => {
+    try {
+      const { data: attendanceRecord } = await supabase
+        .from('attendance')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('batch_id', batchId)
+        .single();
+      
+      if (attendanceRecord) {
+        const { error } = await supabase
+          .from('attendance')
+          .update({ [`session_${session}`]: status })
+          .eq('id', attendanceRecord.id);
+
+        if (error) throw error;
+      }
+      
+      // Refresh data
+      const data = await getAlertData(studentId, batchId);
+      setAlertsData(prev => ({ ...prev, [studentId]: data }));
+      fetchAlerts();
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error('Failed to update attendance');
+    }
+  };
+
+  const handleHomeworkChange = async (
+    studentId: string,
+    batchId: string,
+    sessionNumber: number,
+    status: string
+  ) => {
+    try {
+      const completed = status === 'completed';
+      const { data: homeworkRecord } = await supabase
+        .from('homework')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('batch_id', batchId)
+        .eq('session_number', sessionNumber)
+        .maybeSingle();
+      
+      if (!homeworkRecord) {
+        const { error } = await supabase
+          .from('homework')
+          .insert({
+            student_id: studentId,
+            batch_id: batchId,
+            session_number: sessionNumber,
+            completed,
+          });
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('homework')
+          .update({ completed })
+          .eq('id', homeworkRecord.id);
+
+        if (error) throw error;
+      }
+
+      // Refresh data
+      const data = await getAlertData(studentId, batchId);
+      setAlertsData(prev => ({ ...prev, [studentId]: data }));
+      fetchAlerts();
+    } catch (error) {
+      console.error('Error updating homework:', error);
+      toast.error('Failed to update homework');
+    }
+  };
+
+  const handleTestScoreChange = async (
+    studentId: string,
+    batchId: string,
+    testNumber: number,
+    score: number | null
+  ) => {
+    try {
+      const { data: testRecord } = await supabase
+        .from('practice_tests')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('batch_id', batchId)
+        .eq('test_number', testNumber)
+        .maybeSingle();
+      
+      if (!testRecord) {
+        const { error } = await supabase
+          .from('practice_tests')
+          .insert({
+            student_id: studentId,
+            batch_id: batchId,
+            test_number: testNumber,
+            score,
+          });
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('practice_tests')
+          .update({ score })
+          .eq('id', testRecord.id);
+
+        if (error) throw error;
+      }
+
+      // Refresh data
+      const data = await getAlertData(studentId, batchId);
+      setAlertsData(prev => ({ ...prev, [studentId]: data }));
+    } catch (error) {
+      console.error('Error updating test score:', error);
+      toast.error('Failed to update test score');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -198,57 +464,49 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         Found {alerts.length} student{alerts.length !== 1 ? 's' : ''} needing attention
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {alerts.map((alert) => (
-          <Card key={alert.student.id} className="border-2 border-destructive/20 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 space-y-3">
-              {/* Student Name */}
-              <div>
-                <h3 className="font-bold text-lg">
-                  {alert.student.first_name} {alert.student.last_name ? alert.student.last_name.charAt(0) + '.' : ''}
-                </h3>
-                <p className="text-sm text-muted-foreground">{alert.batch.batch_name}</p>
-              </div>
+      <div className="space-y-8">
+        {alerts.map((alert, index) => {
+          const data = alertsData[alert.student.id];
+          if (!data) return null;
 
-              {/* Alert Badges */}
-              <div className="flex flex-wrap gap-2">
-                {alert.missedClasses >= 3 && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    {alert.missedClasses} classes missed
-                  </Badge>
-                )}
-                {alert.missedHomework >= 3 && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    {alert.missedHomework} homework incomplete
-                  </Badge>
-                )}
+          return (
+            <div key={alert.student.id} className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <span>{alert.batch.batch_name}</span>
               </div>
-
-              {/* Contact Info */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>{alert.student.phone}</span>
-              </div>
-
-              {/* View Student Button */}
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => navigate(`/teacher/students/${alert.batch.id}`)}
-              >
-                View Student
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+              <StudentCard
+                student={{
+                  id: alert.student.id,
+                  first_name: alert.student.first_name,
+                  last_name: alert.student.last_name || '',
+                  phone: alert.student.phone,
+                  parent_phone: alert.student.parent_phone || undefined,
+                  math_level: alert.student.math_level as any,
+                  english_level: alert.student.english_level as any,
+                  first_session_completed: alert.student.first_session_completed || false,
+                }}
+                currentIndex={index}
+                totalStudents={alerts.length}
+                attendance={data.attendance}
+                homework={data.homework}
+                practiceTests={data.practiceTests}
+                hasAlert={true}
+                missedClasses={alert.missedClasses}
+                missedHomework={alert.missedHomework}
+                onUpdateStudent={(updates) => handleUpdateStudent(alert.student.id, updates)}
+                onAttendanceChange={(session, status) => handleAttendanceChange(alert.student.id, alert.batch.id, session, status)}
+                onHomeworkChange={(session, status) => handleHomeworkChange(alert.student.id, alert.batch.id, session, status)}
+                onTestScoreChange={(testNumber, score) => handleTestScoreChange(alert.student.id, alert.batch.id, testNumber, score)}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
