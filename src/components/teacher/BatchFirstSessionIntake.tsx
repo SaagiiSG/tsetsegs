@@ -141,12 +141,12 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col">
+    <div className="fixed inset-0 bg-background z-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">First Session Intake</h2>
-          <span className="text-sm text-muted-foreground">
+      <div className="border-b bg-card px-3 md:px-4 py-2 md:py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3">
+          <h2 className="text-base md:text-lg font-semibold">First Session Intake</h2>
+          <span className="text-xs md:text-sm text-muted-foreground">
             {currentIndex + 1} / {incompleteStudents.length}
           </span>
         </div>
@@ -164,8 +164,8 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
       </div>
 
       {/* Student List - Horizontal Scroll */}
-      <div className="border-b bg-card px-4 py-2 overflow-x-auto">
-        <div className="flex gap-2 min-w-max">
+      <div className="border-b bg-card px-3 md:px-4 py-1.5 md:py-2 overflow-x-auto flex-shrink-0">
+        <div className="flex gap-1.5 md:gap-2 min-w-max">
           {incompleteStudents.map((student, index) => (
             <button
               key={student.id}
@@ -180,7 +180,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
                   english_level: student.english_level || undefined,
                 });
               }}
-              className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
+              className={`px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap transition-colors ${
                 index === currentIndex
                   ? "bg-primary text-primary-foreground"
                   : completedStudents.has(student.id)
@@ -196,16 +196,16 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
       </div>
 
       {/* Form Carousel */}
-      <div className="flex-1 overflow-hidden" ref={emblaRef}>
+      <div className="flex-1 overflow-hidden min-h-0" ref={emblaRef}>
         <div className="flex h-full">
           {incompleteStudents.map((student) => (
-            <div key={student.id} className="flex-[0_0_100%] min-w-0 p-6 overflow-y-auto">
+            <div key={student.id} className="flex-[0_0_100%] min-w-0 p-3 md:p-4 lg:p-6 overflow-y-auto">
               <div className="max-w-2xl mx-auto">
-                <h3 className="text-2xl font-semibold mb-6">
+                <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
                   {student.first_name} {student.last_name || ""}
                 </h3>
 
-                <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 md:space-y-6">
                   {/* Phone */}
                   <div className="space-y-2">
                     <Label htmlFor="phone">Student Phone (8 digits)</Label>
@@ -303,27 +303,29 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
       </div>
 
       {/* Navigation Footer */}
-      <div className="border-t bg-card px-4 py-3 flex items-center justify-between">
+      <div className="border-t bg-card px-3 md:px-4 py-2 md:py-3 flex items-center justify-between flex-shrink-0">
         <Button
+          size="sm"
           variant="outline"
-          onClick={handlePrevious}
           disabled={currentIndex === 0}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Previous
+          <ArrowLeft className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+          <span className="hidden sm:inline">Previous</span>
+          <span className="sm:hidden">Prev</span>
         </Button>
         
-        <div className="text-sm text-muted-foreground">
+        <div className="text-xs md:text-sm text-muted-foreground">
           {completedStudents.size} / {incompleteStudents.length} completed
         </div>
 
         <Button
+          size="sm"
           variant="outline"
           onClick={handleNext}
           disabled={currentIndex === incompleteStudents.length - 1}
         >
-          Next
-          <ArrowRight className="h-4 w-4 ml-2" />
+          <span className="hidden sm:inline">Next</span>
+          <ArrowRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
         </Button>
       </div>
     </div>
