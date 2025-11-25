@@ -114,7 +114,7 @@ export function StudentCard({
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="border-b bg-muted/50 sticky top-0 z-10">
+      <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           {/* Left side: Student count and name */}
           <div className="flex items-center gap-4">
