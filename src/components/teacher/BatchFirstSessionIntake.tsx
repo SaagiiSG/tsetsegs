@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -74,41 +74,48 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const mathLevel = watch("math_level");
   const englishLevel = watch("english_level");
 
-  const handlePrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      const newIndex = currentIndex - 1;
-      setCurrentIndex(newIndex);
-      if (emblaApi) emblaApi.scrollTo(newIndex);
-      
-      // Reset form with previous student's data
-      const prevStudent = incompleteStudents[newIndex];
-      reset({
-        phone: prevStudent.phone || "",
-        parent_phone: prevStudent.parent_phone || "",
-        last_name: prevStudent.last_name || "",
-        math_level: prevStudent.math_level || undefined,
-        english_level: prevStudent.english_level || undefined,
+  // Sync embla carousel with currentIndex
+  useEffect(() => {
+    if (emblaApi) {
+      emblaApi.on('select', () => {
+        const selected = emblaApi.selectedScrollSnap();
+        if (selected !== currentIndex) {
+          setCurrentIndex(selected);
+        }
       });
     }
-  }, [currentIndex, emblaApi, incompleteStudents, reset]);
+  }, [emblaApi, currentIndex]);
+
+  // Update form when currentIndex changes
+  useEffect(() => {
+    const student = incompleteStudents[currentIndex];
+    if (student) {
+      reset({
+        phone: student.phone || "",
+        parent_phone: student.parent_phone || "",
+        last_name: student.last_name || "",
+        math_level: student.math_level || undefined,
+        english_level: student.english_level || undefined,
+      });
+    }
+  }, [currentIndex, incompleteStudents, reset]);
+
+  const navigateToStudent = useCallback((index: number) => {
+    if (index >= 0 && index < incompleteStudents.length) {
+      setCurrentIndex(index);
+      if (emblaApi) {
+        emblaApi.scrollTo(index);
+      }
+    }
+  }, [emblaApi, incompleteStudents.length]);
+
+  const handlePrevious = useCallback(() => {
+    navigateToStudent(currentIndex - 1);
+  }, [currentIndex, navigateToStudent]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < incompleteStudents.length - 1) {
-      const newIndex = currentIndex + 1;
-      setCurrentIndex(newIndex);
-      if (emblaApi) emblaApi.scrollTo(newIndex);
-      
-      // Reset form with next student's data
-      const nextStudent = incompleteStudents[newIndex];
-      reset({
-        phone: nextStudent.phone || "",
-        parent_phone: nextStudent.parent_phone || "",
-        last_name: nextStudent.last_name || "",
-        math_level: nextStudent.math_level || undefined,
-        english_level: nextStudent.english_level || undefined,
-      });
-    }
-  }, [currentIndex, emblaApi, incompleteStudents, reset]);
+    navigateToStudent(currentIndex + 1);
+  }, [currentIndex, navigateToStudent]);
 
   const onSubmitForm = async (data: FormData) => {
     setIsSubmitting(true);
@@ -176,17 +183,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
           {incompleteStudents.map((student, index) => (
             <button
               key={student.id}
-              onClick={() => {
-                setCurrentIndex(index);
-                if (emblaApi) emblaApi.scrollTo(index);
-                reset({
-                  phone: student.phone || "",
-                  parent_phone: student.parent_phone || "",
-                  last_name: student.last_name || "",
-                  math_level: student.math_level || undefined,
-                  english_level: student.english_level || undefined,
-                });
-              }}
+              onClick={() => navigateToStudent(index)}
               className={`px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap transition-colors ${
                 index === currentIndex
                   ? "bg-primary text-primary-foreground"
@@ -205,104 +202,107 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
       {/* Form Carousel */}
       <div className="flex-1 overflow-hidden min-h-0" ref={emblaRef}>
         <div className="flex h-full">
-          {incompleteStudents.map((student) => (
+          {incompleteStudents.map((student, idx) => (
             <div key={student.id} className="flex-[0_0_100%] min-w-0 p-3 md:p-4 lg:p-6 overflow-y-auto">
               <div className="max-w-2xl mx-auto">
                 <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
                   {student.first_name} {student.last_name || ""}
                 </h3>
 
-                <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 md:space-y-6">
-                  {/* Phone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Student Phone (8 digits)</Label>
-                    <Input
-                      id="phone"
-                      {...register("phone")}
-                      placeholder="99112233"
-                      maxLength={8}
-                    />
-                    {errors.phone && (
-                      <p className="text-sm text-destructive">{errors.phone.message}</p>
-                    )}
-                  </div>
+                {/* Only render the form for the current student */}
+                {idx === currentIndex && (
+                  <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 md:space-y-6">
+                    {/* Phone */}
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Student Phone (8 digits)</Label>
+                      <Input
+                        id="phone"
+                        {...register("phone")}
+                        placeholder="99112233"
+                        maxLength={8}
+                      />
+                      {errors.phone && (
+                        <p className="text-sm text-destructive">{errors.phone.message}</p>
+                      )}
+                    </div>
 
-                  {/* Parent Phone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_phone">Parent Phone (8 digits)</Label>
-                    <Input
-                      id="parent_phone"
-                      {...register("parent_phone")}
-                      placeholder="88776655"
-                      maxLength={8}
-                    />
-                    {errors.parent_phone && (
-                      <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
-                    )}
-                  </div>
+                    {/* Parent Phone */}
+                    <div className="space-y-2">
+                      <Label htmlFor="parent_phone">Parent Phone (8 digits)</Label>
+                      <Input
+                        id="parent_phone"
+                        {...register("parent_phone")}
+                        placeholder="88776655"
+                        maxLength={8}
+                      />
+                      {errors.parent_phone && (
+                        <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
+                      )}
+                    </div>
 
-                  {/* Last Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="last_name">Last Name</Label>
-                    <Input
-                      id="last_name"
-                      {...register("last_name")}
-                      placeholder="Enter last name"
-                    />
-                    {errors.last_name && (
-                      <p className="text-sm text-destructive">{errors.last_name.message}</p>
-                    )}
-                  </div>
+                    {/* Last Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="last_name">Last Name</Label>
+                      <Input
+                        id="last_name"
+                        {...register("last_name")}
+                        placeholder="Enter last name"
+                      />
+                      {errors.last_name && (
+                        <p className="text-sm text-destructive">{errors.last_name.message}</p>
+                      )}
+                    </div>
 
-                  {/* Math Level */}
-                  <div className="space-y-3">
-                    <Label>Math Level</Label>
-                    <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="bad" id="math-bad" />
-                        <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="average" id="math-average" />
-                        <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="good" id="math-good" />
-                        <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
-                      </div>
-                    </RadioGroup>
-                    {errors.math_level && (
-                      <p className="text-sm text-destructive">{errors.math_level.message}</p>
-                    )}
-                  </div>
+                    {/* Math Level */}
+                    <div className="space-y-3">
+                      <Label>Math Level</Label>
+                      <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="bad" id="math-bad" />
+                          <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="average" id="math-average" />
+                          <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="good" id="math-good" />
+                          <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
+                        </div>
+                      </RadioGroup>
+                      {errors.math_level && (
+                        <p className="text-sm text-destructive">{errors.math_level.message}</p>
+                      )}
+                    </div>
 
-                  {/* English Level */}
-                  <div className="space-y-3">
-                    <Label>English Level</Label>
-                    <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="bad" id="english-bad" />
-                        <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="average" id="english-average" />
-                        <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="good" id="english-good" />
-                        <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
-                      </div>
-                    </RadioGroup>
-                    {errors.english_level && (
-                      <p className="text-sm text-destructive">{errors.english_level.message}</p>
-                    )}
-                  </div>
+                    {/* English Level */}
+                    <div className="space-y-3">
+                      <Label>English Level</Label>
+                      <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="bad" id="english-bad" />
+                          <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="average" id="english-average" />
+                          <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="good" id="english-good" />
+                          <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
+                        </div>
+                      </RadioGroup>
+                      {errors.english_level && (
+                        <p className="text-sm text-destructive">{errors.english_level.message}</p>
+                      )}
+                    </div>
 
-                  {/* Submit Button */}
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </Button>
-                </form>
+                    {/* Submit Button */}
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
           ))}
