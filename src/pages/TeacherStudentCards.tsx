@@ -485,9 +485,9 @@ export default function TeacherStudentCards() {
       </div>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-60px)]">
-        {/* Sidebar - Hidden on mobile */}
-        <div className="hidden lg:block">
+      <div className="flex h-[calc(100vh-60px)] overflow-hidden">
+        {/* Sidebar - Hidden on mobile and small tablets */}
+        <div className="hidden lg:block flex-shrink-0">
           <StudentSidebar
             students={students}
             currentIndex={currentIndex}
@@ -501,16 +501,16 @@ export default function TeacherStudentCards() {
         </div>
 
         {/* Student Card Carousel */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-4xl">
-            <div className="overflow-hidden" ref={emblaRef}>
-              <div className="flex">
+        <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
+          <div className="w-full max-w-4xl h-full flex flex-col">
+            <div className="overflow-hidden flex-1" ref={emblaRef}>
+              <div className="flex h-full">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
                   const alertStatus = getStudentAlertStatus(student.id);
                   return (
-                    <div key={student.id} className="flex-[0_0_100%] min-w-0 px-4">
-                      <Card className={alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}>
+                    <div key={student.id} className="flex-[0_0_100%] min-w-0 px-2 md:px-4 h-full overflow-y-auto">
+                      <Card className={`h-full ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}`}>
                         {alertStatus.hasAlert && (
                           <div className="p-4 bg-destructive/10 border-b border-destructive/30">
                             <p className="text-sm font-medium text-destructive">
@@ -541,23 +541,23 @@ export default function TeacherStudentCards() {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-center gap-4 mt-6">
+            <div className="flex justify-center gap-2 md:gap-4 mt-3 md:mt-6 pb-2 md:pb-0 flex-shrink-0">
               <Button
                 variant="outline"
-                size="lg"
+                size="default"
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className="min-w-[160px]"
+                className="min-w-[120px] md:min-w-[160px]"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Previous
               </Button>
               <Button
                 variant="default"
-                size="lg"
+                size="default"
                 onClick={handleNext}
                 disabled={currentIndex === students.length - 1}
-                className="min-w-[160px] bg-primary"
+                className="min-w-[120px] md:min-w-[160px] bg-primary"
               >
                 Next
                 <ArrowRight className="h-4 w-4 ml-2" />
