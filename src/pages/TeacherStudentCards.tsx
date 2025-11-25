@@ -60,6 +60,8 @@ export default function TeacherStudentCards() {
     loop: false, 
     skipSnaps: false,
     duration: 20,
+    align: 'center',
+    containScroll: 'trimSnaps',
   });
   
   // All student data mapped by student ID
@@ -503,14 +505,22 @@ export default function TeacherStudentCards() {
         {/* Student Card Carousel */}
         <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
           <div className="w-full max-w-4xl h-full flex flex-col">
-            <div className="overflow-hidden flex-1" ref={emblaRef}>
+            <div className="overflow-visible flex-1" ref={emblaRef}>
               <div className="flex h-full">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
                   const alertStatus = getStudentAlertStatus(student.id);
+                  const isActive = index === currentIndex;
                   return (
-                    <div key={student.id} className="flex-[0_0_100%] min-w-0 px-2 md:px-4 h-full overflow-y-auto">
-                      <Card className={`h-full ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}`}>
+                    <div 
+                      key={student.id} 
+                      className="flex-[0_0_95%] sm:flex-[0_0_90%] md:flex-[0_0_85%] lg:flex-[0_0_80%] min-w-0 px-2 md:px-4 h-full overflow-y-auto transition-all duration-300"
+                      style={{
+                        transform: isActive ? 'scale(1)' : 'scale(0.92)',
+                        opacity: isActive ? 1 : 0.4,
+                      }}
+                    >
+                      <Card className={`h-full transition-all duration-300 ${alertStatus.hasAlert ? "shadow-lg border-2 border-destructive" : "shadow-lg"}`}>
                         {alertStatus.hasAlert && (
                           <div className="p-4 bg-destructive/10 border-b border-destructive/30">
                             <p className="text-sm font-medium text-destructive">
