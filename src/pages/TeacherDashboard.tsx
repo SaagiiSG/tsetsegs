@@ -49,7 +49,7 @@ export default function TeacherDashboard() {
       const { data: batchesData, error: batchesError } = await supabase
         .from('batches')
         .select('id, batch_name, schedule, room, start_date')
-        .eq('teacher', teacherName)
+        .ilike('teacher', `%${teacherName}%`)
         .order('start_date', { ascending: false });
 
       console.log('Batches query result:', { batchesData, batchesError });
