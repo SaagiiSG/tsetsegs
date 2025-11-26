@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import ielts801 from "@/assets/ielts-8-0-1.jpg";
 import ielts751 from "@/assets/ielts-7-5-1.jpg";
 import ielts802 from "@/assets/ielts-8-0-2.jpg";
+import ieltsAchievement1 from "@/assets/ielts-achievement-1.jpg";
+import ieltsAchievement2 from "@/assets/ielts-achievement-2.jpg";
+import ieltsAchievement3 from "@/assets/ielts-achievement-3.jpg";
+import ieltsAchievement4 from "@/assets/ielts-achievement-4.jpg";
+import ieltsAchievement5 from "@/assets/ielts-achievement-5.jpg";
+import ieltsAchievement6 from "@/assets/ielts-achievement-6.jpg";
+import ieltsAchievement7 from "@/assets/ielts-achievement-7.jpg";
+import ieltsAchievement8 from "@/assets/ielts-achievement-8.jpg";
 
 interface FloatingImage {
   id: number;
@@ -19,33 +27,35 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // Real IELTS achievement images - no duplication
+    // All unique IELTS achievement images - no duplication
     const achievementImages = [
       ielts801, ielts751, ielts802,
+      ieltsAchievement1, ieltsAchievement2, ieltsAchievement3,
+      ieltsAchievement4, ieltsAchievement5, ieltsAchievement6,
+      ieltsAchievement7, ieltsAchievement8,
     ];
 
-    // Generate evenly distributed positions for 3 unique images
+    // Generate scattered positions across viewport with good coverage
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => {
-      // Position images with good spacing across the viewport
-      const positions = [
-        { x: 25, y: 30 }, // Left-middle
-        { x: 50, y: 45 }, // Center
-        { x: 75, y: 35 }, // Right-middle
-      ];
+      // Divide screen into regions for even distribution
+      const col = i % 4; // 4 columns
+      const row = Math.floor(i / 4); // 3 rows for 11 images
       
-      const pos = positions[i];
+      // Base position in grid + random offset within cell
+      const baseX = 12.5 + (col * 25); // 12.5%, 37.5%, 62.5%, 87.5%
+      const baseY = 15 + (row * 30); // Spacing rows vertically
       
-      // Add random offset for natural scatter
-      const offsetX = (Math.random() - 0.5) * 10; // ±5%
-      const offsetY = (Math.random() - 0.5) * 10; // ±5%
+      // Add random offset within the grid cell for natural scatter
+      const offsetX = (Math.random() - 0.5) * 18; // ±9%
+      const offsetY = (Math.random() - 0.5) * 15; // ±7.5%
       
       return {
         id: i,
-        x: `${pos.x + offsetX}%`,
-        y: `${pos.y + offsetY}%`,
+        x: `${baseX + offsetX}%`,
+        y: `${baseY + offsetY}%`,
         rotation: 0, // No rotation - keep it clean
-        scale: 0.85 + Math.random() * 0.25, // 0.85 to 1.1
-        zIndex: Math.floor(Math.random() * 3) + 1,
+        scale: 0.8 + Math.random() * 0.3, // 0.8 to 1.1
+        zIndex: Math.floor(Math.random() * 4) + 1,
         blur: Math.random() * 0.3, // 0 to 0.3px blur - very subtle
         imageUrl: url,
       };
