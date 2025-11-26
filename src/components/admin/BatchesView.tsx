@@ -96,8 +96,18 @@ export function BatchesView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Courses</SelectItem>
-                  <SelectItem value="SAT">SAT</SelectItem>
-                  <SelectItem value="IELTS">IELTS</SelectItem>
+                  <SelectItem value="SAT">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                      SAT
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="IELTS">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                      IELTS
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

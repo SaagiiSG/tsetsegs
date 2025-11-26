@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { DashboardStats } from '@/components/admin/DashboardStats';
 import { BatchesView } from '@/components/admin/BatchesView';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
@@ -58,7 +59,8 @@ const Admin = () => {
           <AdminSidebar />
           <main className="flex-1 container mx-auto px-4 py-8">
             <Routes>
-              <Route index element={<BatchesView />} />
+              <Route index element={<DashboardStats />} />
+              <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
               <Route
                 path="teachers"
