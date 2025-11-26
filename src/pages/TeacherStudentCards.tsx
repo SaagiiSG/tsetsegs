@@ -13,6 +13,7 @@ import { useIsTablet } from "@/hooks/use-mobile";
 
 interface Student {
   id: string;
+  name?: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -116,7 +117,7 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, first_name, last_name, phone, parent_phone, math_level, english_level, first_session_completed, batch_id")
+        .select("id, name, first_name, last_name, phone, parent_phone, math_level, english_level, first_session_completed, batch_id")
         .eq("batch_id", batchId)
         .order("first_name");
 
