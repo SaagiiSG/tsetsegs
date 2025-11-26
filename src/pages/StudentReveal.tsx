@@ -528,51 +528,15 @@ const StudentReveal = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.8 }}
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-                className="relative"
-              >
-                <motion.div
-                  className="absolute inset-0 blur-3xl bg-gold/30 rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                <Trophy className="w-40 h-40 text-gold mx-auto relative z-10" />
-              </motion.div>
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-                className="space-y-6"
-              >
-                <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">
-                  {t.numberOne.title}
-                </h1>
-                <p className="text-3xl md:text-4xl text-white font-light">
-                  {batch.course_type === 'IELTS' ? t.numberOne.subtitleIELTS : t.numberOne.subtitle}
-                </p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.6 }}
-                className="text-2xl text-white leading-relaxed max-w-2xl mx-auto text-center"
-              >
-                <p>{batch.course_type === 'IELTS' ? t.numberOne.messageIELTS : t.numberOne.message}</p>
-                <p className="mt-2">{t.numberOne.message2}</p>
-              </motion.div>
-
-              {batch.course_type === 'IELTS' && (
+              {batch.course_type === 'IELTS' ? (
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0, duration: 0.6 }}
-                  className="mt-16 max-w-2xl mx-auto"
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="max-w-2xl mx-auto"
                 >
-                  <h3 className="text-3xl md:text-4xl font-bold text-gold mb-8">
-                    {language === 'mn' ? 'Зөвхөн Цэцэгс дээр' : 'Only at Tsetsegs'}
+                  <h3 className="text-4xl md:text-5xl font-bold text-gold mb-8">
+                    {language === 'mn' ? 'Бидний давуу тал' : 'Our advantage'}
                   </h3>
                   <div className="bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-6 md:p-8 text-left space-y-4">
                     {language === 'mn' ? (
@@ -640,6 +604,44 @@ const StudentReveal = () => {
                     )}
                   </div>
                 </motion.div>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    className="relative"
+                  >
+                    <motion.div
+                      className="absolute inset-0 blur-3xl bg-gold/30 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <Trophy className="w-40 h-40 text-gold mx-auto relative z-10" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                    className="space-y-6"
+                  >
+                    <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">
+                      {t.numberOne.title}
+                    </h1>
+                    <p className="text-3xl md:text-4xl text-white font-light">
+                      {t.numberOne.subtitle}
+                    </p>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                    className="text-2xl text-white leading-relaxed max-w-2xl mx-auto text-center"
+                  >
+                    <p>{t.numberOne.message}</p>
+                    <p className="mt-2">{t.numberOne.message2}</p>
+                  </motion.div>
+                </>
               )}
 
               {[...Array(3)].map((_, i) => (
