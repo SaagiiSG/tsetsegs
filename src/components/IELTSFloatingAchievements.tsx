@@ -11,6 +11,13 @@ import ieltsAchievement5 from "@/assets/ielts-achievement-5.jpg";
 import ieltsAchievement6 from "@/assets/ielts-achievement-6.jpg";
 import ieltsAchievement7 from "@/assets/ielts-achievement-7.jpg";
 import ieltsAchievement8 from "@/assets/ielts-achievement-8.jpg";
+import ieltsAchievement9 from "@/assets/ielts-achievement-9.jpg";
+import ieltsAchievement10 from "@/assets/ielts-achievement-10.jpg";
+import ieltsAchievement11 from "@/assets/ielts-achievement-11.jpg";
+import ieltsAchievement12 from "@/assets/ielts-achievement-12.jpg";
+import ieltsAchievement13 from "@/assets/ielts-achievement-13.jpg";
+import ieltsAchievement14 from "@/assets/ielts-achievement-14.jpg";
+import ieltsAchievement15 from "@/assets/ielts-achievement-15.jpg";
 
 interface FloatingImage {
   id: number;
@@ -27,36 +34,38 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // All unique IELTS achievement images - no duplication
+    // All unique IELTS achievement images - 18 total photos
     const achievementImages = [
       ielts801, ielts751, ielts802,
       ieltsAchievement1, ieltsAchievement2, ieltsAchievement3,
       ieltsAchievement4, ieltsAchievement5, ieltsAchievement6,
-      ieltsAchievement7, ieltsAchievement8,
+      ieltsAchievement7, ieltsAchievement8, ieltsAchievement9,
+      ieltsAchievement10, ieltsAchievement11, ieltsAchievement12,
+      ieltsAchievement13, ieltsAchievement14, ieltsAchievement15,
     ];
 
     // Generate scattered positions across viewport with good coverage
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => {
       // Divide screen into regions for even distribution
-      const col = i % 4; // 4 columns
-      const row = Math.floor(i / 4); // 3 rows for 11 images
+      const col = i % 6; // 6 columns
+      const row = Math.floor(i / 6); // 3 rows for 18 images
       
       // Base position in grid + random offset within cell
-      const baseX = 12.5 + (col * 25); // 12.5%, 37.5%, 62.5%, 87.5%
-      const baseY = 15 + (row * 30); // Spacing rows vertically
+      const baseX = 8 + (col * 16); // Distribute across width
+      const baseY = 12 + (row * 28); // Spacing rows vertically
       
       // Add random offset within the grid cell for natural scatter
-      const offsetX = (Math.random() - 0.5) * 18; // ±9%
-      const offsetY = (Math.random() - 0.5) * 15; // ±7.5%
+      const offsetX = (Math.random() - 0.5) * 12; // ±6%
+      const offsetY = (Math.random() - 0.5) * 12; // ±6%
       
       return {
         id: i,
         x: `${baseX + offsetX}%`,
         y: `${baseY + offsetY}%`,
         rotation: 0, // No rotation - keep it clean
-        scale: 0.8 + Math.random() * 0.3, // 0.8 to 1.1
-        zIndex: Math.floor(Math.random() * 4) + 1,
-        blur: Math.random() * 0.3, // 0 to 0.3px blur - very subtle
+        scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
+        zIndex: Math.floor(Math.random() * 5) + 1,
+        blur: Math.random() * 0.4, // 0 to 0.4px blur - very subtle
         imageUrl: url,
       };
     });
