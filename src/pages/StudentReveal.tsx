@@ -520,7 +520,7 @@ const StudentReveal = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6"
+            className="min-h-screen flex items-center justify-center relative z-10 px-4 md:px-6 overflow-y-auto py-20"
           >
             <motion.div
               className="text-center space-y-12 max-w-4xl"
@@ -563,6 +563,85 @@ const StudentReveal = () => {
                 <p>{batch.course_type === 'IELTS' ? t.numberOne.messageIELTS : t.numberOne.message}</p>
                 <p className="mt-2">{t.numberOne.message2}</p>
               </motion.div>
+
+              {batch.course_type === 'IELTS' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.0, duration: 0.6 }}
+                  className="mt-16 max-w-2xl mx-auto"
+                >
+                  <h3 className="text-3xl md:text-4xl font-bold text-gold mb-8">
+                    {language === 'mn' ? 'Зөвхөн Цэцэгс дээр' : 'Only at Tsetsegs'}
+                  </h3>
+                  <div className="bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-2xl p-6 md:p-8 text-left space-y-4">
+                    {language === 'mn' ? (
+                      <>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">4 чадвараа жигд хөгжүүлэх боломж</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Cambridge IELTS ном 4-18 цуврал file хэлбэрээр</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Заавал цээжлэх 320 үгс</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">IELTS шалгалтад өндөр оноо авах стратегиуд</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Дүрмийн давтлага орно</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Ням гараг бүр Mock тест хийнэ</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">АНУ-ын их сургуульд өргөдлөө илгээх үнэ төлбөргүй зөвлөгөө</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Balanced development of all 4 skills</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Cambridge IELTS books 4-18 series in digital format</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Essential 320 vocabulary words to memorize</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">High-scoring strategies for IELTS exam</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Regular grammar review sessions</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Weekly mock tests every Sunday</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-gold text-lg">🔥</span>
+                          <p className="text-white text-base md:text-lg">Free consulting for U.S. university applications</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
               {[...Array(3)].map((_, i) => (
                 <motion.div
                   key={i}
