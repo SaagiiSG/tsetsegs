@@ -56,8 +56,8 @@ export function IELTSFloatingAchievements() {
         col = i % 3;
         row = Math.floor(i / 3);
         
-        // Wider spacing on mobile
-        baseX = 15 + (col * 35); // More spread horizontally
+        // Better centered positioning on mobile
+        baseX = 10 + (col * 30); // Shifted left and more centered
         baseY = 8 + (row * 15); // More vertical spacing
         
         // Smaller random offset for cleaner mobile layout
