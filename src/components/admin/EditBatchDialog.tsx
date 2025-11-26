@@ -58,6 +58,7 @@ interface Batch {
   room: string;
   start_date: string;
   fb_group_link: string;
+  course_type: 'SAT' | 'IELTS';
 }
 
 interface EditBatchDialogProps {
@@ -71,6 +72,9 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState(batch.teacher);
+  const [selectedTeachers, setSelectedTeachers] = useState<string[]>(
+    batch.course_type === 'IELTS' ? batch.teacher.split(', ') : []
+  );
   const [selectedSchedule, setSelectedSchedule] = useState(batch.schedule);
   const [selectedRoom, setSelectedRoom] = useState(batch.room);
   const [startDate, setStartDate] = useState(batch.start_date);
@@ -93,6 +97,9 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       fetchStudents();
       // Reset to current batch values
       setSelectedTeacher(batch.teacher);
+      setSelectedTeachers(
+        batch.course_type === 'IELTS' ? batch.teacher.split(', ') : []
+      );
       setSelectedSchedule(batch.schedule);
       setSelectedRoom(batch.room);
       setStartDate(batch.start_date);
@@ -382,10 +389,14 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
+      const teacherValue = batch.course_type === 'IELTS'
+        ? selectedTeachers.join(', ')
+        : selectedTeacher;
+      
       const { error } = await supabase
         .from('batches')
         .update({
-          teacher: selectedTeacher,
+          teacher: teacherValue,
           schedule: selectedSchedule,
           room: selectedRoom,
           start_date: startDate,
@@ -449,19 +460,41 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
 
             <TabsContent value="details" className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label>Teacher</Label>
-                <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                <Label>Teacher{batch.course_type === 'IELTS' ? 's' : ''}</Label>
+                {batch.course_type === 'IELTS' ? (
+                  <div className="space-y-2">
                     {teachers.map((teacher) => (
-                      <SelectItem key={teacher.name} value={teacher.name}>
-                        {teacher.name}
-                      </SelectItem>
+                      <label key={teacher.name} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedTeachers.includes(teacher.name)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTeachers([...selectedTeachers, teacher.name]);
+                            } else {
+                              setSelectedTeachers(selectedTeachers.filter(name => name !== teacher.name));
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span>{teacher.name}</span>
+                      </label>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                ) : (
+                  <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teachers.map((teacher) => (
+                        <SelectItem key={teacher.name} value={teacher.name}>
+                          {teacher.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">

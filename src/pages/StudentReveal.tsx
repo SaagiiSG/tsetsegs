@@ -59,6 +59,7 @@ const translations = {
       title: "Your Class Details",
       onlineHeader: "ONLINE CLASS",
       teacher: "Teacher",
+      teachers: "Teachers",
       schedule: "Schedule",
       mathSchedule: "Math Хичээл",
       mathScheduleOnline: "Math Хичээл (Online)",
@@ -114,6 +115,7 @@ const translations = {
       title: "Таны ангийн мэдээлэл",
       onlineHeader: "ONLINE CLASS",
       teacher: "Багш",
+      teachers: "Багш нар",
       schedule: "Хуваарь",
       mathSchedule: "Math Хичээл",
       mathScheduleOnline: "Math Хичээл (Online)",
@@ -619,8 +621,20 @@ const StudentReveal = () => {
               >
                 <User className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <p className="text-white text-sm md:text-base">{t.classDetails.teacher}</p>
-                  <p className="text-lg md:text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
+                  <p className="text-white text-sm md:text-base">
+                    {batch.teacher.includes(', ') ? t.classDetails.teachers : t.classDetails.teacher}
+                  </p>
+                  {batch.teacher.includes(', ') ? (
+                    <div className="space-y-1">
+                      {batch.teacher.split(', ').map((teacher, idx) => (
+                        <p key={idx} className="text-lg md:text-2xl font-bold text-gold">
+                          {teacher}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-lg md:text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
+                  )}
                 </div>
               </motion.div>
 
