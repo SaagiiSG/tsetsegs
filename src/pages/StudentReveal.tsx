@@ -50,7 +50,9 @@ const translations = {
     numberOne: {
       title: "Mongolia's #1",
       subtitle: "SAT MATH Prep Center",
+      subtitleIELTS: "IELTS Center",
       message: "Leading the nation in SAT preparation and student success.",
+      messageIELTS: "Leading the nation in IELTS preparation and student success.",
       message2: "Join the best and become the best.",
     },
     classDetails: {
@@ -103,7 +105,9 @@ const translations = {
     numberOne: {
       title: "Монголын #1",
       subtitle: "SAT MAТH бэлтгэлийн төв",
+      subtitleIELTS: "IELTS төв",
       message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч",
+      messageIELTS: "IELTS бэлтгэлээр улсдаа тэргүүлэгч",
       message2: "Шилдэгтэй нэгдэж, шилдэг бол.",
     },
     classDetails: {
@@ -542,7 +546,9 @@ const StudentReveal = () => {
                 <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent">
                   {t.numberOne.title}
                 </h1>
-                <p className="text-3xl md:text-4xl text-white font-light">{t.numberOne.subtitle}</p>
+                <p className="text-3xl md:text-4xl text-white font-light">
+                  {batch.course_type === 'IELTS' ? t.numberOne.subtitleIELTS : t.numberOne.subtitle}
+                </p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0 }}
@@ -550,7 +556,7 @@ const StudentReveal = () => {
                 transition={{ delay: 0.8, duration: 0.6 }}
                 className="text-2xl text-white leading-relaxed max-w-2xl mx-auto text-center"
               >
-                <p>{t.numberOne.message}</p>
+                <p>{batch.course_type === 'IELTS' ? t.numberOne.messageIELTS : t.numberOne.message}</p>
                 <p className="mt-2">{t.numberOne.message2}</p>
               </motion.div>
               {[...Array(3)].map((_, i) => (
@@ -623,44 +629,56 @@ const StudentReveal = () => {
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
                 <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
-                <div className="flex-1 space-y-3">
-                  <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
+                  <div className="flex-1 space-y-3">
+                    <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
 
-                  <div className="space-y-2">
-                    {batch.schedule.split("+").map((part, index) => {
-                      const trimmedPart = part.trim();
-                      const isMath = trimmedPart.includes("Math");
-                      const isEnglish = trimmedPart.includes("English");
-                      const isOnline = trimmedPart.includes("Online");
-                      const isBatchOnline = isOnlineClass(batch.schedule);
+                    <div className="space-y-2">
+                      {batch.schedule.split("+").map((part, index) => {
+                        const trimmedPart = part.trim();
+                        const isMath = trimmedPart.includes("Math");
+                        const isEnglish = trimmedPart.includes("English");
+                        const isOnline = trimmedPart.includes("Online");
+                        const isBatchOnline = isOnlineClass(batch.schedule);
 
-                      // Extract the schedule without the subject label
-                      let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
+                        // Extract the schedule without the subject label
+                        let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
 
-                      // Add "Бямба" prefix to English classes if they don't have a day specified
-                      if (
-                        isEnglish &&
-                        !scheduleText.includes("Бямба") &&
-                        !scheduleText.includes("Даваа") &&
-                        !scheduleText.includes("Мягмар")
-                      ) {
-                        scheduleText = "Бямба " + scheduleText;
-                      }
+                        // Add "Бямба" prefix to English classes if they don't have a day specified
+                        if (
+                          isEnglish &&
+                          !scheduleText.includes("Бямба") &&
+                          !scheduleText.includes("Даваа") &&
+                          !scheduleText.includes("Мягмар")
+                        ) {
+                          scheduleText = "Бямба " + scheduleText;
+                        }
 
-                      return (
-                        <div key={index}>
-                          <p className="text-white/80 text-xs md:text-sm mb-1">
-                            {isMath && isOnline && t.classDetails.mathScheduleOnline}
-                            {isMath && !isOnline && t.classDetails.mathSchedule}
-                            {isEnglish && isBatchOnline && t.classDetails.englishScheduleOnline}
-                            {isEnglish && !isBatchOnline && t.classDetails.englishSchedule}:
-                          </p>
-                          <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
-                        </div>
-                      );
-                    })}
+                        return (
+                          <div key={index}>
+                            {isMath && (
+                              <>
+                                <p className="text-white/80 text-xs md:text-sm mb-1">
+                                  {isOnline ? t.classDetails.mathScheduleOnline : t.classDetails.mathSchedule}
+                                </p>
+                                <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
+                              </>
+                            )}
+                            {isEnglish && (
+                              <>
+                                <p className="text-white/80 text-xs md:text-sm mb-1">
+                                  {isBatchOnline ? t.classDetails.englishScheduleOnline : t.classDetails.englishSchedule}
+                                </p>
+                                <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
+                              </>
+                            )}
+                            {!isMath && !isEnglish && (
+                              <p className="text-base md:text-lg font-semibold text-gold">{scheduleText}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
               </motion.div>
 
               {isOnlineClass(batch.schedule) ? (
