@@ -34,12 +34,12 @@ export function IELTSFloatingAchievements() {
     // Generate scattered positions across the entire screen
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => ({
       id: i,
-      x: `${10 + Math.random() * 80}%`, // 10% to 90% across width
-      y: `${10 + Math.random() * 80}%`, // 10% to 90% across height
-      rotation: Math.random() * 40 - 20, // -20deg to 20deg
-      scale: 0.7 + Math.random() * 0.5, // 0.7 to 1.2
+      x: `${15 + Math.random() * 70}%`, // 15% to 85% across width
+      y: `${15 + Math.random() * 70}%`, // 15% to 85% across height
+      rotation: 0, // No rotation - keep it clean
+      scale: 0.8 + Math.random() * 0.3, // 0.8 to 1.1
       zIndex: Math.floor(Math.random() * 5) + 1,
-      blur: Math.random() * 3, // 0 to 3px blur for depth
+      blur: Math.random() * 0.5, // 0 to 0.5px blur - very subtle
       imageUrl: url,
     }));
 
@@ -52,15 +52,14 @@ export function IELTSFloatingAchievements() {
         <motion.div
           key={image.id}
           className="absolute"
-          initial={{ opacity: 0, scale: 0, rotate: 0 }}
+          initial={{ opacity: 0, scale: 0 }}
           animate={{
             opacity: 1,
             scale: image.scale,
-            rotate: image.rotation,
           }}
           transition={{
-            duration: 1.2,
-            delay: image.id * 0.15,
+            duration: 0.8,
+            delay: image.id * 0.1,
             ease: "easeOut",
           }}
           style={{
@@ -73,8 +72,7 @@ export function IELTSFloatingAchievements() {
         >
           <motion.div
             animate={{
-              y: [0, -10, 0],
-              rotate: [image.rotation, image.rotation + 2, image.rotation],
+              y: [0, -8, 0],
             }}
             transition={{
               duration: 3 + Math.random() * 2,
@@ -84,9 +82,9 @@ export function IELTSFloatingAchievements() {
             className="relative"
           >
             <div
-              className="w-32 h-40 md:w-48 md:h-60 rounded-lg overflow-hidden border-4 border-gold/50 shadow-2xl bg-black/20 backdrop-blur-sm"
+              className="w-40 h-48 md:w-52 md:h-64 rounded-xl overflow-hidden border-2 border-gold/40 shadow-2xl bg-black/10"
               style={{
-                boxShadow: `0 ${10 + image.zIndex * 5}px ${20 + image.zIndex * 10}px rgba(0, 0, 0, 0.5)`,
+                boxShadow: `0 ${8 + image.zIndex * 3}px ${16 + image.zIndex * 6}px rgba(0, 0, 0, 0.4)`,
               }}
             >
               <img
@@ -95,28 +93,25 @@ export function IELTSFloatingAchievements() {
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* Glow effect for depth */}
-            <div
-              className="absolute inset-0 rounded-lg bg-gradient-to-br from-gold/30 via-transparent to-transparent pointer-events-none"
-              style={{ opacity: 1 - image.blur / 3 }}
-            />
           </motion.div>
         </motion.div>
       ))}
 
-      {/* Central title overlay */}
+      {/* Central title overlay - properly centered */}
       <motion.div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-center"
-        initial={{ opacity: 0, scale: 0.8 }}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-center px-6"
+        initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
+        transition={{ delay: 0.8, duration: 0.6 }}
       >
-        <h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-4">
-          Our Achievements
-        </h2>
-        <p className="text-2xl md:text-3xl text-white font-light">
-          Excellence in IELTS
-        </p>
+        <div className="bg-black/60 backdrop-blur-md rounded-3xl px-12 py-8 border-2 border-gold/50">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-3">
+            Our Achievements
+          </h2>
+          <p className="text-xl md:text-2xl lg:text-3xl text-white font-light">
+            Excellence in IELTS
+          </p>
+        </div>
       </motion.div>
     </div>
   );
