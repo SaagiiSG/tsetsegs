@@ -18,8 +18,8 @@ interface Student {
   last_name: string;
   phone: string;
   parent_phone?: string;
-  math_level?: 'bad' | 'average' | 'good';
-  english_level?: 'bad' | 'average' | 'good';
+  math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
+  english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
   batch_id: string;
 }
@@ -483,9 +483,10 @@ export default function TeacherStudentCards() {
   return (
     <div className="min-h-screen bg-background">
       {/* Batch Intake Modal */}
-      {showBatchIntake && (
+      {showBatchIntake && batch && (
         <BatchFirstSessionIntake
           students={students}
+          courseType={batch.course_type}
           onClose={() => setShowBatchIntake(false)}
           onSubmit={handleBatchIntakeSubmit}
         />

@@ -13,8 +13,8 @@ interface Student {
   last_name: string;
   phone: string;
   parent_phone?: string;
-  math_level?: 'bad' | 'average' | 'good';
-  english_level?: 'bad' | 'average' | 'good';
+  math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
+  english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
 }
 
@@ -126,14 +126,21 @@ export function StudentCard({
     });
   };
 
-  const getLevelDisplay = (level?: 'bad' | 'average' | 'good') => {
+  const getLevelDisplay = (level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string) => {
     if (!level) return '-';
-    const levelMap = {
+    
+    // CEFR levels for IELTS
+    if (['B1', 'B2', 'C1', 'C2'].includes(level)) {
+      return level;
+    }
+    
+    // SAT levels
+    const levelMap: Record<string, string> = {
       'bad': 'Needs Work',
       'average': 'Average',
       'good': 'Good'
     };
-    return levelMap[level];
+    return levelMap[level] || level;
   };
 
   return (
@@ -240,10 +247,12 @@ export function StudentCard({
               <p className="font-medium mt-1">{student.parent_phone || "-"}</p>
             </div>
 
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Math Level</Label>
-              <p className="font-medium mt-1">{getLevelDisplay(student.math_level)}</p>
-            </div>
+            {courseType === 'SAT' && (
+              <div>
+                <Label className="text-xs uppercase text-muted-foreground">Math Level</Label>
+                <p className="font-medium mt-1">{getLevelDisplay(student.math_level)}</p>
+              </div>
+            )}
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">English Level</Label>
