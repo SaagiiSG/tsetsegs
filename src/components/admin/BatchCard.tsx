@@ -100,6 +100,24 @@ export function BatchCard({ batch, onUpdate }: BatchCardProps) {
   const getSmsTemplate = () => {
     const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
     
+    // IELTS template
+    if (batch.course_type === 'IELTS') {
+      return `Сайн байна уу? 
+
+Tsetsegs IELTS сургалтаас холбогдож байна. 
+
+Ангийн мэдээлэл: ${batchLink}
+
+Тус групт
+1. Бидний хэрэглэх ном (Google drive дотор)
+2. Цээжлэх үгс (Google drive дотор)
+3. ЭЕШ-д бэлдэх Англи хэл, Нийгмийн 700+ материал
+4. Сургалтын төлөвлөгөө зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.
+
+Баярлалаа.`;
+    }
+    
+    // SAT Online template
     if (isOnlineClass(batch.schedule)) {
       return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
 
@@ -121,6 +139,7 @@ Platform: Discord
 Утас: 80660314, 88559876`;
     }
     
+    // SAT In-person template
     return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.
 
 Class Info: ${batchLink}
