@@ -163,10 +163,19 @@ Class Info: ${batchLink}
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow border-l-4" style={{ borderLeftColor: batch.course_type === 'SAT' ? 'hsl(217, 91%, 60%)' : 'hsl(271, 91%, 65%)' }}>
         <CardHeader className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
           <div className="flex items-start justify-between">
             <div className="space-y-2 flex-1">
+              <Badge 
+                className="mb-2 w-fit font-semibold" 
+                style={{ 
+                  backgroundColor: batch.course_type === 'SAT' ? 'hsl(217, 91%, 60%)' : 'hsl(271, 91%, 65%)',
+                  color: 'white'
+                }}
+              >
+                {batch.course_type}
+              </Badge>
               <CardTitle className="text-lg">
                 {batch.batch_name || `${batch.teacher} - ${formatDate(batch.start_date)}`}
               </CardTitle>
