@@ -31,13 +31,13 @@ export function IELTSFloatingAchievements() {
       ielts751,
     ];
 
-    // Generate scattered positions across the entire screen
+    // Generate scattered positions across the entire screen - more spread out
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => ({
       id: i,
-      x: `${15 + Math.random() * 70}%`, // 15% to 85% across width
-      y: `${15 + Math.random() * 70}%`, // 15% to 85% across height
+      x: `${5 + Math.random() * 90}%`, // 5% to 95% across width - much wider spread
+      y: `${5 + Math.random() * 90}%`, // 5% to 95% across height - much wider spread
       rotation: 0, // No rotation - keep it clean
-      scale: 0.8 + Math.random() * 0.3, // 0.8 to 1.1
+      scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
       zIndex: Math.floor(Math.random() * 5) + 1,
       blur: Math.random() * 0.5, // 0 to 0.5px blur - very subtle
       imageUrl: url,
@@ -47,7 +47,7 @@ export function IELTSFloatingAchievements() {
   }, []);
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden">
       {images.map((image) => (
         <motion.div
           key={image.id}
@@ -97,22 +97,24 @@ export function IELTSFloatingAchievements() {
         </motion.div>
       ))}
 
-      {/* Central title overlay - properly centered */}
-      <motion.div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-center px-6"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-      >
-        <div className="bg-black/60 backdrop-blur-md rounded-3xl px-12 py-8 border-2 border-gold/50">
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-3">
-            Our Achievements
-          </h2>
-          <p className="text-xl md:text-2xl lg:text-3xl text-white font-light">
-            Excellence in IELTS
-          </p>
-        </div>
-      </motion.div>
+      {/* Central title overlay - FIXED ABSOLUTE CENTERING */}
+      <div className="fixed inset-0 w-screen h-screen pointer-events-none flex items-center justify-center z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="text-center px-6"
+        >
+          <div className="bg-black/60 backdrop-blur-md rounded-3xl px-12 py-8 border-2 border-gold/50">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-3">
+              Our Achievements
+            </h2>
+            <p className="text-xl md:text-2xl lg:text-3xl text-white font-light">
+              Excellence in IELTS
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
