@@ -19,7 +19,7 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // Real IELTS achievement images
+    // Real IELTS achievement images - doubled to 16 for better coverage
     const achievementImages = [
       ielts801,
       ielts751,
@@ -29,9 +29,17 @@ export function IELTSFloatingAchievements() {
       ielts802,
       ielts801,
       ielts751,
+      ielts802,
+      ielts801,
+      ielts751,
+      ielts802,
+      ielts801,
+      ielts751,
+      ielts802,
+      ielts801,
     ];
 
-    // Generate scattered positions across the entire screen - more spread out
+    // Generate scattered positions across the entire screen - filling ~80%
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => ({
       id: i,
       x: `${5 + Math.random() * 90}%`, // 5% to 95% across width - much wider spread
