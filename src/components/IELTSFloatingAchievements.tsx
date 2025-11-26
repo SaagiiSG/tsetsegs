@@ -47,7 +47,7 @@ export function IELTSFloatingAchievements() {
   }, []);
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
       {images.map((image) => (
         <motion.div
           key={image.id}

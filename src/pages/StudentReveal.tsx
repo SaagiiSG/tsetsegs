@@ -105,7 +105,7 @@ const translations = {
     numberOne: {
       title: "Монголын #1",
       subtitle: "SAT MAТH бэлтгэлийн төв",
-      subtitleIELTS: "IELTS төв",
+      subtitleIELTS: "IELTS сургалтын төв",
       message: "Сурагчдын амжилтын хувиар улсдаа тэргүүлэгч",
       messageIELTS: "IELTS бэлтгэлээр улсдаа тэргүүлэгч",
       message2: "Шилдэгтэй нэгдэж, шилдэг бол.",
@@ -449,7 +449,9 @@ const StudentReveal = () => {
             className="min-h-screen flex items-center justify-center relative z-10 px-6 py-20"
           >
             {batch.course_type === 'IELTS' ? (
-              <IELTSFloatingAchievements />
+              <div className="w-full h-screen absolute inset-0">
+                <IELTSFloatingAchievements />
+              </div>
             ) : (
               <div className="max-w-4xl w-full space-y-6">
                 <motion.h2
