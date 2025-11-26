@@ -104,6 +104,7 @@ export type Database = {
       batches: {
         Row: {
           batch_name: string | null
+          course_type: Database["public"]["Enums"]["course_type"]
           created_at: string
           fb_group_link: string | null
           id: string
@@ -115,6 +116,7 @@ export type Database = {
         }
         Insert: {
           batch_name?: string | null
+          course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string
           fb_group_link?: string | null
           id?: string
@@ -126,6 +128,7 @@ export type Database = {
         }
         Update: {
           batch_name?: string | null
+          course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string
           fb_group_link?: string | null
           id?: string
@@ -365,6 +368,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "teacher"
       attendance_status: "present" | "absent" | "sick" | "late"
+      course_type: "SAT" | "IELTS"
       room_number: "1105" | "905"
       teacher_name: "Saran-Ochir" | "Altan-Erdene" | "Manlai"
     }
@@ -496,6 +500,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "teacher"],
       attendance_status: ["present", "absent", "sick", "late"],
+      course_type: ["SAT", "IELTS"],
       room_number: ["1105", "905"],
       teacher_name: ["Saran-Ochir", "Altan-Erdene", "Manlai"],
     },
