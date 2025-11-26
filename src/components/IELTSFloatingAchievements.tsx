@@ -44,28 +44,45 @@ export function IELTSFloatingAchievements() {
       ieltsAchievement13, ieltsAchievement14, ieltsAchievement15,
     ];
 
+    // Detect mobile viewport
+    const isMobile = window.innerWidth < 768;
+
     // Generate scattered positions across viewport with good coverage
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => {
-      // Divide screen into regions for even distribution
-      const col = i % 6; // 6 columns
-      const row = Math.floor(i / 6); // 3 rows for 18 images
-      
-      // Base position in grid + random offset within cell
-      const baseX = 8 + (col * 16); // Distribute across width
-      const baseY = 12 + (row * 28); // Spacing rows vertically
-      
-      // Add random offset within the grid cell for natural scatter
-      const offsetX = (Math.random() - 0.5) * 12; // ±6%
-      const offsetY = (Math.random() - 0.5) * 12; // ±6%
+      let col, row, baseX, baseY, offsetX, offsetY;
+
+      if (isMobile) {
+        // Mobile: 3 columns, 6 rows for better separation
+        col = i % 3;
+        row = Math.floor(i / 3);
+        
+        // Wider spacing on mobile
+        baseX = 15 + (col * 35); // More spread horizontally
+        baseY = 8 + (row * 15); // More vertical spacing
+        
+        // Smaller random offset for cleaner mobile layout
+        offsetX = (Math.random() - 0.5) * 8; // ±4%
+        offsetY = (Math.random() - 0.5) * 8; // ±4%
+      } else {
+        // Desktop: 6 columns, 3 rows (original layout)
+        col = i % 6;
+        row = Math.floor(i / 6);
+        
+        baseX = 8 + (col * 16);
+        baseY = 12 + (row * 28);
+        
+        offsetX = (Math.random() - 0.5) * 12; // ±6%
+        offsetY = (Math.random() - 0.5) * 12; // ±6%
+      }
       
       return {
         id: i,
         x: `${baseX + offsetX}%`,
         y: `${baseY + offsetY}%`,
-        rotation: 0, // No rotation - keep it clean
-        scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
+        rotation: 0,
+        scale: 0.75 + Math.random() * 0.35,
         zIndex: Math.floor(Math.random() * 5) + 1,
-        blur: Math.random() * 0.4, // 0 to 0.4px blur - very subtle
+        blur: Math.random() * 0.4,
         imageUrl: url,
       };
     });
