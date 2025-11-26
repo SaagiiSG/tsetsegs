@@ -19,43 +19,34 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // Real IELTS achievement images - 32 images for 80% screen coverage
+    // Real IELTS achievement images - no duplication
     const achievementImages = [
       ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751, ielts802,
-      ielts801, ielts751,
     ];
 
-    // Generate evenly distributed positions using grid-based approach
+    // Generate evenly distributed positions for 3 unique images
     const generatedImages: FloatingImage[] = achievementImages.map((url, i) => {
-      // Divide screen into regions to ensure even distribution
-      const col = i % 4; // 4 columns
-      const row = Math.floor(i / 4); // 8 rows
+      // Position images with good spacing across the viewport
+      const positions = [
+        { x: 25, y: 30 }, // Left-middle
+        { x: 50, y: 45 }, // Center
+        { x: 75, y: 35 }, // Right-middle
+      ];
       
-      // Base position in grid + random offset within cell
-      const baseX = 12.5 + (col * 25); // 12.5%, 37.5%, 62.5%, 87.5%
-      const baseY = 6 + (row * 12); // Spacing rows vertically
+      const pos = positions[i];
       
-      // Add random offset within the grid cell for natural scatter
-      const offsetX = (Math.random() - 0.5) * 15; // ±7.5%
-      const offsetY = (Math.random() - 0.5) * 8; // ±4%
+      // Add random offset for natural scatter
+      const offsetX = (Math.random() - 0.5) * 10; // ±5%
+      const offsetY = (Math.random() - 0.5) * 10; // ±5%
       
       return {
         id: i,
-        x: `${baseX + offsetX}%`,
-        y: `${baseY + offsetY}%`,
+        x: `${pos.x + offsetX}%`,
+        y: `${pos.y + offsetY}%`,
         rotation: 0, // No rotation - keep it clean
-        scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
-        zIndex: Math.floor(Math.random() * 5) + 1,
-        blur: Math.random() * 0.5, // 0 to 0.5px blur - very subtle
+        scale: 0.85 + Math.random() * 0.25, // 0.85 to 1.1
+        zIndex: Math.floor(Math.random() * 3) + 1,
+        blur: Math.random() * 0.3, // 0 to 0.3px blur - very subtle
         imageUrl: url,
       };
     });
