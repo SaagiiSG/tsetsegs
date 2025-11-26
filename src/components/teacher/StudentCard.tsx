@@ -143,7 +143,7 @@ export function StudentCard({
           {/* Left side: Student name and count */}
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-bold">
-              {student.first_name || student.name || 'Unknown'} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
+              {(student.first_name && student.first_name.trim()) || student.name || 'Unknown'} {student.last_name && student.last_name.trim() ? student.last_name.charAt(0) + '.' : ''}
             </h2>
             <p className="text-sm font-medium text-muted-foreground">
               Student {currentIndex + 1} of {totalStudents}
@@ -205,7 +205,7 @@ export function StudentCard({
                   className="mt-1"
                 />
               ) : (
-                <p className="font-medium mt-1">{student.first_name}</p>
+                <p className="font-medium mt-1">{student.first_name || student.name || "-"}</p>
               )}
             </div>
 
