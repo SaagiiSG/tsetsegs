@@ -34,6 +34,7 @@ const createFormSchema = (courseType: 'SAT' | 'IELTS') => {
 
 interface Student {
   id: string;
+  name?: string;
   first_name: string;
   last_name: string | null;
   phone: string;
@@ -168,7 +169,7 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
       
       toast({
         title: "Saved",
-        description: `${currentStudent.first_name}'s information saved successfully`,
+        description: `${(currentStudent.first_name && currentStudent.first_name.trim()) ? currentStudent.first_name : currentStudent.name || "Student"}'s information saved successfully`,
       });
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -223,22 +224,28 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
       {/* Student List - Horizontal Scroll */}
       <div className="border-b bg-card px-3 md:px-4 py-1.5 md:py-2 overflow-x-auto flex-shrink-0">
         <div className="flex gap-1.5 md:gap-2 min-w-max">
-          {incompleteStudents.map((student, index) => (
-            <button
-              key={student.id}
-              onClick={() => navigateToStudent(index)}
-              className={`px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap transition-colors ${
-                index === currentIndex
-                  ? "bg-primary text-primary-foreground"
-                  : completedStudents.has(student.id)
-                  ? "bg-green-500/10 text-green-600"
-                  : "bg-muted hover:bg-muted/80"
-              }`}
-            >
-              {completedStudents.has(student.id) && <Check className="h-3 w-3 inline mr-1" />}
-              {student.first_name}
-            </button>
-          ))}
+          {incompleteStudents.map((student, index) => {
+            const displayName = (student.first_name && student.first_name.trim()) 
+              ? student.first_name 
+              : student.name || 'Unknown';
+            
+            return (
+              <button
+                key={student.id}
+                onClick={() => navigateToStudent(index)}
+                className={`px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap transition-colors ${
+                  index === currentIndex
+                    ? "bg-primary text-primary-foreground"
+                    : completedStudents.has(student.id)
+                    ? "bg-green-500/10 text-green-600"
+                    : "bg-muted hover:bg-muted/80"
+                }`}
+              >
+                {completedStudents.has(student.id) && <Check className="h-3 w-3 inline mr-1" />}
+                {displayName}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -247,7 +254,9 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
         {/* Student Name Header */}
         <div className="px-3 md:px-4 py-3 border-b flex-shrink-0">
           <h3 className="text-xl md:text-2xl font-semibold text-center">
-            {currentStudent.first_name} {currentStudent.last_name || ""}
+            {(currentStudent.first_name && currentStudent.first_name.trim()) 
+              ? `${currentStudent.first_name} ${currentStudent.last_name || ""}`
+              : currentStudent.name || "Unknown"}
           </h3>
         </div>
 
