@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import ielts801 from "@/assets/ielts-8-0-1.jpg";
+import ielts751 from "@/assets/ielts-7-5-1.jpg";
+import ielts802 from "@/assets/ielts-8-0-2.jpg";
 
 interface FloatingImage {
   id: number;
@@ -16,18 +19,20 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // User will upload achievement images - for now we'll use placeholders
-    // These would be replaced with actual uploaded IELTS achievement certificates
-    const placeholderImages = [
-      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=300&h=400&fit=crop", // Certificate 1
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=300&h=400&fit=crop", // Certificate 2
-      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300&h=400&fit=crop", // Certificate 3
-      "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=300&h=400&fit=crop", // Certificate 4
-      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=300&h=400&fit=crop", // Certificate 5
+    // Real IELTS achievement images
+    const achievementImages = [
+      ielts801,
+      ielts751,
+      ielts802,
+      ielts801,
+      ielts751,
+      ielts802,
+      ielts801,
+      ielts751,
     ];
 
     // Generate scattered positions across the entire screen
-    const generatedImages: FloatingImage[] = placeholderImages.map((url, i) => ({
+    const generatedImages: FloatingImage[] = achievementImages.map((url, i) => ({
       id: i,
       x: `${10 + Math.random() * 80}%`, // 10% to 90% across width
       y: `${10 + Math.random() * 80}%`, // 10% to 90% across height
