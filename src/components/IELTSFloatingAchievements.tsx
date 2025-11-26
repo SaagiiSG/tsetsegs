@@ -19,37 +19,46 @@ export function IELTSFloatingAchievements() {
   const [images, setImages] = useState<FloatingImage[]>([]);
 
   useEffect(() => {
-    // Real IELTS achievement images - doubled to 16 for better coverage
+    // Real IELTS achievement images - 32 images for 80% screen coverage
     const achievementImages = [
-      ielts801,
-      ielts751,
-      ielts802,
-      ielts801,
-      ielts751,
-      ielts802,
-      ielts801,
-      ielts751,
-      ielts802,
-      ielts801,
-      ielts751,
-      ielts802,
-      ielts801,
-      ielts751,
-      ielts802,
-      ielts801,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751, ielts802,
+      ielts801, ielts751,
     ];
 
-    // Generate scattered positions across the entire screen - filling ~80%
-    const generatedImages: FloatingImage[] = achievementImages.map((url, i) => ({
-      id: i,
-      x: `${5 + Math.random() * 90}%`, // 5% to 95% across width - much wider spread
-      y: `${5 + Math.random() * 90}%`, // 5% to 95% across height - much wider spread
-      rotation: 0, // No rotation - keep it clean
-      scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
-      zIndex: Math.floor(Math.random() * 5) + 1,
-      blur: Math.random() * 0.5, // 0 to 0.5px blur - very subtle
-      imageUrl: url,
-    }));
+    // Generate evenly distributed positions using grid-based approach
+    const generatedImages: FloatingImage[] = achievementImages.map((url, i) => {
+      // Divide screen into regions to ensure even distribution
+      const col = i % 4; // 4 columns
+      const row = Math.floor(i / 4); // 8 rows
+      
+      // Base position in grid + random offset within cell
+      const baseX = 12.5 + (col * 25); // 12.5%, 37.5%, 62.5%, 87.5%
+      const baseY = 6 + (row * 12); // Spacing rows vertically
+      
+      // Add random offset within the grid cell for natural scatter
+      const offsetX = (Math.random() - 0.5) * 15; // ±7.5%
+      const offsetY = (Math.random() - 0.5) * 8; // ±4%
+      
+      return {
+        id: i,
+        x: `${baseX + offsetX}%`,
+        y: `${baseY + offsetY}%`,
+        rotation: 0, // No rotation - keep it clean
+        scale: 0.75 + Math.random() * 0.35, // 0.75 to 1.1
+        zIndex: Math.floor(Math.random() * 5) + 1,
+        blur: Math.random() * 0.5, // 0 to 0.5px blur - very subtle
+        imageUrl: url,
+      };
+    });
 
     setImages(generatedImages);
   }, []);
