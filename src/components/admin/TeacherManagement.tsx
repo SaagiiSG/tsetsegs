@@ -123,52 +123,23 @@ export function TeacherManagement() {
       return;
     }
 
-    const username = generateUsername(validation.data.name);
-    const temporaryPassword = generatePassword();
-    const email = `${username}@teachers.tsetsegs.mn`;
-
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: temporaryPassword,
-        options: {
-          data: {
-            username,
-            display_name: validation.data.name,
-          },
+      // Call Edge Function to create teacher account
+      const { data, error } = await supabase.functions.invoke('create-teacher-account', {
+        body: {
+          name: validation.data.name,
+          phone: validation.data.phone,
         },
       });
 
-      if (authError) throw authError;
-      
-      if (!authData.user) throw new Error('Failed to create auth user');
-
-      // Insert teacher record with auth info
-      const { error: teacherError } = await supabase
-        .from('teachers')
-        .insert({
-          name: validation.data.name,
-          phone: validation.data.phone,
-          username,
-          password_hash: 'managed_by_supabase_auth',
-          temporary_password: true,
-        });
-
-      if (teacherError) throw teacherError;
-
-      // Add teacher role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'teacher',
-        });
-
-      if (roleError) throw roleError;
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Failed to create teacher account');
 
       // Show credentials dialog
-      setNewCredentials({ username, password: temporaryPassword });
+      setNewCredentials({ 
+        username: data.username, 
+        password: data.temporaryPassword 
+      });
       setShowCredentialsDialog(true);
 
       toast({
@@ -181,6 +152,7 @@ export function TeacherManagement() {
       setShowAddDialog(false);
       fetchTeachers();
     } catch (error: any) {
+      console.error('Teacher creation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to add teacher",
