@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldOff } from 'lucide-react';
+import { Shield, ShieldOff, Trash2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -23,7 +23,7 @@ export function UserManagement() {
     open: boolean;
     userId: string;
     email: string;
-    action: 'make-admin' | 'remove-admin';
+    action: 'make-admin' | 'remove-admin' | 'delete-user';
   } | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -135,7 +135,33 @@ export function UserManagement() {
     }
   };
 
-  const openConfirmDialog = (userId: string, email: string, action: 'make-admin' | 'remove-admin') => {
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-teacher-account', {
+        body: { userId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'User deleted successfully',
+      });
+
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user',
+        variant: 'destructive',
+      });
+    } finally {
+      setConfirmDialog(null);
+    }
+  };
+
+  const openConfirmDialog = (userId: string, email: string, action: 'make-admin' | 'remove-admin' | 'delete-user') => {
     setConfirmDialog({ open: true, userId, email, action });
   };
 
@@ -144,8 +170,10 @@ export function UserManagement() {
 
     if (confirmDialog.action === 'make-admin') {
       handleMakeAdmin(confirmDialog.userId);
-    } else {
+    } else if (confirmDialog.action === 'remove-admin') {
       handleRemoveAdmin(confirmDialog.userId);
+    } else if (confirmDialog.action === 'delete-user') {
+      handleDeleteUser(confirmDialog.userId);
     }
   };
 
@@ -195,24 +223,35 @@ export function UserManagement() {
                   <TableCell>
                     {userData.id === user?.id ? (
                       <span className="text-sm text-muted-foreground">You</span>
-                    ) : userData.isAdmin ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openConfirmDialog(userData.id, userData.email, 'remove-admin')}
-                      >
-                        <ShieldOff className="w-4 h-4 mr-1" />
-                        Remove Admin
-                      </Button>
                     ) : (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => openConfirmDialog(userData.id, userData.email, 'make-admin')}
-                      >
-                        <Shield className="w-4 h-4 mr-1" />
-                        Make Admin
-                      </Button>
+                      <div className="flex gap-2">
+                        {userData.isAdmin ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openConfirmDialog(userData.id, userData.email, 'remove-admin')}
+                          >
+                            <ShieldOff className="w-4 h-4 mr-1" />
+                            Remove Admin
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => openConfirmDialog(userData.id, userData.email, 'make-admin')}
+                          >
+                            <Shield className="w-4 h-4 mr-1" />
+                            Make Admin
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => openConfirmDialog(userData.id, userData.email, 'delete-user')}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
@@ -226,12 +265,18 @@ export function UserManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog?.action === 'make-admin' ? 'Promote to Admin?' : 'Remove Admin Role?'}
+              {confirmDialog?.action === 'make-admin' 
+                ? 'Promote to Admin?' 
+                : confirmDialog?.action === 'remove-admin'
+                ? 'Remove Admin Role?'
+                : 'Delete User?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog?.action === 'make-admin' 
                 ? `Are you sure you want to make ${confirmDialog?.email} an admin? They will have full access to manage batches, students, and teachers.`
-                : `Are you sure you want to remove admin role from ${confirmDialog?.email}? They will lose access to the admin dashboard.`
+                : confirmDialog?.action === 'remove-admin'
+                ? `Are you sure you want to remove admin role from ${confirmDialog?.email}? They will lose access to the admin dashboard.`
+                : `Are you sure you want to permanently delete ${confirmDialog?.email}? This action cannot be undone and will remove all associated data.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
