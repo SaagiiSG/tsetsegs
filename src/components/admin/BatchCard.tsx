@@ -233,7 +233,7 @@ Class Info: ${batchLink}
               <CollapsibleTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full">
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  📋 SMS Message Template
+                  SMS Message Template
                   {showSmsTemplate ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
                 </Button>
               </CollapsibleTrigger>
@@ -247,7 +247,7 @@ Class Info: ${batchLink}
                     className="w-full bg-green-600 hover:bg-green-700 text-white"
                   >
                     <Copy className="w-4 h-4 mr-2" />
-                    📋 Copy Message
+                    Copy Message
                   </Button>
                 </div>
               </CollapsibleContent>
