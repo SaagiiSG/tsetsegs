@@ -1,1 +1,10 @@
 project_id = "plfaixcjzrhpaxfhfstd"
+
+[functions.delete-teacher-account]
+verify_jwt = false
+
+[functions.create-teacher-account]
+verify_jwt = false
+
+[functions.setup-teacher-accounts]
+verify_jwt = false
