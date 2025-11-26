@@ -10,15 +10,27 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { X, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
-  parent_phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
-  last_name: z.string().min(1, "Last name is required"),
-  math_level: z.enum(['bad', 'average', 'good']),
-  english_level: z.enum(['bad', 'average', 'good']),
-});
+const createFormSchema = (courseType: 'SAT' | 'IELTS') => {
+  const baseSchema = {
+    phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
+    parent_phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
+    last_name: z.string().min(1, "Last name is required"),
+  };
 
-type FormData = z.infer<typeof formSchema>;
+  if (courseType === 'SAT') {
+    return z.object({
+      ...baseSchema,
+      math_level: z.enum(['bad', 'average', 'good']),
+      english_level: z.enum(['bad', 'average', 'good']),
+    });
+  } else {
+    // IELTS: no math_level, english_level uses CEFR levels
+    return z.object({
+      ...baseSchema,
+      english_level: z.enum(['B1', 'B2', 'C1', 'C2']),
+    });
+  }
+};
 
 interface Student {
   id: string;
@@ -26,18 +38,19 @@ interface Student {
   last_name: string | null;
   phone: string;
   parent_phone?: string;
-  math_level?: 'bad' | 'average' | 'good';
-  english_level?: 'bad' | 'average' | 'good';
+  math_level?: 'bad' | 'average' | 'good' | string;
+  english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
 }
 
 interface BatchFirstSessionIntakeProps {
   students: Student[];
+  courseType: 'SAT' | 'IELTS';
   onClose: () => void;
-  onSubmit: (studentId: string, data: FormData) => Promise<void>;
+  onSubmit: (studentId: string, data: any) => Promise<void>;
 }
 
-export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFirstSessionIntakeProps) {
+export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmit }: BatchFirstSessionIntakeProps) {
   const { toast } = useToast();
   const incompleteStudents = students.filter(s => !s.first_session_completed);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,9 +58,29 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Store form data for each student to preserve changes when switching
-  const [formDataCache, setFormDataCache] = useState<Map<string, Partial<FormData>>>(new Map());
+  const [formDataCache, setFormDataCache] = useState<Map<string, Partial<any>>>(new Map());
 
   const currentStudent = incompleteStudents[currentIndex];
+
+  const formSchema = createFormSchema(courseType);
+  type FormData = z.infer<typeof formSchema>;
+
+  const getDefaultValues = () => {
+    const base = {
+      phone: currentStudent?.phone || "",
+      parent_phone: currentStudent?.parent_phone || "",
+      last_name: currentStudent?.last_name || "",
+      english_level: currentStudent?.english_level || undefined,
+    };
+    
+    if (courseType === 'SAT') {
+      return {
+        ...base,
+        math_level: currentStudent?.math_level || undefined,
+      };
+    }
+    return base;
+  };
 
   const {
     register,
@@ -57,18 +90,12 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
     watch,
     reset,
     getValues,
-  } = useForm<FormData>({
+  } = useForm<any>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      phone: currentStudent?.phone || "",
-      parent_phone: currentStudent?.parent_phone || "",
-      last_name: currentStudent?.last_name || "",
-      math_level: currentStudent?.math_level || undefined,
-      english_level: currentStudent?.english_level || undefined,
-    },
+    defaultValues: getDefaultValues(),
   });
 
-  const mathLevel = watch("math_level");
+  const mathLevel = courseType === 'SAT' ? watch("math_level") : undefined;
   const englishLevel = watch("english_level");
 
   // Auto-save current form data to cache when navigating
@@ -89,18 +116,26 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
     
     if (cachedData) {
       // Load from cache
-      reset(cachedData as FormData);
+      reset(cachedData);
     } else {
       // Load from student object
-      reset({
+      const baseData = {
         phone: student.phone || "",
         parent_phone: student.parent_phone || "",
         last_name: student.last_name || "",
-        math_level: student.math_level || undefined,
         english_level: student.english_level || undefined,
-      });
+      };
+      
+      if (courseType === 'SAT') {
+        reset({
+          ...baseData,
+          math_level: student.math_level || undefined,
+        });
+      } else {
+        reset(baseData);
+      }
     }
-  }, [currentIndex]); // Only depend on currentIndex, not the whole array
+  }, [currentIndex, courseType]); // Only depend on currentIndex and courseType
 
   const navigateToStudent = useCallback((index: number) => {
     if (index >= 0 && index < incompleteStudents.length) {
@@ -118,7 +153,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
     navigateToStudent(currentIndex + 1);
   }, [currentIndex, navigateToStudent]);
 
-  const onSubmitForm = async (data: FormData) => {
+  const onSubmitForm = async (data: any) => {
     setIsSubmitting(true);
     try {
       await onSubmit(currentStudent.id, data);
@@ -231,7 +266,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
                   autoComplete="off"
                 />
                 {errors.phone && (
-                  <p className="text-sm text-destructive">{errors.phone.message}</p>
+                  <p className="text-sm text-destructive">{errors.phone.message?.toString()}</p>
                 )}
               </div>
 
@@ -246,7 +281,7 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
                   autoComplete="off"
                 />
                 {errors.parent_phone && (
-                  <p className="text-sm text-destructive">{errors.parent_phone.message}</p>
+                  <p className="text-sm text-destructive">{errors.parent_phone.message?.toString()}</p>
                 )}
               </div>
 
@@ -260,51 +295,74 @@ export function BatchFirstSessionIntake({ students, onClose, onSubmit }: BatchFi
                   autoComplete="off"
                 />
                 {errors.last_name && (
-                  <p className="text-sm text-destructive">{errors.last_name.message}</p>
+                  <p className="text-sm text-destructive">{errors.last_name.message?.toString()}</p>
                 )}
               </div>
 
-              {/* Math Level */}
-              <div className="space-y-3">
-                <Label>Math Level</Label>
-                <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bad" id="math-bad" />
-                    <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="average" id="math-average" />
-                    <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="good" id="math-good" />
-                    <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
-                  </div>
-                </RadioGroup>
-                {errors.math_level && (
-                  <p className="text-sm text-destructive">{errors.math_level.message}</p>
-                )}
-              </div>
+              {/* Math Level - SAT Only */}
+              {courseType === 'SAT' && (
+                <div className="space-y-3">
+                  <Label>Math Level</Label>
+                  <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="bad" id="math-bad" />
+                      <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="average" id="math-average" />
+                      <Label htmlFor="math-average" className="cursor-pointer">Average</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="good" id="math-good" />
+                      <Label htmlFor="math-good" className="cursor-pointer">Good</Label>
+                    </div>
+                  </RadioGroup>
+                  {errors.math_level && (
+                    <p className="text-sm text-destructive">{errors.math_level.message?.toString()}</p>
+                  )}
+                </div>
+              )}
 
               {/* English Level */}
               <div className="space-y-3">
                 <Label>English Level</Label>
-                <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bad" id="english-bad" />
-                    <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="average" id="english-average" />
-                    <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="good" id="english-good" />
-                    <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
-                  </div>
-                </RadioGroup>
+                {courseType === 'SAT' ? (
+                  <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="bad" id="english-bad" />
+                      <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="average" id="english-average" />
+                      <Label htmlFor="english-average" className="cursor-pointer">Average</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="good" id="english-good" />
+                      <Label htmlFor="english-good" className="cursor-pointer">Good</Label>
+                    </div>
+                  </RadioGroup>
+                ) : (
+                  <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="B1" id="english-b1" />
+                      <Label htmlFor="english-b1" className="cursor-pointer">B1</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="B2" id="english-b2" />
+                      <Label htmlFor="english-b2" className="cursor-pointer">B2</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="C1" id="english-c1" />
+                      <Label htmlFor="english-c1" className="cursor-pointer">C1</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="C2" id="english-c2" />
+                      <Label htmlFor="english-c2" className="cursor-pointer">C2</Label>
+                    </div>
+                  </RadioGroup>
+                )}
                 {errors.english_level && (
-                  <p className="text-sm text-destructive">{errors.english_level.message}</p>
+                  <p className="text-sm text-destructive">{errors.english_level.message?.toString()}</p>
                 )}
               </div>
 
