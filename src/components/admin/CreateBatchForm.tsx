@@ -35,6 +35,7 @@ interface CreateBatchFormProps {
 export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const [studentList, setStudentList] = useState('');
   const [teacher, setTeacher] = useState('');
+  const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
   const [schedule, setSchedule] = useState('');
   const [room, setRoom] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -72,7 +73,11 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   };
 
   const handleCreateBatch = async () => {
-    if (!studentList || !teacher || !room || !schedule || !startDate) {
+    const teacherValue = courseType === 'IELTS' 
+      ? selectedTeachers.join(', ')
+      : teacher;
+    
+    if (!studentList || !teacherValue || !room || !schedule || !startDate) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -118,7 +123,9 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       }
 
       const batchLinkId = generateUniqueId();
-      const teacherName = teachers.find(t => t.id === teacher)?.name || teacher;
+      const teacherName = courseType === 'IELTS'
+        ? selectedTeachers.map(id => teachers.find(t => t.id === id)?.name || id).join(', ')
+        : teachers.find(t => t.id === teacher)?.name || teacher;
       const batchName = generateBatchName(teacherName, startDate);
 
       const { data: batch, error: batchError } = await supabase
@@ -159,6 +166,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       // Reset form
       setStudentList('');
       setTeacher('');
+      setSelectedTeachers([]);
       setSchedule('');
       setRoom('');
       setStartDate('');
@@ -212,19 +220,41 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="teacher">Teacher</Label>
-            <Select value={teacher} onValueChange={setTeacher}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select teacher" />
-              </SelectTrigger>
-              <SelectContent>
+            <Label htmlFor="teacher">Teacher{courseType === 'IELTS' ? 's' : ''}</Label>
+            {courseType === 'IELTS' ? (
+              <div className="space-y-2">
                 {teachers.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
+                  <label key={t.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedTeachers.includes(t.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTeachers([...selectedTeachers, t.id]);
+                        } else {
+                          setSelectedTeachers(selectedTeachers.filter(id => id !== t.id));
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span>{t.name}</span>
+                  </label>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            ) : (
+              <Select value={teacher} onValueChange={setTeacher}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select teacher" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">
