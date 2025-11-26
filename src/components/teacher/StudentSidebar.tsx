@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 interface Student {
   id: string;
+  name?: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -51,9 +52,11 @@ export function StudentSidebar({ students, currentIndex, onSelectStudent, batch,
       <ScrollArea className="h-[calc(100%-200px)]">
         <div className="p-2">
           {students.map((student, index) => {
-            const displayName = student.last_name 
-              ? `${student.first_name} ${student.last_name.charAt(0)}.`
-              : student.first_name;
+            const displayName = (student.first_name && student.first_name.trim()) 
+              ? (student.last_name 
+                  ? `${student.first_name} ${student.last_name.charAt(0)}.`
+                  : student.first_name)
+              : student.name || 'Unknown';
             
             const alertStatus = getStudentAlertStatus(student.id);
 
