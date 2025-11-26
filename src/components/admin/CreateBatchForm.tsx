@@ -24,7 +24,7 @@ const schedules = [
   'Мягмар/Пүрэв 16:30-18:30 + Бямба 10:00-12:00 + Ням 10:00-14:00 (Mock - үнэгүй)',
 ];
 
-const rooms = ['1105 (11th floor)', '905 (9th floor)', 'Online'];
+const rooms = ['1114 (11th floor)', '1105 (11th floor)', '905 (9th floor)', 'Online'];
 
 type CourseType = 'SAT' | 'IELTS';
 

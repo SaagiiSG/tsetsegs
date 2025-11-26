@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 
 interface FloatingImage {
   id: number;
-  x: number;
-  y: number;
+  x: string;
+  y: string;
   rotation: number;
   scale: number;
   zIndex: number;
@@ -26,13 +26,13 @@ export function IELTSFloatingAchievements() {
       "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=300&h=400&fit=crop", // Certificate 5
     ];
 
-    // Generate random positions and properties for floating effect
+    // Generate scattered positions across the entire screen
     const generatedImages: FloatingImage[] = placeholderImages.map((url, i) => ({
       id: i,
-      x: Math.random() * 80 - 40, // -40% to 40%
-      y: Math.random() * 60 - 30, // -30% to 30%
-      rotation: Math.random() * 30 - 15, // -15deg to 15deg
-      scale: 0.8 + Math.random() * 0.4, // 0.8 to 1.2
+      x: `${10 + Math.random() * 80}%`, // 10% to 90% across width
+      y: `${10 + Math.random() * 80}%`, // 10% to 90% across height
+      rotation: Math.random() * 40 - 20, // -20deg to 20deg
+      scale: 0.7 + Math.random() * 0.5, // 0.7 to 1.2
       zIndex: Math.floor(Math.random() * 5) + 1,
       blur: Math.random() * 3, // 0 to 3px blur for depth
       imageUrl: url,
@@ -42,18 +42,16 @@ export function IELTSFloatingAchievements() {
   }, []);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full overflow-hidden">
       {images.map((image) => (
         <motion.div
           key={image.id}
           className="absolute"
-          initial={{ opacity: 0, scale: 0 }}
+          initial={{ opacity: 0, scale: 0, rotate: 0 }}
           animate={{
-            opacity: [0, 1, 1, 1],
-            scale: [0, image.scale * 1.1, image.scale],
-            x: [0, image.x * 0.3, image.x],
-            y: [0, image.y * 0.3, image.y],
-            rotate: [0, image.rotation * 0.5, image.rotation],
+            opacity: 1,
+            scale: image.scale,
+            rotate: image.rotation,
           }}
           transition={{
             duration: 1.2,
@@ -61,9 +59,9 @@ export function IELTSFloatingAchievements() {
             ease: "easeOut",
           }}
           style={{
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%)`,
+            left: image.x,
+            top: image.y,
+            transform: "translate(-50%, -50%)",
             zIndex: image.zIndex,
             filter: `blur(${image.blur}px)`,
           }}

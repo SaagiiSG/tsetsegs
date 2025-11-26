@@ -690,7 +690,9 @@ const StudentReveal = () => {
                       {t.classDetails.address} {batch.room?.split(" ")[0] || "TBA"}
                     </p>
                     <p className="text-sm md:text-base text-white">
-                      {batch.room?.split(" ")[0] === "1105" ? t.classDetails.floor11 : t.classDetails.floor9}
+                      {batch.room?.split(" ")[0] === "1105" || batch.room?.split(" ")[0] === "1114" 
+                        ? t.classDetails.floor11 
+                        : t.classDetails.floor9}
                     </p>
                   </div>
                 </motion.div>
