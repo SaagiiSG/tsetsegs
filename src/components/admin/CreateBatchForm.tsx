@@ -21,9 +21,12 @@ const schedules = [
   'Мягмар/Пүрэв 16:40-18:30 (Math) + Бямба 10:00-12:00 (Math) + 12:00-14:00 (English - үнэгүй)',
   'Мягмар/Пүрэв 18:40-20:30 (Math) + Бямба 12:10-14:10 (Math) + 14:10-16:10 (English - үнэгүй)',
   'Даваа/Лхагва/Баасан 18:40-20:30 (Math - Online) + Бямба 18:30-20:00 (English - үнэгүй)',
+  'Мягмар/Пүрэв 16:30-18:30 + Бямба 10:00-12:00 + Ням 10:00-14:00 (Mock - үнэгүй)',
 ];
 
 const rooms = ['1105 (11th floor)', '905 (9th floor)', 'Online'];
+
+type CourseType = 'SAT' | 'IELTS';
 
 interface CreateBatchFormProps {
   onSuccess: () => void;
@@ -36,6 +39,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const [room, setRoom] = useState('');
   const [startDate, setStartDate] = useState('');
   const [fbGroupLink, setFbGroupLink] = useState('');
+  const [courseType, setCourseType] = useState<CourseType>('SAT');
   const [teachers, setTeachers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -127,6 +131,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           fb_group_link: fbGroupLink,
           unique_link_id: batchLinkId,
           batch_name: batchName,
+          course_type: courseType,
         })
         .select()
         .single();
@@ -158,6 +163,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       setRoom('');
       setStartDate('');
       setFbGroupLink('');
+      setCourseType('SAT');
       
       onSuccess();
     } catch (error: any) {
@@ -192,6 +198,19 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="course-type">Course Type</Label>
+            <Select value={courseType} onValueChange={(value: CourseType) => setCourseType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select course type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SAT">SAT</SelectItem>
+                <SelectItem value="IELTS">IELTS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="teacher">Teacher</Label>
             <Select value={teacher} onValueChange={setTeacher}>

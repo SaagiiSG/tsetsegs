@@ -8,6 +8,7 @@ export function BatchesView() {
   const [batches, setBatches] = useState<any[]>([]);
   const [selectedIntake, setSelectedIntake] = useState<string>('all');
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
+  const [selectedCourse, setSelectedCourse] = useState<string>('all');
 
   useEffect(() => {
     fetchBatches();
@@ -70,9 +71,14 @@ export function BatchesView() {
         return false;
       }
 
+      // Filter by course type
+      if (selectedCourse !== 'all' && batch.course_type !== selectedCourse) {
+        return false;
+      }
+
       return true;
     });
-  }, [batches, selectedIntake, selectedTeacher]);
+  }, [batches, selectedIntake, selectedTeacher, selectedCourse]);
 
   return (
     <div className="space-y-6">
@@ -83,6 +89,18 @@ export function BatchesView() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="SAT">SAT</SelectItem>
+                  <SelectItem value="IELTS">IELTS</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex-1">
               <Select value={selectedIntake} onValueChange={setSelectedIntake}>
                 <SelectTrigger>
