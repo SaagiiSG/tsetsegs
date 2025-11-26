@@ -26,7 +26,16 @@ export type Database = {
           session_13: Database["public"]["Enums"]["attendance_status"] | null
           session_14: Database["public"]["Enums"]["attendance_status"] | null
           session_15: Database["public"]["Enums"]["attendance_status"] | null
+          session_16: Database["public"]["Enums"]["attendance_status"] | null
+          session_17: Database["public"]["Enums"]["attendance_status"] | null
+          session_18: Database["public"]["Enums"]["attendance_status"] | null
+          session_19: Database["public"]["Enums"]["attendance_status"] | null
           session_2: Database["public"]["Enums"]["attendance_status"] | null
+          session_20: Database["public"]["Enums"]["attendance_status"] | null
+          session_21: Database["public"]["Enums"]["attendance_status"] | null
+          session_22: Database["public"]["Enums"]["attendance_status"] | null
+          session_23: Database["public"]["Enums"]["attendance_status"] | null
+          session_24: Database["public"]["Enums"]["attendance_status"] | null
           session_3: Database["public"]["Enums"]["attendance_status"] | null
           session_4: Database["public"]["Enums"]["attendance_status"] | null
           session_5: Database["public"]["Enums"]["attendance_status"] | null
@@ -49,7 +58,16 @@ export type Database = {
           session_13?: Database["public"]["Enums"]["attendance_status"] | null
           session_14?: Database["public"]["Enums"]["attendance_status"] | null
           session_15?: Database["public"]["Enums"]["attendance_status"] | null
+          session_16?: Database["public"]["Enums"]["attendance_status"] | null
+          session_17?: Database["public"]["Enums"]["attendance_status"] | null
+          session_18?: Database["public"]["Enums"]["attendance_status"] | null
+          session_19?: Database["public"]["Enums"]["attendance_status"] | null
           session_2?: Database["public"]["Enums"]["attendance_status"] | null
+          session_20?: Database["public"]["Enums"]["attendance_status"] | null
+          session_21?: Database["public"]["Enums"]["attendance_status"] | null
+          session_22?: Database["public"]["Enums"]["attendance_status"] | null
+          session_23?: Database["public"]["Enums"]["attendance_status"] | null
+          session_24?: Database["public"]["Enums"]["attendance_status"] | null
           session_3?: Database["public"]["Enums"]["attendance_status"] | null
           session_4?: Database["public"]["Enums"]["attendance_status"] | null
           session_5?: Database["public"]["Enums"]["attendance_status"] | null
@@ -72,7 +90,16 @@ export type Database = {
           session_13?: Database["public"]["Enums"]["attendance_status"] | null
           session_14?: Database["public"]["Enums"]["attendance_status"] | null
           session_15?: Database["public"]["Enums"]["attendance_status"] | null
+          session_16?: Database["public"]["Enums"]["attendance_status"] | null
+          session_17?: Database["public"]["Enums"]["attendance_status"] | null
+          session_18?: Database["public"]["Enums"]["attendance_status"] | null
+          session_19?: Database["public"]["Enums"]["attendance_status"] | null
           session_2?: Database["public"]["Enums"]["attendance_status"] | null
+          session_20?: Database["public"]["Enums"]["attendance_status"] | null
+          session_21?: Database["public"]["Enums"]["attendance_status"] | null
+          session_22?: Database["public"]["Enums"]["attendance_status"] | null
+          session_23?: Database["public"]["Enums"]["attendance_status"] | null
+          session_24?: Database["public"]["Enums"]["attendance_status"] | null
           session_3?: Database["public"]["Enums"]["attendance_status"] | null
           session_4?: Database["public"]["Enums"]["attendance_status"] | null
           session_5?: Database["public"]["Enums"]["attendance_status"] | null
@@ -190,28 +217,40 @@ export type Database = {
           batch_id: string
           created_at: string
           id: string
+          listening: number | null
+          reading: number | null
           score: number | null
+          speaking: number | null
           student_id: string
           test_number: number
           updated_at: string
+          writing: number | null
         }
         Insert: {
           batch_id: string
           created_at?: string
           id?: string
+          listening?: number | null
+          reading?: number | null
           score?: number | null
+          speaking?: number | null
           student_id: string
           test_number: number
           updated_at?: string
+          writing?: number | null
         }
         Update: {
           batch_id?: string
           created_at?: string
           id?: string
+          listening?: number | null
+          reading?: number | null
           score?: number | null
+          speaking?: number | null
           student_id?: string
           test_number?: number
           updated_at?: string
+          writing?: number | null
         }
         Relationships: [
           {

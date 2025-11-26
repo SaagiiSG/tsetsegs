@@ -30,6 +30,10 @@ interface Homework {
 interface PracticeTest {
   test_number: number;
   score: number | null;
+  listening?: number | null;
+  reading?: number | null;
+  writing?: number | null;
+  speaking?: number | null;
 }
 
 interface StudentCardProps {
@@ -42,10 +46,11 @@ interface StudentCardProps {
   hasAlert?: boolean;
   missedClasses?: number;
   missedHomework?: number;
+  courseType: 'SAT' | 'IELTS';
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
-  onTestScoreChange: (testNumber: number, score: number | null) => void;
+  onTestScoreChange: (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => void;
 }
 
 export function StudentCard({
@@ -58,6 +63,7 @@ export function StudentCard({
   hasAlert,
   missedClasses,
   missedHomework,
+  courseType,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
@@ -70,6 +76,7 @@ export function StudentCard({
     phone: student.phone,
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
+  const [skillInputs, setSkillInputs] = useState<Record<number, Record<string, string>>>({});
 
   // Note: Alert calculation is now done in parent component based on current week
 
@@ -98,6 +105,38 @@ export function StudentCard({
     setTestInputs(prev => {
       const next = { ...prev };
       delete next[testNumber];
+      return next;
+    });
+  };
+
+  const handleIELTSSkillBlur = (testNumber: number, skill: string, value: string) => {
+    const parsed = parseFloat(value);
+    const currentTest = practiceTests.find(t => t.test_number === testNumber);
+    
+    if (value === "") {
+      // Save null for this skill
+      onTestScoreChange(testNumber, null, {
+        ...currentTest,
+        [skill]: null
+      });
+    } else if (!isNaN(parsed) && parsed >= 0 && parsed <= 9) {
+      // Round to nearest 0.5
+      const rounded = Math.round(parsed * 2) / 2;
+      onTestScoreChange(testNumber, null, {
+        ...currentTest,
+        [skill]: rounded
+      });
+    }
+    
+    // Clear local input state after save
+    setSkillInputs(prev => {
+      const next = { ...prev };
+      if (next[testNumber]) {
+        delete next[testNumber][skill];
+        if (Object.keys(next[testNumber]).length === 0) {
+          delete next[testNumber];
+        }
+      }
       return next;
     });
   };
@@ -282,42 +321,161 @@ export function StudentCard({
           {/* Right Column: Practice Tests */}
           <div className="border rounded-lg p-4">
             <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-4">
-              Practice Tests (Math Only)
+              {courseType === 'IELTS' ? 'IELTS Mock Tests' : 'Practice Tests (Math Only)'}
             </h3>
 
-            <div className="space-y-4">
-              {practiceTests.map((test) => {
-                // Map test numbers 1-7 to display as 4-10, with test 7 being "Real SAT mock"
-                const getTestLabel = (testNum: number) => {
-                  if (testNum === 7) return "Real SAT mock";
-                  return `Test ${testNum + 3}`; // 1→4, 2→5, 3→6, 4→7, 5→8, 6→9
-                };
-                
-                return (
-                  <div key={test.test_number}>
-                    <Label className="text-sm">{getTestLabel(test.test_number)}</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="800"
-                        placeholder="___"
-                        value={testInputs[test.test_number] ?? test.score ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          // Allow typing and validate range
-                          if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
-                            setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
-                          }
-                        }}
-                        onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
-                        className="w-24"
-                      />
-                      <span className="text-sm text-muted-foreground">/ 800</span>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+              {courseType === 'SAT' ? (
+                // SAT: Show single score input
+                practiceTests.map((test) => {
+                  // Map test numbers 1-7 to display as 4-10, with test 7 being "Real SAT mock"
+                  const getTestLabel = (testNum: number) => {
+                    if (testNum === 7) return "Real SAT mock";
+                    return `Test ${testNum + 3}`; // 1→4, 2→5, 3→6, 4→7, 5→8, 6→9
+                  };
+                  
+                  return (
+                    <div key={test.test_number}>
+                      <Label className="text-sm">{getTestLabel(test.test_number)}</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="800"
+                          placeholder="___"
+                          value={testInputs[test.test_number] ?? test.score ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Allow typing and validate range
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                              setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                            }
+                          }}
+                          onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-sm text-muted-foreground">/ 800</span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                // IELTS: Show 4 skill inputs per test
+                practiceTests.map((test) => (
+                  <div key={test.test_number} className="pb-4 border-b last:border-0">
+                    <Label className="text-sm font-semibold mb-3 block">Mock {test.test_number}</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Listening */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Listening</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="9"
+                            step="0.5"
+                            placeholder="_"
+                            value={skillInputs[test.test_number]?.listening ?? test.listening ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                                setSkillInputs(prev => ({
+                                  ...prev,
+                                  [test.test_number]: { ...prev[test.test_number], listening: val }
+                                }));
+                              }
+                            }}
+                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'listening', e.target.value)}
+                            className="w-16 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">/9</span>
+                        </div>
+                      </div>
+
+                      {/* Reading */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Reading</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="9"
+                            step="0.5"
+                            placeholder="_"
+                            value={skillInputs[test.test_number]?.reading ?? test.reading ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                                setSkillInputs(prev => ({
+                                  ...prev,
+                                  [test.test_number]: { ...prev[test.test_number], reading: val }
+                                }));
+                              }
+                            }}
+                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'reading', e.target.value)}
+                            className="w-16 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">/9</span>
+                        </div>
+                      </div>
+
+                      {/* Writing */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Writing</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="9"
+                            step="0.5"
+                            placeholder="_"
+                            value={skillInputs[test.test_number]?.writing ?? test.writing ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                                setSkillInputs(prev => ({
+                                  ...prev,
+                                  [test.test_number]: { ...prev[test.test_number], writing: val }
+                                }));
+                              }
+                            }}
+                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'writing', e.target.value)}
+                            className="w-16 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">/9</span>
+                        </div>
+                      </div>
+
+                      {/* Speaking */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Speaking</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="9"
+                            step="0.5"
+                            placeholder="_"
+                            value={skillInputs[test.test_number]?.speaking ?? test.speaking ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                                setSkillInputs(prev => ({
+                                  ...prev,
+                                  [test.test_number]: { ...prev[test.test_number], speaking: val }
+                                }));
+                              }
+                            }}
+                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'speaking', e.target.value)}
+                            className="w-16 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">/9</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           </div>
         </div>

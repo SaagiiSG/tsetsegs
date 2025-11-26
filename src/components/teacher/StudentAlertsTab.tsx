@@ -58,6 +58,7 @@ interface Batch {
   id: string;
   batch_name: string;
   start_date: string;
+  course_type: 'SAT' | 'IELTS';
 }
 
 interface StudentAlert {
@@ -89,7 +90,7 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
       // Fetch all batches for this teacher
       const { data: batches, error: batchesError } = await supabase
         .from('batches')
-        .select('id, batch_name, start_date')
+        .select('id, batch_name, start_date, course_type')
         .eq('teacher', teacherName);
 
       console.log('Batches fetched:', batches);
@@ -499,6 +500,7 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
                 hasAlert={true}
                 missedClasses={alert.missedClasses}
                 missedHomework={alert.missedHomework}
+                courseType={alert.batch.course_type}
                 onUpdateStudent={(updates) => handleUpdateStudent(alert.student.id, updates)}
                 onAttendanceChange={(session, status) => handleAttendanceChange(alert.student.id, alert.batch.id, session, status)}
                 onHomeworkChange={(session, status) => handleHomeworkChange(alert.student.id, alert.batch.id, session, status)}

@@ -36,6 +36,10 @@ interface Homework {
 interface PracticeTest {
   test_number: number;
   score: number | null;
+  listening?: number | null;
+  reading?: number | null;
+  writing?: number | null;
+  speaking?: number | null;
 }
 
 interface Batch {
@@ -44,6 +48,7 @@ interface Batch {
   schedule: string;
   room: string;
   start_date: string;
+  course_type: 'SAT' | 'IELTS';
 }
 
 export default function TeacherStudentCards() {
@@ -101,7 +106,7 @@ export default function TeacherStudentCards() {
       // Fetch batch
       const { data: batchData, error: batchError } = await supabase
         .from("batches")
-        .select("id, batch_name, schedule, room, start_date")
+        .select("id, batch_name, schedule, room, start_date, course_type")
         .eq("id", batchId)
         .single();
 
@@ -130,6 +135,9 @@ export default function TeacherStudentCards() {
 
   const fetchStudentData = async (studentId: string) => {
     try {
+      const maxSessions = batch?.course_type === 'IELTS' ? 24 : 15;
+      const maxTests = batch?.course_type === 'IELTS' ? 8 : 7;
+
       // Fetch attendance
       const { data: attendanceData } = await supabase
         .from("attendance")
@@ -140,7 +148,7 @@ export default function TeacherStudentCards() {
 
       const attendance: Attendance[] = [];
       if (attendanceData) {
-        for (let i = 1; i <= 15; i++) {
+        for (let i = 1; i <= maxSessions; i++) {
           attendance.push({
             session_number: i,
             status: (attendanceData as any)[`session_${i}`] || null,
@@ -148,7 +156,7 @@ export default function TeacherStudentCards() {
         }
       } else {
         // Initialize empty attendance
-        for (let i = 1; i <= 15; i++) {
+        for (let i = 1; i <= maxSessions; i++) {
           attendance.push({
             session_number: i,
             status: null,
@@ -164,7 +172,7 @@ export default function TeacherStudentCards() {
         .eq("batch_id", batchId);
 
       const hwMap = new Map(homeworkData?.map(h => [h.session_number, h.completed]) || []);
-      const homework: Homework[] = Array.from({ length: 15 }, (_, i) => ({
+      const homework: Homework[] = Array.from({ length: maxSessions }, (_, i) => ({
         session_number: i + 1,
         status: hwMap.has(i + 1) ? (hwMap.get(i + 1) ? "completed" : "incomplete") : null,
       }));
@@ -172,15 +180,22 @@ export default function TeacherStudentCards() {
       // Fetch practice tests
       const { data: testsData } = await supabase
         .from("practice_tests")
-        .select("test_number, score")
+        .select("test_number, score, listening, reading, writing, speaking")
         .eq("student_id", studentId)
         .eq("batch_id", batchId);
 
-      const testsMap = new Map(testsData?.map(t => [t.test_number, t.score]) || []);
-      const practiceTests: PracticeTest[] = Array.from({ length: 7 }, (_, i) => ({
-        test_number: i + 1,
-        score: testsMap.get(i + 1) || null,
-      }));
+      const testsMap = new Map(testsData?.map(t => [t.test_number, t]) || []);
+      const practiceTests: PracticeTest[] = Array.from({ length: maxTests }, (_, i) => {
+        const testData = testsMap.get(i + 1);
+        return {
+          test_number: i + 1,
+          score: testData?.score || null,
+          listening: testData?.listening || null,
+          reading: testData?.reading || null,
+          writing: testData?.writing || null,
+          speaking: testData?.speaking || null,
+        };
+      });
 
       // Update the map with this student's data
       setStudentDataMap(prev => new Map(prev).set(studentId, {
@@ -195,17 +210,18 @@ export default function TeacherStudentCards() {
 
   // Calculate current week based on batch start date
   const getCurrentWeek = () => {
-    if (!batch?.start_date) return 15; // Default to all sessions if no start date
+    const maxWeeks = batch?.course_type === 'IELTS' ? 24 : 15;
+    if (!batch?.start_date) return maxWeeks; // Default to all sessions if no start date
     
     const startDate = new Date(batch.start_date);
     const today = new Date();
     const diffTime = today.getTime() - startDate.getTime();
     const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
     
-    // If batch hasn't started yet (negative weeks), return 15 to check all marked sessions
-    if (diffWeeks < 0) return 15;
+    // If batch hasn't started yet (negative weeks), return maxWeeks to check all marked sessions
+    if (diffWeeks < 0) return maxWeeks;
     
-    return Math.max(1, Math.min(diffWeeks + 1, 15)); // Between 1 and 15
+    return Math.max(1, Math.min(diffWeeks + 1, maxWeeks)); // Between 1 and maxWeeks
   };
 
   // Calculate alert status for each student
@@ -217,11 +233,12 @@ export default function TeacherStudentCards() {
     }
 
     const currentWeek = getCurrentWeek();
+    const maxSessions = batch?.course_type === 'IELTS' ? 24 : 15;
     let missedClasses = 0;
     let missedHomework = 0;
 
     // Check sessions up to current week, but only count those that are actually marked
-    for (let i = 0; i < currentWeek && i < 15; i++) {
+    for (let i = 0; i < currentWeek && i < maxSessions; i++) {
       const session = studentData.attendance[i];
       const hw = studentData.homework[i];
       
@@ -345,39 +362,70 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handleTestScoreChange = async (testNumber: number, score: number | null) => {
+  const handleTestScoreChange = async (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => {
     const currentStudent = students[currentIndex];
     try {
-      if (score === null) {
-        await supabase
-          .from("practice_tests")
-          .delete()
-          .eq("student_id", currentStudent.id)
-          .eq("test_number", testNumber);
-      } else {
+      if (batch?.course_type === 'IELTS' && skills) {
+        // For IELTS: Update skill scores
         const { error } = await supabase
           .from("practice_tests")
           .upsert({
             student_id: currentStudent.id,
             batch_id: batchId,
             test_number: testNumber,
-            score,
+            listening: skills.listening,
+            reading: skills.reading,
+            writing: skills.writing,
+            speaking: skills.speaking,
           }, {
             onConflict: "student_id,test_number",
           });
 
         if (error) throw error;
-      }
 
-      // Update the student data map
-      const studentData = studentDataMap.get(currentStudent.id);
-      if (studentData) {
-        setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
-          ...studentData,
-          practiceTests: studentData.practiceTests.map(t =>
-            t.test_number === testNumber ? { ...t, score } : t
-          ),
-        }));
+        // Update the student data map
+        const studentData = studentDataMap.get(currentStudent.id);
+        if (studentData) {
+          setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+            ...studentData,
+            practiceTests: studentData.practiceTests.map(t =>
+              t.test_number === testNumber ? { ...t, ...skills } : t
+            ),
+          }));
+        }
+      } else {
+        // For SAT: Update single score
+        if (score === null) {
+          await supabase
+            .from("practice_tests")
+            .delete()
+            .eq("student_id", currentStudent.id)
+            .eq("test_number", testNumber);
+        } else {
+          const { error } = await supabase
+            .from("practice_tests")
+            .upsert({
+              student_id: currentStudent.id,
+              batch_id: batchId,
+              test_number: testNumber,
+              score,
+            }, {
+              onConflict: "student_id,test_number",
+            });
+
+          if (error) throw error;
+        }
+
+        // Update the student data map
+        const studentData = studentDataMap.get(currentStudent.id);
+        if (studentData) {
+          setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+            ...studentData,
+            practiceTests: studentData.practiceTests.map(t =>
+              t.test_number === testNumber ? { ...t, score } : t
+            ),
+          }));
+        }
       }
     } catch (error: any) {
       toast({
@@ -539,6 +587,7 @@ export default function TeacherStudentCards() {
                           hasAlert={alertStatus.hasAlert}
                           missedClasses={alertStatus.missedClasses}
                           missedHomework={alertStatus.missedHomework}
+                          courseType={batch?.course_type || 'SAT'}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
