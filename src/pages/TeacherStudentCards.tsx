@@ -365,67 +365,37 @@ export default function TeacherStudentCards() {
   const handleTestScoreChange = async (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => {
     const currentStudent = students[currentIndex];
     try {
-      if (batch?.course_type === 'IELTS' && skills) {
-        // For IELTS: Update skill scores
+      // Both SAT and IELTS now use single score approach
+      if (score === null) {
+        await supabase
+          .from("practice_tests")
+          .delete()
+          .eq("student_id", currentStudent.id)
+          .eq("test_number", testNumber);
+      } else {
         const { error } = await supabase
           .from("practice_tests")
           .upsert({
             student_id: currentStudent.id,
             batch_id: batchId,
             test_number: testNumber,
-            listening: skills.listening,
-            reading: skills.reading,
-            writing: skills.writing,
-            speaking: skills.speaking,
+            score,
           }, {
             onConflict: "student_id,test_number",
           });
 
         if (error) throw error;
+      }
 
-        // Update the student data map
-        const studentData = studentDataMap.get(currentStudent.id);
-        if (studentData) {
-          setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
-            ...studentData,
-            practiceTests: studentData.practiceTests.map(t =>
-              t.test_number === testNumber ? { ...t, ...skills } : t
-            ),
-          }));
-        }
-      } else {
-        // For SAT: Update single score
-        if (score === null) {
-          await supabase
-            .from("practice_tests")
-            .delete()
-            .eq("student_id", currentStudent.id)
-            .eq("test_number", testNumber);
-        } else {
-          const { error } = await supabase
-            .from("practice_tests")
-            .upsert({
-              student_id: currentStudent.id,
-              batch_id: batchId,
-              test_number: testNumber,
-              score,
-            }, {
-              onConflict: "student_id,test_number",
-            });
-
-          if (error) throw error;
-        }
-
-        // Update the student data map
-        const studentData = studentDataMap.get(currentStudent.id);
-        if (studentData) {
-          setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
-            ...studentData,
-            practiceTests: studentData.practiceTests.map(t =>
-              t.test_number === testNumber ? { ...t, score } : t
-            ),
-          }));
-        }
+      // Update the student data map
+      const studentData = studentDataMap.get(currentStudent.id);
+      if (studentData) {
+        setStudentDataMap(prev => new Map(prev).set(currentStudent.id, {
+          ...studentData,
+          practiceTests: studentData.practiceTests.map(t =>
+            t.test_number === testNumber ? { ...t, score } : t
+          ),
+        }));
       }
     } catch (error: any) {
       toast({

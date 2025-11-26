@@ -76,7 +76,6 @@ export function StudentCard({
     phone: student.phone,
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
-  const [skillInputs, setSkillInputs] = useState<Record<number, Record<string, string>>>({});
 
   // Note: Alert calculation is now done in parent component based on current week
 
@@ -109,34 +108,19 @@ export function StudentCard({
     });
   };
 
-  const handleIELTSSkillBlur = (testNumber: number, skill: string, value: string) => {
+  const handleIELTSScoreBlur = (testNumber: number, value: string) => {
     const parsed = parseFloat(value);
-    const currentTest = practiceTests.find(t => t.test_number === testNumber);
-    
     if (value === "") {
-      // Save null for this skill
-      onTestScoreChange(testNumber, null, {
-        ...currentTest,
-        [skill]: null
-      });
+      onTestScoreChange(testNumber, null);
     } else if (!isNaN(parsed) && parsed >= 0 && parsed <= 9) {
       // Round to nearest 0.5
       const rounded = Math.round(parsed * 2) / 2;
-      onTestScoreChange(testNumber, null, {
-        ...currentTest,
-        [skill]: rounded
-      });
+      onTestScoreChange(testNumber, rounded);
     }
-    
     // Clear local input state after save
-    setSkillInputs(prev => {
+    setTestInputs(prev => {
       const next = { ...prev };
-      if (next[testNumber]) {
-        delete next[testNumber][skill];
-        if (Object.keys(next[testNumber]).length === 0) {
-          delete next[testNumber];
-        }
-      }
+      delete next[testNumber];
       return next;
     });
   };
@@ -360,118 +344,29 @@ export function StudentCard({
                   );
                 })
               ) : (
-                // IELTS: Show 4 skill inputs per test
+                // IELTS: Show single overall band score input per test
                 practiceTests.map((test) => (
-                  <div key={test.test_number} className="pb-4 border-b last:border-0">
-                    <Label className="text-sm font-semibold mb-3 block">Mock {test.test_number}</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Listening */}
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Listening</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="9"
-                            step="0.5"
-                            placeholder="_"
-                            value={skillInputs[test.test_number]?.listening ?? test.listening ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                                setSkillInputs(prev => ({
-                                  ...prev,
-                                  [test.test_number]: { ...prev[test.test_number], listening: val }
-                                }));
-                              }
-                            }}
-                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'listening', e.target.value)}
-                            className="w-16 text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground">/9</span>
-                        </div>
-                      </div>
-
-                      {/* Reading */}
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Reading</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="9"
-                            step="0.5"
-                            placeholder="_"
-                            value={skillInputs[test.test_number]?.reading ?? test.reading ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                                setSkillInputs(prev => ({
-                                  ...prev,
-                                  [test.test_number]: { ...prev[test.test_number], reading: val }
-                                }));
-                              }
-                            }}
-                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'reading', e.target.value)}
-                            className="w-16 text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground">/9</span>
-                        </div>
-                      </div>
-
-                      {/* Writing */}
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Writing</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="9"
-                            step="0.5"
-                            placeholder="_"
-                            value={skillInputs[test.test_number]?.writing ?? test.writing ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                                setSkillInputs(prev => ({
-                                  ...prev,
-                                  [test.test_number]: { ...prev[test.test_number], writing: val }
-                                }));
-                              }
-                            }}
-                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'writing', e.target.value)}
-                            className="w-16 text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground">/9</span>
-                        </div>
-                      </div>
-
-                      {/* Speaking */}
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Speaking</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="9"
-                            step="0.5"
-                            placeholder="_"
-                            value={skillInputs[test.test_number]?.speaking ?? test.speaking ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                                setSkillInputs(prev => ({
-                                  ...prev,
-                                  [test.test_number]: { ...prev[test.test_number], speaking: val }
-                                }));
-                              }
-                            }}
-                            onBlur={(e) => handleIELTSSkillBlur(test.test_number, 'speaking', e.target.value)}
-                            className="w-16 text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground">/9</span>
-                        </div>
-                      </div>
+                  <div key={test.test_number}>
+                    <Label className="text-sm">Mock {test.test_number}</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="9"
+                        step="0.5"
+                        placeholder="___"
+                        value={testInputs[test.test_number] ?? test.score ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // Allow typing and validate range
+                          if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                            setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                          }
+                        }}
+                        onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
+                        className="w-24"
+                      />
+                      <span className="text-sm text-muted-foreground">/ 9.0</span>
                     </div>
                   </div>
                 ))
