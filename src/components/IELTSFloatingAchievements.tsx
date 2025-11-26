@@ -82,7 +82,7 @@ export function IELTSFloatingAchievements() {
             className="relative"
           >
             <div
-              className="w-40 h-48 md:w-52 md:h-64 rounded-xl overflow-hidden border-2 border-gold/40 shadow-2xl bg-black/10"
+              className="w-32 h-40 sm:w-36 sm:h-44 md:w-52 md:h-64 rounded-xl overflow-hidden border-2 border-gold/40 shadow-2xl bg-black/10"
               style={{
                 boxShadow: `0 ${8 + image.zIndex * 3}px ${16 + image.zIndex * 6}px rgba(0, 0, 0, 0.4)`,
               }}
@@ -105,11 +105,11 @@ export function IELTSFloatingAchievements() {
           transition={{ delay: 0.8, duration: 0.6 }}
           className="text-center px-6"
         >
-          <div className="bg-black/60 backdrop-blur-md rounded-3xl px-12 py-8 border-2 border-gold/50">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-3">
+          <div className="bg-black/60 backdrop-blur-md rounded-2xl md:rounded-3xl px-6 py-6 md:px-12 md:py-8 border-2 border-gold/50 max-w-xs sm:max-w-md md:max-w-2xl">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gold via-yellow-300 to-gold bg-clip-text text-transparent mb-2 md:mb-3">
               Our Achievements
             </h2>
-            <p className="text-xl md:text-2xl lg:text-3xl text-white font-light">
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white font-light">
               Excellence in IELTS
             </p>
           </div>
