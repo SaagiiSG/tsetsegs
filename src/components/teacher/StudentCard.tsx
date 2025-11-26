@@ -8,6 +8,7 @@ import { Edit2, Check, X } from "lucide-react";
 
 interface Student {
   id: string;
+  name?: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -142,7 +143,7 @@ export function StudentCard({
           {/* Left side: Student name and count */}
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-bold">
-              {student.first_name} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
+              {student.first_name || student.name || 'Unknown'} {student.last_name ? student.last_name.charAt(0) + '.' : ''}
             </h2>
             <p className="text-sm font-medium text-muted-foreground">
               Student {currentIndex + 1} of {totalStudents}
