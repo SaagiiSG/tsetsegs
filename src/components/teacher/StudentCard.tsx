@@ -322,7 +322,7 @@ export function StudentCard({
               {courseType === 'SAT' ? (
                 // SAT: Show single score input
                 practiceTests.map((test) => {
-                  // Map test numbers 1-7 to display as Test 4-10, with test 8 being "Real SAT mock"
+                  // Map test numbers to display: Test 4-10, then Real SAT mock
                   const getTestLabel = (testNum: number) => {
                     if (testNum === 8) return "Real SAT mock";
                     return `Test ${testNum + 3}`; // 1→4, 2→5, 3→6, 4→7, 5→8, 6→9, 7→10
