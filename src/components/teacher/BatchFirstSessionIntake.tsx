@@ -15,6 +15,8 @@ const createFormSchema = (courseType: 'SAT' | 'IELTS') => {
     phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
     parent_phone: z.string().min(8, "Phone must be 8 digits").max(8, "Phone must be 8 digits"),
     last_name: z.string().min(1, "Last name is required"),
+    grade: z.string().min(1, "Grade is required"),
+    school_name: z.string().min(1, "School name is required"),
   };
 
   if (courseType === 'SAT') {
@@ -39,6 +41,8 @@ interface Student {
   last_name: string | null;
   phone: string;
   parent_phone?: string;
+  grade?: string;
+  school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
@@ -71,6 +75,8 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
       phone: currentStudent?.phone || "",
       parent_phone: currentStudent?.parent_phone || "",
       last_name: currentStudent?.last_name || "",
+      grade: currentStudent?.grade || "",
+      school_name: currentStudent?.school_name || "",
       english_level: currentStudent?.english_level || undefined,
     };
     
@@ -124,6 +130,8 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
         phone: student.phone || "",
         parent_phone: student.parent_phone || "",
         last_name: student.last_name || "",
+        grade: student.grade || "",
+        school_name: student.school_name || "",
         english_level: student.english_level || undefined,
       };
       
@@ -305,6 +313,34 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
                 />
                 {errors.last_name && (
                   <p className="text-sm text-destructive">{errors.last_name.message?.toString()}</p>
+                )}
+              </div>
+
+              {/* Grade */}
+              <div className="space-y-2">
+                <Label htmlFor="grade">Grade</Label>
+                <Input
+                  id="grade"
+                  {...register("grade")}
+                  placeholder="e.g., 10th grade, 11th grade"
+                  autoComplete="off"
+                />
+                {errors.grade && (
+                  <p className="text-sm text-destructive">{errors.grade.message?.toString()}</p>
+                )}
+              </div>
+
+              {/* School Name */}
+              <div className="space-y-2">
+                <Label htmlFor="school_name">School Name</Label>
+                <Input
+                  id="school_name"
+                  {...register("school_name")}
+                  placeholder="Enter school name"
+                  autoComplete="off"
+                />
+                {errors.school_name && (
+                  <p className="text-sm text-destructive">{errors.school_name.message?.toString()}</p>
                 )}
               </div>
 

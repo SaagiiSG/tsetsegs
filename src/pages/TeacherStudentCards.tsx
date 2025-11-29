@@ -18,6 +18,8 @@ interface Student {
   last_name: string;
   phone: string;
   parent_phone?: string;
+  grade?: string;
+  school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
@@ -117,7 +119,7 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, name, first_name, last_name, phone, parent_phone, math_level, english_level, first_session_completed, batch_id")
+        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, first_session_completed, batch_id")
         .eq("batch_id", batchId)
         .order("first_name");
 
@@ -411,20 +413,30 @@ export default function TeacherStudentCards() {
     phone: string;
     parent_phone: string;
     last_name: string;
-    math_level: 'bad' | 'average' | 'good';
-    english_level: 'bad' | 'average' | 'good';
+    grade: string;
+    school_name: string;
+    math_level?: 'bad' | 'average' | 'good';
+    english_level: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2';
   }) => {
     try {
+      const updateData: any = {
+        phone: data.phone,
+        parent_phone: data.parent_phone,
+        last_name: data.last_name,
+        grade: data.grade,
+        school_name: data.school_name,
+        english_level: data.english_level,
+        first_session_completed: true,
+      };
+
+      // Add math_level only for SAT
+      if (data.math_level) {
+        updateData.math_level = data.math_level;
+      }
+
       const { error } = await supabase
         .from("students")
-        .update({
-          phone: data.phone,
-          parent_phone: data.parent_phone,
-          last_name: data.last_name,
-          math_level: data.math_level,
-          english_level: data.english_level,
-          first_session_completed: true,
-        })
+        .update(updateData)
         .eq("id", studentId);
 
       if (error) throw error;
@@ -437,6 +449,8 @@ export default function TeacherStudentCards() {
               phone: data.phone,
               parent_phone: data.parent_phone,
               last_name: data.last_name,
+              grade: data.grade,
+              school_name: data.school_name,
               math_level: data.math_level,
               english_level: data.english_level,
               first_session_completed: true 
