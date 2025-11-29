@@ -278,12 +278,14 @@ export type Database = {
           english_level: string | null
           first_name: string
           first_session_completed: boolean | null
+          grade: string | null
           id: string
           last_name: string | null
           math_level: string | null
           name: string
           parent_phone: string | null
           phone: string
+          school_name: string | null
           unique_link_id: string
         }
         Insert: {
@@ -294,12 +296,14 @@ export type Database = {
           english_level?: string | null
           first_name?: string
           first_session_completed?: boolean | null
+          grade?: string | null
           id?: string
           last_name?: string | null
           math_level?: string | null
           name: string
           parent_phone?: string | null
           phone: string
+          school_name?: string | null
           unique_link_id: string
         }
         Update: {
@@ -310,12 +314,14 @@ export type Database = {
           english_level?: string | null
           first_name?: string
           first_session_completed?: boolean | null
+          grade?: string | null
           id?: string
           last_name?: string | null
           math_level?: string | null
           name?: string
           parent_phone?: string | null
           phone?: string
+          school_name?: string | null
           unique_link_id?: string
         }
         Relationships: [

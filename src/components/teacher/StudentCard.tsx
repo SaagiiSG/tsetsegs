@@ -13,6 +13,8 @@ interface Student {
   last_name: string;
   phone: string;
   parent_phone?: string;
+  grade?: string;
+  school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   first_session_completed?: boolean;
@@ -245,6 +247,16 @@ export function StudentCard({
             <div>
               <Label className="text-xs uppercase text-muted-foreground">Parent Phone</Label>
               <p className="font-medium mt-1">{student.parent_phone || "-"}</p>
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground">Grade</Label>
+              <p className="font-medium mt-1">{student.grade || "-"}</p>
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase text-muted-foreground">School Name</Label>
+              <p className="font-medium mt-1">{student.school_name || "-"}</p>
             </div>
 
             {courseType === 'SAT' && (
