@@ -67,11 +67,9 @@ export default function TeacherStudentCards() {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
     skipSnaps: false,
-    duration: 30,
+    duration: 20,
     align: 'center',
     containScroll: 'trimSnaps',
-    dragFree: false,
-    startIndex: 0,
   });
   
   // All student data mapped by student ID
