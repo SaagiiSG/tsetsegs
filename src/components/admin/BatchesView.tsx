@@ -6,6 +6,7 @@ import { BatchCard } from './BatchCard';
 
 export function BatchesView() {
   const [batches, setBatches] = useState<any[]>([]);
+  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [selectedIntake, setSelectedIntake] = useState<string>('all');
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
@@ -14,17 +15,37 @@ export function BatchesView() {
     fetchBatches();
   }, []);
 
+  useEffect(() => {
+    if (batches.length > 0) {
+      fetchStudentCounts();
+    }
+  }, [batches]);
+
   const fetchBatches = async () => {
+    // Get current month for smart default filtering
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Fetch batches (default: current month + future)
     const { data } = await supabase
       .from('batches')
-      .select(`
-        *,
-        students (*)
-      `)
-      .order('created_at', { ascending: false });
+      .select('*')
+      .gte('start_date', currentMonthStart.toISOString())
+      .order('start_date', { ascending: false });
 
     if (data) {
       setBatches(data);
+    }
+  };
+
+  const fetchStudentCounts = async () => {
+    const { data, error } = await supabase.rpc('get_batch_student_counts');
+    if (!error && data) {
+      const counts: Record<string, number> = {};
+      data.forEach((item: { batch_id: string; student_count: number }) => {
+        counts[item.batch_id] = item.student_count;
+      });
+      setStudentCounts(counts);
     }
   };
 
@@ -162,7 +183,12 @@ export function BatchesView() {
             </p>
           ) : (
             filteredBatches.map((batch) => (
-              <BatchCard key={batch.id} batch={batch} onUpdate={fetchBatches} />
+              <BatchCard 
+                key={batch.id} 
+                batch={batch} 
+                onUpdate={fetchBatches}
+                studentCount={studentCounts[batch.id] || 0}
+              />
             ))
           )}
         </CardContent>

@@ -395,6 +395,13 @@ export type Database = {
           id: string
         }[]
       }
+      get_batch_student_counts: {
+        Args: { teacher_name?: string }
+        Returns: {
+          batch_id: string
+          student_count: number
+        }[]
+      }
       get_current_teacher_username: { Args: never; Returns: string }
       has_role: {
         Args: {

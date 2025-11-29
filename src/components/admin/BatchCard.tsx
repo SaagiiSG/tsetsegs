@@ -23,9 +23,10 @@ import {
 interface BatchCardProps {
   batch: any;
   onUpdate: () => void;
+  studentCount?: number;
 }
 
-export function BatchCard({ batch, onUpdate }: BatchCardProps) {
+export function BatchCard({ batch, onUpdate, studentCount }: BatchCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSmsTemplate, setShowSmsTemplate] = useState(false);
@@ -182,7 +183,7 @@ Class Info: ${batchLink}
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  <span>{batch.students?.length || 0} students</span>
+                  <span>{studentCount ?? batch.students?.length ?? 0} students</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
