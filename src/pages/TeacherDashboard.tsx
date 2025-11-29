@@ -22,7 +22,7 @@ export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
-  const [selectedIntake, setSelectedIntake] = useState<string>('all');
+  const [selectedIntake, setSelectedIntake] = useState<string>('current');
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('classes');
   const navigate = useNavigate();
@@ -46,30 +46,44 @@ export default function TeacherDashboard() {
 
     try {
       console.log('Querying batches for teacher:', teacherName);
-      const { data: batchesData, error: batchesError } = await supabase
+      
+      // Get date ranges for smart filtering
+      const now = new Date();
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+      // Build query with date filtering
+      let query = supabase
         .from('batches')
         .select('id, batch_name, schedule, room, start_date')
-        .ilike('teacher', `%${teacherName}%`)
-        .order('start_date', { ascending: false });
+        .ilike('teacher', `%${teacherName}%`);
+
+      if (selectedIntake === 'current') {
+        query = query.gte('start_date', currentMonthStart.toISOString());
+      } else if (selectedIntake === 'previous') {
+        query = query.gte('start_date', previousMonthStart.toISOString())
+                     .lt('start_date', currentMonthStart.toISOString());
+      }
+      // 'all' means no date filter
+
+      const { data: batchesData, error: batchesError } = await query.order('start_date', { ascending: false });
 
       console.log('Batches query result:', { batchesData, batchesError });
       if (batchesError) throw batchesError;
       
       setBatches(batchesData || []);
 
-      // Fetch student counts for each batch
-      if (batchesData && batchesData.length > 0) {
+      // Fetch student counts using RPC function (single query)
+      const { data: countsData, error: countsError } = await supabase
+        .rpc('get_batch_student_counts', { teacher_name: teacherName });
+
+      if (countsError) {
+        console.error('Error fetching student counts:', countsError);
+      } else {
         const counts: Record<string, number> = {};
-        for (const batch of batchesData) {
-          const { count, error: countError } = await supabase
-            .from('students')
-            .select('*', { count: 'exact', head: true })
-            .eq('batch_id', batch.id);
-          
-          if (!countError) {
-            counts[batch.id] = count || 0;
-          }
-        }
+        countsData?.forEach((item: { batch_id: string; student_count: number }) => {
+          counts[item.batch_id] = item.student_count;
+        });
         setStudentCounts(counts);
       }
     } catch (error: any) {
@@ -98,33 +112,17 @@ export default function TeacherDashboard() {
     return schedule.toLowerCase().includes('online');
   };
 
-  // Get unique intakes (Month Year from start_date)
+  // Intake filter options
   const intakes = useMemo(() => {
-    const intakeSet = new Set<string>();
-    batches.forEach((batch) => {
-      if (batch.start_date) {
-        const date = new Date(batch.start_date);
-        const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        intakeSet.add(monthYear);
-      }
-    });
-    return Array.from(intakeSet).sort((a, b) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateB.getTime() - dateA.getTime();
-    });
-  }, [batches]);
+    return [
+      { label: 'Current Month', value: 'current' },
+      { label: 'Previous Month', value: 'previous' },
+      { label: 'All Intakes', value: 'all' }
+    ];
+  }, []);
 
-  // Filter batches
-  const filteredBatches = useMemo(() => {
-    if (selectedIntake === 'all') return batches;
-    
-    return batches.filter((batch) => {
-      const batchDate = new Date(batch.start_date);
-      const batchIntake = batchDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      return batchIntake === selectedIntake;
-    });
-  }, [batches, selectedIntake]);
+  // Filtering is now done server-side in fetchBatches
+  const filteredBatches = useMemo(() => batches, [batches]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -168,15 +166,18 @@ export default function TeacherDashboard() {
                     <CardTitle>Filter Classes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Select value={selectedIntake} onValueChange={setSelectedIntake}>
+                    <Select value={selectedIntake} onValueChange={(value) => {
+                      setSelectedIntake(value);
+                      setIsLoading(true);
+                      setTimeout(() => fetchBatches(), 0);
+                    }}>
                       <SelectTrigger className="w-full sm:w-64">
                         <SelectValue placeholder="Select intake" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Intakes</SelectItem>
                         {intakes.map((intake) => (
-                          <SelectItem key={intake} value={intake}>
-                            {intake}
+                          <SelectItem key={intake.value} value={intake.value}>
+                            {intake.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
