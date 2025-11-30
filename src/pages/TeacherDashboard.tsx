@@ -126,44 +126,45 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <div className="container mx-auto p-4 md:p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {teacherName}! 👋</h1>
-            <p className="text-muted-foreground mt-1">Manage your classes and track attendance</p>
+      <div className="container mx-auto p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Welcome, {teacherName}! 👋</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your classes and track attendance</p>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
+          <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto shrink-0">
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="classes">My Classes</TabsTrigger>
-            <TabsTrigger value="alerts">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Alerts
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="classes" className="text-sm md:text-base">My Classes</TabsTrigger>
+            <TabsTrigger value="alerts" className="text-sm md:text-base">
+              <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden xs:inline">Alerts</span>
+              <span className="inline xs:hidden">⚠️</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="classes" className="space-y-6">
+          <TabsContent value="classes" className="space-y-4 md:space-y-6">
             {isLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex justify-center py-8 md:py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : batches.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
+                <CardContent className="py-8 md:py-12 text-center text-muted-foreground text-sm md:text-base">
                   No classes assigned yet
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {/* Filter */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Filter Classes</CardTitle>
+                  <CardHeader className="pb-3 md:pb-6">
+                    <CardTitle className="text-base md:text-lg">Filter Classes</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Select value={selectedIntake} onValueChange={(value) => {
@@ -171,7 +172,7 @@ export default function TeacherDashboard() {
                       setIsLoading(true);
                       setTimeout(() => fetchBatches(), 0);
                     }}>
-                      <SelectTrigger className="w-full sm:w-64">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select intake" />
                       </SelectTrigger>
                       <SelectContent>
@@ -182,34 +183,34 @@ export default function TeacherDashboard() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-xs md:text-sm text-muted-foreground mt-2">
                       Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? 'es' : ''}
                     </p>
                   </CardContent>
                 </Card>
 
                 {/* Batch Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredBatches.map((batch) => (
                     <Card key={batch.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{batch.batch_name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
+                      <CardHeader className="pb-3 md:pb-6">
+                        <CardTitle className="text-base md:text-lg leading-tight">{batch.batch_name}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
+                          <Users className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
                           {getStudentCount(batch.id)} students
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-start gap-2 text-sm">
-                          <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          <div>
+                      <CardContent className="space-y-2.5 md:space-y-3">
+                        <div className="flex items-start gap-2 text-xs md:text-sm">
+                          <Calendar className="h-3 w-3 md:h-4 md:w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
                             <p className="font-medium">Schedule:</p>
-                            <p className="text-muted-foreground whitespace-pre-line">{batch.schedule}</p>
+                            <p className="text-muted-foreground whitespace-pre-line break-words">{batch.schedule}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>
+                        <div className="flex items-center gap-2 text-xs md:text-sm">
+                          <MapPin className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+                          <span className="truncate">
                             {isOnlineClass(batch.schedule) ? (
                               <span className="font-medium text-primary">🌐 Online Class</span>
                             ) : (
@@ -217,7 +218,7 @@ export default function TeacherDashboard() {
                             )}
                           </span>
                         </div>
-                        <div className="text-sm">
+                        <div className="text-xs md:text-sm">
                           <p className="font-medium">Start Date:</p>
                           <p className="text-muted-foreground">
                             {new Date(batch.start_date).toLocaleDateString('en-US', {
@@ -228,10 +229,11 @@ export default function TeacherDashboard() {
                           </p>
                         </div>
                         <Button 
-                          className="w-full mt-4" 
+                          className="w-full mt-3 md:mt-4 text-sm md:text-base h-9 md:h-10" 
                           onClick={() => navigate(`/teacher/students/${batch.id}`)}
                         >
-                          View Students & Attendance
+                          <span className="hidden sm:inline">View Students & Attendance</span>
+                          <span className="inline sm:hidden">View Students</span>
                         </Button>
                       </CardContent>
                     </Card>
@@ -243,12 +245,12 @@ export default function TeacherDashboard() {
 
           <TabsContent value="alerts">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Students Needing Attention
+              <CardHeader className="pb-3 md:pb-6">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                  <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 text-destructive shrink-0" />
+                  <span>Students Needing Attention</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs md:text-sm">
                   Students with 3+ missed classes or homework across all your batches
                 </CardDescription>
               </CardHeader>
@@ -256,7 +258,7 @@ export default function TeacherDashboard() {
                 {teacherName ? (
                   <StudentAlertsTab teacherName={teacherName} />
                 ) : (
-                  <p className="text-muted-foreground text-center py-8">Loading...</p>
+                  <p className="text-muted-foreground text-center py-6 md:py-8 text-sm md:text-base">Loading...</p>
                 )}
               </CardContent>
             </Card>
