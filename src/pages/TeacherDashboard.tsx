@@ -1,14 +1,14 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Calendar, MapPin, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { StudentAlertsTab } from '@/components/teacher/StudentAlertsTab';
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 
 interface Batch {
   id: string;
@@ -22,31 +22,31 @@ export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
-  const [selectedIntake, setSelectedIntake] = useState<string>('current');
+  const [selectedIntake, setSelectedIntake] = useState<string>("current");
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('classes');
+  const [activeTab, setActiveTab] = useState("classes");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('TeacherDashboard - authLoading:', authLoading, 'teacherName:', teacherName);
+    console.log("TeacherDashboard - authLoading:", authLoading, "teacherName:", teacherName);
     if (!authLoading) {
-      console.log('Fetching batches...');
+      console.log("Fetching batches...");
       fetchBatches();
     }
   }, [teacherName, authLoading]);
 
   const fetchBatches = async () => {
-    console.log('fetchBatches called, teacherName:', teacherName);
+    console.log("fetchBatches called, teacherName:", teacherName);
     if (!teacherName) {
-      console.log('No teacher name, setting loading to false');
+      console.log("No teacher name, setting loading to false");
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log('Querying batches for teacher:', teacherName);
-      
+      console.log("Querying batches for teacher:", teacherName);
+
       // Get date ranges for smart filtering
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -54,31 +54,33 @@ export default function TeacherDashboard() {
 
       // Build query with date filtering
       let query = supabase
-        .from('batches')
-        .select('id, batch_name, schedule, room, start_date')
-        .ilike('teacher', `%${teacherName}%`);
+        .from("batches")
+        .select("id, batch_name, schedule, room, start_date")
+        .ilike("teacher", `%${teacherName}%`);
 
-      if (selectedIntake === 'current') {
-        query = query.gte('start_date', currentMonthStart.toISOString());
-      } else if (selectedIntake === 'previous') {
-        query = query.gte('start_date', previousMonthStart.toISOString())
-                     .lt('start_date', currentMonthStart.toISOString());
+      if (selectedIntake === "current") {
+        query = query.gte("start_date", currentMonthStart.toISOString());
+      } else if (selectedIntake === "previous") {
+        query = query
+          .gte("start_date", previousMonthStart.toISOString())
+          .lt("start_date", currentMonthStart.toISOString());
       }
       // 'all' means no date filter
 
-      const { data: batchesData, error: batchesError } = await query.order('start_date', { ascending: false });
+      const { data: batchesData, error: batchesError } = await query.order("start_date", { ascending: false });
 
-      console.log('Batches query result:', { batchesData, batchesError });
+      console.log("Batches query result:", { batchesData, batchesError });
       if (batchesError) throw batchesError;
-      
+
       setBatches(batchesData || []);
 
       // Fetch student counts using RPC function (single query)
-      const { data: countsData, error: countsError } = await supabase
-        .rpc('get_batch_student_counts', { teacher_name: teacherName });
+      const { data: countsData, error: countsError } = await supabase.rpc("get_batch_student_counts", {
+        teacher_name: teacherName,
+      });
 
       if (countsError) {
-        console.error('Error fetching student counts:', countsError);
+        console.error("Error fetching student counts:", countsError);
       } else {
         const counts: Record<string, number> = {};
         countsData?.forEach((item: { batch_id: string; student_count: number }) => {
@@ -87,21 +89,21 @@ export default function TeacherDashboard() {
         setStudentCounts(counts);
       }
     } catch (error: any) {
-      console.error('Error fetching batches:', error);
+      console.error("Error fetching batches:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load classes',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load classes",
+        variant: "destructive",
       });
     } finally {
-      console.log('Setting isLoading to false');
+      console.log("Setting isLoading to false");
       setIsLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/teacher/login');
+    navigate("/teacher/login");
   };
 
   const getStudentCount = (batchId: string) => {
@@ -109,15 +111,15 @@ export default function TeacherDashboard() {
   };
 
   const isOnlineClass = (schedule: string) => {
-    return schedule.toLowerCase().includes('online');
+    return schedule.toLowerCase().includes("online");
   };
 
   // Intake filter options
   const intakes = useMemo(() => {
     return [
-      { label: 'Current Month', value: 'current' },
-      { label: 'Previous Month', value: 'previous' },
-      { label: 'All Intakes', value: 'all' }
+      { label: "Current Month", value: "current" },
+      { label: "Previous Month", value: "previous" },
+      { label: "All Intakes", value: "all" },
     ];
   }, []);
 
@@ -140,11 +142,12 @@ export default function TeacherDashboard() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="classes" className="text-sm md:text-base">My Classes</TabsTrigger>
+            <TabsTrigger value="classes" className="text-sm md:text-base">
+              My Classes
+            </TabsTrigger>
             <TabsTrigger value="alerts" className="text-sm md:text-base">
               <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               <span className="hidden xs:inline">Alerts</span>
-              <span className="inline xs:hidden">⚠️</span>
             </TabsTrigger>
           </TabsList>
 
@@ -167,11 +170,14 @@ export default function TeacherDashboard() {
                     <CardTitle className="text-base md:text-lg">Filter Classes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Select value={selectedIntake} onValueChange={(value) => {
-                      setSelectedIntake(value);
-                      setIsLoading(true);
-                      setTimeout(() => fetchBatches(), 0);
-                    }}>
+                    <Select
+                      value={selectedIntake}
+                      onValueChange={(value) => {
+                        setSelectedIntake(value);
+                        setIsLoading(true);
+                        setTimeout(() => fetchBatches(), 0);
+                      }}
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select intake" />
                       </SelectTrigger>
@@ -184,7 +190,7 @@ export default function TeacherDashboard() {
                       </SelectContent>
                     </Select>
                     <p className="text-xs md:text-sm text-muted-foreground mt-2">
-                      Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? 'es' : ''}
+                      Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? "es" : ""}
                     </p>
                   </CardContent>
                 </Card>
@@ -221,15 +227,15 @@ export default function TeacherDashboard() {
                         <div className="text-xs md:text-sm">
                           <p className="font-medium">Start Date:</p>
                           <p className="text-muted-foreground">
-                            {new Date(batch.start_date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
+                            {new Date(batch.start_date).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
                             })}
                           </p>
                         </div>
-                        <Button 
-                          className="w-full mt-3 md:mt-4 text-sm md:text-base h-9 md:h-10" 
+                        <Button
+                          className="w-full mt-3 md:mt-4 text-sm md:text-base h-9 md:h-10"
                           onClick={() => navigate(`/teacher/students/${batch.id}`)}
                         >
                           <span className="hidden sm:inline">View Students & Attendance</span>
