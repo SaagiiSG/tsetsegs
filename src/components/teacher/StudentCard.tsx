@@ -240,13 +240,21 @@ export function StudentCard({
                   className="mt-1"
                 />
               ) : (
-                <p className="font-medium mt-1">{student.phone}</p>
+                <a href={`tel:+976${student.phone}`} className="font-medium mt-1 block text-primary hover:underline">
+                  {student.phone}
+                </a>
               )}
             </div>
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">Parent Phone</Label>
-              <p className="font-medium mt-1">{student.parent_phone || "-"}</p>
+              {student.parent_phone ? (
+                <a href={`tel:+976${student.parent_phone}`} className="font-medium mt-1 block text-primary hover:underline">
+                  {student.parent_phone}
+                </a>
+              ) : (
+                <p className="font-medium mt-1">-</p>
+              )}
             </div>
 
             <div>
