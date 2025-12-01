@@ -71,6 +71,7 @@ export default function TeacherStudentCards() {
   const [isLoading, setIsLoading] = useState(true);
   const [showBatchIntake, setShowBatchIntake] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
+  const [showScoreCalculator, setShowScoreCalculator] = useState(false);
   const [newStudentData, setNewStudentData] = useState({
     first_name: "",
     last_name: "",
@@ -781,6 +782,31 @@ export default function TeacherStudentCards() {
             >
               Batch First Session Intake
             </Button>
+            {batch?.course_type === 'SAT' && (
+              <Dialog open={showScoreCalculator} onOpenChange={setShowScoreCalculator}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    SAT Score Calculator
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] max-h-[95vh] w-[1000px] h-[900px] p-0">
+                  <DialogHeader className="p-6 pb-4">
+                    <DialogTitle>SAT Score Calculator</DialogTitle>
+                    <DialogDescription>
+                      Use this tool to calculate SAT scores from raw scores
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-hidden px-6 pb-6">
+                    <iframe 
+                      src="/embed/digital-sat-score-calculator" 
+                      className="w-full h-[750px] border rounded-md"
+                      frameBorder="0" 
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
       </div>
