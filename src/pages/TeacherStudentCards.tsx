@@ -11,8 +11,11 @@ import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionI
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import useEmblaCarousel from "embla-carousel-react";
 import { useIsTablet } from "@/hooks/use-mobile";
+import { z } from "zod";
 
 interface Student {
   id: string;
@@ -68,8 +71,42 @@ export default function TeacherStudentCards() {
   const [isLoading, setIsLoading] = useState(true);
   const [showBatchIntake, setShowBatchIntake] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
-  const [newStudentData, setNewStudentData] = useState({ first_name: "", phone: "" });
+  const [newStudentData, setNewStudentData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    parent_phone: "",
+    grade: "",
+    school_name: "",
+    math_level: "",
+    english_level: "",
+  });
   const isTablet = useIsTablet();
+
+  // Validation schema for new student
+  const createStudentSchema = (courseType: 'SAT' | 'IELTS') => {
+    const baseSchema = {
+      first_name: z.string().trim().min(1, "First name is required").max(100, "First name too long"),
+      last_name: z.string().trim().min(1, "Last name is required").max(100, "Last name too long"),
+      phone: z.string().regex(/^\d{8}$/, "Phone must be exactly 8 digits"),
+      parent_phone: z.string().regex(/^\d{8}$/, "Parent phone must be exactly 8 digits"),
+      grade: z.string().trim().min(1, "Grade is required").max(50, "Grade too long"),
+      school_name: z.string().trim().min(1, "School name is required").max(200, "School name too long"),
+    };
+
+    if (courseType === 'SAT') {
+      return z.object({
+        ...baseSchema,
+        math_level: z.enum(['bad', 'average', 'good'], { required_error: "Math level is required" }),
+        english_level: z.enum(['bad', 'average', 'good'], { required_error: "English level is required" }),
+      });
+    } else {
+      return z.object({
+        ...baseSchema,
+        english_level: z.enum(['B1', 'B2', 'C1', 'C2'], { required_error: "English level is required" }),
+      });
+    }
+  };
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
@@ -478,36 +515,47 @@ export default function TeacherStudentCards() {
   };
 
   const handleAddStudent = async () => {
-    if (!newStudentData.first_name.trim() || !newStudentData.phone.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-
-    if (newStudentData.phone.length !== 8 || !/^\d+$/.test(newStudentData.phone)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Phone must be exactly 8 digits",
-      });
-      return;
-    }
+    if (!batch) return;
 
     try {
+      // Validate input
+      const schema = createStudentSchema(batch.course_type);
+      const validationResult = schema.safeParse(newStudentData);
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: firstError.message,
+        });
+        return;
+      }
+
       const uniqueLinkId = Math.random().toString(36).substring(2, 15);
       
+      const insertData: any = {
+        first_name: newStudentData.first_name.trim(),
+        last_name: newStudentData.last_name.trim(),
+        name: `${newStudentData.first_name.trim()} ${newStudentData.last_name.trim()}`,
+        phone: newStudentData.phone.trim(),
+        parent_phone: newStudentData.parent_phone.trim(),
+        grade: newStudentData.grade.trim(),
+        school_name: newStudentData.school_name.trim(),
+        english_level: newStudentData.english_level,
+        batch_id: batchId,
+        unique_link_id: uniqueLinkId,
+        first_session_completed: true,
+      };
+
+      // Add math_level only for SAT
+      if (batch.course_type === 'SAT') {
+        insertData.math_level = newStudentData.math_level;
+      }
+
       const { data, error } = await supabase
         .from("students")
-        .insert({
-          first_name: newStudentData.first_name,
-          name: newStudentData.first_name,
-          phone: newStudentData.phone,
-          batch_id: batchId,
-          unique_link_id: uniqueLinkId,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -517,11 +565,20 @@ export default function TeacherStudentCards() {
       await fetchData();
       
       setShowAddStudent(false);
-      setNewStudentData({ first_name: "", phone: "" });
+      setNewStudentData({
+        first_name: "",
+        last_name: "",
+        phone: "",
+        parent_phone: "",
+        grade: "",
+        school_name: "",
+        math_level: "",
+        english_level: "",
+      });
       
       toast({
         title: "Success",
-        description: "Student added successfully",
+        description: "Student added successfully with complete information",
       });
     } catch (error: any) {
       toast({
@@ -581,35 +638,134 @@ export default function TeacherStudentCards() {
                   Add Student
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl max-h-[90vh]">
                 <DialogHeader>
-                  <DialogTitle>Add New Student</DialogTitle>
+                  <DialogTitle>Add New Student - {batch?.course_type}</DialogTitle>
                   <DialogDescription>
-                    Add a new student to this class. You can complete their profile later.
+                    Add a new student with complete information to this {batch?.course_type} class.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name">First Name *</Label>
-                    <Input
-                      id="first_name"
-                      value={newStudentData.first_name}
-                      onChange={(e) => setNewStudentData({ ...newStudentData, first_name: e.target.value })}
-                      placeholder="Student's first name"
-                    />
+                <ScrollArea className="max-h-[60vh] pr-4">
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="first_name">First Name *</Label>
+                        <Input
+                          id="first_name"
+                          value={newStudentData.first_name}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, first_name: e.target.value })}
+                          placeholder="Student's first name"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="last_name">Last Name *</Label>
+                        <Input
+                          id="last_name"
+                          value={newStudentData.last_name}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, last_name: e.target.value })}
+                          placeholder="Student's last name"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number * (8 digits)</Label>
+                        <Input
+                          id="phone"
+                          value={newStudentData.phone}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, phone: e.target.value.replace(/\D/g, '') })}
+                          placeholder="12345678"
+                          maxLength={8}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="parent_phone">Parent Phone * (8 digits)</Label>
+                        <Input
+                          id="parent_phone"
+                          value={newStudentData.parent_phone}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, parent_phone: e.target.value.replace(/\D/g, '') })}
+                          placeholder="12345678"
+                          maxLength={8}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="grade">Grade *</Label>
+                        <Input
+                          id="grade"
+                          value={newStudentData.grade}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, grade: e.target.value })}
+                          placeholder="e.g., 10th, 11th, 12th"
+                          maxLength={50}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="school_name">School Name *</Label>
+                        <Input
+                          id="school_name"
+                          value={newStudentData.school_name}
+                          onChange={(e) => setNewStudentData({ ...newStudentData, school_name: e.target.value })}
+                          placeholder="School name"
+                          maxLength={200}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {batch?.course_type === 'SAT' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="math_level">Math Level *</Label>
+                          <Select
+                            value={newStudentData.math_level}
+                            onValueChange={(value) => setNewStudentData({ ...newStudentData, math_level: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select math level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="bad">Needs Work</SelectItem>
+                              <SelectItem value="average">Average</SelectItem>
+                              <SelectItem value="good">Good</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label htmlFor="english_level">English Level *</Label>
+                        <Select
+                          value={newStudentData.english_level}
+                          onValueChange={(value) => setNewStudentData({ ...newStudentData, english_level: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select english level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {batch?.course_type === 'SAT' ? (
+                              <>
+                                <SelectItem value="bad">Needs Work</SelectItem>
+                                <SelectItem value="average">Average</SelectItem>
+                                <SelectItem value="good">Good</SelectItem>
+                              </>
+                            ) : (
+                              <>
+                                <SelectItem value="B1">B1</SelectItem>
+                                <SelectItem value="B2">B2</SelectItem>
+                                <SelectItem value="C1">C1</SelectItem>
+                                <SelectItem value="C2">C2</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number * (8 digits)</Label>
-                    <Input
-                      id="phone"
-                      value={newStudentData.phone}
-                      onChange={(e) => setNewStudentData({ ...newStudentData, phone: e.target.value })}
-                      placeholder="12345678"
-                      maxLength={8}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
+                </ScrollArea>
+                <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button variant="outline" onClick={() => setShowAddStudent(false)}>
                     Cancel
                   </Button>
