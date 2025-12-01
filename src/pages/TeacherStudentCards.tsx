@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, UserPlus } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
 import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionIntake";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import useEmblaCarousel from "embla-carousel-react";
 import { useIsTablet } from "@/hooks/use-mobile";
 
@@ -64,6 +67,8 @@ export default function TeacherStudentCards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showBatchIntake, setShowBatchIntake] = useState(false);
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [newStudentData, setNewStudentData] = useState({ first_name: "", phone: "" });
   const isTablet = useIsTablet();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -472,6 +477,61 @@ export default function TeacherStudentCards() {
     }
   };
 
+  const handleAddStudent = async () => {
+    if (!newStudentData.first_name.trim() || !newStudentData.phone.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields",
+      });
+      return;
+    }
+
+    if (newStudentData.phone.length !== 8 || !/^\d+$/.test(newStudentData.phone)) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Phone must be exactly 8 digits",
+      });
+      return;
+    }
+
+    try {
+      const uniqueLinkId = Math.random().toString(36).substring(2, 15);
+      
+      const { data, error } = await supabase
+        .from("students")
+        .insert({
+          first_name: newStudentData.first_name,
+          name: newStudentData.first_name,
+          phone: newStudentData.phone,
+          batch_id: batchId,
+          unique_link_id: uniqueLinkId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh students list
+      await fetchData();
+      
+      setShowAddStudent(false);
+      setNewStudentData({ first_name: "", phone: "" });
+      
+      toast({
+        title: "Success",
+        description: "Student added successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -513,12 +573,59 @@ export default function TeacherStudentCards() {
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back to My Classes
           </Button>
-          <Button 
-            variant="default"
-            onClick={() => setShowBatchIntake(true)}
-          >
-            Batch First Session Intake
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={showAddStudent} onOpenChange={setShowAddStudent}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Student
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Student</DialogTitle>
+                  <DialogDescription>
+                    Add a new student to this class. You can complete their profile later.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name">First Name *</Label>
+                    <Input
+                      id="first_name"
+                      value={newStudentData.first_name}
+                      onChange={(e) => setNewStudentData({ ...newStudentData, first_name: e.target.value })}
+                      placeholder="Student's first name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number * (8 digits)</Label>
+                    <Input
+                      id="phone"
+                      value={newStudentData.phone}
+                      onChange={(e) => setNewStudentData({ ...newStudentData, phone: e.target.value })}
+                      placeholder="12345678"
+                      maxLength={8}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowAddStudent(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddStudent}>
+                    Add Student
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button 
+              variant="default"
+              onClick={() => setShowBatchIntake(true)}
+            >
+              Batch First Session Intake
+            </Button>
+          </div>
         </div>
       </div>
 
