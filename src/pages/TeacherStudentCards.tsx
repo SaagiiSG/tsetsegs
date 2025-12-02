@@ -776,12 +776,6 @@ export default function TeacherStudentCards() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button 
-              variant="default"
-              onClick={() => setShowBatchIntake(true)}
-            >
-              Batch First Session Intake
-            </Button>
             {batch?.course_type === 'SAT' && (
               <Dialog open={showScoreCalculator} onOpenChange={setShowScoreCalculator}>
                 <DialogTrigger asChild>
@@ -789,19 +783,19 @@ export default function TeacherStudentCards() {
                     SAT Score Calculator
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] max-h-[95vh] w-[1000px] h-[900px] p-0">
-                  <DialogHeader className="p-6 pb-4">
+                <DialogContent className="max-w-[1040px] w-full p-6">
+                  <DialogHeader>
                     <DialogTitle>SAT Score Calculator</DialogTitle>
                     <DialogDescription>
                       Use this tool to calculate SAT scores from raw scores
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex-1 overflow-hidden px-6 pb-6">
+                  <div className="mt-4">
                     <iframe 
                       src="/embed/digital-sat-score-calculator" 
-                      className="w-full h-[750px] border rounded-md"
-                      frameBorder="0" 
+                      className="w-full h-[900px] border-0 rounded-md"
                       referrerPolicy="strict-origin-when-cross-origin"
+                      title="SAT Score Calculator"
                     />
                   </div>
                 </DialogContent>
