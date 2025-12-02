@@ -77,6 +77,11 @@ export function StudentCard({
     first_name: student.first_name,
     last_name: student.last_name,
     phone: student.phone,
+    parent_phone: student.parent_phone || '',
+    grade: student.grade || '',
+    school_name: student.school_name || '',
+    math_level: student.math_level || '',
+    english_level: student.english_level || '',
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
 
@@ -92,6 +97,11 @@ export function StudentCard({
       first_name: student.first_name,
       last_name: student.last_name,
       phone: student.phone,
+      parent_phone: student.parent_phone || '',
+      grade: student.grade || '',
+      school_name: student.school_name || '',
+      math_level: student.math_level || '',
+      english_level: student.english_level || '',
     });
     setIsEditing(false);
   };
@@ -248,7 +258,15 @@ export function StudentCard({
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">Parent Phone</Label>
-              {student.parent_phone ? (
+              {isEditing ? (
+                <Input
+                  value={editForm.parent_phone}
+                  onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value.replace(/\D/g, '') })}
+                  maxLength={8}
+                  placeholder="8-digit number"
+                  className="mt-1"
+                />
+              ) : student.parent_phone ? (
                 <a href={`tel:+976${student.parent_phone}`} className="font-medium mt-1 block text-primary hover:underline">
                   {student.parent_phone}
                 </a>
@@ -259,24 +277,83 @@ export function StudentCard({
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">Grade</Label>
-              <p className="font-medium mt-1">{student.grade || "-"}</p>
+              {isEditing ? (
+                <Input
+                  value={editForm.grade}
+                  onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium mt-1">{student.grade || "-"}</p>
+              )}
             </div>
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">School Name</Label>
-              <p className="font-medium mt-1">{student.school_name || "-"}</p>
+              {isEditing ? (
+                <Input
+                  value={editForm.school_name}
+                  onChange={(e) => setEditForm({ ...editForm, school_name: e.target.value })}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium mt-1">{student.school_name || "-"}</p>
+              )}
             </div>
 
             {courseType === 'SAT' && (
               <div>
                 <Label className="text-xs uppercase text-muted-foreground">Math Level</Label>
-                <p className="font-medium mt-1">{getLevelDisplay(student.math_level)}</p>
+                {isEditing ? (
+                  <Select
+                    value={editForm.math_level}
+                    onValueChange={(value) => setEditForm({ ...editForm, math_level: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bad">Needs Work</SelectItem>
+                      <SelectItem value="average">Average</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="font-medium mt-1">{getLevelDisplay(student.math_level)}</p>
+                )}
               </div>
             )}
 
             <div>
               <Label className="text-xs uppercase text-muted-foreground">English Level</Label>
-              <p className="font-medium mt-1">{getLevelDisplay(student.english_level)}</p>
+              {isEditing ? (
+                <Select
+                  value={editForm.english_level}
+                  onValueChange={(value) => setEditForm({ ...editForm, english_level: value })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courseType === 'IELTS' ? (
+                      <>
+                        <SelectItem value="B1">B1</SelectItem>
+                        <SelectItem value="B2">B2</SelectItem>
+                        <SelectItem value="C1">C1</SelectItem>
+                        <SelectItem value="C2">C2</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="bad">Needs Work</SelectItem>
+                        <SelectItem value="average">Average</SelectItem>
+                        <SelectItem value="good">Good</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="font-medium mt-1">{getLevelDisplay(student.english_level)}</p>
+              )}
             </div>
           </div>
         </div>
