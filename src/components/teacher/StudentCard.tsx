@@ -177,16 +177,16 @@ export function StudentCard({
 
   return (
     <Card className="shadow-lg">
-      {/* Dot Tracker - Above all content */}
+      {/* Square Tracker - Above all content */}
       <div className="p-3 border-b bg-muted/30">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground w-20">Attendance</span>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap">
               {attendance.map((session) => (
                 <div
                   key={`att-${session.session_number}`}
-                  className={`w-2 h-2 rounded-sm ${getAttendanceDotColor(session.status)}`}
+                  className={`w-2.5 h-2.5 ${getAttendanceDotColor(session.status)}`}
                   title={`S${session.session_number}: ${session.status || 'unmarked'}`}
                 />
               ))}
@@ -194,11 +194,11 @@ export function StudentCard({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground w-20">Homework</span>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap">
               {homework.map((hw) => (
                 <div
                   key={`hw-${hw.session_number}`}
-                  className={`w-2 h-2 rounded-sm ${getHomeworkDotColor(hw.status)}`}
+                  className={`w-2.5 h-2.5 ${getHomeworkDotColor(hw.status)}`}
                   title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
                 />
               ))}
@@ -206,11 +206,11 @@ export function StudentCard({
           </div>
           {/* Legend */}
           <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#03C988]/70" />Present/Done</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FFDE0B]/70" />Late</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FA6363]/70" />Absent/Incomplete</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400/70" />Sick</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-400/70" />Excused</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#03C988]/70" />Present/Done</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FFDE0B]/70" />Late</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FA6363]/70" />Absent/Incomplete</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-400/70" />Sick</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-purple-400/70" />Excused</span>
           </div>
         </div>
       </div>
@@ -435,11 +435,11 @@ export function StudentCard({
                           <SelectValue placeholder="Attendance" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50 pointer-events-auto">
-                          <SelectItem value="present">✓ Present</SelectItem>
-                          <SelectItem value="late">⏰ Late</SelectItem>
-                          <SelectItem value="absent">✗ Absent</SelectItem>
-                          <SelectItem value="sick">🤒 Sick</SelectItem>
-                          <SelectItem value="excused">🆓 Excused</SelectItem>
+                          <SelectItem value="present" className="text-[#03C988]">✓ Present</SelectItem>
+                          <SelectItem value="late" className="text-[#FFDE0B]">⏰ Late</SelectItem>
+                          <SelectItem value="absent" className="text-[#FA6363]">✗ Absent</SelectItem>
+                          <SelectItem value="sick" className="text-blue-400">🤒 Sick</SelectItem>
+                          <SelectItem value="excused" className="text-purple-400">🆓 Excused</SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -452,8 +452,8 @@ export function StudentCard({
                           <SelectValue placeholder="Homework" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50 pointer-events-auto">
-                          <SelectItem value="completed">✓ Done</SelectItem>
-                          <SelectItem value="incomplete">✗ Incomplete</SelectItem>
+                          <SelectItem value="completed" className="text-[#03C988]">✓ Done</SelectItem>
+                          <SelectItem value="incomplete" className="text-[#FA6363]">✗ Incomplete</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

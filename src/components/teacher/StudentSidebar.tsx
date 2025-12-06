@@ -120,32 +120,32 @@ export function StudentSidebar({
                     <span className="text-xs">⚠️</span>
                   )}
                 </div>
-                {/* Dot trackers */}
+                {/* Square trackers */}
                 {(attendance.length > 0 || homework.length > 0) && (
-                  <div className="mt-1.5 space-y-1">
+                  <div className="mt-1.5 space-y-0.5">
                     {attendance.length > 0 && (
-                      <div className="flex gap-0.5 flex-wrap">
+                      <div className="flex flex-wrap">
                         {attendance.slice(0, 12).map((a) => (
                           <div
                             key={`s-att-${a.session_number}`}
-                            className={`w-1.5 h-1.5 rounded-sm ${getAttendanceDotColor(a.status)}`}
+                            className={`w-1.5 h-1.5 ${getAttendanceDotColor(a.status)}`}
                           />
                         ))}
                         {attendance.length > 12 && (
-                          <span className="text-[8px] text-muted-foreground">+{attendance.length - 12}</span>
+                          <span className="text-[8px] text-muted-foreground ml-0.5">+{attendance.length - 12}</span>
                         )}
                       </div>
                     )}
                     {homework.length > 0 && (
-                      <div className="flex gap-0.5 flex-wrap">
+                      <div className="flex flex-wrap">
                         {homework.slice(0, 12).map((h) => (
                           <div
                             key={`s-hw-${h.session_number}`}
-                            className={`w-1.5 h-1.5 rounded-sm ${getHomeworkDotColor(h.status)}`}
+                            className={`w-1.5 h-1.5 ${getHomeworkDotColor(h.status)}`}
                           />
                         ))}
                         {homework.length > 12 && (
-                          <span className="text-[8px] text-muted-foreground">+{homework.length - 12}</span>
+                          <span className="text-[8px] text-muted-foreground ml-0.5">+{homework.length - 12}</span>
                         )}
                       </div>
                     )}
