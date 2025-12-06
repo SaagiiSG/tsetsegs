@@ -36,23 +36,18 @@ export default function TeacherSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Apply color theme on mount and change
-  useEffect(() => {
+  // Apply color theme immediately on change
+  const handleColorThemeChange = (newTheme: string) => {
     const root = document.documentElement;
-    // Remove all theme classes
+    // Remove all theme classes immediately
     colorThemes.forEach((t) => root.classList.remove(`theme-${t.id}`));
-    // Add current theme class
-    root.classList.add(`theme-${colorTheme}`);
-    localStorage.setItem("color-theme", colorTheme);
-  }, [colorTheme]);
-
-  // Load theme on initial mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("color-theme");
-    if (savedTheme) {
-      document.documentElement.classList.add(`theme-${savedTheme}`);
-    }
-  }, []);
+    // Add new theme class immediately
+    root.classList.add(`theme-${newTheme}`);
+    // Save to localStorage
+    localStorage.setItem("color-theme", newTheme);
+    // Update state
+    setColorTheme(newTheme);
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +183,7 @@ export default function TeacherSettings() {
                   {colorThemes.map((t) => (
                     <button
                       key={t.id}
-                      onClick={() => setColorTheme(t.id)}
+                      onClick={() => handleColorThemeChange(t.id)}
                       className={cn(
                         "relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
                         colorTheme === t.id
