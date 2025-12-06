@@ -34,7 +34,7 @@ interface Student {
 
 interface Attendance {
   session_number: number;
-  status: "present" | "absent" | "sick" | "late" | null;
+  status: "present" | "absent" | "sick" | "late" | "excused" | null;
 }
 
 interface Homework {
@@ -818,6 +818,8 @@ export default function TeacherStudentCards() {
             }}
             batch={batch}
             getStudentAlertStatus={getStudentAlertStatus}
+            getStudentAttendance={(studentId) => studentDataMap.get(studentId)?.attendance || []}
+            getStudentHomework={(studentId) => studentDataMap.get(studentId)?.homework || []}
           />
         </div>
 
