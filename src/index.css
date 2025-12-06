@@ -123,34 +123,107 @@ All colors MUST be HSL.
 .theme-rose {
   --primary: 345 75% 65% !important;
   --ring: 345 75% 65% !important;
+  --background: 350 25% 98% !important;
+  --muted: 350 20% 95% !important;
+  --border: 345 30% 90% !important;
+  --input: 345 30% 90% !important;
 }
 
 :root.theme-blue,
 .theme-blue {
   --primary: 217 91% 60% !important;
   --ring: 217 91% 60% !important;
+  --background: 215 30% 98% !important;
+  --muted: 215 25% 95% !important;
+  --border: 215 30% 90% !important;
+  --input: 215 30% 90% !important;
 }
 
 :root.theme-green,
 .theme-green {
   --primary: 142 76% 45% !important;
   --ring: 142 76% 45% !important;
+  --background: 140 25% 98% !important;
+  --muted: 140 20% 95% !important;
+  --border: 142 25% 90% !important;
+  --input: 142 25% 90% !important;
 }
 
 :root.theme-purple,
 .theme-purple {
   --primary: 270 70% 60% !important;
   --ring: 270 70% 60% !important;
+  --background: 270 25% 98% !important;
+  --muted: 270 20% 95% !important;
+  --border: 270 25% 90% !important;
+  --input: 270 25% 90% !important;
 }
 
 :root.theme-orange,
 .theme-orange {
   --primary: 25 95% 55% !important;
   --ring: 25 95% 55% !important;
+  --background: 30 30% 98% !important;
+  --muted: 30 25% 95% !important;
+  --border: 30 30% 90% !important;
+  --input: 30 30% 90% !important;
 }
 
 :root.theme-gold,
 .theme-gold {
   --primary: 43 88% 50% !important;
   --ring: 43 88% 50% !important;
+  --background: 45 30% 98% !important;
+  --muted: 45 25% 95% !important;
+  --border: 45 30% 90% !important;
+  --input: 45 30% 90% !important;
+}
+
+/* Dark mode theme overrides */
+.dark.theme-rose,
+.dark .theme-rose {
+  --background: 340 20% 8% !important;
+  --muted: 340 15% 15% !important;
+  --border: 340 15% 20% !important;
+  --input: 340 15% 20% !important;
+}
+
+.dark.theme-blue,
+.dark .theme-blue {
+  --background: 220 25% 8% !important;
+  --muted: 220 20% 15% !important;
+  --border: 220 20% 20% !important;
+  --input: 220 20% 20% !important;
+}
+
+.dark.theme-green,
+.dark .theme-green {
+  --background: 145 20% 7% !important;
+  --muted: 145 15% 14% !important;
+  --border: 145 15% 18% !important;
+  --input: 145 15% 18% !important;
+}
+
+.dark.theme-purple,
+.dark .theme-purple {
+  --background: 270 20% 8% !important;
+  --muted: 270 15% 15% !important;
+  --border: 270 15% 20% !important;
+  --input: 270 15% 20% !important;
+}
+
+.dark.theme-orange,
+.dark .theme-orange {
+  --background: 25 20% 7% !important;
+  --muted: 25 15% 14% !important;
+  --border: 25 15% 18% !important;
+  --input: 25 15% 18% !important;
+}
+
+.dark.theme-gold,
+.dark .theme-gold {
+  --background: 40 20% 7% !important;
+  --muted: 40 15% 14% !important;
+  --border: 40 15% 18% !important;
+  --input: 40 15% 18% !important;
 }
