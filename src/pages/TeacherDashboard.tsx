@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 
@@ -151,9 +151,13 @@ export default function TeacherDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="classes" className="text-sm md:text-base">
               My Classes
+            </TabsTrigger>
+            <TabsTrigger value="students" className="text-sm md:text-base">
+              <GraduationCap className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden xs:inline">Students</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="text-sm md:text-base">
               <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -257,6 +261,29 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="students">
+            <Card>
+              <CardHeader className="pb-3 md:pb-6">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                  <GraduationCap className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                  <span>All Students</span>
+                </CardTitle>
+                <CardDescription className="text-xs md:text-sm">
+                  View and manage all your students with detailed profiles
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="w-full"
+                  onClick={() => navigate("/teacher/students")}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Open Student Directory
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="alerts">

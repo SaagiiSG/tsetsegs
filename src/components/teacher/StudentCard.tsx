@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2, Check, X } from "lucide-react";
+import { Edit2, Check, X, ExternalLink } from "lucide-react";
 
 interface Student {
   id: string;
@@ -72,6 +73,7 @@ export function StudentCard({
   onHomeworkChange,
   onTestScoreChange,
 }: StudentCardProps) {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     first_name: student.first_name,
@@ -201,9 +203,13 @@ export function StudentCard({
         <div className="flex items-center justify-between gap-4">
           {/* Left side: Student name and count */}
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-bold">
+            <button 
+              onClick={() => navigate(`/teacher/student/${student.id}`)}
+              className="text-lg font-bold text-left hover:text-primary transition-colors flex items-center gap-2 group"
+            >
               {(student.first_name && student.first_name.trim()) || student.name || 'Unknown'} {student.last_name && student.last_name.trim() ? student.last_name.charAt(0) + '.' : ''}
-            </h2>
+              <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
             <p className="text-sm font-medium text-muted-foreground">
               Student {currentIndex + 1} of {totalStudents}
             </p>
