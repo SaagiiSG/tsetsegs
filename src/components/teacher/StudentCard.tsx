@@ -155,23 +155,23 @@ export function StudentCard({
     return levelMap[level] || level;
   };
 
-  // Dot color helper functions
+  // Dot color helper functions - using dimmed custom colors
   const getAttendanceDotColor = (status: string | null) => {
     switch (status) {
-      case 'present': return 'bg-emerald-500';
-      case 'late': return 'bg-amber-500';
-      case 'absent': return 'bg-destructive';
-      case 'sick': return 'bg-blue-500';
-      case 'excused': return 'bg-purple-500';
-      default: return 'bg-muted-foreground/30';
+      case 'present': return 'bg-[#03C988]/70';
+      case 'late': return 'bg-[#FFDE0B]/70';
+      case 'absent': return 'bg-[#FA6363]/70';
+      case 'sick': return 'bg-blue-400/70';
+      case 'excused': return 'bg-purple-400/70';
+      default: return 'bg-muted-foreground/20';
     }
   };
 
   const getHomeworkDotColor = (status: string | null) => {
     switch (status) {
-      case 'completed': return 'bg-emerald-500';
-      case 'incomplete': return 'bg-destructive';
-      default: return 'bg-muted-foreground/30';
+      case 'completed': return 'bg-[#03C988]/70';
+      case 'incomplete': return 'bg-[#FA6363]/70';
+      default: return 'bg-muted-foreground/20';
     }
   };
 
@@ -186,7 +186,7 @@ export function StudentCard({
               {attendance.map((session) => (
                 <div
                   key={`att-${session.session_number}`}
-                  className={`w-2.5 h-2.5 rounded-full ${getAttendanceDotColor(session.status)}`}
+                  className={`w-2 h-2 rounded-sm ${getAttendanceDotColor(session.status)}`}
                   title={`S${session.session_number}: ${session.status || 'unmarked'}`}
                 />
               ))}
@@ -198,7 +198,7 @@ export function StudentCard({
               {homework.map((hw) => (
                 <div
                   key={`hw-${hw.session_number}`}
-                  className={`w-2.5 h-2.5 rounded-full ${getHomeworkDotColor(hw.status)}`}
+                  className={`w-2 h-2 rounded-sm ${getHomeworkDotColor(hw.status)}`}
                   title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
                 />
               ))}
@@ -206,11 +206,11 @@ export function StudentCard({
           </div>
           {/* Legend */}
           <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />Present/Done</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" />Late</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" />Absent/Incomplete</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />Sick</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500" />Excused</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#03C988]/70" />Present/Done</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FFDE0B]/70" />Late</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FA6363]/70" />Absent/Incomplete</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400/70" />Sick</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-400/70" />Excused</span>
           </div>
         </div>
       </div>
@@ -229,11 +229,6 @@ export function StudentCard({
           
           {/* Right side: Warnings */}
           <div className="flex flex-wrap items-center gap-2 justify-end">
-            {!student.first_session_completed && (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-                <span className="text-xs font-medium text-amber-600">⚠️ First Session Incomplete</span>
-              </div>
-            )}
             {hasAlert && (
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20">
                 <span className="text-xs font-medium text-destructive">

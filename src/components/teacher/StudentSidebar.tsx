@@ -40,20 +40,20 @@ interface StudentSidebarProps {
 
 const getAttendanceDotColor = (status: string | null) => {
   switch (status) {
-    case 'present': return 'bg-emerald-500';
-    case 'late': return 'bg-amber-500';
-    case 'absent': return 'bg-destructive';
-    case 'sick': return 'bg-blue-500';
-    case 'excused': return 'bg-purple-500';
-    default: return 'bg-muted-foreground/30';
+    case 'present': return 'bg-[#03C988]/70';
+    case 'late': return 'bg-[#FFDE0B]/70';
+    case 'absent': return 'bg-[#FA6363]/70';
+    case 'sick': return 'bg-blue-400/70';
+    case 'excused': return 'bg-purple-400/70';
+    default: return 'bg-muted-foreground/20';
   }
 };
 
 const getHomeworkDotColor = (status: string | null) => {
   switch (status) {
-    case 'completed': return 'bg-emerald-500';
-    case 'incomplete': return 'bg-destructive';
-    default: return 'bg-muted-foreground/30';
+    case 'completed': return 'bg-[#03C988]/70';
+    case 'incomplete': return 'bg-[#FA6363]/70';
+    default: return 'bg-muted-foreground/20';
   }
 };
 
@@ -128,7 +128,7 @@ export function StudentSidebar({
                         {attendance.slice(0, 12).map((a) => (
                           <div
                             key={`s-att-${a.session_number}`}
-                            className={`w-1.5 h-1.5 rounded-full ${getAttendanceDotColor(a.status)}`}
+                            className={`w-1.5 h-1.5 rounded-sm ${getAttendanceDotColor(a.status)}`}
                           />
                         ))}
                         {attendance.length > 12 && (
@@ -141,7 +141,7 @@ export function StudentSidebar({
                         {homework.slice(0, 12).map((h) => (
                           <div
                             key={`s-hw-${h.session_number}`}
-                            className={`w-1.5 h-1.5 rounded-full ${getHomeworkDotColor(h.status)}`}
+                            className={`w-1.5 h-1.5 rounded-sm ${getHomeworkDotColor(h.status)}`}
                           />
                         ))}
                         {homework.length > 12 && (
