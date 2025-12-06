@@ -22,6 +22,10 @@ import TeacherSettings from "./pages/TeacherSettings";
 
 const queryClient = new QueryClient();
 
+// Apply saved color theme on app load
+const savedColorTheme = localStorage.getItem("color-theme") || "rose";
+document.documentElement.classList.add(`theme-${savedColorTheme}`);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
