@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   ChevronLeft, User, Phone, School, BookOpen, TrendingUp, 
   Calendar, Clock, AlertTriangle, Award, Target, BarChart3,
-  CheckCircle2, XCircle, Clock3
+  CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send
 } from "lucide-react";
+import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar, Area, AreaChart
@@ -58,6 +60,14 @@ interface PracticeTest {
   created_at?: string;
 }
 
+interface StudentNote {
+  id: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Chart colors using design tokens
 const CHART_COLORS = {
   present: "hsl(var(--chart-2))",
@@ -75,12 +85,16 @@ export default function TeacherStudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { teacherName } = useTeacherAuth();
 
   const [student, setStudent] = useState<Student | null>(null);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [homework, setHomework] = useState<HomeworkRecord[]>([]);
   const [practiceTests, setPracticeTests] = useState<PracticeTest[]>([]);
+  const [notes, setNotes] = useState<StudentNote[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -157,6 +171,16 @@ export default function TeacherStudentProfile() {
 
       setPracticeTests(testsData || []);
 
+      // Fetch notes
+      const { data: notesData } = await supabase
+        .from("student_notes")
+        .select("*")
+        .eq("student_id", studentId)
+        .eq("batch_id", studentData.batch_id)
+        .order("created_at", { ascending: false });
+
+      setNotes(notesData || []);
+
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -165,6 +189,63 @@ export default function TeacherStudentProfile() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !student || !batch || !teacherName) return;
+    
+    setIsAddingNote(true);
+    try {
+      const { data, error } = await supabase
+        .from("student_notes")
+        .insert({
+          student_id: student.id,
+          batch_id: batch.id,
+          content: newNote.trim(),
+          created_by: teacherName,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setNotes([data, ...notes]);
+      setNewNote("");
+      toast({
+        title: "Note added",
+        description: "Your note has been saved",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const { error } = await supabase
+        .from("student_notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+
+      setNotes(notes.filter(n => n.id !== noteId));
+      toast({
+        title: "Note deleted",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
@@ -365,10 +446,19 @@ export default function TeacherStudentProfile() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-4 mb-6">
+          <TabsList className="w-full grid grid-cols-5 mb-6">
             <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="progress" className="text-xs md:text-sm">Progress</TabsTrigger>
             <TabsTrigger value="attendance" className="text-xs md:text-sm">Attendance</TabsTrigger>
+            <TabsTrigger value="notes" className="text-xs md:text-sm">
+              <StickyNote className="h-3 w-3 mr-1 hidden md:inline" />
+              Notes
+              {notes.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 text-xs justify-center hidden md:flex">
+                  {notes.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="info" className="text-xs md:text-sm">Info</TabsTrigger>
           </TabsList>
 
@@ -783,6 +873,99 @@ export default function TeacherStudentProfile() {
                       <p className="font-medium">{batch.teacher}</p>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <StickyNote className="h-5 w-5 text-primary" />
+                  Teacher Notes
+                </CardTitle>
+                <CardDescription>
+                  Private notes about this student (only visible to teachers)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add Note Form */}
+                <div className="space-y-3">
+                  <Textarea
+                    placeholder="Add a note about this student..."
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
+                  <Button 
+                    onClick={handleAddNote} 
+                    disabled={!newNote.trim() || isAddingNote}
+                    className="w-full sm:w-auto"
+                  >
+                    {isAddingNote ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Add Note
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Notes List */}
+                <div className="border-t pt-4">
+                  {notes.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <StickyNote className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                      <p>No notes yet</p>
+                      <p className="text-sm">Add your first note above</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[400px]">
+                      <div className="space-y-3 pr-4">
+                        {notes.map((note) => (
+                          <div 
+                            key={note.id} 
+                            className="p-4 bg-muted/50 rounded-lg group relative"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <p className="whitespace-pre-wrap text-sm">{note.content}</p>
+                                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                                  <span className="font-medium">{note.created_by}</span>
+                                  <span>•</span>
+                                  <span>
+                                    {new Date(note.created_at).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </div>
               </CardContent>
             </Card>
