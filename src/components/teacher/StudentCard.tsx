@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2 } from "lucide-react";
+import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -108,6 +108,8 @@ export function StudentCard({
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [showNotes, setShowNotes] = useState(true);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteContent, setEditingNoteContent] = useState("");
 
   // Fetch notes when student changes
   useEffect(() => {
@@ -157,6 +159,23 @@ export function StudentCard({
       if (error) throw error;
       setNotes(notes.filter(n => n.id !== noteId));
       toast({ title: "Note deleted" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    }
+  };
+
+  const handleEditNote = async (noteId: string) => {
+    if (!editingNoteContent.trim()) return;
+    try {
+      const { error } = await supabase
+        .from("student_notes")
+        .update({ content: editingNoteContent.trim() })
+        .eq("id", noteId);
+      if (error) throw error;
+      setNotes(notes.map(n => n.id === noteId ? { ...n, content: editingNoteContent.trim() } : n));
+      setEditingNoteId(null);
+      setEditingNoteContent("");
+      toast({ title: "Note updated" });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     }
@@ -663,25 +682,57 @@ export function StudentCard({
                         key={note.id} 
                         className="p-3 bg-muted/50 rounded-lg text-sm group relative"
                       >
-                        <p className="whitespace-pre-wrap pr-8">{note.content}</p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span>{note.created_by}</span>
-                          <span>•</span>
-                          <span>
-                            {new Date(note.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteNote(note.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {editingNoteId === note.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={editingNoteContent}
+                              onChange={(e) => setEditingNoteContent(e.target.value)}
+                              rows={2}
+                              className="resize-none"
+                              autoFocus
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingNoteId(null); setEditingNoteContent(""); }}>
+                                <X className="h-3 w-3 mr-1" /> Cancel
+                              </Button>
+                              <Button size="sm" onClick={() => handleEditNote(note.id)}>
+                                <Check className="h-3 w-3 mr-1" /> Save
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="whitespace-pre-wrap pr-16">{note.content}</p>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                              <span>{note.created_by}</span>
+                              <span>•</span>
+                              <span>
+                                {new Date(note.created_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                onClick={() => { setEditingNoteId(note.id); setEditingNoteContent(note.content); }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
