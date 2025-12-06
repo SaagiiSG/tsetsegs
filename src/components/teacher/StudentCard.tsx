@@ -107,7 +107,7 @@ export function StudentCard({
   const [notes, setNotes] = useState<StudentNote[]>([]);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
+  const [showNotes, setShowNotes] = useState(true);
 
   // Fetch notes when student changes
   useEffect(() => {
