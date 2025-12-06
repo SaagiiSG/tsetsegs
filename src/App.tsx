@@ -1,4 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
+import TeacherStudentProfile from "./pages/TeacherStudentProfile";
+import TeacherAllStudents from "./pages/TeacherAllStudents";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -77,6 +79,22 @@ const App = () => (
                   element={
                     <TeacherProtectedRoute>
                       <TeacherStudentCards />
+                    </TeacherProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/teacher/students" 
+                  element={
+                    <TeacherProtectedRoute>
+                      <TeacherAllStudents />
+                    </TeacherProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/teacher/student/:studentId" 
+                  element={
+                    <TeacherProtectedRoute>
+                      <TeacherStudentProfile />
                     </TeacherProtectedRoute>
                   } 
                 />
