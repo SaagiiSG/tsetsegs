@@ -22,7 +22,7 @@ interface Student {
 
 interface Attendance {
   session_number: number;
-  status: "present" | "absent" | "sick" | "late" | null;
+  status: "present" | "absent" | "sick" | "late" | "excused" | null;
 }
 
 interface Homework {
@@ -155,8 +155,66 @@ export function StudentCard({
     return levelMap[level] || level;
   };
 
+  // Dot color helper functions
+  const getAttendanceDotColor = (status: string | null) => {
+    switch (status) {
+      case 'present': return 'bg-emerald-500';
+      case 'late': return 'bg-amber-500';
+      case 'absent': return 'bg-destructive';
+      case 'sick': return 'bg-blue-500';
+      case 'excused': return 'bg-purple-500';
+      default: return 'bg-muted-foreground/30';
+    }
+  };
+
+  const getHomeworkDotColor = (status: string | null) => {
+    switch (status) {
+      case 'completed': return 'bg-emerald-500';
+      case 'incomplete': return 'bg-destructive';
+      default: return 'bg-muted-foreground/30';
+    }
+  };
+
   return (
     <Card className="shadow-lg">
+      {/* Dot Tracker - Above all content */}
+      <div className="p-3 border-b bg-muted/30">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground w-20">Attendance</span>
+            <div className="flex flex-wrap gap-1">
+              {attendance.map((session) => (
+                <div
+                  key={`att-${session.session_number}`}
+                  className={`w-2.5 h-2.5 rounded-full ${getAttendanceDotColor(session.status)}`}
+                  title={`S${session.session_number}: ${session.status || 'unmarked'}`}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground w-20">Homework</span>
+            <div className="flex flex-wrap gap-1">
+              {homework.map((hw) => (
+                <div
+                  key={`hw-${hw.session_number}`}
+                  className={`w-2.5 h-2.5 rounded-full ${getHomeworkDotColor(hw.status)}`}
+                  title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
+                />
+              ))}
+            </div>
+          </div>
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />Present/Done</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" />Late</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" />Absent/Incomplete</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />Sick</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500" />Excused</span>
+          </div>
+        </div>
+      </div>
+
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           {/* Left side: Student name and count */}
@@ -386,6 +444,7 @@ export function StudentCard({
                           <SelectItem value="late">⏰ Late</SelectItem>
                           <SelectItem value="absent">✗ Absent</SelectItem>
                           <SelectItem value="sick">🤒 Sick</SelectItem>
+                          <SelectItem value="excused">🆓 Excused</SelectItem>
                         </SelectContent>
                       </Select>
 

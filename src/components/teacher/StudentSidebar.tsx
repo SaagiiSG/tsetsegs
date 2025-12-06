@@ -14,6 +14,16 @@ interface Batch {
   start_date: string;
 }
 
+interface AttendanceStatus {
+  session_number: number;
+  status: "present" | "absent" | "sick" | "late" | "excused" | null;
+}
+
+interface HomeworkStatus {
+  session_number: number;
+  status: "completed" | "incomplete" | null;
+}
+
 interface StudentSidebarProps {
   students: Student[];
   currentIndex: number;
@@ -24,9 +34,38 @@ interface StudentSidebarProps {
     missedClasses: number;
     missedHomework: number;
   };
+  getStudentAttendance?: (studentId: string) => AttendanceStatus[];
+  getStudentHomework?: (studentId: string) => HomeworkStatus[];
 }
 
-export function StudentSidebar({ students, currentIndex, onSelectStudent, batch, getStudentAlertStatus }: StudentSidebarProps) {
+const getAttendanceDotColor = (status: string | null) => {
+  switch (status) {
+    case 'present': return 'bg-emerald-500';
+    case 'late': return 'bg-amber-500';
+    case 'absent': return 'bg-destructive';
+    case 'sick': return 'bg-blue-500';
+    case 'excused': return 'bg-purple-500';
+    default: return 'bg-muted-foreground/30';
+  }
+};
+
+const getHomeworkDotColor = (status: string | null) => {
+  switch (status) {
+    case 'completed': return 'bg-emerald-500';
+    case 'incomplete': return 'bg-destructive';
+    default: return 'bg-muted-foreground/30';
+  }
+};
+
+export function StudentSidebar({ 
+  students, 
+  currentIndex, 
+  onSelectStudent, 
+  batch, 
+  getStudentAlertStatus,
+  getStudentAttendance,
+  getStudentHomework 
+}: StudentSidebarProps) {
   return (
     <div className="w-64 border-r bg-card h-full">
       <div className="p-4 border-b space-y-3">
@@ -59,6 +98,8 @@ export function StudentSidebar({ students, currentIndex, onSelectStudent, batch,
               : student.name || 'Unknown';
             
             const alertStatus = getStudentAlertStatus(student.id);
+            const attendance = getStudentAttendance?.(student.id) || [];
+            const homework = getStudentHomework?.(student.id) || [];
 
             return (
               <button
@@ -79,6 +120,37 @@ export function StudentSidebar({ students, currentIndex, onSelectStudent, batch,
                     <span className="text-xs">⚠️</span>
                   )}
                 </div>
+                {/* Dot trackers */}
+                {(attendance.length > 0 || homework.length > 0) && (
+                  <div className="mt-1.5 space-y-1">
+                    {attendance.length > 0 && (
+                      <div className="flex gap-0.5 flex-wrap">
+                        {attendance.slice(0, 12).map((a) => (
+                          <div
+                            key={`s-att-${a.session_number}`}
+                            className={`w-1.5 h-1.5 rounded-full ${getAttendanceDotColor(a.status)}`}
+                          />
+                        ))}
+                        {attendance.length > 12 && (
+                          <span className="text-[8px] text-muted-foreground">+{attendance.length - 12}</span>
+                        )}
+                      </div>
+                    )}
+                    {homework.length > 0 && (
+                      <div className="flex gap-0.5 flex-wrap">
+                        {homework.slice(0, 12).map((h) => (
+                          <div
+                            key={`s-hw-${h.session_number}`}
+                            className={`w-1.5 h-1.5 rounded-full ${getHomeworkDotColor(h.status)}`}
+                          />
+                        ))}
+                        {homework.length > 12 && (
+                          <span className="text-[8px] text-muted-foreground">+{homework.length - 12}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {alertStatus.hasAlert && currentIndex !== index && (
                   <div className="text-xs mt-0.5 opacity-90">
                     {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
