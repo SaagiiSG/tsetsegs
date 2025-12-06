@@ -177,44 +177,6 @@ export function StudentCard({
 
   return (
     <Card className="shadow-lg">
-      {/* Square Tracker - Above all content */}
-      <div className="p-3 border-b bg-muted/30">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground w-20">Attendance</span>
-            <div className="flex flex-wrap gap-px rounded-md overflow-hidden border border-border/50">
-              {attendance.map((session) => (
-                <div
-                  key={`att-${session.session_number}`}
-                  className={`w-3 h-3 ${getAttendanceDotColor(session.status)}`}
-                  title={`S${session.session_number}: ${session.status || 'unmarked'}`}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground w-20">Homework</span>
-            <div className="flex flex-wrap gap-px rounded-md overflow-hidden border border-border/50">
-              {homework.map((hw) => (
-                <div
-                  key={`hw-${hw.session_number}`}
-                  className={`w-3 h-3 ${getHomeworkDotColor(hw.status)}`}
-                  title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
-                />
-              ))}
-            </div>
-          </div>
-          {/* Legend */}
-          <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#03C988]/70" />Present/Done</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FFDE0B]/70" />Late</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FA6363]/70" />Absent/Incomplete</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400/70" />Sick</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-400/70" />Excused</span>
-          </div>
-        </div>
-      </div>
-
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           {/* Left side: Student name and count */}
@@ -227,15 +189,37 @@ export function StudentCard({
             </p>
           </div>
           
-          {/* Right side: Warnings */}
-          <div className="flex flex-wrap items-center gap-2 justify-end">
+          {/* Right side: Square trackers and alerts */}
+          <div className="flex flex-col items-end gap-1.5">
+            {/* Square trackers */}
+            <div className="flex flex-col gap-px">
+              <div className="flex gap-px rounded overflow-hidden border border-border/50">
+                {attendance.map((session) => (
+                  <div
+                    key={`att-${session.session_number}`}
+                    className={`w-2.5 h-2.5 ${getAttendanceDotColor(session.status)}`}
+                    title={`S${session.session_number}: ${session.status || 'unmarked'}`}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-px rounded overflow-hidden border border-border/50">
+                {homework.map((hw) => (
+                  <div
+                    key={`hw-${hw.session_number}`}
+                    className={`w-2.5 h-2.5 ${getHomeworkDotColor(hw.status)}`}
+                    title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Alert badge */}
             {hasAlert && (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20">
-                <span className="text-xs font-medium text-destructive">
-                  ⚠️ Alert: 
-                  {missedClasses && missedClasses >= 3 && ` ${missedClasses} classes missed`}
-                  {missedClasses && missedClasses >= 3 && missedHomework && missedHomework >= 3 && ' •'}
-                  {missedHomework && missedHomework >= 3 && ` ${missedHomework} homework incomplete`}
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/20">
+                <span className="text-[10px] font-medium text-destructive">
+                  ⚠️ {missedClasses && missedClasses >= 3 && `${missedClasses} abs`}
+                  {missedClasses && missedClasses >= 3 && missedHomework && missedHomework >= 3 && ' • '}
+                  {missedHomework && missedHomework >= 3 && `${missedHomework} HW`}
                 </span>
               </div>
             )}

@@ -115,9 +115,26 @@ export function StudentSidebar({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  {/* Square trackers - left of name */}
+                  {/* Name and alerts */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{index + 1}. {displayName}</span>
+                      {alertStatus.hasAlert && currentIndex !== index && (
+                        <span className="text-xs flex-shrink-0">⚠️</span>
+                      )}
+                    </div>
+                    {alertStatus.hasAlert && currentIndex !== index && (
+                      <div className="text-xs opacity-90">
+                        {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
+                        {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
+                        {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Square trackers - right of name */}
                   {(attendance.length > 0 || homework.length > 0) && (
-                    <div className="flex flex-col gap-px flex-shrink-0 mt-0.5">
+                    <div className="flex flex-col gap-px flex-shrink-0">
                       {attendance.length > 0 && (
                         <div className="flex gap-px rounded overflow-hidden">
                           {attendance.slice(0, 12).map((a) => (
@@ -140,23 +157,6 @@ export function StudentSidebar({
                       )}
                     </div>
                   )}
-                  
-                  {/* Name and alerts */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{index + 1}. {displayName}</span>
-                      {alertStatus.hasAlert && currentIndex !== index && (
-                        <span className="text-xs flex-shrink-0">⚠️</span>
-                      )}
-                    </div>
-                    {alertStatus.hasAlert && currentIndex !== index && (
-                      <div className="text-xs opacity-90">
-                        {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
-                        {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
-                        {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </button>
             );
