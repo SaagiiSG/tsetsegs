@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 
@@ -134,10 +134,20 @@ export default function TeacherDashboard() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Welcome, {teacherName}! 👋</h1>
             <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your classes and track attendance</p>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto shrink-0">
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/teacher/settings")}
+              className="shrink-0"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" onClick={handleSignOut} className="flex-1 sm:flex-none">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
