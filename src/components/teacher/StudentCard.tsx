@@ -182,11 +182,11 @@ export function StudentCard({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground w-20">Attendance</span>
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap gap-px rounded-md overflow-hidden border border-border/50">
               {attendance.map((session) => (
                 <div
                   key={`att-${session.session_number}`}
-                  className={`w-2.5 h-2.5 ${getAttendanceDotColor(session.status)}`}
+                  className={`w-3 h-3 ${getAttendanceDotColor(session.status)}`}
                   title={`S${session.session_number}: ${session.status || 'unmarked'}`}
                 />
               ))}
@@ -194,11 +194,11 @@ export function StudentCard({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground w-20">Homework</span>
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap gap-px rounded-md overflow-hidden border border-border/50">
               {homework.map((hw) => (
                 <div
                   key={`hw-${hw.session_number}`}
-                  className={`w-2.5 h-2.5 ${getHomeworkDotColor(hw.status)}`}
+                  className={`w-3 h-3 ${getHomeworkDotColor(hw.status)}`}
                   title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
                 />
               ))}
@@ -206,11 +206,11 @@ export function StudentCard({
           </div>
           {/* Legend */}
           <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#03C988]/70" />Present/Done</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FFDE0B]/70" />Late</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FA6363]/70" />Absent/Incomplete</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-400/70" />Sick</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-purple-400/70" />Excused</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#03C988]/70" />Present/Done</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FFDE0B]/70" />Late</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#FA6363]/70" />Absent/Incomplete</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400/70" />Sick</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-400/70" />Excused</span>
           </div>
         </div>
       </div>

@@ -124,11 +124,11 @@ export function StudentSidebar({
                 {(attendance.length > 0 || homework.length > 0) && (
                   <div className="mt-1.5 space-y-0.5">
                     {attendance.length > 0 && (
-                      <div className="flex flex-wrap">
+                      <div className="flex flex-wrap gap-px rounded overflow-hidden">
                         {attendance.slice(0, 12).map((a) => (
                           <div
                             key={`s-att-${a.session_number}`}
-                            className={`w-1.5 h-1.5 ${getAttendanceDotColor(a.status)}`}
+                            className={`w-2 h-2 ${getAttendanceDotColor(a.status)}`}
                           />
                         ))}
                         {attendance.length > 12 && (
@@ -137,11 +137,11 @@ export function StudentSidebar({
                       </div>
                     )}
                     {homework.length > 0 && (
-                      <div className="flex flex-wrap">
+                      <div className="flex flex-wrap gap-px rounded overflow-hidden">
                         {homework.slice(0, 12).map((h) => (
                           <div
                             key={`s-hw-${h.session_number}`}
-                            className={`w-1.5 h-1.5 ${getHomeworkDotColor(h.status)}`}
+                            className={`w-2 h-2 ${getHomeworkDotColor(h.status)}`}
                           />
                         ))}
                         {homework.length > 12 && (
