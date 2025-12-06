@@ -52,19 +52,12 @@ All colors MUST be HSL.
     --reveal-grid: 43 88% 58%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -106,45 +99,6 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  /* Color Themes */
-  .theme-rose {
-    --primary: 345 75% 65%;
-    --ring: 345 75% 65%;
-    --gradient-petal: linear-gradient(135deg, hsl(345 75% 65%), hsl(25 85% 70%));
-  }
-  
-  .theme-blue {
-    --primary: 217 91% 60%;
-    --ring: 217 91% 60%;
-    --gradient-petal: linear-gradient(135deg, hsl(217 91% 60%), hsl(199 89% 48%));
-  }
-  
-  .theme-green {
-    --primary: 142 76% 45%;
-    --ring: 142 76% 45%;
-    --gradient-petal: linear-gradient(135deg, hsl(142 76% 45%), hsl(168 76% 42%));
-  }
-  
-  .theme-purple {
-    --primary: 270 70% 60%;
-    --ring: 270 70% 60%;
-    --gradient-petal: linear-gradient(135deg, hsl(270 70% 60%), hsl(300 70% 60%));
-  }
-  
-  .theme-orange {
-    --primary: 25 95% 55%;
-    --ring: 25 95% 55%;
-    --gradient-petal: linear-gradient(135deg, hsl(25 95% 55%), hsl(45 95% 55%));
-  }
-  
-  .theme-gold {
-    --primary: 43 88% 50%;
-    --ring: 43 88% 50%;
-    --gradient-petal: linear-gradient(135deg, hsl(43 88% 50%), hsl(35 88% 45%));
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
@@ -162,4 +116,41 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Color Themes - Outside @layer for higher specificity */
+:root.theme-rose,
+.theme-rose {
+  --primary: 345 75% 65% !important;
+  --ring: 345 75% 65% !important;
+}
+
+:root.theme-blue,
+.theme-blue {
+  --primary: 217 91% 60% !important;
+  --ring: 217 91% 60% !important;
+}
+
+:root.theme-green,
+.theme-green {
+  --primary: 142 76% 45% !important;
+  --ring: 142 76% 45% !important;
+}
+
+:root.theme-purple,
+.theme-purple {
+  --primary: 270 70% 60% !important;
+  --ring: 270 70% 60% !important;
+}
+
+:root.theme-orange,
+.theme-orange {
+  --primary: 25 95% 55% !important;
+  --ring: 25 95% 55% !important;
+}
+
+:root.theme-gold,
+.theme-gold {
+  --primary: 43 88% 50% !important;
+  --ring: 43 88% 50% !important;
 }
