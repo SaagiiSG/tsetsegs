@@ -175,6 +175,26 @@ export function StudentCard({
     }
   };
 
+  // Background color for select triggers
+  const getAttendanceBgColor = (status: string | null) => {
+    switch (status) {
+      case 'present': return 'bg-[#03C988]/20 border-[#03C988]/40';
+      case 'late': return 'bg-[#FFDE0B]/20 border-[#FFDE0B]/40';
+      case 'absent': return 'bg-[#FA6363]/20 border-[#FA6363]/40';
+      case 'sick': return 'bg-blue-400/20 border-blue-400/40';
+      case 'excused': return 'bg-purple-400/20 border-purple-400/40';
+      default: return '';
+    }
+  };
+
+  const getHomeworkBgColor = (status: string | null) => {
+    switch (status) {
+      case 'completed': return 'bg-[#03C988]/20 border-[#03C988]/40';
+      case 'incomplete': return 'bg-[#FA6363]/20 border-[#FA6363]/40';
+      default: return '';
+    }
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm">
@@ -415,7 +435,7 @@ export function StudentCard({
                         value={session.status || ""}
                         onValueChange={(value) => onAttendanceChange(session.session_number, value)}
                       >
-                        <SelectTrigger className="h-9 text-sm pointer-events-auto">
+                        <SelectTrigger className={`h-9 text-sm pointer-events-auto ${getAttendanceBgColor(session.status)}`}>
                           <SelectValue placeholder="Attendance" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50 pointer-events-auto">
@@ -432,7 +452,7 @@ export function StudentCard({
                         value={hw?.status || ""}
                         onValueChange={(value) => onHomeworkChange(session.session_number, value)}
                       >
-                        <SelectTrigger className="h-9 text-sm pointer-events-auto">
+                        <SelectTrigger className={`h-9 text-sm pointer-events-auto ${getHomeworkBgColor(hw?.status || null)}`}>
                           <SelectValue placeholder="Homework" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50 pointer-events-auto">
