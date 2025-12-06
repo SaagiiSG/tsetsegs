@@ -792,10 +792,13 @@ export default function TeacherStudentCards() {
                   </DialogHeader>
                   <div className="mt-4">
                     <iframe 
-                      src="/embed/digital-sat-score-calculator" 
-                      className="w-full h-[900px] border-0 rounded-md"
+                      src="https://test-ninjas.com/digital-sat-score-calculator" 
+                      width="1000"
+                      height="900"
+                      frameBorder="0"
                       referrerPolicy="strict-origin-when-cross-origin"
                       title="SAT Score Calculator"
+                      className="w-full rounded-md"
                     />
                   </div>
                 </DialogContent>
