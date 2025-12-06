@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useTheme } from "next-themes";
@@ -7,8 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, User, Lock, Palette, Moon, Sun, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Lock, Palette, Moon, Sun, Loader2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const colorThemes = [
+  { id: "rose", name: "Rose", color: "hsl(345 75% 65%)" },
+  { id: "blue", name: "Ocean", color: "hsl(217 91% 60%)" },
+  { id: "green", name: "Forest", color: "hsl(142 76% 45%)" },
+  { id: "purple", name: "Violet", color: "hsl(270 70% 60%)" },
+  { id: "orange", name: "Sunset", color: "hsl(25 95% 55%)" },
+  { id: "gold", name: "Gold", color: "hsl(43 88% 50%)" },
+];
 
 export default function TeacherSettings() {
   const { teacherName, user, changePassword } = useTeacherAuth();
@@ -16,10 +26,33 @@ export default function TeacherSettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Color theme state
+  const [colorTheme, setColorTheme] = useState(() => {
+    return localStorage.getItem("color-theme") || "rose";
+  });
+
   // Password change state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Apply color theme on mount and change
+  useEffect(() => {
+    const root = document.documentElement;
+    // Remove all theme classes
+    colorThemes.forEach((t) => root.classList.remove(`theme-${t.id}`));
+    // Add current theme class
+    root.classList.add(`theme-${colorTheme}`);
+    localStorage.setItem("color-theme", colorTheme);
+  }, [colorTheme]);
+
+  // Load theme on initial mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("color-theme");
+    if (savedTheme) {
+      document.documentElement.classList.add(`theme-${savedTheme}`);
+    }
+  }, []);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +151,8 @@ export default function TeacherSettings() {
               </CardTitle>
               <CardDescription>Customize how the app looks</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Dark Mode Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {isDarkMode ? (
@@ -140,6 +174,40 @@ export default function TeacherSettings() {
                   checked={isDarkMode}
                   onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
                 />
+              </div>
+
+              {/* Color Theme Selector */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-base font-medium">Accent Color</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choose your preferred accent color
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {colorThemes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setColorTheme(t.id)}
+                      className={cn(
+                        "relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                        colorTheme === t.id
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full shadow-md flex items-center justify-center"
+                        style={{ backgroundColor: t.color }}
+                      >
+                        {colorTheme === t.id && (
+                          <Check className="h-4 w-4 text-white" />
+                        )}
+                      </div>
+                      <span className="text-xs font-medium">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
