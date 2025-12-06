@@ -419,7 +419,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "teacher"
-      attendance_status: "present" | "absent" | "sick" | "late"
+      attendance_status: "present" | "absent" | "sick" | "late" | "excused"
       course_type: "SAT" | "IELTS"
       room_number: "1105" | "905"
       teacher_name: "Saran-Ochir" | "Altan-Erdene" | "Manlai"
@@ -551,7 +551,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "teacher"],
-      attendance_status: ["present", "absent", "sick", "late"],
+      attendance_status: ["present", "absent", "sick", "late", "excused"],
       course_type: ["SAT", "IELTS"],
       room_number: ["1105", "905"],
       teacher_name: ["Saran-Ochir", "Altan-Erdene", "Manlai"],
