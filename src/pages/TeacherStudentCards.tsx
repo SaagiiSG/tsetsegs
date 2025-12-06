@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ChevronLeft, UserPlus } from "lucide-react";
@@ -64,6 +65,7 @@ export default function TeacherStudentCards() {
   const { batchId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { teacherName } = useTeacherAuth();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
@@ -862,6 +864,8 @@ export default function TeacherStudentCards() {
                           missedClasses={alertStatus.missedClasses}
                           missedHomework={alertStatus.missedHomework}
                           courseType={batch?.course_type || 'SAT'}
+                          batchId={batchId || ''}
+                          teacherName={teacherName || ''}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}

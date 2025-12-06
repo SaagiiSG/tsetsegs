@@ -501,6 +501,8 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
                 missedClasses={alert.missedClasses}
                 missedHomework={alert.missedHomework}
                 courseType={alert.batch.course_type}
+                batchId={alert.batch.id}
+                teacherName={teacherName}
                 onUpdateStudent={(updates) => handleUpdateStudent(alert.student.id, updates)}
                 onAttendanceChange={(session, status) => handleAttendanceChange(alert.student.id, alert.batch.id, session, status)}
                 onHomeworkChange={(session, status) => handleHomeworkChange(alert.student.id, alert.batch.id, session, status)}
