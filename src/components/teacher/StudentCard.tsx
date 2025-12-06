@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2, Check, X, ExternalLink } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Student {
   id: string;
@@ -40,6 +44,13 @@ interface PracticeTest {
   speaking?: number | null;
 }
 
+interface StudentNote {
+  id: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+}
+
 interface StudentCardProps {
   student: Student;
   currentIndex: number;
@@ -51,6 +62,8 @@ interface StudentCardProps {
   missedClasses?: number;
   missedHomework?: number;
   courseType: 'SAT' | 'IELTS';
+  batchId: string;
+  teacherName: string;
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
@@ -68,12 +81,15 @@ export function StudentCard({
   missedClasses,
   missedHomework,
   courseType,
+  batchId,
+  teacherName,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
   onTestScoreChange,
 }: StudentCardProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     first_name: student.first_name,
@@ -86,6 +102,65 @@ export function StudentCard({
     english_level: student.english_level || '',
   });
   const [testInputs, setTestInputs] = useState<Record<number, string>>({});
+  
+  // Notes state
+  const [notes, setNotes] = useState<StudentNote[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+
+  // Fetch notes when student changes
+  useEffect(() => {
+    if (student.id && batchId) {
+      fetchNotes();
+    }
+  }, [student.id, batchId]);
+
+  const fetchNotes = async () => {
+    const { data } = await supabase
+      .from("student_notes")
+      .select("id, content, created_by, created_at")
+      .eq("student_id", student.id)
+      .eq("batch_id", batchId)
+      .order("created_at", { ascending: false });
+    setNotes(data || []);
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !teacherName) return;
+    setIsAddingNote(true);
+    try {
+      const { data, error } = await supabase
+        .from("student_notes")
+        .insert({
+          student_id: student.id,
+          batch_id: batchId,
+          content: newNote.trim(),
+          created_by: teacherName,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setNotes([data, ...notes]);
+      setNewNote("");
+      toast({ title: "Note saved" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const { error } = await supabase.from("student_notes").delete().eq("id", noteId);
+      if (error) throw error;
+      setNotes(notes.filter(n => n.id !== noteId));
+      toast({ title: "Note deleted" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    }
+  };
 
   // Note: Alert calculation is now done in parent component based on current week
 
@@ -544,6 +619,76 @@ export function StudentCard({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Notes Section */}
+        <div className="mt-6 border-t pt-6">
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="flex items-center gap-2 text-sm font-semibold uppercase text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <StickyNote className="h-4 w-4" />
+              Notes {notes.length > 0 && `(${notes.length})`}
+            </button>
+          </div>
+
+          {showNotes && (
+            <div className="space-y-3">
+              {/* Add Note */}
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Add a note..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  rows={2}
+                  className="resize-none flex-1"
+                />
+                <Button 
+                  onClick={handleAddNote} 
+                  disabled={!newNote.trim() || isAddingNote}
+                  size="sm"
+                  className="self-end"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Notes List */}
+              {notes.length > 0 && (
+                <ScrollArea className="h-[200px]">
+                  <div className="space-y-2 pr-2">
+                    {notes.map((note) => (
+                      <div 
+                        key={note.id} 
+                        className="p-3 bg-muted/50 rounded-lg text-sm group relative"
+                      >
+                        <p className="whitespace-pre-wrap pr-8">{note.content}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span>{note.created_by}</span>
+                          <span>•</span>
+                          <span>
+                            {new Date(note.created_at).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteNote(note.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
