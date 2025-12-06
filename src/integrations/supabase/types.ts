@@ -269,6 +269,51 @@ export type Database = {
           },
         ]
       }
+      student_notes: {
+        Row: {
+          batch_id: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_notes_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           accessed: boolean
