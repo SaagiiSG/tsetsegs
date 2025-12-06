@@ -114,50 +114,50 @@ export function StudentSidebar({
                     : "hover:bg-muted"
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <span>{index + 1}. {displayName}</span>
-                  {alertStatus.hasAlert && currentIndex !== index && (
-                    <span className="text-xs">⚠️</span>
+                <div className="flex items-start gap-2">
+                  {/* Square trackers - left of name */}
+                  {(attendance.length > 0 || homework.length > 0) && (
+                    <div className="flex flex-col gap-px flex-shrink-0 mt-0.5">
+                      {attendance.length > 0 && (
+                        <div className="flex gap-px rounded overflow-hidden">
+                          {attendance.slice(0, 12).map((a) => (
+                            <div
+                              key={`s-att-${a.session_number}`}
+                              className={`w-1.5 h-1.5 ${getAttendanceDotColor(a.status)}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {homework.length > 0 && (
+                        <div className="flex gap-px rounded overflow-hidden">
+                          {homework.slice(0, 12).map((h) => (
+                            <div
+                              key={`s-hw-${h.session_number}`}
+                              className={`w-1.5 h-1.5 ${getHomeworkDotColor(h.status)}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
+                  
+                  {/* Name and alerts */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{index + 1}. {displayName}</span>
+                      {alertStatus.hasAlert && currentIndex !== index && (
+                        <span className="text-xs flex-shrink-0">⚠️</span>
+                      )}
+                    </div>
+                    {alertStatus.hasAlert && currentIndex !== index && (
+                      <div className="text-xs opacity-90">
+                        {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
+                        {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
+                        {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {/* Square trackers */}
-                {(attendance.length > 0 || homework.length > 0) && (
-                  <div className="mt-1.5 space-y-0.5">
-                    {attendance.length > 0 && (
-                      <div className="flex flex-wrap gap-px rounded overflow-hidden">
-                        {attendance.slice(0, 12).map((a) => (
-                          <div
-                            key={`s-att-${a.session_number}`}
-                            className={`w-2 h-2 ${getAttendanceDotColor(a.status)}`}
-                          />
-                        ))}
-                        {attendance.length > 12 && (
-                          <span className="text-[8px] text-muted-foreground ml-0.5">+{attendance.length - 12}</span>
-                        )}
-                      </div>
-                    )}
-                    {homework.length > 0 && (
-                      <div className="flex flex-wrap gap-px rounded overflow-hidden">
-                        {homework.slice(0, 12).map((h) => (
-                          <div
-                            key={`s-hw-${h.session_number}`}
-                            className={`w-2 h-2 ${getHomeworkDotColor(h.status)}`}
-                          />
-                        ))}
-                        {homework.length > 12 && (
-                          <span className="text-[8px] text-muted-foreground ml-0.5">+{homework.length - 12}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {alertStatus.hasAlert && currentIndex !== index && (
-                  <div className="text-xs mt-0.5 opacity-90">
-                    {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
-                    {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
-                    {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
-                  </div>
-                )}
               </button>
             );
           })}
