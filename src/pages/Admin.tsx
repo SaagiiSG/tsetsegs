@@ -11,7 +11,8 @@ import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SetupTeacherAccounts } from '@/components/admin/SetupTeacherAccounts';
 import { UserManagement } from '@/components/admin/UserManagement';
-import { LogOut, GraduationCap, Users } from 'lucide-react';
+import AdminSettings from '@/pages/AdminSettings';
+import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
@@ -72,6 +73,7 @@ const Admin = () => {
                 }
               />
               <Route path="users" element={<UserManagement />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </main>
         </div>

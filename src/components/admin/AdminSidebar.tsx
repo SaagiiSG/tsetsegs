@@ -1,4 +1,4 @@
-import { GraduationCap, Plus, Users, UserCog, BarChart3 } from 'lucide-react';
+import { GraduationCap, Plus, Users, UserCog, BarChart3, Settings } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -18,6 +18,7 @@ const menuItems = [
   { title: 'Create Batch', url: '/admin/create', icon: Plus },
   { title: 'Teachers', url: '/admin/teachers', icon: UserCog },
   { title: 'Users', url: '/admin/users', icon: Users },
+  { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
 export function AdminSidebar() {
