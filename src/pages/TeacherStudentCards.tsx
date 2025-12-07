@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ChevronLeft, UserPlus } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
+import { StudentCardsLoadingSkeleton } from "@/components/teacher/StudentCardSkeleton";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
 import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionIntake";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -593,11 +594,7 @@ export default function TeacherStudentCards() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <StudentCardsLoadingSkeleton />;
   }
 
   if (students.length === 0) {
