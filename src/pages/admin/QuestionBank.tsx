@@ -6,9 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, FileQuestion, Users, Flag, Brain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { QuestionList } from '@/components/admin/questions/QuestionList';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
 
   // Fetch questions count
   const { data: questionsCount } = useQuery({
@@ -57,6 +61,18 @@ export default function QuestionBank() {
     }
   });
 
+  const handleEdit = (question: any) => {
+    setEditingQuestion(question);
+    setFormOpen(true);
+  };
+
+  const handleFormClose = (open: boolean) => {
+    setFormOpen(open);
+    if (!open) {
+      setEditingQuestion(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -64,7 +80,7 @@ export default function QuestionBank() {
           <h1 className="text-3xl font-bold">Question Bank</h1>
           <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setFormOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Question
         </Button>
@@ -142,18 +158,7 @@ export default function QuestionBank() {
         </TabsList>
 
         <TabsContent value="questions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <FileQuestion className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No questions added yet</p>
-                <p className="text-sm">Click "Add Question" to create your first question</p>
-              </div>
-            </CardContent>
-          </Card>
+          <QuestionList onEdit={handleEdit} />
         </TabsContent>
 
         <TabsContent value="variations" className="space-y-4">
@@ -180,7 +185,7 @@ export default function QuestionBank() {
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No students registered yet</p>
-                <p className="text-sm">Students will appear here after they log in</p>
+                <p className="text-sm">Students will appear here after they log in at /practice</p>
               </div>
             </CardContent>
           </Card>
@@ -214,6 +219,13 @@ export default function QuestionBank() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Question Form Dialog */}
+      <QuestionForm 
+        open={formOpen} 
+        onOpenChange={handleFormClose}
+        editingQuestion={editingQuestion}
+      />
     </div>
   );
 }

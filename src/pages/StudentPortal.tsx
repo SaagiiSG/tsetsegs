@@ -4,12 +4,28 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, BookOpen, GraduationCap } from 'lucide-react';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { Phone, BookOpen, GraduationCap, Loader2 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 export default function StudentPortal() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { student, login, isLoading: authLoading } = useStudentAuth();
+
+  // Redirect if already logged in
+  if (student) {
+    return <Navigate to="/practice/dashboard" replace />;
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +41,15 @@ export default function StudentPortal() {
 
     setIsLoading(true);
     
-    // TODO: Implement actual login logic
-    toast({
-      title: 'Coming Soon',
-      description: 'Student login will be available soon!'
-    });
+    const { error } = await login(phoneNumber);
+    
+    if (error) {
+      toast({
+        title: 'Login failed',
+        description: error,
+        variant: 'destructive'
+      });
+    }
     
     setIsLoading(false);
   };
@@ -82,7 +102,14 @@ export default function StudentPortal() {
                 className="w-full h-12 text-lg"
                 disabled={isLoading || phoneNumber.length !== 8}
               >
-                {isLoading ? 'Signing in...' : 'Start Practicing'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Start Practicing'
+                )}
               </Button>
             </form>
           </CardContent>
