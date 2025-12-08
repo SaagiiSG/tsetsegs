@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BatchCard } from './BatchCard';
+import { BatchGridCard } from './BatchGridCard';
+import { BatchDetailsDialog } from './BatchDetailsDialog';
 
 export function BatchesView() {
   const [batches, setBatches] = useState<any[]>([]);
@@ -10,6 +11,8 @@ export function BatchesView() {
   const [selectedIntake, setSelectedIntake] = useState<string>('all');
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
+  const [selectedBatch, setSelectedBatch] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchBatches();
@@ -22,11 +25,9 @@ export function BatchesView() {
   }, [batches]);
 
   const fetchBatches = async () => {
-    // Get current month for smart default filtering
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Fetch batches (default: current month + future)
     const { data } = await supabase
       .from('batches')
       .select('*')
@@ -49,7 +50,6 @@ export function BatchesView() {
     }
   };
 
-  // Get unique intakes (Month Year from start_date)
   const intakes = useMemo(() => {
     const intakeSet = new Set<string>();
     batches.forEach((batch) => {
@@ -66,7 +66,6 @@ export function BatchesView() {
     });
   }, [batches]);
 
-  // Get unique teachers
   const teachers = useMemo(() => {
     const teacherSet = new Set<string>();
     batches.forEach((batch) => {
@@ -77,22 +76,18 @@ export function BatchesView() {
     return Array.from(teacherSet).sort();
   }, [batches]);
 
-  // Filter batches
   const filteredBatches = useMemo(() => {
     return batches.filter((batch) => {
-      // Filter by intake
       if (selectedIntake !== 'all') {
         const batchDate = new Date(batch.start_date);
         const batchIntake = batchDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (batchIntake !== selectedIntake) return false;
       }
 
-      // Filter by teacher
       if (selectedTeacher !== 'all' && batch.teacher !== selectedTeacher) {
         return false;
       }
 
-      // Filter by course type
       if (selectedCourse !== 'all' && batch.course_type !== selectedCourse) {
         return false;
       }
@@ -100,6 +95,15 @@ export function BatchesView() {
       return true;
     });
   }, [batches, selectedIntake, selectedTeacher, selectedCourse]);
+
+  const handleBatchClick = (batch: any) => {
+    setSelectedBatch(batch);
+    setDialogOpen(true);
+  };
+
+  const handleUpdate = () => {
+    fetchBatches();
+  };
 
   return (
     <div className="space-y-6">
@@ -166,7 +170,7 @@ export function BatchesView() {
         </CardContent>
       </Card>
 
-      {/* Batch List */}
+      {/* Batch Grid */}
       <Card>
         <CardHeader>
           <CardTitle>All Batches</CardTitle>
@@ -174,7 +178,7 @@ export function BatchesView() {
             Showing {filteredBatches.length} of {batches.length} batch{batches.length !== 1 ? 'es' : ''}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           {filteredBatches.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               {batches.length === 0
@@ -182,17 +186,28 @@ export function BatchesView() {
                 : 'No batches match your filters.'}
             </p>
           ) : (
-            filteredBatches.map((batch) => (
-              <BatchCard 
-                key={batch.id} 
-                batch={batch} 
-                onUpdate={fetchBatches}
-                studentCount={studentCounts[batch.id] || 0}
-              />
-            ))
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredBatches.map((batch) => (
+                <BatchGridCard
+                  key={batch.id}
+                  batch={batch}
+                  studentCount={studentCounts[batch.id] || 0}
+                  onClick={() => handleBatchClick(batch)}
+                />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Batch Details Dialog */}
+      <BatchDetailsDialog
+        batch={selectedBatch}
+        studentCount={selectedBatch ? studentCounts[selectedBatch.id] || 0 : 0}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 }
