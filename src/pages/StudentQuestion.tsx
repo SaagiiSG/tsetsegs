@@ -404,7 +404,7 @@ export default function StudentQuestion() {
                         onClick={() => !submitted && setSelectedAnswer(opt)}
                         disabled={submitted}
                         className={`w-full p-4 rounded-lg border text-left transition-all ${
-                          submitted && opt === currentQuestion.answer
+                          submitted && opt === selectedAnswer && isCorrect
                             ? 'border-green-500 bg-green-500/10'
                             : submitted && opt === selectedAnswer && !isCorrect
                             ? 'border-red-500 bg-red-500/10'
@@ -430,11 +430,6 @@ export default function StudentQuestion() {
                       disabled={submitted}
                       className="text-lg"
                     />
-                    {submitted && (
-                      <p className={isCorrect ? 'text-green-500' : 'text-red-500'}>
-                        Correct answer: {currentQuestion.answer}
-                      </p>
-                    )}
                   </div>
                 )}
 
