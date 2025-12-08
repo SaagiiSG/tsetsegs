@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TeacherAuthProvider } from "./contexts/TeacherAuthContext";
+import { StudentAuthProvider } from "./contexts/StudentAuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
@@ -15,6 +16,8 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
 import StudentPortal from "./pages/StudentPortal";
+import StudentDashboard from "./pages/StudentDashboard";
+import StudentQuestion from "./pages/StudentQuestion";
 import NotFound from "./pages/NotFound";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -38,72 +41,78 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <TeacherAuthProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route 
-                  path="/admin/*" 
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/teacher/login" element={<TeacherLogin />} />
-                <Route path="/teacher/change-password" element={<TeacherChangePassword />} />
-                <Route 
-                  path="/teacher/dashboard" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherDashboard />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/teacher/settings" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherSettings />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/teacher/class/:batchId" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherClassAttendance />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/teacher/students/:batchId" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherStudentCards />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/teacher/students" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherAllStudents />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/teacher/student/:studentId" 
-                  element={
-                    <TeacherProtectedRoute>
-                      <TeacherStudentProfile />
-                    </TeacherProtectedRoute>
-                  } 
-                />
-                <Route path="/student/:id" element={<StudentReveal />} />
-                <Route path="/batch/:id" element={<StudentReveal />} />
-                <Route path="/practice" element={<StudentPortal />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <StudentAuthProvider>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <ProtectedRoute>
+                        <Admin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route path="/teacher/login" element={<TeacherLogin />} />
+                  <Route path="/teacher/change-password" element={<TeacherChangePassword />} />
+                  <Route 
+                    path="/teacher/dashboard" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherDashboard />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/settings" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherSettings />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/class/:batchId" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherClassAttendance />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/students/:batchId" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherStudentCards />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/students" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherAllStudents />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/student/:studentId" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherStudentProfile />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  {/* Student Practice Portal */}
+                  <Route path="/practice" element={<StudentPortal />} />
+                  <Route path="/practice/dashboard" element={<StudentDashboard />} />
+                  <Route path="/practice/question/:questionId" element={<StudentQuestion />} />
+                  
+                  <Route path="/student/:id" element={<StudentReveal />} />
+                  <Route path="/batch/:id" element={<StudentReveal />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </StudentAuthProvider>
             </TeacherAuthProvider>
           </AuthProvider>
         </BrowserRouter>
