@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_variations: {
+        Row: {
+          answer: string
+          generated_at: string
+          id: string
+          multiple_choice_options: Json | null
+          parent_question_id: string
+          question_image_url: string | null
+          question_text: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          answer: string
+          generated_at?: string
+          id?: string
+          multiple_choice_options?: Json | null
+          parent_question_id: string
+          question_image_url?: string | null
+          question_text: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          answer?: string
+          generated_at?: string
+          id?: string
+          multiple_choice_options?: Json | null
+          parent_question_id?: string
+          question_image_url?: string | null
+          question_text?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_variations_parent_question_id_fkey"
+            columns: ["parent_question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           batch_id: string
@@ -437,6 +484,135 @@ export type Database = {
           },
         ]
       }
+      question_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      question_flags: {
+        Row: {
+          admin_reviewed: boolean
+          flag_reason: string | null
+          flagged_at: string
+          id: string
+          question_id: string
+          reviewed_at: string | null
+          student_account_id: string
+        }
+        Insert: {
+          admin_reviewed?: boolean
+          flag_reason?: string | null
+          flagged_at?: string
+          id?: string
+          question_id: string
+          reviewed_at?: string | null
+          student_account_id: string
+        }
+        Update: {
+          admin_reviewed?: boolean
+          flag_reason?: string | null
+          flagged_at?: string
+          id?: string
+          question_id?: string
+          reviewed_at?: string | null
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_flags_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_flags_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          answer: string
+          category_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_original: boolean
+          multiple_choice_options: Json | null
+          parent_question_id: string | null
+          question_id: string
+          question_image_url: string | null
+          question_text: string
+          question_type: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          answer: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_original?: boolean
+          multiple_choice_options?: Json | null
+          parent_question_id?: string | null
+          question_id: string
+          question_image_url?: string | null
+          question_text: string
+          question_type: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          answer?: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_original?: boolean
+          multiple_choice_options?: Json | null
+          parent_question_id?: string | null
+          question_id?: string
+          question_image_url?: string | null
+          question_text?: string
+          question_type?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "question_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_parent_question_id_fkey"
+            columns: ["parent_question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_topics: {
         Row: {
           created_at: string
@@ -474,6 +650,78 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "curriculum_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_login: string | null
+          phone_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          phone_number: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          phone_number?: string
+        }
+        Relationships: []
+      }
+      student_attempts: {
+        Row: {
+          answer_submitted: string
+          attempt_number: number
+          attempted_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          student_account_id: string
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          answer_submitted: string
+          attempt_number: number
+          attempted_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          student_account_id: string
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          answer_submitted?: string
+          attempt_number?: number
+          attempted_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          student_account_id?: string
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_attempts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -519,6 +767,89 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_progress: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          student_account_id: string
+          updated_at: string
+          video_watched: boolean
+          video_watched_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          student_account_id: string
+          updated_at?: string
+          video_watched?: boolean
+          video_watched_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          student_account_id?: string
+          updated_at?: string
+          video_watched?: boolean
+          video_watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_progress_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_progress_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_sessions: {
+        Row: {
+          device_id: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          login_timestamp: string
+          student_account_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          device_id: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          login_timestamp?: string
+          student_account_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          device_id?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          login_timestamp?: string
+          student_account_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_sessions_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -672,7 +1003,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "teacher"
+      app_role: "admin" | "user" | "teacher" | "student"
       attendance_status: "present" | "absent" | "sick" | "late" | "excused"
       course_type: "SAT" | "IELTS"
       room_number: "1105" | "905"
@@ -804,7 +1135,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "teacher"],
+      app_role: ["admin", "user", "teacher", "student"],
       attendance_status: ["present", "absent", "sick", "late", "excused"],
       course_type: ["SAT", "IELTS"],
       room_number: ["1105", "905"],
