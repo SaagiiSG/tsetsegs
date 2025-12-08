@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight } from 'lucide-react';
+import { MathText } from '@/components/MathText';
 
 export default function StudentQuestion() {
   const { questionId } = useParams();
@@ -380,7 +381,9 @@ export default function StudentQuestion() {
               <CardContent className="space-y-6">
                 {/* Question Text */}
                 <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-lg whitespace-pre-wrap">{currentQuestion.question_text}</p>
+                  <p className="text-lg">
+                    <MathText text={currentQuestion.question_text} />
+                  </p>
                 </div>
 
                 {/* Question Image */}
@@ -411,7 +414,7 @@ export default function StudentQuestion() {
                         }`}
                       >
                         <span className="font-medium mr-3">{opt}.</span>
-                        {options[opt]}
+                        <MathText text={options[opt]} />
                       </button>
                     ))}
                   </div>
