@@ -18,12 +18,13 @@ const studentSchema = z.object({
 });
 
 interface BatchStudentsTableProps {
-  students: any[];
+  students?: any[];
   batchId: string;
   onUpdate: () => void;
 }
 
-export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudentsTableProps) {
+export function BatchStudentsTable({ students: propStudents, batchId, onUpdate }: BatchStudentsTableProps) {
+  const [students, setStudents] = useState<any[]>(propStudents || []);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -37,7 +38,28 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
 
   useEffect(() => {
     fetchBatches();
-  }, []);
+    if (!propStudents) {
+      fetchStudents();
+    }
+  }, [batchId]);
+
+  useEffect(() => {
+    if (propStudents) {
+      setStudents(propStudents);
+    }
+  }, [propStudents]);
+
+  const fetchStudents = async () => {
+    const { data } = await supabase
+      .from('students')
+      .select('*')
+      .eq('batch_id', batchId)
+      .order('created_at', { ascending: true });
+    
+    if (data) {
+      setStudents(data);
+    }
+  };
 
   const fetchBatches = async () => {
     const { data } = await supabase
@@ -85,6 +107,7 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
         description: "Student updated successfully"
       });
       setEditingStudent(null);
+      fetchStudents();
       onUpdate();
     }
   };
@@ -109,6 +132,7 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
         description: "Student deleted successfully"
       });
       setDeletingStudent(null);
+      fetchStudents();
       onUpdate();
     }
   };
@@ -155,6 +179,7 @@ export function BatchStudentsTable({ students, batchId, onUpdate }: BatchStudent
       setShowConfirmTransfer(false);
       setSelectedStudents([]);
       setDestinationBatchId('');
+      fetchStudents();
       onUpdate();
     }
   };
