@@ -335,7 +335,7 @@ export default function TeacherClassAnalytics() {
 
         {/* Summary Cards */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -351,7 +351,7 @@ export default function TeacherClassAnalytics() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
                 <BookOpen className="h-4 w-4 text-blue-500" />
@@ -367,7 +367,7 @@ export default function TeacherClassAnalytics() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
                 <Target className="h-4 w-4 text-purple-500" />
@@ -388,7 +388,7 @@ export default function TeacherClassAnalytics() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
@@ -407,7 +407,7 @@ export default function TeacherClassAnalytics() {
         {/* Charts Row 1 */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Attendance Pie Chart */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Attendance Distribution</CardTitle>
             </CardHeader>
@@ -451,7 +451,7 @@ export default function TeacherClassAnalytics() {
           </Card>
 
           {/* Attendance by Session */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Attendance by Session</CardTitle>
             </CardHeader>
@@ -460,7 +460,7 @@ export default function TeacherClassAnalytics() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={attendanceBySession}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="session" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip />
@@ -484,7 +484,7 @@ export default function TeacherClassAnalytics() {
         {/* Charts Row 2 */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Test Score Progression */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Test Score Progression</CardTitle>
               <CardDescription>Average, min, and max scores per test</CardDescription>
@@ -494,7 +494,7 @@ export default function TeacherClassAnalytics() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={testScoreStats}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="test" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} domain={[0, batch?.course_type === "IELTS" ? 9 : 800]} />
                       <Tooltip />
@@ -535,7 +535,7 @@ export default function TeacherClassAnalytics() {
           </Card>
 
           {/* Homework by Session */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Homework by Session</CardTitle>
             </CardHeader>
@@ -544,7 +544,7 @@ export default function TeacherClassAnalytics() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={homeworkBySession}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="session" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip />
@@ -566,7 +566,7 @@ export default function TeacherClassAnalytics() {
         {/* Bottom Row - Lists */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Students Needing Attention */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
@@ -605,7 +605,7 @@ export default function TeacherClassAnalytics() {
           </Card>
 
           {/* Top Performers */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Award className="h-4 w-4 text-yellow-500" />
@@ -619,7 +619,7 @@ export default function TeacherClassAnalytics() {
                   {topPerformers.map(({ student, avgScore, testCount }, index) => (
                     <div 
                       key={student.id} 
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted"
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                     >
                       <div className="flex items-center gap-3">
                         <span className={`
