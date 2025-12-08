@@ -171,96 +171,111 @@ Class Info: ${batchLink}
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <Badge 
-                className="font-semibold" 
-                style={{ 
-                  backgroundColor: batch.course_type === 'SAT' ? 'hsl(217, 91%, 60%)' : 'hsl(271, 91%, 65%)',
-                  color: 'white'
-                }}
-              >
-                {batch.course_type}
-              </Badge>
-              <DialogTitle className="text-xl">
-                {batch.batch_name || `${batch.teacher} - ${formatDate(batch.start_date)}`}
-              </DialogTitle>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Batch Info */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="w-4 h-4" />
-                <span>{studentCount} students</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>{formatDate(batch.start_date)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span className="truncate">{batch.schedule}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>Room {batch.room}</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="default" size="sm" onClick={() => setShowEditDialog(true)}>
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit Batch
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                <Copy className="w-4 h-4 mr-2" />
-                Copy Link
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleOpenLink}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleRegenerateLink}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Regenerate
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-
-            {/* SMS Template */}
-            <Collapsible open={showSmsTemplate} onOpenChange={setShowSmsTemplate}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  SMS Message Template
-                  {showSmsTemplate ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
-                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-                  <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">
-                    {getSmsTemplate()}
-                  </pre>
-                  <Button 
-                    onClick={handleCopySmsTemplate} 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 overflow-hidden">
+          <div className="flex h-full">
+            {/* Left Side - Batch Details */}
+            <div className="flex-1 p-6 overflow-y-auto border-r">
+              <DialogHeader className="mb-6">
+                <div className="flex items-center gap-3">
+                  <Badge 
+                    className="font-semibold" 
+                    style={{ 
+                      backgroundColor: batch.course_type === 'SAT' ? 'hsl(217, 91%, 60%)' : 'hsl(271, 91%, 65%)',
+                      color: 'white'
+                    }}
                   >
+                    {batch.course_type}
+                  </Badge>
+                  <DialogTitle className="text-xl">
+                    {batch.batch_name || `${batch.teacher} - ${formatDate(batch.start_date)}`}
+                  </DialogTitle>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* Batch Info */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    <span>{studentCount} students</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(batch.start_date)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{batch.schedule}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>Room {batch.room}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="default" size="sm" onClick={() => setShowEditDialog(true)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit Batch
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleCopyLink}>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copy Message
+                    Copy Link
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleOpenLink}>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleRegenerateLink}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
                   </Button>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
 
-            {/* Students Table */}
-            <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
+                {/* SMS Template */}
+                <Collapsible open={showSmsTemplate} onOpenChange={setShowSmsTemplate}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      SMS Message Template
+                      {showSmsTemplate ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3">
+                    <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                      <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">
+                        {getSmsTemplate()}
+                      </pre>
+                      <Button 
+                        onClick={handleCopySmsTemplate} 
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Message
+                      </Button>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </div>
+
+            {/* Right Side - Students List */}
+            <div className="w-[400px] flex flex-col bg-muted/30">
+              <div className="p-4 border-b bg-background">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Students ({studentCount})
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
