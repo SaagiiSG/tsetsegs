@@ -258,14 +258,14 @@ Class Info: ${batchLink}
             </div>
 
             {/* Right Side - Students List */}
-            <div className="w-1/2 flex flex-col bg-muted/30">
-              <div className="p-4 border-b bg-background">
+            <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden">
+              <div className="p-4 border-b bg-background flex-shrink-0">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Students ({studentCount})
                 </h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 min-h-0">
                 <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
               </div>
             </div>
