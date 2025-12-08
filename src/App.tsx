@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
+import StudentPortal from "./pages/StudentPortal";
 import NotFound from "./pages/NotFound";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -100,6 +101,7 @@ const App = () => (
                 />
                 <Route path="/student/:id" element={<StudentReveal />} />
                 <Route path="/batch/:id" element={<StudentReveal />} />
+                <Route path="/practice" element={<StudentPortal />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TeacherAuthProvider>
