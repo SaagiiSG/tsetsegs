@@ -11,7 +11,6 @@ import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SetupTeacherAccounts } from '@/components/admin/SetupTeacherAccounts';
 import { UserManagement } from '@/components/admin/UserManagement';
-import { CurriculumBuilder } from '@/components/admin/curriculum/CurriculumBuilder';
 import AdminSettings from '@/pages/AdminSettings';
 import { LogOut, Users } from 'lucide-react';
 
@@ -64,7 +63,6 @@ const Admin = () => {
               <Route index element={<DashboardStats />} />
               <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
-              <Route path="curriculum" element={<CurriculumBuilder />} />
               <Route
                 path="teachers"
                 element={

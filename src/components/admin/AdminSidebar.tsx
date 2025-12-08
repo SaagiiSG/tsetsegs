@@ -1,4 +1,4 @@
-import { GraduationCap, Plus, Users, UserCog, BarChart3, Settings, BookOpen } from 'lucide-react';
+import { GraduationCap, Plus, Users, UserCog, BarChart3, Settings } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -16,7 +16,6 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: BarChart3, end: true },
   { title: 'Batches', url: '/admin/batches', icon: GraduationCap },
   { title: 'Create Batch', url: '/admin/create', icon: Plus },
-  { title: 'Curriculum', url: '/admin/curriculum', icon: BookOpen },
   { title: 'Teachers', url: '/admin/teachers', icon: UserCog },
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Settings', url: '/admin/settings', icon: Settings },

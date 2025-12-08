@@ -208,7 +208,7 @@ export function BatchStudentsTable({ students: propStudents, batchId, onUpdate }
           Move Students
         </Button>
 
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-auto max-h-[calc(100vh-300px)]">
           <Table>
             <TableHeader>
               <TableRow>
