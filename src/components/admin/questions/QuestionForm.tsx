@@ -6,14 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload, X, Youtube } from 'lucide-react';
+import { Loader2, X, Youtube } from 'lucide-react';
+import { RichTextEditor } from './RichTextEditor';
 
 const questionSchema = z.object({
   question_id: z.string().min(1, 'Question ID is required'),
@@ -357,10 +357,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 <FormItem>
                   <FormLabel>Question Text</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Enter your question here... (supports basic markdown)"
-                      className="min-h-[120px]"
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Enter your question here..."
                     />
                   </FormControl>
                   <FormMessage />
