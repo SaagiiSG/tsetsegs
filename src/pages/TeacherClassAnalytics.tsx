@@ -6,16 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { 
   ArrowLeft, 
   Users, 
   CheckCircle2, 
-  XCircle, 
-  Clock, 
   BookOpen, 
   Target,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Award,
   Calendar
@@ -29,10 +26,6 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  Tooltip, 
-  LineChart, 
-  Line,
-  Legend,
   CartesianGrid,
   Area,
   AreaChart
@@ -296,6 +289,18 @@ export default function TeacherClassAnalytics() {
     { name: "Excused", value: attendanceStats.excused, color: COLORS.excused },
   ].filter(d => d.value > 0);
 
+  const chartConfig = {
+    present: { label: 'Present', color: COLORS.present },
+    absent: { label: 'Absent', color: COLORS.absent },
+    late: { label: 'Late', color: COLORS.late },
+    sick: { label: 'Sick', color: COLORS.sick },
+    completed: { label: 'Completed', color: '#22c55e' },
+    incomplete: { label: 'Incomplete', color: '#ef4444' },
+    avg: { label: 'Average', color: '#3b82f6' },
+    max: { label: 'Max', color: '#22c55e' },
+    min: { label: 'Min', color: '#f97316' },
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4 md:p-6 lg:p-8">
@@ -413,7 +418,7 @@ export default function TeacherClassAnalytics() {
             </CardHeader>
             <CardContent>
               {pieData.length > 0 ? (
-                <div className="h-64">
+                <ChartContainer config={chartConfig} className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -430,10 +435,10 @@ export default function TeacherClassAnalytics() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <ChartTooltip content={<ChartTooltipContent />} />
                     </PieChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   No attendance data recorded
@@ -457,26 +462,48 @@ export default function TeacherClassAnalytics() {
             </CardHeader>
             <CardContent>
               {attendanceBySession.length > 0 ? (
-                <div className="h-64">
+                <ChartContainer config={chartConfig} className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={attendanceBySession}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="session" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="present" stackId="a" fill={COLORS.present} name="Present" />
-                      <Bar dataKey="late" stackId="a" fill={COLORS.late} name="Late" />
-                      <Bar dataKey="absent" stackId="a" fill={COLORS.absent} name="Absent" />
-                      <Bar dataKey="sick" stackId="a" fill={COLORS.sick} name="Sick" />
+                      <defs>
+                        <linearGradient id="presentGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={COLORS.present} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={COLORS.present} stopOpacity={0.4}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="session" 
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="present" stackId="a" fill="url(#presentGradient)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="late" stackId="a" fill={COLORS.late} fillOpacity={0.7} />
+                      <Bar dataKey="absent" stackId="a" fill={COLORS.absent} fillOpacity={0.7} />
+                      <Bar dataKey="sick" stackId="a" fill={COLORS.sick} fillOpacity={0.7} />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   No session data available
                 </div>
               )}
+              <div className="flex flex-wrap justify-center gap-3 mt-3">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.present }} />Present
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.late }} />Late
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.absent }} />Absent
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.sick }} />Sick
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -491,46 +518,73 @@ export default function TeacherClassAnalytics() {
             </CardHeader>
             <CardContent>
               {testScoreStats.length > 0 ? (
-                <div className="h-64">
+                <ChartContainer config={chartConfig} className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={testScoreStats}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="test" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} domain={[0, batch?.course_type === "IELTS" ? 9 : 800]} />
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <defs>
+                        <linearGradient id="avgGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="maxGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="minGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="test" 
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                      />
+                      <YAxis 
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                        domain={[0, batch?.course_type === "IELTS" ? 9 : 800]} 
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
                       <Area 
                         type="monotone" 
                         dataKey="max" 
-                        stroke="hsl(var(--chart-2))" 
-                        fill="hsl(var(--chart-2))" 
-                        fillOpacity={0.2}
-                        name="Max"
+                        stroke="#22c55e" 
+                        strokeWidth={2}
+                        fill="url(#maxGradient)"
                       />
                       <Area 
                         type="monotone" 
                         dataKey="avg" 
-                        stroke="hsl(var(--chart-1))" 
-                        fill="hsl(var(--chart-1))" 
-                        fillOpacity={0.4}
-                        name="Average"
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        fill="url(#avgGradient)"
                       />
                       <Area 
                         type="monotone" 
                         dataKey="min" 
-                        stroke="hsl(var(--chart-4))" 
-                        fill="hsl(var(--chart-4))" 
-                        fillOpacity={0.2}
-                        name="Min"
+                        stroke="#f97316" 
+                        strokeWidth={2}
+                        fill="url(#minGradient)"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   No test scores recorded yet
                 </div>
               )}
+              <div className="flex flex-wrap justify-center gap-4 mt-3">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded bg-green-500" />Max
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded bg-blue-500" />Average
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded bg-orange-500" />Min
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -541,24 +595,56 @@ export default function TeacherClassAnalytics() {
             </CardHeader>
             <CardContent>
               {homeworkBySession.length > 0 ? (
-                <div className="h-64">
+                <ChartContainer config={chartConfig} className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={homeworkBySession}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="session" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="completed" fill="hsl(var(--chart-2))" name="Completed" />
-                      <Bar dataKey="incomplete" fill="hsl(var(--chart-4))" name="Incomplete" />
+                      <defs>
+                        <linearGradient id="completedGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0.3}/>
+                        </linearGradient>
+                        <linearGradient id="incompleteGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.3}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="session" 
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="completed" 
+                        fill="url(#completedGradient)" 
+                        radius={[4, 4, 0, 0]}
+                        stroke="#22c55e"
+                        strokeWidth={1}
+                      />
+                      <Bar 
+                        dataKey="incomplete" 
+                        fill="url(#incompleteGradient)" 
+                        radius={[4, 4, 0, 0]}
+                        stroke="#ef4444"
+                        strokeWidth={1}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </ChartContainer>
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   No homework data recorded
                 </div>
               )}
+              <div className="flex flex-wrap justify-center gap-4 mt-3">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded bg-green-500" />Completed
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded bg-red-500" />Incomplete
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
