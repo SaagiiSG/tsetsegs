@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import TeacherStudentProfile from "./pages/TeacherStudentProfile";
 import TeacherAllStudents from "./pages/TeacherAllStudents";
+import TeacherClassAnalytics from "./pages/TeacherClassAnalytics";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -100,6 +101,14 @@ const App = () => (
                     element={
                       <TeacherProtectedRoute>
                         <TeacherStudentProfile />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/teacher/analytics/:batchId" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherClassAnalytics />
                       </TeacherProtectedRoute>
                     } 
                   />
