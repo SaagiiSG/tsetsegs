@@ -4,10 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileQuestion, Users, Flag, Brain } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { QuestionList } from '@/components/admin/questions/QuestionList';
+import { VariationsReview } from '@/components/admin/questions/VariationsReview';
+import { FlaggedQuestions } from '@/components/admin/questions/FlaggedQuestions';
+import { AnalyticsDashboard } from '@/components/admin/questions/AnalyticsDashboard';
+import { StudentsTab } from '@/components/admin/questions/StudentsTab';
+import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions');
@@ -88,7 +93,7 @@ export default function QuestionBank() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
             <FileQuestion className="h-4 w-4 text-muted-foreground" />
@@ -99,7 +104,7 @@ export default function QuestionBank() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('variations')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
             <Brain className="h-4 w-4 text-muted-foreground" />
@@ -110,7 +115,7 @@ export default function QuestionBank() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('students')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Practice Students</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -121,7 +126,7 @@ export default function QuestionBank() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('flags')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Flagged Questions</CardTitle>
             <Flag className="h-4 w-4 text-muted-foreground" />
@@ -135,7 +140,7 @@ export default function QuestionBank() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="questions">Questions</TabsTrigger>
           <TabsTrigger value="variations">
             AI Variations
@@ -155,6 +160,10 @@ export default function QuestionBank() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings className="h-4 w-4 mr-1" />
+            Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="questions" className="space-y-4">
@@ -162,61 +171,23 @@ export default function QuestionBank() {
         </TabsContent>
 
         <TabsContent value="variations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI-Generated Variations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No pending variations</p>
-                <p className="text-sm">Variations will appear here when generated</p>
-              </div>
-            </CardContent>
-          </Card>
+          <VariationsReview />
         </TabsContent>
 
         <TabsContent value="students" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Practice Students</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No students registered yet</p>
-                <p className="text-sm">Students will appear here after they log in at /practice</p>
-              </div>
-            </CardContent>
-          </Card>
+          <StudentsTab />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <p>Analytics will be available once students start practicing</p>
-              </div>
-            </CardContent>
-          </Card>
+          <AnalyticsDashboard />
         </TabsContent>
 
         <TabsContent value="flags" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Flagged Questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No flagged questions</p>
-                <p className="text-sm">Questions flagged by students will appear here</p>
-              </div>
-            </CardContent>
-          </Card>
+          <FlaggedQuestions />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <CategoryManager />
         </TabsContent>
       </Tabs>
 
