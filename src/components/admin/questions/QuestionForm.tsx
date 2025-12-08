@@ -348,6 +348,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     setImagePreview(null);
   };
 
+  const watchedValues = form.watch();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] p-0 flex flex-col">
@@ -357,11 +359,13 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
-            {/* Basic Info Row */}
-            <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Side - Form */}
+          <ScrollArea className="flex-1 px-6 border-r">
+            <Form {...form}>
+              <form id="question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
+              {/* Basic Info Row */}
+              <div className="grid grid-cols-2 gap-4">
               {/* Question ID */}
               <FormField
                 control={form.control}
@@ -840,21 +844,140 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4 pb-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saveMutation.isPending || isUploading}>
-                {(saveMutation.isPending || isUploading) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {editingQuestion ? 'Update Question' : 'Add Question'}
-              </Button>
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4 pb-2">
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" form="question-form" disabled={saveMutation.isPending || isUploading}>
+                  {(saveMutation.isPending || isUploading) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {editingQuestion ? 'Update Question' : 'Add Question'}
+                </Button>
+              </div>
+              </form>
+            </Form>
+          </ScrollArea>
+
+          {/* Right Side - Live Preview */}
+          <div className="w-[400px] shrink-0 flex flex-col bg-muted/30">
+            <div className="px-4 py-3 border-b bg-muted/50">
+              <span className="text-sm font-medium">Live Preview</span>
+              <span className="text-xs text-muted-foreground ml-2">(How students will see it)</span>
             </div>
-            </form>
-          </Form>
-        </ScrollArea>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {/* Question ID Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded">
+                    Q#{watchedValues.question_id || '----'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {categories?.find(c => c.id === watchedValues.category_id)?.name || 'No category'}
+                  </span>
+                </div>
+
+                {/* Preview Image */}
+                {imagePreview && (
+                  <div className="rounded-lg border overflow-hidden bg-white">
+                    <img 
+                      src={imagePreview} 
+                      alt="Question figure" 
+                      className="w-full object-contain max-h-48"
+                    />
+                  </div>
+                )}
+
+                {/* Preview Question Text */}
+                <div className="p-4 rounded-lg border bg-card">
+                  {watchedValues.question_text ? (
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: watchedValues.question_text }}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground italic text-sm">Question text will appear here...</p>
+                  )}
+                </div>
+
+                {/* Preview Options */}
+                {watchedValues.question_type === 'multiple_choice' && (
+                  <div className="space-y-2">
+                    {['A', 'B', 'C', 'D'].map((letter) => {
+                      const optionKey = `option_${letter.toLowerCase()}` as keyof typeof watchedValues;
+                      const optionValue = watchedValues[optionKey] as string;
+                      const isCorrect = watchedValues.answer === letter;
+                      
+                      return (
+                        <div 
+                          key={letter}
+                          className={`p-3 rounded-lg border transition-colors ${
+                            isCorrect 
+                              ? 'border-green-500 bg-green-500/10' 
+                              : 'border-border bg-card hover:bg-muted/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className={`font-medium text-sm ${isCorrect ? 'text-green-600' : ''}`}>
+                              {letter}.
+                            </span>
+                            {optionValue ? (
+                              <div 
+                                className="prose prose-sm max-w-none flex-1"
+                                dangerouslySetInnerHTML={{ __html: optionValue }}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm">Option {letter}...</span>
+                            )}
+                            {isCorrect && (
+                              <span className="text-xs text-green-600 font-medium">✓ Correct</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Fill in the blank preview */}
+                {watchedValues.question_type === 'fill_blank' && (
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg border bg-card">
+                      <Input 
+                        disabled 
+                        placeholder="Student types answer here..." 
+                        className="bg-muted/50"
+                      />
+                    </div>
+                    {watchedValues.answer && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <span>✓</span> Correct answer: <strong>{watchedValues.answer}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Video indicator */}
+                {watchedValues.video_url && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg border bg-red-50 border-red-200">
+                    <Youtube className="h-5 w-5 text-red-500" />
+                    <span className="text-sm text-red-700">Video explanation attached</span>
+                  </div>
+                )}
+
+                {/* Variations count */}
+                {variationFields.length > 0 && (
+                  <div className="p-3 rounded-lg border bg-blue-50 border-blue-200">
+                    <span className="text-sm text-blue-700">
+                      +{variationFields.length} manual variation{variationFields.length > 1 ? 's' : ''} added
+                    </span>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
