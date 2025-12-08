@@ -285,46 +285,49 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4">
-            {/* Question ID */}
-            <FormField
-              control={form.control}
-              name="question_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Question ID</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="6801" disabled={!!editingQuestion} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category */}
-            <FormField
-              control={form.control}
-              name="category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+            {/* Basic Info Row */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Question ID */}
+              <FormField
+                control={form.control}
+                name="question_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Question ID</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
+                      <Input {...field} placeholder="6801" disabled={!!editingQuestion} />
                     </FormControl>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Category */}
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Question Type */}
             <FormField
@@ -332,7 +335,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               name="question_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Question Type</FormLabel>
+                  <FormLabel>Answer Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -340,8 +343,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                      <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
+                      <SelectItem value="multiple_choice">Multiple Choice (A, B, C, D)</SelectItem>
+                      <SelectItem value="fill_blank">Fill in the Blank (Student types answer)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -349,55 +352,77 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               )}
             />
 
-            {/* Question Text */}
-            <FormField
-              control={form.control}
-              name="question_text"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Question Text</FormLabel>
-                  <FormControl>
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Enter your question here..."
+            {/* Question Preview Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 border-b">
+                <span className="text-sm font-medium">Question Preview Layout</span>
+                <span className="text-xs text-muted-foreground ml-2">(Image on top, text below)</span>
+              </div>
+              
+              {/* Graph/Table Image - FIRST (Top) */}
+              <div className="p-4 border-b bg-background">
+                <Label className="text-sm font-medium mb-2 block">
+                  Graph / Table / Figure (optional)
+                </Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Upload your Figma/Canva exported image here - it will display above the question text
+                </p>
+                {imagePreview ? (
+                  <div className="relative w-full">
+                    <img 
+                      src={imagePreview} 
+                      alt="Question figure" 
+                      className="rounded-lg border w-full max-h-64 object-contain bg-white"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="text-muted-foreground">
+                        <p className="font-medium">Click to upload image</p>
+                        <p className="text-xs">PNG, JPG from Figma/Canva</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+              </div>
 
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <Label>Question Image (optional)</Label>
-              {imagePreview ? (
-                <div className="relative w-full max-w-sm">
-                  <img 
-                    src={imagePreview} 
-                    alt="Question" 
-                    className="rounded-lg border max-h-48 object-contain"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="max-w-sm"
-                  />
-                </div>
-              )}
+              {/* Question Text - SECOND (Below image) */}
+              <div className="p-4">
+                <FormField
+                  control={form.control}
+                  name="question_text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Question Text</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Enter the question text here..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Multiple Choice Options */}
