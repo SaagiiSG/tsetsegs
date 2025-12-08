@@ -862,7 +862,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           </ScrollArea>
 
           {/* Right Side - Live Preview */}
-          <div className="w-[400px] shrink-0 flex flex-col bg-muted/30">
+          <div className="w-[40%] shrink-0 flex flex-col bg-muted/30">
             <div className="px-4 py-3 border-b bg-muted/50">
               <span className="text-sm font-medium">Live Preview</span>
               <span className="text-xs text-muted-foreground ml-2">(How students will see it)</span>
