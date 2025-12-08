@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, X, Youtube, Plus, Trash2 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { MathText } from '@/components/MathText';
 
 const variationSchema = z.object({
   question_text: z.string().min(1, 'Question text is required'),
@@ -892,9 +893,9 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 {/* Preview Question Text */}
                 <div className="p-4 rounded-lg border bg-card">
                   {watchedValues.question_text ? (
-                    <div 
-                      className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: watchedValues.question_text }}
+                    <MathText 
+                      text={watchedValues.question_text}
+                      className="text-sm"
                     />
                   ) : (
                     <p className="text-muted-foreground italic text-sm">Question text will appear here...</p>
@@ -923,9 +924,9 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                               {letter}.
                             </span>
                             {optionValue ? (
-                              <div 
-                                className="prose prose-sm max-w-none flex-1"
-                                dangerouslySetInnerHTML={{ __html: optionValue }}
+                              <MathText 
+                                text={optionValue}
+                                className="flex-1 text-sm"
                               />
                             ) : (
                               <span className="text-muted-foreground italic text-sm">Option {letter}...</span>
