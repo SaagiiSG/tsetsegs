@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
-import { BatchAnalytics } from "@/components/teacher/BatchAnalytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Batch {
   id: string;
@@ -28,13 +26,8 @@ export default function TeacherDashboard() {
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("classes");
-  const [expandedAnalytics, setExpandedAnalytics] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const toggleAnalytics = (batchId: string) => {
-    setExpandedAnalytics(prev => ({ ...prev, [batchId]: !prev[batchId] }));
-  };
 
   useEffect(() => {
     console.log("TeacherDashboard - authLoading:", authLoading, "teacherName:", teacherName);
@@ -264,29 +257,15 @@ export default function TeacherDashboard() {
                           <span className="inline sm:hidden">View Students</span>
                         </Button>
                         
-                        {/* Analytics Collapsible */}
-                        <Collapsible 
-                          open={expandedAnalytics[batch.id]} 
-                          onOpenChange={() => toggleAnalytics(batch.id)}
+                        {/* Analytics Button */}
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-2 text-xs md:text-sm h-8"
+                          onClick={() => navigate(`/teacher/analytics/${batch.id}`)}
                         >
-                          <CollapsibleTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              className="w-full mt-2 text-xs md:text-sm h-8 text-muted-foreground hover:text-foreground"
-                            >
-                              <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
-                              {expandedAnalytics[batch.id] ? "Hide" : "View"} Analytics
-                              {expandedAnalytics[batch.id] ? (
-                                <ChevronUp className="h-3.5 w-3.5 ml-auto" />
-                              ) : (
-                                <ChevronDown className="h-3.5 w-3.5 ml-auto" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <BatchAnalytics batchId={batch.id} courseType={batch.course_type} />
-                          </CollapsibleContent>
-                        </Collapsible>
+                          <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
+                          View Class Analytics
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}
