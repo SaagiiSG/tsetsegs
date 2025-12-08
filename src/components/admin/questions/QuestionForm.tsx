@@ -183,12 +183,49 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         if (error) throw error;
       }
 
-      // TODO: If generate_variations is true, call AI to generate variations
-      if (data.generate_variations) {
-        toast({
-          title: 'AI Variations',
-          description: 'AI variation generation will be implemented in the next phase',
-        });
+      // If generate_variations is true, call AI to generate variations
+      if (data.generate_variations && !editingQuestion) {
+        // Get the inserted question ID
+        const { data: insertedQuestion } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('question_id', data.question_id)
+          .single();
+
+        if (insertedQuestion) {
+          try {
+            const response = await supabase.functions.invoke('generate-variations', {
+              body: {
+                questionId: insertedQuestion.id,
+                questionText: data.question_text,
+                questionType: data.question_type,
+                answer: data.answer,
+                multipleChoiceOptions: data.question_type === 'multiple_choice'
+                  ? { A: data.option_a, B: data.option_b, C: data.option_c, D: data.option_d }
+                  : null
+              }
+            });
+
+            if (response.error) {
+              toast({
+                title: 'AI Generation Warning',
+                description: 'Question saved but AI variations failed: ' + response.error.message,
+                variant: 'destructive',
+              });
+            } else {
+              toast({
+                title: 'AI Variations Generated',
+                description: `${response.data?.count || 3} variations created and pending review`,
+              });
+            }
+          } catch (aiError: any) {
+            toast({
+              title: 'AI Generation Warning',
+              description: 'Question saved but AI variations failed',
+              variant: 'destructive',
+            });
+          }
+        }
       }
     },
     onSuccess: () => {

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.setup-teacher-accounts]
 verify_jwt = false
+
+[functions.generate-variations]
+verify_jwt = false
