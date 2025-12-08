@@ -429,18 +429,28 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
             {questionType === 'multiple_choice' && (
               <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
                 <Label>Answer Options</Label>
-                <div className="grid grid-cols-2 gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Use $math$ for LaTeX notation (e.g., $x^2 + 1$)
+                </p>
+                <div className="grid grid-cols-1 gap-3">
                   <FormField
                     control={form.control}
                     name="option_a"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium w-6">A:</span>
-                            <Input {...field} placeholder="Option A" />
+                        <div className="flex items-start gap-2">
+                          <span className="font-medium w-6 mt-2">A:</span>
+                          <div className="flex-1">
+                            <FormControl>
+                              <RichTextEditor
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                placeholder="Option A"
+                                minHeight="60px"
+                              />
+                            </FormControl>
                           </div>
-                        </FormControl>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -449,12 +459,19 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                     name="option_b"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium w-6">B:</span>
-                            <Input {...field} placeholder="Option B" />
+                        <div className="flex items-start gap-2">
+                          <span className="font-medium w-6 mt-2">B:</span>
+                          <div className="flex-1">
+                            <FormControl>
+                              <RichTextEditor
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                placeholder="Option B"
+                                minHeight="60px"
+                              />
+                            </FormControl>
                           </div>
-                        </FormControl>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -463,12 +480,19 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                     name="option_c"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium w-6">C:</span>
-                            <Input {...field} placeholder="Option C" />
+                        <div className="flex items-start gap-2">
+                          <span className="font-medium w-6 mt-2">C:</span>
+                          <div className="flex-1">
+                            <FormControl>
+                              <RichTextEditor
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                placeholder="Option C"
+                                minHeight="60px"
+                              />
+                            </FormControl>
                           </div>
-                        </FormControl>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -477,12 +501,19 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                     name="option_d"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium w-6">D:</span>
-                            <Input {...field} placeholder="Option D" />
+                        <div className="flex items-start gap-2">
+                          <span className="font-medium w-6 mt-2">D:</span>
+                          <div className="flex-1">
+                            <FormControl>
+                              <RichTextEditor
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                placeholder="Option D"
+                                minHeight="60px"
+                              />
+                            </FormControl>
                           </div>
-                        </FormControl>
+                        </div>
                       </FormItem>
                     )}
                   />

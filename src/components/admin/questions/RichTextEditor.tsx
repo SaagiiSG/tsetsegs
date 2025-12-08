@@ -13,9 +13,10 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  minHeight?: string;
 }
 
-export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, placeholder, className, minHeight = '120px' }: RichTextEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [mathInput, setMathInput] = useState('');
@@ -250,7 +251,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
       {/* Editor / Preview */}
       {showPreview ? (
-        <div className={`min-h-[120px] p-3 border rounded-md bg-background ${className}`}>
+        <div className={`p-3 border rounded-md bg-background ${className}`} style={{ minHeight }}>
           {value ? (
             <div className="prose prose-sm max-w-none dark:prose-invert">
               {renderPreview(value)}
@@ -265,7 +266,8 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`min-h-[120px] ${className}`}
+          className={className}
+          style={{ minHeight }}
         />
       )}
 
