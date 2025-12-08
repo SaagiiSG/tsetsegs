@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +12,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Youtube } from 'lucide-react';
+import { Loader2, X, Youtube, Plus, Trash2 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const variationSchema = z.object({
+  question_text: z.string().min(1, 'Question text is required'),
+  answer: z.string().min(1, 'Answer is required'),
+  option_a: z.string().optional(),
+  option_b: z.string().optional(),
+  option_c: z.string().optional(),
+  option_d: z.string().optional(),
+});
 
 const questionSchema = z.object({
   question_id: z.string().min(1, 'Question ID is required'),
@@ -27,6 +37,7 @@ const questionSchema = z.object({
   option_d: z.string().optional(),
   video_url: z.string().optional(),
   generate_variations: z.boolean().default(false),
+  manual_variations: z.array(variationSchema).default([]),
 });
 
 type QuestionFormData = z.infer<typeof questionSchema>;
@@ -95,7 +106,13 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       option_d: '',
       video_url: '',
       generate_variations: false,
+      manual_variations: [],
     }
+  });
+
+  const { fields: variationFields, append: appendVariation, remove: removeVariation } = useFieldArray({
+    control: form.control,
+    name: 'manual_variations',
   });
 
   const questionType = form.watch('question_type');
@@ -177,10 +194,43 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           .eq('id', editingQuestion.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('questions')
-          .insert(questionData);
+          .insert(questionData)
+          .select()
+          .single();
         if (error) throw error;
+
+        // Insert manual variations if any
+        if (data.manual_variations && data.manual_variations.length > 0 && insertedData) {
+          const variationsToInsert = data.manual_variations.map((variation) => ({
+            question_id: `${data.question_id}-V${Math.random().toString(36).substr(2, 4)}`,
+            question_text: variation.question_text,
+            category_id: data.category_id,
+            question_type: data.question_type,
+            answer: variation.answer,
+            question_image_url: imageUrl,
+            video_url: data.video_url || null,
+            multiple_choice_options: data.question_type === 'multiple_choice'
+              ? { A: variation.option_a, B: variation.option_b, C: variation.option_c, D: variation.option_d }
+              : null,
+            is_original: false,
+            is_active: true,
+            parent_question_id: insertedData.id,
+          }));
+
+          const { error: variationError } = await supabase
+            .from('questions')
+            .insert(variationsToInsert);
+          
+          if (variationError) {
+            toast({
+              title: 'Warning',
+              description: 'Question saved but some variations failed to save',
+              variant: 'destructive',
+            });
+          }
+        }
       }
 
       // If generate_variations is true, call AI to generate variations
@@ -251,10 +301,34 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   });
 
   const handleClose = () => {
-    form.reset();
+    form.reset({
+      question_id: '',
+      question_text: '',
+      category_id: '',
+      question_type: 'multiple_choice',
+      answer: '',
+      option_a: '',
+      option_b: '',
+      option_c: '',
+      option_d: '',
+      video_url: '',
+      generate_variations: false,
+      manual_variations: [],
+    });
     setImageFile(null);
     setImagePreview(null);
     onOpenChange(false);
+  };
+
+  const addVariation = () => {
+    appendVariation({
+      question_text: '',
+      answer: '',
+      option_a: '',
+      option_b: '',
+      option_c: '',
+      option_d: '',
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,15 +350,16 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] p-0 flex flex-col">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>
             {editingQuestion ? 'Edit Question' : 'Add New Question'}
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4">
+        <ScrollArea className="flex-1 px-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
             {/* Basic Info Row */}
             <div className="grid grid-cols-2 gap-4">
               {/* Question ID */}
@@ -592,8 +667,181 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               )}
             />
 
+            {/* Manual Variations Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium">Manual Question Variations</span>
+                  <p className="text-xs text-muted-foreground">Add custom variations of this question</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={addVariation}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Variation
+                </Button>
+              </div>
+
+              {variationFields.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <p className="text-sm">No manual variations added yet</p>
+                  <p className="text-xs mt-1">Click "Add Variation" to create custom question variations</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {variationFields.map((field, index) => (
+                    <div key={field.id} className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Variation {index + 1}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeVariation(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Variation Question Text */}
+                      <FormField
+                        control={form.control}
+                        name={`manual_variations.${index}.question_text`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Question Text</FormLabel>
+                            <FormControl>
+                              <RichTextEditor
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Enter variation question text..."
+                                minHeight="80px"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Variation Options (if multiple choice) */}
+                      {questionType === 'multiple_choice' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <FormField
+                            control={form.control}
+                            name={`manual_variations.${index}.option_a`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-start gap-1">
+                                  <span className="text-xs font-medium mt-2">A:</span>
+                                  <FormControl>
+                                    <RichTextEditor
+                                      value={field.value || ''}
+                                      onChange={field.onChange}
+                                      placeholder="Option A"
+                                      minHeight="50px"
+                                    />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`manual_variations.${index}.option_b`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-start gap-1">
+                                  <span className="text-xs font-medium mt-2">B:</span>
+                                  <FormControl>
+                                    <RichTextEditor
+                                      value={field.value || ''}
+                                      onChange={field.onChange}
+                                      placeholder="Option B"
+                                      minHeight="50px"
+                                    />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`manual_variations.${index}.option_c`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-start gap-1">
+                                  <span className="text-xs font-medium mt-2">C:</span>
+                                  <FormControl>
+                                    <RichTextEditor
+                                      value={field.value || ''}
+                                      onChange={field.onChange}
+                                      placeholder="Option C"
+                                      minHeight="50px"
+                                    />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`manual_variations.${index}.option_d`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-start gap-1">
+                                  <span className="text-xs font-medium mt-2">D:</span>
+                                  <FormControl>
+                                    <RichTextEditor
+                                      value={field.value || ''}
+                                      onChange={field.onChange}
+                                      placeholder="Option D"
+                                      minHeight="50px"
+                                    />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {/* Variation Answer */}
+                      <FormField
+                        control={form.control}
+                        name={`manual_variations.${index}.answer`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Correct Answer</FormLabel>
+                            {questionType === 'multiple_choice' ? (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select correct answer" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="A">A</SelectItem>
+                                  <SelectItem value="B">B</SelectItem>
+                                  <SelectItem value="C">C</SelectItem>
+                                  <SelectItem value="D">D</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <FormControl>
+                                <Input {...field} placeholder="Enter correct answer" />
+                              </FormControl>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-4 pb-2">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
@@ -604,8 +852,9 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 {editingQuestion ? 'Update Question' : 'Add Question'}
               </Button>
             </div>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
