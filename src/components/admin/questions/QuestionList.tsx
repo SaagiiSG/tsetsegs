@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2, Youtube, Image, Search, FileQuestion } from 'lucide-react';
+import { MathText } from '@/components/MathText';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
@@ -158,7 +159,9 @@ export function QuestionList({ onEdit }: QuestionListProps) {
                     <TableRow key={q.id}>
                       <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
                       <TableCell className="max-w-md">
-                        <p className="truncate">{q.question_text}</p>
+                        <div className="truncate">
+                          <MathText text={q.question_text} />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={getCategoryColor(q.category?.name || '')}>
