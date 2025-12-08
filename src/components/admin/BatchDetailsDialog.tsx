@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2, MessageSquare, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Calendar, MapPin, Clock, ExternalLink, Copy, RefreshCw, Trash2, MessageSquare, Pencil } from 'lucide-react';
 import { BatchStudentsTable } from './BatchStudentsTable';
 import { EditBatchDialog } from './EditBatchDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { isOnlineClass } from '@/lib/classUtils';
 import {
   Dialog,
@@ -35,7 +34,6 @@ interface BatchDetailsDialogProps {
 
 export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, onUpdate }: BatchDetailsDialogProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showSmsTemplate, setShowSmsTemplate] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
@@ -174,7 +172,7 @@ Class Info: ${batchLink}
         <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 overflow-hidden">
           <div className="flex h-full">
             {/* Left Side - Batch Details */}
-            <div className="flex-1 p-6 overflow-y-auto border-r">
+            <div className="w-1/2 p-6 overflow-y-auto border-r">
               <DialogHeader className="mb-6">
                 <div className="flex items-center gap-3">
                   <Badge 
@@ -237,35 +235,30 @@ Class Info: ${batchLink}
                   </Button>
                 </div>
 
-                {/* SMS Template */}
-                <Collapsible open={showSmsTemplate} onOpenChange={setShowSmsTemplate}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      SMS Message Template
-                      {showSmsTemplate ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+                {/* SMS Template - Always Visible */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2 text-sm">
+                    <MessageSquare className="w-4 h-4" />
+                    SMS Message Template
+                  </h3>
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                    <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">
+                      {getSmsTemplate()}
+                    </pre>
+                    <Button 
+                      onClick={handleCopySmsTemplate} 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Message
                     </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-3">
-                    <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-                      <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">
-                        {getSmsTemplate()}
-                      </pre>
-                      <Button 
-                        onClick={handleCopySmsTemplate} 
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy Message
-                      </Button>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Right Side - Students List */}
-            <div className="w-[400px] flex flex-col bg-muted/30">
+            <div className="w-1/2 flex flex-col bg-muted/30">
               <div className="p-4 border-b bg-background">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Users className="w-4 h-4" />
