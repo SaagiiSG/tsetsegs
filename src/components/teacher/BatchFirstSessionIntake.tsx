@@ -70,14 +70,28 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
   const formSchema = createFormSchema(courseType);
   type FormData = z.infer<typeof formSchema>;
 
+  const getValidEnglishLevel = (level: string | undefined, course: 'SAT' | 'IELTS') => {
+    if (!level) return undefined;
+    const satLevels = ['bad', 'average', 'good'];
+    const ieltsLevels = ['B1', 'B2', 'C1', 'C2'];
+    
+    if (course === 'SAT') {
+      return satLevels.includes(level) ? level : undefined;
+    } else {
+      return ieltsLevels.includes(level) ? level : undefined;
+    }
+  };
+
   const getDefaultValues = () => {
+    const validEnglishLevel = getValidEnglishLevel(currentStudent?.english_level, courseType);
+    
     const base = {
       phone: currentStudent?.phone || "",
       parent_phone: currentStudent?.parent_phone || "",
       last_name: currentStudent?.last_name || "",
       grade: currentStudent?.grade || "",
       school_name: currentStudent?.school_name || "",
-      english_level: currentStudent?.english_level || undefined,
+      english_level: validEnglishLevel,
     };
     
     if (courseType === 'SAT') {
@@ -125,14 +139,16 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
       // Load from cache
       reset(cachedData);
     } else {
-      // Load from student object
+      // Load from student object with validated english_level
+      const validEnglishLevel = getValidEnglishLevel(student.english_level, courseType);
+      
       const baseData = {
         phone: student.phone || "",
         parent_phone: student.parent_phone || "",
         last_name: student.last_name || "",
         grade: student.grade || "",
         school_name: student.school_name || "",
-        english_level: student.english_level || undefined,
+        english_level: validEnglishLevel,
       };
       
       if (courseType === 'SAT') {
