@@ -64,7 +64,7 @@ const Admin = () => {
               <Route index element={<DashboardStats />} />
               <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
-              <Route path="questions" element={<QuestionBank />} />
+              {import.meta.env.DEV && <Route path="questions" element={<QuestionBank />} />}
               <Route
                 path="teachers"
                 element={
