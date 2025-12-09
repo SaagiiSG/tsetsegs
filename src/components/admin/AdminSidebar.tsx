@@ -1,5 +1,6 @@
-import { GraduationCap, Plus, Users, UserCog, BarChart3, Settings, FileQuestion } from 'lucide-react';
+import { Plus, Users, UserCog, BarChart3, Settings, FileQuestion, GraduationCap } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
+import flowersLogo from '@/assets/flowers-logo.png';
 import {
   Sidebar,
   SidebarContent,
@@ -33,9 +34,11 @@ export function AdminSidebar() {
         {/* Logo and Title */}
         <div className="px-3 pb-4 mb-4 border-b">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
-              <GraduationCap className="w-6 h-6 text-primary" />
-            </div>
+            <img 
+              src={flowersLogo} 
+              alt="Flowers Talent Agency" 
+              className="w-10 h-10 rounded-lg flex-shrink-0 object-contain"
+            />
             {open && (
               <div>
                 <h2 className="font-bold text-sm">Flowers Talent Agency</h2>
