@@ -2,6 +2,11 @@ export function isOnlineClass(schedule: string): boolean {
   return schedule.includes("Online") || schedule.includes("online");
 }
 
+// Strip "[Holiday]" tag from schedule for display purposes
+export function formatScheduleForDisplay(schedule: string): string {
+  return schedule.replace(/\s*\[Holiday\]\s*/gi, '').trim();
+}
+
 // Teachers whose names should be hidden on student reveal panels
 export const HIDDEN_TEACHERS = ['Enguun', 'Khulan'];
 

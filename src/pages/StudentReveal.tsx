@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
-import { isOnlineClass, filterVisibleTeachers } from "@/lib/classUtils";
+import { isOnlineClass, filterVisibleTeachers, formatScheduleForDisplay } from "@/lib/classUtils";
 import { IELTSFloatingAchievements } from "@/components/IELTSFloatingAchievements";
 
 type Language = "en" | "mn";
@@ -732,7 +732,7 @@ const StudentReveal = () => {
                     <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
 
                     <div className="space-y-2">
-                      {batch.schedule.split("+").map((part, index) => {
+                      {formatScheduleForDisplay(batch.schedule).split("+").map((part, index) => {
                         const trimmedPart = part.trim();
                         const isMath = trimmedPart.includes("Math");
                         const isEnglish = trimmedPart.includes("English");
