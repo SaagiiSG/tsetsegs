@@ -178,7 +178,8 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
           for (let i = 1; i <= currentWeek; i++) {
             const sessionKey = `session_${i}` as keyof typeof att;
             const status = att[sessionKey];
-            if (status === 'absent') {
+            // Count absent and sick as missed classes (excused doesn't count)
+            if (status === 'absent' || status === 'sick') {
               missedClasses++;
             }
           }
