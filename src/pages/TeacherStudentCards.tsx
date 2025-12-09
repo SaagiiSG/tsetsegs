@@ -281,13 +281,12 @@ export default function TeacherStudentCards() {
       return { hasAlert: false, missedClasses: 0, missedHomework: 0 };
     }
 
-    const currentWeek = getCurrentWeek();
     const maxSessions = batch?.course_type === 'IELTS' ? 24 : 15;
     let missedClasses = 0;
     let missedHomework = 0;
 
-    // Check sessions up to current week, but only count those that are actually marked
-    for (let i = 0; i < currentWeek && i < maxSessions; i++) {
+    // Check ALL marked sessions (not limited by current week) to catch alerts properly
+    for (let i = 0; i < maxSessions; i++) {
       const session = studentData.attendance[i];
       const hw = studentData.homework[i];
       
