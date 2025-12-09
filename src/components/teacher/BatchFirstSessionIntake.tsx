@@ -22,14 +22,23 @@ const createFormSchema = (courseType: 'SAT' | 'IELTS') => {
   if (courseType === 'SAT') {
     return z.object({
       ...baseSchema,
-      math_level: z.enum(['bad', 'average', 'good']),
-      english_level: z.enum(['bad', 'average', 'good']),
+      math_level: z.enum(['bad', 'average', 'good'], { 
+        required_error: "Math level is required",
+        invalid_type_error: "Please select a math level" 
+      }),
+      english_level: z.enum(['bad', 'average', 'good'], { 
+        required_error: "English level is required",
+        invalid_type_error: "Please select an English level" 
+      }),
     });
   } else {
     // IELTS: no math_level, english_level uses CEFR levels
     return z.object({
       ...baseSchema,
-      english_level: z.enum(['B1', 'B2', 'C1', 'C2']),
+      english_level: z.enum(['B1', 'B2', 'C1', 'C2'], { 
+        required_error: "English level is required",
+        invalid_type_error: "Please select an English level" 
+      }),
     });
   }
 };
@@ -364,7 +373,7 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
               {courseType === 'SAT' && (
                 <div className="space-y-3">
                   <Label>Math Level</Label>
-                  <RadioGroup value={mathLevel} onValueChange={(value) => setValue("math_level", value as any)}>
+                  <RadioGroup value={mathLevel || ""} onValueChange={(value) => setValue("math_level", value, { shouldValidate: true, shouldDirty: true })}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="bad" id="math-bad" />
                       <Label htmlFor="math-bad" className="cursor-pointer">Bad</Label>
@@ -388,7 +397,7 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
               <div className="space-y-3">
                 <Label>English Level</Label>
                 {courseType === 'SAT' ? (
-                  <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                  <RadioGroup value={englishLevel || ""} onValueChange={(value) => setValue("english_level", value, { shouldValidate: true, shouldDirty: true })}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="bad" id="english-bad" />
                       <Label htmlFor="english-bad" className="cursor-pointer">Bad</Label>
@@ -403,7 +412,7 @@ export function BatchFirstSessionIntake({ students, courseType, onClose, onSubmi
                     </div>
                   </RadioGroup>
                 ) : (
-                  <RadioGroup value={englishLevel} onValueChange={(value) => setValue("english_level", value as any)}>
+                  <RadioGroup value={englishLevel || ""} onValueChange={(value) => setValue("english_level", value, { shouldValidate: true, shouldDirty: true })}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="B1" id="english-b1" />
                       <Label htmlFor="english-b1" className="cursor-pointer">B1</Label>
