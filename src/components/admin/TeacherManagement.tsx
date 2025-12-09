@@ -83,10 +83,11 @@ export function TeacherManagement() {
     if (teachersData) {
       const teachersWithCount = await Promise.all(
         teachersData.map(async (teacher) => {
+          // Use ilike for partial matching to handle multi-teacher batches (comma-separated)
           const { count } = await supabase
             .from('batches')
             .select('*', { count: 'exact', head: true })
-            .eq('teacher', teacher.name);
+            .ilike('teacher', `%${teacher.name}%`);
           
           // Note: Cannot reliably check admin status from client without service role
           // Admin status will show "No Account" for now if they don't have teacher portal account
