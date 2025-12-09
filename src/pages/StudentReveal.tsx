@@ -747,7 +747,8 @@ const StudentReveal = () => {
                           isEnglish &&
                           !scheduleText.includes("Бямба") &&
                           !scheduleText.includes("Даваа") &&
-                          !scheduleText.includes("Мягмар")
+                          !scheduleText.includes("Мягмар") &&
+                          !scheduleText.includes("Баасан")
                         ) {
                           scheduleText = "Бямба " + scheduleText;
                         }
