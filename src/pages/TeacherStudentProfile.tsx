@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   ChevronLeft, User, Phone, School, BookOpen, TrendingUp, 
   Calendar, Clock, AlertTriangle, Award, Target, BarChart3,
-  CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send
+  CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send, Brain
 } from "lucide-react";
+import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -446,10 +447,14 @@ export default function TeacherStudentProfile() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-5 mb-6">
+          <TabsList className="w-full grid grid-cols-6 mb-6">
             <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="progress" className="text-xs md:text-sm">Progress</TabsTrigger>
             <TabsTrigger value="attendance" className="text-xs md:text-sm">Attendance</TabsTrigger>
+            <TabsTrigger value="practice" className="text-xs md:text-sm">
+              <Brain className="h-3 w-3 mr-1 hidden md:inline" />
+              Practice
+            </TabsTrigger>
             <TabsTrigger value="notes" className="text-xs md:text-sm">
               <StickyNote className="h-3 w-3 mr-1 hidden md:inline" />
               Notes
@@ -785,6 +790,22 @@ export default function TeacherStudentProfile() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Practice Tab - SAT Question Bank Progress */}
+          <TabsContent value="practice" className="space-y-6">
+            {batch.course_type === 'SAT' ? (
+              <StudentQuestionProgress studentPhone={student.phone} />
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    Practice questions are only available for SAT students.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Info Tab */}
