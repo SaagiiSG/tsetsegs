@@ -99,30 +99,12 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         studentAccount = newStudent;
       }
 
-      // Check existing active sessions for this student
-      const { data: existingSessions } = await supabase
+      // Deactivate ALL existing sessions for this student (enforce single active session)
+      await supabase
         .from('student_sessions')
-        .select('*')
+        .update({ is_active: false })
         .eq('student_account_id', studentAccount.id)
         .eq('is_active', true);
-
-      const activeSessions = existingSessions || [];
-
-      // If already 2 sessions and this device is new, deactivate oldest
-      if (activeSessions.length >= 2) {
-        const deviceSession = activeSessions.find(s => s.device_id === deviceId);
-        if (!deviceSession) {
-          // Deactivate oldest session
-          const oldestSession = activeSessions.sort(
-            (a, b) => new Date(a.login_timestamp).getTime() - new Date(b.login_timestamp).getTime()
-          )[0];
-          
-          await supabase
-            .from('student_sessions')
-            .update({ is_active: false })
-            .eq('id', oldestSession.id);
-        }
-      }
 
       // Create or update session for this device
       const expiresAt = new Date();
