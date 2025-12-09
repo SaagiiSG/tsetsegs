@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
-import { isOnlineClass } from "@/lib/classUtils";
+import { isOnlineClass, filterVisibleTeachers } from "@/lib/classUtils";
 import { IELTSFloatingAchievements } from "@/components/IELTSFloatingAchievements";
 
 type Language = "en" | "mn";
@@ -694,30 +694,32 @@ const StudentReveal = () => {
                 </motion.div>
               )}
 
-              <motion.div
-                className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                <User className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-white text-sm md:text-base">
-                    {batch.teacher.includes(', ') ? t.classDetails.teachers : t.classDetails.teacher}
-                  </p>
-                  {batch.teacher.includes(', ') ? (
-                    <div className="space-y-1">
-                      {batch.teacher.split(', ').map((teacher, idx) => (
-                        <p key={idx} className="text-lg md:text-2xl font-bold text-gold">
-                          {teacher}
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-lg md:text-2xl font-bold text-gold">{batch.teacher || "TBA"}</p>
-                  )}
-                </div>
-              </motion.div>
+              {filterVisibleTeachers(batch.teacher) && (
+                <motion.div
+                  className="flex items-center gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
+                  initial={{ x: -30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.5 }}
+                >
+                  <User className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <p className="text-white text-sm md:text-base">
+                      {filterVisibleTeachers(batch.teacher).includes(', ') ? t.classDetails.teachers : t.classDetails.teacher}
+                    </p>
+                    {filterVisibleTeachers(batch.teacher).includes(', ') ? (
+                      <div className="space-y-1">
+                        {filterVisibleTeachers(batch.teacher).split(', ').map((teacher, idx) => (
+                          <p key={idx} className="text-lg md:text-2xl font-bold text-gold">
+                            {teacher}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-lg md:text-2xl font-bold text-gold">{filterVisibleTeachers(batch.teacher)}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
               <motion.div
                 className="flex items-start gap-3 md:gap-6 bg-black/40 backdrop-blur-lg border-2 border-gold/30 rounded-xl md:rounded-2xl p-4 md:p-8 max-w-md md:max-w-full mx-auto"
