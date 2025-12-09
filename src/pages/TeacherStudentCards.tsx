@@ -317,9 +317,16 @@ export default function TeacherStudentCards() {
   const handleUpdateStudent = async (updates: Partial<Student>) => {
     const currentStudent = students[currentIndex];
     try {
+      // Convert empty strings to null for level fields to satisfy check constraints
+      const sanitizedUpdates = {
+        ...updates,
+        math_level: updates.math_level === '' ? null : updates.math_level,
+        english_level: updates.english_level === '' ? null : updates.english_level,
+      };
+
       const { error } = await supabase
         .from("students")
-        .update(updates)
+        .update(sanitizedUpdates)
         .eq("id", currentStudent.id);
 
       if (error) throw error;
