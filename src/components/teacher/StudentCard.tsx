@@ -337,9 +337,9 @@ export function StudentCard({
             {hasAlert && (
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/20">
                 <span className="text-[10px] font-medium text-destructive">
-                  ⚠️ {missedClasses && missedClasses >= 3 && `${missedClasses} abs`}
-                  {missedClasses && missedClasses >= 3 && missedHomework && missedHomework >= 3 && ' • '}
-                  {missedHomework && missedHomework >= 3 && `${missedHomework} HW`}
+                  ⚠️ {missedClasses !== undefined && missedClasses >= 3 && `${missedClasses} abs`}
+                  {missedClasses !== undefined && missedClasses >= 3 && missedHomework !== undefined && missedHomework >= 3 && ' • '}
+                  {missedHomework !== undefined && missedHomework >= 3 && `${missedHomework} HW`}
                 </span>
               </div>
             )}
