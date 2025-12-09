@@ -87,11 +87,11 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
     try {
       console.log('Fetching alerts for teacher:', teacherName);
       
-      // Fetch all batches for this teacher
+      // Fetch all batches for this teacher (use ilike for multi-teacher IELTS batches)
       const { data: batches, error: batchesError } = await supabase
         .from('batches')
         .select('id, batch_name, start_date, course_type')
-        .eq('teacher', teacherName);
+        .ilike('teacher', `%${teacherName}%`);
 
       console.log('Batches fetched:', batches);
       if (batchesError) throw batchesError;
