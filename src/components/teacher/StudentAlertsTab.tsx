@@ -441,37 +441,33 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center py-6 md:py-12">
+        <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (alerts.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-3">
-              <AlertTriangle className="h-8 w-8 text-green-600 dark:text-green-500" />
-            </div>
-            <h3 className="text-lg font-semibold">All Clear! 🎉</h3>
-            <p className="text-muted-foreground">
-              No students currently need attention. Great work!
-            </p>
+      <div className="py-6 md:py-8 text-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-2.5">
+            <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-500" />
           </div>
-        </CardContent>
-      </Card>
+          <h3 className="text-sm md:text-base font-semibold">All Clear! 🎉</h3>
+          <p className="text-xs md:text-sm text-muted-foreground">No students need attention</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        Found {alerts.length} student{alerts.length !== 1 ? 's' : ''} needing attention
+    <div className="space-y-3 md:space-y-4">
+      <p className="text-xs md:text-sm text-muted-foreground">
+        {alerts.length} student{alerts.length !== 1 ? 's' : ''} need attention
       </p>
 
-      <div className="space-y-8">
+      <div className="space-y-4 md:space-y-6">
         {alerts.map((alert, index) => {
           const data = alertsData[alert.student.id];
           if (!data) return null;

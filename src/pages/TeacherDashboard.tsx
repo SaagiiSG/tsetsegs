@@ -129,144 +129,121 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <div className="container mx-auto p-4 md:p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Welcome, {teacherName}! 👋</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your classes and track attendance</p>
+      <div className="container mx-auto p-3 md:p-6 lg:p-8">
+        {/* Compact header on mobile */}
+        <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold truncate">Welcome, {teacherName}!</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-0.5 hidden sm:block">Manage your classes and track attendance</p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/teacher/settings")}
-              className="shrink-0"
-            >
-              <Settings className="h-5 w-5" />
+          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => navigate("/teacher/settings")}>
+              <Settings className="h-4 w-4" />
             </Button>
-            <Button variant="outline" onClick={handleSignOut} className="flex-1 sm:flex-none">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
+            <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Logout</span>
             </Button>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="classes" className="text-sm md:text-base">
-              My Classes
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-9 md:h-10">
+            <TabsTrigger value="classes" className="text-xs md:text-sm px-2">
+              Classes
             </TabsTrigger>
-            <TabsTrigger value="students" className="text-sm md:text-base">
-              <GraduationCap className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <TabsTrigger value="students" className="text-xs md:text-sm px-2">
+              <GraduationCap className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
               <span className="hidden xs:inline">Students</span>
             </TabsTrigger>
-            <TabsTrigger value="alerts" className="text-sm md:text-base">
-              <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <TabsTrigger value="alerts" className="text-xs md:text-sm px-2">
+              <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
               <span className="hidden xs:inline">Alerts</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="classes" className="space-y-4 md:space-y-6">
+          <TabsContent value="classes" className="space-y-3 md:space-y-4">
             {isLoading ? (
-              <div className="flex justify-center py-8 md:py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="flex justify-center py-6 md:py-12">
+                <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary"></div>
               </div>
             ) : batches.length === 0 ? (
               <Card>
-                <CardContent className="py-8 md:py-12 text-center text-muted-foreground text-sm md:text-base">
+                <CardContent className="py-6 md:py-12 text-center text-muted-foreground text-xs md:text-sm">
                   No classes assigned yet
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4 md:space-y-6">
-                {/* Filter */}
-                <Card>
-                  <CardHeader className="pb-3 md:pb-6">
-                    <CardTitle className="text-base md:text-lg">Filter Classes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Select
-                      value={selectedIntake}
-                      onValueChange={(value) => {
-                        setSelectedIntake(value);
-                        setIsLoading(true);
-                        setTimeout(() => fetchBatches(), 0);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select intake" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {intakes.map((intake) => (
-                          <SelectItem key={intake.value} value={intake.value}>
-                            {intake.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-2">
-                      Showing {filteredBatches.length} of {batches.length} class{batches.length !== 1 ? "es" : ""}
-                    </p>
-                  </CardContent>
-                </Card>
+              <div className="space-y-3 md:space-y-4">
+                {/* Compact inline filter */}
+                <div className="flex items-center gap-2 p-2 md:p-3 bg-card rounded-lg border">
+                  <Select
+                    value={selectedIntake}
+                    onValueChange={(value) => {
+                      setSelectedIntake(value);
+                      setIsLoading(true);
+                      setTimeout(() => fetchBatches(), 0);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 md:h-9 text-xs md:text-sm flex-1">
+                      <SelectValue placeholder="Select intake" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {intakes.map((intake) => (
+                        <SelectItem key={intake.value} value={intake.value} className="text-xs md:text-sm">
+                          {intake.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
+                    {filteredBatches.length} class{filteredBatches.length !== 1 ? "es" : ""}
+                  </span>
+                </div>
 
-                {/* Batch Cards */}
-                <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Compact Batch Cards */}
+                <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredBatches.map((batch) => (
-                    <Card key={batch.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader className="pb-3 md:pb-6">
-                        <CardTitle className="text-base md:text-lg leading-tight">{batch.batch_name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
-                          <Users className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
-                          {getStudentCount(batch.id)} students
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-2.5 md:space-y-3">
-                        <div className="flex items-start gap-2 text-xs md:text-sm">
-                          <Calendar className="h-3 w-3 md:h-4 md:w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium">Schedule:</p>
-                            <p className="text-muted-foreground whitespace-pre-line break-words">{batch.schedule}</p>
+                    <Card key={batch.id} className="p-3 md:p-4 hover:shadow-md transition-shadow">
+                      <div className="space-y-2 md:space-y-3">
+                        {/* Header */}
+                        <div>
+                          <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2">{batch.batch_name}</h3>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <Users className="h-3 w-3" />
+                            <span>{getStudentCount(batch.id)} students</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-xs md:text-sm">
-                          <MapPin className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
-                          <span className="truncate">
-                            {isOnlineClass(batch.schedule) ? (
-                              <span className="font-medium text-primary">🌐 Online Class</span>
-                            ) : (
-                              <>Room {batch.room}</>
-                            )}
-                          </span>
-                        </div>
-                        <div className="text-xs md:text-sm">
-                          <p className="font-medium">Start Date:</p>
-                          <p className="text-muted-foreground">
-                            {new Date(batch.start_date).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </div>
-                        <Button
-                          className="w-full mt-3 md:mt-4 text-sm md:text-base h-9 md:h-10"
-                          onClick={() => navigate(`/teacher/students/${batch.id}`)}
-                        >
-                          <span className="hidden sm:inline">View Students & Attendance</span>
-                          <span className="inline sm:hidden">View Students</span>
-                        </Button>
                         
-                        {/* Analytics Button */}
-                        <Button 
-                          variant="outline" 
-                          className="w-full mt-2 text-xs md:text-sm h-8"
-                          onClick={() => navigate(`/teacher/analytics/${batch.id}`)}
-                        >
-                          <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
-                          View Class Analytics
-                        </Button>
-                      </CardContent>
+                        {/* Details - More compact */}
+                        <div className="space-y-1.5 text-xs md:text-sm">
+                          <div className="flex items-start gap-1.5 text-muted-foreground">
+                            <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 mt-0.5 flex-shrink-0" />
+                            <span className="line-clamp-2 leading-tight">{batch.schedule}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                            <span>
+                              {isOnlineClass(batch.schedule) ? "🌐 Online" : `Room ${batch.room}`}
+                            </span>
+                            <span className="text-muted-foreground/50">•</span>
+                            <span>
+                              {new Date(batch.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Action buttons - Compact */}
+                        <div className="flex gap-2 pt-1">
+                          <Button className="flex-1 h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate(`/teacher/students/${batch.id}`)}>
+                            <Users className="h-3.5 w-3.5 mr-1.5" />
+                            Students
+                          </Button>
+                          <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
+                            <BarChart3 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -275,46 +252,32 @@ export default function TeacherDashboard() {
           </TabsContent>
 
           <TabsContent value="students">
-            <Card>
-              <CardHeader className="pb-3 md:pb-6">
-                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                  <GraduationCap className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                  <span>All Students</span>
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                  View and manage all your students with detailed profiles
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  className="w-full"
-                  onClick={() => navigate("/teacher/students")}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Open Student Directory
+            <Card className="p-4 md:p-6">
+              <div className="text-center space-y-3">
+                <GraduationCap className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground" />
+                <div>
+                  <h3 className="text-sm md:text-base font-semibold">All Students</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">View and manage students</p>
+                </div>
+                <Button className="h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate("/teacher/students")}>
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Open Directory
                 </Button>
-              </CardContent>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="alerts">
-            <Card>
-              <CardHeader className="pb-3 md:pb-6">
-                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                  <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 text-destructive shrink-0" />
-                  <span>Students Needing Attention</span>
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                  Students with 3+ missed classes or homework across all your batches
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {teacherName ? (
-                  <StudentAlertsTab teacherName={teacherName} />
-                ) : (
-                  <p className="text-muted-foreground text-center py-6 md:py-8 text-sm md:text-base">Loading...</p>
-                )}
-              </CardContent>
+            <Card className="p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <h3 className="text-sm md:text-base font-semibold">Needs Attention</h3>
+              </div>
+              {teacherName ? (
+                <StudentAlertsTab teacherName={teacherName} />
+              ) : (
+                <p className="text-muted-foreground text-center py-4 text-xs">Loading...</p>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
