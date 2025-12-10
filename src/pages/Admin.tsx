@@ -41,7 +41,14 @@ const Admin = () => {
       <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
         <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <SidebarTrigger />
+            <div className="flex items-center gap-3">
+              <SidebarTrigger />
+              {import.meta.env.DEV && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/30">
+                  DEV MODE
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               {isTeacher && (
                 <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
