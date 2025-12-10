@@ -376,11 +376,6 @@ export default function TeacherStudentProfile() {
                   Needs Attention
                 </Badge>
               )}
-              {!student.first_session_completed && (
-                <Badge variant="outline" className="gap-1">
-                  First Session Incomplete
-                </Badge>
-              )}
             </div>
             <p className="text-muted-foreground mt-1 text-sm md:text-base truncate">
               {batch.batch_name} • {batch.course_type}

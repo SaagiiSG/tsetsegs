@@ -358,11 +358,8 @@ export function StudentCard({
             onClick={() => setShowStudentInfo(!showStudentInfo)}
             className="flex items-center justify-between w-full text-left"
           >
-            <h3 className="text-xs md:text-sm font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
+            <h3 className="text-xs md:text-sm font-semibold uppercase text-muted-foreground">
               Student Info
-              {!student.first_session_completed && (
-                <span className="text-[10px] text-amber-600 normal-case">⚠️ Incomplete</span>
-              )}
             </h3>
             <div className="flex items-center gap-2">
               {!showStudentInfo && (
