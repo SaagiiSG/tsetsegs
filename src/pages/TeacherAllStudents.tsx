@@ -120,8 +120,7 @@ export default function TeacherAllStudents() {
   const stats = useMemo(() => {
     const sat = students.filter(s => s.course_type === 'SAT').length;
     const ielts = students.filter(s => s.course_type === 'IELTS').length;
-    const incompleteIntake = students.filter(s => !s.first_session_completed).length;
-    return { total: students.length, sat, ielts, incompleteIntake };
+    return { total: students.length, sat, ielts };
   }, [students]);
 
   if (isLoading || authLoading) {
@@ -183,15 +182,6 @@ export default function TeacherAllStudents() {
               <div>
                 <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400">IELTS</p>
                 <p className="text-lg md:text-xl font-bold">{stats.ielts}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className={`p-2.5 md:p-3 flex-shrink-0 w-[100px] md:w-auto ${stats.incompleteIntake > 0 ? 'bg-amber-500/5 border-amber-500/20' : ''}`}>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <div>
-                <p className="text-[10px] md:text-xs text-amber-600 dark:text-amber-400">Incomplete</p>
-                <p className="text-lg md:text-xl font-bold">{stats.incompleteIntake}</p>
               </div>
             </div>
           </Card>
