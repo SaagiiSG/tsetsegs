@@ -9,7 +9,6 @@ import { ArrowLeft, ArrowRight, ChevronLeft, UserPlus } from "lucide-react";
 import { StudentCard } from "@/components/teacher/StudentCard";
 import { StudentCardsLoadingSkeleton } from "@/components/teacher/StudentCardSkeleton";
 import { StudentSidebar } from "@/components/teacher/StudentSidebar";
-import { BatchFirstSessionIntake } from "@/components/teacher/BatchFirstSessionIntake";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +29,6 @@ interface Student {
   school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
-  first_session_completed?: boolean;
   batch_id: string;
 }
 
@@ -72,7 +70,6 @@ export default function TeacherStudentCards() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [showBatchIntake, setShowBatchIntake] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showScoreCalculator, setShowScoreCalculator] = useState(false);
   const [newStudentData, setNewStudentData] = useState({
@@ -165,7 +162,7 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, first_session_completed, batch_id")
+        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, batch_id")
         .eq("batch_id", batchId)
         .order("first_name");
 
@@ -460,70 +457,6 @@ export default function TeacherStudentCards() {
       });
     }
   };
-
-  const handleBatchIntakeSubmit = async (studentId: string, data: {
-    phone: string;
-    parent_phone: string;
-    last_name: string;
-    grade: string;
-    school_name: string;
-    math_level?: 'bad' | 'average' | 'good';
-    english_level: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2';
-  }) => {
-    try {
-      const updateData: any = {
-        phone: data.phone,
-        parent_phone: data.parent_phone,
-        last_name: data.last_name,
-        grade: data.grade,
-        school_name: data.school_name,
-        english_level: data.english_level,
-        first_session_completed: true,
-      };
-
-      // Add math_level only for SAT
-      if (data.math_level) {
-        updateData.math_level = data.math_level;
-      }
-
-      const { error } = await supabase
-        .from("students")
-        .update(updateData)
-        .eq("id", studentId);
-
-      if (error) throw error;
-
-      // Update local state
-      setStudents(students.map(s => 
-        s.id === studentId 
-          ? { 
-              ...s, 
-              phone: data.phone,
-              parent_phone: data.parent_phone,
-              last_name: data.last_name,
-              grade: data.grade,
-              school_name: data.school_name,
-              math_level: data.math_level,
-              english_level: data.english_level,
-              first_session_completed: true 
-            } 
-          : s
-      ));
-
-      toast({
-        title: "Success",
-        description: "First session data saved successfully",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-      throw error;
-    }
-  };
-
   const handleAddStudent = async () => {
     if (!batch) return;
 
@@ -619,16 +552,6 @@ export default function TeacherStudentCards() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Batch Intake Modal */}
-      {showBatchIntake && batch && (
-        <BatchFirstSessionIntake
-          students={students}
-          courseType={batch.course_type}
-          onClose={() => setShowBatchIntake(false)}
-          onSubmit={handleBatchIntakeSubmit}
-        />
-      )}
-
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">

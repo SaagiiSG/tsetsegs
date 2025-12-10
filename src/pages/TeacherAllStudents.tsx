@@ -21,7 +21,6 @@ interface Student {
   phone: string;
   school_name?: string;
   grade?: string;
-  first_session_completed?: boolean;
   batch_id: string;
   batch_name?: string;
   course_type?: 'SAT' | 'IELTS';
@@ -70,7 +69,7 @@ export default function TeacherAllStudents() {
         const batchIds = batchesData.map(b => b.id);
         const { data: studentsData, error: studentsError } = await supabase
           .from("students")
-          .select("id, first_name, last_name, phone, school_name, grade, first_session_completed, batch_id")
+          .select("id, first_name, last_name, phone, school_name, grade, batch_id")
           .in("batch_id", batchIds)
           .order("first_name");
 
@@ -254,9 +253,6 @@ export default function TeacherAllStudents() {
                           <p className="font-medium text-sm md:text-base truncate">
                             {student.first_name} {student.last_name}
                           </p>
-                          {!student.first_session_completed && (
-                            <span className="text-[10px] text-amber-600">⚠️</span>
-                          )}
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] md:text-xs text-muted-foreground">
                           <Phone className="h-2.5 w-2.5" />

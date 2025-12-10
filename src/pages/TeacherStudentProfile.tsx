@@ -30,7 +30,6 @@ interface Student {
   school_name?: string;
   math_level?: string;
   english_level?: string;
-  first_session_completed?: boolean;
   batch_id: string;
   created_at: string;
 }

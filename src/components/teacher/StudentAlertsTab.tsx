@@ -14,7 +14,6 @@ interface DbStudent {
   batch_id: string;
   english_level: string | null;
   math_level: string | null;
-  first_session_completed: boolean | null;
 }
 
 interface DbAttendance {
@@ -487,7 +486,7 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
                   parent_phone: alert.student.parent_phone || undefined,
                   math_level: alert.student.math_level as any,
                   english_level: alert.student.english_level as any,
-                  first_session_completed: alert.student.first_session_completed || false,
+                  
                 }}
                 currentIndex={index}
                 totalStudents={alerts.length}
