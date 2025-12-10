@@ -308,20 +308,20 @@ export function StudentAccountsManagement() {
       <Card>
         <div className="overflow-x-auto">
           <ScrollArea className="h-[600px]">
-            <Table className="w-full">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]"></TableHead>
-                  <TableHead className="whitespace-nowrap min-w-[200px]">Student</TableHead>
-                  <TableHead className="whitespace-nowrap min-w-[180px]">Class</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="whitespace-nowrap">Last Login</TableHead>
-                  <TableHead className="whitespace-nowrap">Sessions</TableHead>
-                  <TableHead className="whitespace-nowrap">Created</TableHead>
-                  <TableHead className="whitespace-nowrap">Actions</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-[200px]">Student</TableHead>
+                  <TableHead className="w-[180px]">Class</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="w-[120px]">Last Login</TableHead>
+                  <TableHead className="w-[80px]">Sessions</TableHead>
+                  <TableHead className="w-[120px]">Created</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-            <TableBody>
+              <TableBody>
               {filteredAccounts.map((account) => {
                 const activeSessions = account.sessions.filter(s => s.is_active);
                 const isExpanded = expandedAccounts.has(account.id);
