@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -20,9 +21,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command';
+import {
   Search, Smartphone, Monitor, Laptop, 
   ChevronDown, ChevronRight, Power, PowerOff, 
-  RefreshCw, Trash2, User
+  RefreshCw, Trash2, User, ExternalLink, Phone, GraduationCap
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -36,6 +46,7 @@ interface StudentSession {
 }
 
 interface StudentInfo {
+  student_id: string;
   first_name: string;
   last_name: string | null;
   batch_name: string | null;
@@ -94,10 +105,12 @@ function parseUserAgent(userAgent: string | null): { device: string; browser: st
 
 export function StudentAccountsManagement() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
+  const [searchOpen, setSearchOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     type: 'terminate_session' | 'deactivate_account' | 'activate_account';
@@ -108,6 +121,18 @@ export function StudentAccountsManagement() {
   useEffect(() => {
     fetchAccounts();
   }, []);
+
+  // Global keyboard shortcut for search
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen(!searchOpen);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, [searchOpen]);
 
   const fetchAccounts = async () => {
     try {
@@ -132,7 +157,7 @@ export function StudentAccountsManagement() {
       // Fetch students with their batch info to match by phone
       const { data: studentsData, error: studentsError } = await supabase
         .from('students')
-        .select('phone, first_name, last_name, batch_id, batches(batch_name, course_type)');
+        .select('id, phone, first_name, last_name, batch_id, batches(batch_name, course_type)');
       
       if (studentsError) throw studentsError;
 
@@ -140,6 +165,7 @@ export function StudentAccountsManagement() {
       const studentsByPhone = new Map<string, StudentInfo>();
       (studentsData || []).forEach((s: any) => {
         studentsByPhone.set(s.phone, {
+          student_id: s.id,
           first_name: s.first_name,
           last_name: s.last_name,
           batch_name: s.batches?.batch_name || null,
@@ -284,15 +310,17 @@ export function StudentAccountsManagement() {
 
       {/* Search and Actions */}
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by phone number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <Button 
+          variant="outline" 
+          className="flex-1 max-w-sm justify-start text-muted-foreground"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="h-4 w-4 mr-2" />
+          Search students...
+          <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </Button>
         <Button variant="outline" onClick={fetchAccounts}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
@@ -307,13 +335,14 @@ export function StudentAccountsManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead className="w-[200px]">Student</TableHead>
-                  <TableHead className="w-[180px]">Class</TableHead>
-                  <TableHead className="w-[100px]">Status</TableHead>
-                  <TableHead className="w-[120px]">Last Login</TableHead>
-                  <TableHead className="w-[80px]">Sessions</TableHead>
-                  <TableHead className="w-[120px]">Created</TableHead>
-                  <TableHead className="w-[120px]">Actions</TableHead>
+                  <TableHead className="w-[180px]">Student</TableHead>
+                  <TableHead className="w-[160px]">Class</TableHead>
+                  <TableHead className="w-[80px]">Status</TableHead>
+                  <TableHead className="w-[100px]">Last Login</TableHead>
+                  <TableHead className="w-[60px]">Sessions</TableHead>
+                  <TableHead className="w-[100px]">Created</TableHead>
+                  <TableHead className="w-[80px]">Profile</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -329,7 +358,7 @@ export function StudentAccountsManagement() {
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </TableCell>
-                      <TableCell className="w-[200px]">
+                      <TableCell className="w-[180px]">
                         <div className="flex flex-col">
                           <span className="font-medium truncate">
                             {account.studentInfo 
@@ -340,7 +369,7 @@ export function StudentAccountsManagement() {
                           <span className="text-xs text-muted-foreground">{account.phone_number}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="w-[180px]">
+                      <TableCell className="w-[160px]">
                         {account.studentInfo?.batch_name ? (
                           <div className="flex flex-col gap-1">
                             <span className="text-sm truncate" title={account.studentInfo.batch_name}>
@@ -358,26 +387,41 @@ export function StudentAccountsManagement() {
                           <span className="text-muted-foreground text-sm">Not enrolled</span>
                         )}
                       </TableCell>
-                      <TableCell className="w-[100px]">
+                      <TableCell className="w-[80px]">
                         <Badge variant={account.is_active ? 'default' : 'destructive'}>
                           {account.is_active ? 'Active' : 'Deactivated'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-[120px]">
+                      <TableCell className="w-[100px]">
                         {account.last_login 
                           ? formatDistanceToNow(new Date(account.last_login), { addSuffix: true })
                           : 'Never'
                         }
                       </TableCell>
-                      <TableCell className="w-[80px]">
+                      <TableCell className="w-[60px]">
                         <Badge variant={activeSessions.length > 0 ? 'outline' : 'secondary'}>
                           {activeSessions.length}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-[120px]">
+                      <TableCell className="w-[100px]">
                         {format(new Date(account.created_at), 'MMM d, yyyy')}
                       </TableCell>
-                      <TableCell className="w-[120px]">
+                      <TableCell className="w-[80px]">
+                        {account.studentInfo?.student_id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/teacher/students/${account.studentInfo?.student_id}`);
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell className="w-[100px]">
                         <Button
                           variant={account.is_active ? 'destructive' : 'default'}
                           size="sm"
@@ -408,7 +452,7 @@ export function StudentAccountsManagement() {
                     
                     {isExpanded && (
                       <TableRow key={`${account.id}-expanded`} className="bg-muted/30">
-                        <TableCell colSpan={8} className="p-0">
+                        <TableCell colSpan={9} className="p-0">
                           <div className="px-6 py-4">
                             <h4 className="text-sm font-semibold mb-3">Sessions ({account.sessions.length})</h4>
                             {account.sessions.length === 0 ? (
@@ -471,7 +515,7 @@ export function StudentAccountsManagement() {
               
               {filteredAccounts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No accounts found matching your search' : 'No student accounts yet'}
                   </TableCell>
                 </TableRow>
@@ -517,6 +561,74 @@ export function StudentAccountsManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Student Search Command Dialog */}
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput placeholder="Search students by name or phone..." />
+        <CommandList>
+          <CommandEmpty>No students found.</CommandEmpty>
+          
+          {/* Group by batch */}
+          {Object.entries(
+            accounts.reduce((acc, account) => {
+              if (!account.studentInfo) return acc;
+              const key = account.studentInfo.batch_name || 'Not Enrolled';
+              if (!acc[key]) {
+                acc[key] = { students: [], course_type: account.studentInfo.course_type };
+              }
+              acc[key].students.push(account);
+              return acc;
+            }, {} as Record<string, { students: StudentAccount[]; course_type: string | null }>)
+          ).map(([batchName, { students, course_type }], index) => (
+            <div key={batchName}>
+              {index > 0 && <CommandSeparator />}
+              <CommandGroup 
+                heading={
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-3 w-3" />
+                    <span>{batchName}</span>
+                    {course_type && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] px-1 py-0 ${
+                          course_type === 'SAT' 
+                            ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' 
+                            : 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                        }`}
+                      >
+                        {course_type}
+                      </Badge>
+                    )}
+                  </div>
+                }
+              >
+                {students.map((account) => (
+                  <CommandItem
+                    key={account.id}
+                    value={`${account.studentInfo?.first_name} ${account.studentInfo?.last_name} ${account.phone_number}`}
+                    onSelect={() => {
+                      setSearchOpen(false);
+                      if (account.studentInfo?.student_id) {
+                        navigate(`/teacher/students/${account.studentInfo.student_id}`);
+                      }
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{account.studentInfo?.first_name} {account.studentInfo?.last_name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                      <span>{account.phone_number}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </div>
+          ))}
+        </CommandList>
+      </CommandDialog>
     </div>
   );
 }
