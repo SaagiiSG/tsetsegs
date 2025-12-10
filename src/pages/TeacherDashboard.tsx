@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3 } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
+import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
 
 interface Batch {
   id: string;
@@ -26,6 +27,7 @@ export default function TeacherDashboard() {
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("classes");
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -137,6 +139,18 @@ export default function TeacherDashboard() {
             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 hidden sm:block">Manage your classes and track attendance</p>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline text-xs">Search</span>
+              <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => navigate("/teacher/settings")}>
               <Settings className="h-4 w-4" />
             </Button>
@@ -146,6 +160,9 @@ export default function TeacherDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Global Search Command */}
+        <StudentSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
           <TabsList className="grid w-full grid-cols-3 h-9 md:h-10">

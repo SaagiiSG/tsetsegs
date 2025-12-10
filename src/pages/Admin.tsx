@@ -11,6 +11,7 @@ import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SetupTeacherAccounts } from '@/components/admin/SetupTeacherAccounts';
 import { UserManagement } from '@/components/admin/UserManagement';
+import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
 import { LogOut, Users } from 'lucide-react';
@@ -81,6 +82,7 @@ const Admin = () => {
                   </div>
                 }
               />
+              <Route path="students" element={<StudentAccountsManagement />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
