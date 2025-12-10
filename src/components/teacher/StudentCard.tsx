@@ -481,117 +481,228 @@ export function StudentCard({
           )}
         </div>
 
-        {/* Tabbed Layout for Attendance/Homework and Tests - Mobile friendly */}
-        <Tabs defaultValue="tracking" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-8 md:h-9 mb-3">
-            <TabsTrigger value="tracking" className="text-xs md:text-sm">
-              <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
-              Attendance
-            </TabsTrigger>
-            <TabsTrigger value="tests" className="text-xs md:text-sm">
-              <Trophy className="h-3.5 w-3.5 mr-1.5" />
-              Tests
-            </TabsTrigger>
-          </TabsList>
+        {/* Mobile: Tabs | Desktop/Tablet: Side-by-side */}
+        
+        {/* Mobile view - Tabs */}
+        <div className="md:hidden">
+          <Tabs defaultValue="tracking" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 h-8 mb-3">
+              <TabsTrigger value="tracking" className="text-xs">
+                <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                Attendance
+              </TabsTrigger>
+              <TabsTrigger value="tests" className="text-xs">
+                <Trophy className="h-3.5 w-3.5 mr-1.5" />
+                Tests
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="tracking" className="mt-0">
-            <div className="border rounded-lg p-2 md:p-4">
-              <div className="space-y-1.5 md:space-y-2 max-h-[280px] md:max-h-[350px] overflow-y-auto">
-                {attendance.map((session) => {
-                  const hw = homework.find(h => h.session_number === session.session_number);
-                  return (
-                    <div key={session.session_number} className="pb-1.5 md:pb-2 border-b last:border-0">
-                      <p className="text-[10px] md:text-xs font-medium text-muted-foreground mb-1">S{session.session_number}</p>
-                      <div className="grid grid-cols-2 gap-1.5 md:gap-2">
-                        <Select value={session.status || ""} onValueChange={(value) => onAttendanceChange(session.session_number, value)}>
-                          <SelectTrigger className={`h-7 md:h-8 text-[11px] md:text-xs ${getAttendanceBgColor(session.status)}`}>
-                            <SelectValue placeholder="Att" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="present" className="text-[#03C988] text-xs">✓ Present</SelectItem>
-                            <SelectItem value="late" className="text-[#FFDE0B] text-xs">⏰ Late</SelectItem>
-                            <SelectItem value="absent" className="text-[#FA6363] text-xs">✗ Absent</SelectItem>
-                            <SelectItem value="sick" className="text-blue-400 text-xs">🤒 Sick</SelectItem>
-                            <SelectItem value="excused" className="text-purple-400 text-xs">🆓 Excused</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select value={hw?.status || ""} onValueChange={(value) => onHomeworkChange(session.session_number, value)}>
-                          <SelectTrigger className={`h-7 md:h-8 text-[11px] md:text-xs ${getHomeworkBgColor(hw?.status || null)}`}>
-                            <SelectValue placeholder="HW" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="completed" className="text-[#03C988] text-xs">✓ Done</SelectItem>
-                            <SelectItem value="incomplete" className="text-[#FA6363] text-xs">✗ Incomplete</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tests" className="mt-0">
-            <div className="border rounded-lg p-2 md:p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 max-h-[280px] md:max-h-[350px] overflow-y-auto">
-                {courseType === 'SAT' ? (
-                  practiceTests.map((test) => {
-                    const getTestLabel = (testNum: number) => testNum === 8 ? "SAT Mock" : `Test ${testNum + 3}`;
+            <TabsContent value="tracking" className="mt-0">
+              <div className="border rounded-lg p-2">
+                <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
+                  {attendance.map((session) => {
+                    const hw = homework.find(h => h.session_number === session.session_number);
                     return (
+                      <div key={session.session_number} className="pb-1.5 border-b last:border-0">
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1">S{session.session_number}</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Select value={session.status || ""} onValueChange={(value) => onAttendanceChange(session.session_number, value)}>
+                            <SelectTrigger className={`h-7 text-[11px] ${getAttendanceBgColor(session.status)}`}>
+                              <SelectValue placeholder="Att" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background z-50">
+                              <SelectItem value="present" className="text-[#03C988] text-xs">✓ Present</SelectItem>
+                              <SelectItem value="late" className="text-[#FFDE0B] text-xs">⏰ Late</SelectItem>
+                              <SelectItem value="absent" className="text-[#FA6363] text-xs">✗ Absent</SelectItem>
+                              <SelectItem value="sick" className="text-blue-400 text-xs">🤒 Sick</SelectItem>
+                              <SelectItem value="excused" className="text-purple-400 text-xs">🆓 Excused</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select value={hw?.status || ""} onValueChange={(value) => onHomeworkChange(session.session_number, value)}>
+                            <SelectTrigger className={`h-7 text-[11px] ${getHomeworkBgColor(hw?.status || null)}`}>
+                              <SelectValue placeholder="HW" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background z-50">
+                              <SelectItem value="completed" className="text-[#03C988] text-xs">✓ Done</SelectItem>
+                              <SelectItem value="incomplete" className="text-[#FA6363] text-xs">✗ Incomplete</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tests" className="mt-0">
+              <div className="border rounded-lg p-2">
+                <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto">
+                  {courseType === 'SAT' ? (
+                    practiceTests.map((test) => {
+                      const getTestLabel = (testNum: number) => testNum === 8 ? "SAT Mock" : `Test ${testNum + 3}`;
+                      return (
+                        <div key={test.test_number} className="space-y-1">
+                          <Label className="text-[10px]">{getTestLabel(test.test_number)}</Label>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="800"
+                              placeholder="—"
+                              value={testInputs[test.test_number] ?? test.score ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                                  setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                                }
+                              }}
+                              onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+                              className="w-16 h-7 text-xs"
+                            />
+                            <span className="text-[10px] text-muted-foreground">/800</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    practiceTests.map((test) => (
                       <div key={test.test_number} className="space-y-1">
-                        <Label className="text-[10px] md:text-xs">{getTestLabel(test.test_number)}</Label>
+                        <Label className="text-[10px]">Mock {test.test_number}</Label>
                         <div className="flex items-center gap-1">
                           <Input
                             type="number"
                             min="0"
-                            max="800"
+                            max="9"
+                            step="0.5"
                             placeholder="—"
                             value={testInputs[test.test_number] ?? test.score ?? ""}
                             onChange={(e) => {
                               const val = e.target.value;
-                              if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
                                 setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                               }
                             }}
-                            onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
-                            className="w-16 md:w-20 h-7 md:h-8 text-xs md:text-sm"
+                            onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
+                            className="w-14 h-7 text-xs"
                           />
-                          <span className="text-[10px] md:text-xs text-muted-foreground">/800</span>
+                          <span className="text-[10px] text-muted-foreground">/9</span>
                         </div>
                       </div>
-                    );
-                  })
-                ) : (
-                  practiceTests.map((test) => (
+                    ))
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Desktop/Tablet view - Side by side */}
+        <div className="hidden md:grid md:grid-cols-2 gap-4">
+          {/* Attendance & Homework Column */}
+          <div className="border rounded-lg p-4">
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" />
+              Attendance & Homework
+            </h4>
+            <div className="space-y-2 max-h-[350px] overflow-y-auto">
+              {attendance.map((session) => {
+                const hw = homework.find(h => h.session_number === session.session_number);
+                return (
+                  <div key={session.session_number} className="pb-2 border-b last:border-0">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Session {session.session_number}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Select value={session.status || ""} onValueChange={(value) => onAttendanceChange(session.session_number, value)}>
+                        <SelectTrigger className={`h-8 text-xs ${getAttendanceBgColor(session.status)}`}>
+                          <SelectValue placeholder="Attendance" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="present" className="text-[#03C988] text-xs">✓ Present</SelectItem>
+                          <SelectItem value="late" className="text-[#FFDE0B] text-xs">⏰ Late</SelectItem>
+                          <SelectItem value="absent" className="text-[#FA6363] text-xs">✗ Absent</SelectItem>
+                          <SelectItem value="sick" className="text-blue-400 text-xs">🤒 Sick</SelectItem>
+                          <SelectItem value="excused" className="text-purple-400 text-xs">🆓 Excused</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select value={hw?.status || ""} onValueChange={(value) => onHomeworkChange(session.session_number, value)}>
+                        <SelectTrigger className={`h-8 text-xs ${getHomeworkBgColor(hw?.status || null)}`}>
+                          <SelectValue placeholder="Homework" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="completed" className="text-[#03C988] text-xs">✓ Done</SelectItem>
+                          <SelectItem value="incomplete" className="text-[#FA6363] text-xs">✗ Incomplete</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tests Column */}
+          <div className="border rounded-lg p-4">
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
+              <Trophy className="h-3.5 w-3.5" />
+              Practice Tests
+            </h4>
+            <div className="grid grid-cols-2 gap-3 max-h-[350px] overflow-y-auto">
+              {courseType === 'SAT' ? (
+                practiceTests.map((test) => {
+                  const getTestLabel = (testNum: number) => testNum === 8 ? "SAT Mock" : `Test ${testNum + 3}`;
+                  return (
                     <div key={test.test_number} className="space-y-1">
-                      <Label className="text-[10px] md:text-xs">Mock {test.test_number}</Label>
+                      <Label className="text-xs">{getTestLabel(test.test_number)}</Label>
                       <div className="flex items-center gap-1">
                         <Input
                           type="number"
                           min="0"
-                          max="9"
-                          step="0.5"
+                          max="800"
                           placeholder="—"
                           value={testInputs[test.test_number] ?? test.score ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
                               setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                             }
                           }}
-                          onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
-                          className="w-14 md:w-16 h-7 md:h-8 text-xs md:text-sm"
+                          onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+                          className="w-20 h-8 text-sm"
                         />
-                        <span className="text-[10px] md:text-xs text-muted-foreground">/9</span>
+                        <span className="text-xs text-muted-foreground">/800</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  );
+                })
+              ) : (
+                practiceTests.map((test) => (
+                  <div key={test.test_number} className="space-y-1">
+                    <Label className="text-xs">Mock {test.test_number}</Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="9"
+                        step="0.5"
+                        placeholder="—"
+                        value={testInputs[test.test_number] ?? test.score ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
+                            setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                          }
+                        }}
+                        onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
+                        className="w-16 h-8 text-sm"
+                      />
+                      <span className="text-xs text-muted-foreground">/9</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
         {/* Collapsible Notes Section */}
         <div className="mt-3 md:mt-6 border-t pt-3 md:pt-4">
