@@ -23,7 +23,6 @@ interface Student {
   school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
-  first_session_completed?: boolean;
 }
 
 interface Attendance {
