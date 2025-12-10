@@ -20,11 +20,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { 
   Search, Smartphone, Monitor, Laptop, 
   ChevronDown, ChevronRight, Power, PowerOff, 
   RefreshCw, Trash2, User
@@ -327,18 +322,16 @@ export function StudentAccountsManagement() {
                 const isExpanded = expandedAccounts.has(account.id);
                 
                 return (
-                  <Collapsible key={account.id} open={isExpanded} onOpenChange={() => toggleExpanded(account.id)}>
-                    <TableRow className="cursor-pointer hover:bg-muted/50">
-                      <TableCell>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
-                        </CollapsibleTrigger>
+                  <>
+                    <TableRow key={account.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleExpanded(account.id)}>
+                      <TableCell className="w-12">
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </Button>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-[200px]">
                         <div className="flex flex-col">
-                          <span className="font-medium">
+                          <span className="font-medium truncate">
                             {account.studentInfo 
                               ? `${account.studentInfo.first_name} ${account.studentInfo.last_name || ''}`.trim()
                               : 'Unknown Student'
@@ -347,10 +340,10 @@ export function StudentAccountsManagement() {
                           <span className="text-xs text-muted-foreground">{account.phone_number}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-[180px]">
                         {account.studentInfo?.batch_name ? (
                           <div className="flex flex-col gap-1">
-                            <span className="text-sm truncate max-w-[200px]" title={account.studentInfo.batch_name}>
+                            <span className="text-sm truncate" title={account.studentInfo.batch_name}>
                               {account.studentInfo.batch_name}
                             </span>
                             <Badge variant="outline" className={`w-fit text-[10px] ${
@@ -365,26 +358,26 @@ export function StudentAccountsManagement() {
                           <span className="text-muted-foreground text-sm">Not enrolled</span>
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="w-[100px]">
                         <Badge variant={account.is_active ? 'default' : 'destructive'}>
                           {account.is_active ? 'Active' : 'Deactivated'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="w-[120px]">
                         {account.last_login 
                           ? formatDistanceToNow(new Date(account.last_login), { addSuffix: true })
                           : 'Never'
                         }
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="w-[80px]">
                         <Badge variant={activeSessions.length > 0 ? 'outline' : 'secondary'}>
                           {activeSessions.length}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="w-[120px]">
                         {format(new Date(account.created_at), 'MMM d, yyyy')}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="w-[120px]">
                         <Button
                           variant={account.is_active ? 'destructive' : 'default'}
                           size="sm"
@@ -413,8 +406,8 @@ export function StudentAccountsManagement() {
                       </TableCell>
                     </TableRow>
                     
-                    <CollapsibleContent asChild>
-                      <TableRow className="bg-muted/30">
+                    {isExpanded && (
+                      <TableRow key={`${account.id}-expanded`} className="bg-muted/30">
                         <TableCell colSpan={8} className="p-0">
                           <div className="px-6 py-4">
                             <h4 className="text-sm font-semibold mb-3">Sessions ({account.sessions.length})</h4>
@@ -471,8 +464,8 @@ export function StudentAccountsManagement() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    )}
+                  </>
                 );
               })}
               
