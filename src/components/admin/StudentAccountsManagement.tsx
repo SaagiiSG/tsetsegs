@@ -40,6 +40,13 @@ interface StudentSession {
   is_active: boolean;
 }
 
+interface StudentInfo {
+  first_name: string;
+  last_name: string | null;
+  batch_name: string | null;
+  course_type: string | null;
+}
+
 interface StudentAccount {
   id: string;
   phone_number: string;
@@ -47,6 +54,7 @@ interface StudentAccount {
   last_login: string | null;
   is_active: boolean;
   sessions: StudentSession[];
+  studentInfo?: StudentInfo;
 }
 
 function parseUserAgent(userAgent: string | null): { device: string; browser: string; icon: React.ReactNode } {
@@ -125,11 +133,30 @@ export function StudentAccountsManagement() {
         .order('login_timestamp', { ascending: false });
       
       if (sessionsError) throw sessionsError;
+
+      // Fetch students with their batch info to match by phone
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('phone, first_name, last_name, batch_id, batches(batch_name, course_type)');
+      
+      if (studentsError) throw studentsError;
+
+      // Create a map of phone -> student info
+      const studentsByPhone = new Map<string, StudentInfo>();
+      (studentsData || []).forEach((s: any) => {
+        studentsByPhone.set(s.phone, {
+          first_name: s.first_name,
+          last_name: s.last_name,
+          batch_name: s.batches?.batch_name || null,
+          course_type: s.batches?.course_type || null,
+        });
+      });
       
       // Combine data
       const accountsWithSessions: StudentAccount[] = (accountsData || []).map(account => ({
         ...account,
-        sessions: (sessionsData || []).filter(s => s.student_account_id === account.id)
+        sessions: (sessionsData || []).filter(s => s.student_account_id === account.id),
+        studentInfo: studentsByPhone.get(account.phone_number)
       }));
       
       setAccounts(accountsWithSessions);
@@ -281,14 +308,15 @@ export function StudentAccountsManagement() {
       <Card>
         <div className="overflow-x-auto">
           <ScrollArea className="h-[600px]">
-            <Table>
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]"></TableHead>
-                  <TableHead className="whitespace-nowrap">Phone Number</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[200px]">Student</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[180px]">Class</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
                   <TableHead className="whitespace-nowrap">Last Login</TableHead>
-                  <TableHead className="whitespace-nowrap">Active Sessions</TableHead>
+                  <TableHead className="whitespace-nowrap">Sessions</TableHead>
                   <TableHead className="whitespace-nowrap">Created</TableHead>
                   <TableHead className="whitespace-nowrap">Actions</TableHead>
                 </TableRow>
@@ -308,7 +336,35 @@ export function StudentAccountsManagement() {
                           </Button>
                         </CollapsibleTrigger>
                       </TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">{account.phone_number}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {account.studentInfo 
+                              ? `${account.studentInfo.first_name} ${account.studentInfo.last_name || ''}`.trim()
+                              : 'Unknown Student'
+                            }
+                          </span>
+                          <span className="text-xs text-muted-foreground">{account.phone_number}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {account.studentInfo?.batch_name ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm truncate max-w-[200px]" title={account.studentInfo.batch_name}>
+                              {account.studentInfo.batch_name}
+                            </span>
+                            <Badge variant="outline" className={`w-fit text-[10px] ${
+                              account.studentInfo.course_type === 'SAT' 
+                                ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' 
+                                : 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                            }`}>
+                              {account.studentInfo.course_type}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Not enrolled</span>
+                        )}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={account.is_active ? 'default' : 'destructive'}>
                           {account.is_active ? 'Active' : 'Deactivated'}
@@ -322,7 +378,7 @@ export function StudentAccountsManagement() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={activeSessions.length > 0 ? 'outline' : 'secondary'}>
-                          {activeSessions.length} session{activeSessions.length !== 1 ? 's' : ''}
+                          {activeSessions.length}
                         </Badge>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -359,7 +415,7 @@ export function StudentAccountsManagement() {
                     
                     <CollapsibleContent asChild>
                       <TableRow className="bg-muted/30">
-                        <TableCell colSpan={7} className="p-0">
+                        <TableCell colSpan={8} className="p-0">
                           <div className="px-6 py-4">
                             <h4 className="text-sm font-semibold mb-3">Sessions ({account.sessions.length})</h4>
                             {account.sessions.length === 0 ? (
@@ -422,7 +478,7 @@ export function StudentAccountsManagement() {
               
               {filteredAccounts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No accounts found matching your search' : 'No student accounts yet'}
                   </TableCell>
                 </TableRow>
