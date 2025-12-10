@@ -113,9 +113,13 @@ export default function TeacherStudentProfile() {
         .from("students")
         .select("*")
         .eq("id", studentId)
-        .single();
+        .maybeSingle();
 
       if (studentError) throw studentError;
+      if (!studentData) {
+        setIsLoading(false);
+        return;
+      }
       setStudent(studentData);
 
       // Fetch batch
@@ -123,9 +127,13 @@ export default function TeacherStudentProfile() {
         .from("batches")
         .select("*")
         .eq("id", studentData.batch_id)
-        .single();
+        .maybeSingle();
 
       if (batchError) throw batchError;
+      if (!batchData) {
+        setIsLoading(false);
+        return;
+      }
       setBatch(batchData);
 
       const maxSessions = batchData.course_type === 'IELTS' ? 24 : 15;
