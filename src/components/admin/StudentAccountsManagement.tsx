@@ -281,16 +281,16 @@ export function StudentAccountsManagement() {
       <Card>
         <div className="overflow-x-auto">
           <ScrollArea className="h-[600px]">
-            <Table className="min-w-[800px]">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10"></TableHead>
-                  <TableHead className="w-32 whitespace-nowrap">Phone Number</TableHead>
-                  <TableHead className="w-24 whitespace-nowrap">Status</TableHead>
-                  <TableHead className="w-28 whitespace-nowrap">Last Login</TableHead>
-                  <TableHead className="w-32 whitespace-nowrap">Active Sessions</TableHead>
-                  <TableHead className="w-28 whitespace-nowrap">Created</TableHead>
-                  <TableHead className="w-32 text-right whitespace-nowrap">Actions</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="whitespace-nowrap">Phone Number</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="whitespace-nowrap">Last Login</TableHead>
+                  <TableHead className="whitespace-nowrap">Active Sessions</TableHead>
+                  <TableHead className="whitespace-nowrap">Created</TableHead>
+                  <TableHead className="whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
             <TableBody>
@@ -328,7 +328,7 @@ export function StudentAccountsManagement() {
                       <TableCell className="whitespace-nowrap">
                         {format(new Date(account.created_at), 'MMM d, yyyy')}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="whitespace-nowrap">
                         <Button
                           variant={account.is_active ? 'destructive' : 'default'}
                           size="sm"
