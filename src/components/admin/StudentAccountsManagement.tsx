@@ -279,19 +279,20 @@ export function StudentAccountsManagement() {
 
       {/* Accounts Table */}
       <Card>
-        <ScrollArea className="h-[600px]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10"></TableHead>
-                <TableHead>Phone Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead>Active Sessions</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+        <div className="overflow-x-auto">
+          <ScrollArea className="h-[600px]">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-32 whitespace-nowrap">Phone Number</TableHead>
+                  <TableHead className="w-24 whitespace-nowrap">Status</TableHead>
+                  <TableHead className="w-28 whitespace-nowrap">Last Login</TableHead>
+                  <TableHead className="w-32 whitespace-nowrap">Active Sessions</TableHead>
+                  <TableHead className="w-28 whitespace-nowrap">Created</TableHead>
+                  <TableHead className="w-32 text-right whitespace-nowrap">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {filteredAccounts.map((account) => {
                 const activeSessions = account.sessions.filter(s => s.is_active);
@@ -307,24 +308,24 @@ export function StudentAccountsManagement() {
                           </Button>
                         </CollapsibleTrigger>
                       </TableCell>
-                      <TableCell className="font-medium">{account.phone_number}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">{account.phone_number}</TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant={account.is_active ? 'default' : 'destructive'}>
                           {account.is_active ? 'Active' : 'Deactivated'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {account.last_login 
                           ? formatDistanceToNow(new Date(account.last_login), { addSuffix: true })
                           : 'Never'
                         }
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant={activeSessions.length > 0 ? 'outline' : 'secondary'}>
                           {activeSessions.length} session{activeSessions.length !== 1 ? 's' : ''}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {format(new Date(account.created_at), 'MMM d, yyyy')}
                       </TableCell>
                       <TableCell className="text-right">
@@ -428,7 +429,8 @@ export function StudentAccountsManagement() {
               )}
             </TableBody>
           </Table>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
       </Card>
 
       {/* Confirmation Dialog */}
