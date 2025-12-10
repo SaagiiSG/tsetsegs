@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ChevronLeft, Search, Users, AlertTriangle, User, 
-  Phone, School, BookOpen, Filter, ChevronRight, Settings, LogOut
+  Phone, School, BookOpen, Filter, ChevronRight, Settings, LogOut, ArrowLeft, GraduationCap
 } from "lucide-react";
 
 interface Student {
@@ -118,10 +118,10 @@ export default function TeacherAllStudents() {
 
   // Group by course type for stats
   const stats = useMemo(() => {
-    const satCount = students.filter(s => s.course_type === 'SAT').length;
-    const ieltsCount = students.filter(s => s.course_type === 'IELTS').length;
+    const sat = students.filter(s => s.course_type === 'SAT').length;
+    const ielts = students.filter(s => s.course_type === 'IELTS').length;
     const incompleteIntake = students.filter(s => !s.first_session_completed).length;
-    return { total: students.length, satCount, ieltsCount, incompleteIntake };
+    return { total: students.length, sat, ielts, incompleteIntake };
   }, [students]);
 
   if (isLoading || authLoading) {
@@ -134,184 +134,160 @@ export default function TeacherAllStudents() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/teacher/dashboard")}>
-              <ChevronLeft className="h-5 w-5" />
+      <div className="container mx-auto p-3 md:p-6 lg:p-8 max-w-6xl">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0" onClick={() => navigate("/teacher/dashboard")}>
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">All Students</h1>
-              <p className="text-muted-foreground text-sm">Manage all your students across classes</p>
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-2xl lg:text-3xl font-bold truncate">All Students</h1>
+              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Manage students across classes</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/teacher/settings")}
-            >
-              <Settings className="h-5 w-5" />
+          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => navigate("/teacher/settings")}>
+              <Settings className="h-4 w-4" />
             </Button>
-            <Button variant="outline" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
+            <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Logout</span>
             </Button>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Users className="h-4 w-4" />
-                <span className="text-xs">Total Students</span>
+        {/* Stats Cards - Horizontal scroll on mobile */}
+        <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible mb-4 md:mb-6">
+          <Card className="p-2.5 md:p-3 flex-shrink-0 w-[100px] md:w-auto">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-[10px] md:text-xs text-muted-foreground">Total</p>
+                <p className="text-lg md:text-xl font-bold">{stats.total}</p>
               </div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </CardContent>
+            </div>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-                <BookOpen className="h-4 w-4" />
-                <span className="text-xs">SAT</span>
+          <Card className="p-2.5 md:p-3 flex-shrink-0 w-[100px] md:w-auto bg-blue-500/5 border-blue-500/20">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-blue-500" />
+              <div>
+                <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400">SAT</p>
+                <p className="text-lg md:text-xl font-bold">{stats.sat}</p>
               </div>
-              <p className="text-2xl font-bold">{stats.satCount}</p>
-            </CardContent>
+            </div>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
-                <BookOpen className="h-4 w-4" />
-                <span className="text-xs">IELTS</span>
+          <Card className="p-2.5 md:p-3 flex-shrink-0 w-[100px] md:w-auto bg-purple-500/5 border-purple-500/20">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-purple-500" />
+              <div>
+                <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400">IELTS</p>
+                <p className="text-lg md:text-xl font-bold">{stats.ielts}</p>
               </div>
-              <p className="text-2xl font-bold">{stats.ieltsCount}</p>
-            </CardContent>
+            </div>
           </Card>
-          <Card className={stats.incompleteIntake > 0 ? 'bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20' : ''}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="text-xs">Incomplete Intake</span>
+          <Card className={`p-2.5 md:p-3 flex-shrink-0 w-[100px] md:w-auto ${stats.incompleteIntake > 0 ? 'bg-amber-500/5 border-amber-500/20' : ''}`}>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <div>
+                <p className="text-[10px] md:text-xs text-amber-600 dark:text-amber-400">Incomplete</p>
+                <p className="text-lg md:text-xl font-bold">{stats.incompleteIntake}</p>
               </div>
-              <p className="text-2xl font-bold">{stats.incompleteIntake}</p>
-            </CardContent>
+            </div>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, phone, or school..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                <SelectTrigger className="w-full md:w-[140px]">
-                  <SelectValue placeholder="Course" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  <SelectItem value="SAT">SAT</SelectItem>
-                  <SelectItem value="IELTS">IELTS</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Batches</SelectItem>
-                  {batches.map((batch) => (
-                    <SelectItem key={batch.id} value={batch.id}>
-                      {batch.batch_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Showing {filteredStudents.length} of {students.length} students
-            </p>
-          </CardContent>
-        </Card>
+        {/* Compact Filters */}
+        <div className="space-y-2 md:space-y-0 md:flex md:gap-2 p-2 md:p-3 bg-card rounded-lg border mb-3 md:mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-8 md:h-9 text-xs md:text-sm"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <SelectTrigger className="w-[80px] md:w-[100px] h-8 md:h-9 text-xs md:text-sm">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs md:text-sm">All</SelectItem>
+                <SelectItem value="SAT" className="text-xs md:text-sm">SAT</SelectItem>
+                <SelectItem value="IELTS" className="text-xs md:text-sm">IELTS</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+              <SelectTrigger className="flex-1 md:w-[160px] h-8 md:h-9 text-xs md:text-sm">
+                <SelectValue placeholder="Batch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs md:text-sm">All Batches</SelectItem>
+                {batches.map((batch) => (
+                  <SelectItem key={batch.id} value={batch.id} className="text-xs md:text-sm">
+                    {batch.batch_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-        {/* Students List */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredStudents.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                {students.length === 0 ? "No students found" : "No students match your filters"}
-              </div>
-            ) : (
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
-                  {filteredStudents.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer group"
-                      onClick={() => navigate(`/teacher/student/${student.id}`)}
-                    >
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <User className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium truncate">
-                              {student.first_name} {student.last_name}
-                            </p>
-                            {!student.first_session_completed && (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                ⚠️ Incomplete
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {student.phone}
-                            </span>
-                            {student.school_name && (
-                              <span className="flex items-center gap-1 hidden sm:flex">
-                                <School className="h-3 w-3" />
-                                {student.school_name}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+        {/* Compact Students List */}
+        <Card className="overflow-hidden">
+          <div className="p-2 md:p-3 border-b flex items-center justify-between">
+            <span className="text-xs md:text-sm font-medium">{filteredStudents.length} students</span>
+          </div>
+          {filteredStudents.length === 0 ? (
+            <div className="text-center py-8 md:py-12 text-muted-foreground text-xs md:text-sm">
+              {students.length === 0 ? "No students found" : "No students match your filters"}
+            </div>
+          ) : (
+            <ScrollArea className="h-[calc(100vh-320px)] md:h-[calc(100vh-380px)]">
+              <div className="divide-y">
+                {filteredStudents.map((student) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center justify-between p-2.5 md:p-3 hover:bg-muted/50 active:bg-muted/70 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/teacher/student/${student.id}`)}
+                  >
+                    <div className="flex items-center gap-2.5 md:gap-3 min-w-0 flex-1">
+                      <div className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs md:text-sm font-medium text-primary">
+                          {student.first_name?.charAt(0) || '?'}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right hidden md:block">
-                          <Badge variant={student.course_type === 'SAT' ? 'default' : 'secondary'}>
-                            {student.course_type}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1 truncate max-w-[150px]">
-                            {student.batch_name}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-sm md:text-base truncate">
+                            {student.first_name} {student.last_name}
                           </p>
+                          {!student.first_session_completed && (
+                            <span className="text-[10px] text-amber-600">⚠️</span>
+                          )}
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <div className="flex items-center gap-1.5 text-[11px] md:text-xs text-muted-foreground">
+                          <Phone className="h-2.5 w-2.5" />
+                          <span>{student.phone}</span>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
+                    <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] md:text-xs px-1.5 ${student.course_type === 'SAT' ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' : 'bg-purple-500/10 text-purple-600 border-purple-500/30'}`}
+                      >
+                        {student.course_type}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </Card>
       </div>
     </div>
