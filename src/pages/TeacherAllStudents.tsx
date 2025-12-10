@@ -13,6 +13,7 @@ import {
   ChevronLeft, Search, Users, AlertTriangle, User, 
   Phone, School, BookOpen, Filter, ChevronRight, Settings, LogOut, ArrowLeft, GraduationCap
 } from "lucide-react";
+import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
 
 interface Student {
   id: string;
@@ -43,6 +44,7 @@ export default function TeacherAllStudents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && teacherName) {
@@ -145,6 +147,17 @@ export default function TeacherAllStudents() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-4 w-4 md:mr-2" />
+              <kbd className="hidden lg:inline-flex ml-1 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => navigate("/teacher/settings")}>
               <Settings className="h-4 w-4" />
             </Button>
@@ -154,6 +167,9 @@ export default function TeacherAllStudents() {
             </Button>
           </div>
         </div>
+
+        {/* Global Search Command */}
+        <StudentSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
         {/* Stats Cards - Horizontal scroll on mobile */}
         <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible mb-4 md:mb-6">

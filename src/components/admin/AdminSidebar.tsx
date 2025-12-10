@@ -1,4 +1,4 @@
-import { Plus, Users, UserCog, BarChart3, Settings, FileQuestion, GraduationCap } from 'lucide-react';
+import { Plus, Users, UserCog, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import flowersLogo from '@/assets/flowers-logo.png';
 import {
@@ -20,6 +20,7 @@ const menuItems = [
   { title: 'Batches', url: '/admin/batches', icon: GraduationCap },
   { title: 'Create Batch', url: '/admin/create', icon: Plus },
   ...(isDev ? [{ title: 'Question Bank', url: '/admin/questions', icon: FileQuestion }] : []),
+  { title: 'Students', url: '/admin/students', icon: UserCheck },
   { title: 'Teachers', url: '/admin/teachers', icon: UserCog },
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
