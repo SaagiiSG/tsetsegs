@@ -36,6 +36,7 @@ import StudentStats from "./pages/student/StudentStats";
 import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentShareProfile from "./pages/student/StudentShareProfile";
+import StudentVocabulary from "./pages/student/StudentVocabulary";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +134,7 @@ const App = () => (
                     <Route path="stats" element={<StudentStats />} />
                     <Route path="leaderboard" element={<StudentLeaderboard />} />
                     <Route path="settings" element={<StudentSettings />} />
+                    <Route path="vocabulary" element={<StudentVocabulary />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                   </Route>
                   

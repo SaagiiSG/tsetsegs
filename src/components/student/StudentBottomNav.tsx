@@ -1,13 +1,13 @@
 import { NavLink } from '@/components/NavLink';
-import { BookOpen, Zap, Brain, BarChart3, Trophy } from 'lucide-react';
+import { BookOpen, Zap, Brain, BarChart3, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/speed', icon: Zap, label: 'Speed' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
+  { to: '/practice/vocabulary', icon: Languages, label: 'Words' },
   { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
-  { to: '/practice/leaderboard', icon: Trophy, label: 'Ranks' },
 ];
 
 export function StudentBottomNav() {

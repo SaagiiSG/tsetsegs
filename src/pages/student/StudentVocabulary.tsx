@@ -1,0 +1,230 @@
+import { useState, useCallback } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { satVocabulary, getTotalWords } from '@/data/satVocabulary';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Search, BookOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const StudentVocabulary = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
+  const [isShuffled, setIsShuffled] = useState(false);
+
+  const totalWords = getTotalWords();
+
+  // Get current word based on shuffle state
+  const getCurrentWord = useCallback(() => {
+    if (isShuffled && shuffledIndices.length > 0) {
+      return satVocabulary[shuffledIndices[currentIndex]];
+    }
+    return satVocabulary[currentIndex];
+  }, [currentIndex, isShuffled, shuffledIndices]);
+
+  const currentWord = getCurrentWord();
+
+  // Filter words by search
+  const filteredWords = satVocabulary.filter(word => 
+    word.english.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    word.mongolian.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleNext = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev + 1) % totalWords);
+    }, 150);
+  };
+
+  const handlePrev = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev - 1 + totalWords) % totalWords);
+    }, 150);
+  };
+
+  const handleFlip = () => {
+    setIsFlipped(prev => !prev);
+  };
+
+  const handleShuffle = () => {
+    const indices = [...Array(totalWords)].map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    setShuffledIndices(indices);
+    setIsShuffled(true);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  };
+
+  const handleReset = () => {
+    setIsShuffled(false);
+    setShuffledIndices([]);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  };
+
+  const handleWordClick = (index: number) => {
+    setCurrentIndex(index);
+    setIsFlipped(false);
+    setIsShuffled(false);
+    setShuffledIndices([]);
+    setSearchQuery('');
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <BookOpen className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold">SAT Vocabulary</h1>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            {totalWords} words to memorize • Tap card to flip
+          </p>
+        </div>
+
+        {/* Flashcard */}
+        <div className="flex justify-center">
+          <div 
+            className="relative w-full max-w-md aspect-[3/2] cursor-pointer perspective-1000"
+            onClick={handleFlip}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${currentIndex}-${isFlipped}`}
+                initial={{ rotateY: isFlipped ? -90 : 90, opacity: 0 }}
+                animate={{ rotateY: 0, opacity: 1 }}
+                exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="w-full h-full"
+              >
+                <Card className={`w-full h-full flex flex-col items-center justify-center p-6 shadow-xl border-2 ${
+                  isFlipped 
+                    ? 'bg-primary/5 border-primary/30' 
+                    : 'bg-card border-border'
+                }`}>
+                  <span className="absolute top-3 left-3 text-xs text-muted-foreground font-medium">
+                    {isFlipped ? 'Mongolian' : 'English'}
+                  </span>
+                  <span className="absolute top-3 right-3 text-xs text-muted-foreground">
+                    #{currentWord?.id}
+                  </span>
+                  <p className={`text-center font-semibold ${
+                    isFlipped ? 'text-lg md:text-xl' : 'text-xl md:text-2xl'
+                  }`}>
+                    {isFlipped ? currentWord?.mongolian : currentWord?.english}
+                  </p>
+                  <span className="absolute bottom-3 text-xs text-muted-foreground">
+                    Tap to flip
+                  </span>
+                </Card>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-center gap-4">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handlePrev}
+            className="h-12 w-12"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Button>
+          
+          <div className="flex items-center gap-2 min-w-[100px] justify-center">
+            <span className="text-lg font-semibold">{currentIndex + 1}</span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">{totalWords}</span>
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleNext}
+            className="h-12 w-12"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </Button>
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center gap-3">
+          <Button 
+            variant={isShuffled ? "default" : "outline"}
+            onClick={handleShuffle}
+            className="gap-2"
+          >
+            <Shuffle className="w-4 h-4" />
+            Shuffle
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleReset}
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
+        </div>
+
+        {/* Word List Search */}
+        <Card className="p-4">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search words..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            {searchQuery && (
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {filteredWords.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-4">
+                    No words found
+                  </p>
+                ) : (
+                  filteredWords.map((word, idx) => (
+                    <button
+                      key={word.id}
+                      onClick={() => handleWordClick(satVocabulary.indexOf(word))}
+                      className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
+                    >
+                      <span className="font-medium">{word.english}</span>
+                      <span className="text-sm text-muted-foreground truncate max-w-[50%]">
+                        {word.mongolian}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Progress indicator */}
+        <div className="w-full bg-muted rounded-full h-2">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentVocabulary;
