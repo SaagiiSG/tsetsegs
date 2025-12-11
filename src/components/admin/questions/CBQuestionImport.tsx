@@ -15,8 +15,8 @@ import { Upload, FileText, Loader2, CheckCircle, XCircle, Edit2, Save, Trash2 } 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Set up PDF.js worker using unpkg which has the latest versions
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 interface ParsedQuestion {
   pageNumber: number;
