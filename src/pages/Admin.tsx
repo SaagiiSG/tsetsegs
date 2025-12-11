@@ -8,9 +8,7 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { BatchesView } from '@/components/admin/BatchesView';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
-import { TeacherManagement } from '@/components/admin/TeacherManagement';
-import { SetupTeacherAccounts } from '@/components/admin/SetupTeacherAccounts';
-import { UserManagement } from '@/components/admin/UserManagement';
+import { TeamManagement } from '@/components/admin/TeamManagement';
 import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
@@ -74,18 +72,9 @@ const Admin = () => {
               <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
               {import.meta.env.DEV && <Route path="questions" element={<QuestionBank />} />}
-              <Route
-                path="teachers"
-                element={
-                  <div className="space-y-4">
-                    <SetupTeacherAccounts />
-                    <TeacherManagement />
-                  </div>
-                }
-              />
+              <Route path="team" element={<TeamManagement />} />
               <Route path="students" element={<StudentAccountsManagement />} />
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
-              <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </main>
