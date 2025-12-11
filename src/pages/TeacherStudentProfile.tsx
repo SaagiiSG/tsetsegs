@@ -8,17 +8,23 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   ChevronLeft, User, Phone, School, BookOpen, TrendingUp, 
   Calendar, Clock, AlertTriangle, Award, Target, BarChart3,
-  CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send, Brain
+  CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send, Brain,
+  Share2, Copy, Link2, Loader2
 } from "lucide-react";
 import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar, Area, AreaChart
 } from "recharts";
+
+// Alias for recharts tooltip to avoid conflict with shadcn
+const ChartTooltip = RechartsTooltip;
 
 interface Student {
   id: string;
@@ -97,6 +103,64 @@ export default function TeacherStudentProfile() {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Fetch student account and share token
+  const { data: studentAccount, isLoading: loadingShareToken } = useQuery({
+    queryKey: ['student-account-share', student?.phone],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_accounts')
+        .select('id, share_token, share_token_created_at')
+        .eq('phone_number', student!.phone)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!student?.phone
+  });
+
+  // Generate share token mutation
+  const generateShareToken = useMutation({
+    mutationFn: async () => {
+      if (!studentAccount?.id) throw new Error('No student account found');
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+      
+      const { error } = await supabase
+        .from('student_accounts')
+        .update({ 
+          share_token: token,
+          share_token_created_at: new Date().toISOString()
+        })
+        .eq('id', studentAccount.id);
+      
+      if (error) throw error;
+      return token;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-account-share'] });
+      toast({ title: 'Share link generated!' });
+    },
+    onError: () => {
+      toast({ variant: 'destructive', title: 'Failed to generate share link' });
+    }
+  });
+
+  const shareUrl = studentAccount?.share_token 
+    ? `${window.location.origin}/student/share/${studentAccount.share_token}`
+    : null;
+
+  const copyShareLink = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareLinkCopied(true);
+      toast({ title: 'Share link copied!' });
+      setTimeout(() => setShareLinkCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (studentId) {
@@ -388,6 +452,49 @@ export default function TeacherStudentProfile() {
               {batch.batch_name} • {batch.course_type}
             </p>
           </div>
+          
+          {/* Share Link Button */}
+          {studentAccount ? (
+            shareUrl ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={copyShareLink}
+                    className="gap-2"
+                  >
+                    {shareLinkCopied ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">
+                      {shareLinkCopied ? 'Copied!' : 'Share Link'}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copy parent share link</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => generateShareToken.mutate()}
+                disabled={generateShareToken.isPending}
+                className="gap-2"
+              >
+                {generateShareToken.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Generate Link</span>
+              </Button>
+            )
+          ) : null}
         </div>
 
         {/* Quick Stats Cards */}
@@ -498,7 +605,7 @@ export default function TeacherStudentProfile() {
                           className="text-xs" 
                           tick={{ fill: 'hsl(var(--muted-foreground))' }}
                         />
-                        <Tooltip 
+                        <ChartTooltip 
                           contentStyle={{ 
                             backgroundColor: 'hsl(var(--card))', 
                             border: '1px solid hsl(var(--border))',
@@ -545,7 +652,7 @@ export default function TeacherStudentProfile() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="session" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis domain={[0, 1]} ticks={[0, 1]} className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                      <Tooltip 
+                      <ChartTooltip 
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
