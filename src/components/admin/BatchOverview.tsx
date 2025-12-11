@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Calendar,
-  Filter
+  Filter,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -38,6 +40,7 @@ export function BatchOverview() {
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Get unique teachers for filter
   const teachers = useMemo(() => {
@@ -104,14 +107,26 @@ export function BatchOverview() {
             .select('*')
             .eq('batch_id', batch.id);
 
+          // Get homework records
+          const { data: homework } = await supabase
+            .from('homework')
+            .select('student_id, completed')
+            .eq('batch_id', batch.id);
+
           // Calculate attendance rate and alerts
           let totalPresent = 0;
           let totalSessions = 0;
-          let alertCount = 0;
           const maxSessions = batch.course_type === 'IELTS' ? 24 : 15;
 
+          // Track per-student absence counts
+          const studentAbsenceCounts: Record<string, number> = {};
+
           attendance?.forEach(record => {
-            let studentAbsent = 0;
+            const studentId = record.student_id as string;
+            if (!studentAbsenceCounts[studentId]) {
+              studentAbsenceCounts[studentId] = 0;
+            }
+            
             for (let i = 1; i <= maxSessions; i++) {
               const sessionKey = `session_${i}` as keyof typeof record;
               const status = record[sessionKey];
@@ -120,11 +135,37 @@ export function BatchOverview() {
                 if (status === 'present' || status === 'late') {
                   totalPresent++;
                 } else if (status === 'absent') {
-                  studentAbsent++;
+                  studentAbsenceCounts[studentId]++;
                 }
               }
             }
-            if (studentAbsent >= 3) alertCount++;
+          });
+
+          // Track per-student homework miss counts
+          const studentHomeworkMissCounts: Record<string, number> = {};
+          homework?.forEach(record => {
+            const studentId = record.student_id;
+            if (!studentHomeworkMissCounts[studentId]) {
+              studentHomeworkMissCounts[studentId] = 0;
+            }
+            if (!record.completed) {
+              studentHomeworkMissCounts[studentId]++;
+            }
+          });
+
+          // Count students with 3+ absences OR 3+ homework misses
+          const allStudentIds = new Set([
+            ...Object.keys(studentAbsenceCounts),
+            ...Object.keys(studentHomeworkMissCounts)
+          ]);
+          
+          let alertCount = 0;
+          allStudentIds.forEach(studentId => {
+            const absences = studentAbsenceCounts[studentId] || 0;
+            const homeworkMisses = studentHomeworkMissCounts[studentId] || 0;
+            if (absences >= 3 || homeworkMisses >= 3) {
+              alertCount++;
+            }
           });
 
           const attendanceRate = totalSessions > 0 ? (totalPresent / totalSessions) * 100 : 0;
@@ -293,18 +334,25 @@ export function BatchOverview() {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBatches.map(batch => (
-            <Card key={batch.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={batch.id} 
+              className="hover:shadow-md transition-all cursor-pointer hover:border-primary/50 group"
+              onClick={() => navigate(`/admin/batches?batch=${batch.id}`)}
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base line-clamp-1">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base line-clamp-1 group-hover:text-primary transition-colors">
                       {batch.batch_name || 'Unnamed Batch'}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">{batch.teacher || 'No teacher'}</p>
                   </div>
-                  <Badge variant={batch.course_type === 'SAT' ? 'default' : 'secondary'}>
-                    {batch.course_type}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={batch.course_type === 'SAT' ? 'default' : 'secondary'}>
+                      {batch.course_type}
+                    </Badge>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -350,11 +398,16 @@ export function BatchOverview() {
                     <TableHead className="text-center">Attendance</TableHead>
                     <TableHead className="text-center">Alerts</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredBatches.map(batch => (
-                    <TableRow key={batch.id}>
+                    <TableRow 
+                      key={batch.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/admin/batches?batch=${batch.id}`)}
+                    >
                       <TableCell className="font-medium max-w-[200px] truncate">
                         {batch.batch_name || 'Unnamed Batch'}
                       </TableCell>
@@ -379,6 +432,9 @@ export function BatchOverview() {
                         )}
                       </TableCell>
                       <TableCell>{getAttendanceBadge(batch.attendanceRate)}</TableCell>
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
