@@ -660,6 +660,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_login: string | null
+          linked_student_id: string | null
           phone_number: string
         }
         Insert: {
@@ -667,6 +668,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login?: string | null
+          linked_student_id?: string | null
           phone_number: string
         }
         Update: {
@@ -674,9 +676,63 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login?: string | null
+          linked_student_id?: string | null
           phone_number?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "student_accounts_linked_student_id_fkey"
+            columns: ["linked_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_activity_logs: {
+        Row: {
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          session_id: string | null
+          student_account_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          student_account_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_activity_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "student_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_activity_logs_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_attempts: {
         Row: {
@@ -809,6 +865,57 @@ export type Database = {
           },
           {
             foreignKeyName: "student_progress_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_review_queue: {
+        Row: {
+          created_at: string
+          ease_factor: number | null
+          id: string
+          interval_days: number | null
+          next_review_at: string
+          question_id: string
+          review_count: number | null
+          student_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ease_factor?: number | null
+          id?: string
+          interval_days?: number | null
+          next_review_at?: string
+          question_id: string
+          review_count?: number | null
+          student_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ease_factor?: number | null
+          id?: string
+          interval_days?: number | null
+          next_review_at?: string
+          question_id?: string
+          review_count?: number | null
+          student_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_review_queue_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_review_queue_student_account_id_fkey"
             columns: ["student_account_id"]
             isOneToOne: false
             referencedRelation: "student_accounts"
