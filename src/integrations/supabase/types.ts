@@ -552,15 +552,20 @@ export type Database = {
           answer: string
           category_id: string | null
           created_at: string
+          difficulty_level: string | null
           id: string
           is_active: boolean
           is_original: boolean
           multiple_choice_options: Json | null
+          original_cb_id: string | null
           parent_question_id: string | null
           question_id: string
           question_image_url: string | null
+          question_set: string | null
           question_text: string
           question_type: string
+          rationale: string | null
+          subtopic: string | null
           updated_at: string
           video_url: string | null
         }
@@ -568,15 +573,20 @@ export type Database = {
           answer: string
           category_id?: string | null
           created_at?: string
+          difficulty_level?: string | null
           id?: string
           is_active?: boolean
           is_original?: boolean
           multiple_choice_options?: Json | null
+          original_cb_id?: string | null
           parent_question_id?: string | null
           question_id: string
           question_image_url?: string | null
+          question_set?: string | null
           question_text: string
           question_type: string
+          rationale?: string | null
+          subtopic?: string | null
           updated_at?: string
           video_url?: string | null
         }
@@ -584,15 +594,20 @@ export type Database = {
           answer?: string
           category_id?: string | null
           created_at?: string
+          difficulty_level?: string | null
           id?: string
           is_active?: boolean
           is_original?: boolean
           multiple_choice_options?: Json | null
+          original_cb_id?: string | null
           parent_question_id?: string | null
           question_id?: string
           question_image_url?: string | null
+          question_set?: string | null
           question_text?: string
           question_type?: string
+          rationale?: string | null
+          subtopic?: string | null
           updated_at?: string
           video_url?: string | null
         }
