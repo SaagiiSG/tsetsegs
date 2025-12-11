@@ -100,7 +100,7 @@ export function StudentSearchCommand({ open, onOpenChange }: StudentSearchComman
 
   const handleSelect = (studentId: string) => {
     onOpenChange(false);
-    navigate(`/teacher/students/${studentId}`);
+    navigate(`/teacher/student/${studentId}`);
   };
 
   // Group students by batch
