@@ -211,12 +211,11 @@ export function CBQuestionImport() {
       const validQuestions = questions.filter(q => 
         q.status === 'success' && 
         q.question_text && 
-        q.correct_answer && 
-        ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase())
+        q.correct_answer // Just need a non-empty answer
       );
       
       if (validQuestions.length === 0) {
-        throw new Error('No valid questions to save. Ensure all questions have text and a correct answer (A, B, C, or D).');
+        throw new Error('No valid questions to save. Ensure all questions have text and a correct answer.');
       }
       
       // Get the highest existing CB question number
@@ -235,25 +234,29 @@ export function CBQuestionImport() {
         }
       }
 
-      const questionsToInsert = validQuestions.map((q, idx) => ({
-        question_id: `CB${String(nextNumber + idx).padStart(4, '0')}`,
-        question_text: q.question_text,
-        question_type: 'multiple_choice',
-        multiple_choice_options: {
-          A: q.option_a || '',
-          B: q.option_b || '',
-          C: q.option_c || '',
-          D: q.option_d || ''
-        },
-        answer: q.correct_answer.toUpperCase(),
-        question_set: 'CollegeBoard',
-        original_cb_id: q.question_id || null,
-        subtopic: q.skill || null,
-        difficulty_level: q.difficulty || null,
-        rationale: q.rationale || null,
-        is_active: true,
-        is_original: true
-      }));
+      const questionsToInsert = validQuestions.map((q, idx) => {
+        const isMultipleChoice = ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase());
+        
+        return {
+          question_id: `CB${String(nextNumber + idx).padStart(4, '0')}`,
+          question_text: q.question_text,
+          question_type: isMultipleChoice ? 'multiple_choice' : 'fill_in_blank',
+          multiple_choice_options: isMultipleChoice ? {
+            A: q.option_a || '',
+            B: q.option_b || '',
+            C: q.option_c || '',
+            D: q.option_d || ''
+          } : null,
+          answer: isMultipleChoice ? q.correct_answer.toUpperCase() : q.correct_answer,
+          question_set: 'CollegeBoard',
+          original_cb_id: q.question_id || null,
+          subtopic: q.skill || null,
+          difficulty_level: q.difficulty || null,
+          rationale: q.rationale || null,
+          is_active: true,
+          is_original: true
+        };
+      });
 
       const { error } = await supabase
         .from('questions')
@@ -276,8 +279,7 @@ export function CBQuestionImport() {
   const validCount = parsedQuestions.filter(q => 
     q.status === 'success' && 
     q.question_text && 
-    q.correct_answer && 
-    ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase())
+    q.correct_answer
   ).length;
   const successCount = parsedQuestions.filter(q => q.status === 'success').length;
   const errorCount = parsedQuestions.filter(q => q.status === 'error').length;
