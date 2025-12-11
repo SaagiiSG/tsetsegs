@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck } from 'lucide-react';
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import flowersLogo from '@/assets/flowers-logo.png';
 import {
@@ -17,6 +17,7 @@ const isDev = import.meta.env.DEV;
 
 const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: BarChart3, end: true },
+  { title: 'Batch Overview', url: '/admin/overview', icon: ClipboardList },
   { title: 'Batches', url: '/admin/batches', icon: GraduationCap },
   { title: 'Create Batch', url: '/admin/create', icon: Plus },
   ...(isDev ? [{ title: 'Question Bank', url: '/admin/questions', icon: FileQuestion }] : []),
