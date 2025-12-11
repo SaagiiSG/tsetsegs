@@ -18,7 +18,7 @@ interface Question {
   question_text: string;
   answer: string;
   question_type: string;
-  multiple_choice_options: string[] | null;
+  multiple_choice_options: Record<string, string> | null;
   category: { name: string } | null;
 }
 
@@ -260,8 +260,8 @@ export default function StudentSpeedSession() {
     ? (timeLeft / timerValue) * 100
     : (timeLeft / (timerValue * 60)) * 100;
 
-  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && 
-    currentQuestion.multiple_choice_options?.length;
+  const options = currentQuestion?.multiple_choice_options as Record<string, string> | null;
+  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && options;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none">
@@ -306,15 +306,15 @@ export default function StudentSpeedSession() {
             {/* Answer Input */}
             {isMultipleChoice ? (
               <div className="grid grid-cols-2 gap-3">
-                {currentQuestion?.multiple_choice_options?.map((option, idx) => {
-                  const letter = String.fromCharCode(65 + idx);
+                {['A', 'B', 'C', 'D'].map((letter) => {
+                  if (!options?.[letter]) return null;
                   const isSelected = selectedAnswer === letter;
-                  const showCorrect = showResult && letter === currentQuestion.answer;
+                  const showCorrect = showResult && letter === currentQuestion?.answer;
                   const showWrong = showResult && isSelected && !isCorrect;
 
                   return (
                     <Button
-                      key={idx}
+                      key={letter}
                       variant="outline"
                       disabled={showResult}
                       className={`h-auto py-3 px-4 justify-start text-left ${
@@ -325,7 +325,7 @@ export default function StudentSpeedSession() {
                       onClick={() => setSelectedAnswer(letter)}
                     >
                       <span className="font-bold mr-2">{letter}.</span>
-                      <MathText text={option} />
+                      <MathText text={options[letter]} />
                     </Button>
                   );
                 })}
