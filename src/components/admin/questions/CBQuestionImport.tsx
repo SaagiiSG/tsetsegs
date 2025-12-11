@@ -207,7 +207,17 @@ export function CBQuestionImport() {
 
   const saveMutation = useMutation({
     mutationFn: async (questions: ParsedQuestion[]) => {
-      const successQuestions = questions.filter(q => q.status === 'success' && q.question_id);
+      // Filter only valid questions with required fields
+      const validQuestions = questions.filter(q => 
+        q.status === 'success' && 
+        q.question_text && 
+        q.correct_answer && 
+        ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase())
+      );
+      
+      if (validQuestions.length === 0) {
+        throw new Error('No valid questions to save. Ensure all questions have text and a correct answer (A, B, C, or D).');
+      }
       
       // Get the highest existing CB question number
       const { data: existingQuestions } = await supabase
@@ -225,22 +235,22 @@ export function CBQuestionImport() {
         }
       }
 
-      const questionsToInsert = successQuestions.map((q, idx) => ({
+      const questionsToInsert = validQuestions.map((q, idx) => ({
         question_id: `CB${String(nextNumber + idx).padStart(4, '0')}`,
         question_text: q.question_text,
         question_type: 'multiple_choice',
         multiple_choice_options: {
-          A: q.option_a,
-          B: q.option_b,
-          C: q.option_c,
-          D: q.option_d
+          A: q.option_a || '',
+          B: q.option_b || '',
+          C: q.option_c || '',
+          D: q.option_d || ''
         },
-        answer: q.correct_answer,
+        answer: q.correct_answer.toUpperCase(),
         question_set: 'CollegeBoard',
-        original_cb_id: q.question_id,
-        subtopic: q.skill,
-        difficulty_level: q.difficulty,
-        rationale: q.rationale,
+        original_cb_id: q.question_id || null,
+        subtopic: q.skill || null,
+        difficulty_level: q.difficulty || null,
+        rationale: q.rationale || null,
         is_active: true,
         is_original: true
       }));
@@ -263,6 +273,12 @@ export function CBQuestionImport() {
     }
   });
 
+  const validCount = parsedQuestions.filter(q => 
+    q.status === 'success' && 
+    q.question_text && 
+    q.correct_answer && 
+    ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase())
+  ).length;
   const successCount = parsedQuestions.filter(q => q.status === 'success').length;
   const errorCount = parsedQuestions.filter(q => q.status === 'error').length;
 
@@ -354,14 +370,14 @@ export function CBQuestionImport() {
                 </div>
                 <Button
                   onClick={() => saveMutation.mutate(parsedQuestions)}
-                  disabled={successCount === 0 || saveMutation.isPending}
+                  disabled={validCount === 0 || saveMutation.isPending}
                 >
                   {saveMutation.isPending ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  Save {successCount} Questions
+                  Save {validCount} Questions
                 </Button>
               </div>
             </div>
