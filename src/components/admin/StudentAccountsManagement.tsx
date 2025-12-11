@@ -30,11 +30,22 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Search, Smartphone, Monitor, Laptop, 
   ChevronDown, ChevronRight, Power, PowerOff, 
   RefreshCw, Trash2, User, ExternalLink, Phone, GraduationCap
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+
+const ITEMS_PER_PAGE = 15;
 
 interface StudentSession {
   id: string;
@@ -111,6 +122,7 @@ export function StudentAccountsManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const [searchOpen, setSearchOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     type: 'terminate_session' | 'deactivate_account' | 'activate_account';
@@ -248,8 +260,20 @@ export function StudentAccountsManagement() {
   };
 
   const filteredAccounts = accounts.filter(account =>
-    account.phone_number.includes(searchQuery)
+    account.phone_number.includes(searchQuery) ||
+    account.studentInfo?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    account.studentInfo?.last_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const activeSessionsCount = accounts.reduce(
     (sum, a) => sum + a.sessions.filter(s => s.is_active).length, 
@@ -346,7 +370,7 @@ export function StudentAccountsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {filteredAccounts.map((account) => {
+              {paginatedAccounts.map((account) => {
                 const activeSessions = account.sessions.filter(s => s.is_active);
                 const isExpanded = expandedAccounts.has(account.id);
                 
@@ -413,7 +437,7 @@ export function StudentAccountsManagement() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/teacher/students/${account.studentInfo?.student_id}`);
+                              navigate(`/admin/student/${account.studentInfo?.student_id}`);
                             }}
                           >
                             <ExternalLink className="h-3 w-3 mr-1" />
@@ -513,7 +537,7 @@ export function StudentAccountsManagement() {
                 );
               })}
               
-              {filteredAccounts.length === 0 && (
+              {paginatedAccounts.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No accounts found matching your search' : 'No student accounts yet'}
@@ -524,6 +548,63 @@ export function StudentAccountsManagement() {
           </Table>
           </ScrollArea>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <p className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredAccounts.length)} of {filteredAccounts.length} accounts
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
 
       {/* Confirmation Dialog */}
@@ -609,7 +690,7 @@ export function StudentAccountsManagement() {
                     onSelect={() => {
                       setSearchOpen(false);
                       if (account.studentInfo?.student_id) {
-                        navigate(`/teacher/students/${account.studentInfo.student_id}`);
+                        navigate(`/admin/student/${account.studentInfo.student_id}`);
                       }
                     }}
                     className="flex items-center justify-between cursor-pointer"

@@ -14,6 +14,7 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
+import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -83,6 +84,7 @@ const Admin = () => {
                 }
               />
               <Route path="students" element={<StudentAccountsManagement />} />
+              <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
