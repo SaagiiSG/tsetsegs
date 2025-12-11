@@ -337,7 +337,7 @@ export function BatchOverview() {
             <Card 
               key={batch.id} 
               className="hover:shadow-md transition-all cursor-pointer hover:border-primary/50 group"
-              onClick={() => navigate(`/admin/batches?batch=${batch.id}`)}
+              onClick={() => navigate(`/admin/analytics/${batch.id}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
@@ -406,7 +406,7 @@ export function BatchOverview() {
                     <TableRow 
                       key={batch.id} 
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/admin/batches?batch=${batch.id}`)}
+                      onClick={() => navigate(`/admin/analytics/${batch.id}`)}
                     >
                       <TableCell className="font-medium max-w-[200px] truncate">
                         {batch.batch_name || 'Unnamed Batch'}
