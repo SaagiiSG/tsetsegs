@@ -1,6 +1,6 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList } from 'lucide-react';
-import { NavLink } from '@/components/NavLink';
-import flowersLogo from '@/assets/flowers-logo.png';
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList } from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import flowersLogo from "@/assets/flowers-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -11,33 +11,33 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 const isDev = import.meta.env.DEV;
 
 const menuItems = [
-  { title: 'Dashboard', url: '/admin', icon: BarChart3, end: true },
-  { title: 'Batch Overview', url: '/admin/overview', icon: ClipboardList },
-  { title: 'Batches', url: '/admin/batches', icon: GraduationCap },
-  { title: 'Create Batch', url: '/admin/create', icon: Plus },
-  ...(isDev ? [{ title: 'Question Bank', url: '/admin/questions', icon: FileQuestion }] : []),
-  { title: 'Students', url: '/admin/students', icon: UserCheck },
-  { title: 'Team', url: '/admin/team', icon: Users },
-  { title: 'Settings', url: '/admin/settings', icon: Settings },
+  { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
+  { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
+  { title: "Batches", url: "/admin/batches", icon: GraduationCap },
+  { title: "Create Batch", url: "/admin/create", icon: Plus },
+  ...(isDev ? [{ title: "Question Bank", url: "/admin/questions", icon: FileQuestion }] : []),
+  { title: "Students", url: "/admin/students", icon: UserCheck },
+  { title: "Team", url: "/admin/team", icon: Users },
+  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const { open } = useSidebar();
 
   return (
-    <Sidebar className={open ? 'w-60' : 'w-14'} collapsible="icon">
+    <Sidebar className={open ? "w-60" : "w-14"} collapsible="icon">
       <SidebarContent className="pt-4">
         {/* Logo and Title */}
         <div className="px-3 pb-4 mb-4 border-b">
           <div className="flex items-center gap-3">
-            <img 
-              src={flowersLogo} 
-              alt="Flowers Talent Agency" 
+            <img
+              src={flowersLogo}
+              alt="Flowers Talent Agency"
               className="w-10 h-10 rounded-lg flex-shrink-0 object-contain"
             />
             {open && (
