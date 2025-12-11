@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -6,6 +7,7 @@ import { BatchGridCard } from './BatchGridCard';
 import { BatchDetailsDialog } from './BatchDetailsDialog';
 
 export function BatchesView() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<any[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [selectedIntake, setSelectedIntake] = useState<string>('all');
@@ -14,6 +16,9 @@ export function BatchesView() {
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Check for batch query param to auto-open dialog
+  const batchIdFromUrl = searchParams.get('batch');
+
   useEffect(() => {
     fetchBatches();
   }, []);
@@ -21,18 +26,33 @@ export function BatchesView() {
   useEffect(() => {
     if (batches.length > 0) {
       fetchStudentCounts();
+      
+      // Auto-open batch dialog if batch ID is in URL
+      if (batchIdFromUrl) {
+        const batchToOpen = batches.find(b => b.id === batchIdFromUrl);
+        if (batchToOpen) {
+          setSelectedBatch(batchToOpen);
+          setDialogOpen(true);
+        }
+        // Clear the query param after opening
+        setSearchParams({}, { replace: true });
+      }
     }
-  }, [batches]);
+  }, [batches, batchIdFromUrl]);
 
   const fetchBatches = async () => {
+    // If there's a specific batch requested, fetch all batches
+    // Otherwise, default to current month for performance
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const { data } = await supabase
-      .from('batches')
-      .select('*')
-      .gte('start_date', currentMonthStart.toISOString())
-      .order('start_date', { ascending: false });
+    
+    let query = supabase.from('batches').select('*');
+    
+    if (!batchIdFromUrl) {
+      query = query.gte('start_date', currentMonthStart.toISOString());
+    }
+    
+    const { data } = await query.order('start_date', { ascending: false });
 
     if (data) {
       setBatches(data);
