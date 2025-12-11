@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   GraduationCap, Target, BookOpen, CheckCircle2, XCircle, 
-  Clock, TrendingUp, Calendar, Award
+  Clock, TrendingUp, Calendar, Award, UserCheck, ClipboardCheck, Trophy
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -24,11 +24,21 @@ export default function StudentShareProfile() {
           id,
           phone_number,
           created_at,
+          linked_student_id,
           linked_student:students(
+            id,
             first_name,
             last_name,
             school_name,
-            grade
+            grade,
+            batch_id,
+            batch:batches(
+              id,
+              batch_name,
+              course_type,
+              schedule,
+              start_date
+            )
           )
         `)
         .eq('share_token', shareToken)
@@ -38,6 +48,69 @@ export default function StudentShareProfile() {
       return data;
     },
     enabled: !!shareToken
+  });
+
+  const linkedStudent = studentAccount?.linked_student as {
+    id: string;
+    first_name: string;
+    last_name: string | null;
+    school_name: string | null;
+    grade: string | null;
+    batch_id: string;
+    batch: {
+      id: string;
+      batch_name: string;
+      course_type: 'SAT' | 'IELTS';
+      schedule: string;
+      start_date: string;
+    } | null;
+  } | null;
+
+  // Fetch attendance data
+  const { data: attendanceData } = useQuery({
+    queryKey: ['shared-attendance', linkedStudent?.id, linkedStudent?.batch_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', linkedStudent!.id)
+        .eq('batch_id', linkedStudent!.batch_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
+  });
+
+  // Fetch homework data
+  const { data: homeworkData } = useQuery({
+    queryKey: ['shared-homework', linkedStudent?.id, linkedStudent?.batch_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('homework')
+        .select('session_number, completed')
+        .eq('student_id', linkedStudent!.id)
+        .eq('batch_id', linkedStudent!.batch_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
+  });
+
+  // Fetch practice tests
+  const { data: practiceTests } = useQuery({
+    queryKey: ['shared-practice-tests', linkedStudent?.id, linkedStudent?.batch_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('practice_tests')
+        .select('test_number, score, created_at')
+        .eq('student_id', linkedStudent!.id)
+        .eq('batch_id', linkedStudent!.batch_id)
+        .order('test_number');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
   });
 
   // Fetch questions for progress calculation
@@ -130,22 +203,60 @@ export default function StudentShareProfile() {
     );
   }
 
-  const linkedStudent = studentAccount.linked_student as { 
-    first_name: string; 
-    last_name: string | null;
-    school_name: string | null;
-    grade: string | null;
-  } | null;
-
   const studentName = linkedStudent 
     ? `${linkedStudent.first_name} ${linkedStudent.last_name || ''}`.trim()
     : 'Student';
 
-  // Calculate stats
+  const courseType = linkedStudent?.batch?.course_type || 'SAT';
+  const maxSessions = courseType === 'IELTS' ? 24 : 15;
+
+  // Calculate course stats (attendance, homework, practice tests)
+  const courseStats = (() => {
+    // Attendance
+    let attendedCount = 0;
+    let markedCount = 0;
+    if (attendanceData) {
+      for (let i = 1; i <= maxSessions; i++) {
+        const status = (attendanceData as any)[`session_${i}`];
+        if (status !== null) {
+          markedCount++;
+          if (status === 'present' || status === 'late') {
+            attendedCount++;
+          }
+        }
+      }
+    }
+    const attendanceRate = markedCount > 0 ? Math.round((attendedCount / markedCount) * 100) : 0;
+
+    // Homework
+    const homeworkCompleted = homeworkData?.filter(h => h.completed === true).length || 0;
+    const homeworkMarked = homeworkData?.filter(h => h.completed !== null).length || 0;
+    const homeworkRate = homeworkMarked > 0 ? Math.round((homeworkCompleted / homeworkMarked) * 100) : 0;
+
+    // Practice tests
+    const testsWithScores = practiceTests?.filter(t => t.score !== null) || [];
+    const avgScore = testsWithScores.length > 0 
+      ? Math.round(testsWithScores.reduce((sum, t) => sum + (t.score || 0), 0) / testsWithScores.length)
+      : 0;
+    const latestScore = testsWithScores.length > 0 ? testsWithScores[testsWithScores.length - 1].score : null;
+
+    return {
+      attendedCount,
+      markedCount,
+      attendanceRate,
+      homeworkCompleted,
+      homeworkMarked,
+      homeworkRate,
+      testsCompleted: testsWithScores.length,
+      avgScore,
+      latestScore,
+    };
+  })();
+
+  // Calculate practice stats
   const totalQuestions = questions?.length || 0;
   const videosWatched = progress?.filter(p => p.video_watched).length || 0;
   
-  // Group attempts by question to find correct ones
   const attemptsByQuestion = attempts?.reduce((acc, a) => {
     if (!acc[a.question_id]) acc[a.question_id] = [];
     acc[a.question_id].push(a);
@@ -172,8 +283,8 @@ export default function StudentShareProfile() {
     return acc;
   }, {} as Record<string, { total: number; completed: number }>);
 
-  // Recent attempts (last 20)
-  const recentAttempts = attempts?.slice(0, 20).map(a => {
+  // Recent attempts (last 10)
+  const recentAttempts = attempts?.slice(0, 10).map(a => {
     const q = questions?.find(q => q.id === a.question_id);
     return { ...a, question: q };
   });
@@ -197,53 +308,132 @@ export default function StudentShareProfile() {
                   {linkedStudent?.grade && (
                     <Badge variant="outline">Grade {linkedStudent.grade}</Badge>
                   )}
+                  <Badge>{courseType}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  SAT Practice Progress Report
-                </p>
+                {linkedStudent?.batch?.batch_name && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {linkedStudent.batch.batch_name}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Course Completion Stats */}
+        {linkedStudent?.batch && (
           <Card>
-            <CardContent className="p-4 text-center">
-              <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold">{questionsCompleted}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Course Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <UserCheck className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{courseStats.attendanceRate}%</p>
+                  <p className="text-xs text-muted-foreground">Attendance</p>
+                  <p className="text-xs text-muted-foreground">
+                    {courseStats.attendedCount}/{courseStats.markedCount} sessions
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <ClipboardCheck className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{courseStats.homeworkRate}%</p>
+                  <p className="text-xs text-muted-foreground">Homework</p>
+                  <p className="text-xs text-muted-foreground">
+                    {courseStats.homeworkCompleted}/{courseStats.homeworkMarked} completed
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <Trophy className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
+                    {courseStats.avgScore > 0 ? courseStats.avgScore : '-'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Avg Score</p>
+                  <p className="text-xs text-muted-foreground">
+                    {courseStats.testsCompleted} tests taken
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <TrendingUp className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
+                    {courseStats.latestScore ?? '-'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Latest Score</p>
+                  <p className="text-xs text-muted-foreground">
+                    {courseType === 'IELTS' ? 'Band' : 'SAT'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Practice Test History */}
+              {practiceTests && practiceTests.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium mb-3">Practice Test History</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {practiceTests.map((test) => (
+                      <div 
+                        key={test.test_number}
+                        className="px-3 py-2 rounded-lg bg-muted text-center min-w-[70px]"
+                      >
+                        <p className="text-xs text-muted-foreground">
+                          {courseType === 'IELTS' ? `Mock ${test.test_number}` : `Test ${test.test_number + 3}`}
+                        </p>
+                        <p className="font-semibold">
+                          {test.score ?? '-'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <BookOpen className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold">{videosWatched}</p>
-              <p className="text-xs text-muted-foreground">Videos Watched</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Target className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{accuracy}%</p>
-              <p className="text-xs text-muted-foreground">Accuracy</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Clock className="h-6 w-6 text-orange-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold">{reviewCount}</p>
-              <p className="text-xs text-muted-foreground">To Review</p>
-            </CardContent>
-          </Card>
-        </div>
+        )}
+
+        {/* Practice Stats Grid */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              SAT Practice Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{questionsCompleted}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <BookOpen className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{videosWatched}</p>
+                <p className="text-xs text-muted-foreground">Videos Watched</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <Target className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-2xl font-bold">{accuracy}%</p>
+                <p className="text-xs text-muted-foreground">Accuracy</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <Clock className="h-6 w-6 text-orange-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{reviewCount}</p>
+                <p className="text-xs text-muted-foreground">To Review</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Overall Progress */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Overall Progress
+              Overall Question Progress
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -332,7 +522,7 @@ export default function StudentShareProfile() {
 
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground pb-6">
-          <p>Tsetsegs Talent Agency • SAT Practice Portal</p>
+          <p>Tsetsegs Talent Agency • {courseType} Prep Portal</p>
           <p className="mt-1">This is a read-only view for parents</p>
         </div>
       </div>
