@@ -1,7 +1,7 @@
 import { NavLink } from '@/components/NavLink';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { 
-  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User
+  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/speed', icon: Zap, label: 'Speed Mode' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
+  { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
