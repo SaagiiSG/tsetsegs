@@ -14,10 +14,28 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 
+// SM-2 spaced repetition algorithm helper
+const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
+  // quality: 0-2 = wrong, 3 = barely correct, 4-5 = correct
+  let newEF = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  newEF = Math.max(1.3, newEF);
+  
+  let newInterval: number;
+  if (quality < 3) {
+    newInterval = 1; // Reset to 1 day
+  } else {
+    if (interval === 0) newInterval = 1;
+    else if (interval === 1) newInterval = 6;
+    else newInterval = Math.round(interval * newEF);
+  }
+  
+  return { newEF, newInterval };
+};
+
 export default function StudentQuestion() {
   const { questionId } = useParams();
   const navigate = useNavigate();
-  const { student, isLoading: authLoading } = useStudentAuth();
+  const { student, isLoading: authLoading, logActivity } = useStudentAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -31,6 +49,22 @@ export default function StudentQuestion() {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
+
+  // Security: Prevent screenshots
+  useEffect(() => {
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+    
+    // Log question view
+    if (student && questionId) {
+      logActivity('question_view', { question_id: questionId });
+    }
+
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
+    };
+  }, [student, questionId]);
 
   // Fetch original question details
   const { data: question, isLoading: questionLoading } = useQuery({
@@ -158,6 +192,9 @@ export default function StudentQuestion() {
         }, {
           onConflict: 'student_account_id,question_id'
         });
+
+      // Log activity
+      logActivity('video_watch', { question_id: questionId });
     },
     onSuccess: () => {
       setVideoWatched(true);
@@ -184,6 +221,89 @@ export default function StudentQuestion() {
           time_spent_seconds: timeSpent,
         });
 
+      // Log activity
+      logActivity('question_attempt', {
+        question_id: currentQuestion.id,
+        is_correct: correct,
+        attempt_number: currentAttempts.length + 1,
+        time_spent: timeSpent
+      });
+
+      // Add to spaced repetition queue if incorrect
+      if (!correct && questionId) {
+        const { data: existing } = await supabase
+          .from('student_review_queue')
+          .select('*')
+          .eq('student_account_id', student.id)
+          .eq('question_id', questionId)
+          .maybeSingle();
+
+        if (existing) {
+          // Update existing review item with SM-2 algorithm
+          const { newEF, newInterval } = calculateNextReview(
+            0, // quality 0 for wrong answer
+            Number(existing.ease_factor) || 2.5,
+            existing.interval_days || 1
+          );
+          const nextReview = new Date();
+          nextReview.setDate(nextReview.getDate() + newInterval);
+
+          await supabase
+            .from('student_review_queue')
+            .update({
+              next_review_at: nextReview.toISOString(),
+              ease_factor: newEF,
+              interval_days: newInterval,
+              review_count: (existing.review_count || 0) + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+        } else {
+          // Create new review item
+          const nextReview = new Date();
+          nextReview.setDate(nextReview.getDate() + 1); // First review after 1 day
+
+          await supabase
+            .from('student_review_queue')
+            .insert({
+              student_account_id: student.id,
+              question_id: questionId,
+              next_review_at: nextReview.toISOString(),
+              ease_factor: 2.5,
+              interval_days: 1,
+              review_count: 1
+            });
+        }
+      } else if (correct && questionId) {
+        // Remove from review queue if correct (or update with longer interval)
+        const { data: existing } = await supabase
+          .from('student_review_queue')
+          .select('*')
+          .eq('student_account_id', student.id)
+          .eq('question_id', questionId)
+          .maybeSingle();
+
+        if (existing) {
+          const { newEF, newInterval } = calculateNextReview(
+            5, // quality 5 for correct
+            Number(existing.ease_factor) || 2.5,
+            existing.interval_days || 1
+          );
+          const nextReview = new Date();
+          nextReview.setDate(nextReview.getDate() + newInterval);
+
+          await supabase
+            .from('student_review_queue')
+            .update({
+              next_review_at: nextReview.toISOString(),
+              ease_factor: newEF,
+              interval_days: newInterval,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+        }
+      }
+
       return correct;
     },
     onSuccess: (correct) => {
@@ -192,6 +312,7 @@ export default function StudentQuestion() {
       setAttemptCount(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['question-attempts-all'] });
       queryClient.invalidateQueries({ queryKey: ['student-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['review-queue'] });
     },
     onError: (error: any) => {
       toast({
