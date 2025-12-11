@@ -35,6 +35,7 @@ import StudentReview from "./pages/student/StudentReview";
 import StudentStats from "./pages/student/StudentStats";
 import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import StudentSettings from "./pages/student/StudentSettings";
+import StudentShareProfile from "./pages/student/StudentShareProfile";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,7 @@ const App = () => (
                   </Route>
                   
                   <Route path="/student/:id" element={<StudentReveal />} />
+                  <Route path="/student/share/:shareToken" element={<StudentShareProfile />} />
                   <Route path="/batch/:id" element={<StudentReveal />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

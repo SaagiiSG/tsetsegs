@@ -662,6 +662,8 @@ export type Database = {
           last_login: string | null
           linked_student_id: string | null
           phone_number: string
+          share_token: string | null
+          share_token_created_at: string | null
         }
         Insert: {
           created_at?: string
@@ -670,6 +672,8 @@ export type Database = {
           last_login?: string | null
           linked_student_id?: string | null
           phone_number: string
+          share_token?: string | null
+          share_token_created_at?: string | null
         }
         Update: {
           created_at?: string
@@ -678,6 +682,8 @@ export type Database = {
           last_login?: string | null
           linked_student_id?: string | null
           phone_number?: string
+          share_token?: string | null
+          share_token_created_at?: string | null
         }
         Relationships: [
           {
@@ -1085,6 +1091,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_share_token: { Args: never; Returns: string }
       get_all_users: {
         Args: never
         Returns: {
