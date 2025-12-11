@@ -217,6 +217,21 @@ export function CBQuestionImport() {
       if (validQuestions.length === 0) {
         throw new Error('No valid questions to save. Ensure all questions have text and a correct answer.');
       }
+
+      // Fetch categories for mapping
+      const { data: categories } = await supabase
+        .from('question_categories')
+        .select('id, name');
+      
+      // Create domain to category_id mapping
+      const categoryMap: Record<string, string> = {};
+      categories?.forEach(cat => {
+        categoryMap[cat.name] = cat.id;
+        // Also map "Data Analysis" to "Data Analysis and Problem Solving"
+        if (cat.name === 'Data Analysis and Problem Solving') {
+          categoryMap['Data Analysis'] = cat.id;
+        }
+      });
       
       // Get the highest existing CB question number
       const { data: existingQuestions } = await supabase
@@ -236,6 +251,7 @@ export function CBQuestionImport() {
 
       const questionsToInsert = validQuestions.map((q, idx) => {
         const isMultipleChoice = ['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase());
+        const categoryId = categoryMap[q.domain] || null;
         
         return {
           question_id: `CB${String(nextNumber + idx).padStart(4, '0')}`,
@@ -253,6 +269,7 @@ export function CBQuestionImport() {
           subtopic: q.skill || null,
           difficulty_level: q.difficulty || null,
           rationale: q.rationale || null,
+          category_id: categoryId,
           is_active: true,
           is_original: true
         };
