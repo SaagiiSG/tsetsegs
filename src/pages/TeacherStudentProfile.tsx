@@ -144,7 +144,7 @@ export default function TeacherStudentProfile() {
         .select("*")
         .eq("student_id", studentId)
         .eq("batch_id", studentData.batch_id)
-        .single();
+        .maybeSingle();
 
       const attendanceRecords: AttendanceRecord[] = [];
       for (let i = 1; i <= maxSessions; i++) {
