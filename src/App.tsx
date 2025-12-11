@@ -17,7 +17,6 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
 import StudentPortal from "./pages/StudentPortal";
-import StudentDashboard from "./pages/StudentDashboard";
 import StudentQuestion from "./pages/StudentQuestion";
 import NotFound from "./pages/NotFound";
 import TeacherLogin from "./pages/TeacherLogin";
@@ -26,6 +25,16 @@ import TeacherChangePassword from "./pages/TeacherChangePassword";
 import TeacherClassAttendance from "./pages/TeacherClassAttendance";
 import TeacherStudentCards from "./pages/TeacherStudentCards";
 import TeacherSettings from "./pages/TeacherSettings";
+
+// Student Practice Portal Pages
+import { StudentLayout } from "./components/student/StudentLayout";
+import StudentPractice from "./pages/student/StudentPractice";
+import StudentSpeedMode from "./pages/student/StudentSpeedMode";
+import StudentSpeedSession from "./pages/student/StudentSpeedSession";
+import StudentReview from "./pages/student/StudentReview";
+import StudentStats from "./pages/student/StudentStats";
+import StudentLeaderboard from "./pages/student/StudentLeaderboard";
+import StudentSettings from "./pages/student/StudentSettings";
 
 const queryClient = new QueryClient();
 
@@ -112,10 +121,19 @@ const App = () => (
                       </TeacherProtectedRoute>
                     } 
                   />
+                  
                   {/* Student Practice Portal */}
                   <Route path="/practice" element={<StudentPortal />} />
-                  <Route path="/practice/dashboard" element={<StudentDashboard />} />
-                  <Route path="/practice/question/:questionId" element={<StudentQuestion />} />
+                  <Route path="/practice" element={<StudentLayout />}>
+                    <Route path="dashboard" element={<StudentPractice />} />
+                    <Route path="speed" element={<StudentSpeedMode />} />
+                    <Route path="speed/session" element={<StudentSpeedSession />} />
+                    <Route path="review" element={<StudentReview />} />
+                    <Route path="stats" element={<StudentStats />} />
+                    <Route path="leaderboard" element={<StudentLeaderboard />} />
+                    <Route path="settings" element={<StudentSettings />} />
+                    <Route path="question/:questionId" element={<StudentQuestion />} />
+                  </Route>
                   
                   <Route path="/student/:id" element={<StudentReveal />} />
                   <Route path="/batch/:id" element={<StudentReveal />} />

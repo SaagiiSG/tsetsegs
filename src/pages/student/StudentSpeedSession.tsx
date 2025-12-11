@@ -1,0 +1,407 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { 
+  Timer, Zap, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Home
+} from 'lucide-react';
+import { MathText } from '@/components/MathText';
+
+interface Question {
+  id: string;
+  question_id: string;
+  question_text: string;
+  answer: string;
+  question_type: string;
+  multiple_choice_options: string[] | null;
+  category: { name: string } | null;
+}
+
+export default function StudentSpeedSession() {
+  const { student, logActivity } = useStudentAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const mode = searchParams.get('mode') as 'question' | 'session';
+  const timerValue = Number(searchParams.get('timer'));
+  const categoryId = searchParams.get('category');
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(mode === 'session' ? timerValue * 60 : timerValue);
+  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [showResult, setShowResult] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [results, setResults] = useState<{ correct: boolean; questionId: string }[]>([]);
+
+  // Fetch questions
+  const { data: questions, isLoading } = useQuery({
+    queryKey: ['speed-questions', categoryId],
+    queryFn: async () => {
+      let query = supabase
+        .from('questions')
+        .select(`
+          id,
+          question_id,
+          question_text,
+          answer,
+          question_type,
+          multiple_choice_options,
+          category:question_categories(name)
+        `)
+        .eq('is_original', true)
+        .eq('is_active', true);
+
+      if (categoryId && categoryId !== 'all') {
+        query = query.eq('category_id', categoryId);
+      }
+
+      const { data, error } = await query.order('question_id');
+      if (error) throw error;
+      
+      // Shuffle questions for randomness
+      return (data as Question[]).sort(() => Math.random() - 0.5);
+    },
+    enabled: !!student
+  });
+
+  const currentQuestion = questions?.[currentIndex];
+
+  // Submit attempt mutation
+  const submitAttempt = useMutation({
+    mutationFn: async ({ questionId, answer, correct }: { 
+      questionId: string; 
+      answer: string; 
+      correct: boolean 
+    }) => {
+      if (!student) return;
+
+      // Get current attempt count
+      const { data: existing } = await supabase
+        .from('student_attempts')
+        .select('attempt_number')
+        .eq('student_account_id', student.id)
+        .eq('question_id', questionId)
+        .order('attempt_number', { ascending: false })
+        .limit(1);
+
+      const attemptNumber = (existing?.[0]?.attempt_number || 0) + 1;
+
+      await supabase.from('student_attempts').insert({
+        student_account_id: student.id,
+        question_id: questionId,
+        answer_submitted: answer,
+        is_correct: correct,
+        attempt_number: attemptNumber,
+        time_spent_seconds: mode === 'question' ? timerValue - timeLeft : null
+      });
+    }
+  });
+
+  // Timer logic
+  useEffect(() => {
+    if (sessionComplete || showResult || !questions?.length) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          if (mode === 'question') {
+            // Time's up for this question - mark as incorrect
+            handleSubmit(true);
+          } else {
+            // Session time's up
+            setSessionComplete(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionComplete, showResult, questions, mode]);
+
+  // Reset question timer when moving to next question
+  useEffect(() => {
+    if (mode === 'question' && !showResult) {
+      setTimeLeft(timerValue);
+    }
+  }, [currentIndex, mode, timerValue, showResult]);
+
+  const normalizeAnswer = (answer: string) => {
+    return answer.trim().toLowerCase().replace(/\s+/g, ' ');
+  };
+
+  const handleSubmit = useCallback((timeout = false) => {
+    if (!currentQuestion || showResult) return;
+
+    const correct = !timeout && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentQuestion.answer);
+    
+    setIsCorrect(correct);
+    setShowResult(true);
+    setResults(prev => [...prev, { correct, questionId: currentQuestion.id }]);
+
+    submitAttempt.mutate({
+      questionId: currentQuestion.id,
+      answer: timeout ? 'TIMEOUT' : selectedAnswer,
+      correct
+    });
+
+    logActivity('speed_mode_answer', {
+      question_id: currentQuestion.id,
+      correct,
+      timeout
+    });
+  }, [currentQuestion, selectedAnswer, showResult]);
+
+  const handleNext = () => {
+    if (currentIndex >= (questions?.length || 0) - 1) {
+      setSessionComplete(true);
+      return;
+    }
+    
+    setCurrentIndex(prev => prev + 1);
+    setSelectedAnswer('');
+    setShowResult(false);
+    setIsCorrect(false);
+  };
+
+  const handleFinish = () => {
+    logActivity('speed_mode_complete', {
+      total: results.length,
+      correct: results.filter(r => r.correct).length,
+      mode,
+      timer: timerValue
+    });
+    navigate('/practice/speed');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!questions?.length) {
+    return (
+      <div className="p-4 md:p-6 text-center">
+        <p className="text-muted-foreground">No questions available</p>
+        <Button onClick={() => navigate('/practice/speed')} className="mt-4">
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  // Session complete screen
+  if (sessionComplete) {
+    const correctCount = results.filter(r => r.correct).length;
+    const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center space-y-6">
+            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Trophy className="h-10 w-10 text-primary" />
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold">Session Complete!</h2>
+              <p className="text-muted-foreground mt-2">Great job practicing!</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-muted/50">
+                <p className="text-3xl font-bold">{results.length}</p>
+                <p className="text-xs text-muted-foreground">Questions</p>
+              </div>
+              <div className="p-4 rounded-lg bg-green-500/10">
+                <p className="text-3xl font-bold text-green-600">{correctCount}</p>
+                <p className="text-xs text-muted-foreground">Correct</p>
+              </div>
+              <div className="p-4 rounded-lg bg-primary/10">
+                <p className="text-3xl font-bold text-primary">{accuracy}%</p>
+                <p className="text-xs text-muted-foreground">Accuracy</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate('/practice/speed')} className="flex-1">
+                <Zap className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+              <Button onClick={() => navigate('/practice/dashboard')} className="flex-1">
+                <Home className="h-4 w-4 mr-2" />
+                Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const timerPercent = mode === 'question' 
+    ? (timeLeft / timerValue) * 100
+    : (timeLeft / (timerValue * 60)) * 100;
+
+  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && 
+    currentQuestion.multiple_choice_options?.length;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none">
+      {/* Header */}
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* Timer Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Timer className={`h-4 w-4 ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-muted-foreground'}`} />
+              <span className={`font-mono font-bold ${timeLeft < 10 ? 'text-red-500' : ''}`}>
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+            <span className="text-muted-foreground">
+              Question {currentIndex + 1} of {questions.length}
+            </span>
+          </div>
+          <Progress 
+            value={timerPercent} 
+            className={`h-2 ${timeLeft < 10 ? '[&>div]:bg-red-500' : ''}`} 
+          />
+        </div>
+
+        {/* Question Card */}
+        <Card>
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-primary">
+                  {currentQuestion?.question_id}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {currentQuestion?.category?.name}
+                </span>
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <MathText text={currentQuestion?.question_text || ''} />
+              </div>
+            </div>
+
+            {/* Answer Input */}
+            {isMultipleChoice ? (
+              <div className="grid grid-cols-2 gap-3">
+                {currentQuestion?.multiple_choice_options?.map((option, idx) => {
+                  const letter = String.fromCharCode(65 + idx);
+                  const isSelected = selectedAnswer === letter;
+                  const showCorrect = showResult && letter === currentQuestion.answer;
+                  const showWrong = showResult && isSelected && !isCorrect;
+
+                  return (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      disabled={showResult}
+                      className={`h-auto py-3 px-4 justify-start text-left ${
+                        showCorrect ? 'border-green-500 bg-green-500/10' :
+                        showWrong ? 'border-red-500 bg-red-500/10' :
+                        isSelected ? 'border-primary bg-primary/10' : ''
+                      }`}
+                      onClick={() => setSelectedAnswer(letter)}
+                    >
+                      <span className="font-bold mr-2">{letter}.</span>
+                      <MathText text={option} />
+                    </Button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Type your answer..."
+                  value={selectedAnswer}
+                  onChange={(e) => setSelectedAnswer(e.target.value)}
+                  disabled={showResult}
+                  className="text-lg"
+                  onKeyDown={(e) => e.key === 'Enter' && !showResult && handleSubmit()}
+                />
+              </div>
+            )}
+
+            {/* Result */}
+            {showResult && (
+              <div className={`flex items-center gap-3 p-4 rounded-lg ${
+                isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'
+              }`}>
+                {isCorrect ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                ) : (
+                  <XCircle className="h-6 w-6 text-red-500" />
+                )}
+                <div>
+                  <p className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                    {isCorrect ? 'Correct!' : 'Incorrect'}
+                  </p>
+                  {!isCorrect && (
+                    <p className="text-sm text-muted-foreground">
+                      Answer: {currentQuestion?.answer}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              {!showResult ? (
+                <Button 
+                  onClick={() => handleSubmit()} 
+                  disabled={!selectedAnswer}
+                  className="flex-1"
+                >
+                  Submit
+                </Button>
+              ) : (
+                <Button onClick={handleNext} className="flex-1">
+                  {currentIndex >= questions.length - 1 ? 'Finish' : 'Next'}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+              
+              <Button variant="outline" onClick={handleFinish}>
+                End Session
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progress */}
+        <div className="flex items-center justify-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span>{results.filter(r => r.correct).length} correct</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-red-500" />
+            <span>{results.filter(r => !r.correct).length} incorrect</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
