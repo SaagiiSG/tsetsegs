@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-variations]
 verify_jwt = false
+
+[functions.parse-cb-question]
+verify_jwt = false

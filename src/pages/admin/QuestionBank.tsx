@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { QuestionList } from '@/components/admin/questions/QuestionList';
@@ -13,6 +13,7 @@ import { FlaggedQuestions } from '@/components/admin/questions/FlaggedQuestions'
 import { AnalyticsDashboard } from '@/components/admin/questions/AnalyticsDashboard';
 import { StudentsTab } from '@/components/admin/questions/StudentsTab';
 import { CategoryManager } from '@/components/admin/questions/CategoryManager';
+import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions');
@@ -142,6 +143,10 @@ export default function QuestionBank() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="questions">Questions</TabsTrigger>
+          <TabsTrigger value="import">
+            <Upload className="h-4 w-4 mr-1" />
+            Import CB
+          </TabsTrigger>
           <TabsTrigger value="variations">
             AI Variations
             {(pendingVariationsCount ?? 0) > 0 && (
@@ -168,6 +173,10 @@ export default function QuestionBank() {
 
         <TabsContent value="questions" className="space-y-4">
           <QuestionList onEdit={handleEdit} />
+        </TabsContent>
+
+        <TabsContent value="import" className="space-y-4">
+          <CBQuestionImport />
         </TabsContent>
 
         <TabsContent value="variations" className="space-y-4">
