@@ -13,6 +13,7 @@ import { TeamManagement } from '@/components/admin/TeamManagement';
 import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
+import AdminBatchAnalytics from '@/pages/admin/AdminBatchAnalytics';
 import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
 import { LogOut, Users } from 'lucide-react';
 
@@ -71,6 +72,7 @@ const Admin = () => {
             <Routes>
               <Route index element={<DashboardStats />} />
               <Route path="overview" element={<BatchOverview />} />
+              <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
               <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
               {import.meta.env.DEV && <Route path="questions" element={<QuestionBank />} />}
