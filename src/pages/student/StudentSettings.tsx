@@ -1,25 +1,17 @@
-import { useState } from 'react';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { 
-  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap,
-  Share2, Copy, RefreshCw, Link2, Loader2
+  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap
 } from 'lucide-react';
 
 export default function StudentSettings() {
   const { student, logout } = useStudentAuth();
   const { theme, setTheme } = useTheme();
-  const queryClient = useQueryClient();
-  const [copied, setCopied] = useState(false);
 
   const linkedStudent = student?.linked_student as {
     first_name: string;
@@ -27,84 +19,6 @@ export default function StudentSettings() {
     school_name?: string;
     grade?: string;
   } | null;
-
-  // Fetch current share token
-  const { data: accountData, isLoading: loadingAccount } = useQuery({
-    queryKey: ['student-share-token', student?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_accounts')
-        .select('share_token, share_token_created_at')
-        .eq('id', student!.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student?.id
-  });
-
-  // Generate/regenerate share token
-  const generateToken = useMutation({
-    mutationFn: async () => {
-      // Generate a random hex token
-      const array = new Uint8Array(16);
-      crypto.getRandomValues(array);
-      const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-      
-      const { error } = await supabase
-        .from('student_accounts')
-        .update({ 
-          share_token: token,
-          share_token_created_at: new Date().toISOString()
-        })
-        .eq('id', student!.id);
-      
-      if (error) throw error;
-      return token;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-share-token'] });
-      toast.success('Share link generated!');
-    },
-    onError: () => {
-      toast.error('Failed to generate share link');
-    }
-  });
-
-  // Revoke share token
-  const revokeToken = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('student_accounts')
-        .update({ 
-          share_token: null,
-          share_token_created_at: null
-        })
-        .eq('id', student!.id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-share-token'] });
-      toast.success('Share link revoked');
-    },
-    onError: () => {
-      toast.error('Failed to revoke share link');
-    }
-  });
-
-  const shareUrl = accountData?.share_token 
-    ? `${window.location.origin}/student/share/${accountData.share_token}`
-    : null;
-
-  const copyShareLink = async () => {
-    if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      toast.success('Link copied to clipboard!');
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
@@ -165,82 +79,6 @@ export default function StudentSettings() {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Share with Parents */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Share2 className="h-4 w-4" />
-            Share with Parents
-          </CardTitle>
-          <CardDescription>
-            Generate a link to share your progress with parents (read-only)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingAccount ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : shareUrl ? (
-            <>
-              <div className="flex gap-2">
-                <Input 
-                  value={shareUrl} 
-                  readOnly 
-                  className="text-xs font-mono"
-                />
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={copyShareLink}
-                >
-                  <Copy className={`h-4 w-4 ${copied ? 'text-green-500' : ''}`} />
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => generateToken.mutate()}
-                  disabled={generateToken.isPending}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${generateToken.isPending ? 'animate-spin' : ''}`} />
-                  Regenerate
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => revokeToken.mutate()}
-                  disabled={revokeToken.isPending}
-                >
-                  Revoke Link
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Parents can view your progress, stats, and recent activity through this link.
-              </p>
-            </>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                No share link generated yet. Create one to let your parents track your progress.
-              </p>
-              <Button 
-                onClick={() => generateToken.mutate()}
-                disabled={generateToken.isPending}
-              >
-                {generateToken.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Link2 className="h-4 w-4 mr-2" />
-                )}
-                Generate Share Link
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
