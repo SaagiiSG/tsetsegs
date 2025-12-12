@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2, Youtube, Image, Search, FileQuestion } from 'lucide-react';
 import { MathText } from '@/components/MathText';
@@ -22,6 +23,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,6 +112,49 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
     }
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: `${selectedIds.size} questions deleted` });
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-count'] });
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (questions && selectedIds.size === questions.length) {
+      setSelectedIds(new Set());
+    } else if (questions) {
+      setSelectedIds(new Set(questions.map(q => q.id)));
+    }
+  };
+
   const getCategoryColor = (categoryName: string) => {
     const colors: Record<string, string> = {
       'Algebra': 'bg-blue-500/10 text-blue-500',
@@ -136,7 +182,17 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              {selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete ({selectedIds.size})
+                </Button>
+              )}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -181,6 +237,12 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={questions.length > 0 && selectedIds.size === questions.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="w-24">ID</TableHead>
                     <TableHead>Question</TableHead>
                     <TableHead className="w-36">Category</TableHead>
@@ -192,7 +254,13 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                 </TableHeader>
                 <TableBody>
                   {questions.map((q) => (
-                    <TableRow key={q.id}>
+                    <TableRow key={q.id} className={selectedIds.has(q.id) ? 'bg-muted/50' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(q.id)}
+                          onCheckedChange={() => toggleSelect(q.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
                       <TableCell className="max-w-md">
                         <div className="truncate">
@@ -275,6 +343,28 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} Questions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedIds.size} questions and all their variations. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? 'Deleting...' : `Delete ${selectedIds.size} Questions`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
