@@ -163,6 +163,11 @@ export function useMarqueeSelection<T>({
       return;
     }
 
+    // Prevent default for modifier keys (especially Option on Mac)
+    if (e.shiftKey || e.altKey || e.metaKey) {
+      e.preventDefault();
+    }
+
     if (e.shiftKey && lastClickedIndex !== null) {
       // Shift+click: select range from last clicked to current
       const start = Math.min(lastClickedIndex, index);
@@ -175,8 +180,9 @@ export function useMarqueeSelection<T>({
         }
       }
       setSelectedIds(newSelected);
-    } else if (e.altKey && selectedIds.size > 0) {
-      // Alt+click: select range from any selected to current
+      setLastClickedIndex(index);
+    } else if ((e.altKey || e.metaKey) && selectedIds.size > 0) {
+      // Alt/Option+click (or Cmd+click on Mac): select range from last selected to current
       const selectedIndices = items
         .map((item, idx) => selectedIds.has(getItemId(item)) ? idx : -1)
         .filter(idx => idx !== -1);
