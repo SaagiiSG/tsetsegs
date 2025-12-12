@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 import { QuestionList } from '@/components/admin/questions/QuestionList';
 import { VariationsReview } from '@/components/admin/questions/VariationsReview';
 import { FlaggedQuestions } from '@/components/admin/questions/FlaggedQuestions';
@@ -18,7 +19,9 @@ import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport'
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions-68');
   const [formOpen, setFormOpen] = useState(false);
+  const [cbFormOpen, setCbFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
 
   // Fetch 68 questions count
   const { data: questions68Count } = useQuery({
@@ -82,14 +85,26 @@ export default function QuestionBank() {
   });
 
   const handleEdit = (question: any) => {
-    setEditingQuestion(question);
-    setFormOpen(true);
+    if (question.question_set === 'CollegeBoard') {
+      setEditingCBQuestion(question);
+      setCbFormOpen(true);
+    } else {
+      setEditingQuestion(question);
+      setFormOpen(true);
+    }
   };
 
   const handleFormClose = (open: boolean) => {
     setFormOpen(open);
     if (!open) {
       setEditingQuestion(null);
+    }
+  };
+
+  const handleCBFormClose = (open: boolean) => {
+    setCbFormOpen(open);
+    if (!open) {
+      setEditingCBQuestion(null);
     }
   };
 
@@ -191,6 +206,12 @@ export default function QuestionBank() {
         </TabsContent>
 
         <TabsContent value="questions-cb" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setCbFormOpen(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
+              <Plus className="h-4 w-4" />
+              Add CB Question
+            </Button>
+          </div>
           <QuestionList onEdit={handleEdit} questionSet="CB" />
         </TabsContent>
 
@@ -224,6 +245,13 @@ export default function QuestionBank() {
         open={formOpen} 
         onOpenChange={handleFormClose}
         editingQuestion={editingQuestion}
+      />
+
+      {/* CB Question Form Dialog */}
+      <CBQuestionForm
+        open={cbFormOpen}
+        onOpenChange={handleCBFormClose}
+        editingQuestion={editingCBQuestion}
       />
     </div>
   );
