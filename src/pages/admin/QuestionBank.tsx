@@ -16,18 +16,32 @@ import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
 
 export default function QuestionBank() {
-  const [activeTab, setActiveTab] = useState('questions');
+  const [activeTab, setActiveTab] = useState('questions-68');
   const [formOpen, setFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
 
-  // Fetch questions count
-  const { data: questionsCount } = useQuery({
-    queryKey: ['questions-count'],
+  // Fetch 68 questions count
+  const { data: questions68Count } = useQuery({
+    queryKey: ['questions-68-count'],
     queryFn: async () => {
       const { count } = await supabase
         .from('questions')
         .select('*', { count: 'exact', head: true })
-        .eq('is_original', true);
+        .eq('is_original', true)
+        .eq('question_set', '68');
+      return count || 0;
+    }
+  });
+
+  // Fetch CB questions count
+  const { data: questionsCBCount } = useQuery({
+    queryKey: ['questions-cb-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_original', true)
+        .eq('question_set', 'CollegeBoard');
       return count || 0;
     }
   });
@@ -94,25 +108,25 @@ export default function QuestionBank() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">68 Questions</CardTitle>
             <FileQuestion className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{questionsCount ?? 0}/68</div>
-            <p className="text-xs text-muted-foreground">Original questions added</p>
+            <div className="text-2xl font-bold">{questions68Count ?? 0}/68</div>
+            <p className="text-xs text-muted-foreground">Original questions</p>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('variations')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions-cb')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">CollegeBoard</CardTitle>
+            <FileQuestion className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingVariationsCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground">AI variations to review</p>
+            <div className="text-2xl font-bold">{questionsCBCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground">Imported CB questions</p>
           </CardContent>
         </Card>
 
@@ -142,7 +156,8 @@ export default function QuestionBank() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex-wrap">
-          <TabsTrigger value="questions">Questions</TabsTrigger>
+          <TabsTrigger value="questions-68">68 Questions</TabsTrigger>
+          <TabsTrigger value="questions-cb">CollegeBoard ({questionsCBCount ?? 0})</TabsTrigger>
           <TabsTrigger value="import">
             <Upload className="h-4 w-4 mr-1" />
             Import CB
@@ -171,8 +186,12 @@ export default function QuestionBank() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="questions" className="space-y-4">
-          <QuestionList onEdit={handleEdit} />
+        <TabsContent value="questions-68" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="68" />
+        </TabsContent>
+
+        <TabsContent value="questions-cb" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="CB" />
         </TabsContent>
 
         <TabsContent value="import" className="space-y-4">

@@ -14,9 +14,10 @@ import { MathText } from '@/components/MathText';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
+  questionSet?: '68' | 'CB';
 }
 
-export function QuestionList({ onEdit }: QuestionListProps) {
+export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -36,9 +37,9 @@ export function QuestionList({ onEdit }: QuestionListProps) {
     }
   });
 
-  // Fetch questions
+  // Fetch questions based on question set
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', categoryFilter, search],
+    queryKey: ['questions', questionSet, categoryFilter, search],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -48,6 +49,13 @@ export function QuestionList({ onEdit }: QuestionListProps) {
         `)
         .eq('is_original', true)
         .order('question_id');
+
+      // Filter by question set
+      if (questionSet === '68') {
+        query = query.eq('question_set', '68');
+      } else {
+        query = query.eq('question_set', 'CollegeBoard');
+      }
 
       if (categoryFilter !== 'all') {
         query = query.eq('category_id', categoryFilter);
@@ -113,7 +121,7 @@ export function QuestionList({ onEdit }: QuestionListProps) {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <CardTitle>All Questions ({questions?.length || 0}/68)</CardTitle>
+            <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
             <div className="flex gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
