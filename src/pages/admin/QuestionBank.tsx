@@ -110,15 +110,9 @@ export default function QuestionBank() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Question Bank</h1>
-          <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
-        </div>
-        <Button className="gap-2" onClick={() => setFormOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Add Question
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">Question Bank</h1>
+        <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
       </div>
 
       {/* Stats Cards */}
@@ -202,6 +196,12 @@ export default function QuestionBank() {
         </TabsList>
 
         <TabsContent value="questions-68" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setFormOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add 68 Question
+            </Button>
+          </div>
           <QuestionList onEdit={handleEdit} questionSet="68" />
         </TabsContent>
 
