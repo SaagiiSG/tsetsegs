@@ -163,18 +163,14 @@ export function useMarqueeSelection<T>({
       return;
     }
 
-    // Debug logging
-    console.log('Row click:', { index, id, shiftKey: e.shiftKey, altKey: e.altKey, metaKey: e.metaKey, lastClickedIndex, selectedSize: selectedIds.size });
-
-    // Prevent default for modifier keys (especially Option on Mac)
-    if (e.shiftKey || e.altKey || e.metaKey) {
+    // Prevent default for modifier keys
+    if (e.shiftKey || e.altKey) {
       e.preventDefault();
       e.stopPropagation();
     }
 
     if (e.shiftKey && lastClickedIndex !== null) {
       // Shift+click: select range from last clicked to current
-      console.log('Shift+click range:', lastClickedIndex, 'to', index);
       const start = Math.min(lastClickedIndex, index);
       const end = Math.max(lastClickedIndex, index);
       const newSelected = new Set(selectedIds);
@@ -186,20 +182,15 @@ export function useMarqueeSelection<T>({
       }
       setSelectedIds(newSelected);
       setLastClickedIndex(index);
-    } else if (e.altKey || e.metaKey) {
-      // Alt/Option+click (or Cmd+click on Mac): select range from last selected to current
-      console.log('Alt/Cmd+click detected, selectedIds:', selectedIds.size);
-      
+    } else if (e.altKey) {
+      // Option+click: select range from last selected to current
       if (selectedIds.size > 0) {
         const selectedIndices = items
           .map((item, idx) => selectedIds.has(getItemId(item)) ? idx : -1)
           .filter(idx => idx !== -1);
         
-        console.log('Selected indices:', selectedIndices);
-        
         if (selectedIndices.length > 0) {
           const lastSelectedIndex = selectedIndices[selectedIndices.length - 1];
-          console.log('Extending from', lastSelectedIndex, 'to', index);
           const start = Math.min(lastSelectedIndex, index);
           const end = Math.max(lastSelectedIndex, index);
           const newSelected = new Set(selectedIds);
