@@ -20,6 +20,7 @@ interface QuestionListProps {
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -39,7 +40,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
   // Fetch questions based on question set
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', questionSet, categoryFilter, search],
+    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, search],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -61,6 +62,10 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.eq('category_id', categoryFilter);
       }
 
+      if (difficultyFilter !== 'all') {
+        query = query.eq('difficulty_level', difficultyFilter);
+      }
+
       if (search) {
         query = query.or(`question_id.ilike.%${search}%,question_text.ilike.%${search}%`);
       }
@@ -70,6 +75,15 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
       return data;
     }
   });
+
+  const getDifficultyColor = (difficulty: string | null) => {
+    const colors: Record<string, string> = {
+      'Easy': 'bg-green-500/10 text-green-600 border-green-500/20',
+      'Medium': 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+      'Hard': 'bg-red-500/10 text-red-600 border-red-500/20',
+    };
+    return colors[difficulty || ''] || 'bg-muted text-muted-foreground';
+  };
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -122,19 +136,19 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-48"
+                  className="pl-9 w-40"
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by category" />
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
@@ -145,6 +159,19 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                   ))}
                 </SelectContent>
               </Select>
+              {questionSet === 'CB' && (
+                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="Easy">Easy</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -154,10 +181,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">ID</TableHead>
+                    <TableHead className="w-24">ID</TableHead>
                     <TableHead>Question</TableHead>
-                    <TableHead className="w-40">Category</TableHead>
-                    <TableHead className="w-32">Type</TableHead>
+                    <TableHead className="w-36">Category</TableHead>
+                    {questionSet === 'CB' && <TableHead className="w-24">Difficulty</TableHead>}
+                    <TableHead className="w-28">Type</TableHead>
                     <TableHead className="w-20">Media</TableHead>
                     <TableHead className="w-24 text-right">Actions</TableHead>
                   </TableRow>
@@ -176,9 +204,16 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                           {q.category?.name || 'N/A'}
                         </Badge>
                       </TableCell>
+                      {questionSet === 'CB' && (
+                        <TableCell>
+                          <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
+                            {q.difficulty_level || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Badge variant="outline">
-                          {q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Fill Blank'}
+                          {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
                         </Badge>
                       </TableCell>
                       <TableCell>
