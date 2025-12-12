@@ -124,8 +124,8 @@ export default function StudentQuestion() {
   }, [allQuestions, questionId, student, queryClient]);
 
   // Fetch original question details
-  const { data: question, isLoading: questionLoading } = useQuery({
-    queryKey: ['question-detail', questionId],
+  const { data: question, isLoading: questionLoading, isPlaceholderData } = useQuery({
+    queryKey: ['question', questionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
@@ -139,7 +139,9 @@ export default function StudentQuestion() {
       if (error) throw error;
       return data;
     },
-    enabled: !!questionId && !!student
+    enabled: !!questionId && !!student,
+    placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000
   });
 
   // Fetch variations for this question
@@ -157,7 +159,9 @@ export default function StudentQuestion() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!questionId && !!student
+    enabled: !!questionId && !!student,
+    placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000
   });
 
   // Fetch existing progress
