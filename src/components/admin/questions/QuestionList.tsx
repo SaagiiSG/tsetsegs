@@ -208,7 +208,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
             <div>
               <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Tip: Drag to select multiple • Shift+click for range • Alt+click extends from last selected
+                Tip: Drag to select multiple • Shift+click for range • ⌥/Cmd+click extends from last selected
               </p>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
