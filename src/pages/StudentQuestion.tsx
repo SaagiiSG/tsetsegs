@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 
 // SM-2 spaced repetition algorithm helper
@@ -65,6 +65,23 @@ export default function StudentQuestion() {
       document.body.style.webkitUserSelect = '';
     };
   }, [student, questionId]);
+
+  // Fetch all practice questions for navigation
+  const { data: allQuestions } = useQuery({
+    queryKey: ['all-practice-questions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('id, question_id')
+        .eq('is_original', true)
+        .eq('is_active', true)
+        .order('question_id');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!student
+  });
 
   // Fetch original question details
   const { data: question, isLoading: questionLoading } = useQuery({
@@ -384,6 +401,25 @@ export default function StudentQuestion() {
     }
   };
 
+  // Question navigation
+  const currentQuestionIndex = allQuestions?.findIndex(q => q.id === questionId) ?? -1;
+  const prevQuestion = currentQuestionIndex > 0 ? allQuestions?.[currentQuestionIndex - 1] : null;
+  const nextQuestion = currentQuestionIndex >= 0 && currentQuestionIndex < (allQuestions?.length ?? 0) - 1 
+    ? allQuestions?.[currentQuestionIndex + 1] 
+    : null;
+
+  const handlePrevQuestion = () => {
+    if (prevQuestion) {
+      navigate(`/practice/question/${prevQuestion.id}`);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (nextQuestion) {
+      navigate(`/practice/question/${nextQuestion.id}`);
+    }
+  };
+
   // Extract YouTube video ID
   const getYouTubeId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
@@ -435,12 +471,41 @@ export default function StudentQuestion() {
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
             <Badge variant="secondary">{question.category?.name}</Badge>
+            {allQuestions && (
+              <span className="text-xs text-muted-foreground">
+                ({currentQuestionIndex + 1}/{allQuestions.length})
+              </span>
+            )}
           </div>
           <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
             <Flag className="h-4 w-4" />
           </Button>
         </div>
       </header>
+
+      {/* Prev/Next Navigation */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePrevQuestion}
+          disabled={!prevQuestion}
+          className="rounded-full"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Prev
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNextQuestion}
+          disabled={!nextQuestion}
+          className="rounded-full"
+        >
+          Next
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
 
       <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
         {/* Video Section */}
