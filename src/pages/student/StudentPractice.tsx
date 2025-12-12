@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,10 +13,13 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+type QuestionSet = '68' | 'CB';
+
 export default function StudentPractice() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
+  const [questionSet, setQuestionSet] = useState<QuestionSet>('68');
 
   useEffect(() => {
     if (student) {
@@ -23,23 +27,58 @@ export default function StudentPractice() {
     }
   }, [student]);
 
+  // Fetch questions based on selected question set
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['practice-questions'],
+    queryKey: ['practice-questions', questionSet],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('questions')
         .select(`
           id,
           question_id,
           category_id,
+          question_set,
           category:question_categories(id, name)
         `)
         .eq('is_original', true)
-        .eq('is_active', true)
-        .order('question_id');
+        .eq('is_active', true);
       
+      if (questionSet === '68') {
+        query = query.eq('question_set', '68');
+      } else {
+        query = query.eq('question_set', 'CollegeBoard');
+      }
+      
+      const { data, error } = await query.order('question_id');
       if (error) throw error;
       return data;
+    },
+    enabled: !!student
+  });
+
+  // Fetch question counts for both sets
+  const { data: questionCounts } = useQuery({
+    queryKey: ['question-set-counts'],
+    queryFn: async () => {
+      const [set68Result, cbResult] = await Promise.all([
+        supabase
+          .from('questions')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('question_set', '68'),
+        supabase
+          .from('questions')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('question_set', 'CollegeBoard')
+      ]);
+      
+      return {
+        set68: set68Result.count || 0,
+        cb: cbResult.count || 0
+      };
     },
     enabled: !!student
   });
@@ -158,6 +197,41 @@ export default function StudentPractice() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
+      {/* Question Set Selector */}
+      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">Question Set:</span>
+            <div className="flex gap-2">
+              <Button
+                variant={questionSet === '68' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setQuestionSet('68');
+                  setActiveTab('all');
+                }}
+                className="gap-2"
+              >
+                <BookOpen className="h-4 w-4" />
+                68 Questions ({questionCounts?.set68 || 0})
+              </Button>
+              <Button
+                variant={questionSet === 'CB' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setQuestionSet('CB');
+                  setActiveTab('all');
+                }}
+                className="gap-2"
+              >
+                <Target className="h-4 w-4" />
+                CollegeBoard ({questionCounts?.cb || 0})
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Overall Progress */}
       <Card>
         <CardHeader className="pb-2">
