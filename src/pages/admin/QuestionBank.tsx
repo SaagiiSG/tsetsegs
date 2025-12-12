@@ -15,6 +15,7 @@ import { AnalyticsDashboard } from '@/components/admin/questions/AnalyticsDashbo
 import { StudentsTab } from '@/components/admin/questions/StudentsTab';
 import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
+import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuestionImport';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions-68');
@@ -194,7 +195,11 @@ export default function QuestionBank() {
           <TabsTrigger value="questions-cb">CollegeBoard ({questionsCBCount ?? 0})</TabsTrigger>
           <TabsTrigger value="import">
             <Upload className="h-4 w-4 mr-1" />
-            Import CB
+            Import Math
+          </TabsTrigger>
+          <TabsTrigger value="import-english">
+            <Upload className="h-4 w-4 mr-1" />
+            Import English
           </TabsTrigger>
           <TabsTrigger value="variations">
             AI Variations
@@ -230,6 +235,10 @@ export default function QuestionBank() {
 
         <TabsContent value="import" className="space-y-4">
           <CBQuestionImport />
+        </TabsContent>
+
+        <TabsContent value="import-english" className="space-y-4">
+          <EnglishQuestionImport />
         </TabsContent>
 
         <TabsContent value="variations" className="space-y-4">
