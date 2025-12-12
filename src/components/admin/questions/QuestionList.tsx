@@ -208,7 +208,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
             <div>
               <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Tip: Drag to select multiple • Shift+click for range • ⌥/Cmd+click extends from last selected
+                Tip: Drag to select • Shift+click for range • Option+click extends from last selected
               </p>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
@@ -304,7 +304,18 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                     <TableRow 
                       key={q.id} 
                       className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                      onClick={(e) => handleRowClick(index, q.id, e)}
+                      onMouseDown={(e) => {
+                        // Use mousedown to capture Option key before browser intercepts
+                        if (e.altKey) {
+                          e.preventDefault();
+                          handleRowClick(index, q.id, e);
+                        }
+                      }}
+                      onClick={(e) => {
+                        if (!e.altKey) {
+                          handleRowClick(index, q.id, e);
+                        }
+                      }}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
