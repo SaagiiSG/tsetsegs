@@ -14,10 +14,13 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+type QuestionSet = '68' | 'CB';
+
 export default function StudentDashboard() {
   const { student, logout, isLoading: authLoading, logActivity } = useStudentAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
+  const [questionSet, setQuestionSet] = useState<QuestionSet>('68');
 
   // Security: Prevent screenshots (CSS-based)
   useEffect(() => {
@@ -35,21 +38,29 @@ export default function StudentDashboard() {
     };
   }, [student]);
 
-  // Fetch all questions
+  // Fetch all questions based on selected question set
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['practice-questions'],
+    queryKey: ['practice-questions', questionSet],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('questions')
         .select(`
           id,
           question_id,
           category_id,
+          question_set,
           category:question_categories(id, name)
         `)
         .eq('is_original', true)
-        .eq('is_active', true)
-        .order('question_id');
+        .eq('is_active', true);
+      
+      if (questionSet === '68') {
+        query = query.eq('question_set', '68');
+      } else {
+        query = query.like('question_id', 'CB%');
+      }
+      
+      const { data, error } = await query.order('question_id');
       
       if (error) throw error;
       return data;
@@ -222,6 +233,40 @@ export default function StudentDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Question Set Selector */}
+        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">Question Set:</span>
+              <div className="flex gap-2">
+                <Button
+                  variant={questionSet === '68' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setQuestionSet('68');
+                    setActiveTab('all');
+                  }}
+                  className="gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  68 Questions
+                </Button>
+                <Button
+                  variant={questionSet === 'CB' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setQuestionSet('CB');
+                    setActiveTab('all');
+                  }}
+                  className="gap-2"
+                >
+                  <Target className="h-4 w-4" />
+                  CollegeBoard ({questions?.length || 0}+)
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
