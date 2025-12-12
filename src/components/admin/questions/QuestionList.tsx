@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useMarqueeSelection } from '@/hooks/useMarqueeSelection';
 import { Edit, Trash2, Youtube, Image, Search, FileQuestion } from 'lucide-react';
 import { MathText } from '@/components/MathText';
+import { useState } from 'react';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
@@ -23,10 +25,10 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -77,6 +79,25 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
       if (error) throw error;
       return data;
     }
+  });
+
+  // Marquee selection hook
+  const {
+    selectedIds,
+    setSelectedIds,
+    marquee,
+    getMarqueeRect,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleRowClick,
+    toggleSelect,
+    toggleSelectAll,
+  } = useMarqueeSelection({
+    items: questions || [],
+    getItemId: (q) => q.id,
+    containerRef: tableContainerRef,
+    rowSelector: 'tbody tr',
   });
 
   const getDifficultyColor = (difficulty: string | null) => {
@@ -137,24 +158,6 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
     }
   });
 
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const toggleSelectAll = () => {
-    if (questions && selectedIds.size === questions.length) {
-      setSelectedIds(new Set());
-    } else if (questions) {
-      setSelectedIds(new Set(questions.map(q => q.id)));
-    }
-  };
-
   const getCategoryColor = (categoryName: string) => {
     const colors: Record<string, string> = {
       'Algebra': 'bg-blue-500/10 text-blue-500',
@@ -176,12 +179,19 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
     );
   }
 
+  const marqueeRect = getMarqueeRect();
+
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
+            <div>
+              <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tip: Drag to select multiple • Shift+click for range • Alt+click extends from last selected
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2 items-center">
               {selectedIds.size > 0 && (
                 <Button
@@ -233,7 +243,25 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         </CardHeader>
         <CardContent>
           {questions && questions.length > 0 ? (
-            <div className="rounded-md border overflow-auto max-h-[60vh]">
+            <div 
+              ref={tableContainerRef}
+              className="rounded-md border overflow-auto max-h-[60vh] relative select-none"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+            >
+              {/* Marquee selection box */}
+              {marquee.isSelecting && marqueeRect.width > 5 && marqueeRect.height > 5 && (
+                <div
+                  className="absolute pointer-events-none bg-primary/20 border-2 border-primary/50 z-50"
+                  style={{
+                    left: marqueeRect.left,
+                    top: marqueeRect.top,
+                    width: marqueeRect.width,
+                    height: marqueeRect.height,
+                  }}
+                />
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -253,9 +281,13 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {questions.map((q) => (
-                    <TableRow key={q.id} className={selectedIds.has(q.id) ? 'bg-muted/50' : ''}>
-                      <TableCell>
+                  {questions.map((q, index) => (
+                    <TableRow 
+                      key={q.id} 
+                      className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                      onClick={(e) => handleRowClick(index, q.id, e)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedIds.has(q.id)}
                           onCheckedChange={() => toggleSelect(q.id)}
@@ -294,7 +326,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
