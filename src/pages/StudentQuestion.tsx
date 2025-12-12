@@ -80,8 +80,48 @@ export default function StudentQuestion() {
       if (error) throw error;
       return data;
     },
-    enabled: !!student
+    enabled: !!student,
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
   });
+
+  // Prefetch nearby questions for smooth navigation
+  useEffect(() => {
+    if (!allQuestions || !questionId || !student) return;
+    
+    const currentIndex = allQuestions.findIndex(q => q.id === questionId);
+    if (currentIndex === -1) return;
+
+    // Get 2 questions before and 2 after current
+    const nearbyIds = [];
+    for (let i = -2; i <= 2; i++) {
+      const idx = currentIndex + i;
+      if (idx >= 0 && idx < allQuestions.length && idx !== currentIndex) {
+        nearbyIds.push(allQuestions[idx].id);
+      }
+    }
+
+    // Prefetch each nearby question
+    nearbyIds.forEach(id => {
+      queryClient.prefetchQuery({
+        queryKey: ['question', id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('questions')
+            .select(`
+              *,
+              category:question_categories(name)
+            `)
+            .eq('id', id)
+            .eq('is_original', true)
+            .single();
+          
+          if (error) throw error;
+          return data;
+        },
+        staleTime: 5 * 60 * 1000
+      });
+    });
+  }, [allQuestions, questionId, student, queryClient]);
 
   // Fetch original question details
   const { data: question, isLoading: questionLoading } = useQuery({
