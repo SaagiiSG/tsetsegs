@@ -108,11 +108,36 @@ export default function QuestionBank() {
     }
   };
 
+  const handleAddQuestion = () => {
+    if (activeTab === 'questions-cb') {
+      setCbFormOpen(true);
+    } else {
+      setFormOpen(true);
+    }
+  };
+
+  const getAddButtonText = () => {
+    if (activeTab === 'questions-68') return 'Add 68 Question';
+    if (activeTab === 'questions-cb') return 'Add CB Question';
+    return null;
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Question Bank</h1>
-        <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Question Bank</h1>
+          <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
+        </div>
+        {getAddButtonText() && (
+          <Button 
+            className={`gap-2 ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+            onClick={handleAddQuestion}
+          >
+            <Plus className="h-4 w-4" />
+            {getAddButtonText()}
+          </Button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -196,22 +221,10 @@ export default function QuestionBank() {
         </TabsList>
 
         <TabsContent value="questions-68" className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <Button onClick={() => setFormOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add 68 Question
-            </Button>
-          </div>
           <QuestionList onEdit={handleEdit} questionSet="68" />
         </TabsContent>
 
         <TabsContent value="questions-cb" className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <Button onClick={() => setCbFormOpen(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
-              <Plus className="h-4 w-4" />
-              Add CB Question
-            </Button>
-          </div>
           <QuestionList onEdit={handleEdit} questionSet="CB" />
         </TabsContent>
 
