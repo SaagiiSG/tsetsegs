@@ -559,12 +559,14 @@ export type Database = {
           multiple_choice_options: Json | null
           original_cb_id: string | null
           parent_question_id: string | null
+          passage_text: string | null
           question_id: string
           question_image_url: string | null
           question_set: string | null
           question_text: string
           question_type: string
           rationale: string | null
+          subject: string | null
           subtopic: string | null
           updated_at: string
           video_url: string | null
@@ -580,12 +582,14 @@ export type Database = {
           multiple_choice_options?: Json | null
           original_cb_id?: string | null
           parent_question_id?: string | null
+          passage_text?: string | null
           question_id: string
           question_image_url?: string | null
           question_set?: string | null
           question_text: string
           question_type: string
           rationale?: string | null
+          subject?: string | null
           subtopic?: string | null
           updated_at?: string
           video_url?: string | null
@@ -601,12 +605,14 @@ export type Database = {
           multiple_choice_options?: Json | null
           original_cb_id?: string | null
           parent_question_id?: string | null
+          passage_text?: string | null
           question_id?: string
           question_image_url?: string | null
           question_set?: string | null
           question_text?: string
           question_type?: string
           rationale?: string | null
+          subject?: string | null
           subtopic?: string | null
           updated_at?: string
           video_url?: string | null
