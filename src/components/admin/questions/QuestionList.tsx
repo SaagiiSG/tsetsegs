@@ -78,11 +78,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
   const getDifficultyColor = (difficulty: string | null) => {
     const colors: Record<string, string> = {
-      'Easy': 'bg-green-500/10 text-green-600 border-green-500/20',
-      'Medium': 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-      'Hard': 'bg-red-500/10 text-red-600 border-red-500/20',
+      'easy': 'bg-green-500/10 text-green-600 border-green-500/20',
+      'medium': 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+      'hard': 'bg-red-500/10 text-red-600 border-red-500/20',
     };
-    return colors[difficulty || ''] || 'bg-muted text-muted-foreground';
+    return colors[difficulty?.toLowerCase() || ''] || 'bg-muted text-muted-foreground';
   };
 
   // Delete mutation
@@ -166,9 +166,9 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="Easy">Easy</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Hard">Hard</SelectItem>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
                   </SelectContent>
                 </Select>
               )}
