@@ -57,13 +57,40 @@ export default function StudentDashboard() {
       if (questionSet === '68') {
         query = query.eq('question_set', '68');
       } else {
-        query = query.like('question_id', 'CB%');
+        query = query.eq('question_set', 'CollegeBoard');
       }
       
       const { data, error } = await query.order('question_id');
       
       if (error) throw error;
       return data;
+    },
+    enabled: !!student
+  });
+
+  // Fetch question counts for both sets
+  const { data: questionCounts } = useQuery({
+    queryKey: ['question-set-counts'],
+    queryFn: async () => {
+      const [set68Result, cbResult] = await Promise.all([
+        supabase
+          .from('questions')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('question_set', '68'),
+        supabase
+          .from('questions')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('question_set', 'CollegeBoard')
+      ]);
+      
+      return {
+        set68: set68Result.count || 0,
+        cb: cbResult.count || 0
+      };
     },
     enabled: !!student
   });
@@ -249,7 +276,7 @@ export default function StudentDashboard() {
                   className="gap-2"
                 >
                   <BookOpen className="h-4 w-4" />
-                  68 Questions
+                  68 Questions ({questionCounts?.set68 || 0})
                 </Button>
                 <Button
                   variant={questionSet === 'CB' ? 'default' : 'outline'}
@@ -261,7 +288,7 @@ export default function StudentDashboard() {
                   className="gap-2"
                 >
                   <Target className="h-4 w-4" />
-                  CollegeBoard ({questions?.length || 0}+)
+                  CollegeBoard ({questionCounts?.cb || 0})
                 </Button>
               </div>
             </div>
