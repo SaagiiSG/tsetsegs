@@ -163,14 +163,9 @@ export function useMarqueeSelection<T>({
       return;
     }
 
-    // Prevent default for modifier keys
-    if (e.shiftKey || e.altKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
     if (e.shiftKey && lastClickedIndex !== null) {
       // Shift+click: select range from last clicked to current
+      e.preventDefault();
       const start = Math.min(lastClickedIndex, index);
       const end = Math.max(lastClickedIndex, index);
       const newSelected = new Set(selectedIds);
@@ -182,33 +177,6 @@ export function useMarqueeSelection<T>({
       }
       setSelectedIds(newSelected);
       setLastClickedIndex(index);
-    } else if (e.altKey) {
-      // Option+click: select range from last selected to current
-      if (selectedIds.size > 0) {
-        const selectedIndices = items
-          .map((item, idx) => selectedIds.has(getItemId(item)) ? idx : -1)
-          .filter(idx => idx !== -1);
-        
-        if (selectedIndices.length > 0) {
-          const lastSelectedIndex = selectedIndices[selectedIndices.length - 1];
-          const start = Math.min(lastSelectedIndex, index);
-          const end = Math.max(lastSelectedIndex, index);
-          const newSelected = new Set(selectedIds);
-          
-          for (let i = start; i <= end; i++) {
-            if (items[i]) {
-              newSelected.add(getItemId(items[i]));
-            }
-          }
-          setSelectedIds(newSelected);
-        }
-      } else {
-        // No selection yet, just select this one
-        const newSelected = new Set<string>();
-        newSelected.add(id);
-        setSelectedIds(newSelected);
-        setLastClickedIndex(index);
-      }
     } else {
       // Regular click: toggle selection
       const newSelected = new Set(selectedIds);
