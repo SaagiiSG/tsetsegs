@@ -9,17 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CheckCircle2, PlayCircle, Loader2, 
-  Target, RotateCcw, BookOpen
+  Target, RotateCcw, BookOpen, FileText
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type QuestionSet = '68' | 'CB';
+type Subject = 'math' | 'english';
 
 export default function StudentPractice() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [questionSet, setQuestionSet] = useState<QuestionSet>('68');
+  const [subject, setSubject] = useState<Subject>('math');
 
   useEffect(() => {
     if (student) {
@@ -27,9 +29,9 @@ export default function StudentPractice() {
     }
   }, [student]);
 
-  // Fetch questions based on selected question set
+  // Fetch questions based on selected question set and subject
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['practice-questions', questionSet],
+    queryKey: ['practice-questions', questionSet, subject],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -38,15 +40,19 @@ export default function StudentPractice() {
           question_id,
           category_id,
           question_set,
+          subject,
           category:question_categories(id, name)
         `)
         .eq('is_original', true)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('subject', subject);
       
-      if (questionSet === '68') {
-        query = query.eq('question_set', '68');
-      } else {
-        query = query.eq('question_set', 'CollegeBoard');
+      if (subject === 'math') {
+        if (questionSet === '68') {
+          query = query.eq('question_set', '68');
+        } else {
+          query = query.eq('question_set', 'CollegeBoard');
+        }
       }
       
       const { data, error } = await query.order('question_id');
@@ -56,42 +62,59 @@ export default function StudentPractice() {
     enabled: !!student
   });
 
-  // Fetch question counts for both sets
+  // Fetch question counts for all sets
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts'],
     queryFn: async () => {
-      const [set68Result, cbResult] = await Promise.all([
+      const [set68Result, cbResult, englishResult] = await Promise.all([
         supabase
           .from('questions')
           .select('id', { count: 'exact', head: true })
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('question_set', '68'),
+          .eq('question_set', '68')
+          .eq('subject', 'math'),
         supabase
           .from('questions')
           .select('id', { count: 'exact', head: true })
           .eq('is_original', true)
           .eq('is_active', true)
           .eq('question_set', 'CollegeBoard')
+          .eq('subject', 'math'),
+        supabase
+          .from('questions')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('subject', 'english')
       ]);
       
       return {
         set68: set68Result.count || 0,
-        cb: cbResult.count || 0
+        cb: cbResult.count || 0,
+        english: englishResult.count || 0
       };
     },
     enabled: !!student
   });
 
+  // English categories
+  const englishCategories = ['Information and Ideas', 'Craft and Structure', 'Standard English Conventions', 'Expression of Ideas'];
+  
   const { data: categories } = useQuery({
-    queryKey: ['question-categories'],
+    queryKey: ['question-categories', subject],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('question_categories')
         .select('id, name')
         .order('name');
       if (error) throw error;
-      return data;
+      // Filter based on subject
+      return data?.filter(cat => 
+        subject === 'english' 
+          ? englishCategories.includes(cat.name)
+          : !englishCategories.includes(cat.name)
+      ) || [];
     },
     enabled: !!student
   });
@@ -187,47 +210,89 @@ export default function StudentPractice() {
 
   const getCategoryColor = (categoryName: string) => {
     const colors: Record<string, string> = {
+      // Math categories
       'Advanced Math': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
       'Algebra': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
       'Geometry and Trigonometry': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
       'Data Analysis and Problem Solving': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+      // English categories
+      'Information and Ideas': 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
+      'Craft and Structure': 'bg-pink-500/10 text-pink-500 border-pink-500/20',
+      'Standard English Conventions': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+      'Expression of Ideas': 'bg-violet-500/10 text-violet-500 border-violet-500/20',
     };
     return colors[categoryName] || 'bg-muted text-muted-foreground border-border';
   };
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
-      {/* Question Set Selector */}
+      {/* Subject Selector */}
       <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Question Set:</span>
-            <div className="flex gap-2">
-              <Button
-                variant={questionSet === '68' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setQuestionSet('68');
-                  setActiveTab('all');
-                }}
-                className="gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                68 Questions ({questionCounts?.set68 || 0})
-              </Button>
-              <Button
-                variant={questionSet === 'CB' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setQuestionSet('CB');
-                  setActiveTab('all');
-                }}
-                className="gap-2"
-              >
-                <Target className="h-4 w-4" />
-                CollegeBoard ({questionCounts?.cb || 0})
-              </Button>
+          <div className="flex flex-col gap-4">
+            {/* Subject Tabs */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">Subject:</span>
+              <div className="flex gap-2">
+                <Button
+                  variant={subject === 'math' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setSubject('math');
+                    setActiveTab('all');
+                  }}
+                  className="gap-2"
+                >
+                  <Target className="h-4 w-4" />
+                  Math
+                </Button>
+                <Button
+                  variant={subject === 'english' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setSubject('english');
+                    setActiveTab('all');
+                  }}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  English ({questionCounts?.english || 0})
+                </Button>
+              </div>
             </div>
+
+            {/* Question Set Selector (only for Math) */}
+            {subject === 'math' && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">Question Set:</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant={questionSet === '68' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setQuestionSet('68');
+                      setActiveTab('all');
+                    }}
+                    className="gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    68 Questions ({questionCounts?.set68 || 0})
+                  </Button>
+                  <Button
+                    variant={questionSet === 'CB' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setQuestionSet('CB');
+                      setActiveTab('all');
+                    }}
+                    className="gap-2"
+                  >
+                    <Target className="h-4 w-4" />
+                    CollegeBoard ({questionCounts?.cb || 0})
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -303,7 +368,10 @@ export default function StudentPractice() {
                     }`}
                     onClick={() => {
                       logActivity('question_click', { question_id: question.id });
-                      navigate(`/practice/question/${question.id}`);
+                      navigate(subject === 'english' 
+                        ? `/practice/english/question/${question.id}` 
+                        : `/practice/question/${question.id}`
+                      );
                     }}
                   >
                     <CardContent className="p-3 space-y-1">
