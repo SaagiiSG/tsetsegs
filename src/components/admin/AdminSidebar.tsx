@@ -13,14 +13,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const isDev = import.meta.env.DEV;
-
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
   { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
   { title: "Batches", url: "/admin/batches", icon: GraduationCap },
   { title: "Create Batch", url: "/admin/create", icon: Plus },
-  ...(isDev ? [{ title: "Question Bank", url: "/admin/questions", icon: FileQuestion }] : []),
+  { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
   { title: "Students", url: "/admin/students", icon: UserCheck },
   { title: "Team", url: "/admin/team", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
