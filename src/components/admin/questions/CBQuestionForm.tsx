@@ -50,16 +50,18 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch categories
+  // Fetch math categories only (exclude English categories)
+  const englishCategories = ['Information and Ideas', 'Craft and Structure', 'Standard English Conventions', 'Expression of Ideas'];
   const { data: categories } = useQuery({
-    queryKey: ['question-categories'],
+    queryKey: ['question-categories-math'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('question_categories')
         .select('*')
         .order('name');
       if (error) throw error;
-      return data;
+      // Filter out English categories
+      return data?.filter(cat => !englishCategories.includes(cat.name)) || [];
     }
   });
 
