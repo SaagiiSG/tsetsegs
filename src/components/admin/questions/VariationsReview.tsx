@@ -37,23 +37,39 @@ export function VariationsReview() {
   // Approve mutation - move to questions table
   const approveMutation = useMutation({
     mutationFn: async (variation: any) => {
-      // Get parent question to copy category
+      // Get parent question to copy category and question_set
       const { data: parent } = await supabase
         .from('questions')
-        .select('category_id, question_type, video_url')
+        .select('category_id, question_type, video_url, question_set, question_id')
         .eq('id', variation.parent_question_id)
         .single();
 
-      // Generate new question_id for variation
-      const { data: lastQuestion } = await supabase
-        .from('questions')
-        .select('question_id')
-        .order('question_id', { ascending: false })
-        .limit(1)
-        .single();
+      const questionSet = parent?.question_set || '68';
+      let newQuestionId: string;
 
-      const lastId = lastQuestion ? parseInt(lastQuestion.question_id) : 6800;
-      const newQuestionId = (lastId + 1).toString();
+      if (questionSet === 'CollegeBoard') {
+        // Generate CB variation ID: parentId-V001, parentId-V002, etc.
+        const { data: existingVariations } = await supabase
+          .from('questions')
+          .select('question_id')
+          .eq('parent_question_id', variation.parent_question_id)
+          .eq('is_original', false);
+        
+        const varCount = (existingVariations?.length || 0) + 1;
+        newQuestionId = `${parent?.question_id}-V${varCount.toString().padStart(3, '0')}`;
+      } else {
+        // For 68 set: find max ID and increment
+        const { data: lastQuestion } = await supabase
+          .from('questions')
+          .select('question_id')
+          .eq('question_set', '68')
+          .order('question_id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const lastId = lastQuestion ? parseInt(lastQuestion.question_id) : 6800;
+        newQuestionId = (lastId + 1).toString();
+      }
 
       // Insert as new question
       const { error: insertError } = await supabase
@@ -66,6 +82,7 @@ export function VariationsReview() {
           category_id: parent?.category_id,
           question_type: parent?.question_type || 'multiple_choice',
           video_url: parent?.video_url,
+          question_set: questionSet,
           is_original: false,
           is_active: true,
           parent_question_id: variation.parent_question_id,
