@@ -37,14 +37,23 @@ All the best wishes in the upcoming year 2025! 🎉`,
   misheel: {
     name: "Misheel",
     frontImage: "/newyear/misheel.svg",
-    backContent: `Dear Misheel,
+    backContent: `Hello my beautiful teacha! I thought that I would write this letter and put it in the socks but we all know what happens
 
-As the new year dawns, I'm filled with gratitude for having you as part of our journey. Your creativity, dedication, and spirit have been truly inspiring.
+It has been the most interesting and fulfilling year of my life all thanks to my two teachers.
 
-May 2025 bring you endless joy, success, and all the happiness you deserve.
+During this year I really understood what it takes to be teacher but most importantly what it takes to be good genuine person. Compared to me when this year started I am more grounded more smarter and most importantly more humane.
 
-With heartfelt appreciation,
-Happy New Year! 🎉`,
+This title teacher is something I that I take the most pride and joy to wear. The title that I put the most effort to keep it prestigious.
+
+I vividly remember when you asked me if I wanted to teach I was sitting on the sofa in 1105 and you were by the door asked me what I was doing through the winter break and if I was interested in teaching or not. Saying yes was the best decision I have ever made haha
+
+The journey has been fulfilling and full of joy, the time spent with my teachers and the time I spent teaching I would not trade it for anything.
+
+I guess what I am trying to say is that I am soooooooooo grateful and always will be grateful for my two teachers for giving me this opportunity and inviting me to into your family.
+
+Thank you for being my teacher, friend, mentor, and big sister.
+
+All the best wishes in the upcoming year 2026! 🎉`,
     hasPersonalLetter: true
   },
   manlai: {
@@ -349,22 +358,24 @@ export default function NewYearCard() {
             <div className="absolute inset-0 rounded-[32px] border-2 border-[#FFD700]/30" />
             
             {/* Content */}
-            <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
+            <div className="relative h-full flex flex-col items-center p-8 pt-12 text-center overflow-hidden">
               {/* Decorative top */}
-              <div className="absolute top-8 left-1/2 -translate-x-1/2">
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10">
                 <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent" />
               </div>
 
               {/* Title */}
-              <h2 className="text-3xl font-bold text-[#FFD700] mb-2">
+              <h2 className="text-2xl font-bold text-[#FFD700] mb-1 flex-shrink-0">
                 {teacher.hasPersonalLetter ? teacher.name : 'Happy New Year'}
               </h2>
               
-              <div className="text-5xl mb-6">✨</div>
+              <div className="text-3xl mb-3 flex-shrink-0">✨</div>
 
-              {/* Letter content */}
-              <div className="text-[#C5A572] text-sm leading-relaxed whitespace-pre-line max-w-[300px]">
-                {teacher.backContent}
+              {/* Letter content - scrollable */}
+              <div className="flex-1 overflow-y-auto px-2 pb-16 scrollbar-thin">
+                <div className="text-[#C5A572] text-xs leading-relaxed whitespace-pre-line max-w-[280px] mx-auto">
+                  {teacher.backContent}
+                </div>
               </div>
 
               {/* Decorative bottom */}
