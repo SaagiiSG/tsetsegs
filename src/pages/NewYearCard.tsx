@@ -247,14 +247,21 @@ export default function NewYearCard() {
     if (!teacher) return;
 
     try {
-      // Load the front image directly into a canvas for reliable sharing
+      // Fetch SVG as text to avoid CORS tainted canvas issues
+      const response = await fetch(teacher.frontImage);
+      const svgText = await response.text();
+      
+      // Convert SVG to data URL
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // Load image from blob URL (no CORS issues)
       const img = new Image();
-      img.crossOrigin = 'anonymous';
       
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = reject;
-        img.src = teacher.frontImage;
+        img.src = svgUrl;
       });
 
       // Create canvas with Instagram Stories aspect ratio (9:16)
@@ -264,6 +271,7 @@ export default function NewYearCard() {
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
+        URL.revokeObjectURL(svgUrl);
         throw new Error('Could not get canvas context');
       }
 
@@ -291,6 +299,7 @@ export default function NewYearCard() {
 
       // Draw the image centered
       ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+      URL.revokeObjectURL(svgUrl);
 
       // Convert to blob and share
       canvas.toBlob(async (blob) => {
