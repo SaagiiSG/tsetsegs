@@ -299,49 +299,18 @@ export default function NewYearCard() {
       // Draw the image centered
       ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
-      // Convert to blob and share
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          const dataUrl = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = `newyear-${teacher.name}.png`;
-          a.click();
-          return;
-        }
-
-        const file = new File([blob], `newyear-${teacher.name}.png`, {
-          type: 'image/png'
-        });
-
-        // Try native share (works on mobile for IG Stories)
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file]
-            });
-          } catch (error) {
-            // User cancelled or share failed - download instead
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `newyear-${teacher.name}.png`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }
-        } else {
-          // Desktop fallback - download
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `newyear-${teacher.name}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      }, 'image/png', 0.95);
+      // Download the image directly
+      const imageDataUrl = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.download = `newyear-${teacher.name.toLowerCase()}.png`;
+      link.href = imageDataUrl;
+      link.click();
+      
+      // Show instruction
+      alert('Image saved! 📸\n\nOpen Instagram → Create Story → Select from your gallery');
     } catch (error) {
-      console.error('Error sharing:', error);
-      alert('Unable to share. Try taking a screenshot instead.');
+      console.error('Error saving:', error);
+      alert('Unable to save. Please take a screenshot instead.');
     }
   }, [teacher]);
 
