@@ -39,6 +39,7 @@ import StudentShareProfile from "./pages/student/StudentShareProfile";
 import StudentVocabulary from "./pages/student/StudentVocabulary";
 import StudentEnglishPractice from "./pages/student/StudentEnglishPractice";
 import StudentEnglishQuestion from "./pages/student/StudentEnglishQuestion";
+import NewYearCard from "./pages/NewYearCard";
 
 const queryClient = new QueryClient();
 
@@ -145,6 +146,7 @@ const App = () => (
                   <Route path="/student/:id" element={<StudentReveal />} />
                   <Route path="/student/share/:shareToken" element={<StudentShareProfile />} />
                   <Route path="/batch/:id" element={<StudentReveal />} />
+                  <Route path="/teacher/newyear/:teachername" element={<NewYearCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </StudentAuthProvider>
