@@ -13,14 +13,25 @@ const teachers: Record<string, {
   brody: {
     name: "Brody",
     frontImage: "/newyear/brody.svg",
-    backContent: `Dear Brody,
+    backContent: `Yolo teacha! I thought that I would write this letter and put it in the socks but we all know what happens
 
-As we step into the new year, I want to express my heartfelt gratitude for everything you've done. Your dedication, passion, and unwavering support have made a profound impact.
+It has been the most interesting and fulfilling year of my life all thanks to my two teachers.
 
-Here's to new beginnings, exciting adventures, and all the wonderful moments that await us in 2025.
+Started as side hustle that turned into my passion and love, teaching is beautiful act that you have opened my eyes into.
 
-With warmth and appreciation,
-Happy New Year! 🎉`,
+I faced lot of disappointing events but... one thought helped me to push harder than ever that is "I have my two teachers by my side, and I have to be strong for my students".
+
+Teaching taught me so much (mann who would have thought that teaching actually teaches you things) anyways. Teaching is discipline on steroids, you have to be responsible for you and 20 or maybe even 100 people that is different ball game hha. All the respect for my two teachers.
+
+I guess what I am tryna say is that like you guys love me like your siblings I love you two like the big brother and sister I never had.
+
+And teacha, it is cheesy asf but right now you are the single closest person that I would say my father figure. Dont even get me started on the joy and comfort I get from being around you.
+
+It is my pleasure to be part of great legacy of Tsetsegs and contributing to it even a little. Always happy to help and be part of your family.
+
+Thank you for being my teacher, friend, mentor, and big brother.
+
+All the best wishes in the upcoming year 2025! 🎉`,
     hasPersonalLetter: true
   },
   misheel: {
