@@ -252,11 +252,21 @@ export default function NewYearCard() {
         backgroundColor: '#2B2B2B',
         scale: 2,
         useCORS: true,
-        allowTaint: true
+        allowTaint: false,
+        foreignObjectRendering: true,
+        logging: false
       });
 
       canvas.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          // Fallback if blob creation fails - try data URL approach
+          const dataUrl = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `newyear-${teacher?.name || 'card'}.png`;
+          a.click();
+          return;
+        }
 
         const file = new File([blob], `newyear-${teacher?.name || 'card'}.png`, {
           type: 'image/png'
@@ -266,11 +276,18 @@ export default function NewYearCard() {
           try {
             await navigator.share({
               files: [file],
-              title: 'Happy New Year 2025!',
+              title: 'Happy New Year 2026!',
               text: `New Year greeting for ${teacher?.name}`
             });
           } catch (error) {
             console.log('Share cancelled or failed');
+            // Fallback to download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `newyear-${teacher?.name || 'card'}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
           }
         } else {
           // Fallback: download the image
@@ -284,6 +301,8 @@ export default function NewYearCard() {
       }, 'image/png');
     } catch (error) {
       console.error('Error capturing card:', error);
+      // Ultimate fallback - just alert user
+      alert('Unable to capture card. Try taking a screenshot instead.');
     }
   }, [teacher]);
 
