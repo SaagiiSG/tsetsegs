@@ -59,11 +59,13 @@ All the best wishes in the upcoming year 2026! 🎉`,
   manlai: {
     name: "Manlai",
     frontImage: "/newyear/manlai.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
-May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
+Thank you for being an amazing SAT teacher and part of our Tsetsegs family. Your dedication to helping students achieve their dreams is truly inspiring.
 
-Wishing you all the best!`,
+May this year bring you even more success in the classroom and beyond!
+
+Wishing you all the best! 🌟`,
     hasPersonalLetter: false
   },
   udval: {
@@ -341,7 +343,10 @@ export default function NewYearCard() {
             <img
               src={teacher.frontImage}
               alt={`${teacher.name}'s New Year Card`}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-opacity duration-1000 ease-out ${
+                isLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{ transitionDelay: '0.2s' }}
             />
           </div>
 
