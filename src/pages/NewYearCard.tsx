@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import html2canvas from "html2canvas";
 import { Share2 } from "lucide-react";
 
 // Teacher data configuration
@@ -245,64 +244,97 @@ export default function NewYearCard() {
   };
 
   const handleShare = useCallback(async () => {
-    if (!cardRef.current) return;
+    if (!teacher) return;
 
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#2B2B2B',
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: true,
-        logging: false
+      // Load the front image directly into a canvas for reliable sharing
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = teacher.frontImage;
       });
 
+      // Create canvas with Instagram Stories aspect ratio (9:16)
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
+      }
+
+      // Fill background
+      ctx.fillStyle = '#2B2B2B';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Calculate dimensions to fit image while maintaining aspect ratio
+      const imgRatio = img.width / img.height;
+      const canvasRatio = canvas.width / canvas.height;
+      
+      let drawWidth, drawHeight, drawX, drawY;
+      
+      if (imgRatio > canvasRatio) {
+        drawWidth = canvas.width;
+        drawHeight = canvas.width / imgRatio;
+        drawX = 0;
+        drawY = (canvas.height - drawHeight) / 2;
+      } else {
+        drawHeight = canvas.height;
+        drawWidth = canvas.height * imgRatio;
+        drawX = (canvas.width - drawWidth) / 2;
+        drawY = 0;
+      }
+
+      // Draw the image centered
+      ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+
+      // Convert to blob and share
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          // Fallback if blob creation fails - try data URL approach
           const dataUrl = canvas.toDataURL('image/png');
           const a = document.createElement('a');
           a.href = dataUrl;
-          a.download = `newyear-${teacher?.name || 'card'}.png`;
+          a.download = `newyear-${teacher.name}.png`;
           a.click();
           return;
         }
 
-        const file = new File([blob], `newyear-${teacher?.name || 'card'}.png`, {
+        const file = new File([blob], `newyear-${teacher.name}.png`, {
           type: 'image/png'
         });
 
+        // Try native share (works on mobile for IG Stories)
         if (navigator.share && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
-              files: [file],
-              title: 'Happy New Year 2026!',
-              text: `New Year greeting for ${teacher?.name}`
+              files: [file]
             });
           } catch (error) {
-            console.log('Share cancelled or failed');
-            // Fallback to download
+            // User cancelled or share failed - download instead
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `newyear-${teacher?.name || 'card'}.png`;
+            a.download = `newyear-${teacher.name}.png`;
             a.click();
             URL.revokeObjectURL(url);
           }
         } else {
-          // Fallback: download the image
+          // Desktop fallback - download
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `newyear-${teacher?.name || 'card'}.png`;
+          a.download = `newyear-${teacher.name}.png`;
           a.click();
           URL.revokeObjectURL(url);
         }
-      }, 'image/png');
+      }, 'image/png', 0.95);
     } catch (error) {
-      console.error('Error capturing card:', error);
-      // Ultimate fallback - just alert user
-      alert('Unable to capture card. Try taking a screenshot instead.');
+      console.error('Error sharing:', error);
+      alert('Unable to share. Try taking a screenshot instead.');
     }
   }, [teacher]);
 
