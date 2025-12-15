@@ -132,7 +132,8 @@ const GlitterParticles = ({ show }: { show: boolean }) => {
 
   useEffect(() => {
     if (show) {
-      const newParticles = Array.from({ length: 50 }, (_, i) => ({
+      // Reduced particles for better mobile performance
+      const newParticles = Array.from({ length: 25 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         y: Math.random() * 100,
@@ -183,14 +184,21 @@ export default function NewYearCard() {
 
   const teacher = teachername ? teachers[teachername.toLowerCase()] : null;
 
-  // Gyroscope effect
+  // Gyroscope effect with throttling for performance
   useEffect(() => {
+    let lastUpdate = 0;
+    const throttleMs = 50; // Only update every 50ms for smoother performance
+
     const handleOrientation = (event: DeviceOrientationEvent) => {
+      const now = Date.now();
+      if (now - lastUpdate < throttleMs) return;
+      lastUpdate = now;
+
       const { beta, gamma } = event;
       if (beta !== null && gamma !== null) {
         // Clamp values for subtle effect
-        const x = Math.max(-15, Math.min(15, gamma * 0.5));
-        const y = Math.max(-15, Math.min(15, (beta - 45) * 0.5));
+        const x = Math.max(-10, Math.min(10, gamma * 0.3));
+        const y = Math.max(-10, Math.min(10, (beta - 45) * 0.3));
         setRotation({ x: y, y: x });
       }
     };
@@ -264,15 +272,19 @@ export default function NewYearCard() {
         img.src = dataUrl;
       });
 
-      // Create canvas with Instagram Stories aspect ratio (9:16)
+      // Create canvas with Instagram Stories aspect ratio (9:16) at 2x resolution for quality
       const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1920;
+      canvas.width = 2160;  // 2x for high DPI
+      canvas.height = 3840;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
         throw new Error('Could not get canvas context');
       }
+
+      // Enable high quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
 
       // Fill background
       ctx.fillStyle = '#2B2B2B';
@@ -374,18 +386,19 @@ export default function NewYearCard() {
         <div
           ref={cardRef}
           onClick={handleFlip}
-          className={`relative w-full cursor-pointer transition-all duration-700 ease-out ${
+          className={`relative w-full cursor-pointer ${
             isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
           style={{
             aspectRatio: '390/844',
             transformStyle: 'preserve-3d',
+            willChange: 'transform',
             transform: `
               rotateX(${rotation.x}deg) 
               rotateY(${rotation.y}deg) 
               ${isFlipped ? 'rotateY(180deg)' : ''}
             `,
-            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease-out, scale 0.8s ease-out',
+            transition: isFlipped ? 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'transform 0.1s ease-out',
             boxShadow: `${shadowX}px ${shadowY + 20}px 60px rgba(0, 0, 0, 0.5), 
                         ${shadowX * 0.5}px ${shadowY * 0.5 + 10}px 30px rgba(253, 185, 49, 0.1)`
           }}
