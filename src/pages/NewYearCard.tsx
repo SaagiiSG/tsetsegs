@@ -482,10 +482,7 @@ export default function NewYearCard() {
         {/* Tap hint */}
         {showTapHint && !isFlipped && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-pulse">
-            <div className="flex items-center gap-2 text-[#C5A572]/70 text-xs">
-              <span>👆</span>
-              <span>Tap to flip</span>
-            </div>
+            <span className="text-[#C5A572]/70 text-xs">Tap to flip</span>
           </div>
         )}
       </div>
