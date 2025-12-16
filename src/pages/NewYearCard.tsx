@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Instagram } from "lucide-react";
-import { toast } from "sonner";
 
 // Teacher data configuration
 const teachers: Record<
@@ -496,9 +495,6 @@ export default function NewYearCard() {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          toast("Image saved! Open Instagram Stories and paste from your gallery", {
-            duration: 5000,
-          });
           handleShare();
         }}
         className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FDB931] shadow-lg shadow-[#FFD700]/30 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-40"
