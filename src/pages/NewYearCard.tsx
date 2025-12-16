@@ -449,7 +449,7 @@ export default function NewYearCard() {
 
               {/* Letter content - scrollable */}
               <div className="flex-1 overflow-y-auto px-2 pb-16 scrollbar-thin">
-                <div className="text-[#C5A572] text-xs leading-relaxed whitespace-pre-line max-w-[280px] mx-auto">
+                <div className="text-[#C5A572] text-[15px] leading-relaxed whitespace-pre-line max-w-[280px] mx-auto">
                   {teacher.backContent}
                 </div>
               </div>
