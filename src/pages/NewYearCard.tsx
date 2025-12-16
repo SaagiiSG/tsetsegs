@@ -384,8 +384,10 @@ export default function NewYearCard() {
     <div className="min-h-screen bg-[#2B2B2B] flex items-center justify-center overflow-hidden">
       <GlitterParticles show={showGlitter} />
 
-      {/* Card container with perspective */}
-      <div className="relative w-full max-w-[390px] mx-auto" style={{ perspective: "1200px" }}>
+      {/* Wrapper for card and hint */}
+      <div className="flex flex-col items-center">
+        {/* Card container with perspective */}
+        <div className="relative w-full max-w-[390px] mx-auto" style={{ perspective: "1200px" }}>
         {/* 3D Card */}
         <div
           ref={cardRef}
@@ -487,6 +489,7 @@ export default function NewYearCard() {
           <span className="text-[#C5A572]/70 text-sm">Tap to flip</span>
         </div>
       )}
+      </div> {/* End of flex wrapper */}
 
       {/* Share button */}
       <button
