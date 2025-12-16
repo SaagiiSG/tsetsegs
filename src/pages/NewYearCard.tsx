@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Share2 } from "lucide-react";
+import { Instagram } from "lucide-react";
+import { toast } from "sonner";
 
 // Teacher data configuration
 const teachers: Record<
@@ -385,9 +386,9 @@ export default function NewYearCard() {
       <GlitterParticles show={showGlitter} />
 
       {/* Wrapper for card and hint */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full max-w-[390px] px-4">
         {/* Card container with perspective */}
-        <div className="relative w-full max-w-[390px] mx-auto" style={{ perspective: "1200px" }}>
+        <div className="relative w-full" style={{ perspective: "1200px" }}>
         {/* 3D Card */}
         <div
           ref={cardRef}
@@ -491,15 +492,18 @@ export default function NewYearCard() {
       )}
       </div> {/* End of flex wrapper */}
 
-      {/* Share button */}
+      {/* Share to Instagram button */}
       <button
         onClick={(e) => {
           e.stopPropagation();
+          toast("Image saved! Open Instagram Stories and paste from your gallery", {
+            duration: 5000,
+          });
           handleShare();
         }}
         className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FDB931] shadow-lg shadow-[#FFD700]/30 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-40"
       >
-        <Share2 className="w-6 h-6 text-[#2B2B2B]" />
+        <Instagram className="w-6 h-6 text-[#2B2B2B]" />
       </button>
 
       {/* Global styles for glitter animation */}
