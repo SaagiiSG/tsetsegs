@@ -413,14 +413,16 @@ export default function NewYearCard() {
               WebkitBackfaceVisibility: "hidden",
             }}
           >
-            <object
-              data={teacher.frontImage}
-              type="image/svg+xml"
-              className={`w-full h-full transition-opacity duration-1000 ease-out pointer-events-none ${
+            <img
+              src={teacher.frontImage}
+              alt={`${teacher.name}'s New Year Card`}
+              className={`w-full h-full transition-opacity duration-1000 ease-out ${
                 isLoaded ? "opacity-100" : "opacity-0"
               }`}
-              style={{ transitionDelay: "0.2s" }}
-              aria-label={`${teacher.name}'s New Year Card`}
+              style={{ 
+                transitionDelay: "0.2s",
+                imageRendering: "auto",
+              }}
             />
           </div>
 
