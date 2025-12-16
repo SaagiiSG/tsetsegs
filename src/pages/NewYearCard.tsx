@@ -120,6 +120,18 @@ May this year bring you joy, success, and countless beautiful moments. Thank you
 Wishing you all the best!`,
     hasPersonalLetter: false,
   },
+  tuguldur: {
+    name: "Tuguldur",
+    frontImage: "/newyear/tuguldur.png",
+    backContent: `Happy New Year 2026! 🎊
+
+Thank you for being an amazing SAT Math teacher and part of our Tsetsegs family. Your dedication to helping students achieve their dreams is truly inspiring.
+
+May this year bring you even more success in the classroom and beyond!
+
+Wishing you all the best! 🌟`,
+    hasPersonalLetter: false,
+  },
 };
 
 // Glitter particle component
