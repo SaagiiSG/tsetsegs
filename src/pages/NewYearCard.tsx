@@ -61,13 +61,13 @@ All the best wishes in the upcoming year 2026! 🎉`,
   manlai: {
     name: "Manlai",
     frontImage: "/newyear/manlai.svg",
-    backContent: `Happy New Year 2026! 🎊
+    backContent: `Happy New Year 2026!
 
-Thank you for being an amazing SAT teacher and part of our Tsetsegs family. Your dedication to helping students achieve their dreams is truly inspiring.
+Thank you for being an amazing SAT Math teacher and part of our Tsetsegs family. Your dedication to helping students achieve their dreams is truly inspiring.
 
-May this year bring you even more success in the classroom and beyond!
+May this year bring you even more success in the classroom and beyond.
 
-Wishing you all the best! 🌟`,
+Wishing you all the best!`,
     hasPersonalLetter: false,
   },
   udval: {
@@ -123,13 +123,13 @@ Wishing you all the best!`,
   tuguldur: {
     name: "Tuguldur",
     frontImage: "/newyear/tuguldur.png",
-    backContent: `Happy New Year 2026! 🎊
+    backContent: `Happy New Year 2026!
 
 Thank you for being an amazing SAT Math teacher and part of our Tsetsegs family. Your dedication to helping students achieve their dreams is truly inspiring.
 
-May this year bring you even more success in the classroom and beyond!
+May this year bring you even more success in the classroom and beyond.
 
-Wishing you all the best! 🌟`,
+Wishing you all the best!`,
     hasPersonalLetter: false,
   },
 };
