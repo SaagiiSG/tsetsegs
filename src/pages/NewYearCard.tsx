@@ -479,13 +479,14 @@ export default function NewYearCard() {
           </div>
         </div>
 
-        {/* Tap hint */}
-        {showTapHint && !isFlipped && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-pulse">
-            <span className="text-[#C5A572]/70 text-xs">Tap to flip</span>
-          </div>
-        )}
       </div>
+
+      {/* Tap hint - below the card */}
+      {!isFlipped && (
+        <div className="mt-6 text-center animate-pulse">
+          <span className="text-[#C5A572]/70 text-sm">Tap to flip</span>
+        </div>
+      )}
 
       {/* Share button */}
       <button
