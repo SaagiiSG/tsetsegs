@@ -413,13 +413,14 @@ export default function NewYearCard() {
               WebkitBackfaceVisibility: "hidden",
             }}
           >
-            <img
-              src={teacher.frontImage}
-              alt={`${teacher.name}'s New Year Card`}
-              className={`w-full h-full object-cover transition-opacity duration-1000 ease-out ${
+            <object
+              data={teacher.frontImage}
+              type="image/svg+xml"
+              className={`w-full h-full transition-opacity duration-1000 ease-out pointer-events-none ${
                 isLoaded ? "opacity-100" : "opacity-0"
               }`}
               style={{ transitionDelay: "0.2s" }}
+              aria-label={`${teacher.name}'s New Year Card`}
             />
           </div>
 
@@ -449,8 +450,15 @@ export default function NewYearCard() {
 
               <div className="text-3xl mb-3 flex-shrink-0">✨</div>
 
-              {/* Letter content - scrollable */}
-              <div className="flex-1 overflow-y-auto px-2 pb-16 scrollbar-thin">
+              {/* Letter content - scrollable with optimized performance */}
+              <div 
+                className="flex-1 overflow-y-auto px-2 pb-16 scrollbar-thin"
+                style={{
+                  WebkitOverflowScrolling: "touch",
+                  willChange: "scroll-position",
+                  transform: "translateZ(0)",
+                }}
+              >
                 <div className="text-[#C5A572] text-[15px] leading-relaxed whitespace-pre-line max-w-[280px] mx-auto">
                   {teacher.backContent}
                 </div>
