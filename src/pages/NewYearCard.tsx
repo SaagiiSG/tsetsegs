@@ -3,12 +3,15 @@ import { useParams } from "react-router-dom";
 import { Share2 } from "lucide-react";
 
 // Teacher data configuration
-const teachers: Record<string, {
-  name: string;
-  frontImage: string;
-  backContent: string;
-  hasPersonalLetter: boolean;
-}> = {
+const teachers: Record<
+  string,
+  {
+    name: string;
+    frontImage: string;
+    backContent: string;
+    hasPersonalLetter: boolean;
+  }
+> = {
   brody: {
     name: "Brody",
     frontImage: "/newyear/brody.svg",
@@ -31,7 +34,7 @@ It is my pleasure to be part of great legacy of Tsetsegs and contributing to it 
 Thank you for being my teacher, friend, mentor, and big brother.
 
 All the best wishes in the upcoming year 2025! 🎉`,
-    hasPersonalLetter: true
+    hasPersonalLetter: true,
   },
   misheel: {
     name: "Misheel",
@@ -53,7 +56,7 @@ I guess what I am trying to say is that I am soooooooooo grateful and always wil
 Thank you for being my teacher, friend, mentor, and big sister.
 
 All the best wishes in the upcoming year 2026! 🎉`,
-    hasPersonalLetter: true
+    hasPersonalLetter: true,
   },
   manlai: {
     name: "Manlai",
@@ -65,70 +68,72 @@ Thank you for being an amazing SAT teacher and part of our Tsetsegs family. Your
 May this year bring you even more success in the classroom and beyond!
 
 Wishing you all the best! 🌟`,
-    hasPersonalLetter: false
+    hasPersonalLetter: false,
   },
   udval: {
     name: "Udval",
     frontImage: "/newyear/udval.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
 May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
 
 Wishing you all the best!`,
-    hasPersonalLetter: false
+    hasPersonalLetter: false,
   },
   dulguun: {
     name: "Dulguun",
     frontImage: "/newyear/dulguun.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
 May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
 
 Wishing you all the best!`,
-    hasPersonalLetter: false
+    hasPersonalLetter: false,
   },
   enguun: {
     name: "Enguun",
     frontImage: "/newyear/enguun.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
 May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
 
 Wishing you all the best!`,
-    hasPersonalLetter: false
+    hasPersonalLetter: false,
   },
   khulan: {
     name: "Khulan",
     frontImage: "/newyear/khulan.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
 May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
 
 Wishing you all the best!`,
-    hasPersonalLetter: false
+    hasPersonalLetter: false,
   },
   saran: {
     name: "Saran",
     frontImage: "/newyear/saran.svg",
-    backContent: `Happy New Year 2025! 🎊
+    backContent: `Happy New Year 2026! 🎊
 
 May this year bring you joy, success, and countless beautiful moments. Thank you for being an amazing part of our team.
 
 Wishing you all the best!`,
-    hasPersonalLetter: false
-  }
+    hasPersonalLetter: false,
+  },
 };
 
 // Glitter particle component
 const GlitterParticles = ({ show }: { show: boolean }) => {
-  const [particles, setParticles] = useState<Array<{
-    id: number;
-    x: number;
-    y: number;
-    size: number;
-    delay: number;
-    duration: number;
-  }>>([]);
+  const [particles, setParticles] = useState<
+    Array<{
+      id: number;
+      x: number;
+      y: number;
+      size: number;
+      delay: number;
+      duration: number;
+    }>
+  >([]);
 
   useEffect(() => {
     if (show) {
@@ -139,7 +144,7 @@ const GlitterParticles = ({ show }: { show: boolean }) => {
         y: Math.random() * 100,
         size: Math.random() * 6 + 2,
         delay: Math.random() * 1,
-        duration: Math.random() * 2 + 2
+        duration: Math.random() * 2 + 2,
       }));
       setParticles(newParticles);
 
@@ -165,7 +170,7 @@ const GlitterParticles = ({ show }: { show: boolean }) => {
             background: `radial-gradient(circle, #FFD700 0%, #FDB931 50%, transparent 100%)`,
             boxShadow: `0 0 ${particle.size * 2}px #FFD700`,
             animationDelay: `${particle.delay}s`,
-            animationDuration: `${particle.duration}s`
+            animationDuration: `${particle.duration}s`,
           }}
         />
       ))}
@@ -205,24 +210,24 @@ export default function NewYearCard() {
 
     // Request permission for iOS 13+
     const requestPermission = async () => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
         try {
           const permission = await (DeviceOrientationEvent as any).requestPermission();
-          if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation);
+          if (permission === "granted") {
+            window.addEventListener("deviceorientation", handleOrientation);
           }
         } catch (error) {
-          console.error('Error requesting device orientation permission:', error);
+          console.error("Error requesting device orientation permission:", error);
         }
       } else {
-        window.addEventListener('deviceorientation', handleOrientation);
+        window.addEventListener("deviceorientation", handleOrientation);
       }
     };
 
     requestPermission();
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener("deviceorientation", handleOrientation);
     };
   }, []);
 
@@ -258,14 +263,14 @@ export default function NewYearCard() {
       // Fetch SVG as text and convert to base64 data URL to avoid CORS issues
       const response = await fetch(teacher.frontImage);
       const svgText = await response.text();
-      
+
       // Convert to base64 data URL (completely avoids CORS tainted canvas)
       const base64 = btoa(unescape(encodeURIComponent(svgText)));
       const dataUrl = `data:image/svg+xml;base64,${base64}`;
-      
+
       // Load image from data URL (no CORS issues)
       const img = new Image();
-      
+
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = reject;
@@ -273,29 +278,29 @@ export default function NewYearCard() {
       });
 
       // Create canvas with Instagram Stories aspect ratio (9:16) at 2x resolution for quality
-      const canvas = document.createElement('canvas');
-      canvas.width = 2160;  // 2x for high DPI
+      const canvas = document.createElement("canvas");
+      canvas.width = 2160; // 2x for high DPI
       canvas.height = 3840;
-      const ctx = canvas.getContext('2d');
-      
+      const ctx = canvas.getContext("2d");
+
       if (!ctx) {
-        throw new Error('Could not get canvas context');
+        throw new Error("Could not get canvas context");
       }
 
       // Enable high quality rendering
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      ctx.imageSmoothingQuality = "high";
 
       // Fill background
-      ctx.fillStyle = '#2B2B2B';
+      ctx.fillStyle = "#2B2B2B";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Calculate dimensions to fit image while maintaining aspect ratio
       const imgRatio = img.width / img.height;
       const canvasRatio = canvas.width / canvas.height;
-      
+
       let drawWidth, drawHeight, drawX, drawY;
-      
+
       if (imgRatio > canvasRatio) {
         drawWidth = canvas.width;
         drawHeight = canvas.width / imgRatio;
@@ -312,48 +317,52 @@ export default function NewYearCard() {
       ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
       // Convert to blob and share
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          const dataUrl = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = `newyear-${teacher.name}.png`;
-          a.click();
-          return;
-        }
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            const dataUrl = canvas.toDataURL("image/png");
+            const a = document.createElement("a");
+            a.href = dataUrl;
+            a.download = `newyear-${teacher.name}.png`;
+            a.click();
+            return;
+          }
 
-        const file = new File([blob], `newyear-${teacher.name}.png`, {
-          type: 'image/png'
-        });
+          const file = new File([blob], `newyear-${teacher.name}.png`, {
+            type: "image/png",
+          });
 
-        // Try native share (works on mobile for IG Stories)
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file]
-            });
-          } catch (error) {
-            // User cancelled or share failed - download instead
+          // Try native share (works on mobile for IG Stories)
+          if (navigator.share && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+              });
+            } catch (error) {
+              // User cancelled or share failed - download instead
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `newyear-${teacher.name}.png`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }
+          } else {
+            // Desktop fallback - download
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
             a.download = `newyear-${teacher.name}.png`;
             a.click();
             URL.revokeObjectURL(url);
           }
-        } else {
-          // Desktop fallback - download
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `newyear-${teacher.name}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      }, 'image/png', 0.95);
+        },
+        "image/png",
+        0.95,
+      );
     } catch (error) {
-      console.error('Error sharing:', error);
-      alert('Unable to share. Try taking a screenshot instead.');
+      console.error("Error sharing:", error);
+      alert("Unable to share. Try taking a screenshot instead.");
     }
   }, [teacher]);
 
@@ -362,9 +371,7 @@ export default function NewYearCard() {
       <div className="min-h-screen bg-[#2B2B2B] flex items-center justify-center p-4">
         <div className="text-center text-[#C5A572]">
           <h1 className="text-2xl font-bold mb-4">Teacher not found</h1>
-          <p className="text-sm opacity-70">
-            Available: brody, misheel, manlai, udval, dulguun, enguun, khulan, saran
-          </p>
+          <p className="text-sm opacity-70">Available: brody, misheel, manlai, udval, dulguun, enguun, khulan, saran</p>
         </div>
       </div>
     );
@@ -378,46 +385,41 @@ export default function NewYearCard() {
       <GlitterParticles show={showGlitter} />
 
       {/* Card container with perspective */}
-      <div
-        className="relative w-full max-w-[390px] mx-auto"
-        style={{ perspective: '1200px' }}
-      >
+      <div className="relative w-full max-w-[390px] mx-auto" style={{ perspective: "1200px" }}>
         {/* 3D Card */}
         <div
           ref={cardRef}
           onClick={handleFlip}
-          className={`relative w-full cursor-pointer ${
-            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-          }`}
+          className={`relative w-full cursor-pointer ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
           style={{
-            aspectRatio: '390/844',
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
+            aspectRatio: "390/844",
+            transformStyle: "preserve-3d",
+            willChange: "transform",
             transform: `
               rotateX(${rotation.x}deg) 
               rotateY(${rotation.y}deg) 
-              ${isFlipped ? 'rotateY(180deg)' : ''}
+              ${isFlipped ? "rotateY(180deg)" : ""}
             `,
-            transition: isFlipped ? 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'transform 0.1s ease-out',
+            transition: isFlipped ? "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" : "transform 0.1s ease-out",
             boxShadow: `${shadowX}px ${shadowY + 20}px 60px rgba(0, 0, 0, 0.5), 
-                        ${shadowX * 0.5}px ${shadowY * 0.5 + 10}px 30px rgba(253, 185, 49, 0.1)`
+                        ${shadowX * 0.5}px ${shadowY * 0.5 + 10}px 30px rgba(253, 185, 49, 0.1)`,
           }}
         >
           {/* Front face */}
           <div
             className="absolute inset-0 rounded-[32px] overflow-hidden"
             style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden'
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           >
             <img
               src={teacher.frontImage}
               alt={`${teacher.name}'s New Year Card`}
               className={`w-full h-full object-cover transition-opacity duration-1000 ease-out ${
-                isLoaded ? 'opacity-100' : 'opacity-0'
+                isLoaded ? "opacity-100" : "opacity-0"
               }`}
-              style={{ transitionDelay: '0.2s' }}
+              style={{ transitionDelay: "0.2s" }}
             />
           </div>
 
@@ -425,14 +427,14 @@ export default function NewYearCard() {
           <div
             className="absolute inset-0 rounded-[32px] overflow-hidden bg-gradient-to-br from-[#2B2B2B] via-[#3a3a3a] to-[#2B2B2B]"
             style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)'
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
             }}
           >
             {/* Golden border glow */}
             <div className="absolute inset-0 rounded-[32px] border-2 border-[#FFD700]/30" />
-            
+
             {/* Content */}
             <div className="relative h-full flex flex-col items-center p-8 pt-12 text-center overflow-hidden">
               {/* Decorative top */}
@@ -442,9 +444,9 @@ export default function NewYearCard() {
 
               {/* Title */}
               <h2 className="text-2xl font-bold text-[#FFD700] mb-1 flex-shrink-0">
-                {teacher.hasPersonalLetter ? teacher.name : 'Happy New Year'}
+                {teacher.hasPersonalLetter ? teacher.name : "Happy New Year"}
               </h2>
-              
+
               <div className="text-3xl mb-3 flex-shrink-0">✨</div>
 
               {/* Letter content - scrollable */}
