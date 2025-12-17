@@ -163,28 +163,29 @@ export function TeacherManagement() {
   };
 
   const handleResetPassword = async () => {
-    if (!resettingPassword) return;
-
-    const newPassword = generatePassword();
+    if (!resettingPassword || !resettingPassword.username) return;
 
     try {
-      // Mark as needing password reset
-      const { error } = await supabase
-        .from('teachers')
-        .update({ temporary_password: true })
-        .eq('id', resettingPassword.id);
+      // Call Edge Function to reset password
+      const { data, error } = await supabase.functions.invoke('reset-teacher-password', {
+        body: {
+          teacherId: resettingPassword.id,
+          username: resettingPassword.username,
+        },
+      });
 
       if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Failed to reset password');
 
       // Show new temporary password
       setNewCredentials({ 
-        username: resettingPassword.username || '', 
-        password: newPassword 
+        username: data.username, 
+        password: data.temporaryPassword 
       });
       setShowCredentialsDialog(true);
 
       toast({
-        title: "Password Reset Initiated",
+        title: "Password Reset",
         description: "New temporary password generated. Share this with the teacher.",
       });
 
