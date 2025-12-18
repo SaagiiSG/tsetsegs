@@ -579,8 +579,12 @@ export function StudentCard({
                             value={testInputs[test.test_number] ?? test.score ?? ""}
                             onChange={(e) => {
                               const val = e.target.value;
-                              if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                                setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                              // Allow intermediate typing states (e.g., "7.", "7.5")
+                              if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                                const num = parseFloat(val);
+                                if (val === "" || val === "." || isNaN(num) || (num >= 0 && num <= 9)) {
+                                  setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                                }
                               }
                             }}
                             onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
@@ -688,8 +692,12 @@ export function StudentCard({
                         value={testInputs[test.test_number] ?? test.score ?? ""}
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 9)) {
-                            setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                          // Allow intermediate typing states (e.g., "7.", "7.5")
+                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                            const num = parseFloat(val);
+                            if (val === "" || val === "." || isNaN(num) || (num >= 0 && num <= 9)) {
+                              setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
+                            }
                           }
                         }}
                         onBlur={(e) => handleIELTSScoreBlur(test.test_number, e.target.value)}
