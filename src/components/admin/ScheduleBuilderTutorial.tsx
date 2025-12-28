@@ -1,42 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { X, ChevronRight, ChevronLeft, Calculator, BookOpen, Plus, Save, AlertTriangle } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface TutorialStep {
   title: string;
   description: string;
-  icon: React.ReactNode;
-  highlight?: string;
+  targetSelector: string;
+  position: 'top' | 'bottom' | 'left' | 'right';
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    title: 'Welcome to Schedule Builder',
-    description: 'This tool helps you create separate schedules for Math and English classes. Each schedule can have multiple time slots on different days.',
-    icon: <Calculator className="w-8 h-8 text-blue-500" />,
+    title: 'Math Schedule',
+    description: 'Create the paid Math class schedule here. Add multiple time slots for different days.',
+    targetSelector: '[data-tutorial="math-section"]',
+    position: 'right',
   },
   {
-    title: 'Adding Time Slots',
-    description: 'Click the "Add" button to create a new time slot. You can select the day and freely choose start/end times from the dropdown menus.',
-    icon: <Plus className="w-8 h-8 text-green-500" />,
-    highlight: 'add-button',
+    title: 'English Schedule (Free)',
+    description: 'Set up the free English class schedule. Students will see this marked as "үнэгүй" (free).',
+    targetSelector: '[data-tutorial="english-section"]',
+    position: 'left',
   },
   {
-    title: 'Math vs English Schedules',
-    description: 'Math schedule is the paid class. English schedule is marked as "үнэгүй" (free) and will display that way to students.',
-    icon: <BookOpen className="w-8 h-8 text-purple-500" />,
+    title: 'Add Time Slots',
+    description: 'Click here to add a new time slot. You can add multiple slots per subject.',
+    targetSelector: '[data-tutorial="add-math"]',
+    position: 'bottom',
   },
   {
-    title: 'Saving Templates',
-    description: 'Click "Save" on any schedule to save it as a template. Next time, you can quickly apply saved templates instead of building from scratch.',
-    icon: <Save className="w-8 h-8 text-amber-500" />,
-    highlight: 'save-button',
+    title: 'Save as Template',
+    description: 'Save your schedule as a template for quick reuse when creating new batches.',
+    targetSelector: '[data-tutorial="save-math"]',
+    position: 'bottom',
   },
   {
-    title: 'Conflict Detection',
-    description: 'The builder automatically detects if Math and English schedules overlap on the same day/time and will warn you.',
-    icon: <AlertTriangle className="w-8 h-8 text-red-500" />,
+    title: 'Quick Templates',
+    description: 'Click any saved template to instantly apply it. Great for recurring schedules!',
+    targetSelector: '[data-tutorial="templates-math"]',
+    position: 'bottom',
   },
 ];
 
@@ -47,12 +50,43 @@ interface ScheduleBuilderTutorialProps {
 
 export function ScheduleBuilderTutorial({ onComplete, isOpen }: ScheduleBuilderTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(0);
+      setMounted(true);
+    } else {
+      setMounted(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    const updateTargetRect = () => {
+      const step = TUTORIAL_STEPS[currentStep];
+      const target = document.querySelector(step.targetSelector);
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        setTargetRect(rect);
+      } else {
+        setTargetRect(null);
+      }
+    };
+
+    // Delay to allow DOM to render
+    const timeout = setTimeout(updateTargetRect, 100);
+    window.addEventListener('resize', updateTargetRect);
+    window.addEventListener('scroll', updateTargetRect, true);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', updateTargetRect);
+      window.removeEventListener('scroll', updateTargetRect, true);
+    };
+  }, [currentStep, isOpen, mounted]);
 
   const handleNext = () => {
     if (currentStep < TUTORIAL_STEPS.length - 1) {
@@ -76,87 +110,170 @@ export function ScheduleBuilderTutorial({ onComplete, isOpen }: ScheduleBuilderT
 
   const step = TUTORIAL_STEPS[currentStep];
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
+  const padding = 8;
+
+  // Calculate tooltip position
+  const getTooltipStyle = (): React.CSSProperties => {
+    if (!targetRect) return { opacity: 0 };
+
+    const tooltipWidth = 280;
+    const tooltipHeight = 180;
+    const gap = 16;
+
+    switch (step.position) {
+      case 'right':
+        return {
+          left: Math.min(targetRect.right + gap, window.innerWidth - tooltipWidth - 20),
+          top: targetRect.top + targetRect.height / 2 - tooltipHeight / 2,
+        };
+      case 'left':
+        return {
+          left: Math.max(targetRect.left - tooltipWidth - gap, 20),
+          top: targetRect.top + targetRect.height / 2 - tooltipHeight / 2,
+        };
+      case 'bottom':
+        return {
+          left: Math.max(20, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 20)),
+          top: targetRect.bottom + gap,
+        };
+      case 'top':
+        return {
+          left: Math.max(20, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 20)),
+          top: targetRect.top - tooltipHeight - gap,
+        };
+      default:
+        return {};
+    }
+  };
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={handleSkip}
-      >
+      {mounted && (
         <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50"
+          style={{ pointerEvents: 'auto' }}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 border-b border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                {TUTORIAL_STEPS.map((_, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      idx === currentStep ? 'bg-primary' : idx < currentStep ? 'bg-primary/50' : 'bg-muted'
-                    }`}
+          {/* Dark overlay with spotlight cutout */}
+          <svg
+            className="absolute inset-0 w-full h-full"
+            style={{ pointerEvents: 'none' }}
+          >
+            <defs>
+              <mask id="spotlight-mask">
+                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                {targetRect && (
+                  <rect
+                    x={targetRect.left - padding}
+                    y={targetRect.top - padding}
+                    width={targetRect.width + padding * 2}
+                    height={targetRect.height + padding * 2}
+                    rx="12"
+                    fill="black"
                   />
-                ))}
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleSkip} className="h-8 w-8">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-background rounded-xl shadow-sm">
-                {step.icon}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Step {currentStep + 1} of {TUTORIAL_STEPS.length}</p>
-                <h3 className="text-lg font-semibold">{step.title}</h3>
-              </div>
-            </div>
-          </div>
+                )}
+              </mask>
+            </defs>
+            <rect
+              x="0"
+              y="0"
+              width="100%"
+              height="100%"
+              fill="rgba(0, 0, 0, 0.75)"
+              mask="url(#spotlight-mask)"
+            />
+          </svg>
 
-          {/* Content */}
-          <div className="p-6">
-            <motion.p
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-muted-foreground leading-relaxed"
-            >
-              {step.description}
-            </motion.p>
-          </div>
+          {/* Highlight border around target */}
+          {targetRect && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute pointer-events-none"
+              style={{
+                left: targetRect.left - padding,
+                top: targetRect.top - padding,
+                width: targetRect.width + padding * 2,
+                height: targetRect.height + padding * 2,
+                borderRadius: 12,
+                border: '2px solid hsl(var(--primary))',
+                boxShadow: '0 0 0 4px hsl(var(--primary) / 0.2), 0 0 20px hsl(var(--primary) / 0.3)',
+              }}
+            />
+          )}
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border flex items-center justify-between bg-muted/30">
-            <Button
-              variant="ghost"
-              onClick={handlePrev}
-              disabled={currentStep === 0}
-              className="gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleSkip}>
-                Skip
+          {/* Skip button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSkip}
+            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white z-10"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+
+          {/* Tooltip */}
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute w-[280px] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+            style={getTooltipStyle()}
+          >
+            {/* Progress dots */}
+            <div className="flex items-center gap-1.5 p-3 border-b border-border bg-muted/50">
+              {TUTORIAL_STEPS.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    idx === currentStep ? 'bg-primary' : idx < currentStep ? 'bg-primary/50' : 'bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
+              <span className="ml-auto text-xs text-muted-foreground">
+                {currentStep + 1}/{TUTORIAL_STEPS.length}
+              </span>
+            </div>
+
+            {/* Content */}
+            <div className="p-4">
+              <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {step.description}
+              </p>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between p-3 border-t border-border bg-muted/30">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className="gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
               </Button>
-              <Button onClick={handleNext} className="gap-1">
-                {isLastStep ? 'Get Started' : 'Next'}
+              <Button size="sm" onClick={handleNext} className="gap-1">
+                {isLastStep ? 'Done' : 'Next'}
                 {!isLastStep && <ChevronRight className="w-4 h-4" />}
               </Button>
             </div>
-          </div>
+          </motion.div>
+
+          {/* Click blocker that allows clicking the highlighted element */}
+          <div
+            className="absolute inset-0"
+            onClick={handleSkip}
+            style={{ pointerEvents: 'auto' }}
+          />
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 }
