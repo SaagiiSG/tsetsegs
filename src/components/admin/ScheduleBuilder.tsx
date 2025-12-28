@@ -129,7 +129,7 @@ export function ScheduleBuilder({
       'thu': 'thursday', 'fri': 'friday', 'sat': 'saturday', 'sun': 'sunday',
     };
 
-    const parsePart = (part: string): TimeSlot[] => {
+  const parsePart = (part: string): TimeSlot[] => {
       const slots: TimeSlot[] = [];
       const lowerPart = part.toLowerCase();
 
@@ -140,10 +140,12 @@ export function ScheduleBuilder({
       const startTime = timeMatch[1].padStart(5, '0');
       const endTime = timeMatch[2].padStart(5, '0');
 
-      // Handle "Даваа-Пүрэв" pattern (day range)
-      const dayRangeMatch = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)\s*[-–/]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)/);
+      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      const mongolianDays = ['даваа', 'мягмар', 'лхагва', 'пүрэв', 'баасан', 'бямба', 'ням'];
+
+      // Handle "Даваа-Пүрэв" pattern (day RANGE with hyphen - consecutive days)
+      const dayRangeMatch = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)\s*[-–]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)/);
       if (dayRangeMatch) {
-        const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const startDay = dayMappings[dayRangeMatch[1]];
         const endDay = dayMappings[dayRangeMatch[2]];
         const startIdx = dayOrder.indexOf(startDay);
@@ -157,20 +159,27 @@ export function ScheduleBuilder({
         return slots;
       }
 
-      // Handle "Мягмар/Пүрэв" pattern (specific days)
-      const slashDays = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)\s*[/,]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)/);
-      if (slashDays) {
-        [slashDays[1], slashDays[2]].forEach(d => {
+      // Handle "Даваа/Лхагва/Баасан" pattern (specific days with slashes - can be 2+ days)
+      const slashPattern = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)(?:\s*[/,]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням))+/);
+      if (slashPattern) {
+        // Extract all day names from the matched pattern
+        const dayMatches = slashPattern[0].split(/[/,]/).map(d => d.trim());
+        dayMatches.forEach(d => {
           const day = dayMappings[d];
-          if (day) slots.push({ day, start_time: startTime, end_time: endTime });
+          if (day && !slots.find(s => s.day === day)) {
+            slots.push({ day, start_time: startTime, end_time: endTime });
+          }
         });
         return slots;
       }
 
-      // Find individual day names
-      for (const [key, value] of Object.entries(dayMappings)) {
-        if (lowerPart.includes(key) && !slots.find(s => s.day === value)) {
-          slots.push({ day: value, start_time: startTime, end_time: endTime });
+      // Find individual day names (fallback)
+      for (const mongDay of mongolianDays) {
+        if (lowerPart.includes(mongDay)) {
+          const day = dayMappings[mongDay];
+          if (day && !slots.find(s => s.day === day)) {
+            slots.push({ day, start_time: startTime, end_time: endTime });
+          }
         }
       }
 
