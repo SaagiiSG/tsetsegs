@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, X, Save, BookOpen, Calculator, AlertTriangle } from 'lucide-react';
+import { Plus, X, Save, BookOpen, Calculator, AlertTriangle, HelpCircle } from 'lucide-react';
+import { ScheduleBuilderTutorial } from './ScheduleBuilderTutorial';
 
 export interface TimeSlot {
   day: string;
@@ -58,7 +59,21 @@ export function ScheduleBuilder({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savingSubject, setSavingSubject] = useState<'math' | 'english'>('math');
+  const [showTutorial, setShowTutorial] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user has seen the tutorial
+    const hasSeenTutorial = localStorage.getItem('schedule-builder-tutorial-seen');
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+    }
+  }, []);
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    localStorage.setItem('schedule-builder-tutorial-seen', 'true');
+  };
 
   useEffect(() => {
     fetchTemplates();
@@ -350,28 +365,45 @@ export function ScheduleBuilder({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col lg:flex-row gap-4">
-        {renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
-        {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
-      </div>
+    <>
+      <ScheduleBuilderTutorial isOpen={showTutorial} onComplete={handleTutorialComplete} />
+      
+      <div className="space-y-4">
+        {/* Help button */}
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowTutorial(true)}
+            className="text-muted-foreground hover:text-foreground gap-1"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Help
+          </Button>
+        </div>
 
-      {overlapResult.hasConflict && (
-        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-            <div>
-              <p className="font-medium text-destructive">Schedule Conflict Detected</p>
-              <ul className="text-sm text-destructive/80 mt-1 space-y-1">
-                {overlapResult.conflicts.map((conflict, i) => (
-                  <li key={i}>{conflict}</li>
-                ))}
-              </ul>
+        <div className="flex flex-col lg:flex-row gap-4">
+          {renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
+          {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
+        </div>
+
+        {overlapResult.hasConflict && (
+          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive">Schedule Conflict Detected</p>
+                <ul className="text-sm text-destructive/80 mt-1 space-y-1">
+                  {overlapResult.conflicts.map((conflict, i) => (
+                    <li key={i}>{conflict}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 
