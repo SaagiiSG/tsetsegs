@@ -222,7 +222,7 @@ export function ScheduleBuilder({
     schedule: TimeSlot[],
     icon: React.ReactNode
   ) => (
-    <Card className="flex-1">
+    <Card className="flex-1" data-tutorial={`${subject}-section`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -235,7 +235,12 @@ export function ScheduleBuilder({
               if (open) setSavingSubject(subject);
             }}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={schedule.length === 0}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={schedule.length === 0}
+                  data-tutorial={`save-${subject}`}
+                >
                   <Save className="w-3 h-3 mr-1" />
                   Save
                 </Button>
@@ -259,7 +264,12 @@ export function ScheduleBuilder({
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="sm" onClick={() => addSlot(subject)}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => addSlot(subject)}
+              data-tutorial={`add-${subject}`}
+            >
               <Plus className="w-3 h-3 mr-1" />
               Add
             </Button>
@@ -268,8 +278,8 @@ export function ScheduleBuilder({
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Templates */}
-        {templates.filter(t => t.subject === subject).length > 0 && (
-          <div className="space-y-2">
+        {templates.filter(t => t.subject === subject).length > 0 ? (
+          <div className="space-y-2" data-tutorial={`templates-${subject}`}>
             <Label className="text-xs text-muted-foreground">Quick Templates</Label>
             <div className="flex flex-wrap gap-2">
               {templates.filter(t => t.subject === subject).map((template) => (
@@ -283,6 +293,10 @@ export function ScheduleBuilder({
                 </Badge>
               ))}
             </div>
+          </div>
+        ) : (
+          <div data-tutorial={`templates-${subject}`} className="text-xs text-muted-foreground">
+            No templates saved yet
           </div>
         )}
 
