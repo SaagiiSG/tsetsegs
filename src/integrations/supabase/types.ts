@@ -180,8 +180,10 @@ export type Database = {
           batch_name: string | null
           course_type: Database["public"]["Enums"]["course_type"]
           created_at: string
+          english_schedule: Json | null
           fb_group_link: string | null
           id: string
+          math_schedule: Json | null
           room: string | null
           schedule: string
           start_date: string
@@ -192,8 +194,10 @@ export type Database = {
           batch_name?: string | null
           course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string
+          english_schedule?: Json | null
           fb_group_link?: string | null
           id?: string
+          math_schedule?: Json | null
           room?: string | null
           schedule: string
           start_date: string
@@ -204,8 +208,10 @@ export type Database = {
           batch_name?: string | null
           course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string
+          english_schedule?: Json | null
           fb_group_link?: string | null
           id?: string
+          math_schedule?: Json | null
           room?: string | null
           schedule?: string
           start_date?: string
@@ -633,6 +639,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schedule_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_global: boolean
+          name: string
+          schedule_data: Json
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name: string
+          schedule_data?: Json
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name?: string
+          schedule_data?: Json
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       session_topics: {
         Row: {

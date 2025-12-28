@@ -5,17 +5,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { isOnlineClass } from '@/lib/classUtils';
+import { ScheduleBuilder, TimeSlot, checkScheduleOverlap, formatScheduleDisplay } from './ScheduleBuilder';
+import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 
 const studentSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, "Phone must contain only numbers and valid characters").max(20, "Phone must be less than 20 characters")
 });
 
-const schedules = [
+// Legacy schedules for backward compatibility
+const legacySchedules = [
   'Даваа/Лхагва/Баасан 16:40-18:30 (Math) + Бямба 14:10-16:10 (English - үнэгүй)',
   'Даваа/Лхагва/Баасан 18:40-20:30 (Math) + Бямба 16:20-18:20 (English - үнэгүй)',
   'Мягмар/Пүрэв 16:40-18:30 (Math) + Бямба 10:00-12:00 (Math) + 12:00-14:00 (English - үнэгүй)',
@@ -39,7 +43,6 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const [studentList, setStudentList] = useState('');
   const [teacher, setTeacher] = useState('');
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
-  const [schedule, setSchedule] = useState('');
   const [room, setRoom] = useState('');
   const [startDate, setStartDate] = useState('');
   const [fbGroupLink, setFbGroupLink] = useState('');
@@ -48,16 +51,23 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // New schedule builder state
+  const [useScheduleBuilder, setUseScheduleBuilder] = useState(true);
+  const [mathSchedule, setMathSchedule] = useState<TimeSlot[]>([]);
+  const [englishSchedule, setEnglishSchedule] = useState<TimeSlot[]>([]);
+  const [legacySchedule, setLegacySchedule] = useState('');
+  const [scheduleBuilderOpen, setScheduleBuilderOpen] = useState(true);
+
   useEffect(() => {
     fetchTeachers();
   }, []);
 
   useEffect(() => {
     // Auto-set room to "Online" when online schedule is selected
-    if (schedule && isOnlineClass(schedule)) {
+    if (legacySchedule && isOnlineClass(legacySchedule)) {
       setRoom('Online');
     }
-  }, [schedule]);
+  }, [legacySchedule]);
 
   const fetchTeachers = async () => {
     const { data } = await supabase.from('teachers').select('*').order('name');
@@ -75,15 +85,59 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
     return `(${month} ${year} Intake) - ${teacherName}`;
   };
 
+  // Combine math and english schedules into a display string for the legacy 'schedule' field
+  const getCombinedScheduleString = (): string => {
+    if (!useScheduleBuilder) return legacySchedule;
+    
+    const mathStr = formatScheduleDisplay(mathSchedule);
+    const englishStr = formatScheduleDisplay(englishSchedule);
+    
+    let combined = '';
+    if (mathStr) combined += `(Math) ${mathStr}`;
+    if (englishStr) combined += (combined ? ' + ' : '') + `(English) ${englishStr}`;
+    
+    return combined || '';
+  };
+
   const handleCreateBatch = async () => {
     const teacherValue = courseType === 'IELTS' 
       ? selectedTeachers.join(', ')
       : teacher;
     
-    if (!studentList || !teacherValue || !room || !schedule || !startDate) {
+    const scheduleString = getCombinedScheduleString();
+    
+    if (!studentList || !teacherValue || !room || !startDate) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (useScheduleBuilder && mathSchedule.length === 0 && englishSchedule.length === 0) {
+      toast({
+        title: "Missing Schedule",
+        description: "Please add at least one time slot for Math or English",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!useScheduleBuilder && !legacySchedule) {
+      toast({
+        title: "Missing Schedule",
+        description: "Please select a schedule",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check for schedule overlap
+    if (useScheduleBuilder && checkScheduleOverlap(mathSchedule, englishSchedule)) {
+      toast({
+        title: "Schedule Conflict",
+        description: "Math and English schedules cannot overlap. Please adjust the times.",
         variant: "destructive"
       });
       return;
@@ -99,7 +153,6 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           const match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+)$/);
           if (match) {
             const studentData = { name: match[1].trim(), phone: match[2].trim() };
-            // Validate student data
             const validation = studentSchema.safeParse(studentData);
             if (!validation.success) {
               toast({
@@ -136,12 +189,14 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
         .insert({
           teacher: teacherName,
           room,
-          schedule,
+          schedule: scheduleString,
           start_date: startDate,
           fb_group_link: fbGroupLink,
           unique_link_id: batchLinkId,
           batch_name: batchName,
           course_type: courseType,
+          math_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(mathSchedule)) : null,
+          english_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(englishSchedule)) : null,
         })
         .select()
         .single();
@@ -170,11 +225,13 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       setStudentList('');
       setTeacher('');
       setSelectedTeachers([]);
-      setSchedule('');
       setRoom('');
       setStartDate('');
       setFbGroupLink('');
       setCourseType('SAT');
+      setMathSchedule([]);
+      setEnglishSchedule([]);
+      setLegacySchedule('');
       
       onSuccess();
     } catch (error: any) {
@@ -261,24 +318,8 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="schedule">Schedule</Label>
-            <Select value={schedule} onValueChange={setSchedule}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select schedule" />
-              </SelectTrigger>
-              <SelectContent>
-                {schedules.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="room">Room</Label>
-            <Select value={room} onValueChange={setRoom} disabled={isOnlineClass(schedule)}>
+            <Select value={room} onValueChange={setRoom} disabled={isOnlineClass(legacySchedule)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select room" />
               </SelectTrigger>
@@ -301,6 +342,66 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
+        </div>
+
+        {/* Schedule Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Schedule
+            </Label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={useScheduleBuilder ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUseScheduleBuilder(true)}
+              >
+                Builder
+              </Button>
+              <Button
+                variant={!useScheduleBuilder ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUseScheduleBuilder(false)}
+              >
+                Preset
+              </Button>
+            </div>
+          </div>
+
+          {useScheduleBuilder ? (
+            <Collapsible open={scheduleBuilderOpen} onOpenChange={setScheduleBuilderOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                  <span className="text-sm text-muted-foreground">
+                    {mathSchedule.length + englishSchedule.length} time slots configured
+                  </span>
+                  {scheduleBuilderOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <ScheduleBuilder
+                  mathSchedule={mathSchedule}
+                  englishSchedule={englishSchedule}
+                  onMathScheduleChange={setMathSchedule}
+                  onEnglishScheduleChange={setEnglishSchedule}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <Select value={legacySchedule} onValueChange={setLegacySchedule}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select schedule" />
+              </SelectTrigger>
+              <SelectContent>
+                {legacySchedules.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-2">
