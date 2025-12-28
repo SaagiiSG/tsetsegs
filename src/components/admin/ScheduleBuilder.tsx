@@ -117,62 +117,85 @@ export function ScheduleBuilder({
     }
   };
 
-  // Parse legacy text schedule into TimeSlot array
-  const parseLegacySchedule = (scheduleText: string): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    if (!scheduleText) return slots;
+  // Parse legacy text schedule into separate Math and English schedules
+  const parseLegacySchedule = (scheduleText: string): { math: TimeSlot[], english: TimeSlot[] } => {
+    const result = { math: [] as TimeSlot[], english: [] as TimeSlot[] };
+    if (!scheduleText) return result;
 
-    // Common patterns: "Mon-Wed-Fri 14:20-16:10" or "MWF 14:20-16:10" or "Даваа, Лхагва 16:40-18:30"
     const dayMappings: Record<string, string> = {
-      'mon': 'monday', 'monday': 'monday', 'даваа': 'monday',
-      'tue': 'tuesday', 'tuesday': 'tuesday', 'мягмар': 'tuesday',
-      'wed': 'wednesday', 'wednesday': 'wednesday', 'лхагва': 'wednesday',
-      'thu': 'thursday', 'thursday': 'thursday', 'пүрэв': 'thursday',
-      'fri': 'friday', 'friday': 'friday', 'баасан': 'friday',
-      'sat': 'saturday', 'saturday': 'saturday', 'бямба': 'saturday',
-      'sun': 'sunday', 'sunday': 'sunday', 'ням': 'sunday',
-      'm': 'monday', 'w': 'wednesday', 'f': 'friday',
+      'даваа': 'monday', 'мягмар': 'tuesday', 'лхагва': 'wednesday',
+      'пүрэв': 'thursday', 'баасан': 'friday', 'бямба': 'saturday', 'ням': 'sunday',
+      'mon': 'monday', 'tue': 'tuesday', 'wed': 'wednesday',
+      'thu': 'thursday', 'fri': 'friday', 'sat': 'saturday', 'sun': 'sunday',
     };
 
-    // Try to extract time pattern (HH:MM-HH:MM)
-    const timeMatch = scheduleText.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
-    const startTime = timeMatch ? timeMatch[1].padStart(5, '0') : '16:40';
-    const endTime = timeMatch ? timeMatch[2].padStart(5, '0') : '18:30';
+    const parsePart = (part: string): TimeSlot[] => {
+      const slots: TimeSlot[] = [];
+      const lowerPart = part.toLowerCase();
 
-    // Extract days from the text
-    const lowerText = scheduleText.toLowerCase();
-    
-    // Handle MWF pattern
-    if (/\bmwf\b/.test(lowerText)) {
-      ['monday', 'wednesday', 'friday'].forEach(day => {
-        slots.push({ day, start_time: startTime, end_time: endTime });
-      });
-      return slots;
-    }
+      // Extract time (HH:MM-HH:MM)
+      const timeMatch = part.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
+      if (!timeMatch) return slots;
+      
+      const startTime = timeMatch[1].padStart(5, '0');
+      const endTime = timeMatch[2].padStart(5, '0');
 
-    // Handle TTH pattern
-    if (/\btth\b/.test(lowerText) || /\btt\b/.test(lowerText)) {
-      ['tuesday', 'thursday'].forEach(day => {
-        slots.push({ day, start_time: startTime, end_time: endTime });
-      });
-      return slots;
-    }
+      // Handle "Даваа-Пүрэв" pattern (day range)
+      const dayRangeMatch = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)\s*[-–/]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)/);
+      if (dayRangeMatch) {
+        const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const startDay = dayMappings[dayRangeMatch[1]];
+        const endDay = dayMappings[dayRangeMatch[2]];
+        const startIdx = dayOrder.indexOf(startDay);
+        const endIdx = dayOrder.indexOf(endDay);
+        
+        if (startIdx !== -1 && endIdx !== -1) {
+          for (let i = startIdx; i <= endIdx; i++) {
+            slots.push({ day: dayOrder[i], start_time: startTime, end_time: endTime });
+          }
+        }
+        return slots;
+      }
 
-    // Try to find individual day names
-    for (const [key, value] of Object.entries(dayMappings)) {
-      if (key.length > 1 && lowerText.includes(key)) {
-        if (!slots.find(s => s.day === value)) {
+      // Handle "Мягмар/Пүрэв" pattern (specific days)
+      const slashDays = lowerPart.match(/(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)\s*[/,]\s*(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)/);
+      if (slashDays) {
+        [slashDays[1], slashDays[2]].forEach(d => {
+          const day = dayMappings[d];
+          if (day) slots.push({ day, start_time: startTime, end_time: endTime });
+        });
+        return slots;
+      }
+
+      // Find individual day names
+      for (const [key, value] of Object.entries(dayMappings)) {
+        if (lowerPart.includes(key) && !slots.find(s => s.day === value)) {
           slots.push({ day: value, start_time: startTime, end_time: endTime });
         }
       }
+
+      return slots;
+    };
+
+    // Split by + to separate Math and English parts
+    const parts = scheduleText.split('+').map(p => p.trim());
+
+    for (const part of parts) {
+      const lowerPart = part.toLowerCase();
+      const isEnglish = lowerPart.includes('english') || lowerPart.includes('үнэгүй');
+      const isMath = lowerPart.includes('math');
+      const isMock = lowerPart.includes('mock');
+      
+      const slots = parsePart(part);
+      
+      if (isEnglish && !isMock) {
+        result.english.push(...slots);
+      } else if (isMath || (!isEnglish && !isMock)) {
+        result.math.push(...slots);
+      }
     }
 
-    // If no days found, default to common pattern
-    if (slots.length === 0) {
-      slots.push({ day: 'monday', start_time: startTime, end_time: endTime });
-    }
-
-    return slots;
+    return result;
   };
 
   const hasNewFormatSchedule = (batch: any): boolean => {
@@ -193,12 +216,15 @@ export function ScheduleBuilder({
       imported = true;
     }
 
-    // Fall back to legacy text schedule - apply to BOTH math and english
+    // Fall back to legacy text schedule - parse Math and English separately
     if (!imported && batch.schedule) {
-      const parsedSchedule = parseLegacySchedule(batch.schedule);
-      if (parsedSchedule.length > 0) {
-        onMathScheduleChange(parsedSchedule);
-        onEnglishScheduleChange(parsedSchedule);
+      const parsed = parseLegacySchedule(batch.schedule);
+      if (parsed.math.length > 0) {
+        onMathScheduleChange(parsed.math);
+        imported = true;
+      }
+      if (parsed.english.length > 0) {
+        onEnglishScheduleChange(parsed.english);
         imported = true;
       }
     }
