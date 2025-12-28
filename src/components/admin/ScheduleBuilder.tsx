@@ -35,13 +35,13 @@ const DAYS = [
   { value: 'sunday', label: 'Ням (Sun)' },
 ];
 
-// Free time options for flexible scheduling
-const TIME_OPTIONS = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:10', '12:30', '13:00', '13:30', '14:00', '14:10', '14:20', '14:30',
-  '15:00', '15:30', '16:00', '16:20', '16:30', '16:40', '17:00', '17:30',
-  '18:00', '18:20', '18:30', '18:40', '19:00', '19:30', '20:00', '20:30', '21:00'
-];
+// Generate time options with 10-minute intervals from 08:00 to 22:00
+const TIME_OPTIONS = Array.from({ length: 85 }, (_, i) => {
+  const totalMinutes = 8 * 60 + i * 10; // Start at 8:00
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+});
 
 interface ScheduleTemplate {
   id: string;
@@ -522,22 +522,40 @@ export function ScheduleBuilder({
                 </Select>
 
                 {/* Start time */}
-                <Input
-                  type="time"
+                <Select
                   value={slot.start_time}
-                  onChange={(e) => updateSlot(subject, index, 'start_time', e.target.value)}
-                  className="w-[100px]"
-                />
+                  onValueChange={(value) => updateSlot(subject, index, 'start_time', value)}
+                >
+                  <SelectTrigger className="w-[90px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {TIME_OPTIONS.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <span className="text-muted-foreground">-</span>
 
                 {/* End time */}
-                <Input
-                  type="time"
+                <Select
                   value={slot.end_time}
-                  onChange={(e) => updateSlot(subject, index, 'end_time', e.target.value)}
-                  className="w-[100px]"
-                />
+                  onValueChange={(value) => updateSlot(subject, index, 'end_time', value)}
+                >
+                  <SelectTrigger className="w-[90px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {TIME_OPTIONS.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <Button
                   variant="ghost"
