@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, X, Save, BookOpen, Calculator, AlertTriangle, HelpCircle } from 'lucide-react';
+import { Plus, X, Save, BookOpen, Calculator, AlertTriangle, HelpCircle, Download } from 'lucide-react';
 import { ScheduleBuilderTutorial } from './ScheduleBuilderTutorial';
+import { formatJsonSchedule } from '@/lib/classUtils';
 
 export interface TimeSlot {
   day: string;
@@ -57,6 +58,8 @@ export function ScheduleBuilder({
 }: ScheduleBuilderProps) {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [existingBatches, setExistingBatches] = useState<any[]>([]);
   const [templateName, setTemplateName] = useState('');
   const [savingSubject, setSavingSubject] = useState<'math' | 'english'>('math');
   const [showTutorial, setShowTutorial] = useState(false);
@@ -77,6 +80,7 @@ export function ScheduleBuilder({
 
   useEffect(() => {
     fetchTemplates();
+    fetchExistingBatches();
   }, []);
 
   const fetchTemplates = async () => {
@@ -93,6 +97,37 @@ export function ScheduleBuilder({
         schedule_data: (t.schedule_data as unknown as TimeSlot[]) || []
       })));
     }
+  };
+
+  const fetchExistingBatches = async () => {
+    const { data, error } = await supabase
+      .from('batches')
+      .select('id, batch_name, start_date, math_schedule, english_schedule, schedule')
+      .order('start_date', { ascending: false })
+      .limit(20);
+    
+    if (data && !error) {
+      // Filter to batches that have the new schedule format
+      const batchesWithSchedules = data.filter(b => 
+        (b.math_schedule && Array.isArray(b.math_schedule) && b.math_schedule.length > 0) ||
+        (b.english_schedule && Array.isArray(b.english_schedule) && b.english_schedule.length > 0)
+      );
+      setExistingBatches(batchesWithSchedules);
+    }
+  };
+
+  const importFromBatch = (batch: any) => {
+    if (batch.math_schedule && Array.isArray(batch.math_schedule)) {
+      onMathScheduleChange(batch.math_schedule as TimeSlot[]);
+    }
+    if (batch.english_schedule && Array.isArray(batch.english_schedule)) {
+      onEnglishScheduleChange(batch.english_schedule as TimeSlot[]);
+    }
+    setImportDialogOpen(false);
+    toast({
+      title: 'Schedule Imported',
+      description: `Imported schedule from ${batch.batch_name || 'batch'}`,
+    });
   };
 
   const checkOverlap = (slot1: TimeSlot, slot2: TimeSlot): boolean => {
@@ -383,8 +418,63 @@ export function ScheduleBuilder({
       <ScheduleBuilderTutorial isOpen={showTutorial} onComplete={handleTutorialComplete} />
       
       <div className="space-y-4">
-        {/* Help button */}
-        <div className="flex justify-end">
+        {/* Top actions */}
+        <div className="flex justify-between items-center">
+          <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                disabled={existingBatches.length === 0}
+              >
+                <Download className="w-4 h-4" />
+                Import from Existing Class
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Import Schedule from Existing Class</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 pt-4 max-h-[400px] overflow-y-auto">
+                {existingBatches.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No existing classes with schedules found.
+                  </p>
+                ) : (
+                  existingBatches.map((batch) => (
+                    <div
+                      key={batch.id}
+                      className="p-3 border border-border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => importFromBatch(batch)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium">{batch.batch_name || 'Unnamed Batch'}</p>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(batch.start_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        {batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0 && (
+                          <p>
+                            <span className="text-blue-500">Math:</span>{' '}
+                            {formatJsonSchedule(batch.math_schedule as TimeSlot[])}
+                          </p>
+                        )}
+                        {batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0 && (
+                          <p>
+                            <span className="text-purple-500">English:</span>{' '}
+                            {formatJsonSchedule(batch.english_schedule as TimeSlot[])}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button
             variant="ghost"
             size="sm"
