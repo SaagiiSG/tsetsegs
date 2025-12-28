@@ -256,15 +256,22 @@ export function ScheduleBuilderTutorial({ onComplete, isOpen }: ScheduleBuilderT
             <X className="w-5 h-5" />
           </Button>
 
-          {/* Tooltip */}
+          {/* Click blocker - rendered first so tooltip is on top */}
+          <div
+            className="absolute inset-0"
+            onClick={handleSkip}
+          />
+
+          {/* Tooltip - rendered last to be on top */}
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute w-[280px] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+            className="absolute w-[280px] bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-10"
             style={getTooltipStyle()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Progress dots */}
             <div className="flex items-center gap-1.5 p-3 border-b border-border bg-muted/50">
@@ -307,13 +314,6 @@ export function ScheduleBuilderTutorial({ onComplete, isOpen }: ScheduleBuilderT
               </Button>
             </div>
           </motion.div>
-
-          {/* Click blocker that allows clicking the highlighted element */}
-          <div
-            className="absolute inset-0"
-            onClick={handleSkip}
-            style={{ pointerEvents: 'auto' }}
-          />
         </motion.div>
       )}
     </AnimatePresence>
