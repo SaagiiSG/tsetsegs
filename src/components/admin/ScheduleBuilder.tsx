@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, X, Save, BookOpen, Calculator, AlertTriangle } from 'lucide-react';
+import { Plus, X, Save, BookOpen, Calculator, AlertTriangle, Sun } from 'lucide-react';
 
 export interface TimeSlot {
   day: string;
@@ -33,10 +34,18 @@ const DAYS = [
   { value: 'sunday', label: 'Ням (Sun)' },
 ];
 
-const TIME_OPTIONS = [
-  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '14:10',
-  '15:00', '16:00', '16:20', '16:30', '16:40', '17:00', '18:00', '18:20',
-  '18:30', '18:40', '19:00', '20:00', '20:30', '21:00'
+// Regular mode: only two class time options
+const REGULAR_CLASS_TIMES = [
+  { value: '16:40-18:30', label: '4:40 PM - 6:30 PM', start: '16:40', end: '18:30' },
+  { value: '18:40-20:30', label: '6:40 PM - 8:30 PM', start: '18:40', end: '20:30' },
+];
+
+// Holiday mode: all time options
+const HOLIDAY_TIME_OPTIONS = [
+  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00', '13:30', '14:00', '14:10', '14:30', '15:00',
+  '15:30', '16:00', '16:20', '16:30', '16:40', '17:00', '17:30', '18:00',
+  '18:20', '18:30', '18:40', '19:00', '19:30', '20:00', '20:30', '21:00'
 ];
 
 interface ScheduleTemplate {
@@ -56,6 +65,7 @@ export function ScheduleBuilder({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savingSubject, setSavingSubject] = useState<'math' | 'english'>('math');
+  const [holidayMode, setHolidayMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,11 +120,14 @@ export function ScheduleBuilder({
   };
 
   const addSlot = (subject: 'math' | 'english') => {
-    const newSlot: TimeSlot = { day: 'monday', start_time: '16:40', end_time: '18:30' };
+    const defaultSlot = holidayMode 
+      ? { day: 'monday', start_time: '10:00', end_time: '12:00' }
+      : { day: 'monday', start_time: '16:40', end_time: '18:30' };
+    
     if (subject === 'math') {
-      onMathScheduleChange([...mathSchedule, newSlot]);
+      onMathScheduleChange([...mathSchedule, defaultSlot]);
     } else {
-      onEnglishScheduleChange([...englishSchedule, newSlot]);
+      onEnglishScheduleChange([...englishSchedule, defaultSlot]);
     }
   };
 
@@ -126,6 +139,21 @@ export function ScheduleBuilder({
     } else {
       const updated = [...englishSchedule];
       updated[index] = { ...updated[index], [field]: value };
+      onEnglishScheduleChange(updated);
+    }
+  };
+
+  const updateSlotWithClassTime = (subject: 'math' | 'english', index: number, classTimeValue: string) => {
+    const classTime = REGULAR_CLASS_TIMES.find(t => t.value === classTimeValue);
+    if (!classTime) return;
+
+    if (subject === 'math') {
+      const updated = [...mathSchedule];
+      updated[index] = { ...updated[index], start_time: classTime.start, end_time: classTime.end };
+      onMathScheduleChange(updated);
+    } else {
+      const updated = [...englishSchedule];
+      updated[index] = { ...updated[index], start_time: classTime.start, end_time: classTime.end };
       onEnglishScheduleChange(updated);
     }
   };
@@ -197,6 +225,11 @@ export function ScheduleBuilder({
     }
   };
 
+  const getClassTimeValue = (slot: TimeSlot): string => {
+    const match = REGULAR_CLASS_TIMES.find(t => t.start === slot.start_time && t.end === slot.end_time);
+    return match?.value || '';
+  };
+
   const overlapResult = hasOverlap();
 
   const renderScheduleSection = (
@@ -209,7 +242,7 @@ export function ScheduleBuilder({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             {icon}
-            <span>{subject === 'math' ? 'Math Schedule' : 'English Schedule'}</span>
+            <span>{subject === 'math' ? 'Math Schedule' : 'English Schedule (үнэгүй)'}</span>
           </CardTitle>
           <div className="flex gap-2">
             <Dialog open={saveDialogOpen && savingSubject === subject} onOpenChange={(open) => {
@@ -276,7 +309,8 @@ export function ScheduleBuilder({
         ) : (
           <div className="space-y-2">
             {schedule.map((slot, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+              <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg flex-wrap">
+                {/* Day selector */}
                 <Select
                   value={slot.day}
                   onValueChange={(value) => updateSlot(subject, index, 'day', value)}
@@ -293,39 +327,61 @@ export function ScheduleBuilder({
                   </SelectContent>
                 </Select>
 
-                <Select
-                  value={slot.start_time}
-                  onValueChange={(value) => updateSlot(subject, index, 'start_time', value)}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {holidayMode ? (
+                  // Holiday mode: free time selection
+                  <>
+                    <Select
+                      value={slot.start_time}
+                      onValueChange={(value) => updateSlot(subject, index, 'start_time', value)}
+                    >
+                      <SelectTrigger className="w-[90px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HOLIDAY_TIME_OPTIONS.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                <span className="text-muted-foreground">-</span>
+                    <span className="text-muted-foreground">-</span>
 
-                <Select
-                  value={slot.end_time}
-                  onValueChange={(value) => updateSlot(subject, index, 'end_time', value)}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <Select
+                      value={slot.end_time}
+                      onValueChange={(value) => updateSlot(subject, index, 'end_time', value)}
+                    >
+                      <SelectTrigger className="w-[90px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HOLIDAY_TIME_OPTIONS.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                ) : (
+                  // Regular mode: preset class times
+                  <Select
+                    value={getClassTimeValue(slot)}
+                    onValueChange={(value) => updateSlotWithClassTime(subject, index, value)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select class time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REGULAR_CLASS_TIMES.map((time) => (
+                        <SelectItem key={time.value} value={time.value}>
+                          {time.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
                 <Button
                   variant="ghost"
@@ -345,6 +401,21 @@ export function ScheduleBuilder({
 
   return (
     <div className="space-y-4">
+      {/* Holiday Mode Toggle */}
+      <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Sun className="w-4 h-4 text-amber-600" />
+          <div>
+            <p className="font-medium text-sm">Holiday Mode</p>
+            <p className="text-xs text-muted-foreground">Enable flexible time selection for holiday schedules</p>
+          </div>
+        </div>
+        <Switch
+          checked={holidayMode}
+          onCheckedChange={setHolidayMode}
+        />
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-4">
         {renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
         {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
@@ -370,7 +441,7 @@ export function ScheduleBuilder({
 }
 
 // Helper function to format schedule for display
-export function formatScheduleDisplay(schedule: TimeSlot[]): string {
+export function formatScheduleDisplay(schedule: TimeSlot[], isFree?: boolean): string {
   if (!schedule || schedule.length === 0) return '';
   
   const dayMap: Record<string, string> = {
@@ -383,9 +454,11 @@ export function formatScheduleDisplay(schedule: TimeSlot[]): string {
     'sunday': 'Ням',
   };
 
-  return schedule
+  const formatted = schedule
     .map(slot => `${dayMap[slot.day] || slot.day} ${slot.start_time}-${slot.end_time}`)
     .join(', ');
+
+  return isFree ? `${formatted} (үнэгүй)` : formatted;
 }
 
 // Helper to check for overlaps externally
