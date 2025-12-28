@@ -1,6 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, Clock } from 'lucide-react';
+import { Users, Calendar, Clock, Calculator, BookOpen } from 'lucide-react';
+
+interface TimeSlot {
+  day: string;
+  start_time: string;
+  end_time: string;
+}
 
 interface BatchGridCardProps {
   batch: any;
@@ -8,28 +14,37 @@ interface BatchGridCardProps {
   onClick: () => void;
 }
 
-// Convert full schedule to short format like "4:40 Mon/Wed/Fri"
-const formatShortSchedule = (schedule: string): string => {
+const DAY_SHORT: Record<string, string> = {
+  'monday': 'Mon', 'tuesday': 'Tue', 'wednesday': 'Wed',
+  'thursday': 'Thu', 'friday': 'Fri', 'saturday': 'Sat', 'sunday': 'Sun',
+};
+
+// Format new schedule format
+const formatNewSchedule = (schedule: TimeSlot[]): string => {
+  if (!schedule || schedule.length === 0) return '';
+  const days = [...new Set(schedule.map(s => DAY_SHORT[s.day] || s.day))];
+  const firstTime = schedule[0]?.start_time?.replace(/^0/, '') || '';
+  return `${firstTime} ${days.join('/')}`;
+};
+
+// Convert full schedule to short format (legacy)
+const formatShortSchedule = (schedule: string, mathSchedule?: TimeSlot[], englishSchedule?: TimeSlot[]): string => {
+  // Use new format if available
+  if (mathSchedule && mathSchedule.length > 0) {
+    return formatNewSchedule(mathSchedule);
+  }
+  
   if (!schedule) return '';
   
-  // Extract time (first occurrence of HH:MM pattern)
   const timeMatch = schedule.match(/(\d{1,2}):(\d{2})/);
   const time = timeMatch ? `${parseInt(timeMatch[1])}:${timeMatch[2]}` : '';
   
-  // Map Mongolian days to short English
   const dayMap: Record<string, string> = {
-    'Даваа': 'Mon',
-    'Мягмар': 'Tue', 
-    'Лхагва': 'Wed',
-    'Пүрэв': 'Thu',
-    'Баасан': 'Fri',
-    'Бямба': 'Sat',
-    'Ням': 'Sun',
+    'Даваа': 'Mon', 'Мягмар': 'Tue', 'Лхагва': 'Wed',
+    'Пүрэв': 'Thu', 'Баасан': 'Fri', 'Бямба': 'Sat', 'Ням': 'Sun',
   };
   
   const days: string[] = [];
-  
-  // Check for day patterns
   if (schedule.includes('Даваа') && schedule.includes('Лхагва') && schedule.includes('Баасан')) {
     days.push('MWF');
   } else if (schedule.includes('Мягмар') && schedule.includes('Пүрэв')) {
@@ -37,13 +52,11 @@ const formatShortSchedule = (schedule: string): string => {
   } else if (schedule.includes('Даваа') && schedule.includes('Пүрэв')) {
     days.push('M-Th');
   } else {
-    // Individual days
     Object.entries(dayMap).forEach(([mn, en]) => {
       if (schedule.includes(mn)) days.push(en);
     });
   }
   
-  // Check for Saturday add-on
   if (schedule.includes('Бямба') && !days.includes('Sat') && days.length > 0) {
     return `${time} ${days[0]}+Sat`;
   }
@@ -59,7 +72,9 @@ export function BatchGridCard({ batch, studentCount, onClick }: BatchGridCardPro
     });
   };
 
-  const shortSchedule = formatShortSchedule(batch.schedule);
+  const mathSchedule = batch.math_schedule as TimeSlot[] | null;
+  const englishSchedule = batch.english_schedule as TimeSlot[] | null;
+  const shortSchedule = formatShortSchedule(batch.schedule, mathSchedule || undefined, englishSchedule || undefined);
 
   return (
     <Card 
