@@ -193,12 +193,12 @@ export function ScheduleBuilder({
       imported = true;
     }
 
-    // Fall back to legacy text schedule
+    // Fall back to legacy text schedule - apply to BOTH math and english
     if (!imported && batch.schedule) {
       const parsedSchedule = parseLegacySchedule(batch.schedule);
       if (parsedSchedule.length > 0) {
-        // Apply to math by default for legacy schedules
         onMathScheduleChange(parsedSchedule);
+        onEnglishScheduleChange(parsedSchedule);
         imported = true;
       }
     }
