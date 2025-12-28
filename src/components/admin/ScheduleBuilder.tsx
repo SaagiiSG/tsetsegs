@@ -522,40 +522,22 @@ export function ScheduleBuilder({
                 </Select>
 
                 {/* Start time */}
-                <Select
+                <Input
+                  type="time"
                   value={slot.start_time}
-                  onValueChange={(value) => updateSlot(subject, index, 'start_time', value)}
-                >
-                  <SelectTrigger className="w-[90px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => updateSlot(subject, index, 'start_time', e.target.value)}
+                  className="w-[100px]"
+                />
 
                 <span className="text-muted-foreground">-</span>
 
                 {/* End time */}
-                <Select
+                <Input
+                  type="time"
                   value={slot.end_time}
-                  onValueChange={(value) => updateSlot(subject, index, 'end_time', value)}
-                >
-                  <SelectTrigger className="w-[90px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => updateSlot(subject, index, 'end_time', e.target.value)}
+                  className="w-[100px]"
+                />
 
                 <Button
                   variant="ghost"
