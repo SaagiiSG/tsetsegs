@@ -62,6 +62,48 @@ export function ScheduleBuilderTutorial({ onComplete, isOpen }: ScheduleBuilderT
     }
   }, [isOpen]);
 
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          if (currentStep < TUTORIAL_STEPS.length - 1) {
+            setCurrentStep(prev => prev + 1);
+          } else {
+            onComplete();
+          }
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          onComplete();
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (currentStep < TUTORIAL_STEPS.length - 1) {
+            setCurrentStep(prev => prev + 1);
+          } else {
+            onComplete();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, currentStep, onComplete]);
+
   useEffect(() => {
     if (!isOpen || !mounted) return;
 
