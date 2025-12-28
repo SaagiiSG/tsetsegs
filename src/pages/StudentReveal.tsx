@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import flowersLogo from "@/assets/flowers-logo.png";
 import bgMusicFile from "@/assets/bg-music.mp3";
-import { isOnlineClass, filterVisibleTeachers, formatScheduleForDisplay } from "@/lib/classUtils";
+import { isOnlineClass, filterVisibleTeachers, formatScheduleForDisplay, formatJsonSchedule, hasNewScheduleFormat, TimeSlot } from "@/lib/classUtils";
 import { IELTSFloatingAchievements } from "@/components/IELTSFloatingAchievements";
 
 type Language = "en" | "mn";
@@ -728,9 +728,35 @@ const StudentReveal = () => {
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
                 <Calendar className="w-8 h-8 md:w-12 md:h-12 text-gold flex-shrink-0 mt-1" />
-                  <div className="flex-1 space-y-3">
-                    <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
+                <div className="flex-1 space-y-3">
+                  <p className="text-white text-sm md:text-base">{t.classDetails.schedule}</p>
 
+                  {hasNewScheduleFormat(batch) ? (
+                    // New JSONB schedule format
+                    <div className="space-y-3">
+                      {batch.math_schedule && (batch.math_schedule as TimeSlot[]).length > 0 && (
+                        <div>
+                          <p className="text-white/80 text-xs md:text-sm mb-1">
+                            {isOnlineClass(batch.schedule) ? t.classDetails.mathScheduleOnline : t.classDetails.mathSchedule}
+                          </p>
+                          <p className="text-base md:text-lg font-semibold text-gold">
+                            {formatJsonSchedule(batch.math_schedule as TimeSlot[])}
+                          </p>
+                        </div>
+                      )}
+                      {batch.english_schedule && (batch.english_schedule as TimeSlot[]).length > 0 && (
+                        <div>
+                          <p className="text-white/80 text-xs md:text-sm mb-1">
+                            {isOnlineClass(batch.schedule) ? t.classDetails.englishScheduleOnline : t.classDetails.englishSchedule}
+                          </p>
+                          <p className="text-base md:text-lg font-semibold text-gold">
+                            {formatJsonSchedule(batch.english_schedule as TimeSlot[])}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Legacy string schedule format
                     <div className="space-y-2">
                       {formatScheduleForDisplay(batch.schedule).split("+").map((part, index) => {
                         const trimmedPart = part.trim();
@@ -739,10 +765,8 @@ const StudentReveal = () => {
                         const isOnline = trimmedPart.includes("Online");
                         const isBatchOnline = isOnlineClass(batch.schedule);
 
-                        // Extract the schedule without the subject label
                         let scheduleText = trimmedPart.replace(/\s*\(Math.*?\)|\(English.*?\)/g, "").trim();
 
-                        // Add "Бямба" prefix to English classes if they don't have a day specified
                         if (
                           isEnglish &&
                           !scheduleText.includes("Бямба") &&
@@ -778,7 +802,8 @@ const StudentReveal = () => {
                         );
                       })}
                     </div>
-                  </div>
+                  )}
+                </div>
               </motion.div>
 
               {isOnlineClass(batch.schedule) ? (
