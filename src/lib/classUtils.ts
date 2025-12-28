@@ -23,16 +23,26 @@ export function formatScheduleForDisplay(schedule: string): string {
   return schedule.replace(/\s*\[Holiday\]\s*/gi, '').trim();
 }
 
-// Format new JSONB schedule for display
+// Format new JSONB schedule for display - groups days with same time
 export function formatJsonSchedule(schedule: TimeSlot[]): string {
   if (!schedule || schedule.length === 0) return '';
   
-  return schedule
-    .map(slot => {
-      const dayName = DAY_MAP[slot.day] || slot.day;
-      return `${dayName} ${slot.start_time}-${slot.end_time}`;
-    })
-    .join(', ');
+  // Group slots by time (start_time-end_time)
+  const timeGroups: Record<string, string[]> = {};
+  
+  schedule.forEach(slot => {
+    const timeKey = `${slot.start_time}-${slot.end_time}`;
+    const dayName = DAY_MAP[slot.day] || slot.day;
+    if (!timeGroups[timeKey]) {
+      timeGroups[timeKey] = [];
+    }
+    timeGroups[timeKey].push(dayName);
+  });
+  
+  // Format each group: "Mon,Wed,Fri 16:40-18:30"
+  return Object.entries(timeGroups)
+    .map(([time, days]) => `${days.join('/')} ${time}`)
+    .join(' + ');
 }
 
 // Check if batch uses new schedule format
