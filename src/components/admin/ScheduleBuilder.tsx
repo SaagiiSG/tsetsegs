@@ -104,29 +104,109 @@ export function ScheduleBuilder({
       .from('batches')
       .select('id, batch_name, start_date, math_schedule, english_schedule, schedule')
       .order('start_date', { ascending: false })
-      .limit(20);
+      .limit(30);
     
     if (data && !error) {
-      // Filter to batches that have the new schedule format
+      // Include ALL batches - either with new format or legacy text schedule
       const batchesWithSchedules = data.filter(b => 
         (b.math_schedule && Array.isArray(b.math_schedule) && b.math_schedule.length > 0) ||
-        (b.english_schedule && Array.isArray(b.english_schedule) && b.english_schedule.length > 0)
+        (b.english_schedule && Array.isArray(b.english_schedule) && b.english_schedule.length > 0) ||
+        (b.schedule && b.schedule.trim().length > 0)
       );
       setExistingBatches(batchesWithSchedules);
     }
   };
 
+  // Parse legacy text schedule into TimeSlot array
+  const parseLegacySchedule = (scheduleText: string): TimeSlot[] => {
+    const slots: TimeSlot[] = [];
+    if (!scheduleText) return slots;
+
+    // Common patterns: "Mon-Wed-Fri 14:20-16:10" or "MWF 14:20-16:10" or "Даваа, Лхагва 16:40-18:30"
+    const dayMappings: Record<string, string> = {
+      'mon': 'monday', 'monday': 'monday', 'даваа': 'monday',
+      'tue': 'tuesday', 'tuesday': 'tuesday', 'мягмар': 'tuesday',
+      'wed': 'wednesday', 'wednesday': 'wednesday', 'лхагва': 'wednesday',
+      'thu': 'thursday', 'thursday': 'thursday', 'пүрэв': 'thursday',
+      'fri': 'friday', 'friday': 'friday', 'баасан': 'friday',
+      'sat': 'saturday', 'saturday': 'saturday', 'бямба': 'saturday',
+      'sun': 'sunday', 'sunday': 'sunday', 'ням': 'sunday',
+      'm': 'monday', 'w': 'wednesday', 'f': 'friday',
+    };
+
+    // Try to extract time pattern (HH:MM-HH:MM)
+    const timeMatch = scheduleText.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
+    const startTime = timeMatch ? timeMatch[1].padStart(5, '0') : '16:40';
+    const endTime = timeMatch ? timeMatch[2].padStart(5, '0') : '18:30';
+
+    // Extract days from the text
+    const lowerText = scheduleText.toLowerCase();
+    
+    // Handle MWF pattern
+    if (/\bmwf\b/.test(lowerText)) {
+      ['monday', 'wednesday', 'friday'].forEach(day => {
+        slots.push({ day, start_time: startTime, end_time: endTime });
+      });
+      return slots;
+    }
+
+    // Handle TTH pattern
+    if (/\btth\b/.test(lowerText) || /\btt\b/.test(lowerText)) {
+      ['tuesday', 'thursday'].forEach(day => {
+        slots.push({ day, start_time: startTime, end_time: endTime });
+      });
+      return slots;
+    }
+
+    // Try to find individual day names
+    for (const [key, value] of Object.entries(dayMappings)) {
+      if (key.length > 1 && lowerText.includes(key)) {
+        if (!slots.find(s => s.day === value)) {
+          slots.push({ day: value, start_time: startTime, end_time: endTime });
+        }
+      }
+    }
+
+    // If no days found, default to common pattern
+    if (slots.length === 0) {
+      slots.push({ day: 'monday', start_time: startTime, end_time: endTime });
+    }
+
+    return slots;
+  };
+
+  const hasNewFormatSchedule = (batch: any): boolean => {
+    return (batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0) ||
+           (batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0);
+  };
+
   const importFromBatch = (batch: any) => {
-    if (batch.math_schedule && Array.isArray(batch.math_schedule)) {
+    let imported = false;
+
+    // Check for new format first
+    if (batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0) {
       onMathScheduleChange(batch.math_schedule as TimeSlot[]);
+      imported = true;
     }
-    if (batch.english_schedule && Array.isArray(batch.english_schedule)) {
+    if (batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0) {
       onEnglishScheduleChange(batch.english_schedule as TimeSlot[]);
+      imported = true;
     }
+
+    // Fall back to legacy text schedule
+    if (!imported && batch.schedule) {
+      const parsedSchedule = parseLegacySchedule(batch.schedule);
+      if (parsedSchedule.length > 0) {
+        // Apply to math by default for legacy schedules
+        onMathScheduleChange(parsedSchedule);
+        imported = true;
+      }
+    }
+
     setImportDialogOpen(false);
     toast({
       title: 'Schedule Imported',
-      description: `Imported schedule from ${batch.batch_name || 'batch'}`,
+      description: `Imported schedule from ${batch.batch_name || 'batch'}${!hasNewFormatSchedule(batch) ? ' (parsed from legacy format)' : ''}`,
     });
   };
 
@@ -497,22 +577,36 @@ export function ScheduleBuilder({
                       className="p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium">{batch.batch_name || 'Unnamed Batch'}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{batch.batch_name || 'Unnamed Batch'}</p>
+                          {!hasNewFormatSchedule(batch) && (
+                            <Badge variant="secondary" className="text-xs">Legacy</Badge>
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground">
                           {new Date(batch.start_date).toLocaleDateString()}
                         </span>
                       </div>
                       <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                        {batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0 && (
+                        {hasNewFormatSchedule(batch) ? (
+                          <>
+                            {batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0 && (
+                              <p>
+                                <span className="text-blue-500">Math:</span>{' '}
+                                {formatJsonSchedule(batch.math_schedule as TimeSlot[])}
+                              </p>
+                            )}
+                            {batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0 && (
+                              <p>
+                                <span className="text-purple-500">English:</span>{' '}
+                                {formatJsonSchedule(batch.english_schedule as TimeSlot[])}
+                              </p>
+                            )}
+                          </>
+                        ) : (
                           <p>
-                            <span className="text-blue-500">Math:</span>{' '}
-                            {formatJsonSchedule(batch.math_schedule as TimeSlot[])}
-                          </p>
-                        )}
-                        {batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0 && (
-                          <p>
-                            <span className="text-purple-500">English:</span>{' '}
-                            {formatJsonSchedule(batch.english_schedule as TimeSlot[])}
+                            <span className="text-orange-500">Schedule:</span>{' '}
+                            {batch.schedule}
                           </p>
                         )}
                       </div>
@@ -525,14 +619,16 @@ export function ScheduleBuilder({
                         >
                           Use This Schedule
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => saveScheduleAsTemplate(batch)}
-                        >
-                          <Save className="w-3 h-3 mr-1" />
-                          Save as Template
-                        </Button>
+                        {hasNewFormatSchedule(batch) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveScheduleAsTemplate(batch)}
+                          >
+                            <Save className="w-3 h-3 mr-1" />
+                            Save as Template
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))
