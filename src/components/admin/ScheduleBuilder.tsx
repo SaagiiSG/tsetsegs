@@ -130,6 +130,51 @@ export function ScheduleBuilder({
     });
   };
 
+  const saveScheduleAsTemplate = async (batch: any) => {
+    const batchName = batch.batch_name || 'Imported';
+    let savedCount = 0;
+
+    // Save math schedule as template if exists
+    if (batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0) {
+      const { error } = await supabase
+        .from('schedule_templates')
+        .insert([{
+          name: `${batchName} - Math`,
+          subject: 'math',
+          schedule_data: JSON.parse(JSON.stringify(batch.math_schedule)),
+          is_global: true,
+        }]);
+      if (!error) savedCount++;
+    }
+
+    // Save english schedule as template if exists
+    if (batch.english_schedule && Array.isArray(batch.english_schedule) && batch.english_schedule.length > 0) {
+      const { error } = await supabase
+        .from('schedule_templates')
+        .insert([{
+          name: `${batchName} - English`,
+          subject: 'english',
+          schedule_data: JSON.parse(JSON.stringify(batch.english_schedule)),
+          is_global: true,
+        }]);
+      if (!error) savedCount++;
+    }
+
+    if (savedCount > 0) {
+      toast({
+        title: 'Templates Saved',
+        description: `Saved ${savedCount} template(s) from ${batchName}`,
+      });
+      fetchTemplates();
+    } else {
+      toast({
+        title: 'No Templates Saved',
+        description: 'No valid schedules found to save',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const checkOverlap = (slot1: TimeSlot, slot2: TimeSlot): boolean => {
     if (slot1.day !== slot2.day) return false;
     
@@ -426,7 +471,6 @@ export function ScheduleBuilder({
                 variant="outline"
                 size="sm"
                 className="gap-1"
-                disabled={existingBatches.length === 0}
               >
                 <Download className="w-4 h-4" />
                 Import from Existing Class
@@ -438,15 +482,19 @@ export function ScheduleBuilder({
               </DialogHeader>
               <div className="space-y-3 pt-4 max-h-[400px] overflow-y-auto">
                 {existingBatches.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No existing classes with schedules found.
-                  </p>
+                  <div className="text-center py-8">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No existing classes with the new schedule format found.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Only classes created with the new schedule builder will appear here.
+                    </p>
+                  </div>
                 ) : (
                   existingBatches.map((batch) => (
                     <div
                       key={batch.id}
-                      className="p-3 border border-border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => importFromBatch(batch)}
+                      className="p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium">{batch.batch_name || 'Unnamed Batch'}</p>
@@ -454,7 +502,7 @@ export function ScheduleBuilder({
                           {new Date(batch.start_date).toLocaleDateString()}
                         </span>
                       </div>
-                      <div className="space-y-1 text-xs text-muted-foreground">
+                      <div className="space-y-1 text-xs text-muted-foreground mb-3">
                         {batch.math_schedule && Array.isArray(batch.math_schedule) && batch.math_schedule.length > 0 && (
                           <p>
                             <span className="text-blue-500">Math:</span>{' '}
@@ -467,6 +515,24 @@ export function ScheduleBuilder({
                             {formatJsonSchedule(batch.english_schedule as TimeSlot[])}
                           </p>
                         )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1"
+                          onClick={() => importFromBatch(batch)}
+                        >
+                          Use This Schedule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => saveScheduleAsTemplate(batch)}
+                        >
+                          <Save className="w-3 h-3 mr-1" />
+                          Save as Template
+                        </Button>
                       </div>
                     </div>
                   ))
