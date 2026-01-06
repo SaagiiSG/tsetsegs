@@ -1160,6 +1160,13 @@ export type Database = {
           id: string
         }[]
       }
+      get_batch_completion_status: {
+        Args: { teacher_name?: string }
+        Returns: {
+          batch_id: string
+          is_completed: boolean
+        }[]
+      }
       get_batch_student_counts: {
         Args: { teacher_name?: string }
         Returns: {

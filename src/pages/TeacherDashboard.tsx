@@ -52,35 +52,43 @@ export default function TeacherDashboard() {
     try {
       console.log("Querying batches for teacher:", teacherName);
 
-      // Get date ranges for smart filtering
-      // "Current" = classes that started within the last 2 months (still active)
-      const now = new Date();
-      const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-
-      // Build query with date filtering
-      let query = supabase
+      // Fetch all batches for this teacher
+      const { data: batchesData, error: batchesError } = await supabase
         .from("batches")
         .select("id, batch_name, schedule, room, start_date, course_type")
-        .ilike("teacher", `%${teacherName}%`);
+        .ilike("teacher", `%${teacherName}%`)
+        .order("start_date", { ascending: false });
 
-      if (selectedIntake === "current") {
-        // Show classes started in the last 2 months (still ongoing)
-        query = query.gte("start_date", twoMonthsAgo.toISOString());
-      } else if (selectedIntake === "previous") {
-        // Show classes from 2-3 months ago
-        query = query
-          .gte("start_date", threeMonthsAgo.toISOString())
-          .lt("start_date", twoMonthsAgo.toISOString());
-      }
-      // 'all' means no date filter
-
-      const { data: batchesData, error: batchesError } = await query.order("start_date", { ascending: false });
-
-      console.log("Batches query result:", { batchesData, batchesError });
       if (batchesError) throw batchesError;
 
-      setBatches(batchesData || []);
+      // Fetch completion status for batches
+      const { data: completionData, error: completionError } = await supabase.rpc(
+        "get_batch_completion_status",
+        { teacher_name: teacherName }
+      );
+
+      if (completionError) {
+        console.error("Error fetching completion status:", completionError);
+      }
+
+      // Create a map of batch completion status
+      const completionMap: Record<string, boolean> = {};
+      completionData?.forEach((item: { batch_id: string; is_completed: boolean }) => {
+        completionMap[item.batch_id] = item.is_completed;
+      });
+
+      // Filter batches based on selected intake
+      let filteredBatches = batchesData || [];
+      if (selectedIntake === "current") {
+        // Active = session_24 NOT completed
+        filteredBatches = filteredBatches.filter(b => !completionMap[b.id]);
+      } else if (selectedIntake === "previous") {
+        // Older = session_24 completed
+        filteredBatches = filteredBatches.filter(b => completionMap[b.id]);
+      }
+      // 'all' means no filter
+
+      setBatches(filteredBatches);
 
       // Fetch student counts using RPC function (single query)
       const { data: countsData, error: countsError } = await supabase.rpc("get_batch_student_counts", {
@@ -126,7 +134,7 @@ export default function TeacherDashboard() {
   const intakes = useMemo(() => {
     return [
       { label: "Active Classes", value: "current" },
-      { label: "Older Classes", value: "previous" },
+      { label: "Completed Classes", value: "previous" },
       { label: "All Classes", value: "all" },
     ];
   }, []);
