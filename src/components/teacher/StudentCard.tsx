@@ -318,24 +318,41 @@ export function StudentCard({
           
           {/* Right side: Compact trackers and alerts */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Square trackers - smaller on mobile */}
-            <div className="flex flex-col gap-0.5">
-              <div className="flex gap-px rounded overflow-hidden border border-border/50">
-                {attendance.slice(0, 12).map((session) => (
-                  <div
-                    key={`att-${session.session_number}`}
-                    className={`w-1.5 h-1.5 md:w-2 md:h-2 ${getAttendanceDotColor(session.status)}`}
-                    title={`S${session.session_number}: ${session.status || 'unmarked'}`}
-                  />
+            {/* Square trackers - split into rows based on course type */}
+            {/* SAT (15): 10 + 5, IELTS (24): 10 + 10 + 4 */}
+            <div className="flex flex-col gap-1">
+              {/* Attendance rows */}
+              <div className="flex flex-col gap-px">
+                {(courseType === 'SAT' 
+                  ? [attendance.slice(0, 10), attendance.slice(10, 15)]
+                  : [attendance.slice(0, 10), attendance.slice(10, 20), attendance.slice(20, 24)]
+                ).map((row, rowIndex) => (
+                  <div key={`att-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden border border-border/50">
+                    {row.map((session) => (
+                      <div
+                        key={`att-${session.session_number}`}
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 ${getAttendanceDotColor(session.status)}`}
+                        title={`S${session.session_number}: ${session.status || 'unmarked'}`}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
-              <div className="flex gap-px rounded overflow-hidden border border-border/50">
-                {homework.slice(0, 12).map((hw) => (
-                  <div
-                    key={`hw-${hw.session_number}`}
-                    className={`w-1.5 h-1.5 md:w-2 md:h-2 ${getHomeworkDotColor(hw.status)}`}
-                    title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
-                  />
+              {/* Homework rows */}
+              <div className="flex flex-col gap-px">
+                {(courseType === 'SAT' 
+                  ? [homework.slice(0, 10), homework.slice(10, 15)]
+                  : [homework.slice(0, 10), homework.slice(10, 20), homework.slice(20, 24)]
+                ).map((row, rowIndex) => (
+                  <div key={`hw-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden border border-border/50">
+                    {row.map((hw) => (
+                      <div
+                        key={`hw-${hw.session_number}`}
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 ${getHomeworkDotColor(hw.status)}`}
+                        title={`S${hw.session_number}: ${hw.status || 'unmarked'}`}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>

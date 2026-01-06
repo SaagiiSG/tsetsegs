@@ -29,6 +29,7 @@ interface StudentSidebarProps {
   currentIndex: number;
   onSelectStudent: (index: number) => void;
   batch: Batch | null;
+  courseType: 'SAT' | 'IELTS';
   getStudentAlertStatus: (studentId: string) => {
     hasAlert: boolean;
     missedClasses: number;
@@ -62,10 +63,21 @@ export function StudentSidebar({
   currentIndex, 
   onSelectStudent, 
   batch, 
+  courseType,
   getStudentAlertStatus,
   getStudentAttendance,
   getStudentHomework 
 }: StudentSidebarProps) {
+  // Split sessions into rows based on course type
+  // SAT (15 sessions): 10 + 5
+  // IELTS (24 sessions): 10 + 10 + 4
+  const getSessionRows = (sessions: AttendanceStatus[] | HomeworkStatus[]) => {
+    if (courseType === 'SAT') {
+      return [sessions.slice(0, 10), sessions.slice(10, 15)];
+    } else {
+      return [sessions.slice(0, 10), sessions.slice(10, 20), sessions.slice(20, 24)];
+    }
+  };
   return (
     <div className="w-64 border-r bg-card h-full">
       <div className="p-4 border-b space-y-3">
@@ -134,24 +146,34 @@ export function StudentSidebar({
                   
                   {/* Square trackers - right of name */}
                   {(attendance.length > 0 || homework.length > 0) && (
-                    <div className="flex flex-col gap-px flex-shrink-0">
+                    <div className="flex flex-col gap-0.5 flex-shrink-0">
+                      {/* Attendance rows */}
                       {attendance.length > 0 && (
-                        <div className="flex gap-px rounded overflow-hidden">
-                          {attendance.slice(0, 12).map((a) => (
-                            <div
-                              key={`s-att-${a.session_number}`}
-                              className={`w-1.5 h-1.5 ${getAttendanceDotColor(a.status)}`}
-                            />
+                        <div className="flex flex-col gap-px">
+                          {getSessionRows(attendance).map((row, rowIndex) => (
+                            <div key={`att-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
+                              {row.map((a) => (
+                                <div
+                                  key={`s-att-${(a as AttendanceStatus).session_number}`}
+                                  className={`w-1.5 h-1.5 ${getAttendanceDotColor((a as AttendanceStatus).status)}`}
+                                />
+                              ))}
+                            </div>
                           ))}
                         </div>
                       )}
+                      {/* Homework rows */}
                       {homework.length > 0 && (
-                        <div className="flex gap-px rounded overflow-hidden">
-                          {homework.slice(0, 12).map((h) => (
-                            <div
-                              key={`s-hw-${h.session_number}`}
-                              className={`w-1.5 h-1.5 ${getHomeworkDotColor(h.status)}`}
-                            />
+                        <div className="flex flex-col gap-px">
+                          {getSessionRows(homework).map((row, rowIndex) => (
+                            <div key={`hw-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
+                              {row.map((h) => (
+                                <div
+                                  key={`s-hw-${(h as HomeworkStatus).session_number}`}
+                                  className={`w-1.5 h-1.5 ${getHomeworkDotColor((h as HomeworkStatus).status)}`}
+                                />
+                              ))}
+                            </div>
                           ))}
                         </div>
                       )}
