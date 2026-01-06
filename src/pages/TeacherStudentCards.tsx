@@ -757,6 +757,7 @@ export default function TeacherStudentCards() {
               if (emblaApi) emblaApi.scrollTo(index);
             }}
             batch={batch}
+            courseType={batch?.course_type || 'SAT'}
             getStudentAlertStatus={getStudentAlertStatus}
             getStudentAttendance={(studentId) => studentDataMap.get(studentId)?.attendance || []}
             getStudentHomework={(studentId) => studentDataMap.get(studentId)?.homework || []}
