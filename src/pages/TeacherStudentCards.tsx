@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorToast } from "@/lib/errorUtils";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -169,10 +170,10 @@ export default function TeacherStudentCards() {
       if (studentsError) throw studentsError;
       setStudents((studentsData || []) as Student[]);
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "load students");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     } finally {
       setIsLoading(false);
@@ -336,10 +337,10 @@ export default function TeacherStudentCards() {
         description: "Student info updated",
       });
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "update student");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     }
   };
@@ -370,10 +371,10 @@ export default function TeacherStudentCards() {
         }));
       }
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "save attendance");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     }
   };
@@ -406,10 +407,10 @@ export default function TeacherStudentCards() {
         }));
       }
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "save homework");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     }
   };
@@ -532,10 +533,10 @@ export default function TeacherStudentCards() {
         description: "Student added successfully with complete information",
       });
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "add student");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     }
   };

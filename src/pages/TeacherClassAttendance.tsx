@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorToast } from '@/lib/errorUtils';
 import { ArrowLeft, Plus, Pencil, Check } from 'lucide-react';
 import { z } from 'zod';
 
@@ -125,9 +126,9 @@ export default function TeacherClassAttendance() {
 
       setAttendance(attendanceMap);
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "load attendance");
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to load data',
+        ...errorToast,
         variant: 'destructive',
       });
     } finally {
@@ -161,9 +162,9 @@ export default function TeacherClassAttendance() {
       // Refresh to get updated total_attended
       fetchData();
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "update attendance");
       toast({
-        title: 'Error',
-        description: 'Failed to update attendance',
+        ...errorToast,
         variant: 'destructive',
       });
     }
@@ -210,9 +211,9 @@ export default function TeacherClassAttendance() {
           variant: 'destructive',
         });
       } else {
+        const errorToast = getErrorToast(error, "add student");
         toast({
-          title: 'Error',
-          description: 'Failed to add student',
+          ...errorToast,
           variant: 'destructive',
         });
       }
@@ -250,9 +251,9 @@ export default function TeacherClassAttendance() {
           variant: 'destructive',
         });
       } else {
+        const errorToast = getErrorToast(error, "update student");
         toast({
-          title: 'Error',
-          description: 'Failed to update student',
+          ...errorToast,
           variant: 'destructive',
         });
       }

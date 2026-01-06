@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorToast } from "@/lib/errorUtils";
 
 interface Student {
   id: string;
@@ -148,7 +149,8 @@ export function StudentCard({
       setNewNote("");
       toast({ title: "Note saved" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      const errorToast = getErrorToast(error, "save note");
+      toast({ variant: "destructive", ...errorToast });
     } finally {
       setIsAddingNote(false);
     }
@@ -161,7 +163,8 @@ export function StudentCard({
       setNotes(notes.filter(n => n.id !== noteId));
       toast({ title: "Note deleted" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      const errorToast = getErrorToast(error, "delete note");
+      toast({ variant: "destructive", ...errorToast });
     }
   };
 
@@ -178,7 +181,8 @@ export function StudentCard({
       setEditingNoteContent("");
       toast({ title: "Note updated" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      const errorToast = getErrorToast(error, "update note");
+      toast({ variant: "destructive", ...errorToast });
     }
   };
 
