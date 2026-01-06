@@ -450,10 +450,18 @@ export default function TeacherStudentCards() {
         }));
       }
     } catch (error: any) {
+      // Make error messages user-friendly
+      let userMessage = "Failed to save test score. Please try again.";
+      if (error.message?.includes("check constraint")) {
+        userMessage = `Test ${testNumber} is not a valid test number. Please use a number between 1 and 20.`;
+      } else if (error.message?.includes("duplicate key")) {
+        userMessage = "This test score already exists. Try refreshing the page.";
+      }
+      
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        title: "Could not save score",
+        description: userMessage,
       });
     }
   };
