@@ -37,7 +37,7 @@ export default function TeacherDashboard() {
       console.log("Fetching batches...");
       fetchBatches();
     }
-  }, [teacherName, authLoading]);
+  }, [teacherName, authLoading, selectedIntake]);
 
   const fetchBatches = async () => {
     console.log("fetchBatches called, teacherName:", teacherName);
@@ -196,11 +196,7 @@ export default function TeacherDashboard() {
                 <div className="flex items-center gap-2 p-2 md:p-3 bg-card rounded-lg border">
                   <Select
                     value={selectedIntake}
-                    onValueChange={(value) => {
-                      setSelectedIntake(value);
-                      setIsLoading(true);
-                      setTimeout(() => fetchBatches(), 0);
-                    }}
+                    onValueChange={setSelectedIntake}
                   >
                     <SelectTrigger className="h-8 md:h-9 text-xs md:text-sm flex-1">
                       <SelectValue placeholder="Select intake" />
