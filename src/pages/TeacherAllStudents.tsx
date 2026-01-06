@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorToast } from "@/lib/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -87,10 +88,10 @@ export default function TeacherAllStudents() {
         setStudents(enrichedStudents);
       }
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "load students");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     } finally {
       setIsLoading(false);

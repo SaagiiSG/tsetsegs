@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorToast } from "@/lib/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -254,10 +255,10 @@ export default function TeacherStudentProfile() {
       setNotes(notesData || []);
 
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "load student data");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     } finally {
       setIsLoading(false);
@@ -289,10 +290,10 @@ export default function TeacherStudentProfile() {
         description: "Your note has been saved",
       });
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "add note");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     } finally {
       setIsAddingNote(false);
@@ -313,10 +314,10 @@ export default function TeacherStudentProfile() {
         title: "Note deleted",
       });
     } catch (error: any) {
+      const errorToast = getErrorToast(error, "delete note");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        ...errorToast,
       });
     }
   };

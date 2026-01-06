@@ -10,6 +10,7 @@ import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
+import { getErrorToast } from "@/lib/errorUtils";
 
 interface Batch {
   id: string;
@@ -93,9 +94,9 @@ export default function TeacherDashboard() {
       }
     } catch (error: any) {
       console.error("Error fetching batches:", error);
+      const errorToast = getErrorToast(error, "load classes");
       toast({
-        title: "Error",
-        description: "Failed to load classes",
+        ...errorToast,
         variant: "destructive",
       });
     } finally {
@@ -126,8 +127,68 @@ export default function TeacherDashboard() {
     ];
   }, []);
 
-  // Filtering is now done server-side in fetchBatches
-  const filteredBatches = useMemo(() => batches, [batches]);
+  // Group batches by month for "all intakes" view
+  const groupedBatches = useMemo(() => {
+    if (selectedIntake !== "all") {
+      return { ungrouped: batches };
+    }
+    
+    const groups: Record<string, typeof batches> = {};
+    batches.forEach(batch => {
+      const date = new Date(batch.start_date);
+      const key = `${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(batch);
+    });
+    return groups;
+  }, [batches, selectedIntake]);
+
+  // Batch card component
+  const BatchCard = ({ batch }: { batch: Batch }) => (
+    <Card className="p-3 md:p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-2 md:space-y-3">
+        {/* Header */}
+        <div>
+          <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2">{batch.batch_name}</h3>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <Users className="h-3 w-3" />
+            <span>{getStudentCount(batch.id)} students</span>
+          </div>
+        </div>
+        
+        {/* Details - More compact */}
+        <div className="space-y-1.5 text-xs md:text-sm">
+          <div className="flex items-start gap-1.5 text-muted-foreground">
+            <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 mt-0.5 flex-shrink-0" />
+            <span className="line-clamp-2 leading-tight">{batch.schedule}</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+            <span>
+              {isOnlineClass(batch.schedule) ? "🌐 Online" : `Room ${batch.room}`}
+            </span>
+            <span className="text-muted-foreground/50">•</span>
+            <span>
+              {new Date(batch.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+        </div>
+        
+        {/* Action buttons - Compact */}
+        <div className="flex gap-2 pt-1">
+          <Button className="flex-1 h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate(`/teacher/students/${batch.id}`)}>
+            <Users className="h-3.5 w-3.5 mr-1.5" />
+            Students
+          </Button>
+          <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
+            <BarChart3 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -210,56 +271,35 @@ export default function TeacherDashboard() {
                     </SelectContent>
                   </Select>
                   <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
-                    {filteredBatches.length} class{filteredBatches.length !== 1 ? "es" : ""}
+                    {batches.length} class{batches.length !== 1 ? "es" : ""}
                   </span>
                 </div>
 
-                {/* Compact Batch Cards */}
-                <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredBatches.map((batch) => (
-                    <Card key={batch.id} className="p-3 md:p-4 hover:shadow-md transition-shadow">
-                      <div className="space-y-2 md:space-y-3">
-                        {/* Header */}
-                        <div>
-                          <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2">{batch.batch_name}</h3>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                            <Users className="h-3 w-3" />
-                            <span>{getStudentCount(batch.id)} students</span>
+                {/* Batch Cards - grouped by month when "all" is selected */}
+                {selectedIntake === "all" ? (
+                  <div className="space-y-4">
+                    {Object.entries(groupedBatches).map(([monthYear, monthBatches]) => (
+                      monthYear !== "ungrouped" && (
+                        <div key={monthYear} className="space-y-2">
+                          <h4 className="text-xs md:text-sm font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur-sm py-1">
+                            {monthYear}
+                          </h4>
+                          <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {monthBatches.map((batch) => (
+                              <BatchCard key={batch.id} batch={batch} />
+                            ))}
                           </div>
                         </div>
-                        
-                        {/* Details - More compact */}
-                        <div className="space-y-1.5 text-xs md:text-sm">
-                          <div className="flex items-start gap-1.5 text-muted-foreground">
-                            <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-2 leading-tight">{batch.schedule}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
-                            <span>
-                              {isOnlineClass(batch.schedule) ? "🌐 Online" : `Room ${batch.room}`}
-                            </span>
-                            <span className="text-muted-foreground/50">•</span>
-                            <span>
-                              {new Date(batch.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Action buttons - Compact */}
-                        <div className="flex gap-2 pt-1">
-                          <Button className="flex-1 h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate(`/teacher/students/${batch.id}`)}>
-                            <Users className="h-3.5 w-3.5 mr-1.5" />
-                            Students
-                          </Button>
-                          <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
-                            <BarChart3 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                      )
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {batches.map((batch) => (
+                      <BatchCard key={batch.id} batch={batch} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
