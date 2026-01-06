@@ -15,7 +15,10 @@ import {
   Target,
   AlertTriangle,
   Award,
-  Calendar
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Minus
 } from "lucide-react";
 import { 
   PieChart, 
@@ -231,6 +234,42 @@ export default function TeacherClassAnalytics() {
       .sort((a, b) => a.testNumber - b.testNumber);
   })();
 
+  // Calculate average improvement from first to last test per student
+  const scoreImprovementStats = (() => {
+    const studentImprovements: { student: Student; firstScore: number; lastScore: number; improvement: number; testCount: number }[] = [];
+    
+    students.forEach((student) => {
+      const studentTests = testScores
+        .filter(t => t.student_id === student.id && t.score !== null)
+        .sort((a, b) => a.test_number - b.test_number);
+      
+      if (studentTests.length >= 2) {
+        const firstScore = studentTests[0].score;
+        const lastScore = studentTests[studentTests.length - 1].score;
+        const improvement = lastScore - firstScore;
+        studentImprovements.push({ 
+          student, 
+          firstScore, 
+          lastScore, 
+          improvement,
+          testCount: studentTests.length 
+        });
+      }
+    });
+    
+    // Calculate class average improvement
+    const avgImprovement = studentImprovements.length > 0
+      ? Math.round(studentImprovements.reduce((sum, s) => sum + s.improvement, 0) / studentImprovements.length)
+      : 0;
+    
+    // Get students with improvements (sorted by improvement descending)
+    const topImprovers = [...studentImprovements]
+      .sort((a, b) => b.improvement - a.improvement)
+      .slice(0, 3);
+    
+    return { avgImprovement, topImprovers, totalWithMultipleTests: studentImprovements.length };
+  })();
+
   // Students needing attention (3+ absences or incomplete homework)
   const studentsNeedingAttention = (() => {
     const alerts: { student: Student; absences: number; incompleteHw: number }[] = [];
@@ -258,20 +297,23 @@ export default function TeacherClassAnalytics() {
     return alerts.sort((a, b) => (b.absences + b.incompleteHw) - (a.absences + a.incompleteHw));
   })();
 
-  // Top performers
-  const topPerformers = (() => {
-    const studentScores: { student: Student; avgScore: number; testCount: number }[] = [];
-    
-    students.forEach((student) => {
-      const studentTests = testScores.filter(t => t.student_id === student.id && t.score !== null);
-      if (studentTests.length > 0) {
-        const avg = studentTests.reduce((sum, t) => sum + t.score, 0) / studentTests.length;
-        studentScores.push({ student, avgScore: Math.round(avg), testCount: studentTests.length });
+  // Current session (highest session with any recorded attendance)
+  const currentSession = (() => {
+    let maxSession = 0;
+    attendanceData.forEach((record) => {
+      for (let i = sessionCount; i >= 1; i--) {
+        const status = record[`session_${i}`] as string | null;
+        if (status && i > maxSession) {
+          maxSession = i;
+          break;
+        }
       }
     });
-    
-    return studentScores.sort((a, b) => b.avgScore - a.avgScore).slice(0, 5);
+    return maxSession;
   })();
+
+  // Class progress percentage
+  const classProgress = currentSession > 0 ? Math.round((currentSession / sessionCount) * 100) : 0;
 
   const attendanceRate = attendanceStats.total > 0 
     ? Math.round((attendanceStats.present / attendanceStats.total) * 100) 
@@ -375,20 +417,30 @@ export default function TeacherClassAnalytics() {
           <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
-                <Target className="h-4 w-4 text-purple-500" />
-                Avg Test Score
+                <TrendingUp className="h-4 w-4 text-purple-500" />
+                Avg Score Improvement
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl md:text-3xl font-bold">
-                {testScoreStats.length > 0 
-                  ? Math.round(testScoreStats.reduce((sum, t) => sum + t.avg, 0) / testScoreStats.length)
-                  : "—"}
+              <div className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                {scoreImprovementStats.totalWithMultipleTests > 0 ? (
+                  <>
+                    {scoreImprovementStats.avgImprovement > 0 ? "+" : ""}
+                    {scoreImprovementStats.avgImprovement}
+                    {scoreImprovementStats.avgImprovement > 0 ? (
+                      <TrendingUp className="h-5 w-5 text-green-500" />
+                    ) : scoreImprovementStats.avgImprovement < 0 ? (
+                      <TrendingDown className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <Minus className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </>
+                ) : "—"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {testScoreStats.length > 0 
-                  ? `Across ${testScoreStats.length} tests`
-                  : "No test data yet"}
+                {scoreImprovementStats.totalWithMultipleTests > 0 
+                  ? `First → Last mock (${scoreImprovementStats.totalWithMultipleTests} students)`
+                  : "Need 2+ tests per student"}
               </p>
             </CardContent>
           </Card>
@@ -396,14 +448,15 @@ export default function TeacherClassAnalytics() {
           <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1.5">
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
-                Need Attention
+                <Calendar className="h-4 w-4 text-cyan-500" />
+                Class Progress
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl md:text-3xl font-bold">{studentsNeedingAttention.length}</div>
+              <div className="text-2xl md:text-3xl font-bold">{currentSession}/{sessionCount}</div>
+              <Progress value={classProgress} className="h-2 mt-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                Students with 3+ misses
+                {classProgress}% complete
               </p>
             </CardContent>
           </Card>
@@ -690,19 +743,19 @@ export default function TeacherClassAnalytics() {
             </CardContent>
           </Card>
 
-          {/* Top Performers */}
+          {/* Most Improved Students */}
           <Card className="bg-card/60 backdrop-blur-sm border-border/50">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Award className="h-4 w-4 text-yellow-500" />
-                Top Performers
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                Most Improved Students
               </CardTitle>
-              <CardDescription>Highest average test scores</CardDescription>
+              <CardDescription>Biggest improvement from first to last mock</CardDescription>
             </CardHeader>
             <CardContent>
-              {topPerformers.length > 0 ? (
+              {scoreImprovementStats.topImprovers.length > 0 ? (
                 <div className="space-y-3">
-                  {topPerformers.map(({ student, avgScore, testCount }, index) => (
+                  {scoreImprovementStats.topImprovers.map(({ student, firstScore, lastScore, improvement, testCount }, index) => (
                     <div 
                       key={student.id} 
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
@@ -716,22 +769,25 @@ export default function TeacherClassAnalytics() {
                         `}>
                           {index + 1}
                         </span>
-                        <span className="font-medium">
-                          {student.first_name} {student.last_name?.charAt(0)}.
-                        </span>
+                        <div>
+                          <span className="font-medium">
+                            {student.first_name} {student.last_name?.charAt(0)}.
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            {firstScore} → {lastScore} ({testCount} tests)
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold">{avgScore}</span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({testCount} tests)
-                        </span>
+                      <div className={`text-right font-bold flex items-center gap-1 ${improvement > 0 ? "text-green-500" : improvement < 0 ? "text-red-500" : ""}`}>
+                        {improvement > 0 ? <TrendingUp className="h-4 w-4" /> : improvement < 0 ? <TrendingDown className="h-4 w-4" /> : null}
+                        {improvement > 0 ? "+" : ""}{improvement}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  No test scores recorded yet
+                  Need 2+ test scores per student
                 </p>
               )}
             </CardContent>
