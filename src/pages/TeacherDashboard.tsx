@@ -53,9 +53,10 @@ export default function TeacherDashboard() {
       console.log("Querying batches for teacher:", teacherName);
 
       // Get date ranges for smart filtering
+      // "Current" = classes that started within the last 2 months (still active)
       const now = new Date();
-      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
 
       // Build query with date filtering
       let query = supabase
@@ -64,11 +65,13 @@ export default function TeacherDashboard() {
         .ilike("teacher", `%${teacherName}%`);
 
       if (selectedIntake === "current") {
-        query = query.gte("start_date", currentMonthStart.toISOString());
+        // Show classes started in the last 2 months (still ongoing)
+        query = query.gte("start_date", twoMonthsAgo.toISOString());
       } else if (selectedIntake === "previous") {
+        // Show classes from 2-3 months ago
         query = query
-          .gte("start_date", previousMonthStart.toISOString())
-          .lt("start_date", currentMonthStart.toISOString());
+          .gte("start_date", threeMonthsAgo.toISOString())
+          .lt("start_date", twoMonthsAgo.toISOString());
       }
       // 'all' means no date filter
 
@@ -122,9 +125,9 @@ export default function TeacherDashboard() {
   // Intake filter options
   const intakes = useMemo(() => {
     return [
-      { label: "Current Month", value: "current" },
-      { label: "Previous Month", value: "previous" },
-      { label: "All Intakes", value: "all" },
+      { label: "Active Classes", value: "current" },
+      { label: "Older Classes", value: "previous" },
+      { label: "All Classes", value: "all" },
     ];
   }, []);
 
