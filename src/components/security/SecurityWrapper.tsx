@@ -38,6 +38,24 @@ export function SecurityWrapper({ children }: SecurityWrapperProps) {
     enabled: !!student
   });
 
+  // Check if focus is on an allowed element (like Desmos calculator)
+  const isAllowedFocusTarget = useCallback(() => {
+    const activeElement = document.activeElement;
+    // Check if focus moved to Desmos iframe or calculator window
+    if (activeElement?.tagName === 'IFRAME') {
+      const iframe = activeElement as HTMLIFrameElement;
+      if (iframe.src?.includes('desmos.com') || iframe.title?.includes('Desmos')) {
+        return true;
+      }
+    }
+    // Check if clicking inside calculator window
+    const calculatorWindow = document.querySelector('[data-calculator-window]');
+    if (calculatorWindow?.contains(activeElement)) {
+      return true;
+    }
+    return false;
+  }, []);
+
   // Handle visibility change (tab switch, window minimize)
   useEffect(() => {
     if (!student) return;
@@ -57,9 +75,16 @@ export function SecurityWrapper({ children }: SecurityWrapperProps) {
     };
 
     const handleWindowBlur = () => {
-      setIsBlurred(true);
-      setBlurReason('Window not in focus');
-      logSecurityAlert('window_blur', 'low', { event: 'blur' });
+      // Delay check to allow focus to settle on new element
+      setTimeout(() => {
+        if (isAllowedFocusTarget()) {
+          // Focus moved to calculator, don't blur
+          return;
+        }
+        setIsBlurred(true);
+        setBlurReason('Window not in focus');
+        logSecurityAlert('window_blur', 'low', { event: 'blur' });
+      }, 100);
     };
 
     const handleWindowFocus = () => {
@@ -78,7 +103,7 @@ export function SecurityWrapper({ children }: SecurityWrapperProps) {
       window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('focus', handleWindowFocus);
     };
-  }, [student, devToolsDetected, logSecurityAlert]);
+  }, [student, devToolsDetected, logSecurityAlert, isAllowedFocusTarget]);
 
   // Prevent text selection within secure content
   useEffect(() => {

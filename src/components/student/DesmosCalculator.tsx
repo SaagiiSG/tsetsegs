@@ -90,6 +90,7 @@ export function DesmosCalculator() {
   return (
     <div
       ref={windowRef}
+      data-calculator-window
       className="fixed z-50 bg-background border rounded-lg shadow-2xl overflow-hidden"
       style={{
         left: isFullWidth ? 'auto' : position.x,
