@@ -10,6 +10,7 @@ interface LinkedStudent {
   batch_id: string;
   grade: string | null;
   school_name: string | null;
+  parent_phone?: string | null;
 }
 
 interface StudentAccount {
@@ -18,8 +19,12 @@ interface StudentAccount {
   created_at: string;
   last_login: string | null;
   is_active: boolean;
+  is_blocked: boolean;
+  blocked_reason: string | null;
   linked_student_id: string | null;
   linked_student?: LinkedStudent | null;
+  registered_device_id: string | null;
+  device_registered_at: string | null;
 }
 
 interface StudentAuthContextType {
@@ -40,6 +45,14 @@ const getDeviceId = (): string => {
     localStorage.setItem('student_device_id', deviceId);
   }
   return deviceId;
+};
+
+// Calculate days remaining for device lock
+const getDaysRemaining = (registrationDate: string): number => {
+  const registered = new Date(registrationDate);
+  const now = new Date();
+  const daysPassed = Math.floor((now.getTime() - registered.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, 30 - daysPassed);
 };
 
 export function StudentAuthProvider({ children }: { children: ReactNode }) {
@@ -70,7 +83,6 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error || !session) {
-        // Session invalid, clear storage
         localStorage.removeItem('student_session_id');
         localStorage.removeItem('student_id');
         setIsLoading(false);
@@ -91,12 +103,20 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Check if account is blocked
+      if (studentAccount.is_blocked) {
+        localStorage.removeItem('student_session_id');
+        localStorage.removeItem('student_id');
+        setIsLoading(false);
+        return;
+      }
+
       // Fetch linked student profile if exists
       let linkedStudent: LinkedStudent | null = null;
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name')
+          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone')
           .eq('id', studentAccount.linked_student_id)
           .maybeSingle();
         linkedStudent = linkedData;
@@ -140,7 +160,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     try {
       const deviceId = getDeviceId();
       
-      // Check if student account exists, create if not
+      // Check if student account exists
       let { data: studentAccount, error: fetchError } = await supabase
         .from('student_accounts')
         .select('*')
@@ -155,15 +175,70 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         // Create new student account (trigger will auto-link to students table)
         const { data: newStudent, error: createError } = await supabase
           .from('student_accounts')
-          .insert({ phone_number: phoneNumber })
+          .insert({ 
+            phone_number: phoneNumber,
+            registered_device_id: deviceId,
+            device_registered_at: new Date().toISOString()
+          })
           .select()
           .single();
 
         if (createError) throw createError;
         studentAccount = newStudent;
+      } else {
+        // Check if account is blocked
+        if (studentAccount.is_blocked) {
+          return { 
+            error: `Your account has been suspended: ${studentAccount.blocked_reason || 'Contact administrator for help.'}` 
+          };
+        }
+
+        // Check device registration lock (30-day lock)
+        if (studentAccount.registered_device_id && studentAccount.device_registered_at) {
+          const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
+          
+          if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
+            // Log the attempt
+            await supabase.from('security_alerts').insert({
+              student_account_id: studentAccount.id,
+              alert_type: 'unauthorized_device_attempt',
+              severity: 'high',
+              metadata: {
+                attempted_device_id: deviceId,
+                registered_device_id: studentAccount.registered_device_id,
+                days_remaining: daysRemaining,
+                user_agent: navigator.userAgent
+              }
+            });
+            
+            return { 
+              error: `This account is registered to another device. You can log in from a new device in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
+            };
+          }
+          
+          // If 30 days have passed, allow new device registration
+          if (studentAccount.registered_device_id !== deviceId && daysRemaining <= 0) {
+            await supabase
+              .from('student_accounts')
+              .update({
+                registered_device_id: deviceId,
+                device_registered_at: new Date().toISOString()
+              })
+              .eq('id', studentAccount.id);
+          }
+        } else {
+          // First time device registration
+          await supabase
+            .from('student_accounts')
+            .update({
+              registered_device_id: deviceId,
+              device_registered_at: new Date().toISOString()
+            })
+            .eq('id', studentAccount.id);
+        }
       }
 
-      // Deactivate ALL existing sessions for this student (enforce single active session)
+      // Deactivate ALL existing sessions for this student
       await supabase
         .from('student_sessions')
         .update({ is_active: false })
@@ -202,7 +277,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name')
+          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone')
           .eq('id', studentAccount.linked_student_id)
           .maybeSingle();
         linkedStudent = linkedData;
@@ -244,7 +319,6 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     const sessionId = localStorage.getItem('student_session_id');
     
     if (sessionId && student) {
-      // Log logout and deactivate session
       supabase
         .from('student_activity_logs')
         .insert({

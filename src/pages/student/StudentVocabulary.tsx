@@ -1,11 +1,20 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { satVocabulary, getTotalWords, VocabularyWord } from '@/data/satVocabulary';
-import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Search, BookOpen, Check, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Search, BookOpen, Check, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { SecurityWrapper } from '@/components/security/SecurityWrapper';
+
+interface VocabularyWord {
+  id: string;
+  word_number: number;
+  english: string;
+  mongolian: string;
+}
 
 const StudentVocabulary = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -15,29 +24,46 @@ const StudentVocabulary = () => {
   const [isShuffled, setIsShuffled] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
-  const totalWords = getTotalWords();
+  // Fetch vocabulary from database
+  const { data: vocabulary = [], isLoading } = useQuery({
+    queryKey: ['vocabulary-words'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vocabulary_words')
+        .select('*')
+        .eq('is_active', true)
+        .order('word_number');
+      
+      if (error) throw error;
+      return data as VocabularyWord[];
+    },
+    staleTime: 10 * 60 * 1000 // Cache for 10 minutes
+  });
+
+  const totalWords = vocabulary.length;
 
   // Get current word based on shuffle state
   const getCurrentWord = useCallback(() => {
+    if (!vocabulary.length) return null;
     if (isShuffled && shuffledIndices.length > 0) {
-      return satVocabulary[shuffledIndices[currentIndex]];
+      return vocabulary[shuffledIndices[currentIndex]];
     }
-    return satVocabulary[currentIndex];
-  }, [currentIndex, isShuffled, shuffledIndices]);
+    return vocabulary[currentIndex];
+  }, [currentIndex, isShuffled, shuffledIndices, vocabulary]);
 
   const currentWord = getCurrentWord();
 
   // Generate 4 multiple choice options (1 correct + 3 random wrong)
   const multipleChoiceOptions = useMemo(() => {
-    if (!currentWord) return [];
+    if (!currentWord || !vocabulary.length) return [];
     
     const correctAnswer = currentWord;
     const wrongAnswers: VocabularyWord[] = [];
     const usedIds = new Set([correctAnswer.id]);
     
-    while (wrongAnswers.length < 3) {
-      const randomIndex = Math.floor(Math.random() * satVocabulary.length);
-      const word = satVocabulary[randomIndex];
+    while (wrongAnswers.length < 3 && vocabulary.length > 3) {
+      const randomIndex = Math.floor(Math.random() * vocabulary.length);
+      const word = vocabulary[randomIndex];
       if (!usedIds.has(word.id)) {
         usedIds.add(word.id);
         wrongAnswers.push(word);
@@ -52,10 +78,10 @@ const StudentVocabulary = () => {
     }
     
     return allOptions;
-  }, [currentWord, currentIndex, isShuffled]); // Re-generate on card change
+  }, [currentWord, currentIndex, isShuffled, vocabulary]);
 
   // Filter words by search
-  const filteredWords = satVocabulary.filter(word => 
+  const filteredWords = vocabulary.filter(word => 
     word.english.toLowerCase().includes(searchQuery.toLowerCase()) ||
     word.mongolian.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -81,9 +107,8 @@ const StudentVocabulary = () => {
   };
 
   const handleSelectAnswer = (index: number) => {
-    if (selectedAnswer !== null) return; // Already answered
+    if (selectedAnswer !== null) return;
     setSelectedAnswer(index);
-    // Auto-flip after selection
     setTimeout(() => {
       setIsFlipped(true);
     }, 500);
@@ -121,236 +146,254 @@ const StudentVocabulary = () => {
 
   const isCorrectAnswer = (option: VocabularyWord) => option.id === currentWord?.id;
 
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">SAT Vocabulary</h1>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            {totalWords} words • Pick the correct Mongolian translation
-          </p>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-        {/* Flashcard */}
-        <div className="flex justify-center">
-          <div className="relative w-full max-w-md">
-            <AnimatePresence mode="wait">
-              {!isFlipped ? (
-                <motion.div
-                  key={`front-${currentIndex}`}
-                  initial={{ rotateY: -90, opacity: 0 }}
-                  animate={{ rotateY: 0, opacity: 1 }}
-                  exit={{ rotateY: 90, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <Card className="w-full p-6 shadow-xl border-2">
-                    <div className="space-y-6">
-                      {/* English Word */}
-                      <div className="text-center py-4">
+  if (!vocabulary.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">No vocabulary words available</p>
+      </div>
+    );
+  }
+
+  return (
+    <SecurityWrapper>
+      <div className="min-h-screen bg-background p-4 md:p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <BookOpen className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-bold">SAT Vocabulary</h1>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              {totalWords} words • Pick the correct Mongolian translation
+            </p>
+          </div>
+
+          {/* Flashcard */}
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-md">
+              <AnimatePresence mode="wait">
+                {!isFlipped ? (
+                  <motion.div
+                    key={`front-${currentIndex}`}
+                    initial={{ rotateY: -90, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    exit={{ rotateY: 90, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <Card className="w-full p-6 shadow-xl border-2">
+                      <div className="space-y-6">
+                        {/* English Word */}
+                        <div className="text-center py-4">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            #{currentWord?.word_number}
+                          </span>
+                          <p className="text-2xl md:text-3xl font-bold mt-2">
+                            {currentWord?.english}
+                          </p>
+                        </div>
+                        
+                        {/* Multiple Choice Options */}
+                        <div className="grid grid-cols-1 gap-2">
+                          {multipleChoiceOptions.map((option, idx) => {
+                            const isSelected = selectedAnswer === idx;
+                            const isCorrect = isCorrectAnswer(option);
+                            const showResult = selectedAnswer !== null;
+                            
+                            return (
+                              <button
+                                key={option.id}
+                                onClick={() => handleSelectAnswer(idx)}
+                                disabled={selectedAnswer !== null}
+                                className={cn(
+                                  "w-full p-3 rounded-lg border-2 text-left transition-all",
+                                  "hover:bg-accent hover:border-primary/50",
+                                  !showResult && "border-border",
+                                  showResult && isCorrect && "border-green-500 bg-green-500/10",
+                                  showResult && isSelected && !isCorrect && "border-red-500 bg-red-500/10",
+                                  showResult && !isSelected && !isCorrect && "opacity-50"
+                                )}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={cn(
+                                    "text-sm font-medium",
+                                    showResult && isCorrect && "text-green-600 dark:text-green-400",
+                                    showResult && isSelected && !isCorrect && "text-red-600 dark:text-red-400"
+                                  )}>
+                                    {option.mongolian}
+                                  </span>
+                                  {showResult && isCorrect && (
+                                    <Check className="w-4 h-4 text-green-500" />
+                                  )}
+                                  {showResult && isSelected && !isCorrect && (
+                                    <X className="w-4 h-4 text-red-500" />
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        {selectedAnswer === null && (
+                          <p className="text-center text-xs text-muted-foreground">
+                            Select the correct Mongolian translation
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={`back-${currentIndex}`}
+                    initial={{ rotateY: -90, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    exit={{ rotateY: 90, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <Card className="w-full p-6 shadow-xl border-2 bg-primary/5 border-primary/30">
+                      <div className="space-y-4 text-center py-8">
                         <span className="text-xs text-muted-foreground font-medium">
-                          #{currentWord?.id}
+                          #{currentWord?.word_number}
                         </span>
-                        <p className="text-2xl md:text-3xl font-bold mt-2">
+                        <p className="text-xl font-semibold text-muted-foreground">
                           {currentWord?.english}
                         </p>
-                      </div>
-                      
-                      {/* Multiple Choice Options */}
-                      <div className="grid grid-cols-1 gap-2">
-                        {multipleChoiceOptions.map((option, idx) => {
-                          const isSelected = selectedAnswer === idx;
-                          const isCorrect = isCorrectAnswer(option);
-                          const showResult = selectedAnswer !== null;
-                          
-                          return (
-                            <button
-                              key={option.id}
-                              onClick={() => handleSelectAnswer(idx)}
-                              disabled={selectedAnswer !== null}
-                              className={cn(
-                                "w-full p-3 rounded-lg border-2 text-left transition-all",
-                                "hover:bg-accent hover:border-primary/50",
-                                !showResult && "border-border",
-                                showResult && isCorrect && "border-green-500 bg-green-500/10",
-                                showResult && isSelected && !isCorrect && "border-red-500 bg-red-500/10",
-                                showResult && !isSelected && !isCorrect && "opacity-50"
-                              )}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className={cn(
-                                  "text-sm font-medium",
-                                  showResult && isCorrect && "text-green-600 dark:text-green-400",
-                                  showResult && isSelected && !isCorrect && "text-red-600 dark:text-red-400"
-                                )}>
-                                  {option.mongolian}
-                                </span>
-                                {showResult && isCorrect && (
-                                  <Check className="w-4 h-4 text-green-500" />
-                                )}
-                                {showResult && isSelected && !isCorrect && (
-                                  <X className="w-4 h-4 text-red-500" />
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      
-                      {selectedAnswer === null && (
-                        <p className="text-center text-xs text-muted-foreground">
-                          Select the correct Mongolian translation
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={`back-${currentIndex}`}
-                  initial={{ rotateY: -90, opacity: 0 }}
-                  animate={{ rotateY: 0, opacity: 1 }}
-                  exit={{ rotateY: 90, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <Card className="w-full p-6 shadow-xl border-2 bg-primary/5 border-primary/30">
-                    <div className="space-y-4 text-center py-8">
-                      <span className="text-xs text-muted-foreground font-medium">
-                        #{currentWord?.id}
-                      </span>
-                      <p className="text-xl font-semibold text-muted-foreground">
-                        {currentWord?.english}
-                      </p>
-                      <div className="pt-4 border-t">
-                        <p className="text-lg md:text-xl font-bold text-primary">
-                          {currentWord?.mongolian}
-                        </p>
-                      </div>
-                      {selectedAnswer !== null && (
-                        <div className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium",
-                          isCorrectAnswer(multipleChoiceOptions[selectedAnswer])
-                            ? "bg-green-500/20 text-green-600 dark:text-green-400"
-                            : "bg-red-500/20 text-red-600 dark:text-red-400"
-                        )}>
-                          {isCorrectAnswer(multipleChoiceOptions[selectedAnswer]) ? (
-                            <>
-                              <Check className="w-4 h-4" />
-                              Correct!
-                            </>
-                          ) : (
-                            <>
-                              <X className="w-4 h-4" />
-                              Incorrect
-                            </>
-                          )}
+                        <div className="pt-4 border-t">
+                          <p className="text-lg md:text-xl font-bold text-primary">
+                            {currentWord?.mongolian}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                        {selectedAnswer !== null && (
+                          <div className={cn(
+                            "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium",
+                            isCorrectAnswer(multipleChoiceOptions[selectedAnswer])
+                              ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                              : "bg-red-500/20 text-red-600 dark:text-red-400"
+                          )}>
+                            {isCorrectAnswer(multipleChoiceOptions[selectedAnswer]) ? (
+                              <>
+                                <Check className="w-4 h-4" />
+                                Correct!
+                              </>
+                            ) : (
+                              <>
+                                <X className="w-4 h-4" />
+                                Incorrect
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4">
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handlePrev}
-            className="h-12 w-12"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </Button>
-          
-          <div className="flex items-center gap-2 min-w-[100px] justify-center">
-            <span className="text-lg font-semibold">{currentIndex + 1}</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{totalWords}</span>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleNext}
-            className="h-12 w-12"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </Button>
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center gap-3">
-          <Button 
-            variant={isShuffled ? "default" : "outline"}
-            onClick={handleShuffle}
-            className="gap-2"
-          >
-            <Shuffle className="w-4 h-4" />
-            Shuffle
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleReset}
-            className="gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Reset
-          </Button>
-        </div>
-
-        {/* Word List Search */}
-        <Card className="p-4">
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search words..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          {/* Navigation */}
+          <div className="flex items-center justify-center gap-4">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handlePrev}
+              className="h-12 w-12"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            
+            <div className="flex items-center gap-2 min-w-[100px] justify-center">
+              <span className="text-lg font-semibold">{currentIndex + 1}</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-muted-foreground">{totalWords}</span>
             </div>
             
-            {searchQuery && (
-              <div className="max-h-60 overflow-y-auto space-y-1">
-                {filteredWords.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-4">
-                    No words found
-                  </p>
-                ) : (
-                  filteredWords.map((word) => (
-                    <button
-                      key={word.id}
-                      onClick={() => handleWordClick(satVocabulary.indexOf(word))}
-                      className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
-                    >
-                      <span className="font-medium">{word.english}</span>
-                      <span className="text-sm text-muted-foreground truncate max-w-[50%]">
-                        {word.mongolian}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleNext}
+              className="h-12 w-12"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
           </div>
-        </Card>
 
-        {/* Progress indicator */}
-        <div className="w-full bg-muted rounded-full h-2">
-          <div 
-            className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
-          />
+          {/* Controls */}
+          <div className="flex justify-center gap-3">
+            <Button 
+              variant={isShuffled ? "default" : "outline"}
+              onClick={handleShuffle}
+              className="gap-2"
+            >
+              <Shuffle className="w-4 h-4" />
+              Shuffle
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleReset}
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset
+            </Button>
+          </div>
+
+          {/* Word List Search */}
+          <Card className="p-4">
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search words..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {searchQuery && (
+                <div className="max-h-60 overflow-y-auto space-y-1">
+                  {filteredWords.length === 0 ? (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                      No words found
+                    </p>
+                  ) : (
+                    filteredWords.map((word) => (
+                      <button
+                        key={word.id}
+                        onClick={() => handleWordClick(vocabulary.indexOf(word))}
+                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
+                      >
+                        <span className="font-medium">{word.english}</span>
+                        <span className="text-sm text-muted-foreground truncate max-w-[50%]">
+                          {word.mongolian}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Progress indicator */}
+          <div className="w-full bg-muted rounded-full h-2">
+            <div 
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </SecurityWrapper>
   );
 };
 

@@ -673,6 +673,50 @@ export type Database = {
         }
         Relationships: []
       }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          reviewed: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          student_account_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          student_account_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_topics: {
         Row: {
           created_at: string
@@ -716,32 +760,47 @@ export type Database = {
       }
       student_accounts: {
         Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
+          device_registered_at: string | null
           id: string
           is_active: boolean
+          is_blocked: boolean | null
           last_login: string | null
           linked_student_id: string | null
           phone_number: string
+          registered_device_id: string | null
           share_token: string | null
           share_token_created_at: string | null
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
+          device_registered_at?: string | null
           id?: string
           is_active?: boolean
+          is_blocked?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
           phone_number: string
+          registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
         }
         Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
+          device_registered_at?: string | null
           id?: string
           is_active?: boolean
+          is_blocked?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
           phone_number?: string
+          registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
         }
@@ -1143,6 +1202,33 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vocabulary_words: {
+        Row: {
+          created_at: string
+          english: string
+          id: string
+          is_active: boolean
+          mongolian: string
+          word_number: number
+        }
+        Insert: {
+          created_at?: string
+          english: string
+          id?: string
+          is_active?: boolean
+          mongolian: string
+          word_number: number
+        }
+        Update: {
+          created_at?: string
+          english?: string
+          id?: string
+          is_active?: boolean
+          mongolian?: string
+          word_number?: number
         }
         Relationships: []
       }

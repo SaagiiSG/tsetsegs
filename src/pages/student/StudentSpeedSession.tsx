@@ -11,6 +11,7 @@ import {
   Timer, Zap, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Home
 } from 'lucide-react';
 import { MathText } from '@/components/MathText';
+import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 
 interface Question {
   id: string;
@@ -264,6 +265,7 @@ export default function StudentSpeedSession() {
   const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && options;
 
   return (
+    <SecurityWrapper>
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none">
       {/* Header */}
       <div className="max-w-2xl mx-auto space-y-4">
@@ -403,5 +405,6 @@ export default function StudentSpeedSession() {
         </div>
       </div>
     </div>
+    </SecurityWrapper>
   );
 }
