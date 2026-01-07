@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
+import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 
 interface Question {
   id: string;
@@ -266,8 +267,8 @@ export default function StudentSpeedSession() {
 
   return (
     <SecurityWrapper>
+    <DesmosCalculator />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none">
-      {/* Header */}
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Timer Bar */}
         <div className="space-y-2">
