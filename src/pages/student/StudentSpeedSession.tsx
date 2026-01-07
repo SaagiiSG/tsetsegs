@@ -29,7 +29,7 @@ export default function StudentSpeedSession() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isCalculatorSnapped = useCalculatorSnap();
+  const calculatorSnapSide = useCalculatorSnap();
 
   const mode = searchParams.get('mode') as 'question' | 'session';
   const timerValue = Number(searchParams.get('timer'));
@@ -272,8 +272,9 @@ export default function StudentSpeedSession() {
     <div 
       className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none transition-all duration-300"
       style={{ 
-        marginRight: isCalculatorSnapped ? '40vw' : 0,
-        width: isCalculatorSnapped ? '60vw' : '100%'
+        marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
+        marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
+        width: calculatorSnapSide ? '60vw' : '100%'
       }}
     >
       <div className="max-w-2xl mx-auto space-y-4">
