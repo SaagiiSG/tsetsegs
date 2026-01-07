@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
-import { DesmosCalculator } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -40,6 +40,7 @@ export default function StudentQuestion() {
   const { student, isLoading: authLoading, logActivity } = useStudentAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isCalculatorSnapped = useCalculatorSnap();
   
   const [videoWatched, setVideoWatched] = useState(false);
   const [currentVariationIndex, setCurrentVariationIndex] = useState(0);
@@ -508,7 +509,13 @@ export default function StudentQuestion() {
   return (
     <SecurityWrapper>
       <DesmosCalculator />
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div 
+        className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 transition-all duration-300"
+        style={{ 
+          marginRight: isCalculatorSnapped ? '40vw' : 0,
+          width: isCalculatorSnapped ? '60vw' : '100%'
+        }}
+      >
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => navigate('/practice/dashboard')}>
