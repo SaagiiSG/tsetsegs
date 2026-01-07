@@ -767,6 +767,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_blocked: boolean | null
+          is_dev_account: boolean | null
           last_login: string | null
           linked_student_id: string | null
           phone_number: string
@@ -782,6 +783,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
+          is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
           phone_number: string
@@ -797,6 +799,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
+          is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
           phone_number?: string

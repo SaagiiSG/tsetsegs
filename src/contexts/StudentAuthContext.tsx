@@ -193,8 +193,10 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // Check device registration lock (30-day lock)
-        if (studentAccount.registered_device_id && studentAccount.device_registered_at) {
+        // Check device registration lock (30-day lock) - skip for dev accounts
+        const isDevAccount = (studentAccount as any).is_dev_account === true;
+        
+        if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
           const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
           
           if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
