@@ -3,6 +3,32 @@ import { Button } from '@/components/ui/button';
 import { Calculator, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 
 const SNAP_THRESHOLD = 80; // pixels from edge to trigger snap zone
+const SNAP_WIDTH = 40; // percentage of screen width when snapped
+
+// Custom event for snap state changes
+export const CALCULATOR_SNAP_EVENT = 'calculatorSnapChange';
+
+export function dispatchSnapEvent(isSnapped: boolean) {
+  window.dispatchEvent(new CustomEvent(CALCULATOR_SNAP_EVENT, { detail: { isSnapped } }));
+}
+
+// Hook for listening to snap state
+export function useCalculatorSnap() {
+  const [isCalculatorSnapped, setIsCalculatorSnapped] = useState(false);
+
+  useEffect(() => {
+    const handleSnapChange = (e: CustomEvent<{ isSnapped: boolean }>) => {
+      setIsCalculatorSnapped(e.detail.isSnapped);
+    };
+
+    window.addEventListener(CALCULATOR_SNAP_EVENT, handleSnapChange as EventListener);
+    return () => {
+      window.removeEventListener(CALCULATOR_SNAP_EVENT, handleSnapChange as EventListener);
+    };
+  }, []);
+
+  return isCalculatorSnapped;
+}
 
 export function DesmosCalculator() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,9 +43,9 @@ export function DesmosCalculator() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (windowRef.current) {
-      // If snapped, unsnap first
       if (isSnapped) {
         setIsSnapped(false);
+        dispatchSnapEvent(false);
         setPosition({ x: e.clientX - 200, y: e.clientY - 20 });
       }
       setIsDragging(true);
@@ -35,6 +61,7 @@ export function DesmosCalculator() {
     if (windowRef.current && e.touches.length === 1) {
       if (isSnapped) {
         setIsSnapped(false);
+        dispatchSnapEvent(false);
         setPosition({ x: e.touches[0].clientX - 200, y: e.touches[0].clientY - 20 });
       }
       setIsDragging(true);
@@ -54,7 +81,6 @@ export function DesmosCalculator() {
         setPosition({ x: newX, y: newY });
         setCurrentDragX(e.clientX);
         
-        // Show snap zone when near right edge
         const nearRightEdge = e.clientX > window.innerWidth - SNAP_THRESHOLD;
         setShowSnapZone(nearRightEdge);
       }
@@ -73,9 +99,9 @@ export function DesmosCalculator() {
     };
 
     const handleEnd = () => {
-      // Check if should snap to right
       if (isDragging && currentDragX > window.innerWidth - SNAP_THRESHOLD) {
         setIsSnapped(true);
+        dispatchSnapEvent(true);
       }
       setIsDragging(false);
       setShowSnapZone(false);
@@ -96,6 +122,15 @@ export function DesmosCalculator() {
     };
   }, [isDragging, dragOffset, currentDragX]);
 
+  // Notify when component unmounts while snapped
+  useEffect(() => {
+    return () => {
+      if (isSnapped) {
+        dispatchSnapEvent(false);
+      }
+    };
+  }, [isSnapped]);
+
   if (!isOpen) {
     return (
       <Button
@@ -111,15 +146,16 @@ export function DesmosCalculator() {
     );
   }
 
-  const windowWidth = isSnapped ? '50vw' : '400px';
+  const windowWidth = isSnapped ? `${SNAP_WIDTH}vw` : '400px';
 
   return (
     <>
-      {/* Snap Zone Indicator - Shows when dragging near right edge */}
+      {/* Snap Zone Indicator */}
       {showSnapZone && (
         <div 
-          className="fixed right-0 top-0 h-full w-1/2 z-40 pointer-events-none transition-all duration-200"
+          className="fixed right-0 top-0 h-full z-40 pointer-events-none transition-all duration-200"
           style={{
+            width: `${SNAP_WIDTH}%`,
             background: 'linear-gradient(to left, hsl(var(--primary) / 0.15), transparent)',
             borderLeft: '3px solid hsl(var(--primary) / 0.6)',
             boxShadow: '-10px 0 30px hsl(var(--primary) / 0.2)',
@@ -152,7 +188,7 @@ export function DesmosCalculator() {
           transition: isDragging ? 'none' : 'all 0.2s ease-out'
         }}
       >
-        {/* Title Bar - Draggable */}
+        {/* Title Bar */}
         <div
           className="flex items-center justify-between px-3 py-2 bg-muted border-b cursor-move select-none"
           onMouseDown={handleMouseDown}
@@ -182,12 +218,14 @@ export function DesmosCalculator() {
               onClick={() => {
                 if (isSnapped) {
                   setIsSnapped(false);
+                  dispatchSnapEvent(false);
                   setPosition({ x: 20, y: 60 });
                 } else {
                   setIsSnapped(true);
+                  dispatchSnapEvent(true);
                 }
               }}
-              title={isSnapped ? "Restore" : "Half Screen"}
+              title={isSnapped ? "Restore" : "Snap to Side"}
             >
               {isSnapped ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
             </Button>
@@ -196,6 +234,9 @@ export function DesmosCalculator() {
               size="icon"
               className="h-6 w-6 hover:bg-destructive hover:text-destructive-foreground"
               onClick={() => {
+                if (isSnapped) {
+                  dispatchSnapEvent(false);
+                }
                 setIsOpen(false);
                 setIsSnapped(false);
               }}
