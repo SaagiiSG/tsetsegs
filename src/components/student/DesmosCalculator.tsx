@@ -5,20 +5,22 @@ import { Calculator, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 const SNAP_THRESHOLD = 80; // pixels from edge to trigger snap zone
 const SNAP_WIDTH = 40; // percentage of screen width when snapped
 
+export type SnapSide = 'left' | 'right' | null;
+
 // Custom event for snap state changes
 export const CALCULATOR_SNAP_EVENT = 'calculatorSnapChange';
 
-export function dispatchSnapEvent(isSnapped: boolean) {
-  window.dispatchEvent(new CustomEvent(CALCULATOR_SNAP_EVENT, { detail: { isSnapped } }));
+export function dispatchSnapEvent(snapSide: SnapSide) {
+  window.dispatchEvent(new CustomEvent(CALCULATOR_SNAP_EVENT, { detail: { snapSide } }));
 }
 
 // Hook for listening to snap state
 export function useCalculatorSnap() {
-  const [isCalculatorSnapped, setIsCalculatorSnapped] = useState(false);
+  const [snapSide, setSnapSide] = useState<SnapSide>(null);
 
   useEffect(() => {
-    const handleSnapChange = (e: CustomEvent<{ isSnapped: boolean }>) => {
-      setIsCalculatorSnapped(e.detail.isSnapped);
+    const handleSnapChange = (e: CustomEvent<{ snapSide: SnapSide }>) => {
+      setSnapSide(e.detail.snapSide);
     };
 
     window.addEventListener(CALCULATOR_SNAP_EVENT, handleSnapChange as EventListener);
@@ -27,25 +29,25 @@ export function useCalculatorSnap() {
     };
   }, []);
 
-  return isCalculatorSnapped;
+  return snapSide;
 }
 
 export function DesmosCalculator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isSnapped, setIsSnapped] = useState(false);
+  const [snapSide, setSnapSide] = useState<SnapSide>(null);
   const [position, setPosition] = useState({ x: 20, y: 60 });
   const [isDragging, setIsDragging] = useState(false);
-  const [showSnapZone, setShowSnapZone] = useState(false);
+  const [showSnapZone, setShowSnapZone] = useState<SnapSide>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentDragX, setCurrentDragX] = useState(0);
   const windowRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (windowRef.current) {
-      if (isSnapped) {
-        setIsSnapped(false);
-        dispatchSnapEvent(false);
+      if (snapSide) {
+        setSnapSide(null);
+        dispatchSnapEvent(null);
         setPosition({ x: e.clientX - 200, y: e.clientY - 20 });
       }
       setIsDragging(true);
@@ -59,9 +61,9 @@ export function DesmosCalculator() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (windowRef.current && e.touches.length === 1) {
-      if (isSnapped) {
-        setIsSnapped(false);
-        dispatchSnapEvent(false);
+      if (snapSide) {
+        setSnapSide(null);
+        dispatchSnapEvent(null);
         setPosition({ x: e.touches[0].clientX - 200, y: e.touches[0].clientY - 20 });
       }
       setIsDragging(true);
@@ -82,7 +84,15 @@ export function DesmosCalculator() {
         setCurrentDragX(e.clientX);
         
         const nearRightEdge = e.clientX > window.innerWidth - SNAP_THRESHOLD;
-        setShowSnapZone(nearRightEdge);
+        const nearLeftEdge = e.clientX < SNAP_THRESHOLD;
+        
+        if (nearRightEdge) {
+          setShowSnapZone('right');
+        } else if (nearLeftEdge) {
+          setShowSnapZone('left');
+        } else {
+          setShowSnapZone(null);
+        }
       }
     };
 
@@ -94,17 +104,30 @@ export function DesmosCalculator() {
         setCurrentDragX(e.touches[0].clientX);
         
         const nearRightEdge = e.touches[0].clientX > window.innerWidth - SNAP_THRESHOLD;
-        setShowSnapZone(nearRightEdge);
+        const nearLeftEdge = e.touches[0].clientX < SNAP_THRESHOLD;
+        
+        if (nearRightEdge) {
+          setShowSnapZone('right');
+        } else if (nearLeftEdge) {
+          setShowSnapZone('left');
+        } else {
+          setShowSnapZone(null);
+        }
       }
     };
 
     const handleEnd = () => {
-      if (isDragging && currentDragX > window.innerWidth - SNAP_THRESHOLD) {
-        setIsSnapped(true);
-        dispatchSnapEvent(true);
+      if (isDragging) {
+        if (currentDragX > window.innerWidth - SNAP_THRESHOLD) {
+          setSnapSide('right');
+          dispatchSnapEvent('right');
+        } else if (currentDragX < SNAP_THRESHOLD) {
+          setSnapSide('left');
+          dispatchSnapEvent('left');
+        }
       }
       setIsDragging(false);
-      setShowSnapZone(false);
+      setShowSnapZone(null);
     };
 
     if (isDragging) {
@@ -125,11 +148,11 @@ export function DesmosCalculator() {
   // Notify when component unmounts while snapped
   useEffect(() => {
     return () => {
-      if (isSnapped) {
-        dispatchSnapEvent(false);
+      if (snapSide) {
+        dispatchSnapEvent(null);
       }
     };
-  }, [isSnapped]);
+  }, [snapSide]);
 
   if (!isOpen) {
     return (
@@ -146,12 +169,34 @@ export function DesmosCalculator() {
     );
   }
 
-  const windowWidth = isSnapped ? `${SNAP_WIDTH}vw` : '400px';
+  const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : '400px';
 
   return (
     <>
-      {/* Snap Zone Indicator */}
-      {showSnapZone && (
+      {/* Left Snap Zone Indicator */}
+      {showSnapZone === 'left' && (
+        <div 
+          className="fixed left-0 top-0 h-full z-40 pointer-events-none transition-all duration-200"
+          style={{
+            width: `${SNAP_WIDTH}%`,
+            background: 'linear-gradient(to right, hsl(var(--primary) / 0.15), transparent)',
+            borderRight: '3px solid hsl(var(--primary) / 0.6)',
+            boxShadow: '10px 0 30px hsl(var(--primary) / 0.2)',
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-primary/20 backdrop-blur-sm rounded-lg px-6 py-3 border border-primary/30 animate-pulse">
+              <div className="flex items-center gap-2 text-primary font-medium">
+                <Maximize2 className="h-5 w-5" />
+                <span>Drop to snap left</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Right Snap Zone Indicator */}
+      {showSnapZone === 'right' && (
         <div 
           className="fixed right-0 top-0 h-full z-40 pointer-events-none transition-all duration-200"
           style={{
@@ -165,7 +210,7 @@ export function DesmosCalculator() {
             <div className="bg-primary/20 backdrop-blur-sm rounded-lg px-6 py-3 border border-primary/30 animate-pulse">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <Maximize2 className="h-5 w-5" />
-                <span>Drop to snap</span>
+                <span>Drop to snap right</span>
               </div>
             </div>
           </div>
@@ -178,13 +223,13 @@ export function DesmosCalculator() {
         data-calculator-window
         className="fixed z-50 bg-background border rounded-lg shadow-2xl overflow-hidden"
         style={{
-          left: isSnapped ? 'auto' : position.x,
-          right: isSnapped ? 0 : 'auto',
-          top: isSnapped ? 0 : position.y,
+          left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
+          right: snapSide === 'right' ? 0 : 'auto',
+          top: snapSide ? 0 : position.y,
           width: windowWidth,
-          height: isSnapped ? '100vh' : 'auto',
+          height: snapSide ? '100vh' : 'auto',
           maxWidth: '95vw',
-          borderRadius: isSnapped ? 0 : undefined,
+          borderRadius: snapSide ? 0 : undefined,
           transition: isDragging ? 'none' : 'all 0.2s ease-out'
         }}
       >
@@ -197,8 +242,8 @@ export function DesmosCalculator() {
           <div className="flex items-center gap-2 text-sm font-medium">
             <Calculator className="h-4 w-4" />
             <span>Desmos Calculator</span>
-            {isSnapped && (
-              <span className="text-xs text-muted-foreground">(snapped)</span>
+            {snapSide && (
+              <span className="text-xs text-muted-foreground">(snapped {snapSide})</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -216,29 +261,29 @@ export function DesmosCalculator() {
               size="icon"
               className="h-6 w-6"
               onClick={() => {
-                if (isSnapped) {
-                  setIsSnapped(false);
-                  dispatchSnapEvent(false);
+                if (snapSide) {
+                  setSnapSide(null);
+                  dispatchSnapEvent(null);
                   setPosition({ x: 20, y: 60 });
                 } else {
-                  setIsSnapped(true);
-                  dispatchSnapEvent(true);
+                  setSnapSide('right');
+                  dispatchSnapEvent('right');
                 }
               }}
-              title={isSnapped ? "Restore" : "Snap to Side"}
+              title={snapSide ? "Restore" : "Snap to Side"}
             >
-              {isSnapped ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+              {snapSide ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 hover:bg-destructive hover:text-destructive-foreground"
               onClick={() => {
-                if (isSnapped) {
-                  dispatchSnapEvent(false);
+                if (snapSide) {
+                  dispatchSnapEvent(null);
                 }
                 setIsOpen(false);
-                setIsSnapped(false);
+                setSnapSide(null);
               }}
               title="Close"
             >
@@ -247,17 +292,20 @@ export function DesmosCalculator() {
           </div>
         </div>
 
-        {/* Calculator Content */}
-        {!isMinimized && (
-          <div style={{ height: isSnapped ? 'calc(100vh - 44px)' : '460px' }}>
-            <iframe
-              src="https://www.desmos.com/calculator"
-              title="Desmos Graphing Calculator"
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </div>
-        )}
+        {/* Calculator Content - Keep iframe mounted but hidden when minimized */}
+        <div 
+          style={{ 
+            height: snapSide ? 'calc(100vh - 44px)' : '460px',
+            display: isMinimized ? 'none' : 'block'
+          }}
+        >
+          <iframe
+            src="https://www.desmos.com/calculator"
+            title="Desmos Graphing Calculator"
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
       </div>
     </>
   );
