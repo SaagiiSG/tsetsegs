@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft } from 'lucide-react';
 import { MathText } from '@/components/MathText';
+import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -504,251 +505,253 @@ export default function StudentQuestion() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/practice/dashboard')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
-            <Badge variant="secondary">{question.category?.name}</Badge>
-            {allQuestions && (
-              <span className="text-xs text-muted-foreground">
-                ({currentQuestionIndex + 1}/{allQuestions.length})
-              </span>
-            )}
+    <SecurityWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        {/* Header */}
+        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/practice/dashboard')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
+              <Badge variant="secondary">{question.category?.name}</Badge>
+              {allQuestions && (
+                <span className="text-xs text-muted-foreground">
+                  ({currentQuestionIndex + 1}/{allQuestions.length})
+                </span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
+              <Flag className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
-            <Flag className="h-4 w-4" />
+        </header>
+
+        {/* Prev/Next Navigation */}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevQuestion}
+            disabled={!prevQuestion}
+            className="rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Prev
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextQuestion}
+            disabled={!nextQuestion}
+            className="rounded-full"
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
-      </header>
 
-      {/* Prev/Next Navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePrevQuestion}
-          disabled={!prevQuestion}
-          className="rounded-full"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Prev
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleNextQuestion}
-          disabled={!nextQuestion}
-          className="rounded-full"
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
-
-      <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
-        {/* Video Section */}
-        {videoId && !videoWatched && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Play className="h-5 w-5" />
-                Watch the lesson first
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <Button 
-                className="w-full" 
-                onClick={() => markVideoWatchedMutation.mutate()}
-              >
-                I've watched the video - Start Practice
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Practice Section */}
-        {(videoWatched || !videoId) && currentQuestion && (
-          <>
-            {/* Progress indicator */}
-            {practiceQuestions.length > 1 && (
-              <Card>
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span>Variation {currentVariationIndex + 1} of {practiceQuestions.length}</span>
-                    <span>{completedVariations}/{practiceQuestions.length} completed</span>
-                  </div>
-                  <Progress value={(completedVariations / practiceQuestions.length) * 100} />
-                </CardContent>
-              </Card>
-            )}
-
+        <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
+          {/* Video Section */}
+          {videoId && !videoWatched && (
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {practiceQuestions.length > 1 
-                    ? `Practice ${currentVariationIndex + 1}` 
-                    : `Question ${question.question_id}`
-                  }
+                <CardTitle className="flex items-center gap-2">
+                  <Play className="h-5 w-5" />
+                  Watch the lesson first
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Question Text */}
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-lg">
-                    <MathText text={currentQuestion.question_text} />
-                  </p>
-                </div>
-
-                {/* Question Image */}
-                {currentQuestion.question_image_url && (
-                  <img 
-                    src={currentQuestion.question_image_url} 
-                    alt="Question" 
-                    className="max-w-full rounded-lg border"
+              <CardContent className="space-y-4">
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   />
-                )}
-
-                {/* Multiple Choice Options */}
-                {currentQuestion.question_type === 'multiple_choice' && options && (
-                  <div className="space-y-3">
-                    {['A', 'B', 'C', 'D'].map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => !submitted && setSelectedAnswer(opt)}
-                        disabled={submitted}
-                        className={`w-full p-4 rounded-lg border text-left transition-all ${
-                          submitted && opt === selectedAnswer && isCorrect
-                            ? 'border-green-500 bg-green-500/10'
-                            : submitted && opt === selectedAnswer && !isCorrect
-                            ? 'border-red-500 bg-red-500/10'
-                            : selectedAnswer === opt
-                            ? 'border-primary bg-primary/10'
-                            : 'hover:border-primary/50'
-                        }`}
-                      >
-                        <span className="font-medium mr-3">{opt}.</span>
-                        <MathText text={options[opt]} />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Fill in the Blank */}
-                {currentQuestion.question_type === 'fill_blank' && (
-                  <div className="space-y-3">
-                    <Input
-                      value={fillAnswer}
-                      onChange={(e) => setFillAnswer(e.target.value)}
-                      placeholder="Type your answer..."
-                      disabled={submitted}
-                      className="text-lg"
-                    />
-                  </div>
-                )}
-
-                {/* Result */}
-                {submitted && (
-                  <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                    <div className="flex items-center gap-2">
-                      {isCorrect ? (
-                        <>
-                          <CheckCircle2 className="h-6 w-6 text-green-500" />
-                          <span className="text-green-500 font-medium">Correct!</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-6 w-6 text-red-500" />
-                          <span className="text-red-500 font-medium">
-                            Incorrect. {attemptCount < 3 ? 'Try again!' : 'Review the video for help.'}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-3">
-                  {!submitted ? (
-                    <Button 
-                      className="flex-1" 
-                      onClick={handleSubmit}
-                      disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
-                    >
-                      {submitAnswerMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      Submit Answer ({attemptCount}/3 attempts)
-                    </Button>
-                  ) : !isCorrect && attemptCount < 3 ? (
-                    <Button className="flex-1" onClick={handleTryAgain}>
-                      Try Again ({attemptCount}/3 attempts)
-                    </Button>
-                  ) : currentVariationIndex < practiceQuestions.length - 1 ? (
-                    <Button className="flex-1" onClick={handleNextVariation}>
-                      Next Variation
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="flex-1" 
-                      onClick={() => navigate('/practice/dashboard')}
-                    >
-                      Back to Questions
-                    </Button>
-                  )}
                 </div>
+                <Button 
+                  className="w-full" 
+                  onClick={() => markVideoWatchedMutation.mutate()}
+                >
+                  I've watched the video - Start Practice
+                </Button>
               </CardContent>
             </Card>
-          </>
-        )}
-      </main>
+          )}
 
-      {/* Flag Dialog */}
-      <Dialog open={flagDialogOpen} onOpenChange={setFlagDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Report a Problem</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Found an error or have feedback about this question? Let us know!
-            </p>
-            <Textarea
-              placeholder="Describe the issue (optional)..."
-              value={flagReason}
-              onChange={(e) => setFlagReason(e.target.value)}
-              rows={4}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFlagDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => flagMutation.mutate(flagReason)} disabled={flagMutation.isPending}>
-              {flagMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Submit Flag
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          {/* Practice Section */}
+          {(videoWatched || !videoId) && currentQuestion && (
+            <>
+              {/* Progress indicator */}
+              {practiceQuestions.length > 1 && (
+                <Card>
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span>Variation {currentVariationIndex + 1} of {practiceQuestions.length}</span>
+                      <span>{completedVariations}/{practiceQuestions.length} completed</span>
+                    </div>
+                    <Progress value={(completedVariations / practiceQuestions.length) * 100} />
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {practiceQuestions.length > 1 
+                      ? `Practice ${currentVariationIndex + 1}` 
+                      : `Question ${question.question_id}`
+                    }
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Question Text */}
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-lg">
+                      <MathText text={currentQuestion.question_text} />
+                    </p>
+                  </div>
+
+                  {/* Question Image */}
+                  {currentQuestion.question_image_url && (
+                    <img 
+                      src={currentQuestion.question_image_url} 
+                      alt="Question" 
+                      className="max-w-full rounded-lg border"
+                    />
+                  )}
+
+                  {/* Multiple Choice Options */}
+                  {currentQuestion.question_type === 'multiple_choice' && options && (
+                    <div className="space-y-3">
+                      {['A', 'B', 'C', 'D'].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => !submitted && setSelectedAnswer(opt)}
+                          disabled={submitted}
+                          className={`w-full p-4 rounded-lg border text-left transition-all ${
+                            submitted && opt === selectedAnswer && isCorrect
+                              ? 'border-green-500 bg-green-500/10'
+                              : submitted && opt === selectedAnswer && !isCorrect
+                              ? 'border-red-500 bg-red-500/10'
+                              : selectedAnswer === opt
+                              ? 'border-primary bg-primary/10'
+                              : 'hover:border-primary/50'
+                          }`}
+                        >
+                          <span className="font-medium mr-3">{opt}.</span>
+                          <MathText text={options[opt]} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Fill in the Blank */}
+                  {currentQuestion.question_type === 'fill_blank' && (
+                    <div className="space-y-3">
+                      <Input
+                        value={fillAnswer}
+                        onChange={(e) => setFillAnswer(e.target.value)}
+                        placeholder="Type your answer..."
+                        disabled={submitted}
+                        className="text-lg"
+                      />
+                    </div>
+                  )}
+
+                  {/* Result */}
+                  {submitted && (
+                    <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                      <div className="flex items-center gap-2">
+                        {isCorrect ? (
+                          <>
+                            <CheckCircle2 className="h-6 w-6 text-green-500" />
+                            <span className="text-green-500 font-medium">Correct!</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-6 w-6 text-red-500" />
+                            <span className="text-red-500 font-medium">
+                              Incorrect. {attemptCount < 3 ? 'Try again!' : 'Review the video for help.'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    {!submitted ? (
+                      <Button 
+                        className="flex-1" 
+                        onClick={handleSubmit}
+                        disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
+                      >
+                        {submitAnswerMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : null}
+                        Submit Answer ({attemptCount}/3 attempts)
+                      </Button>
+                    ) : !isCorrect && attemptCount < 3 ? (
+                      <Button className="flex-1" onClick={handleTryAgain}>
+                        Try Again ({attemptCount}/3 attempts)
+                      </Button>
+                    ) : currentVariationIndex < practiceQuestions.length - 1 ? (
+                      <Button className="flex-1" onClick={handleNextVariation}>
+                        Next Variation
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="flex-1" 
+                        onClick={() => navigate('/practice/dashboard')}
+                      >
+                        Back to Questions
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </main>
+
+        {/* Flag Dialog */}
+        <Dialog open={flagDialogOpen} onOpenChange={setFlagDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Report a Problem</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Found an error or have feedback about this question? Let us know!
+              </p>
+              <Textarea
+                placeholder="Describe the issue (optional)..."
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFlagDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => flagMutation.mutate(flagReason)} disabled={flagMutation.isPending}>
+                {flagMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Submit Flag
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </SecurityWrapper>
   );
 }

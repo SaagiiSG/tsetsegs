@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -243,213 +244,215 @@ export default function StudentEnglishQuestion() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 select-none">
-      {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-10 p-4">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/practice/english')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
-            <Badge variant="secondary">{question.category?.name}</Badge>
-            {allQuestions && (
-              <span className="text-xs text-muted-foreground">
-                ({currentQuestionIndex + 1}/{allQuestions.length})
-              </span>
-            )}
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
-            <Flag className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
-
-      {/* Navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => prevQuestion && navigate(`/practice/english/question/${prevQuestion.id}`)}
-          disabled={!prevQuestion}
-          className="rounded-full"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Prev
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => nextQuestion && navigate(`/practice/english/question/${nextQuestion.id}`)}
-          disabled={!nextQuestion}
-          className="rounded-full"
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
-
-      <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
-        {/* Passage */}
-        {question.passage_text && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Reading Passage
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="max-h-[300px]">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {question.passage_text}
-                </p>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Question */}
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <p className="text-base leading-relaxed">{question.question_text}</p>
-            
-            {options && (
-              <RadioGroup
-                value={selectedAnswer || ''}
-                onValueChange={setSelectedAnswer}
-                disabled={submitted && isCorrect}
-                className="space-y-3"
-              >
-                {Object.entries(options).map(([key, value]) => {
-                  const isSelected = selectedAnswer === key;
-                  const isAnswer = key === question.answer;
-                  
-                  let bgClass = '';
-                  if (submitted) {
-                    if (isSelected && isCorrect) bgClass = 'bg-green-500/10 border-green-500';
-                    else if (isSelected && !isCorrect) bgClass = 'bg-red-500/10 border-red-500';
-                  }
-                  
-                  return (
-                    <div 
-                      key={key}
-                      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${bgClass} ${
-                        !submitted ? 'hover:bg-muted/50 cursor-pointer' : ''
-                      }`}
-                      onClick={() => !submitted && setSelectedAnswer(key)}
-                    >
-                      <RadioGroupItem value={key} id={key} className="mt-0.5" />
-                      <Label htmlFor={key} className="flex-1 cursor-pointer">
-                        <span className="font-medium mr-2">{key}.</span>
-                        {value}
-                      </Label>
-                      {submitted && isSelected && (
-                        isCorrect ? 
-                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" /> :
-                          <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                      )}
-                    </div>
-                  );
-                })}
-              </RadioGroup>
-            )}
-
-            {/* Submit / Try Again */}
-            <div className="flex gap-3 pt-4">
-              {!submitted ? (
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={!selectedAnswer || submitMutation.isPending}
-                  className="flex-1"
-                >
-                  {submitMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Submit Answer
-                </Button>
-              ) : (
-                <>
-                  {!isCorrect && attemptCount < 3 && (
-                    <Button onClick={handleTryAgain} variant="outline" className="flex-1">
-                      Try Again ({3 - attemptCount} left)
-                    </Button>
-                  )}
-                  <Button 
-                    onClick={() => nextQuestion && navigate(`/practice/english/question/${nextQuestion.id}`)}
-                    disabled={!nextQuestion}
-                    className="flex-1"
-                  >
-                    Next Question
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </>
+    <SecurityWrapper>
+      <div className="min-h-screen bg-background pb-24 select-none">
+        {/* Header */}
+        <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-10 p-4">
+          <div className="flex items-center justify-between max-w-3xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/practice/english')}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
+              <Badge variant="secondary">{question.category?.name}</Badge>
+              {allQuestions && (
+                <span className="text-xs text-muted-foreground">
+                  ({currentQuestionIndex + 1}/{allQuestions.length})
+                </span>
               )}
             </div>
-
-            {/* Attempt status */}
-            {attemptCount > 0 && (
-              <p className="text-sm text-muted-foreground text-center">
-                Attempts: {attemptCount}/3 • {isCorrect ? '✓ Correct!' : 'Keep trying!'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Explanation */}
-        {submitted && question.rationale && (
-          <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
-            <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                  <CardTitle className="text-sm flex items-center justify-between">
-                    <span>Explanation</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
-                  </CardTitle>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {question.rationale}
-                  </p>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        )}
-      </main>
-
-      {/* Flag Dialog */}
-      <Dialog open={flagDialogOpen} onOpenChange={setFlagDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Report a Problem</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Is there an issue with this question? Let us know.
-            </p>
-            <Textarea
-              placeholder="Describe the problem..."
-              value={flagReason}
-              onChange={(e) => setFlagReason(e.target.value)}
-            />
+            <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
+              <Flag className="h-4 w-4" />
+            </Button>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFlagDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => flagMutation.mutate()} 
-              disabled={!flagReason.trim() || flagMutation.isPending}
-            >
-              {flagMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Submit
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </header>
+
+        {/* Navigation */}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => prevQuestion && navigate(`/practice/english/question/${prevQuestion.id}`)}
+            disabled={!prevQuestion}
+            className="rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Prev
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => nextQuestion && navigate(`/practice/english/question/${nextQuestion.id}`)}
+            disabled={!nextQuestion}
+            className="rounded-full"
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+
+        <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
+          {/* Passage */}
+          {question.passage_text && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Reading Passage
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="max-h-[300px]">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {question.passage_text}
+                  </p>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Question */}
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-base leading-relaxed">{question.question_text}</p>
+              
+              {options && (
+                <RadioGroup
+                  value={selectedAnswer || ''}
+                  onValueChange={setSelectedAnswer}
+                  disabled={submitted && isCorrect}
+                  className="space-y-3"
+                >
+                  {Object.entries(options).map(([key, value]) => {
+                    const isSelected = selectedAnswer === key;
+                    const isAnswer = key === question.answer;
+                    
+                    let bgClass = '';
+                    if (submitted) {
+                      if (isSelected && isCorrect) bgClass = 'bg-green-500/10 border-green-500';
+                      else if (isSelected && !isCorrect) bgClass = 'bg-red-500/10 border-red-500';
+                    }
+                    
+                    return (
+                      <div 
+                        key={key}
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${bgClass} ${
+                          !submitted ? 'hover:bg-muted/50 cursor-pointer' : ''
+                        }`}
+                        onClick={() => !submitted && setSelectedAnswer(key)}
+                      >
+                        <RadioGroupItem value={key} id={key} className="mt-0.5" />
+                        <Label htmlFor={key} className="flex-1 cursor-pointer">
+                          <span className="font-medium mr-2">{key}.</span>
+                          {value}
+                        </Label>
+                        {submitted && isSelected && (
+                          isCorrect ? 
+                            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" /> :
+                            <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
+              )}
+
+              {/* Submit / Try Again */}
+              <div className="flex gap-3 pt-4">
+                {!submitted ? (
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={!selectedAnswer || submitMutation.isPending}
+                    className="flex-1"
+                  >
+                    {submitMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Submit Answer
+                  </Button>
+                ) : (
+                  <>
+                    {!isCorrect && attemptCount < 3 && (
+                      <Button onClick={handleTryAgain} variant="outline" className="flex-1">
+                        Try Again ({3 - attemptCount} left)
+                      </Button>
+                    )}
+                    <Button 
+                      onClick={() => nextQuestion && navigate(`/practice/english/question/${nextQuestion.id}`)}
+                      disabled={!nextQuestion}
+                      className="flex-1"
+                    >
+                      Next Question
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Attempt status */}
+              {attemptCount > 0 && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Attempts: {attemptCount}/3 • {isCorrect ? '✓ Correct!' : 'Keep trying!'}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Explanation */}
+          {submitted && question.rationale && (
+            <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span>Explanation</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {question.rationale}
+                    </p>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          )}
+        </main>
+
+        {/* Flag Dialog */}
+        <Dialog open={flagDialogOpen} onOpenChange={setFlagDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Report a Problem</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Is there an issue with this question? Let us know.
+              </p>
+              <Textarea
+                placeholder="Describe the problem..."
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFlagDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => flagMutation.mutate()} 
+                disabled={!flagReason.trim() || flagMutation.isPending}
+              >
+                {flagMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Submit
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </SecurityWrapper>
   );
 }
