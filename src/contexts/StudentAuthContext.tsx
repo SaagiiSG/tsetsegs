@@ -294,18 +294,29 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       
       setStudent(fullStudent);
 
-      // Log login activity
-      await supabase
-        .from('student_activity_logs')
-        .insert({
-          student_account_id: studentAccount.id,
-          session_id: session.id,
-          activity_type: 'login',
-          metadata: {
-            device_id: deviceId,
-            user_agent: navigator.userAgent
+      // Log login activity with IP address via edge function
+      try {
+        await supabase.functions.invoke('log-ip', {
+          body: {
+            student_account_id: studentAccount.id,
+            activity_type: 'login'
           }
         });
+      } catch (ipError) {
+        console.error('Failed to log IP:', ipError);
+        // Still log activity without IP as fallback
+        await supabase
+          .from('student_activity_logs')
+          .insert({
+            student_account_id: studentAccount.id,
+            session_id: session.id,
+            activity_type: 'login',
+            metadata: {
+              device_id: deviceId,
+              user_agent: navigator.userAgent
+            }
+          });
+      }
 
       return { error: null };
 

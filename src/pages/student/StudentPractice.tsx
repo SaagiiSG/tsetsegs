@@ -12,6 +12,7 @@ import {
   Target, RotateCcw, BookOpen, FileText
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 
 type QuestionSet = '68' | 'CB';
 type Subject = 'math' | 'english';
@@ -226,6 +227,8 @@ export default function StudentPractice() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
+      {/* Desmos Calculator Floating Button (only for Math) */}
+      {subject === 'math' && <DesmosCalculator />}
       {/* Subject Selector */}
       <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
         <CardContent className="p-4">
