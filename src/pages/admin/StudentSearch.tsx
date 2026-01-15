@@ -5,7 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, GraduationCap } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Search, User, GraduationCap, Phone, Users } from 'lucide-react';
+
+type PhoneType = 'student' | 'parent';
 
 interface StudentResult {
   id: string;
@@ -28,6 +31,7 @@ interface StudentResult {
 export default function StudentSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [phoneType, setPhoneType] = useState<PhoneType>('student');
   const [results, setResults] = useState<StudentResult[]>([]);
   const [isPending, startTransition] = useTransition();
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -42,7 +46,7 @@ export default function StudentSearch() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Perform search when debounced query changes
+  // Perform search when debounced query or phone type changes
   useEffect(() => {
     if (!debouncedQuery.trim()) {
       setResults([]);
@@ -56,13 +60,15 @@ export default function StudentSearch() {
     abortControllerRef.current = new AbortController();
 
     startTransition(() => {
-      performSearch(debouncedQuery);
+      performSearch(debouncedQuery, phoneType);
     });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, phoneType]);
 
-  const performSearch = async (query: string) => {
+  const performSearch = async (query: string, type: PhoneType) => {
     try {
       const cleanedQuery = query.replace(/[-\s]/g, '');
+      
+      const phoneColumn = type === 'student' ? 'phone' : 'parent_phone';
       
       const { data, error } = await supabase
         .from('students')
@@ -77,7 +83,7 @@ export default function StudentSearch() {
           grade,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
-        .or(`phone.ilike.%${cleanedQuery}%,parent_phone.ilike.%${cleanedQuery}%,name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+        .ilike(phoneColumn, `%${cleanedQuery}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -116,19 +122,36 @@ export default function StudentSearch() {
             Student Search
           </CardTitle>
           <CardDescription>
-            Search for students by phone number, parent phone, or name
+            Search for students by {phoneType === 'student' ? 'student' : 'parent'} phone number
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Start typing phone number or name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              autoFocus
-            />
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={`Enter ${phoneType === 'student' ? 'student' : 'parent'} phone number...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                autoFocus
+              />
+            </div>
+            <ToggleGroup 
+              type="single" 
+              value={phoneType} 
+              onValueChange={(value) => value && setPhoneType(value as PhoneType)}
+              className="border rounded-md"
+            >
+              <ToggleGroupItem value="student" aria-label="Search by student phone" className="gap-2 px-3">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Student</span>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="parent" aria-label="Search by parent phone" className="gap-2 px-3">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Parent</span>
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         </CardContent>
       </Card>
