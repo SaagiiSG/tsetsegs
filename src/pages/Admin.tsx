@@ -15,6 +15,7 @@ import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
 import AdminBatchAnalytics from '@/pages/admin/AdminBatchAnalytics';
 import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
+import StudentSearch from '@/pages/admin/StudentSearch';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -78,6 +79,7 @@ const Admin = () => {
               {import.meta.env.DEV && <Route path="questions" element={<QuestionBank />} />}
               <Route path="team" element={<TeamManagement />} />
               <Route path="students" element={<StudentAccountsManagement />} />
+              <Route path="search" element={<StudentSearch />} />
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>

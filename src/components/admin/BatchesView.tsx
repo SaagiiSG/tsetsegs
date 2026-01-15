@@ -41,18 +41,11 @@ export function BatchesView() {
   }, [batches, batchIdFromUrl]);
 
   const fetchBatches = async () => {
-    // If there's a specific batch requested, fetch all batches
-    // Otherwise, default to current month for performance
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    let query = supabase.from('batches').select('*');
-    
-    if (!batchIdFromUrl) {
-      query = query.gte('start_date', currentMonthStart.toISOString());
-    }
-    
-    const { data } = await query.order('start_date', { ascending: false });
+    // Fetch ALL batches regardless of date - filters handle display
+    const { data } = await supabase
+      .from('batches')
+      .select('*')
+      .order('start_date', { ascending: false });
 
     if (data) {
       setBatches(data);
