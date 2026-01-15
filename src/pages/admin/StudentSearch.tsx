@@ -83,7 +83,7 @@ export default function StudentSearch() {
           grade,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
-        .ilike(phoneColumn, `%${cleanedQuery}%`)
+        .ilike(phoneColumn, `${cleanedQuery}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
