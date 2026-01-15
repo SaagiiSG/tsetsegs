@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Search, User, Phone, GraduationCap, Loader2 } from 'lucide-react';
@@ -30,18 +29,28 @@ export default function StudentSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<StudentResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
+  // Debounced real-time search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      return;
+    }
+
+    const debounceTimer = setTimeout(() => {
+      performSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const performSearch = async (query: string) => {
     setIsLoading(true);
-    setHasSearched(true);
 
     try {
       // Clean the search query - remove spaces and dashes for phone search
-      const cleanedQuery = searchQuery.replace(/[-\s]/g, '');
+      const cleanedQuery = query.replace(/[-\s]/g, '');
       
       const { data, error } = await supabase
         .from('students')
@@ -56,7 +65,7 @@ export default function StudentSearch() {
           grade,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
-        .or(`phone.ilike.%${cleanedQuery}%,parent_phone.ilike.%${cleanedQuery}%,name.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
+        .or(`phone.ilike.%${cleanedQuery}%,parent_phone.ilike.%${cleanedQuery}%,name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -73,12 +82,6 @@ export default function StudentSearch() {
       console.error('Search error:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
     }
   };
 
@@ -106,30 +109,23 @@ export default function StudentSearch() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Enter phone number or student name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="pl-10"
-              />
-            </div>
-            <Button onClick={handleSearch} disabled={isLoading || !searchQuery.trim()}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              <span className="ml-2">Search</span>
-            </Button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Start typing phone number or name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+              autoFocus
+            />
+            {isLoading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {hasSearched && (
+      {searchQuery.trim() && (
         <Card>
           <CardHeader>
             <CardTitle>Results</CardTitle>
