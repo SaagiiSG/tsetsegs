@@ -20,7 +20,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { BatchAnalytics } from '@/components/teacher/BatchAnalytics';
 
 interface BatchStats {
   id: string;
@@ -199,9 +198,9 @@ export function BatchOverview() {
   };
 
   const getAttendanceBadge = (rate: number) => {
-    if (rate >= 90) return <Badge className="bg-chart-2 hover:bg-chart-2/80">Excellent</Badge>;
-    if (rate >= 75) return <Badge className="bg-chart-1 hover:bg-chart-1/80">Good</Badge>;
-    if (rate >= 60) return <Badge className="bg-chart-3 hover:bg-chart-3/80">Fair</Badge>;
+    if (rate >= 90) return <Badge className="bg-green-600">Excellent</Badge>;
+    if (rate >= 75) return <Badge className="bg-blue-600">Good</Badge>;
+    if (rate >= 60) return <Badge className="bg-yellow-600">Fair</Badge>;
     return <Badge variant="destructive">Needs Attention</Badge>;
   };
 
@@ -371,7 +370,7 @@ export function BatchOverview() {
                     <p className="text-xs text-muted-foreground">Attendance</p>
                   </div>
                   <div className="p-2 bg-muted/50 rounded">
-                    <p className={`text-lg font-semibold ${batch.alertCount > 0 ? 'text-destructive' : ''}`}>
+                    <p className={`text-lg font-semibold ${batch.alertCount > 0 ? 'text-red-500' : ''}`}>
                       {batch.alertCount}
                     </p>
                     <p className="text-xs text-muted-foreground">Alerts</p>
@@ -379,11 +378,6 @@ export function BatchOverview() {
                 </div>
                 <div className="flex justify-end">
                   {getAttendanceBadge(batch.attendanceRate)}
-                </div>
-                
-                {/* Inline Analytics Dashboard */}
-                <div onClick={(e) => e.stopPropagation()}>
-                  <BatchAnalytics batchId={batch.id} courseType={batch.course_type} />
                 </div>
               </CardContent>
             </Card>
