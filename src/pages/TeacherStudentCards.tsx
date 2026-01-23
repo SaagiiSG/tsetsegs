@@ -73,6 +73,7 @@ export default function TeacherStudentCards() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showScoreCalculator, setShowScoreCalculator] = useState(false);
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [newStudentData, setNewStudentData] = useState({
     first_name: "",
     last_name: "",
@@ -508,7 +509,9 @@ export default function TeacherStudentCards() {
   };
   const handleAddStudent = async () => {
     if (!batch) return;
+    if (isAddingStudent) return;
 
+    setIsAddingStudent(true);
     try {
       // Validate input
       const schema = createStudentSchema(batch.course_type);
@@ -578,6 +581,8 @@ export default function TeacherStudentCards() {
         variant: "destructive",
         ...errorToast,
       });
+    } finally {
+      setIsAddingStudent(false);
     }
   };
 
@@ -747,8 +752,8 @@ export default function TeacherStudentCards() {
                   <Button variant="outline" onClick={() => setShowAddStudent(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddStudent}>
-                    Add Student
+                  <Button onClick={handleAddStudent} disabled={isAddingStudent}>
+                    {isAddingStudent ? "Adding…" : "Add Student"}
                   </Button>
                 </div>
               </DialogContent>
