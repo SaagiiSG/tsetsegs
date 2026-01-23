@@ -30,7 +30,7 @@ interface Student {
   school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
-  batch_id: string;
+  batch_id: string | null;
 }
 
 interface Attendance {
@@ -338,6 +338,46 @@ export default function TeacherStudentCards() {
       });
     } catch (error: any) {
       const errorToast = getErrorToast(error, "update student");
+      toast({
+        variant: "destructive",
+        ...errorToast,
+      });
+    }
+  };
+
+  const handleRemoveFromClass = async (studentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update({ batch_id: null })
+        .eq("id", studentId)
+        .eq("batch_id", batchId);
+
+      if (error) throw error;
+
+      setStudents((prev) => {
+        const next = prev.filter((s) => s.id !== studentId);
+        // Keep currentIndex in range
+        const nextIndex = Math.min(currentIndex, Math.max(0, next.length - 1));
+        if (nextIndex !== currentIndex) {
+          setCurrentIndex(nextIndex);
+          emblaApi?.scrollTo(nextIndex);
+        }
+        return next;
+      });
+
+      setStudentDataMap((prev) => {
+        const next = new Map(prev);
+        next.delete(studentId);
+        return next;
+      });
+
+      toast({
+        title: "Removed",
+        description: "Student was removed from this class.",
+      });
+    } catch (error: any) {
+      const errorToast = getErrorToast(error, "remove student from class");
       toast({
         variant: "destructive",
         ...errorToast,
@@ -806,6 +846,7 @@ export default function TeacherStudentCards() {
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
                           onTestScoreChange={handleTestScoreChange}
+                          onRemoveFromClass={() => handleRemoveFromClass(student.id)}
                         />
                       </Card>
                     </div>
