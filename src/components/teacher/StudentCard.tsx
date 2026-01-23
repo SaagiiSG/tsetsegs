@@ -12,6 +12,17 @@ import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, Chevro
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorToast } from "@/lib/errorUtils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Student {
   id: string;
@@ -69,6 +80,7 @@ interface StudentCardProps {
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
   onTestScoreChange: (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => void;
+  onRemoveFromClass?: () => void;
 }
 
 export function StudentCard({
@@ -88,6 +100,7 @@ export function StudentCard({
   onAttendanceChange,
   onHomeworkChange,
   onTestScoreChange,
+  onRemoveFromClass,
 }: StudentCardProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -316,8 +329,35 @@ export function StudentCard({
             </p>
           </div>
           
-          {/* Right side: Compact trackers and alerts */}
+          {/* Right side: actions + compact trackers and alerts */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {onRemoveFromClass && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2"
+                    title="Remove from class"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove student from this class?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will unassign the student from this class (it won’t delete their profile).
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={onRemoveFromClass}>Remove</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
             {/* Square trackers - split into rows based on course type */}
             {/* SAT (15): 10 + 5, IELTS (24): 10 + 10 + 4 */}
             <div className="flex flex-col gap-1">

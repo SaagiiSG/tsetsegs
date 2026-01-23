@@ -1093,7 +1093,7 @@ export type Database = {
         Row: {
           accessed: boolean
           accessed_at: string | null
-          batch_id: string
+          batch_id: string | null
           created_at: string
           english_level: string | null
           first_name: string
@@ -1111,7 +1111,7 @@ export type Database = {
         Insert: {
           accessed?: boolean
           accessed_at?: string | null
-          batch_id: string
+          batch_id?: string | null
           created_at?: string
           english_level?: string | null
           first_name?: string
@@ -1129,7 +1129,7 @@ export type Database = {
         Update: {
           accessed?: boolean
           accessed_at?: string | null
-          batch_id?: string
+          batch_id?: string | null
           created_at?: string
           english_level?: string | null
           first_name?: string
