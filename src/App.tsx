@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { Navigate } from "react-router-dom";
 import TeacherStudentProfile from "./pages/TeacherStudentProfile";
 import TeacherAllStudents from "./pages/TeacherAllStudents";
 import TeacherClassAnalytics from "./pages/TeacherClassAnalytics";
@@ -68,7 +69,7 @@ const App = () => (
                       </ProtectedRoute>
                     } 
                   />
-                  <Route path="/teacher/login" element={<TeacherLogin />} />
+                  <Route path="/teacher/login" element={<Navigate to="/login?role=teacher" replace />} />
                   <Route path="/teacher/change-password" element={<TeacherChangePassword />} />
                   <Route 
                     path="/teacher/dashboard" 
