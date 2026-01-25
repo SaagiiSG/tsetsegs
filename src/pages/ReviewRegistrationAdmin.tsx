@@ -291,7 +291,7 @@ export default function ReviewRegistrationAdmin() {
                     onClick={copyCode}
                   >
                     {isCopied ? (
-                      <Check className="h-5 w-5 text-green-500" />
+                      <Check className="h-5 w-5 text-primary" />
                     ) : (
                       <Copy className="h-5 w-5" />
                     )}
