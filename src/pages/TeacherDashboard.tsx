@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
@@ -369,6 +369,25 @@ export default function TeacherDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Floating toolbar at bottom center */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full px-3 py-2"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 rounded-full gap-2 text-xs"
+            onClick={() => navigate("/register/admin")}
+          >
+            <QrCode className="h-4 w-4" />
+            <span className="hidden sm:inline">Review Registration</span>
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
