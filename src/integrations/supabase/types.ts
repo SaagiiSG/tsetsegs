@@ -640,6 +640,47 @@ export type Database = {
           },
         ]
       }
+      registration_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by_admin_id: string | null
+          created_by_teacher_id: string | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by_admin_id?: string | null
+          created_by_teacher_id?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by_admin_id?: string | null
+          created_by_teacher_id?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_codes_created_by_teacher_id_fkey"
+            columns: ["created_by_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_templates: {
         Row: {
           created_at: string
@@ -1100,11 +1141,13 @@ export type Database = {
           first_session_completed: boolean | null
           grade: string | null
           id: string
+          is_review_student: boolean | null
           last_name: string | null
           math_level: string | null
           name: string
           parent_phone: string | null
           phone: string
+          review_teacher: string | null
           school_name: string | null
           unique_link_id: string
         }
@@ -1118,11 +1161,13 @@ export type Database = {
           first_session_completed?: boolean | null
           grade?: string | null
           id?: string
+          is_review_student?: boolean | null
           last_name?: string | null
           math_level?: string | null
           name: string
           parent_phone?: string | null
           phone: string
+          review_teacher?: string | null
           school_name?: string | null
           unique_link_id: string
         }
@@ -1136,11 +1181,13 @@ export type Database = {
           first_session_completed?: boolean | null
           grade?: string | null
           id?: string
+          is_review_student?: boolean | null
           last_name?: string | null
           math_level?: string | null
           name?: string
           parent_phone?: string | null
           phone?: string
+          review_teacher?: string | null
           school_name?: string | null
           unique_link_id?: string
         }
