@@ -42,6 +42,10 @@ import StudentEnglishPractice from "./pages/student/StudentEnglishPractice";
 import StudentEnglishQuestion from "./pages/student/StudentEnglishQuestion";
 import NewYearCard from "./pages/NewYearCard";
 
+// Registration Pages
+import ReviewRegistration from "./pages/ReviewRegistration";
+import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
+
 const queryClient = new QueryClient();
 
 // Apply saved color theme on app load
@@ -148,6 +152,18 @@ const App = () => (
                   <Route path="/student/share/:shareToken" element={<StudentShareProfile />} />
                   <Route path="/batch/:id" element={<StudentReveal />} />
                   <Route path="/teacher/newyear/:teachername" element={<NewYearCard />} />
+                  
+                  {/* Review Registration */}
+                  <Route path="/register" element={<ReviewRegistration />} />
+                  <Route 
+                    path="/register/admin" 
+                    element={
+                      <ProtectedRoute requireTeacherOrAdmin>
+                        <ReviewRegistrationAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </StudentAuthProvider>
