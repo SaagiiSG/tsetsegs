@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import QRCode from "react-qr-code";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -253,11 +253,10 @@ export default function ReviewRegistrationAdmin() {
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
                 <div className="bg-white p-4 rounded-lg">
-                  <QRCodeSVG
+                  <QRCode
                     value={registrationUrl}
                     size={200}
                     level="H"
-                    includeMargin
                   />
                 </div>
                 <Button variant="outline" size="sm" onClick={copyUrl}>
