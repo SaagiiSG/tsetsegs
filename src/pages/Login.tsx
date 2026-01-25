@@ -1,162 +1,302 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Flower2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, ShieldCheck, GraduationCap, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import flowersLogo from "@/assets/flowers-logo.png";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
+  // Determine initial tab from query param
+  const initialTab = searchParams.get("role") === "teacher" ? "teacher" : "admin";
+  const [activeTab, setActiveTab] = useState<"admin" | "teacher">(initialTab);
+
+  // Admin form state
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  // Teacher form state
+  const [teacherUsername, setTeacherUsername] = useState("");
+  const [teacherPassword, setTeacherPassword] = useState("");
+  const [teacherLoading, setTeacherLoading] = useState(false);
+
+  // Auth contexts
+  const { signIn: adminSignIn, signUp: adminSignUp, user: adminUser, isAdmin, isLoading: authLoading } = useAuth();
+  const { signIn: teacherSignIn, user: teacherUser, needsPasswordChange } = useTeacherAuth();
+
+  // Handle admin auth redirects
   useEffect(() => {
-    console.log('Login useEffect - authLoading:', authLoading, 'user:', user, 'isAdmin:', isAdmin);
-    // If user is logged in and is admin, redirect
-    if (!authLoading && user && isAdmin) {
-      console.log('Redirecting to admin dashboard');
+    if (!authLoading && adminUser && isAdmin) {
       toast({
-        title: "Login Successful",
-        description: "Welcome back!"
+        title: "Welcome back!",
+        description: "You've successfully logged in as admin.",
       });
-      navigate('/admin');
-    } else if (!authLoading && user && !isAdmin) {
-      // User logged in but is not admin
-      console.log('User is not admin, resetting loading');
-      setIsLoading(false);
+      navigate("/admin");
+    } else if (!authLoading && adminUser && !isAdmin) {
+      setAdminLoading(false);
       toast({
         title: "Access Denied",
-        description: "You don't have admin privileges. Please contact an administrator.",
-        variant: "destructive"
+        description: "You don't have admin privileges.",
+        variant: "destructive",
       });
-    } else if (!authLoading && !user) {
-      // No user logged in, ensure loading is false
-      console.log('No user, resetting loading');
-      setIsLoading(false);
+    } else if (!authLoading && !adminUser) {
+      setAdminLoading(false);
     }
-  }, [user, isAdmin, authLoading, navigate, toast]);
+  }, [adminUser, isAdmin, authLoading, navigate, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle teacher auth redirects
+  useEffect(() => {
+    if (teacherUser && activeTab === "teacher") {
+      if (needsPasswordChange) {
+        navigate("/teacher/change-password");
+      } else {
+        navigate("/teacher/dashboard");
+      }
+    }
+  }, [teacherUser, needsPasswordChange, navigate, activeTab]);
+
+  // Admin form submission
+  const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password) {
+    if (!adminEmail || !adminPassword) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both email and password.",
-        variant: "destructive"
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
       });
       return;
     }
 
-    setIsLoading(true);
-    
+    setAdminLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
-        
-        if (error) {
-          toast({
-            title: "Sign Up Failed",
-            description: error.message,
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Account Created Successfully",
-            description: "Your account has been created. An administrator will grant you access to the dashboard.",
-          });
-          setIsSignUp(false);
-          setEmail('');
-          setPassword('');
-        }
-        setIsLoading(false);
+        const { error } = await adminSignUp(adminEmail, adminPassword);
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Account created successfully. Please wait for admin approval.",
+        });
+        setIsSignUp(false);
+        setAdminEmail("");
+        setAdminPassword("");
+        setAdminLoading(false);
       } else {
-        const { error } = await signIn(email, password);
-        
+        const { error } = await adminSignIn(adminEmail, adminPassword);
         if (error) {
           toast({
             title: "Login Failed",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
-          setIsLoading(false);
-        } else {
-          // Don't show toast or set loading false yet - wait for role check
-          // The useEffect will handle navigation once isAdmin is determined
+          setAdminLoading(false);
         }
+        // Don't set loading false - wait for role check in useEffect
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive"
+        description: error.message || "An error occurred",
+        variant: "destructive",
       });
-      setIsLoading(false);
+      setAdminLoading(false);
+    }
+  };
+
+  // Teacher form submission
+  const handleTeacherSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teacherUsername || !teacherPassword) {
+      toast({
+        title: "Error",
+        description: "Please enter your username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTeacherLoading(true);
+    try {
+      const { error, needsPasswordChange } = await teacherSignIn(teacherUsername, teacherPassword);
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message || "Invalid username or password",
+          variant: "destructive",
+        });
+        setTeacherLoading(false);
+      } else {
+        toast({
+          title: "Welcome!",
+          description: needsPasswordChange
+            ? "Please change your temporary password."
+            : "Successfully logged in.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      setTeacherLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-2">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Flower2 className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
+      <div className="w-full max-w-md">
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="text-center space-y-4">
+            <div className="flex justify-center">
+              <img src={flowersLogo} alt="Flowers Logo" className="h-16 w-16 object-contain" />
             </div>
-          </div>
-          <CardTitle className="text-2xl">{isSignUp ? "Create Account" : "Admin Login"}</CardTitle>
-          <CardDescription>
-            {isSignUp ? "Sign up for a new admin account" : "Enter your credentials to access the admin dashboard"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                required
-              />
+            <CardTitle className="text-2xl font-bold">
+              {activeTab === "admin" ? (isSignUp ? "Create Account" : "Admin Login") : "Teacher Login"}
+            </CardTitle>
+            <CardDescription>
+              {activeTab === "admin"
+                ? isSignUp
+                  ? "Sign up for a new admin account"
+                  : "Sign in to access the admin dashboard"
+                : "Sign in to access your classes"}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "teacher")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="admin" className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  Admin
+                </TabsTrigger>
+                <TabsTrigger value="teacher" className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Teacher
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Admin Login Form */}
+              <TabsContent value="admin" className="mt-6">
+                <form onSubmit={handleAdminSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="admin-email" className="text-sm font-medium">
+                      Email
+                    </label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      placeholder="admin@example.com"
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      disabled={adminLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="admin-password" className="text-sm font-medium">
+                      Password
+                    </label>
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      disabled={adminLoading}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={adminLoading}>
+                    {adminLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {isSignUp ? "Creating Account..." : "Signing In..."}
+                      </>
+                    ) : isSignUp ? (
+                      "Sign Up"
+                    ) : (
+                      "Login"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-sm"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    disabled={adminLoading}
+                  >
+                    {isSignUp ? "Already have an account? Login" : "Need an account? Sign Up"}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              {/* Teacher Login Form */}
+              <TabsContent value="teacher" className="mt-6">
+                <form onSubmit={handleTeacherSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="teacher-username" className="text-sm font-medium">
+                      Username
+                    </label>
+                    <Input
+                      id="teacher-username"
+                      type="text"
+                      placeholder="your-username"
+                      value={teacherUsername}
+                      onChange={(e) => setTeacherUsername(e.target.value)}
+                      disabled={teacherLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="teacher-password" className="text-sm font-medium">
+                      Password
+                    </label>
+                    <Input
+                      id="teacher-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={teacherPassword}
+                      onChange={(e) => setTeacherPassword(e.target.value)}
+                      disabled={teacherLoading}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={teacherLoading}>
+                    {teacherLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Contact admin if you need account access
+                  </p>
+                </form>
+              </TabsContent>
+            </Tabs>
+
+            <div className="pt-4 border-t">
+              <Link
+                to="/"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to main site
+              </Link>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (isSignUp ? "Creating Account..." : "Logging in...") : (isSignUp ? "Sign Up" : "Login")}
-            </Button>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              className="w-full" 
-              onClick={() => setIsSignUp(!isSignUp)}
-              disabled={isLoading}
-            >
-              {isSignUp ? "Already have an account? Login" : "Need an account? Sign Up"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
