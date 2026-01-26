@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, RefreshCw, Copy, Check, QrCode, Clock, UserPlus, Users } from "lucide-react";
+import { Loader2, RefreshCw, Copy, Check, QrCode, Clock, UserPlus, Users, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +38,7 @@ const generateCode = () => {
 };
 
 export default function ReviewRegistrationAdmin() {
+  const navigate = useNavigate();
   const { user: adminUser } = useAuth();
   const { teacherName } = useTeacherAuth();
   
@@ -231,6 +233,17 @@ export default function ReviewRegistrationAdmin() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(adminUser ? "/admin" : "/teacher")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">SAT Review Registration</h1>
           <p className="text-muted-foreground mt-2">
