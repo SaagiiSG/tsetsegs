@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { Search, User, GraduationCap, Phone, Users, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Search, User, GraduationCap, Phone, Users, ChevronLeft, ChevronRight, Loader2, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type PhoneType = 'student' | 'parent';
@@ -51,6 +52,11 @@ export default function StudentSearch() {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingAll, setIsLoadingAll] = useState(true);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<{ id: string; name: string; data?: StudentResult } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch all students with pagination
   useEffect(() => {
@@ -194,26 +200,82 @@ export default function StudentSearch() {
     });
   };
 
-  const handleDeleteStudent = async (studentId: string, studentName: string) => {
-    if (!confirm(`Are you sure you want to delete "${studentName}"? This action cannot be undone.`)) {
-      return;
-    }
+  const openDeleteDialog = (student: StudentResult) => {
+    setStudentToDelete({
+      id: student.id,
+      name: `${student.first_name} ${student.last_name || ''}`.trim(),
+      data: student
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!studentToDelete) return;
+
+    setIsDeleting(true);
+    const deletedStudent = studentToDelete.data;
 
     try {
       const { error } = await supabase
         .from('students')
         .delete()
-        .eq('id', studentId);
+        .eq('id', studentToDelete.id);
 
       if (error) throw error;
 
-      toast.success(`Student "${studentName}" deleted successfully`);
-      fetchAllStudents();
-      // Also update search results if applicable
-      setResults(prev => prev.filter(s => s.id !== studentId));
+      // Update UI immediately
+      setAllStudents(prev => prev.filter(s => s.id !== studentToDelete.id));
+      setResults(prev => prev.filter(s => s.id !== studentToDelete.id));
+      setTotalCount(prev => prev - 1);
+
+      // Show undo toast
+      toast.success(`"${studentToDelete.name}" deleted`, {
+        action: deletedStudent ? {
+          label: 'Undo',
+          onClick: async () => {
+            await handleUndoDelete(deletedStudent);
+          }
+        } : undefined,
+        duration: 8000,
+      });
+
+      setDeleteDialogOpen(false);
+      setStudentToDelete(null);
     } catch (error) {
       console.error('Error deleting student:', error);
       toast.error('Failed to delete student');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleUndoDelete = async (student: StudentResult) => {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .insert({
+          id: student.id,
+          name: student.name,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          phone: student.phone,
+          parent_phone: student.parent_phone,
+          school_name: student.school_name,
+          grade: student.grade,
+          math_level: student.math_level,
+          english_level: student.english_level,
+          sat_test_month: student.sat_test_month,
+          batch_id: student.batch?.id || null,
+          unique_link_id: crypto.randomUUID(),
+        });
+
+      if (error) throw error;
+
+      toast.success(`"${student.first_name} ${student.last_name || ''}" restored`);
+      fetchAllStudents();
+    } catch (error) {
+      console.error('Error restoring student:', error);
+      toast.error('Failed to restore student');
     }
   };
 
@@ -331,7 +393,7 @@ export default function StudentSearch() {
                   className="text-destructive focus:text-destructive"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteStudent(student.id, `${student.first_name} ${student.last_name || ''}`);
+                    openDeleteDialog(student);
                   }}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -475,6 +537,39 @@ export default function StudentSearch() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-foreground">"{studentToDelete?.name}"</span>? 
+              This will remove all their data including attendance and homework records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteStudent}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
