@@ -433,6 +433,121 @@ export type Database = {
           },
         ]
       }
+      intense_prep_groups: {
+        Row: {
+          created_at: string
+          created_by_teacher_id: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_teacher_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by_teacher_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intense_prep_groups_created_by_teacher_id_fkey"
+            columns: ["created_by_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intense_prep_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          manual_name: string | null
+          manual_phone: string | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          manual_name?: string | null
+          manual_phone?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          manual_name?: string | null
+          manual_phone?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intense_prep_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "intense_prep_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intense_prep_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intense_prep_tracking: {
+        Row: {
+          id: string
+          member_id: string
+          practice_test_scores: Json | null
+          prep_session_notes: number | null
+          problems_68_notes: boolean[] | null
+          problems_68_solved: boolean[] | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          practice_test_scores?: Json | null
+          prep_session_notes?: number | null
+          problems_68_notes?: boolean[] | null
+          problems_68_solved?: boolean[] | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          practice_test_scores?: Json | null
+          prep_session_notes?: number | null
+          problems_68_notes?: boolean[] | null
+          problems_68_solved?: boolean[] | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intense_prep_tracking_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "intense_prep_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       practice_tests: {
         Row: {
           batch_id: string

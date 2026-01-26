@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Sparkles } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame } from "lucide-react";
+import { IntensePrepContent } from "@/components/teacher/intense-prep";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
@@ -30,9 +31,9 @@ interface SwitchedStudentInfo {
   otherBatchName: string;
 }
 
-type DashboardMode = "dashboard" | "review" | "upcoming";
+type DashboardMode = "dashboard" | "review" | "intense";
 
-const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "upcoming"];
+const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense"];
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
@@ -508,22 +509,6 @@ export default function TeacherDashboard() {
     </Tabs>
   );
 
-  // Upcoming/Coming Soon content
-  const UpcomingContent = () => (
-    <Card className="p-6 md:p-8">
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
-          <Sparkles className="h-8 w-8 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-lg md:text-xl font-semibold">Coming Soon</h3>
-          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-            We're working on exciting new features for teachers. Stay tuned for updates!
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
 
   return (
     <TooltipProvider>
@@ -587,9 +572,9 @@ export default function TeacherDashboard() {
                   <ReviewRegistrationContent />
                 </motion.div>
               )}
-              {activeMode === "upcoming" && (
+              {activeMode === "intense" && (
                 <motion.div
-                  key="upcoming"
+                  key="intense"
                   custom={slideDirection}
                   variants={slideVariants}
                   initial="enter"
@@ -597,7 +582,7 @@ export default function TeacherDashboard() {
                   exit="exit"
                   transition={slideTransition}
                 >
-                  <UpcomingContent />
+                  <IntensePrepContent />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -630,13 +615,13 @@ export default function TeacherDashboard() {
               <span className="hidden sm:inline">Review</span>
             </Button>
             <Button
-              variant={activeMode === "upcoming" ? "default" : "ghost"}
+              variant={activeMode === "intense" ? "default" : "ghost"}
               size="sm"
               className="h-9 rounded-full gap-2 text-xs px-3"
-              onClick={() => handleModeChange("upcoming")}
+              onClick={() => handleModeChange("intense")}
             >
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">New</span>
+              <Flame className="h-4 w-4" />
+              <span className="hidden sm:inline">Intense</span>
             </Button>
           </motion.div>
         </div>
