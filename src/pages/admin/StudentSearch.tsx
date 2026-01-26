@@ -7,7 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
-import { Search, User, GraduationCap, Phone, Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { Search, User, GraduationCap, Phone, Users, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 type PhoneType = 'student' | 'parent';
 
@@ -192,6 +194,29 @@ export default function StudentSearch() {
     });
   };
 
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!confirm(`Are you sure you want to delete "${studentName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      toast.success(`Student "${studentName}" deleted successfully`);
+      fetchAllStudents();
+      // Also update search results if applicable
+      setResults(prev => prev.filter(s => s.id !== studentId));
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast.error('Failed to delete student');
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const renderStudentTable = (students: StudentResult[], showPagination: boolean = false) => (
@@ -215,90 +240,105 @@ export default function StudentSearch() {
         </TableHeader>
         <TableBody>
           {students.map((student) => (
-            <TableRow 
-              key={student.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleStudentClick(student.id)}
-            >
-              <TableCell className="font-medium sticky left-0 bg-background z-10">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span className="truncate">{student.first_name} {student.last_name || ''}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono text-sm">{student.phone}</span>
-              </TableCell>
-              <TableCell>
-                {student.parent_phone ? (
-                  <span className="font-mono text-sm">{student.parent_phone}</span>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <span className="truncate block max-w-[150px]">
-                  {student.school_name || <span className="text-muted-foreground">-</span>}
-                </span>
-              </TableCell>
-              <TableCell>
-                {student.grade || <span className="text-muted-foreground">-</span>}
-              </TableCell>
-              <TableCell>
-                {student.math_level ? (
-                  <Badge variant="outline" className="text-xs">{student.math_level}</Badge>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {student.english_level ? (
-                  <Badge variant="outline" className="text-xs">{student.english_level}</Badge>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {student.sat_test_month || <span className="text-muted-foreground">-</span>}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-sm truncate">
-                      {student.batch?.batch_name || <span className="text-muted-foreground">No batch</span>}
+            <ContextMenu key={student.id}>
+              <ContextMenuTrigger asChild>
+                <TableRow 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleStudentClick(student.id)}
+                >
+                  <TableCell className="font-medium sticky left-0 bg-background z-10">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">{student.first_name} {student.last_name || ''}</span>
                     </div>
-                    {student.batch?.start_date && (
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(student.batch.start_date)}
-                      </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-sm">{student.phone}</span>
+                  </TableCell>
+                  <TableCell>
+                    {student.parent_phone ? (
+                      <span className="font-mono text-sm">{student.parent_phone}</span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
                     )}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                {student.batch?.course_type ? (
-                  <Badge 
-                    variant={student.batch.course_type === 'SAT' ? 'default' : 'secondary'}
-                    className={student.batch.course_type === 'SAT' ? 'bg-blue-500' : 'bg-purple-500'}
-                  >
-                    {student.batch.course_type}
-                  </Badge>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <span className="truncate block max-w-[120px]">
-                  {student.batch?.teacher || <span className="text-muted-foreground">-</span>}
-                </span>
-              </TableCell>
-              <TableCell>
-                <span className="text-sm text-muted-foreground">
-                  {formatFullDate(student.created_at)}
-                </span>
-              </TableCell>
-            </TableRow>
+                  </TableCell>
+                  <TableCell>
+                    <span className="truncate block max-w-[150px]">
+                      {student.school_name || <span className="text-muted-foreground">-</span>}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {student.grade || <span className="text-muted-foreground">-</span>}
+                  </TableCell>
+                  <TableCell>
+                    {student.math_level ? (
+                      <Badge variant="outline" className="text-xs">{student.math_level}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {student.english_level ? (
+                      <Badge variant="outline" className="text-xs">{student.english_level}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {student.sat_test_month || <span className="text-muted-foreground">-</span>}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-sm truncate">
+                          {student.batch?.batch_name || <span className="text-muted-foreground">No batch</span>}
+                        </div>
+                        {student.batch?.start_date && (
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(student.batch.start_date)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {student.batch?.course_type ? (
+                      <Badge 
+                        variant={student.batch.course_type === 'SAT' ? 'default' : 'secondary'}
+                        className={student.batch.course_type === 'SAT' ? 'bg-blue-500' : 'bg-purple-500'}
+                      >
+                        {student.batch.course_type}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="truncate block max-w-[120px]">
+                      {student.batch?.teacher || <span className="text-muted-foreground">-</span>}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {formatFullDate(student.created_at)}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteStudent(student.id, `${student.first_name} ${student.last_name || ''}`);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Student
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           ))}
         </TableBody>
       </Table>
@@ -401,10 +441,7 @@ export default function StudentSearch() {
               {renderStudentTable(allStudents)}
               
               {/* Pagination */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <div className="text-sm text-muted-foreground">
-                  Showing {((currentPage - 1) * PAGE_SIZE) + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount.toLocaleString()}
-                </div>
+              <div className="flex flex-col items-center gap-3 mt-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -429,6 +466,9 @@ export default function StudentSearch() {
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * PAGE_SIZE) + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount.toLocaleString()}
                 </div>
               </div>
             </>
