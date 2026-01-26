@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Search, User, GraduationCap, Phone, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, User, GraduationCap, Phone, Users, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 type PhoneType = 'student' | 'parent';
 
@@ -19,14 +20,20 @@ interface StudentResult {
   parent_phone: string | null;
   school_name: string | null;
   grade: string | null;
+  math_level: string | null;
+  english_level: string | null;
+  sat_test_month: string | null;
+  created_at: string;
   batch: {
     id: string;
     batch_name: string | null;
     course_type: string;
     teacher: string | null;
     start_date: string;
-  };
+  } | null;
 }
+
+const PAGE_SIZE = 20;
 
 export default function StudentSearch() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +43,66 @@ export default function StudentSearch() {
   const [isPending, startTransition] = useTransition();
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
+
+  // All students state
+  const [allStudents, setAllStudents] = useState<StudentResult[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingAll, setIsLoadingAll] = useState(true);
+
+  // Fetch all students with pagination
+  useEffect(() => {
+    fetchAllStudents();
+  }, [currentPage]);
+
+  const fetchAllStudents = async () => {
+    setIsLoadingAll(true);
+    try {
+      // Get total count
+      const { count } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true });
+
+      setTotalCount(count || 0);
+
+      // Get paginated data
+      const from = (currentPage - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, error } = await supabase
+        .from('students')
+        .select(`
+          id,
+          name,
+          first_name,
+          last_name,
+          phone,
+          parent_phone,
+          school_name,
+          grade,
+          math_level,
+          english_level,
+          sat_test_month,
+          created_at,
+          batch:batches(id, batch_name, course_type, teacher, start_date)
+        `)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      const transformedData = (data || []).map(student => ({
+        ...student,
+        batch: Array.isArray(student.batch) ? student.batch[0] : student.batch
+      })) as StudentResult[];
+
+      setAllStudents(transformedData);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setIsLoadingAll(false);
+    }
+  };
 
   // Smooth debounce - update debounced query after typing stops
   useEffect(() => {
@@ -81,6 +148,10 @@ export default function StudentSearch() {
           parent_phone,
           school_name,
           grade,
+          math_level,
+          english_level,
+          sat_test_month,
+          created_at,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
         .ilike(phoneColumn, `${cleanedQuery}%`)
@@ -112,6 +183,127 @@ export default function StudentSearch() {
       year: 'numeric' 
     });
   };
+
+  const formatFullDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric' 
+    });
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const renderStudentTable = (students: StudentResult[], showPagination: boolean = false) => (
+    <div className="overflow-x-auto">
+      <Table className="min-w-[1200px]">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="sticky left-0 bg-background z-10 min-w-[180px]">Name</TableHead>
+            <TableHead className="min-w-[120px]">Phone</TableHead>
+            <TableHead className="min-w-[120px]">Parent Phone</TableHead>
+            <TableHead className="min-w-[150px]">School</TableHead>
+            <TableHead className="min-w-[80px]">Grade</TableHead>
+            <TableHead className="min-w-[80px]">Math</TableHead>
+            <TableHead className="min-w-[80px]">English</TableHead>
+            <TableHead className="min-w-[100px]">SAT Month</TableHead>
+            <TableHead className="min-w-[180px]">Batch</TableHead>
+            <TableHead className="min-w-[80px]">Course</TableHead>
+            <TableHead className="min-w-[120px]">Teacher</TableHead>
+            <TableHead className="min-w-[120px]">Registered</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {students.map((student) => (
+            <TableRow 
+              key={student.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleStudentClick(student.id)}
+            >
+              <TableCell className="font-medium sticky left-0 bg-background z-10">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="truncate">{student.first_name} {student.last_name || ''}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono text-sm">{student.phone}</span>
+              </TableCell>
+              <TableCell>
+                {student.parent_phone ? (
+                  <span className="font-mono text-sm">{student.parent_phone}</span>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <span className="truncate block max-w-[150px]">
+                  {student.school_name || <span className="text-muted-foreground">-</span>}
+                </span>
+              </TableCell>
+              <TableCell>
+                {student.grade || <span className="text-muted-foreground">-</span>}
+              </TableCell>
+              <TableCell>
+                {student.math_level ? (
+                  <Badge variant="outline" className="text-xs">{student.math_level}</Badge>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {student.english_level ? (
+                  <Badge variant="outline" className="text-xs">{student.english_level}</Badge>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {student.sat_test_month || <span className="text-muted-foreground">-</span>}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm truncate">
+                      {student.batch?.batch_name || <span className="text-muted-foreground">No batch</span>}
+                    </div>
+                    {student.batch?.start_date && (
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(student.batch.start_date)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                {student.batch?.course_type ? (
+                  <Badge 
+                    variant={student.batch.course_type === 'SAT' ? 'default' : 'secondary'}
+                    className={student.batch.course_type === 'SAT' ? 'bg-blue-500' : 'bg-purple-500'}
+                  >
+                    {student.batch.course_type}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <span className="truncate block max-w-[120px]">
+                  {student.batch?.teacher || <span className="text-muted-foreground">-</span>}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className="text-sm text-muted-foreground">
+                  {formatFullDate(student.created_at)}
+                </span>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -160,7 +352,7 @@ export default function StudentSearch() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Results</CardTitle>
+              <CardTitle className="text-lg">Search Results</CardTitle>
               <CardDescription>
                 {isPending ? 'Searching...' : `${results.length} found`}
               </CardDescription>
@@ -174,73 +366,75 @@ export default function StudentSearch() {
               </div>
             ) : (
               <div className={`transition-opacity duration-150 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Parent Phone</TableHead>
-                    <TableHead>School</TableHead>
-                    <TableHead>Batch</TableHead>
-                    <TableHead>Course</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {results.map((student) => (
-                    <TableRow 
-                      key={student.id} 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleStudentClick(student.id)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {student.first_name} {student.last_name || ''}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-mono text-sm">{student.phone}</span>
-                      </TableCell>
-                      <TableCell>
-                        {student.parent_phone ? (
-                          <span className="font-mono text-sm">{student.parent_phone}</span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {student.school_name || <span className="text-muted-foreground">-</span>}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <div className="text-sm">
-                              {student.batch?.batch_name || 'Unnamed'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {student.batch?.start_date && formatDate(student.batch.start_date)}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={student.batch?.course_type === 'SAT' ? 'default' : 'secondary'}
-                          className={student.batch?.course_type === 'SAT' ? 'bg-blue-500' : 'bg-purple-500'}
-                        >
-                          {student.batch?.course_type || 'N/A'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                {renderStudentTable(results)}
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
+      {/* All Students Table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              All Students
+            </CardTitle>
+            <CardDescription>
+              {totalCount.toLocaleString()} total students
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingAll ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : allStudents.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No students found</p>
+            </div>
+          ) : (
+            <>
+              {renderStudentTable(allStudents)}
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * PAGE_SIZE) + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount.toLocaleString()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1 || isLoadingAll}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1 px-2">
+                    <span className="text-sm font-medium">{currentPage}</span>
+                    <span className="text-sm text-muted-foreground">of</span>
+                    <span className="text-sm font-medium">{totalPages}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || isLoadingAll}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
