@@ -1,5 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { ArrowRightLeft } from "lucide-react";
 
 interface Student {
   id: string;
@@ -24,6 +26,12 @@ interface HomeworkStatus {
   status: "completed" | "incomplete" | null;
 }
 
+interface SwitchedStudentInfo {
+  otherBatchName: string;
+  otherAttendance: number;
+  currentAttendance: number;
+}
+
 interface StudentSidebarProps {
   students: Student[];
   currentIndex: number;
@@ -37,6 +45,7 @@ interface StudentSidebarProps {
   };
   getStudentAttendance?: (studentId: string) => AttendanceStatus[];
   getStudentHomework?: (studentId: string) => HomeworkStatus[];
+  switchedStudents?: Record<string, SwitchedStudentInfo>;
 }
 
 const getAttendanceDotColor = (status: string | null) => {
@@ -66,7 +75,8 @@ export function StudentSidebar({
   courseType,
   getStudentAlertStatus,
   getStudentAttendance,
-  getStudentHomework 
+  getStudentHomework,
+  switchedStudents = {},
 }: StudentSidebarProps) {
   // Split sessions into rows based on course type
   // SAT (15 sessions): 10 + 5
@@ -112,75 +122,100 @@ export function StudentSidebar({
             const alertStatus = getStudentAlertStatus(student.id);
             const attendance = getStudentAttendance?.(student.id) || [];
             const homework = getStudentHomework?.(student.id) || [];
+            const switchedInfo = switchedStudents[student.id];
 
             return (
-              <button
-                key={student.id}
-                onClick={() => onSelectStudent(index)}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-md text-sm transition-colors mb-1",
-                  currentIndex === index
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : alertStatus.hasAlert
-                    ? "bg-destructive/10 hover:bg-destructive/20 text-destructive font-semibold border border-destructive/30"
-                    : "hover:bg-muted"
-                )}
-              >
-                <div className="flex items-start gap-2">
-                  {/* Name and alerts */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{index + 1}. {displayName}</span>
-                      {alertStatus.hasAlert && currentIndex !== index && (
-                        <span className="text-xs flex-shrink-0">⚠️</span>
+              <TooltipProvider key={student.id}>
+                <button
+                  onClick={() => onSelectStudent(index)}
+                  className={cn(
+                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors mb-1",
+                    currentIndex === index
+                      ? "bg-primary text-primary-foreground font-bold"
+                      : switchedInfo
+                      ? "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30"
+                      : alertStatus.hasAlert
+                      ? "bg-destructive/10 hover:bg-destructive/20 text-destructive font-semibold border border-destructive/30"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    {/* Name and alerts */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="truncate">{index + 1}. {displayName}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {switchedInfo && currentIndex !== index && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-amber-600">
+                                  <ArrowRightLeft className="h-3 w-3" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="max-w-[200px]">
+                                <p className="text-xs">
+                                  Switched to {switchedInfo.otherBatchName} ({switchedInfo.otherAttendance} vs {switchedInfo.currentAttendance} here)
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {alertStatus.hasAlert && currentIndex !== index && (
+                            <span className="text-xs">⚠️</span>
+                          )}
+                        </div>
+                      </div>
+                      {switchedInfo && currentIndex !== index && (
+                        <div className="text-[10px] text-amber-600 truncate">
+                          → {switchedInfo.otherBatchName}
+                        </div>
+                      )}
+                      {alertStatus.hasAlert && currentIndex !== index && !switchedInfo && (
+                        <div className="text-xs opacity-90">
+                          {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
+                          {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
+                          {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
+                        </div>
                       )}
                     </div>
-                    {alertStatus.hasAlert && currentIndex !== index && (
-                      <div className="text-xs opacity-90">
-                        {alertStatus.missedClasses >= 3 && `${alertStatus.missedClasses} abs`}
-                        {alertStatus.missedClasses >= 3 && alertStatus.missedHomework >= 3 && ' • '}
-                        {alertStatus.missedHomework >= 3 && `${alertStatus.missedHomework} HW`}
+                    
+                    {/* Square trackers - right of name */}
+                    {(attendance.length > 0 || homework.length > 0) && (
+                      <div className="flex flex-col gap-0.5 flex-shrink-0">
+                        {/* Attendance rows */}
+                        {attendance.length > 0 && (
+                          <div className="flex flex-col gap-px">
+                            {getSessionRows(attendance).map((row, rowIndex) => (
+                              <div key={`att-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
+                                {row.map((a) => (
+                                  <div
+                                    key={`s-att-${(a as AttendanceStatus).session_number}`}
+                                    className={`w-1.5 h-1.5 ${getAttendanceDotColor((a as AttendanceStatus).status)}`}
+                                  />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Homework rows */}
+                        {homework.length > 0 && (
+                          <div className="flex flex-col gap-px">
+                            {getSessionRows(homework).map((row, rowIndex) => (
+                              <div key={`hw-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
+                                {row.map((h) => (
+                                  <div
+                                    key={`s-hw-${(h as HomeworkStatus).session_number}`}
+                                    className={`w-1.5 h-1.5 ${getHomeworkDotColor((h as HomeworkStatus).status)}`}
+                                  />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                  
-                  {/* Square trackers - right of name */}
-                  {(attendance.length > 0 || homework.length > 0) && (
-                    <div className="flex flex-col gap-0.5 flex-shrink-0">
-                      {/* Attendance rows */}
-                      {attendance.length > 0 && (
-                        <div className="flex flex-col gap-px">
-                          {getSessionRows(attendance).map((row, rowIndex) => (
-                            <div key={`att-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
-                              {row.map((a) => (
-                                <div
-                                  key={`s-att-${(a as AttendanceStatus).session_number}`}
-                                  className={`w-1.5 h-1.5 ${getAttendanceDotColor((a as AttendanceStatus).status)}`}
-                                />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Homework rows */}
-                      {homework.length > 0 && (
-                        <div className="flex flex-col gap-px">
-                          {getSessionRows(homework).map((row, rowIndex) => (
-                            <div key={`hw-row-${rowIndex}`} className="flex gap-px rounded overflow-hidden">
-                              {row.map((h) => (
-                                <div
-                                  key={`s-hw-${(h as HomeworkStatus).session_number}`}
-                                  className={`w-1.5 h-1.5 ${getHomeworkDotColor((h as HomeworkStatus).status)}`}
-                                />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </button>
+                </button>
+              </TooltipProvider>
             );
           })}
         </div>
