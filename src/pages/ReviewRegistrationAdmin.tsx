@@ -36,9 +36,8 @@ export default function ReviewRegistrationAdmin() {
   const [isLoading, setIsLoading] = useState(true);
   const [teacherId, setTeacherId] = useState<string | null>(null);
 
-  const registrationUrl = currentCode
-    ? `${window.location.origin}/register?code=${currentCode}`
-    : "";
+  // QR code leads to /register without the code - students must enter it manually
+  const registrationUrl = `${window.location.origin}/register`;
 
   // Fetch teacher ID if logged in as teacher
   useEffect(() => {
