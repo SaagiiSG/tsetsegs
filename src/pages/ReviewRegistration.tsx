@@ -73,12 +73,9 @@ export default function ReviewRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
 
-  // Pre-fill code from URL if present
-  const urlCode = searchParams.get("code") || "";
-
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
-    defaultValues: { code: urlCode.toUpperCase() },
+    defaultValues: { code: "" },
   });
 
   const registrationForm = useForm<RegistrationFormData>({
@@ -113,13 +110,6 @@ export default function ReviewRegistration() {
     fetchTeachers();
   }, []);
 
-  // Auto-validate if code is in URL
-  useEffect(() => {
-    if (urlCode && urlCode.length === 6) {
-      codeForm.setValue("code", urlCode.toUpperCase());
-      handleCodeSubmit({ code: urlCode.toUpperCase() });
-    }
-  }, [urlCode]);
 
   const handleCodeSubmit = async (data: CodeFormData) => {
     setIsValidating(true);
