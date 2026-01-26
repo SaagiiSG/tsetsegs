@@ -293,8 +293,9 @@ export default function TeacherDashboard() {
 
   const slideTransition = {
     type: "spring" as const,
-    stiffness: 300,
-    damping: 30
+    stiffness: 100,
+    damping: 25,
+    mass: 1.5
   };
 
   // Batch card component with animation
