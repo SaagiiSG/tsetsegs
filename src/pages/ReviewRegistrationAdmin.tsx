@@ -10,9 +10,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, RefreshCw, Copy, Check, QrCode, Clock } from "lucide-react";
+import { Loader2, RefreshCw, Copy, Check, QrCode, Clock, UserPlus, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface ReviewStudent {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  phone: string;
+  review_teacher: string | null;
+  created_at: string;
+}
 
 // Generate a random 6-character alphanumeric code
 const generateCode = () => {
@@ -35,6 +47,8 @@ export default function ReviewRegistrationAdmin() {
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [recentRegistrations, setRecentRegistrations] = useState<ReviewStudent[]>([]);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
   // QR code leads to /register without the code - students must enter it manually
   const registrationUrl = `${window.location.origin}/register`;
@@ -60,6 +74,40 @@ export default function ReviewRegistrationAdmin() {
   useEffect(() => {
     setIsLoading(false);
   }, []);
+
+  // Real-time subscription for new review student registrations
+  useEffect(() => {
+    // Subscribe to new review students
+    const channel = supabase
+      .channel('review-registrations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'students',
+          filter: 'is_review_student=eq.true',
+        },
+        (payload) => {
+          const newStudent = payload.new as ReviewStudent;
+          // Only show if registered after session started (or within last 15 mins if no session)
+          const cutoffTime = sessionStartTime || new Date(Date.now() - 15 * 60 * 1000);
+          const registeredAt = new Date(newStudent.created_at);
+          
+          if (registeredAt >= cutoffTime) {
+            setRecentRegistrations((prev) => [newStudent, ...prev]);
+            toast.success(`${newStudent.first_name} ${newStudent.last_name || ''} just registered!`, {
+              icon: <UserPlus className="h-4 w-4" />,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionStartTime]);
 
   // Countdown timer
   useEffect(() => {
@@ -127,6 +175,8 @@ export default function ReviewRegistrationAdmin() {
 
       setCurrentCode(newCode);
       setExpiresAt(expiryTime);
+      setSessionStartTime(new Date()); // Track when this session started
+      setRecentRegistrations([]); // Clear previous registrations
       toast.success("New code generated!", {
         description: "Code is valid for 15 minutes.",
       });
@@ -307,6 +357,78 @@ export default function ReviewRegistrationAdmin() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Real-time Registrations */}
+        {currentCode && (
+          <Card className="mt-8">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Live Registrations</CardTitle>
+                </div>
+                <Badge variant="secondary" className="text-sm">
+                  {recentRegistrations.length} registered
+                </Badge>
+              </div>
+              <CardDescription>
+                Students will appear here as they register
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentRegistrations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <UserPlus className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p>Waiting for students to register...</p>
+                  <p className="text-sm mt-1">New registrations will appear here in real-time</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    <AnimatePresence mode="popLayout">
+                      {recentRegistrations.map((student, index) => (
+                        <motion.div
+                          key={student.id}
+                          initial={{ opacity: 0, x: -20, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary font-semibold">
+                                {student.first_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium">
+                                {student.first_name} {student.last_name || ''}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {student.phone}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {student.review_teacher && (
+                              <Badge variant="outline" className="text-xs">
+                                {student.review_teacher}
+                              </Badge>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(student.created_at).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Instructions */}
