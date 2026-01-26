@@ -57,31 +57,9 @@ export default function ReviewRegistrationAdmin() {
     fetchTeacherId();
   }, [teacherName]);
 
-  // Fetch existing active code on mount
+  // Set loading to false on mount - no pre-fetching of codes
   useEffect(() => {
-    const fetchActiveCode = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("registration_codes")
-          .select("*")
-          .eq("is_active", true)
-          .gt("expires_at", new Date().toISOString())
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (data && !error) {
-          setCurrentCode(data.code);
-          setExpiresAt(new Date(data.expires_at));
-        }
-      } catch (error) {
-        // No active code found, that's fine
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchActiveCode();
+    setIsLoading(false);
   }, []);
 
   // Countdown timer
