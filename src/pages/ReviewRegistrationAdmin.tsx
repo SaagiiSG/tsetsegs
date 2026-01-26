@@ -53,7 +53,9 @@ export default function ReviewRegistrationAdmin() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
   // QR code leads to /register without the code - students must enter it manually
-  const registrationUrl = `${window.location.origin}/register`;
+  // Use published URL so QR codes work on mobile devices
+  const publishedUrl = "https://tsetsegs.lovable.app";
+  const registrationUrl = `${publishedUrl}/register`;
 
   // Fetch teacher ID if logged in as teacher
   useEffect(() => {
