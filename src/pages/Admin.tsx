@@ -16,6 +16,7 @@ import QuestionBank from '@/pages/admin/QuestionBank';
 import AdminBatchAnalytics from '@/pages/admin/AdminBatchAnalytics';
 import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
 import StudentSearch from '@/pages/admin/StudentSearch';
+import SATSchedule from '@/pages/admin/SATSchedule';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -80,6 +81,7 @@ const Admin = () => {
               <Route path="team" element={<TeamManagement />} />
               <Route path="students" element={<StudentAccountsManagement />} />
               <Route path="search" element={<StudentSearch />} />
+              <Route path="sat-schedule" element={<SATSchedule />} />
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>

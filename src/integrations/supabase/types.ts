@@ -1148,6 +1148,7 @@ export type Database = {
           parent_phone: string | null
           phone: string
           review_teacher: string | null
+          sat_test_month: string | null
           school_name: string | null
           unique_link_id: string
         }
@@ -1168,6 +1169,7 @@ export type Database = {
           parent_phone?: string | null
           phone: string
           review_teacher?: string | null
+          sat_test_month?: string | null
           school_name?: string | null
           unique_link_id: string
         }
@@ -1188,6 +1190,7 @@ export type Database = {
           parent_phone?: string | null
           phone?: string
           review_teacher?: string | null
+          sat_test_month?: string | null
           school_name?: string | null
           unique_link_id?: string
         }
