@@ -237,11 +237,11 @@ export default function ReviewRegistrationAdmin() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(adminUser ? "/admin" : "/teacher")}
+            onClick={() => navigate(-1)}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            Back
           </Button>
         </div>
         <div className="text-center mb-8">
