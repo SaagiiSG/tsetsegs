@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { ArrowLeft, Plus, Loader2, Download, Users, BookOpen, Calculator, FileText } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Plus, Loader2, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { IntensePrepStudentRow } from "./IntensePrepStudentRow";
 import { IntensePrepAddStudentDialog } from "./IntensePrepAddStudentDialog";
+import { cn } from "@/lib/utils";
 
 interface Props {
   groupId: string;
@@ -58,11 +59,16 @@ interface GroupDetails {
   created_at: string;
 }
 
+// Practice test numbers
+const TEST_NUMBERS = [4, 5, 6, 7, 8, 9, 10];
+
 export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
   const [group, setGroup] = useState<GroupDetails | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ memberId: string; field: string } | null>(null);
+  const [localScores, setLocalScores] = useState<Record<string, Record<string, string>>>({});
   const { toast } = useToast();
 
   const fetchGroupDetails = useCallback(async () => {
@@ -141,6 +147,18 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
       }));
 
       setMembers(enrichedMembers);
+      
+      // Initialize local scores from tracking data
+      const scores: Record<string, Record<string, string>> = {};
+      enrichedMembers.forEach(m => {
+        scores[m.id] = {};
+        TEST_NUMBERS.forEach(t => {
+          const score = m.tracking?.practice_test_scores?.[t] || m.practiceData?.practiceTestScores?.[t];
+          if (score) scores[m.id][t] = String(score);
+        });
+        scores[m.id]['prep'] = String(m.tracking?.prep_session_notes || 0);
+      });
+      setLocalScores(scores);
     } catch (error: any) {
       console.error("Error fetching group details:", error);
       toast({
@@ -187,7 +205,7 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
       }
     });
 
-    // Fetch attempts for 68 questions (question_set = '68')
+    // Fetch attempts
     const { data: attempts68 } = await supabase
       .from("student_attempts")
       .select("student_account_id, question_id, is_correct")
@@ -220,11 +238,9 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
       const studentProgress = progressData?.filter(p => p.student_account_id === accountId) || [];
       const studentTests = practiceTests?.filter(t => t.student_id === studentId) || [];
 
-      // Get CB question attempts
       const cbQuestionIds = questions?.filter(q => q.question_set === 'CollegeBoard').map(q => q.id) || [];
       const cbAttempts = studentAttempts.filter(a => cbQuestionIds.includes(a.question_id));
 
-      // Calculate CB categories
       const categoryMap = {
         advancedMath: { correct: 0, total: 0 },
         algebra: { correct: 0, total: 0 },
@@ -251,7 +267,6 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
         }
       });
 
-      // Build test scores map (tests 4-10)
       const testScoresMap: Record<number, number> = {};
       studentTests.forEach(t => {
         if (t.score !== null) {
@@ -272,20 +287,17 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
 
   const handleAddMember = async (studentId: string | null, manualName?: string, manualPhone?: string) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("intense_prep_members")
         .insert({
           group_id: groupId,
           student_id: studentId,
           manual_name: manualName || null,
           manual_phone: manualPhone || null,
-        })
-        .select()
-        .single();
+        });
 
       if (error) throw error;
 
-      // Refresh the list
       await fetchGroupDetails();
       setAddDialogOpen(false);
 
@@ -328,48 +340,78 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
     }
   };
 
-  const handleUpdateTracking = async (memberId: string, updates: Partial<TrackingData>) => {
+  const handleCellChange = (memberId: string, field: string, value: string) => {
+    setLocalScores(prev => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleCellBlur = async (memberId: string, field: string) => {
+    setEditingCell(null);
+    
+    const value = localScores[memberId]?.[field] || '';
+    const existingTracking = members.find(m => m.id === memberId)?.tracking;
+    
     try {
-      const existingTracking = members.find(m => m.id === memberId)?.tracking;
-
-      if (existingTracking) {
-        const { error } = await supabase
-          .from("intense_prep_tracking")
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("member_id", memberId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("intense_prep_tracking")
-          .insert({
-            member_id: memberId,
-            ...updates,
-          });
-
-        if (error) throw error;
-      }
-
-      // Update local state
-      setMembers(prev => prev.map(m => {
-        if (m.id === memberId) {
-          return {
-            ...m,
-            tracking: {
-              ...m.tracking,
-              ...updates,
-              member_id: memberId,
-              updated_at: new Date().toISOString(),
-            } as TrackingData,
-          };
+      if (field === 'prep') {
+        const prepNotes = Math.min(5, Math.max(0, parseInt(value) || 0));
+        
+        if (existingTracking) {
+          await supabase
+            .from("intense_prep_tracking")
+            .update({ prep_session_notes: prepNotes, updated_at: new Date().toISOString() })
+            .eq("member_id", memberId);
+        } else {
+          await supabase
+            .from("intense_prep_tracking")
+            .insert({ member_id: memberId, prep_session_notes: prepNotes });
         }
-        return m;
-      }));
+        
+        setMembers(prev => prev.map(m => {
+          if (m.id === memberId) {
+            return {
+              ...m,
+              tracking: { ...m.tracking, prep_session_notes: prepNotes, member_id: memberId, updated_at: new Date().toISOString() } as TrackingData,
+            };
+          }
+          return m;
+        }));
+      } else {
+        // Practice test score
+        const testNum = field;
+        const score = parseInt(value);
+        
+        if (!isNaN(score) && score >= 400 && score <= 1600) {
+          const newScores = { ...existingTracking?.practice_test_scores, [testNum]: score };
+          
+          if (existingTracking) {
+            await supabase
+              .from("intense_prep_tracking")
+              .update({ practice_test_scores: newScores, updated_at: new Date().toISOString() })
+              .eq("member_id", memberId);
+          } else {
+            await supabase
+              .from("intense_prep_tracking")
+              .insert({ member_id: memberId, practice_test_scores: newScores });
+          }
+          
+          setMembers(prev => prev.map(m => {
+            if (m.id === memberId) {
+              return {
+                ...m,
+                tracking: { ...m.tracking, practice_test_scores: newScores, member_id: memberId, updated_at: new Date().toISOString() } as TrackingData,
+              };
+            }
+            return m;
+          }));
+        }
+      }
     } catch (error: any) {
-      console.error("Error updating tracking:", error);
+      console.error("Error saving:", error);
       toast({
         title: "Error saving",
         description: error.message,
@@ -378,17 +420,31 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
     }
   };
 
-  // Calculate quick stats
-  const stats = {
-    total: members.length,
-    completed68: members.filter(m => {
-      const solved = m.tracking?.problems_68_solved?.filter(Boolean).length || 0;
-      return solved >= 68;
-    }).length,
-    hasAllTests: members.filter(m => {
-      const scores = m.tracking?.practice_test_scores || m.practiceData?.practiceTestScores || {};
-      return Object.keys(scores).length >= 7;
-    }).length,
+  const getStudentName = (member: GroupMember) => {
+    return member.student?.name || member.manual_name || "Unknown";
+  };
+
+  const get68Progress = (member: GroupMember) => {
+    const solved = Math.max(
+      member.tracking?.problems_68_solved?.filter(Boolean).length || 0,
+      member.practiceData?.solvedProblems.length || 0
+    );
+    const videos = Math.max(
+      member.tracking?.problems_68_notes?.filter(Boolean).length || 0,
+      member.practiceData?.watchedVideos.length || 0
+    );
+    return { solved, videos };
+  };
+
+  const getCBProgress = (member: GroupMember) => {
+    const cbData = member.practiceData?.cbCategories;
+    if (!cbData) return { percentage: 0, correct: 0, total: 0 };
+    
+    const correct = Object.values(cbData).reduce((sum, cat) => sum + cat.correct, 0);
+    const total = Object.values(cbData).reduce((sum, cat) => sum + cat.total, 0);
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+    
+    return { percentage, correct, total };
   };
 
   if (isLoading) {
@@ -400,105 +456,177 @@ export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="h-8 px-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h2 className="text-lg md:text-xl font-bold">{group?.name}</h2>
+            <h2 className="text-lg font-bold">{group?.name}</h2>
             <p className="text-xs text-muted-foreground">{members.length} students</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="h-8 gap-2">
-            <Download className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Export</span>
+          <Button variant="outline" size="sm" className="h-8">
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Export
           </Button>
-          <Button size="sm" className="h-8 gap-2" onClick={() => setAddDialogOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Add Student</span>
+          <Button size="sm" className="h-8" onClick={() => setAddDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Add
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-2 md:gap-4">
-        <Card className="p-2 md:p-3 text-center">
-          <Users className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-          <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
-          <div className="text-[10px] md:text-xs text-muted-foreground">Total</div>
-        </Card>
-        <Card className="p-2 md:p-3 text-center">
-          <BookOpen className="h-4 w-4 mx-auto text-blue-500 mb-1" />
-          <div className="text-lg md:text-2xl font-bold">{stats.completed68}</div>
-          <div className="text-[10px] md:text-xs text-muted-foreground">68 Done</div>
-        </Card>
-        <Card className="p-2 md:p-3 text-center">
-          <Calculator className="h-4 w-4 mx-auto text-green-500 mb-1" />
-          <div className="text-lg md:text-2xl font-bold">{stats.hasAllTests}</div>
-          <div className="text-[10px] md:text-xs text-muted-foreground">All Tests</div>
-        </Card>
-        <Card className="p-2 md:p-3 text-center">
-          <FileText className="h-4 w-4 mx-auto text-purple-500 mb-1" />
-          <div className="text-lg md:text-2xl font-bold">
-            {Math.round((stats.completed68 / Math.max(stats.total, 1)) * 100)}%
-          </div>
-          <div className="text-[10px] md:text-xs text-muted-foreground">Progress</div>
-        </Card>
-      </div>
-
-      {/* Student Table */}
+      {/* Spreadsheet Table */}
       {members.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="font-semibold mb-2">No students yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Add students from the database or manually enter their info
-          </p>
-          <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add First Student
+        <div className="border rounded-lg p-8 text-center bg-muted/20">
+          <p className="text-muted-foreground mb-4">No students yet. Add your first student to get started.</p>
+          <Button onClick={() => setAddDialogOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Student
           </Button>
-        </Card>
+        </div>
       ) : (
-        <Card className="overflow-hidden">
+        <div className="border rounded-lg overflow-hidden">
           <ScrollArea className="w-full">
-            <div className="min-w-[900px]">
-              {/* Table Header */}
-              <div className="grid grid-cols-[200px_120px_140px_180px_100px_60px] gap-2 p-3 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
-                <div>Student</div>
-                <div className="text-center">68 Problems</div>
-                <div className="text-center">Practice Tests</div>
-                <div className="text-center">CB 1074</div>
-                <div className="text-center">Prep Notes</div>
-                <div></div>
-              </div>
-              
-              {/* Table Rows */}
-              <div className="divide-y">
-                {members.map((member) => (
-                  <IntensePrepStudentRow
-                    key={member.id}
-                    member={member}
-                    onRemove={() => handleRemoveMember(member.id)}
-                    onUpdateTracking={(updates) => handleUpdateTracking(member.id, updates)}
-                  />
-                ))}
-              </div>
-            </div>
+            <Table className="min-w-[1000px]">
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="w-[40px] text-center font-bold">#</TableHead>
+                  <TableHead className="w-[180px] font-bold">Name</TableHead>
+                  <TableHead className="w-[80px] text-center font-bold">68✓</TableHead>
+                  <TableHead className="w-[80px] text-center font-bold">68📹</TableHead>
+                  {TEST_NUMBERS.map(num => (
+                    <TableHead key={num} className="w-[70px] text-center font-bold">PT{num}</TableHead>
+                  ))}
+                  <TableHead className="w-[80px] text-center font-bold">CB%</TableHead>
+                  <TableHead className="w-[60px] text-center font-bold">Notes</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member, index) => {
+                  const { solved, videos } = get68Progress(member);
+                  const cb = getCBProgress(member);
+                  
+                  return (
+                    <TableRow key={member.id} className="hover:bg-muted/30">
+                      <TableCell className="text-center text-muted-foreground font-mono text-xs">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="truncate">{getStudentName(member)}</div>
+                        {!member.student_id && (
+                          <span className="text-[10px] text-destructive">manual</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-mono text-sm",
+                          solved >= 68 ? "text-primary font-bold" : solved > 0 ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {solved}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-mono text-sm",
+                          videos >= 68 ? "text-primary font-bold" : videos > 0 ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {videos}
+                        </span>
+                      </TableCell>
+                      {TEST_NUMBERS.map(num => {
+                        const isEditing = editingCell?.memberId === member.id && editingCell?.field === String(num);
+                        const value = localScores[member.id]?.[num] || '';
+                        const hasScore = !!value;
+                        
+                        return (
+                          <TableCell key={num} className="p-1">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                className="h-7 w-full text-center text-xs"
+                                value={value}
+                                onChange={(e) => handleCellChange(member.id, String(num), e.target.value)}
+                                onBlur={() => handleCellBlur(member.id, String(num))}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCellBlur(member.id, String(num))}
+                                autoFocus
+                                min={400}
+                                max={1600}
+                              />
+                            ) : (
+                              <div
+                                className={cn(
+                                  "h-7 flex items-center justify-center cursor-pointer rounded border border-transparent hover:border-border hover:bg-muted/50 text-xs font-mono",
+                                  hasScore ? "text-foreground" : "text-muted-foreground/50"
+                                )}
+                                onClick={() => setEditingCell({ memberId: member.id, field: String(num) })}
+                              >
+                                {hasScore ? value : "—"}
+                              </div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-mono text-sm",
+                          cb.percentage >= 80 ? "text-primary font-bold" : cb.percentage > 0 ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {cb.percentage}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="p-1">
+                        {editingCell?.memberId === member.id && editingCell?.field === 'prep' ? (
+                          <Input
+                            type="number"
+                            className="h-7 w-full text-center text-xs"
+                            value={localScores[member.id]?.['prep'] || '0'}
+                            onChange={(e) => handleCellChange(member.id, 'prep', e.target.value)}
+                            onBlur={() => handleCellBlur(member.id, 'prep')}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCellBlur(member.id, 'prep')}
+                            autoFocus
+                            min={0}
+                            max={5}
+                          />
+                        ) : (
+                          <div
+                            className="h-7 flex items-center justify-center cursor-pointer rounded border border-transparent hover:border-border hover:bg-muted/50 text-xs font-mono"
+                            onClick={() => setEditingCell({ memberId: member.id, field: 'prep' })}
+                          >
+                            {localScores[member.id]?.['prep'] || '0'}/5
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="p-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveMember(member.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
-        </Card>
+        </div>
       )}
 
       <IntensePrepAddStudentDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onAdd={handleAddMember}
-        existingMemberStudentIds={members.filter(m => m.student_id).map(m => m.student_id!)}
+        existingMemberStudentIds={members.map(m => m.student_id).filter(Boolean) as string[]}
       />
     </div>
   );

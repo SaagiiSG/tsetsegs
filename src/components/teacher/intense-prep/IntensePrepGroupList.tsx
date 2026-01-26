@@ -30,21 +30,11 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
   const fetchGroups = async () => {
     try {
       setIsLoading(true);
-      
-      // First get teacher id
-      const { data: teacher, error: teacherError } = await supabase
-        .from("teachers")
-        .select("id")
-        .ilike("name", `%${teacherName}%`)
-        .single();
 
-      if (teacherError) throw teacherError;
-
-      // Get groups
+      // Get all active groups (all teachers can see all groups)
       const { data: groupsData, error: groupsError } = await supabase
         .from("intense_prep_groups")
         .select("*")
-        .eq("created_by_teacher_id", teacher.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
