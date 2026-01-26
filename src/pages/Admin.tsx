@@ -54,12 +54,6 @@ const Admin = () => {
               )}
             </div>
             <div className="flex gap-2">
-              {isTeacher && (
-                <Button variant="secondary" onClick={() => navigate('/teacher/login')}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Teacher Portal
-                </Button>
-              )}
               <Button variant="outline" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

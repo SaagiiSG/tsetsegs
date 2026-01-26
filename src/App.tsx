@@ -20,7 +20,7 @@ import StudentReveal from "./pages/StudentReveal";
 import StudentPortal from "./pages/StudentPortal";
 import StudentQuestion from "./pages/StudentQuestion";
 import NotFound from "./pages/NotFound";
-import TeacherLogin from "./pages/TeacherLogin";
+
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherChangePassword from "./pages/TeacherChangePassword";
 import TeacherClassAttendance from "./pages/TeacherClassAttendance";
@@ -73,7 +73,7 @@ const App = () => (
                       </ProtectedRoute>
                     } 
                   />
-                  <Route path="/teacher/login" element={<Navigate to="/login?role=teacher" replace />} />
+                  
                   <Route path="/teacher/change-password" element={<TeacherChangePassword />} />
                   <Route 
                     path="/teacher/dashboard" 

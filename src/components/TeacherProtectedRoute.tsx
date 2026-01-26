@@ -13,7 +13,7 @@ export function TeacherProtectedRoute({ children }: { children: React.ReactNode 
   }
 
   if (!user || !teacherName) {
-    return <Navigate to="/teacher/login" replace />;
+    return <Navigate to="/login?role=teacher" replace />;
   }
 
   if (needsPasswordChange) {
