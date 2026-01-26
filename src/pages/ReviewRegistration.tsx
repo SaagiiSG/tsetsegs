@@ -84,6 +84,7 @@ export default function ReviewRegistration() {
   const [validatedCode, setValidatedCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitCooldown, setSubmitCooldown] = useState(false);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
 
   const codeForm = useForm<CodeFormData>({
@@ -166,21 +167,30 @@ export default function ReviewRegistration() {
   };
 
   const handleRegistrationSubmit = async (data: RegistrationFormData) => {
+    // Prevent rapid double-clicks
+    if (submitCooldown) {
+      return;
+    }
+    
     setIsSubmitting(true);
+    setSubmitCooldown(true);
 
     try {
       // Check if phone number already exists
       const { data: existingStudent } = await supabase
         .from("students")
-        .select("id")
+        .select("id, name")
         .eq("phone", data.phone)
         .single();
 
       if (existingStudent) {
-        toast.error("Phone number already registered", {
-          description: "This phone number is already in use. You can log in to the practice portal directly.",
+        toast.warning("Already Registered! 🎉", {
+          description: "You're already in our system! Go to the practice portal and log in with your phone number.",
+          duration: 6000,
         });
         setIsSubmitting(false);
+        // Keep cooldown for 3 seconds to prevent spam
+        setTimeout(() => setSubmitCooldown(false), 3000);
         return;
       }
 
@@ -233,6 +243,8 @@ export default function ReviewRegistration() {
       toast.error("Something went wrong", {
         description: "Please try again.",
       });
+      // Reset cooldown on error so they can retry
+      setTimeout(() => setSubmitCooldown(false), 2000);
     } finally {
       setIsSubmitting(false);
     }
@@ -517,12 +529,14 @@ export default function ReviewRegistration() {
                 </Select>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full" disabled={isSubmitting || submitCooldown}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Registering...
                   </>
+                ) : submitCooldown ? (
+                  "Please wait..."
                 ) : (
                   "Register"
                 )}
