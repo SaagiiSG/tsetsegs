@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy, ArrowRightLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorToast } from "@/lib/errorUtils";
@@ -76,6 +77,11 @@ interface StudentCardProps {
   courseType: 'SAT' | 'IELTS';
   batchId: string;
   teacherName: string;
+  switchedInfo?: {
+    otherBatchName: string;
+    otherAttendance: number;
+    currentAttendance: number;
+  };
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
@@ -96,6 +102,7 @@ export function StudentCard({
   courseType,
   batchId,
   teacherName,
+  switchedInfo,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
@@ -310,20 +317,41 @@ export function StudentCard({
   };
 
   return (
-    <Card className="shadow-lg">
+    <TooltipProvider>
+    <Card className={`shadow-lg ${switchedInfo ? 'ring-2 ring-amber-500/50' : ''}`}>
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm p-3 md:p-4">
         <div className="flex items-center justify-between gap-2">
           {/* Left side: Student name and count */}
           <div className="flex flex-col gap-0.5 min-w-0">
-            <button 
-              onClick={() => navigate(`/teacher/student/${student.id}`)}
-              className="text-sm md:text-lg font-bold text-left hover:text-primary transition-colors flex items-center gap-1.5 group truncate"
-            >
-              <span className="truncate">
-                {(student.first_name && student.first_name.trim()) || student.name || 'Unknown'} {student.last_name && student.last_name.trim() ? student.last_name.charAt(0) + '.' : ''}
-              </span>
-              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => navigate(`/teacher/student/${student.id}`)}
+                className="text-sm md:text-lg font-bold text-left hover:text-primary transition-colors flex items-center gap-1.5 group truncate"
+              >
+                <span className="truncate">
+                  {(student.first_name && student.first_name.trim()) || student.name || 'Unknown'} {student.last_name && student.last_name.trim() ? student.last_name.charAt(0) + '.' : ''}
+                </span>
+                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              </button>
+              {switchedInfo && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 cursor-help">
+                      <ArrowRightLeft className="h-3 w-3 text-amber-600" />
+                      <span className="text-[10px] font-medium text-amber-600">Switched</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[280px]">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-amber-600">Student enrolled in another class</p>
+                      <p className="text-xs">
+                        More active in <span className="font-medium">{switchedInfo.otherBatchName}</span> ({switchedInfo.otherAttendance} sessions) vs this class ({switchedInfo.currentAttendance} sessions).
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {currentIndex + 1} of {totalStudents}
             </p>
@@ -842,5 +870,6 @@ export function StudentCard({
         </div>
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }

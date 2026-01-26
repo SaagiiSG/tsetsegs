@@ -61,6 +61,12 @@ interface Batch {
   course_type: 'SAT' | 'IELTS';
 }
 
+interface SwitchedStudentInfo {
+  otherBatchName: string;
+  otherAttendance: number;
+  currentAttendance: number;
+}
+
 export default function TeacherStudentCards() {
   const { batchId } = useParams();
   const navigate = useNavigate();
@@ -126,6 +132,9 @@ export default function TeacherStudentCards() {
     practiceTests: PracticeTest[];
   }>>(new Map());
 
+  // Switched students info (students with duplicates in other batches with more attendance)
+  const [switchedStudents, setSwitchedStudents] = useState<Record<string, SwitchedStudentInfo>>({});
+
   useEffect(() => {
     fetchData();
   }, [batchId]);
@@ -136,6 +145,8 @@ export default function TeacherStudentCards() {
       students.forEach(student => {
         fetchStudentData(student.id);
       });
+      // Check for switched students
+      checkForSwitchedStudents(students);
     }
   }, [students]);
 
@@ -253,6 +264,112 @@ export default function TeacherStudentCards() {
       }));
     } catch (error: any) {
       console.error("Error fetching student data:", error);
+    }
+  };
+
+  // Check for switched students (same name + phone in other batches with more attendance)
+  const checkForSwitchedStudents = async (currentStudents: Student[]) => {
+    if (!batchId) return;
+    
+    try {
+      // Get unique phone numbers
+      const phoneNumbers = [...new Set(currentStudents.map(s => s.phone))];
+      
+      // Find all students with matching phone numbers in OTHER batches
+      const { data: allMatchingStudents, error: matchError } = await supabase
+        .from("students")
+        .select(`
+          id,
+          name,
+          phone,
+          batch_id,
+          batches(batch_name)
+        `)
+        .in("phone", phoneNumbers)
+        .neq("batch_id", batchId);
+
+      if (matchError) throw matchError;
+      if (!allMatchingStudents || allMatchingStudents.length === 0) {
+        setSwitchedStudents({});
+        return;
+      }
+
+      // Get attendance for all matching students
+      const matchingStudentIds = allMatchingStudents.map(s => s.id);
+      const { data: matchingAttendance, error: attError } = await supabase
+        .from("attendance")
+        .select("student_id, total_attended")
+        .in("student_id", matchingStudentIds);
+
+      if (attError) throw attError;
+
+      // Create attendance lookup for other batch students
+      const otherAttendanceLookup: Record<string, number> = {};
+      matchingAttendance?.forEach(a => {
+        otherAttendanceLookup[a.student_id] = a.total_attended || 0;
+      });
+
+      // Get attendance for current batch students
+      const currentStudentIds = currentStudents.map(s => s.id);
+      const { data: currentAttendance, error: currAttError } = await supabase
+        .from("attendance")
+        .select("student_id, total_attended")
+        .in("student_id", currentStudentIds)
+        .eq("batch_id", batchId);
+
+      if (currAttError) throw currAttError;
+
+      const currentAttendanceLookup: Record<string, number> = {};
+      currentAttendance?.forEach(a => {
+        currentAttendanceLookup[a.student_id] = a.total_attended || 0;
+      });
+
+      // Build switched students map
+      const switched: Record<string, SwitchedStudentInfo> = {};
+
+      currentStudents.forEach(currentStudent => {
+        const normalizedName = (currentStudent.name || `${currentStudent.first_name} ${currentStudent.last_name}`).toLowerCase().trim();
+        const normalizedPhone = currentStudent.phone.trim();
+        
+        // Find matching students in other batches
+        const matches = allMatchingStudents.filter(other => {
+          const otherName = other.name?.toLowerCase().trim() || '';
+          const otherPhone = other.phone.trim();
+          // Match by phone AND similar name (starts with same name or contains it)
+          return otherPhone === normalizedPhone && other.batch_id && 
+                 (otherName.includes(normalizedName.split(' ')[0]) || normalizedName.includes(otherName.split(' ')[0]));
+        });
+
+        if (matches.length > 0) {
+          // Find the match with the highest attendance
+          let bestMatch = matches[0];
+          let bestAttendance = otherAttendanceLookup[bestMatch.id] || 0;
+
+          matches.forEach(match => {
+            const matchAtt = otherAttendanceLookup[match.id] || 0;
+            if (matchAtt > bestAttendance) {
+              bestMatch = match;
+              bestAttendance = matchAtt;
+            }
+          });
+
+          const currentAtt = currentAttendanceLookup[currentStudent.id] || 0;
+
+          // Only flag if current batch has FEWER attendance than another batch
+          if (currentAtt < bestAttendance) {
+            const batchInfo = bestMatch.batches as { batch_name: string } | null;
+            switched[currentStudent.id] = {
+              otherBatchName: batchInfo?.batch_name || 'Another class',
+              otherAttendance: bestAttendance,
+              currentAttendance: currentAtt,
+            };
+          }
+        }
+      });
+
+      setSwitchedStudents(switched);
+    } catch (error) {
+      console.error("Error checking for switched students:", error);
     }
   };
 
@@ -806,6 +923,7 @@ export default function TeacherStudentCards() {
             getStudentAlertStatus={getStudentAlertStatus}
             getStudentAttendance={(studentId) => studentDataMap.get(studentId)?.attendance || []}
             getStudentHomework={(studentId) => studentDataMap.get(studentId)?.homework || []}
+            switchedStudents={switchedStudents}
           />
         </div>
 
@@ -847,6 +965,7 @@ export default function TeacherStudentCards() {
                           courseType={batch?.course_type || 'SAT'}
                           batchId={batchId || ''}
                           teacherName={teacherName || ''}
+                          switchedInfo={switchedStudents[student.id]}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
