@@ -35,6 +35,18 @@ const codeSchema = z.object({
 });
 
 // Step 2: Registration form schema
+const SAT_TEST_MONTHS = [
+  { value: "march", label: "March" },
+  { value: "may", label: "May" },
+  { value: "june", label: "June" },
+  { value: "august", label: "August" },
+  { value: "sep", label: "September" },
+  { value: "oct", label: "October" },
+  { value: "nov", label: "November" },
+  { value: "dec", label: "December" },
+] as const;
+
+// Step 2: Registration form schema
 const registrationSchema = z.object({
   firstName: z
     .string()
@@ -59,6 +71,7 @@ const registrationSchema = z.object({
     required_error: "Please select your English level",
   }),
   teacher: z.string().min(1, "Please select a teacher"),
+  satTestMonth: z.string().optional(),
 });
 
 type CodeFormData = z.infer<typeof codeSchema>;
@@ -88,6 +101,7 @@ export default function ReviewRegistration() {
       mathLevel: undefined,
       englishLevel: undefined,
       teacher: "",
+      satTestMonth: "",
     },
   });
 
@@ -183,6 +197,7 @@ export default function ReviewRegistration() {
         math_level: data.mathLevel,
         english_level: data.englishLevel,
         review_teacher: data.teacher,
+        sat_test_month: data.satTestMonth || null,
         is_review_student: true,
         unique_link_id: uniqueLinkId,
         first_session_completed: true,
@@ -481,6 +496,25 @@ export default function ReviewRegistration() {
                     {registrationForm.formState.errors.teacher.message}
                   </p>
                 )}
+              </div>
+
+              {/* SAT Test Month (Optional) */}
+              <div className="space-y-2">
+                <Label>When are you taking the SAT? (Optional)</Label>
+                <Select
+                  onValueChange={(value) => registrationForm.setValue("satTestMonth", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select month..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SAT_TEST_MONTHS.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>

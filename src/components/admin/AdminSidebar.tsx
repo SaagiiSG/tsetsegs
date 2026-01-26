@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import {
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "Create Batch", url: "/admin/create", icon: Plus },
   { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
   { title: "Student Search", url: "/admin/search", icon: Search },
+  { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
   { title: "Review Registration", url: "/register/admin", icon: QrCode },
   { title: "Students", url: "/admin/students", icon: UserCheck },
   { title: "Team", url: "/admin/team", icon: Users },
