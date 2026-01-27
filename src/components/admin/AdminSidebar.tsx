@@ -195,11 +195,16 @@ export function AdminSidebar() {
                                 to={item.url}
                                 end={item.end}
                                 className={cn(
-                                  "hover:bg-muted/50 transition-all duration-200 group/item",
+                                  "hover:bg-muted/50 transition-all duration-200 group/item relative",
                                   open ? "pl-6" : "justify-center"
                                 )}
-                                activeClassName="bg-primary/10 text-primary font-medium"
+                                activeClassName="bg-primary/10 text-primary font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
                               >
+                                {/* Active indicator dot */}
+                                <motion.span 
+                                  className="active-dot absolute left-1.5 w-1.5 h-1.5 rounded-full bg-primary opacity-0 scale-0 transition-all duration-200"
+                                  layoutId="activeDot"
+                                />
                                 <motion.div
                                   whileHover={{ scale: 1.1 }}
                                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
