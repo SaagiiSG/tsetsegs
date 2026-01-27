@@ -1,12 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -22,13 +20,120 @@ import {
 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { cn } from '@/lib/utils';
 
-const formatDuration = (seconds: number): string => {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-};
+// iOS-style scroll picker component
+interface ScrollPickerProps {
+  values: { value: number; label: string }[];
+  selectedValue: number;
+  onChange: (value: number) => void;
+  label: string;
+}
+
+function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemHeight = 40;
+  const visibleItems = 3;
+  
+  const selectedIndex = values.findIndex(v => v.value === selectedValue);
+
+  useEffect(() => {
+    if (containerRef.current && selectedIndex >= 0) {
+      containerRef.current.scrollTop = selectedIndex * itemHeight;
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const scrollTop = containerRef.current.scrollTop;
+    const newIndex = Math.round(scrollTop / itemHeight);
+    const clampedIndex = Math.max(0, Math.min(newIndex, values.length - 1));
+    if (values[clampedIndex]?.value !== selectedValue) {
+      onChange(values[clampedIndex].value);
+    }
+  };
+
+  const scrollToIndex = (index: number) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: index * itemHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-xs text-muted-foreground mb-2 font-medium">{label}</span>
+      <div className="relative h-[120px] w-20 overflow-hidden">
+        {/* Selection indicator */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 bg-primary/10 border-y border-primary/30 pointer-events-none z-10" />
+        
+        {/* Gradient overlays */}
+        <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-background to-transparent pointer-events-none z-20" />
+        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent pointer-events-none z-20" />
+        
+        {/* Scrollable list */}
+        <div
+          ref={containerRef}
+          className="h-full overflow-y-auto scrollbar-hide snap-y snap-mandatory"
+          onScroll={handleScroll}
+          style={{ 
+            paddingTop: itemHeight,
+            paddingBottom: itemHeight,
+            scrollSnapType: 'y mandatory'
+          }}
+        >
+          {values.map((item, index) => {
+            const isSelected = item.value === selectedValue;
+            return (
+              <div
+                key={item.value}
+                className={cn(
+                  "h-10 flex items-center justify-center cursor-pointer transition-all snap-center",
+                  isSelected 
+                    ? "text-primary font-bold text-lg" 
+                    : "text-muted-foreground text-sm"
+                )}
+                onClick={() => scrollToIndex(index)}
+              >
+                {item.label}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Generate time values (10s to 10min)
+const timeValues = [
+  { value: 10, label: '10s' },
+  { value: 20, label: '20s' },
+  { value: 30, label: '30s' },
+  { value: 45, label: '45s' },
+  { value: 60, label: '1m' },
+  { value: 90, label: '1m 30s' },
+  { value: 120, label: '2m' },
+  { value: 180, label: '3m' },
+  { value: 240, label: '4m' },
+  { value: 300, label: '5m' },
+  { value: 420, label: '7m' },
+  { value: 600, label: '10m' },
+];
+
+// Generate question count values
+const questionValues = [
+  { value: 5, label: '5' },
+  { value: 10, label: '10' },
+  { value: 15, label: '15' },
+  { value: 20, label: '20' },
+  { value: 25, label: '25' },
+  { value: 30, label: '30' },
+  { value: 40, label: '40' },
+  { value: 50, label: '50' },
+];
 
 const chartConfig = {
   timePerProblem: { label: "Time/Problem (s)", color: "hsl(var(--primary))" },
@@ -39,7 +144,7 @@ export default function StudentSpeedMode() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
   
-  const [sessionDuration, setSessionDuration] = useState(120); // 2 min default
+  const [sessionDuration, setSessionDuration] = useState(120);
   const [questionCount, setQuestionCount] = useState(15);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -251,82 +356,62 @@ export default function StudentSpeedMode() {
         </Card>
       </div>
 
-      {/* Session Builder Island */}
+      {/* Session Builder Island - All in one row */}
       <Card className="shadow-lg border-2">
-        <CardContent className="p-6 space-y-6">
-          {/* Duration Slider */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <Label className="text-sm font-medium">Session Duration</Label>
-              <span className="text-sm font-mono font-bold text-primary">
-                {formatDuration(sessionDuration)}
-              </span>
-            </div>
-            <Slider
-              value={[sessionDuration]}
-              onValueChange={([val]) => setSessionDuration(val)}
-              min={10}
-              max={600}
-              step={10}
-              className="w-full"
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+            {/* Duration Picker */}
+            <ScrollPicker
+              values={timeValues}
+              selectedValue={sessionDuration}
+              onChange={setSessionDuration}
+              label="Duration"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>10s</span>
-              <span>10min</span>
-            </div>
-          </div>
 
-          {/* Question Count Slider */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <Label className="text-sm font-medium">Questions to Solve</Label>
-              <span className="text-sm font-mono font-bold text-primary">
-                {questionCount} questions
-              </span>
-            </div>
-            <Slider
-              value={[questionCount]}
-              onValueChange={([val]) => setQuestionCount(val)}
-              min={5}
-              max={50}
-              step={5}
-              className="w-full"
+            {/* Divider */}
+            <div className="hidden sm:block w-px h-24 bg-border" />
+
+            {/* Question Count Picker */}
+            <ScrollPicker
+              values={questionValues}
+              selectedValue={questionCount}
+              onChange={setQuestionCount}
+              label="Questions"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>5</span>
-              <span>50</span>
-            </div>
-          </div>
 
-          {/* Category Selector */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Category</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories (Mixed)</SelectItem>
-                
-                {categories?.math && categories.math.length > 0 && (
-                  <SelectGroup>
-                    <SelectLabel>Math</SelectLabel>
-                    {categories.math.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                )}
-                
-                {categories?.english && categories.english.length > 0 && (
-                  <SelectGroup>
-                    <SelectLabel>English</SelectLabel>
-                    {categories.english.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                )}
-              </SelectContent>
-            </Select>
+            {/* Divider */}
+            <div className="hidden sm:block w-px h-24 bg-border" />
+
+            {/* Category Selector */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-muted-foreground mb-2 font-medium">Category</span>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-40 h-10">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Mixed</SelectItem>
+                  
+                  {categories?.math && categories.math.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Math</SelectLabel>
+                      {categories.math.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  
+                  {categories?.english && categories.english.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>English</SelectLabel>
+                      {categories.english.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
