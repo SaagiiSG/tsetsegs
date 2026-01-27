@@ -91,7 +91,7 @@ export function StudentDashboardSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar collapsible="offcanvas" variant="floating" className="border-r-0">
       <SidebarHeader className="border-b">
         <div className={cn(
           "flex items-center gap-3 p-2",
