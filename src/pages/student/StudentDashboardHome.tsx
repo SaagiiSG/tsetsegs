@@ -7,7 +7,7 @@ import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO } 
 import { motion } from 'framer-motion';
 import {
   CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, Calendar,
-  TrendingUp, Clock, Brain, Loader2
+  TrendingUp, Clock, Brain, Loader2, Zap, Timer
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -414,6 +414,59 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
+  // Fetch speed mode stats
+  const { data: speedStats } = useQuery({
+    queryKey: ['student-speed-stats', student?.id],
+    queryFn: async () => {
+      if (!student?.id) return null;
+
+      const twoWeeksAgo = subWeeks(new Date(), 2).toISOString();
+
+      // Get all attempts from last 2 weeks for speed calculation
+      const { data: recentAttempts } = await supabase
+        .from('student_attempts')
+        .select('is_correct, time_spent_seconds, attempted_at')
+        .eq('student_account_id', student.id)
+        .eq('attempt_number', 1)
+        .gte('attempted_at', twoWeeksAgo)
+        .not('time_spent_seconds', 'is', null);
+
+      if (!recentAttempts || recentAttempts.length === 0) {
+        return { avgTime: null, totalQuestions: 0, accuracy: 0, sessions: [] };
+      }
+
+      // Calculate average time
+      const totalTime = recentAttempts.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0);
+      const avgTime = Math.round(totalTime / recentAttempts.length);
+      const correctCount = recentAttempts.filter(a => a.is_correct).length;
+      const accuracy = Math.round((correctCount / recentAttempts.length) * 100);
+
+      // Group by day to show recent "sessions"
+      const sessionMap = new Map<string, { date: string; questions: number; correct: number; totalTime: number }>();
+      recentAttempts.forEach(attempt => {
+        const date = format(parseISO(attempt.attempted_at), 'MMM d');
+        const existing = sessionMap.get(date) || { date, questions: 0, correct: 0, totalTime: 0 };
+        existing.questions++;
+        if (attempt.is_correct) existing.correct++;
+        existing.totalTime += attempt.time_spent_seconds || 0;
+        sessionMap.set(date, existing);
+      });
+
+      const sessions = Array.from(sessionMap.values())
+        .slice(-5)
+        .reverse()
+        .map(s => ({
+          date: s.date,
+          questions: s.questions,
+          accuracy: Math.round((s.correct / s.questions) * 100),
+          avgTime: Math.round(s.totalTime / s.questions),
+        }));
+
+      return { avgTime, totalQuestions: recentAttempts.length, accuracy, sessions };
+    },
+    enabled: !!student?.id,
+  });
+
   const isLoading = statsLoading || masteryLoading || weeklyLoading;
 
   if (isLoading) {
@@ -531,6 +584,82 @@ export default function StudentDashboardHome() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Speed Mode Widget */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+      >
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Speed Mode
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/practice/speed')}
+                className="gap-2"
+              >
+                <Timer className="h-4 w-4" />
+                Start Session
+              </Button>
+            </div>
+            <CardDescription>Average time per question & recent sessions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Main Stats */}
+              <div className="flex gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {speedStats?.avgTime ? `${speedStats.avgTime}s` : '—'}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg Time</p>
+                  {speedStats?.avgTime && (
+                    <Badge 
+                      variant={speedStats.avgTime <= 20 ? "default" : speedStats.avgTime <= 40 ? "secondary" : "destructive"}
+                      className="mt-2"
+                    >
+                      {speedStats.avgTime <= 20 ? 'Excellent' : speedStats.avgTime <= 40 ? 'Good' : 'Needs Work'}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{speedStats?.accuracy || 0}%</div>
+                  <p className="text-xs text-muted-foreground mt-1">Accuracy</p>
+                  <Badge variant="outline" className="mt-2">
+                    {speedStats?.totalQuestions || 0} questions
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Recent Sessions */}
+              <div className="flex-1 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6">
+                <h4 className="font-medium text-sm mb-3">Recent Sessions</h4>
+                {speedStats?.sessions && speedStats.sessions.length > 0 ? (
+                  <div className="grid grid-cols-5 gap-2">
+                    {speedStats.sessions.map((session, i) => (
+                      <div key={i} className="text-center p-2 rounded-lg bg-muted/50">
+                        <div className="text-xs text-muted-foreground">{session.date}</div>
+                        <div className="font-semibold text-sm mt-1">{session.avgTime}s</div>
+                        <div className="text-xs text-muted-foreground">{session.accuracy}%</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No speed sessions yet. Start one to track your progress!
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
