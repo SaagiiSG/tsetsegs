@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -28,24 +28,27 @@ export default function StudentSpeedSession() {
   const { student, logActivity } = useStudentAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const calculatorSnapSide = useCalculatorSnap();
 
-  const mode = searchParams.get('mode') as 'question' | 'session';
-  const timerValue = Number(searchParams.get('timer'));
+  // New params: duration (seconds) and questions (count)
+  const duration = Number(searchParams.get('duration')) || 120;
+  const maxQuestions = Number(searchParams.get('questions')) || 15;
   const categoryId = searchParams.get('category');
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(mode === 'session' ? timerValue * 60 : timerValue);
+  const [timeLeft, setTimeLeft] = useState(duration);
   const [selectedAnswer, setSelectedAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
-  const [results, setResults] = useState<{ correct: boolean; questionId: string }[]>([]);
+  const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number }[]>([]);
+  
+  // Track time spent per question
+  const questionStartTime = useRef(Date.now());
 
-  // Fetch questions
+  // Fetch questions (limited to maxQuestions)
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['speed-questions', categoryId],
+    queryKey: ['speed-questions', categoryId, maxQuestions],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -68,8 +71,9 @@ export default function StudentSpeedSession() {
       const { data, error } = await query.order('question_id');
       if (error) throw error;
       
-      // Shuffle questions for randomness
-      return (data as Question[]).sort(() => Math.random() - 0.5);
+      // Shuffle and limit to maxQuestions
+      const shuffled = (data as Question[]).sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, maxQuestions);
     },
     enabled: !!student
   });
@@ -78,14 +82,14 @@ export default function StudentSpeedSession() {
 
   // Submit attempt mutation
   const submitAttempt = useMutation({
-    mutationFn: async ({ questionId, answer, correct }: { 
+    mutationFn: async ({ questionId, answer, correct, timeSpent }: { 
       questionId: string; 
       answer: string; 
-      correct: boolean 
+      correct: boolean;
+      timeSpent: number;
     }) => {
       if (!student) return;
 
-      // Get current attempt count
       const { data: existing } = await supabase
         .from('student_attempts')
         .select('attempt_number')
@@ -102,25 +106,20 @@ export default function StudentSpeedSession() {
         answer_submitted: answer,
         is_correct: correct,
         attempt_number: attemptNumber,
-        time_spent_seconds: mode === 'question' ? timerValue - timeLeft : null
+        time_spent_seconds: Math.round(timeSpent / 1000)
       });
     }
   });
 
-  // Timer logic
+  // Timer logic - counts down from duration
   useEffect(() => {
-    if (sessionComplete || showResult || !questions?.length) return;
+    if (sessionComplete || !questions?.length) return;
 
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (mode === 'question') {
-            // Time's up for this question - mark as incorrect
-            handleSubmit(true);
-          } else {
-            // Session time's up
-            setSessionComplete(true);
-          }
+          // Session time's up
+          setSessionComplete(true);
           return 0;
         }
         return prev - 1;
@@ -128,14 +127,12 @@ export default function StudentSpeedSession() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [sessionComplete, showResult, questions, mode]);
+  }, [sessionComplete, questions]);
 
-  // Reset question timer when moving to next question
+  // Reset question start time when moving to next question
   useEffect(() => {
-    if (mode === 'question' && !showResult) {
-      setTimeLeft(timerValue);
-    }
-  }, [currentIndex, mode, timerValue, showResult]);
+    questionStartTime.current = Date.now();
+  }, [currentIndex]);
 
   const normalizeAnswer = (answer: string) => {
     return answer.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -144,27 +141,31 @@ export default function StudentSpeedSession() {
   const handleSubmit = useCallback((timeout = false) => {
     if (!currentQuestion || showResult) return;
 
+    const timeSpent = Date.now() - questionStartTime.current;
     const correct = !timeout && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentQuestion.answer);
     
     setIsCorrect(correct);
     setShowResult(true);
-    setResults(prev => [...prev, { correct, questionId: currentQuestion.id }]);
+    setResults(prev => [...prev, { correct, questionId: currentQuestion.id, timeSpent }]);
 
     submitAttempt.mutate({
       questionId: currentQuestion.id,
       answer: timeout ? 'TIMEOUT' : selectedAnswer,
-      correct
+      correct,
+      timeSpent
     });
 
     logActivity('speed_mode_answer', {
       question_id: currentQuestion.id,
       correct,
-      timeout
+      timeout,
+      timeSpent: Math.round(timeSpent / 1000)
     });
-  }, [currentQuestion, selectedAnswer, showResult]);
+  }, [currentQuestion, selectedAnswer, showResult, logActivity, submitAttempt]);
 
   const handleNext = () => {
-    if (currentIndex >= (questions?.length || 0) - 1) {
+    // Check if we've reached question limit or end of available questions
+    if (currentIndex >= (questions?.length || 0) - 1 || currentIndex >= maxQuestions - 1) {
       setSessionComplete(true);
       return;
     }
@@ -176,11 +177,16 @@ export default function StudentSpeedSession() {
   };
 
   const handleFinish = () => {
+    const correctCount = results.filter(r => r.correct).length;
+    const totalTime = results.reduce((sum, r) => sum + r.timeSpent, 0);
+    const avgTimePerQuestion = results.length > 0 ? totalTime / results.length / 1000 : 0;
+
     logActivity('speed_mode_complete', {
       total: results.length,
-      correct: results.filter(r => r.correct).length,
-      mode,
-      timer: timerValue
+      correct: correctCount,
+      duration,
+      maxQuestions,
+      avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10
     });
     navigate('/practice/speed');
   };
@@ -208,6 +214,8 @@ export default function StudentSpeedSession() {
   if (sessionComplete) {
     const correctCount = results.filter(r => r.correct).length;
     const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
+    const totalTime = results.reduce((sum, r) => sum + r.timeSpent, 0);
+    const avgTime = results.length > 0 ? Math.round(totalTime / results.length / 1000) : 0;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
@@ -222,7 +230,7 @@ export default function StudentSpeedSession() {
               <p className="text-muted-foreground mt-2">Great job practicing!</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-muted/50">
                 <p className="text-3xl font-bold">{results.length}</p>
                 <p className="text-xs text-muted-foreground">Questions</p>
@@ -234,6 +242,10 @@ export default function StudentSpeedSession() {
               <div className="p-4 rounded-lg bg-primary/10">
                 <p className="text-3xl font-bold text-primary">{accuracy}%</p>
                 <p className="text-xs text-muted-foreground">Accuracy</p>
+              </div>
+              <div className="p-4 rounded-lg bg-yellow-500/10">
+                <p className="text-3xl font-bold text-yellow-600">{avgTime}s</p>
+                <p className="text-xs text-muted-foreground">Avg/Question</p>
               </div>
             </div>
 
@@ -259,9 +271,8 @@ export default function StudentSpeedSession() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const timerPercent = mode === 'question' 
-    ? (timeLeft / timerValue) * 100
-    : (timeLeft / (timerValue * 60)) * 100;
+  const timerPercent = (timeLeft / duration) * 100;
+  const questionProgress = ((currentIndex + 1) / Math.min(questions.length, maxQuestions)) * 100;
 
   const options = currentQuestion?.multiple_choice_options as Record<string, string> | null;
   const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && options;
@@ -288,12 +299,17 @@ export default function StudentSpeedSession() {
               </span>
             </div>
             <span className="text-muted-foreground">
-              Question {currentIndex + 1} of {questions.length}
+              Question {currentIndex + 1} of {Math.min(questions.length, maxQuestions)}
             </span>
           </div>
           <Progress 
             value={timerPercent} 
             className={`h-2 ${timeLeft < 10 ? '[&>div]:bg-red-500' : ''}`} 
+          />
+          {/* Question progress bar */}
+          <Progress 
+            value={questionProgress} 
+            className="h-1 [&>div]:bg-primary/50" 
           />
         </div>
 
@@ -389,7 +405,7 @@ export default function StudentSpeedSession() {
                 </Button>
               ) : (
                 <Button onClick={handleNext} className="flex-1">
-                  {currentIndex >= questions.length - 1 ? 'Finish' : 'Next'}
+                  {currentIndex >= Math.min(questions.length, maxQuestions) - 1 ? 'Finish' : 'Next'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               )}
