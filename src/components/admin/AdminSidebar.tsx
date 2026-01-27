@@ -18,7 +18,7 @@ const menuItems = [
   { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
   { title: "Batches", url: "/admin/batches", icon: GraduationCap },
   { title: "Create Batch", url: "/admin/create", icon: Plus },
-  { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
+  // Question Bank is dev-only, conditionally added below
   { title: "Student Search", url: "/admin/search", icon: Search },
   { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
   { title: "Review Registration", url: "/register/admin", icon: QrCode },
@@ -26,6 +26,15 @@ const menuItems = [
   { title: "Team", url: "/admin/team", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
+
+// Add Question Bank only in dev mode
+const allMenuItems = import.meta.env.DEV 
+  ? [
+      ...menuItems.slice(0, 4),
+      { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
+      ...menuItems.slice(4)
+    ]
+  : menuItems;
 
 export function AdminSidebar() {
   const { open } = useSidebar();
@@ -54,7 +63,7 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {allMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
