@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,8 @@ interface VocabularyWord {
 }
 
 const StudentVocabulary = () => {
+  const { student } = useStudentAuth();
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,6 +42,24 @@ const StudentVocabulary = () => {
     },
     staleTime: 10 * 60 * 1000 // Cache for 10 minutes
   });
+
+  // Fetch learned words for this student
+  const { data: learnedWords = [] } = useQuery({
+    queryKey: ['student-vocab-progress', student?.id],
+    queryFn: async () => {
+      if (!student?.id) return [];
+      const { data, error } = await supabase
+        .from('student_vocabulary_progress')
+        .select('word_id, confidence_level')
+        .eq('student_account_id', student.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!student?.id,
+  });
+
+  const learnedWordIds = new Set(learnedWords.map(w => w.word_id));
 
   const totalWords = vocabulary.length;
 
@@ -106,9 +127,51 @@ const StudentVocabulary = () => {
     setIsFlipped(true);
   };
 
-  const handleSelectAnswer = (index: number) => {
+  const handleSelectAnswer = async (index: number) => {
     if (selectedAnswer !== null) return;
     setSelectedAnswer(index);
+    
+    const selectedOption = multipleChoiceOptions[index];
+    const isCorrect = isCorrectAnswer(selectedOption);
+    
+    // Track progress if correct and student is logged in
+    if (isCorrect && student?.id && currentWord) {
+      try {
+        // Upsert progress - increment confidence if already learned
+        const existingProgress = learnedWords.find(w => w.word_id === currentWord.id);
+        
+        if (existingProgress) {
+          // Update existing - increment review count
+          await supabase
+            .from('student_vocabulary_progress')
+            .update({
+              review_count: (existingProgress as any).review_count + 1 || 1,
+              last_reviewed_at: new Date().toISOString(),
+              confidence_level: Math.min(5, existingProgress.confidence_level + 1),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('student_account_id', student.id)
+            .eq('word_id', currentWord.id);
+        } else {
+          // Insert new progress
+          await supabase
+            .from('student_vocabulary_progress')
+            .insert({
+              student_account_id: student.id,
+              word_id: currentWord.id,
+              confidence_level: 1,
+              review_count: 1,
+            });
+        }
+        
+        // Invalidate queries to refresh stats
+        queryClient.invalidateQueries({ queryKey: ['student-vocab-progress'] });
+        queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
+      } catch (err) {
+        console.error('Failed to track vocab progress:', err);
+      }
+    }
+    
     setTimeout(() => {
       setIsFlipped(true);
     }, 500);
@@ -173,8 +236,14 @@ const StudentVocabulary = () => {
               <h1 className="text-2xl font-bold">SAT Vocabulary</h1>
             </div>
             <p className="text-muted-foreground text-sm">
-              {totalWords} words • Pick the correct Mongolian translation
+              {totalWords} words • {learnedWordIds.size} learned ({totalWords > 0 ? Math.round((learnedWordIds.size / totalWords) * 100) : 0}%)
             </p>
+            {currentWord && learnedWordIds.has(currentWord.id) && (
+              <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                <Check className="w-3 h-3" />
+                Already learned
+              </span>
+            )}
           </div>
 
           {/* Flashcard */}

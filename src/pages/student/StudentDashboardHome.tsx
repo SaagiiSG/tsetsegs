@@ -57,22 +57,28 @@ export default function StudentDashboardHome() {
     queryFn: async () => {
       if (!student?.id) return null;
 
-      // Fetch 68 problems completion
-      const { data: attempts68 } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct')
-        .eq('student_account_id', student.id)
-        .eq('is_correct', true);
-
+      // Fetch 68 problems - get question IDs first
       const { data: questions68 } = await supabase
         .from('questions')
         .select('id')
         .eq('question_set', '68')
         .eq('is_active', true);
 
+      const question68Ids = questions68?.map(q => q.id) || [];
+
+      // Only count correct attempts for questions in the 68 set
+      const { data: attempts68 } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', student.id)
+        .eq('is_correct', true)
+        .in('question_id', question68Ids.length > 0 ? question68Ids : ['00000000-0000-0000-0000-000000000000']);
+
       const unique68Correct = new Set(attempts68?.map(a => a.question_id) || []);
-      const completion68 = questions68?.length 
-        ? Math.round((unique68Correct.size / questions68.length) * 100) 
+      const total68Count = questions68?.length || 0;
+      const completed68Count = unique68Correct.size;
+      const completion68 = total68Count > 0
+        ? Math.round((completed68Count / total68Count) * 100) 
         : 0;
 
       // Fetch CB questions completion
@@ -82,18 +88,20 @@ export default function StudentDashboardHome() {
         .eq('question_set', 'CollegeBoard')
         .eq('is_active', true);
 
+      const cbQuestionIds = cbQuestions?.map(q => q.id) || [];
+
       const { data: cbAttempts } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct')
+        .select('question_id')
         .eq('student_account_id', student.id)
-        .eq('is_correct', true);
+        .eq('is_correct', true)
+        .in('question_id', cbQuestionIds.length > 0 ? cbQuestionIds : ['00000000-0000-0000-0000-000000000000']);
 
-      const cbQuestionIds = new Set(cbQuestions?.map(q => q.id) || []);
-      const uniqueCBCorrect = new Set(
-        cbAttempts?.filter(a => cbQuestionIds.has(a.question_id)).map(a => a.question_id) || []
-      );
-      const cbCompletion = cbQuestions?.length 
-        ? Math.round((uniqueCBCorrect.size / cbQuestions.length) * 100) 
+      const uniqueCBCorrect = new Set(cbAttempts?.map(a => a.question_id) || []);
+      const totalCBCount = cbQuestions?.length || 0;
+      const completedCBCount = uniqueCBCorrect.size;
+      const cbCompletion = totalCBCount > 0
+        ? Math.round((completedCBCount / totalCBCount) * 100) 
         : 0;
 
       // Fetch practice tests for linked student
@@ -117,11 +125,11 @@ export default function StudentDashboardHome() {
 
       return {
         completion68,
-        total68: questions68?.length || 68,
-        completed68: unique68Correct.size,
+        total68: total68Count,
+        completed68: completed68Count,
         cbCompletion,
-        totalCB: cbQuestions?.length || 1074,
-        completedCB: uniqueCBCorrect.size,
+        totalCB: totalCBCount,
+        completedCB: completedCBCount,
         practiceTestAvg,
         realTestScore,
       };
@@ -193,8 +201,20 @@ export default function StudentDashboardHome() {
       // Normalize: 15s = 100, 60s+ = 0
       const speedScore = Math.max(0, Math.min(100, Math.round(100 - ((avgTime - 15) / 45) * 100)));
 
-      // Vocab completion (placeholder - need vocab progress tracking)
-      const vocabScore = 0; // Will be implemented with vocab progress
+      // Fetch vocab progress
+      const { data: totalVocabWords } = await supabase
+        .from('vocabulary_words')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      const { data: learnedVocab } = await supabase
+        .from('student_vocabulary_progress')
+        .select('word_id')
+        .eq('student_account_id', student.id);
+
+      const totalWords = (totalVocabWords as any)?.count || 325;
+      const learnedWords = learnedVocab?.length || 0;
+      const vocabScore = totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0;
 
       return [
         { 
