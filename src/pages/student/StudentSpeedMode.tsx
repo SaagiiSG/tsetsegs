@@ -5,15 +5,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
   Zap, Play, Trophy, Award
@@ -62,9 +54,9 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
   };
 
   return (
-    <div className="flex flex-col items-center min-w-[120px]">
+    <div className="flex flex-col items-center w-[40%]">
       <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">{label}</span>
-      <div className="relative h-[132px] w-32 overflow-hidden rounded-xl">
+      <div className="relative h-[132px] w-full max-w-[140px] overflow-hidden rounded-xl">
         {/* Selection indicator */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-11 bg-primary/10 border-y border-primary/20 pointer-events-none z-10 rounded-lg mx-1" />
         
@@ -357,61 +349,84 @@ export default function StudentSpeedMode() {
 
       {/* Session Builder Island - All in one row */}
       <Card className="shadow-lg border-2 bg-card/80 backdrop-blur-sm">
-        <CardContent className="py-10 px-8 sm:px-16">
-          <div className="flex flex-col sm:flex-row items-center justify-evenly gap-12 sm:gap-20">
-            {/* Duration Picker */}
-            <ScrollPicker
-              values={timeValues}
-              selectedValue={sessionDuration}
-              onChange={setSessionDuration}
-              label="Duration"
-            />
+        <CardContent className="py-8 px-6 sm:px-12">
+          <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-0">
+            {/* Pickers Container - 40% each */}
+            <div className="flex items-center justify-center w-full sm:w-[40%]">
+              <ScrollPicker
+                values={timeValues}
+                selectedValue={sessionDuration}
+                onChange={setSessionDuration}
+                label="Duration"
+              />
+            </div>
 
             {/* Divider */}
-            <div className="hidden sm:block w-px h-32 bg-border/40" />
-            <div className="sm:hidden w-40 h-px bg-border/40" />
+            <div className="hidden sm:block w-px h-32 bg-border/30" />
+            <div className="sm:hidden w-32 h-px bg-border/30" />
 
-            {/* Question Count Picker */}
-            <ScrollPicker
-              values={questionValues}
-              selectedValue={questionCount}
-              onChange={setQuestionCount}
-              label="Questions"
-            />
+            <div className="flex items-center justify-center w-full sm:w-[40%]">
+              <ScrollPicker
+                values={questionValues}
+                selectedValue={questionCount}
+                onChange={setQuestionCount}
+                label="Questions"
+              />
+            </div>
 
             {/* Divider */}
-            <div className="hidden sm:block w-px h-32 bg-border/40" />
-            <div className="sm:hidden w-40 h-px bg-border/40" />
+            <div className="hidden sm:block w-px h-32 bg-border/30" />
+            <div className="sm:hidden w-32 h-px bg-border/30" />
 
-            {/* Category Selector */}
-            <div className="flex flex-col items-center min-w-[160px]">
+            {/* Category Badge Selector - 20% */}
+            <div className="flex flex-col items-center w-full sm:w-[20%]">
               <span className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wider">Category</span>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48 h-12 text-base">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Mixed</SelectItem>
-                  
-                  {categories?.math && categories.math.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>Math</SelectLabel>
-                      {categories.math.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectGroup>
+              <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto">
+                <Badge
+                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                  className={cn(
+                    "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                    selectedCategory === 'all' 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-primary/10"
                   )}
-                  
-                  {categories?.english && categories.english.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>English</SelectLabel>
-                      {categories.english.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                </SelectContent>
-              </Select>
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  All Mixed
+                </Badge>
+                
+                {categories?.math?.map(cat => (
+                  <Badge
+                    key={cat.id}
+                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                    className={cn(
+                      "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                      selectedCategory === cat.id 
+                        ? "bg-primary text-primary-foreground" 
+                        : "hover:bg-primary/10"
+                    )}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    {cat.name}
+                  </Badge>
+                ))}
+                
+                {categories?.english?.map(cat => (
+                  <Badge
+                    key={cat.id}
+                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                    className={cn(
+                      "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                      selectedCategory === cat.id 
+                        ? "bg-primary text-primary-foreground" 
+                        : "hover:bg-primary/10"
+                    )}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    {cat.name}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
