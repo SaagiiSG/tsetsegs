@@ -38,8 +38,8 @@ export function StudentLayout() {
         <StudentDashboardSidebar />
         
         <main className="flex-1 pb-20 md:pb-0 overflow-auto">
-          {/* Mobile header with sidebar trigger */}
-          <div className="md:hidden flex items-center gap-2 p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+          {/* Header with sidebar trigger - visible on all screens */}
+          <div className="flex items-center gap-2 p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
             <SidebarTrigger />
             <span className="font-semibold text-sm">SAT Practice</span>
           </div>
