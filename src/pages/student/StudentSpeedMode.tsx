@@ -32,8 +32,7 @@ interface ScrollPickerProps {
 
 function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const itemHeight = 40;
-  const visibleItems = 3;
+  const itemHeight = 44;
   
   const selectedIndex = values.findIndex(v => v.value === selectedValue);
 
@@ -63,15 +62,15 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <span className="text-xs text-muted-foreground mb-2 font-medium">{label}</span>
-      <div className="relative h-[120px] w-20 overflow-hidden">
+    <div className="flex flex-col items-center min-w-[100px]">
+      <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">{label}</span>
+      <div className="relative h-[132px] w-24 overflow-hidden rounded-xl">
         {/* Selection indicator */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 bg-primary/10 border-y border-primary/30 pointer-events-none z-10" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-11 bg-primary/10 border-y border-primary/20 pointer-events-none z-10 rounded-lg mx-1" />
         
         {/* Gradient overlays */}
-        <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-background to-transparent pointer-events-none z-20" />
-        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent pointer-events-none z-20" />
+        <div className="absolute inset-x-0 top-0 h-11 bg-gradient-to-b from-card to-transparent pointer-events-none z-20" />
+        <div className="absolute inset-x-0 bottom-0 h-11 bg-gradient-to-t from-card to-transparent pointer-events-none z-20" />
         
         {/* Scrollable list */}
         <div
@@ -90,10 +89,10 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
               <div
                 key={item.value}
                 className={cn(
-                  "h-10 flex items-center justify-center cursor-pointer transition-all snap-center",
+                  "h-11 flex items-center justify-center cursor-pointer transition-all duration-200 snap-center",
                   isSelected 
-                    ? "text-primary font-bold text-lg" 
-                    : "text-muted-foreground text-sm"
+                    ? "text-primary font-bold text-xl scale-105" 
+                    : "text-muted-foreground/70 text-base"
                 )}
                 onClick={() => scrollToIndex(index)}
               >
@@ -357,9 +356,9 @@ export default function StudentSpeedMode() {
       </div>
 
       {/* Session Builder Island - All in one row */}
-      <Card className="shadow-lg border-2">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+      <Card className="shadow-lg border-2 bg-card/80 backdrop-blur-sm">
+        <CardContent className="py-10 px-8 sm:px-16">
+          <div className="flex flex-col sm:flex-row items-center justify-evenly gap-12 sm:gap-20">
             {/* Duration Picker */}
             <ScrollPicker
               values={timeValues}
@@ -369,7 +368,8 @@ export default function StudentSpeedMode() {
             />
 
             {/* Divider */}
-            <div className="hidden sm:block w-px h-24 bg-border" />
+            <div className="hidden sm:block w-px h-32 bg-border/40" />
+            <div className="sm:hidden w-40 h-px bg-border/40" />
 
             {/* Question Count Picker */}
             <ScrollPicker
@@ -380,13 +380,14 @@ export default function StudentSpeedMode() {
             />
 
             {/* Divider */}
-            <div className="hidden sm:block w-px h-24 bg-border" />
+            <div className="hidden sm:block w-px h-32 bg-border/40" />
+            <div className="sm:hidden w-40 h-px bg-border/40" />
 
             {/* Category Selector */}
-            <div className="flex flex-col items-center">
-              <span className="text-xs text-muted-foreground mb-2 font-medium">Category</span>
+            <div className="flex flex-col items-center min-w-[160px]">
+              <span className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wider">Category</span>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-40 h-10">
+                <SelectTrigger className="w-48 h-12 text-base">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
