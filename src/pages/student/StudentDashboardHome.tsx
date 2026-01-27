@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO } from 'date-fns';
+import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO, addMonths } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
-  CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, Calendar,
+  CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, CalendarIcon,
   TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreDrawer';
 import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Drawer,
   DrawerClose,
@@ -384,66 +385,52 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  // SAT test months
-  const SAT_MONTHS = [
-    { value: 'Mar', label: 'March' },
-    { value: 'May', label: 'May' },
-    { value: 'Jun', label: 'June' },
-    { value: 'Aug', label: 'August' },
-    { value: 'Sep', label: 'September' },
-    { value: 'Oct', label: 'October' },
-    { value: 'Nov', label: 'November' },
-    { value: 'Dec', label: 'December' },
-  ];
-
-  // Calculate days until SAT based on selected month
-  const daysUntilSAT = useMemo(() => {
-    const satMonth = student?.linked_student?.sat_test_month;
-    if (!satMonth) return null;
+  // Parse stored SAT date and calculate days until
+  const satDate = useMemo(() => {
+    const storedDate = student?.linked_student?.sat_test_month;
+    if (!storedDate) return null;
     
-    const monthMap: Record<string, number> = {
-      'Mar': 2, 'May': 4, 'Jun': 5, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
-    };
+    // Try to parse as ISO date first (new format)
+    try {
+      const parsed = parseISO(storedDate);
+      if (!isNaN(parsed.getTime())) return parsed;
+    } catch {}
     
-    const monthIndex = monthMap[satMonth];
-    if (monthIndex === undefined) return null;
-    
-    const now = new Date();
-    let year = now.getFullYear();
-    
-    // If the month has passed this year, use next year
-    if (monthIndex < now.getMonth()) {
-      year += 1;
-    }
-    
-    // SAT is typically on a Saturday in that month - approximate with 15th
-    const satDate = new Date(year, monthIndex, 15);
-    return Math.max(0, differenceInDays(satDate, now));
+    return null;
   }, [student?.linked_student?.sat_test_month]);
+
+  const daysUntilSAT = useMemo(() => {
+    if (!satDate) return null;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Math.max(0, differenceInDays(satDate, now));
+  }, [satDate]);
 
   const queryClient = useQueryClient();
 
-  // Mutation to update SAT test month
-  const updateSatMonth = useMutation({
-    mutationFn: async (month: string) => {
+  // Mutation to update SAT test date
+  const updateSatDate = useMutation({
+    mutationFn: async (date: Date) => {
       if (!student?.linked_student_id) {
         throw new Error('No linked student found');
       }
       
+      const dateStr = format(date, 'yyyy-MM-dd');
+      
       const { error } = await supabase
         .from('students')
-        .update({ sat_test_month: month })
+        .update({ sat_test_month: dateStr })
         .eq('id', student.linked_student_id);
       
       if (error) throw error;
-      return month;
+      return date;
     },
-    onSuccess: (month) => {
-      toast.success(`SAT test month set to ${SAT_MONTHS.find(m => m.value === month)?.label || month}`);
+    onSuccess: (date) => {
+      toast.success(`SAT test date set to ${format(date, 'MMMM d, yyyy')}`);
       queryClient.invalidateQueries({ queryKey: ['student-auth'] });
     },
     onError: (error) => {
-      toast.error('Failed to update SAT test month');
+      toast.error('Failed to update SAT test date');
       console.error(error);
     },
   });
@@ -931,7 +918,7 @@ export default function StudentDashboardHome() {
                     <Drawer>
                       <DrawerTrigger asChild>
                         <button className="w-full focus:outline-none">
-                          {daysUntilSAT !== null ? (
+                          {daysUntilSAT !== null && satDate ? (
                             <div className="space-y-1">
                               <div className="text-4xl font-bold text-primary">
                                 {daysUntilSAT}
@@ -940,7 +927,7 @@ export default function StudentDashboardHome() {
                                 days until SAT
                               </p>
                               <Badge variant="outline" className="mt-1">
-                                {SAT_MONTHS.find(m => m.value === student?.linked_student?.sat_test_month)?.label} SAT
+                                {format(satDate, 'MMM d, yyyy')}
                               </Badge>
                               {daysUntilSAT <= 30 && (
                                 <Badge variant="destructive" className="mt-1 text-xs ml-1">
@@ -950,7 +937,7 @@ export default function StudentDashboardHome() {
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <Calendar className="h-8 w-8 mx-auto text-muted-foreground" />
+                              <CalendarIcon className="h-8 w-8 mx-auto text-muted-foreground" />
                               <p className="text-sm text-muted-foreground">
                                 Tap to set SAT date
                               </p>
@@ -961,24 +948,24 @@ export default function StudentDashboardHome() {
                       <DrawerContent>
                         <div className="mx-auto w-full max-w-sm">
                           <DrawerHeader>
-                            <DrawerTitle>Select Your SAT Test Month</DrawerTitle>
+                            <DrawerTitle>Select Your SAT Test Date</DrawerTitle>
                             <DrawerDescription>
-                              Choose when you plan to take the SAT
+                              Choose the exact date of your SAT exam
                             </DrawerDescription>
                           </DrawerHeader>
-                          <div className="p-4 grid grid-cols-2 gap-3">
-                            {SAT_MONTHS.map((month) => (
-                              <DrawerClose asChild key={month.value}>
-                                <Button
-                                  variant={student?.linked_student?.sat_test_month === month.value ? "default" : "outline"}
-                                  className="h-14 text-base"
-                                  onClick={() => updateSatMonth.mutate(month.value)}
-                                  disabled={updateSatMonth.isPending}
-                                >
-                                  {month.label}
-                                </Button>
-                              </DrawerClose>
-                            ))}
+                          <div className="flex justify-center p-4">
+                            <Calendar
+                              mode="single"
+                              selected={satDate || undefined}
+                              onSelect={(date) => {
+                                if (date) {
+                                  updateSatDate.mutate(date);
+                                }
+                              }}
+                              disabled={(date) => date < new Date()}
+                              defaultMonth={satDate || addMonths(new Date(), 1)}
+                              className="rounded-md border pointer-events-auto"
+                            />
                           </div>
                           <DrawerFooter>
                             <DrawerClose asChild>
@@ -990,7 +977,7 @@ export default function StudentDashboardHome() {
                     </Drawer>
                   ) : (
                     <div className="space-y-2">
-                      <Calendar className="h-8 w-8 mx-auto text-muted-foreground" />
+                      <CalendarIcon className="h-8 w-8 mx-auto text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">
                         Link your student profile to set SAT date
                       </p>
