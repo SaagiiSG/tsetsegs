@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,6 +62,20 @@ export default function StudentDashboardHome() {
   const { student } = useStudentAuth();
   const navigate = useNavigate();
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
+  const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
+
+  // Initialize selectedSatDate from student data
+  useEffect(() => {
+    const storedDate = student?.linked_student?.sat_test_month;
+    if (storedDate) {
+      try {
+        const parsed = parseISO(storedDate);
+        if (!isNaN(parsed.getTime())) {
+          setSelectedSatDate(parsed);
+        }
+      } catch {}
+    }
+  }, [student?.linked_student?.sat_test_month]);
 
   // Fetch dashboard stats
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -385,26 +399,13 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  // Parse stored SAT date and calculate days until
-  const satDate = useMemo(() => {
-    const storedDate = student?.linked_student?.sat_test_month;
-    if (!storedDate) return null;
-    
-    // Try to parse as ISO date first (new format)
-    try {
-      const parsed = parseISO(storedDate);
-      if (!isNaN(parsed.getTime())) return parsed;
-    } catch {}
-    
-    return null;
-  }, [student?.linked_student?.sat_test_month]);
-
+  // Calculate days until SAT using local state
   const daysUntilSAT = useMemo(() => {
-    if (!satDate) return null;
+    if (!selectedSatDate) return null;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    return Math.max(0, differenceInDays(satDate, now));
-  }, [satDate]);
+    return Math.max(0, differenceInDays(selectedSatDate, now));
+  }, [selectedSatDate]);
 
   const queryClient = useQueryClient();
 
@@ -426,8 +427,8 @@ export default function StudentDashboardHome() {
       return date;
     },
     onSuccess: (date) => {
+      setSelectedSatDate(date); // Update local state immediately
       toast.success(`SAT test date set to ${format(date, 'MMMM d, yyyy')}`);
-      queryClient.invalidateQueries({ queryKey: ['student-auth'] });
     },
     onError: (error) => {
       toast.error('Failed to update SAT test date');
@@ -918,7 +919,7 @@ export default function StudentDashboardHome() {
                     <Drawer>
                       <DrawerTrigger asChild>
                         <button className="w-full focus:outline-none">
-                          {daysUntilSAT !== null && satDate ? (
+                          {daysUntilSAT !== null && selectedSatDate ? (
                             <div className="space-y-1">
                               <div className="text-4xl font-bold text-primary">
                                 {daysUntilSAT}
@@ -927,7 +928,7 @@ export default function StudentDashboardHome() {
                                 days until SAT
                               </p>
                               <Badge variant="outline" className="mt-1">
-                                {format(satDate, 'MMM d, yyyy')}
+                                {format(selectedSatDate, 'MMM d, yyyy')}
                               </Badge>
                               {daysUntilSAT <= 30 && (
                                 <Badge variant="destructive" className="mt-1 text-xs ml-1">
@@ -956,14 +957,14 @@ export default function StudentDashboardHome() {
                           <div className="flex justify-center p-4">
                             <Calendar
                               mode="single"
-                              selected={satDate || undefined}
+                              selected={selectedSatDate || undefined}
                               onSelect={(date) => {
                                 if (date) {
                                   updateSatDate.mutate(date);
                                 }
                               }}
                               disabled={(date) => date < new Date()}
-                              defaultMonth={satDate || addMonths(new Date(), 1)}
+                              defaultMonth={selectedSatDate || addMonths(new Date(), 1)}
                               className="rounded-md border pointer-events-auto"
                             />
                           </div>
