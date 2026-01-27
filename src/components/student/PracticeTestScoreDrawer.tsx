@@ -118,7 +118,7 @@ export function PracticeTestScoreDrawer({ trigger }: PracticeTestScoreDrawerProp
   };
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={setOpen} direction="right">
       <DrawerTrigger asChild>
         {trigger || (
           <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -126,8 +126,8 @@ export function PracticeTestScoreDrawer({ trigger }: PracticeTestScoreDrawerProp
           </Button>
         )}
       </DrawerTrigger>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-sm">
+      <DrawerContent className="h-full w-[400px] max-w-[90vw] ml-auto rounded-l-[10px] rounded-t-none">
+        <div className="w-full max-w-sm mx-auto">
           <DrawerHeader>
             <DrawerTitle>Edit Practice Test Scores</DrawerTitle>
             <DrawerDescription>
