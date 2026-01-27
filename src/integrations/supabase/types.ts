@@ -1245,6 +1245,57 @@ export type Database = {
           },
         ]
       }
+      student_vocabulary_progress: {
+        Row: {
+          confidence_level: number
+          created_at: string
+          id: string
+          last_reviewed_at: string | null
+          learned_at: string
+          review_count: number
+          student_account_id: string
+          updated_at: string
+          word_id: string
+        }
+        Insert: {
+          confidence_level?: number
+          created_at?: string
+          id?: string
+          last_reviewed_at?: string | null
+          learned_at?: string
+          review_count?: number
+          student_account_id: string
+          updated_at?: string
+          word_id: string
+        }
+        Update: {
+          confidence_level?: number
+          created_at?: string
+          id?: string
+          last_reviewed_at?: string | null
+          learned_at?: string
+          review_count?: number
+          student_account_id?: string
+          updated_at?: string
+          word_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_vocabulary_progress_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_vocabulary_progress_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "vocabulary_words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           accessed: boolean
