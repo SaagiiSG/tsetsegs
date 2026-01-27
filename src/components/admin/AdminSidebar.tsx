@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, BookOpen, Wrench, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import {
@@ -12,29 +12,88 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
-const menuItems = [
-  { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
-  { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
-  { title: "Batches", url: "/admin/batches", icon: GraduationCap },
-  { title: "Create Batch", url: "/admin/create", icon: Plus },
-  // Question Bank is dev-only, conditionally added below
-  { title: "Student Search", url: "/admin/search", icon: Search },
-  { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
-  { title: "Review Registration", url: "/register/admin", icon: QrCode },
-  { title: "Students", url: "/admin/students", icon: UserCheck },
-  { title: "Team", url: "/admin/team", icon: Users },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  end?: boolean;
+};
+
+type MenuSection = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: MenuItem[];
+  defaultOpen: boolean;
+  devItems?: MenuItem[];
+};
+
+// Menu sections with their items
+const menuSections: MenuSection[] = [
+  {
+    label: "Overview",
+    icon: LayoutDashboard,
+    items: [
+      { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
+      { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
+    ],
+    defaultOpen: true,
+  },
+  {
+    label: "Batches",
+    icon: GraduationCap,
+    items: [
+      { title: "All Batches", url: "/admin/batches", icon: GraduationCap },
+      { title: "Create Batch", url: "/admin/create", icon: Plus },
+    ],
+    defaultOpen: true,
+  },
+  {
+    label: "Students",
+    icon: Users,
+    items: [
+      { title: "Search", url: "/admin/search", icon: Search },
+      { title: "Accounts", url: "/admin/students", icon: UserCheck },
+    ],
+    defaultOpen: false,
+  },
+  {
+    label: "Tools",
+    icon: Wrench,
+    items: [
+      { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
+      { title: "Registration", url: "/register/admin", icon: QrCode },
+      // Question Bank added conditionally below
+    ],
+    defaultOpen: false,
+    devItems: [
+      { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
+    ],
+  },
+  {
+    label: "Admin",
+    icon: Shield,
+    items: [
+      { title: "Team", url: "/admin/team", icon: Users },
+      { title: "Settings", url: "/admin/settings", icon: Settings },
+    ],
+    defaultOpen: false,
+  },
 ];
 
-// Add Question Bank only in dev mode
-const allMenuItems = import.meta.env.DEV 
-  ? [
-      ...menuItems.slice(0, 4),
-      { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
-      ...menuItems.slice(4)
-    ]
-  : menuItems;
+// Process sections to add dev-only items
+const processedSections = menuSections.map(section => ({
+  ...section,
+  items: import.meta.env.DEV && section.devItems 
+    ? [...section.items, ...section.devItems]
+    : section.items,
+}));
 
 export function AdminSidebar() {
   const { open } = useSidebar();
@@ -43,7 +102,7 @@ export function AdminSidebar() {
     <Sidebar className={open ? "w-60" : "w-14"} collapsible="icon">
       <SidebarContent className="pt-4">
         {/* Logo and Title */}
-        <div className="px-3 pb-4 mb-4 border-b">
+        <div className="px-3 pb-4 mb-2 border-b">
           <div className="flex items-center gap-3">
             <img
               src={flowersLogo}
@@ -59,28 +118,48 @@ export function AdminSidebar() {
           </div>
         </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {allMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.end}
-                      className="hover:bg-muted/50"
-                      activeClassName="bg-muted text-primary font-medium"
-                    >
-                      <item.icon className="h-6 w-6" />
-                      {open && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Menu Sections */}
+        {processedSections.map((section) => (
+          <SidebarGroup key={section.label} className="py-0">
+            <Collapsible defaultOpen={section.defaultOpen} className="group/collapsible">
+              <SidebarGroupLabel asChild className="px-2">
+                <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:bg-muted/50 rounded-md transition-colors">
+                  <div className="flex items-center gap-2">
+                    <section.icon className="h-4 w-4 text-muted-foreground" />
+                    {open && <span className="text-xs font-medium uppercase tracking-wider">{section.label}</span>}
+                  </div>
+                  {open && (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  )}
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {section.items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end={item.end}
+                            className={cn(
+                              "hover:bg-muted/50 transition-colors",
+                              open ? "pl-6" : "justify-center"
+                            )}
+                            activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                          >
+                            <item.icon className="h-4 w-4 flex-shrink-0" />
+                            {open && <span className="truncate">{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );
