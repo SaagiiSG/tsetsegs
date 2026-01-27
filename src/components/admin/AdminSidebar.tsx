@@ -198,7 +198,7 @@ export function AdminSidebar() {
                                   "hover:bg-muted/50 transition-all duration-200 group/item",
                                   open ? "pl-6" : "justify-center"
                                 )}
-                                activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                                activeClassName="bg-primary/10 text-primary font-medium"
                               >
                                 <motion.div
                                   whileHover={{ scale: 1.1 }}
