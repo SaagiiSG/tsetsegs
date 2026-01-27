@@ -35,25 +35,44 @@ export default function Login() {
   const { signIn: adminSignIn, signUp: adminSignUp, user: adminUser, isAdmin, isLoading: authLoading } = useAuth();
   const { signIn: teacherSignIn, user: teacherUser, needsPasswordChange } = useTeacherAuth();
 
+  // Track if we've already shown a toast for this login attempt
+  const [hasShownAdminToast, setHasShownAdminToast] = useState(false);
+
   // Handle admin auth redirects
   useEffect(() => {
-    if (!authLoading && adminUser && isAdmin) {
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in as admin.",
-      });
+    // Only process when auth is fully loaded and we're actively trying to login
+    if (authLoading || !adminLoading) return;
+
+    if (adminUser && isAdmin) {
+      if (!hasShownAdminToast) {
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in as admin.",
+        });
+        setHasShownAdminToast(true);
+      }
       navigate("/admin");
-    } else if (!authLoading && adminUser && !isAdmin) {
+    } else if (adminUser && !isAdmin) {
+      // Only show access denied if we were actively trying to log in as admin
       setAdminLoading(false);
-      toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges.",
-        variant: "destructive",
-      });
-    } else if (!authLoading && !adminUser) {
+      if (!hasShownAdminToast) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges.",
+          variant: "destructive",
+        });
+        setHasShownAdminToast(true);
+      }
+    }
+  }, [adminUser, isAdmin, authLoading, adminLoading, navigate, toast, hasShownAdminToast]);
+
+  // Reset toast flag when user logs out or switches tabs
+  useEffect(() => {
+    if (!adminUser) {
+      setHasShownAdminToast(false);
       setAdminLoading(false);
     }
-  }, [adminUser, isAdmin, authLoading, navigate, toast]);
+  }, [adminUser]);
 
   // Handle teacher auth redirects
   useEffect(() => {
