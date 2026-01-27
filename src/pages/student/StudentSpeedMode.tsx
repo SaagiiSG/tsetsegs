@@ -54,9 +54,9 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
   };
 
   return (
-    <div className="flex flex-col items-center w-[40%]">
+    <div className="flex flex-col items-center flex-1 min-w-[80px]">
       <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">{label}</span>
-      <div className="relative h-[132px] w-full max-w-[140px] overflow-hidden rounded-xl">
+      <div className="relative h-[132px] w-full max-w-[100px] overflow-hidden rounded-xl">
         {/* Selection indicator */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-11 bg-primary/10 border-y border-primary/20 pointer-events-none z-10 rounded-lg mx-1" />
         
@@ -350,22 +350,18 @@ export default function StudentSpeedMode() {
       {/* Session Builder Island - All in one row */}
       <Card className="shadow-lg border-2 bg-card/80 backdrop-blur-sm">
         <CardContent className="py-8 px-6 sm:px-12">
-          <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-0">
-            {/* Pickers Container - 40% each */}
-            <div className="flex items-center justify-center w-full sm:w-[40%]">
+          <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-6">
+            {/* Both Pickers Container - 40% total */}
+            <div className="flex items-center justify-center gap-6 w-full sm:w-[40%]">
               <ScrollPicker
                 values={timeValues}
                 selectedValue={sessionDuration}
                 onChange={setSessionDuration}
                 label="Duration"
               />
-            </div>
-
-            {/* Divider */}
-            <div className="hidden sm:block w-px h-32 bg-border/30" />
-            <div className="sm:hidden w-32 h-px bg-border/30" />
-
-            <div className="flex items-center justify-center w-full sm:w-[40%]">
+              
+              <div className="w-px h-24 bg-border/30" />
+              
               <ScrollPicker
                 values={questionValues}
                 selectedValue={questionCount}
@@ -376,16 +372,16 @@ export default function StudentSpeedMode() {
 
             {/* Divider */}
             <div className="hidden sm:block w-px h-32 bg-border/30" />
-            <div className="sm:hidden w-32 h-px bg-border/30" />
+            <div className="sm:hidden w-48 h-px bg-border/30" />
 
-            {/* Category Badge Selector - 20% */}
-            <div className="flex flex-col items-center w-full sm:w-[20%]">
+            {/* Category Badge Selector - 60% */}
+            <div className="flex flex-col items-center w-full sm:w-[60%]">
               <span className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wider">Category</span>
-              <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto">
+              <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto px-2">
                 <Badge
                   variant={selectedCategory === 'all' ? 'default' : 'outline'}
                   className={cn(
-                    "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                    "cursor-pointer px-4 py-2 text-sm transition-all",
                     selectedCategory === 'all' 
                       ? "bg-primary text-primary-foreground" 
                       : "hover:bg-primary/10"
@@ -400,7 +396,7 @@ export default function StudentSpeedMode() {
                     key={cat.id}
                     variant={selectedCategory === cat.id ? 'default' : 'outline'}
                     className={cn(
-                      "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                      "cursor-pointer px-4 py-2 text-sm transition-all",
                       selectedCategory === cat.id 
                         ? "bg-primary text-primary-foreground" 
                         : "hover:bg-primary/10"
@@ -416,7 +412,7 @@ export default function StudentSpeedMode() {
                     key={cat.id}
                     variant={selectedCategory === cat.id ? 'default' : 'outline'}
                     className={cn(
-                      "cursor-pointer px-3 py-1.5 text-sm transition-all",
+                      "cursor-pointer px-4 py-2 text-sm transition-all",
                       selectedCategory === cat.id 
                         ? "bg-primary text-primary-foreground" 
                         : "hover:bg-primary/10"
