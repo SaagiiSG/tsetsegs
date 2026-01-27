@@ -36,8 +36,7 @@ interface NavItem {
 }
 
 const learningItems: NavItem[] = [
-  { to: '/practice/dashboard', icon: BookOpen, label: 'Math Practice' },
-  { to: '/practice/english', icon: Languages, label: 'English Practice' },
+  { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/speed', icon: Zap, label: 'Speed Mode' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
 ];
