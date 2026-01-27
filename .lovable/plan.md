@@ -1,212 +1,331 @@
 
-# Merged Practice Page Plan
+# Speed Mode Redesign Plan
 
 ## Overview
-This plan merges the Math and English practice pages into a single unified page with an island-style selector at the top and a two-column layout below for category/subtopic selection and question display.
+This plan redesigns the `/practice/speed` page with a modern, analytics-focused layout featuring:
+1. **Top Row**: Performance chart (70%) + Last session stats (30%)
+2. **Session Builder Island**: Time/question count sliders + category selector
+3. **Bottom Row**: Start button + Best score + Session count + Badge placeholder
 
 ---
 
 ## New Layout Design
 
 ```text
-+------------------------------------------------------------+
-|  ISLAND (rounded, elevated container)                       |
-|  +--------------------------------------------------------+ |
-|  | [Math] [English]     [68] [CB] (when math selected)    | |
-|  | ====================================================== | |
-|  | Overall Progress: ████████████░░░░░░░░░  45%           | |
-|  +--------------------------------------------------------+ |
-+------------------------------------------------------------+
-|                                                              |
-|  LEFT HALF (50%)              |  RIGHT HALF (50%)            |
-|  +------------------------+   |  +------------------------+  |
-|  | Categories & Subtopics |   |  | Selected Area Progress |  |
-|  |                        |   |  | + Question Grid        |  |
-|  | ▼ Advanced Math        |   |  |                        |  |
-|  |   • Equivalent expr    |   |  | [Q1] [Q2] [Q3] [Q4]    |  |
-|  |   • Quadratics         |   |  | [Q5] [Q6] [Q7] [Q8]    |  |
-|  | ▼ Algebra              |   |  |                        |  |
-|  |   • Linear equations   |   |  |                        |  |
-|  |   • Systems            |   |  |                        |  |
-|  | ▼ Geometry & Trig      |   |  |                        |  |
-|  | ▼ Problem Solving      |   |  |                        |  |
-|  +------------------------+   |  +------------------------+  |
-+------------------------------------------------------------+
++--------------------------------------------------------------------+
+|  TOP ROW                                                            |
+|  +-------------------------------------------+  +----------------+  |
+|  |  AREA CHART (70%)                         |  | LAST SESSION   |  |
+|  |  Last week's speed sessions               |  | (30%)          |  |
+|  |  AreaChart with:                          |  |                |  |
+|  |  - Date on X-axis                         |  |   42s          |  |
+|  |  - Time per problem (Y-axis)              |  |      87% acc   |  |
+|  |  - Accuracy as secondary line             |  |                |  |
+|  +-------------------------------------------+  +----------------+  |
++--------------------------------------------------------------------+
+|                                                                      |
+|  SESSION BUILDER ISLAND (elevated, rounded container)               |
+|  +----------------------------------------------------------------+ |
+|  |  TIME SELECTION                                                 | |
+|  |  [Slider: 10s ----O-------------------------- 10min]           | |
+|  |  Selected: 2 minutes                                            | |
+|  |                                                                 | |
+|  |  QUESTION COUNT                                                 | |
+|  |  [Slider: 5 ------O-------------------------- 50]              | |
+|  |  Selected: 15 questions                                         | |
+|  |                                                                 | |
+|  |  AREA SELECTOR                                                  | |
+|  |  +------------------------------------------------------------+ | |
+|  |  | Select with Group & Labels                                 | | |
+|  |  | - All Categories                                           | | |
+|  |  | - Math > Advanced Math, Algebra, Geometry, Problem Solving | | |
+|  |  | - English > Craft, Info, Standard English, Expression     | | |
+|  |  +------------------------------------------------------------+ | |
+|  +----------------------------------------------------------------+ |
++--------------------------------------------------------------------+
+|                                                                      |
+|  [================== START SESSION ==================]              |
+|                                                                      |
+|  BOTTOM ROW                                                         |
+|  +-------------------+  +-------------------+  +-------------------+ |
+|  | Best Score        |  | Sessions          |  | Badge             | |
+|  | 95%               |  | 12 total          |  | Coming Soon       | |
+|  | 38s avg           |  |                   |  | (placeholder)     | |
+|  +-------------------+  +-------------------+  +-------------------+ |
++--------------------------------------------------------------------+
 ```
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Refactor StudentPractice.tsx
+### Step 1: Fetch Speed Session History
 
-Replace the current layout with the new unified structure:
+Query the `student_activity_logs` table to get last week's speed session data:
 
-**State Management:**
-- `subject`: 'math' | 'english'
-- `questionSet`: '68' | 'CB' (only applies when math is selected)
-- `selectedCategory`: string | null (category ID or 'all')
-- `selectedSubtopic`: string | null (subtopic name or null for all in category)
-
-**Island Component:**
-- Container with rounded corners, elevated shadow, gradient background
-- Row 1: Button group for Math/English toggle
-- Row 1 (continued): When Math selected, show 68/CB toggle buttons in same row
-- Row 2: Overall progress bar spanning full width
-
-**Left Panel (Category Sidebar):**
-- Scrollable list of 4 categories based on subject selection
-- Each category is a collapsible section (using Collapsible from shadcn)
-- Category header is clickable (selects entire category)
-- Subtopics listed under each category, each clickable
-- Visual indicator for selected category/subtopic
-
-**Right Panel (Questions Display):**
-- Progress bar for selected area (category or subtopic)
-- Question grid matching current practice page style
-- Filtered based on left panel selection
-
-### Step 2: Data Queries
-
-**Fetch Questions:**
 ```tsx
-const { data: questions } = useQuery({
-  queryKey: ['practice-questions', subject, questionSet],
+const { data: speedHistory } = useQuery({
+  queryKey: ['speed-history', student?.id],
   queryFn: async () => {
-    let query = supabase
-      .from('questions')
-      .select('id, question_id, category_id, subtopic, category:question_categories(id, name)')
-      .eq('is_original', true)
-      .eq('is_active', true)
-      .eq('subject', subject);
+    const weekAgo = subDays(new Date(), 7);
     
-    if (subject === 'math') {
-      query = query.eq('question_set', questionSet === '68' ? '68' : 'CollegeBoard');
-    }
-    return query.order('question_id');
-  }
+    // Get completed sessions
+    const { data: sessions } = await supabase
+      .from('student_activity_logs')
+      .select('metadata, created_at')
+      .eq('student_account_id', student.id)
+      .eq('activity_type', 'speed_mode_complete')
+      .gte('created_at', weekAgo.toISOString())
+      .order('created_at', { ascending: true });
+    
+    return sessions?.map(s => ({
+      date: format(new Date(s.created_at), 'EEE'),
+      fullDate: format(new Date(s.created_at), 'MMM d'),
+      total: s.metadata.total,
+      correct: s.metadata.correct,
+      accuracy: s.metadata.total > 0 
+        ? Math.round((s.metadata.correct / s.metadata.total) * 100) 
+        : 0,
+      timePerProblem: s.metadata.timer // seconds per question from session
+    })) || [];
+  },
+  enabled: !!student?.id
 });
 ```
 
-**Build Category + Subtopic Tree:**
+### Step 2: Build Area Chart Component
+
+Using recharts with shadcn ChartContainer:
+
 ```tsx
-const categoryTree = useMemo(() => {
-  const tree = categories?.map(cat => ({
-    ...cat,
-    subtopics: [...new Set(
-      questions?.filter(q => q.category_id === cat.id)
-        .map(q => q.subtopic)
-        .filter(Boolean)
-    )]
-  }));
-  return tree;
-}, [categories, questions]);
+const chartConfig = {
+  timePerProblem: { label: "Time/Problem", color: "hsl(var(--primary))" },
+  accuracy: { label: "Accuracy", color: "hsl(var(--chart-2))" }
+};
+
+<Card className="w-[70%]">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-base">Last 7 Days Performance</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig} className="h-48">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={speedHistory}>
+          <defs>
+            <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+          <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Area 
+            type="monotone" 
+            dataKey="timePerProblem" 
+            stroke="hsl(var(--primary))" 
+            strokeWidth={2}
+            fill="url(#timeGradient)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </ChartContainer>
+  </CardContent>
+</Card>
 ```
 
-### Step 3: Left Panel Component
+### Step 3: Last Session Stats Component
 
-**Structure:**
+Display the most recent session's key metrics:
+
 ```tsx
-<div className="w-1/2 pr-4 border-r">
-  <ScrollArea className="h-[calc(100vh-300px)]">
-    {categoryTree?.map(cat => (
-      <Collapsible key={cat.id} defaultOpen>
-        <CollapsibleTrigger 
-          className={cn(
-            "w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted",
-            selectedCategory === cat.id && !selectedSubtopic && "bg-primary/10"
-          )}
-          onClick={() => {
-            setSelectedCategory(cat.id);
-            setSelectedSubtopic(null);
-          }}
-        >
-          <span className="font-medium">{cat.name}</span>
-          <ChevronDown className="h-4 w-4" />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pl-4 space-y-1">
-          {cat.subtopics.map(subtopic => (
-            <Button
-              key={subtopic}
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "w-full justify-start text-sm",
-                selectedSubtopic === subtopic && "bg-primary/10"
-              )}
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                setSelectedSubtopic(subtopic);
-              }}
-            >
-              {subtopic}
-            </Button>
-          ))}
-        </CollapsibleContent>
-      </Collapsible>
-    ))}
-  </ScrollArea>
+<Card className="w-[30%] flex flex-col justify-center">
+  <CardContent className="p-6 text-center">
+    <p className="text-sm text-muted-foreground mb-1">Last Session</p>
+    <div className="relative">
+      <span className="text-5xl font-bold text-primary">
+        {lastSession?.timePerProblem || '--'}
+        <span className="text-2xl">s</span>
+      </span>
+      <span className="absolute top-0 right-0 text-sm text-muted-foreground">
+        {lastSession?.accuracy || '--'}% acc
+      </span>
+    </div>
+    <p className="text-xs text-muted-foreground mt-2">
+      per problem
+    </p>
+  </CardContent>
+</Card>
+```
+
+### Step 4: Session Builder Island
+
+Elevated container with sliders and category selector:
+
+**State Management:**
+```tsx
+const [sessionDuration, setSessionDuration] = useState(120); // seconds (2 min default)
+const [questionCount, setQuestionCount] = useState(15);
+const [selectedCategory, setSelectedCategory] = useState<string>('all');
+```
+
+**Time Slider (10 seconds to 10 minutes):**
+```tsx
+<div className="space-y-3">
+  <div className="flex justify-between items-center">
+    <Label className="text-sm font-medium">Session Duration</Label>
+    <span className="text-sm font-mono font-bold text-primary">
+      {formatDuration(sessionDuration)}
+    </span>
+  </div>
+  <Slider
+    value={[sessionDuration]}
+    onValueChange={([val]) => setSessionDuration(val)}
+    min={10}
+    max={600} // 10 minutes
+    step={10}
+    className="w-full"
+  />
+  <div className="flex justify-between text-xs text-muted-foreground">
+    <span>10s</span>
+    <span>10min</span>
+  </div>
 </div>
 ```
 
-### Step 4: Right Panel Component
-
-**Structure:**
+**Question Count Slider:**
 ```tsx
-<div className="w-1/2 pl-4">
-  {/* Selected Area Header & Progress */}
-  <Card className="mb-4">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-base">
-        {selectedSubtopic || selectedCategoryName || 'All Questions'}
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <Progress value={areaProgressPercent} className="h-2" />
-      <p className="text-sm text-muted-foreground mt-1">
-        {areaCompleted}/{areaTotal} mastered
+<div className="space-y-3">
+  <div className="flex justify-between items-center">
+    <Label className="text-sm font-medium">Questions to Solve</Label>
+    <span className="text-sm font-mono font-bold text-primary">
+      {questionCount} questions
+    </span>
+  </div>
+  <Slider
+    value={[questionCount]}
+    onValueChange={([val]) => setQuestionCount(val)}
+    min={5}
+    max={50}
+    step={5}
+    className="w-full"
+  />
+  <div className="flex justify-between text-xs text-muted-foreground">
+    <span>5</span>
+    <span>50</span>
+  </div>
+</div>
+```
+
+**Category Selector with Groups:**
+```tsx
+<Select value={selectedCategory} onValueChange={setSelectedCategory}>
+  <SelectTrigger>
+    <SelectValue placeholder="Select category" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">All Categories (Mixed)</SelectItem>
+    
+    <SelectGroup>
+      <SelectLabel>Math</SelectLabel>
+      {mathCategories?.map(cat => (
+        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+      ))}
+    </SelectGroup>
+    
+    <SelectGroup>
+      <SelectLabel>English</SelectLabel>
+      {englishCategories?.map(cat => (
+        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+      ))}
+    </SelectGroup>
+  </SelectContent>
+</Select>
+```
+
+### Step 5: Bottom Stats Row
+
+Three equal-width cards with best score, session count, and badge placeholder:
+
+```tsx
+<div className="grid grid-cols-3 gap-4">
+  {/* Best Score */}
+  <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+    <CardContent className="p-4">
+      <div className="flex items-center gap-2 text-yellow-600 mb-2">
+        <Trophy className="h-4 w-4" />
+        <span className="font-medium text-sm">Best Score</span>
+      </div>
+      <p className="text-2xl font-bold">{bestScore?.accuracy || '--'}%</p>
+      <p className="text-xs text-muted-foreground">
+        {bestScore?.avgTime ? `${bestScore.avgTime}s avg` : 'No sessions yet'}
       </p>
     </CardContent>
   </Card>
-
-  {/* Question Grid */}
-  <ScrollArea className="h-[calc(100vh-400px)]">
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-      {filteredQuestions.map(question => (
-        <QuestionCard key={question.id} question={question} />
-      ))}
-    </div>
-  </ScrollArea>
+  
+  {/* Session Count */}
+  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+    <CardContent className="p-4">
+      <div className="flex items-center gap-2 text-primary mb-2">
+        <Zap className="h-4 w-4" />
+        <span className="font-medium text-sm">Sessions</span>
+      </div>
+      <p className="text-2xl font-bold">{totalSessions || '--'}</p>
+      <p className="text-xs text-muted-foreground">total completed</p>
+    </CardContent>
+  </Card>
+  
+  {/* Badge Placeholder */}
+  <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+    <CardContent className="p-4">
+      <div className="flex items-center gap-2 text-purple-600 mb-2">
+        <Award className="h-4 w-4" />
+        <span className="font-medium text-sm">Badge</span>
+      </div>
+      <p className="text-lg font-bold text-muted-foreground">Coming Soon</p>
+      <p className="text-xs text-muted-foreground">Earn badges!</p>
+    </CardContent>
+  </Card>
 </div>
 ```
 
-### Step 5: Filtering Logic
+### Step 6: Update Navigation to Session
+
+Modify the `startSpeedMode` function to pass new parameters:
 
 ```tsx
-const filteredQuestions = useMemo(() => {
-  if (!questions) return [];
-  
-  return questions.filter(q => {
-    // Filter by category if selected
-    if (selectedCategory && selectedCategory !== 'all') {
-      if (q.category_id !== selectedCategory) return false;
-    }
-    
-    // Filter by subtopic if selected
-    if (selectedSubtopic) {
-      if (q.subtopic !== selectedSubtopic) return false;
-    }
-    
-    return true;
+const startSpeedMode = () => {
+  logActivity('speed_mode_start', { 
+    duration: sessionDuration,
+    questionCount,
+    category: selectedCategory 
   });
-}, [questions, selectedCategory, selectedSubtopic]);
+  
+  const params = new URLSearchParams({
+    duration: String(sessionDuration),
+    questions: String(questionCount),
+    category: selectedCategory
+  });
+  
+  navigate(`/practice/speed/session?${params.toString()}`);
+};
 ```
 
-### Step 6: Update Routes
+### Step 7: Responsive Layout
 
-**Changes to App.tsx:**
-- Keep `/practice/dashboard` pointing to the merged StudentPractice
-- Remove or redirect `/practice/english` to `/practice/dashboard`
+Handle mobile/tablet breakpoints:
+
+```tsx
+{/* Top Row - stack on mobile */}
+<div className="flex flex-col lg:flex-row gap-4">
+  <Card className="lg:w-[70%] w-full">...</Card>
+  <Card className="lg:w-[30%] w-full">...</Card>
+</div>
+
+{/* Bottom Row - 1 col on mobile, 3 cols on desktop */}
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">...</div>
+```
 
 ---
 
@@ -214,31 +333,63 @@ const filteredQuestions = useMemo(() => {
 
 | File | Action |
 |------|--------|
-| `src/pages/student/StudentPractice.tsx` | Major refactor - new layout |
-| `src/App.tsx` | Update routes (remove/redirect English practice) |
+| `src/pages/student/StudentSpeedMode.tsx` | Full redesign with new layout |
+| `src/pages/student/StudentSpeedSession.tsx` | Update to handle new params (duration + question count) |
 
 ---
 
-## Technical Notes
+## Technical Details
 
-### Responsive Design
-- On mobile (< lg breakpoint), stack left/right panels vertically
-- Island remains horizontal with wrapping buttons
-- Use `grid-cols-1 lg:grid-cols-2` for the split layout
+### Helper Function for Duration Formatting
+```tsx
+const formatDuration = (seconds: number): string => {
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+};
+```
 
-### Subtopic Availability
-- Currently only CollegeBoard questions have subtopics populated
-- 68 question set may not have subtopics - show "No subtopics" message
-- English questions should have subtopics from the import system
+### Fetching Best Score and Total Sessions
+```tsx
+const { data: stats } = useQuery({
+  queryKey: ['speed-stats', student?.id],
+  queryFn: async () => {
+    const { data: completedSessions } = await supabase
+      .from('student_activity_logs')
+      .select('metadata')
+      .eq('student_account_id', student.id)
+      .eq('activity_type', 'speed_mode_complete');
+    
+    if (!completedSessions?.length) return { bestScore: null, totalSessions: 0 };
+    
+    const sessions = completedSessions.map(s => ({
+      accuracy: s.metadata.total > 0 
+        ? Math.round((s.metadata.correct / s.metadata.total) * 100) 
+        : 0,
+      avgTime: s.metadata.timer
+    }));
+    
+    const best = sessions.reduce((prev, curr) => 
+      curr.accuracy > prev.accuracy ? curr : prev
+    , sessions[0]);
+    
+    return { bestScore: best, totalSessions: sessions.length };
+  },
+  enabled: !!student?.id
+});
+```
 
 ### UI Components Used (all from shadcn)
-- `Collapsible` + `CollapsibleTrigger` + `CollapsibleContent` for category sections
-- `ScrollArea` for scrollable panels
-- `Progress` for progress bars
-- `Button` for toggles and selections
-- `Card` for containers
+- `Card`, `CardHeader`, `CardTitle`, `CardContent` for containers
+- `Slider` for time and question count selection
+- `Select`, `SelectGroup`, `SelectLabel`, `SelectItem` for category dropdown
+- `ChartContainer`, `ChartTooltip`, `ChartTooltipContent` for chart
+- `Button` for start action
+- `Label` for form labels
 
-### Performance
-- Memoize categoryTree and filteredQuestions
-- React Query caching for data fetching
-- Only render visible questions in ScrollArea
+### Session Logic Update for StudentSpeedSession.tsx
+The session page needs to be updated to:
+1. Accept `duration` (total seconds for session) instead of `timer`
+2. Accept `questions` (max questions to show) instead of unlimited
+3. End session when either time runs out OR question limit is reached
