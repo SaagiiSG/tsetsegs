@@ -62,9 +62,9 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
   };
 
   return (
-    <div className="flex flex-col items-center min-w-[100px]">
+    <div className="flex flex-col items-center min-w-[120px]">
       <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">{label}</span>
-      <div className="relative h-[132px] w-24 overflow-hidden rounded-xl">
+      <div className="relative h-[132px] w-32 overflow-hidden rounded-xl">
         {/* Selection indicator */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-11 bg-primary/10 border-y border-primary/20 pointer-events-none z-10 rounded-lg mx-1" />
         
@@ -106,19 +106,19 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
   );
 }
 
-// Generate time values (10s to 10min)
+// Generate time values (1min to 10min)
 const timeValues = [
-  { value: 10, label: '10s' },
-  { value: 20, label: '20s' },
-  { value: 30, label: '30s' },
-  { value: 45, label: '45s' },
   { value: 60, label: '1m' },
   { value: 90, label: '1m 30s' },
   { value: 120, label: '2m' },
+  { value: 150, label: '2m 30s' },
   { value: 180, label: '3m' },
   { value: 240, label: '4m' },
   { value: 300, label: '5m' },
+  { value: 360, label: '6m' },
   { value: 420, label: '7m' },
+  { value: 480, label: '8m' },
+  { value: 540, label: '9m' },
   { value: 600, label: '10m' },
 ];
 
@@ -143,7 +143,7 @@ export default function StudentSpeedMode() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
   
-  const [sessionDuration, setSessionDuration] = useState(120);
+  const [sessionDuration, setSessionDuration] = useState(120); // 2 min default (first reasonable option)
   const [questionCount, setQuestionCount] = useState(15);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
