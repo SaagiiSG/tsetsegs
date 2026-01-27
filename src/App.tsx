@@ -146,7 +146,7 @@ const App = () => (
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="vocabulary" element={<StudentVocabulary />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
-                    <Route path="english" element={<StudentEnglishPractice />} />
+                    <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
                   </Route>
                   
