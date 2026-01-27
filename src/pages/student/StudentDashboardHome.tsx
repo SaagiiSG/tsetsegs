@@ -18,12 +18,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreDrawer';
 import { toast } from 'sonner';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import {
   ChartContainer,
   ChartTooltip,
@@ -924,53 +927,74 @@ export default function StudentDashboardHome() {
 
                 {/* SAT Countdown */}
                 <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                  </div>
-                  
                   {student?.linked_student_id ? (
-                    <>
-                      <Select
-                        value={student?.linked_student?.sat_test_month || ''}
-                        onValueChange={(value) => updateSatMonth.mutate(value)}
-                        disabled={updateSatMonth.isPending}
-                      >
-                        <SelectTrigger className="w-full h-8 text-sm">
-                          <SelectValue placeholder="Select SAT month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SAT_MONTHS.map((month) => (
-                            <SelectItem key={month.value} value={month.value}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      {daysUntilSAT !== null ? (
-                        <>
-                          <div className="text-2xl font-bold mt-2">
-                            {daysUntilSAT}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            days until SAT
-                          </p>
-                          {daysUntilSAT <= 30 && (
-                            <Badge variant="destructive" className="mt-1 text-xs">
-                              Final Push!
-                            </Badge>
+                    <Drawer>
+                      <DrawerTrigger asChild>
+                        <button className="w-full focus:outline-none">
+                          {daysUntilSAT !== null ? (
+                            <div className="space-y-1">
+                              <div className="text-4xl font-bold text-primary">
+                                {daysUntilSAT}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                days until SAT
+                              </p>
+                              <Badge variant="outline" className="mt-1">
+                                {SAT_MONTHS.find(m => m.value === student?.linked_student?.sat_test_month)?.label} SAT
+                              </Badge>
+                              {daysUntilSAT <= 30 && (
+                                <Badge variant="destructive" className="mt-1 text-xs ml-1">
+                                  Final Push!
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <Calendar className="h-8 w-8 mx-auto text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">
+                                Tap to set SAT date
+                              </p>
+                            </div>
                           )}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Select your test month
-                        </p>
-                      )}
-                    </>
+                        </button>
+                      </DrawerTrigger>
+                      <DrawerContent>
+                        <div className="mx-auto w-full max-w-sm">
+                          <DrawerHeader>
+                            <DrawerTitle>Select Your SAT Test Month</DrawerTitle>
+                            <DrawerDescription>
+                              Choose when you plan to take the SAT
+                            </DrawerDescription>
+                          </DrawerHeader>
+                          <div className="p-4 grid grid-cols-2 gap-3">
+                            {SAT_MONTHS.map((month) => (
+                              <DrawerClose asChild key={month.value}>
+                                <Button
+                                  variant={student?.linked_student?.sat_test_month === month.value ? "default" : "outline"}
+                                  className="h-14 text-base"
+                                  onClick={() => updateSatMonth.mutate(month.value)}
+                                  disabled={updateSatMonth.isPending}
+                                >
+                                  {month.label}
+                                </Button>
+                              </DrawerClose>
+                            ))}
+                          </div>
+                          <DrawerFooter>
+                            <DrawerClose asChild>
+                              <Button variant="ghost">Cancel</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Link your student profile to set SAT date
-                    </p>
+                    <div className="space-y-2">
+                      <Calendar className="h-8 w-8 mx-auto text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        Link your student profile to set SAT date
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
