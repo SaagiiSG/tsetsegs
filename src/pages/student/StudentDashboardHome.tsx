@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO } 
 import { motion } from 'framer-motion';
 import {
   CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, Calendar,
-  TrendingUp, Clock, Brain, Loader2, Zap, Timer
+  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreDrawer';
+import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ChartContainer,
   ChartTooltip,
@@ -373,13 +381,69 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  // Calculate days until SAT
+  // SAT test months
+  const SAT_MONTHS = [
+    { value: 'Mar', label: 'March' },
+    { value: 'May', label: 'May' },
+    { value: 'Jun', label: 'June' },
+    { value: 'Aug', label: 'August' },
+    { value: 'Sep', label: 'September' },
+    { value: 'Oct', label: 'October' },
+    { value: 'Nov', label: 'November' },
+    { value: 'Dec', label: 'December' },
+  ];
+
+  // Calculate days until SAT based on selected month
   const daysUntilSAT = useMemo(() => {
-    if (!student?.linked_student?.batch_id) return null;
-    // This would need the sat_test_month from student profile
-    // For now, return placeholder
-    return null;
-  }, [student]);
+    const satMonth = student?.linked_student?.sat_test_month;
+    if (!satMonth) return null;
+    
+    const monthMap: Record<string, number> = {
+      'Mar': 2, 'May': 4, 'Jun': 5, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+    
+    const monthIndex = monthMap[satMonth];
+    if (monthIndex === undefined) return null;
+    
+    const now = new Date();
+    let year = now.getFullYear();
+    
+    // If the month has passed this year, use next year
+    if (monthIndex < now.getMonth()) {
+      year += 1;
+    }
+    
+    // SAT is typically on a Saturday in that month - approximate with 15th
+    const satDate = new Date(year, monthIndex, 15);
+    return Math.max(0, differenceInDays(satDate, now));
+  }, [student?.linked_student?.sat_test_month]);
+
+  const queryClient = useQueryClient();
+
+  // Mutation to update SAT test month
+  const updateSatMonth = useMutation({
+    mutationFn: async (month: string) => {
+      if (!student?.linked_student_id) {
+        throw new Error('No linked student found');
+      }
+      
+      const { error } = await supabase
+        .from('students')
+        .update({ sat_test_month: month })
+        .eq('id', student.linked_student_id);
+      
+      if (error) throw error;
+      return month;
+    },
+    onSuccess: (month) => {
+      toast.success(`SAT test month set to ${SAT_MONTHS.find(m => m.value === month)?.label || month}`);
+      queryClient.invalidateQueries({ queryKey: ['student-auth'] });
+    },
+    onError: (error) => {
+      toast.error('Failed to update SAT test month');
+      console.error(error);
+    },
+  });
 
   // Fetch student rank
   const { data: rankData } = useQuery({
@@ -860,19 +924,53 @@ export default function StudentDashboardHome() {
 
                 {/* SAT Countdown */}
                 <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="text-3xl font-bold mt-2">
-                    {daysUntilSAT ?? '—'}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    days until SAT
-                  </p>
-                  {daysUntilSAT && daysUntilSAT <= 30 && (
-                    <Badge variant="destructive" className="mt-2">
-                      Final Push!
-                    </Badge>
+                  
+                  {student?.linked_student_id ? (
+                    <>
+                      <Select
+                        value={student?.linked_student?.sat_test_month || ''}
+                        onValueChange={(value) => updateSatMonth.mutate(value)}
+                        disabled={updateSatMonth.isPending}
+                      >
+                        <SelectTrigger className="w-full h-8 text-sm">
+                          <SelectValue placeholder="Select SAT month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SAT_MONTHS.map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {daysUntilSAT !== null ? (
+                        <>
+                          <div className="text-2xl font-bold mt-2">
+                            {daysUntilSAT}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            days until SAT
+                          </p>
+                          {daysUntilSAT <= 30 && (
+                            <Badge variant="destructive" className="mt-1 text-xs">
+                              Final Push!
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Select your test month
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Link your student profile to set SAT date
+                    </p>
                   )}
                 </div>
               </div>
