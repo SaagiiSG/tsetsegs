@@ -29,6 +29,7 @@ import TeacherSettings from "./pages/TeacherSettings";
 
 // Student Practice Portal Pages
 import { StudentLayout } from "./components/student/StudentLayout";
+import StudentDashboardHome from "./pages/student/StudentDashboardHome";
 import StudentPractice from "./pages/student/StudentPractice";
 import StudentSpeedMode from "./pages/student/StudentSpeedMode";
 import StudentSpeedSession from "./pages/student/StudentSpeedSession";
@@ -135,6 +136,7 @@ const App = () => (
                   {/* Student Practice Portal */}
                   <Route path="/practice" element={<StudentPortal />} />
                   <Route path="/practice" element={<StudentLayout />}>
+                    <Route path="home" element={<StudentDashboardHome />} />
                     <Route path="dashboard" element={<StudentPractice />} />
                     <Route path="speed" element={<StudentSpeedMode />} />
                     <Route path="speed/session" element={<StudentSpeedSession />} />
