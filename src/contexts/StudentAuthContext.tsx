@@ -11,6 +11,7 @@ interface LinkedStudent {
   grade: string | null;
   school_name: string | null;
   parent_phone?: string | null;
+  sat_test_month?: string | null;
 }
 
 interface StudentAccount {
@@ -116,7 +117,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone')
+          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
           .eq('id', studentAccount.linked_student_id)
           .maybeSingle();
         linkedStudent = linkedData;
@@ -279,7 +280,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone')
+          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
           .eq('id', studentAccount.linked_student_id)
           .maybeSingle();
         linkedStudent = linkedData;
