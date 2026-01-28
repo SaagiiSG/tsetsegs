@@ -220,6 +220,244 @@ export type Database = {
         }
         Relationships: []
       }
+      bluebook_answers: {
+        Row: {
+          answer_submitted: string | null
+          answered_at: string | null
+          attempt_id: string | null
+          id: string
+          is_correct: boolean | null
+          is_marked: boolean | null
+          module_id: string | null
+          question_id: string | null
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          answer_submitted?: string | null
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_marked?: boolean | null
+          module_id?: string | null
+          question_id?: string | null
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          answer_submitted?: string | null
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_marked?: boolean | null
+          module_id?: string | null
+          question_id?: string | null
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bluebook_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebook_answers_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebook_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bluebook_attempts: {
+        Row: {
+          completed_at: string | null
+          current_module: number | null
+          current_module_id: string | null
+          id: string
+          math_raw_score: number | null
+          math_scaled_score: number | null
+          module_started_at: string | null
+          rw_raw_score: number | null
+          rw_scaled_score: number | null
+          started_at: string | null
+          status: string | null
+          student_account_id: string | null
+          test_id: string | null
+          total_score: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_module?: number | null
+          current_module_id?: string | null
+          id?: string
+          math_raw_score?: number | null
+          math_scaled_score?: number | null
+          module_started_at?: string | null
+          rw_raw_score?: number | null
+          rw_scaled_score?: number | null
+          started_at?: string | null
+          status?: string | null
+          student_account_id?: string | null
+          test_id?: string | null
+          total_score?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_module?: number | null
+          current_module_id?: string | null
+          id?: string
+          math_raw_score?: number | null
+          math_scaled_score?: number | null
+          module_started_at?: string | null
+          rw_raw_score?: number | null
+          rw_scaled_score?: number | null
+          started_at?: string | null
+          status?: string | null
+          student_account_id?: string | null
+          test_id?: string | null
+          total_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bluebook_attempts_current_module_id_fkey"
+            columns: ["current_module_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebook_attempts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebook_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bluebook_module_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          module_id: string | null
+          order_index: number
+          question_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          order_index: number
+          question_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          order_index?: number
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bluebook_module_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebook_module_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bluebook_modules: {
+        Row: {
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          module_number: number
+          section: string
+          test_id: string | null
+          time_limit_minutes: number
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          module_number: number
+          section: string
+          test_id?: string | null
+          time_limit_minutes: number
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          module_number?: number
+          section?: string
+          test_id?: string | null
+          time_limit_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bluebook_modules_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bluebook_tests: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       curriculum_sessions: {
         Row: {
           created_at: string
