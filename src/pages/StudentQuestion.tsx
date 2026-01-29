@@ -15,6 +15,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, Ch
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { QuestionNavigatorDrawer } from '@/components/student/QuestionNavigatorDrawer';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -539,7 +540,7 @@ export default function StudentQuestion() {
         </header>
 
         {/* Prev/Next Navigation */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
           <Button
             variant="outline"
             size="sm"
@@ -550,6 +551,14 @@ export default function StudentQuestion() {
             <ChevronLeft className="h-4 w-4 mr-1" />
             Prev
           </Button>
+          
+          {/* Question Navigator Trigger */}
+          <QuestionNavigatorDrawer 
+            currentQuestionId={questionId || ''} 
+            questionSet={question?.question_set}
+            subject={question?.subject || 'math'}
+          />
+          
           <Button
             variant="outline"
             size="sm"
