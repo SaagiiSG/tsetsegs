@@ -11,11 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
-import { DesmosCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
-import { QuestionNavigatorDrawer } from '@/components/student/QuestionNavigatorDrawer';
+import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { QuestionNavigatorDialog } from '@/components/student/QuestionNavigatorDialog';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -533,9 +533,14 @@ export default function StudentQuestion() {
                 </span>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
-              <Flag className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={() => toggleCalculator()}>
+                <Calculator className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
+                <Flag className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -553,7 +558,7 @@ export default function StudentQuestion() {
           </Button>
           
           {/* Question Navigator Trigger */}
-          <QuestionNavigatorDrawer 
+          <QuestionNavigatorDialog 
             currentQuestionId={questionId || ''} 
             questionSet={question?.question_set}
             subject={question?.subject || 'math'}
