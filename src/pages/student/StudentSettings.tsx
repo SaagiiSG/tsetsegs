@@ -12,8 +12,17 @@ import {
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { cn } from '@/lib/utils';
+import { Lock } from 'lucide-react';
 
 type ThemeOption = 'rank' | TierType;
+
+// Get the index of a tier in TIER_ORDER
+const getTierIndex = (tier: TierType): number => TIER_ORDER.indexOf(tier);
+
+// Check if a tier is unlocked based on current tier
+const isTierUnlocked = (tier: TierType, currentTier: TierType): boolean => {
+  return getTierIndex(tier) <= getTierIndex(currentTier);
+};
 
 const THEME_OPTIONS: { value: ThemeOption; label: string }[] = [
   { value: 'rank', label: 'Use My Rank' },
@@ -190,26 +199,38 @@ export default function StudentSettings() {
               {THEME_OPTIONS.map((option) => {
                 const isSelected = selectedTheme === option.value;
                 const color = getDisplayColor(option.value);
+                const isLocked = option.value !== 'rank' && !isTierUnlocked(option.value as TierType, currentTier);
                 
                 return (
                   <button
                     key={option.value}
-                    onClick={() => handleThemeSelect(option.value)}
+                    onClick={() => !isLocked && handleThemeSelect(option.value)}
+                    disabled={isLocked}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all",
+                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all relative",
+                      isLocked && "opacity-50 cursor-not-allowed",
                       isSelected 
                         ? "border-primary bg-primary/5 ring-2 ring-primary/20" 
-                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                        : !isLocked && "border-border hover:border-primary/50 hover:bg-muted/50",
+                      isLocked && "border-border"
                     )}
                   >
                     <div className="relative">
                       <div 
-                        className="w-8 h-8 rounded-full shadow-md"
+                        className={cn(
+                          "w-8 h-8 rounded-full shadow-md",
+                          isLocked && "grayscale"
+                        )}
                         style={{ backgroundColor: color }}
                       />
                       {option.value === 'rank' && (
                         <Sparkles 
                           className="absolute -top-1 -right-1 h-4 w-4 text-amber-500" 
+                        />
+                      )}
+                      {isLocked && (
+                        <Lock 
+                          className="absolute -top-1 -right-1 h-4 w-4 text-muted-foreground" 
                         />
                       )}
                     </div>
