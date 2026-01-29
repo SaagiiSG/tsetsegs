@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Crown, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
   MyRankTab,
-  SprintEndCelebration
+  SprintEndCelebration,
+  NoActiveSprintCard
 } from '@/components/student/leaderboard';
 import { TierType } from '@/data/badgeDefinitions';
 
@@ -23,8 +24,15 @@ export default function StudentLeaderboard() {
     seasonNumber: number;
   } | null>(null);
   
+  // Store last known ranking for when sprint ends
+  const [lastKnownRanking, setLastKnownRanking] = useState<{
+    entry: LeaderboardEntry;
+    sprint: SprintInfo;
+  } | null>(null);
+  
   const {
     activeSprint,
+    lastEndedSprint,
     leaderboard,
     allTimeLeaderboard,
     currentUserEntry,
@@ -34,7 +42,17 @@ export default function StudentLeaderboard() {
     isAllTimeLoading
   } = useLeaderboard();
 
-  // Check if sprint has ended and user was #1
+  // Store the current user's ranking whenever it updates
+  useEffect(() => {
+    if (currentUserEntry && activeSprint) {
+      setLastKnownRanking({
+        entry: currentUserEntry,
+        sprint: activeSprint
+      });
+    }
+  }, [currentUserEntry, activeSprint]);
+
+  // Check if sprint has ended and show celebration for ALL users
   useEffect(() => {
     if (!activeSprint || !currentUserEntry) return;
 
@@ -42,24 +60,21 @@ export default function StudentLeaderboard() {
       const endDate = new Date(activeSprint.endDate);
       const now = new Date();
       
-      // Sprint just ended (within last 5 seconds)
-      if (now >= endDate && now.getTime() - endDate.getTime() < 5000) {
-        // Check if user was #1
-        if (currentUserEntry.rank === 1) {
-          const celebrationKey = `sprint-celebration-${activeSprint.id}`;
-          const alreadyShown = localStorage.getItem(celebrationKey);
-          
-          if (!alreadyShown) {
-            setCelebrationData({
-              rank: currentUserEntry.rank,
-              tier: currentUserEntry.currentTier,
-              points: currentUserEntry.totalPoints,
-              sprintNumber: activeSprint.sprintNumber,
-              seasonNumber: activeSprint.seasonNumber
-            });
-            setShowCelebration(true);
-            localStorage.setItem(celebrationKey, 'true');
-          }
+      // Sprint just ended (within last 10 seconds)
+      if (now >= endDate && now.getTime() - endDate.getTime() < 10000) {
+        const celebrationKey = `sprint-celebration-${activeSprint.id}-${student?.id}`;
+        const alreadyShown = localStorage.getItem(celebrationKey);
+        
+        if (!alreadyShown) {
+          setCelebrationData({
+            rank: currentUserEntry.rank,
+            tier: currentUserEntry.currentTier,
+            points: currentUserEntry.totalPoints,
+            sprintNumber: activeSprint.sprintNumber,
+            seasonNumber: activeSprint.seasonNumber
+          });
+          setShowCelebration(true);
+          localStorage.setItem(celebrationKey, 'true');
         }
       }
     };
@@ -68,11 +83,14 @@ export default function StudentLeaderboard() {
     checkSprintEnd();
     const interval = setInterval(checkSprintEnd, 1000);
     return () => clearInterval(interval);
-  }, [activeSprint, currentUserEntry]);
+  }, [activeSprint, currentUserEntry, student?.id]);
 
   const handleCloseCelebration = useCallback(() => {
     setShowCelebration(false);
   }, []);
+
+  // Determine if there's no active sprint
+  const noActiveSprint = !activeSprint && !isLoading;
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
@@ -91,81 +109,93 @@ export default function StudentLeaderboard() {
         </p>
       </motion.div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="current" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="current" className="gap-2">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Current Sprint</span>
-            <span className="sm:hidden">Sprint</span>
-          </TabsTrigger>
-          <TabsTrigger value="alltime" className="gap-2">
-            <Crown className="h-4 w-4" />
-            <span className="hidden sm:inline">All-Time</span>
-            <span className="sm:hidden">All-Time</span>
-          </TabsTrigger>
-          <TabsTrigger value="myrank" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">My Rank</span>
-            <span className="sm:hidden">My Rank</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* No Active Sprint State */}
+      {noActiveSprint && (
+        <NoActiveSprintCard
+          lastEndedSprint={lastEndedSprint}
+          lastRank={lastKnownRanking?.entry.rank}
+          lastTier={lastKnownRanking?.entry.currentTier}
+          lastPoints={lastKnownRanking?.entry.totalPoints}
+        />
+      )}
 
-        <AnimatePresence mode="wait">
-          <TabsContent value="current" className="mt-0">
-            <motion.div
-              key="current"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <CurrentSprintTab
-                sprint={activeSprint}
-                leaderboard={leaderboard}
-                currentUserId={student?.id}
-                isLoading={isLoading}
-              />
-            </motion.div>
-          </TabsContent>
+      {/* Tabs - only show when sprint is active */}
+      {!noActiveSprint && (
+        <Tabs defaultValue="current" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="current" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Current Sprint</span>
+              <span className="sm:hidden">Sprint</span>
+            </TabsTrigger>
+            <TabsTrigger value="alltime" className="gap-2">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">All-Time</span>
+              <span className="sm:hidden">All-Time</span>
+            </TabsTrigger>
+            <TabsTrigger value="myrank" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">My Rank</span>
+              <span className="sm:hidden">My Rank</span>
+            </TabsTrigger>
+          </TabsList>
 
-          <TabsContent value="alltime" className="mt-0">
-            <motion.div
-              key="alltime"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <AllTimeTab
-                leaderboard={allTimeLeaderboard}
-                currentUserId={student?.id}
-                isLoading={isAllTimeLoading}
-              />
-            </motion.div>
-          </TabsContent>
+          <AnimatePresence mode="wait">
+            <TabsContent value="current" className="mt-0">
+              <motion.div
+                key="current"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CurrentSprintTab
+                  sprint={activeSprint}
+                  leaderboard={leaderboard}
+                  currentUserId={student?.id}
+                  isLoading={isLoading}
+                />
+              </motion.div>
+            </TabsContent>
 
-          <TabsContent value="myrank" className="mt-0">
-            <motion.div
-              key="myrank"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <MyRankTab
-                currentEntry={currentUserEntry}
-                leaderboard={leaderboard}
-                pointsToAdvance={pointsToAdvance}
-                pointsToTop1={pointsToTop1}
-                sprint={activeSprint}
-              />
-            </motion.div>
-          </TabsContent>
-        </AnimatePresence>
-      </Tabs>
+            <TabsContent value="alltime" className="mt-0">
+              <motion.div
+                key="alltime"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AllTimeTab
+                  leaderboard={allTimeLeaderboard}
+                  currentUserId={student?.id}
+                  isLoading={isAllTimeLoading}
+                />
+              </motion.div>
+            </TabsContent>
 
-      {/* Sprint End Celebration */}
+            <TabsContent value="myrank" className="mt-0">
+              <motion.div
+                key="myrank"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <MyRankTab
+                  currentEntry={currentUserEntry}
+                  leaderboard={leaderboard}
+                  pointsToAdvance={pointsToAdvance}
+                  pointsToTop1={pointsToTop1}
+                  sprint={activeSprint}
+                />
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
+        </Tabs>
+      )}
+
+      {/* Sprint End Celebration - Shows for ALL users */}
       {celebrationData && (
         <SprintEndCelebration
           isOpen={showCelebration}

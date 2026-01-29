@@ -87,6 +87,86 @@ export function useLeaderboard(selectedTier?: TierType) {
     refetchInterval: 60000 // Refetch every minute
   });
 
+  // Fetch most recent ended sprint (for showing results)
+  const { data: lastEndedSprint } = useQuery({
+    queryKey: ['last-ended-sprint'],
+    queryFn: async (): Promise<SprintInfo | null> => {
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('*')
+        .eq('is_active', false)
+        .order('end_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) return null;
+
+      return {
+        id: data.id,
+        sprintNumber: data.sprint_number,
+        seasonNumber: data.season_number,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        daysRemaining: 0,
+        hoursRemaining: 0,
+        minutesRemaining: 0,
+        isActive: false
+      };
+    }
+  });
+
+  // Auto-enroll student in active sprint if not already enrolled
+  useQuery({
+    queryKey: ['auto-enroll-sprint', activeSprint?.id, student?.id],
+    enabled: !!activeSprint?.id && !!student?.id,
+    queryFn: async () => {
+      if (!activeSprint?.id || !student?.id) return null;
+
+      // Check if already enrolled
+      const { data: existing } = await supabase
+        .from('student_sprint_rankings')
+        .select('id')
+        .eq('sprint_id', activeSprint.id)
+        .eq('student_account_id', student.id)
+        .single();
+
+      if (existing) return existing;
+
+      // Get previous tier from last sprint
+      const { data: previousRanking } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier, reserved_next_tier')
+        .eq('student_account_id', student.id)
+        .neq('sprint_id', activeSprint.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const startingTier = previousRanking?.reserved_next_tier || previousRanking?.current_tier || 'unranked';
+
+      // Enroll in new sprint
+      const { data: newRanking, error } = await supabase
+        .from('student_sprint_rankings')
+        .insert({
+          sprint_id: activeSprint.id,
+          student_account_id: student.id,
+          current_tier: startingTier,
+          total_points: 0,
+          is_top_1: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to auto-enroll in sprint:', error);
+        return null;
+      }
+
+      return newRanking;
+    },
+    staleTime: Infinity // Only run once
+  });
+
   // Fetch current sprint leaderboard
   const { data: leaderboard, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
     queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier],
@@ -294,6 +374,7 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   return {
     activeSprint,
+    lastEndedSprint,
     leaderboard: leaderboard || [],
     allTimeLeaderboard: allTimeLeaderboard || [],
     currentUserEntry,
