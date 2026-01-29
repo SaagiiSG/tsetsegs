@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { 
-  Timer, Zap, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Home
+  Timer, Zap, CheckCircle2, XCircle, ArrowRight, Loader2, Trophy, Home, Calculator, BookOpen
 } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
-import { DesmosCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { checkSpeedBadgeProgress } from '@/hooks/useSpeedBadgeProgress';
 import { toast } from 'sonner';
 
@@ -368,6 +369,7 @@ export default function StudentSpeedSession() {
   return (
     <SecurityWrapper>
     <DesmosCalculator />
+    <ReferenceSheet />
     <div 
       className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 select-none transition-all duration-300"
       style={{ 
@@ -377,12 +379,40 @@ export default function StudentSpeedSession() {
       }}
     >
       <div className="max-w-2xl mx-auto space-y-4">
+        {/* Header with Tools */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <span className="font-semibold text-sm">Speed Mode</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleCalculator()}
+              className="gap-1.5"
+            >
+              <Calculator className="h-4 w-4" />
+              <span className="hidden sm:inline">Calculator</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleReferenceSheet()}
+              className="gap-1.5"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Reference</span>
+            </Button>
+          </div>
+        </div>
+
         {/* Timer Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <Timer className={`h-4 w-4 ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-muted-foreground'}`} />
-              <span className={`font-mono font-bold ${timeLeft < 10 ? 'text-red-500' : ''}`}>
+              <Timer className={`h-4 w-4 ${timeLeft < 10 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+              <span className={`font-mono font-bold ${timeLeft < 10 ? 'text-destructive' : ''}`}>
                 {formatTime(timeLeft)}
               </span>
             </div>
@@ -392,7 +422,7 @@ export default function StudentSpeedSession() {
           </div>
           <Progress 
             value={timerPercent} 
-            className={`h-2 ${timeLeft < 10 ? '[&>div]:bg-red-500' : ''}`} 
+            className={`h-2 ${timeLeft < 10 ? '[&>div]:bg-destructive' : ''}`} 
           />
           {/* Question progress bar */}
           <Progress 
