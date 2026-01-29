@@ -2,19 +2,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { 
   Clock, Flag, ChevronLeft, ChevronRight, 
-  CheckCircle2, AlertCircle, BookOpen, Calculator,
+  CheckCircle2, AlertCircle, Grid3X3,
   Pause, Play, X
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -65,6 +65,8 @@ export default function StudentBluebookTest() {
   const [isPaused, setIsPaused] = useState(false);
   const [showBreak, setShowBreak] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
+  const hasShownFiveMinWarning = useRef(false);
 
   // Fetch attempt details
   const { data: attempt, isLoading: attemptLoading } = useQuery({
@@ -170,7 +172,7 @@ export default function StudentBluebookTest() {
     }
   }, [currentModule, attempt?.module_started_at]);
 
-  // Timer countdown
+  // Timer countdown with 5-minute warning
   useEffect(() => {
     if (timeRemaining === null || isPaused || showBreak) return;
 
@@ -181,12 +183,27 @@ export default function StudentBluebookTest() {
           handleModuleComplete();
           return 0;
         }
+        
+        // Show 5-minute warning
+        if (prev === 300 && !hasShownFiveMinWarning.current) {
+          hasShownFiveMinWarning.current = true;
+          toast.warning('5 minutes remaining!', {
+            duration: 5000,
+            icon: <Clock className="h-5 w-5 text-amber-500" />,
+          });
+        }
+        
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
   }, [timeRemaining, isPaused, showBreak]);
+  
+  // Reset warning flag when module changes
+  useEffect(() => {
+    hasShownFiveMinWarning.current = false;
+  }, [attempt?.current_module_id]);
 
   // Save answer mutation
   const saveAnswerMutation = useMutation({
@@ -482,66 +499,13 @@ export default function StudentBluebookTest() {
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
             </Badge>
 
-            {/* Question counter */}
-            <Badge variant="outline" className="text-sm">
-              {currentQuestionIndex + 1} / {moduleQuestions?.length || 0}
-            </Badge>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Question Navigator - Side Panel */}
-        <aside className="hidden md:block w-64 border-r bg-card/50 p-4">
-          <h3 className="text-sm font-medium mb-3">Questions</h3>
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="grid grid-cols-5 gap-2">
-              {moduleQuestions?.map((mq, idx) => {
-                const qId = mq.question?.id;
-                const answer = qId ? answers[qId] : null;
-                const isAnswered = !!answer?.answer_submitted;
-                const isMarked = answer?.is_marked;
-                const isCurrent = idx === currentQuestionIndex;
-
-                return (
-                  <Button
-                    key={mq.id}
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "h-10 w-10 p-0 text-sm font-medium relative",
-                      isCurrent && "ring-2 ring-primary",
-                      isAnswered && !isMarked && "bg-green-500/20 border-green-500",
-                      isMarked && "bg-amber-500/20 border-amber-500"
-                    )}
-                    onClick={() => setCurrentQuestionIndex(idx)}
-                  >
-                    {idx + 1}
-                    {isMarked && (
-                      <Flag className="absolute -top-1 -right-1 h-3 w-3 text-amber-500" />
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </ScrollArea>
-
-          {/* Legend */}
-          <div className="mt-4 space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border bg-green-500/20 border-green-500" />
-              <span>Answered</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border bg-amber-500/20 border-amber-500" />
-              <span>Marked for Review</span>
-            </div>
-          </div>
-        </aside>
-
-        {/* Question Area */}
-        <main className="flex-1 p-6 overflow-auto">
+      {/* Main Content - Full width, no sidebar */}
+      <div className="flex-1 overflow-auto pb-20">
+        <main className="p-6">
           {currentQuestion?.question && (
             <div className="max-w-4xl mx-auto space-y-6">
               {/* Passage (if any) */}
@@ -659,38 +623,110 @@ export default function StudentBluebookTest() {
         </main>
       </div>
 
-      {/* Footer Navigation */}
-      <footer className="sticky bottom-0 bg-card border-t px-4 py-3">
+      {/* Footer Navigation with Bottom Drawer */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-card border-t px-4 py-3 z-40">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="outline"
             onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
             disabled={currentQuestionIndex === 0}
-            className="gap-2"
+            size="icon"
+            className="h-10 w-10"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
+            <ChevronLeft className="h-5 w-5" />
           </Button>
 
-          {/* Mobile question indicator */}
-          <div className="md:hidden">
-            <Badge variant="outline">
-              {currentQuestionIndex + 1} / {moduleQuestions?.length || 0}
-            </Badge>
-          </div>
+          {/* Center: Question counter - opens drawer */}
+          <Drawer open={showQuestionDrawer} onOpenChange={setShowQuestionDrawer}>
+            <DrawerTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Grid3X3 className="h-4 w-4" />
+                <span className="font-medium">
+                  Question {currentQuestionIndex + 1} of {moduleQuestions?.length || 0}
+                </span>
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[70vh]">
+              <DrawerHeader className="border-b">
+                <DrawerTitle className="flex items-center justify-between">
+                  <span>
+                    {currentModule?.section === 'reading_writing' ? 'Reading & Writing' : 'Math'} - 
+                    Module {currentModule?.module_number}
+                  </span>
+                  <div className="flex items-center gap-3 text-sm font-normal">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-3 w-3 rounded-sm bg-primary/20 border border-primary" />
+                      <span className="text-muted-foreground">Answered</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-3 w-3 rounded-sm bg-amber-500/20 border border-amber-500" />
+                      <span className="text-muted-foreground">For Review</span>
+                    </div>
+                  </div>
+                </DrawerTitle>
+              </DrawerHeader>
+              
+              <ScrollArea className="p-4">
+                <div className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-14 gap-2">
+                  {moduleQuestions?.map((mq, idx) => {
+                    const qId = mq.question?.id;
+                    const answer = qId ? answers[qId] : null;
+                    const isAnswered = !!answer?.answer_submitted;
+                    const isMarked = answer?.is_marked;
+                    const isCurrent = idx === currentQuestionIndex;
+
+                    return (
+                      <Button
+                        key={mq.id}
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-10 w-10 p-0 text-sm font-medium relative",
+                          isCurrent && "ring-2 ring-primary",
+                          isAnswered && !isMarked && "bg-primary/20 border-primary",
+                          isMarked && "bg-amber-500/20 border-amber-500"
+                        )}
+                        onClick={() => {
+                          setCurrentQuestionIndex(idx);
+                          setShowQuestionDrawer(false);
+                        }}
+                      >
+                        {idx + 1}
+                        {isMarked && (
+                          <Flag className="absolute -top-1 -right-1 h-3 w-3 text-amber-500" />
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+
+              <div className="p-4 border-t">
+                <Button 
+                  onClick={() => {
+                    setShowQuestionDrawer(false);
+                    handleModuleComplete();
+                  }}
+                  className="w-full gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Go to Review
+                </Button>
+              </div>
+            </DrawerContent>
+          </Drawer>
 
           {currentQuestionIndex === (moduleQuestions?.length || 0) - 1 ? (
-            <Button onClick={handleModuleComplete} className="gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              Finish Module
+            <Button onClick={handleModuleComplete} size="icon" className="h-10 w-10">
+              <CheckCircle2 className="h-5 w-5" />
             </Button>
           ) : (
             <Button
               onClick={() => setCurrentQuestionIndex(prev => Math.min((moduleQuestions?.length || 0) - 1, prev + 1))}
-              className="gap-2"
+              size="icon"
+              className="h-10 w-10"
             >
-              Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           )}
         </div>
