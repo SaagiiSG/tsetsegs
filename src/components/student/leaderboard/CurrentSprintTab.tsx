@@ -33,15 +33,19 @@ export function CurrentSprintTab({
   // Get cutoff for current tier filter
   const getCutoffRank = () => {
     if (selectedTier === 'all') {
-      // Show bronze cutoff for all view
       return TIER_PROMOTION_CUTOFFS.bronze;
     }
     return TIER_PROMOTION_CUTOFFS[selectedTier];
   };
 
+  // Find current user's ranking
+  const currentUserRanking = currentUserId 
+    ? leaderboard.find(e => e.userId === currentUserId) 
+    : null;
+
   return (
-    <div className="space-y-4">
-      <SprintTimer sprint={sprint} />
+    <div className="space-y-6">
+      <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
