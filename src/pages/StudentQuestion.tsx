@@ -321,26 +321,26 @@ export default function StudentQuestion() {
       if (correct) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         
-        // Get active sprint
+        // Get active sprint (optional - points are awarded regardless)
         const { data: activeSprint } = await supabase
           .from('sprints')
           .select('id')
           .eq('is_active', true)
           .maybeSingle();
 
-        if (activeSprint) {
-          // Insert point transaction
-          await supabase
-            .from('point_transactions')
-            .insert({
-              student_account_id: student.id,
-              sprint_id: activeSprint.id,
-              points,
-              category: 'questions',
-              metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
-            });
+        // Always insert point transaction (with or without sprint)
+        await supabase
+          .from('point_transactions')
+          .insert({
+            student_account_id: student.id,
+            sprint_id: activeSprint?.id || null,
+            points,
+            category: 'questions',
+            metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
+          });
 
-          // Update sprint ranking total - first get current, then update
+        // Update sprint ranking only if there's an active sprint
+        if (activeSprint) {
           const { data: currentRanking } = await supabase
             .from('student_sprint_rankings')
             .select('total_points')

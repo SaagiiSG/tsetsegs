@@ -118,26 +118,26 @@ export default function StudentSpeedSession() {
         // Speed bonus: under 10s = 15pts, under 20s = 10pts, under 30s = 5pts, else 2pts
         const points = timeInSeconds < 10 ? 15 : timeInSeconds < 20 ? 10 : timeInSeconds < 30 ? 5 : 2;
         
-        // Get active sprint
+        // Get active sprint (optional - points are awarded regardless)
         const { data: activeSprint } = await supabase
           .from('sprints')
           .select('id')
           .eq('is_active', true)
           .maybeSingle();
 
-        if (activeSprint) {
-          // Insert point transaction
-          await supabase
-            .from('point_transactions')
-            .insert({
-              student_account_id: student.id,
-              sprint_id: activeSprint.id,
-              points,
-              category: 'speed_session',
-              metadata: { question_id: questionId, time_seconds: timeInSeconds }
-            });
+        // Always insert point transaction (with or without sprint)
+        await supabase
+          .from('point_transactions')
+          .insert({
+            student_account_id: student.id,
+            sprint_id: activeSprint?.id || null,
+            points,
+            category: 'speed_session',
+            metadata: { question_id: questionId, time_seconds: timeInSeconds }
+          });
 
-          // Update sprint ranking total
+        // Update sprint ranking only if there's an active sprint
+        if (activeSprint) {
           const { data: currentRanking } = await supabase
             .from('student_sprint_rankings')
             .select('total_points')
