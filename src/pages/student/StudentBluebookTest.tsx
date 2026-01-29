@@ -28,6 +28,7 @@ import {
 import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet } from '@/components/student/ReferenceSheet';
 import { cn } from '@/lib/utils';
 
 interface Question {
@@ -536,16 +537,8 @@ export default function StudentBluebookTest() {
               </Button>
             )}
 
-            {/* Reference Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.info('Reference sheet coming soon!')}
-              className="gap-2"
-            >
-              <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">Reference</span>
-            </Button>
+            {/* Reference Button - Only for Math */}
+            {currentModule?.section === 'math' && <ReferenceSheet />}
 
             {/* Settings Dropdown */}
             <DropdownMenu>
