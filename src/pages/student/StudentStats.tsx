@@ -1,287 +1,156 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { 
-  BarChart3, Target, CheckCircle2, XCircle, Clock, TrendingUp, Award, Loader2
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { BarChart3, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useStudentAnalytics } from '@/hooks/useStudentAnalytics';
+import { PriorityAlertCard } from '@/components/student/analytics/PriorityAlertCard';
+import { WeaknessIdentifier } from '@/components/student/analytics/WeaknessIdentifier';
+import { TimeEfficiencyDashboard } from '@/components/student/analytics/TimeEfficiencyDashboard';
+import { DifficultyAnalysis } from '@/components/student/analytics/DifficultyAnalysis';
+import { ErrorPatternTracker } from '@/components/student/analytics/ErrorPatternTracker';
+import { ProgressVelocityGraph } from '@/components/student/analytics/ProgressVelocityGraph';
+import { GoalGapTracker } from '@/components/student/analytics/GoalGapTracker';
+import { ConsistencyScoreCard } from '@/components/student/analytics/ConsistencyScoreCard';
+
+function AnalyticsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-[180px] w-full rounded-xl" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Skeleton className="h-[380px] w-full rounded-xl" />
+        <Skeleton className="h-[380px] w-full rounded-xl" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Skeleton className="h-[350px] w-full rounded-xl" />
+        <Skeleton className="h-[350px] w-full rounded-xl" />
+      </div>
+      <Skeleton className="h-[400px] w-full rounded-xl" />
+    </div>
+  );
+}
 
 export default function StudentStats() {
-  const { student } = useStudentAuth();
+  const analytics = useStudentAnalytics();
 
-  const { data: attempts, isLoading: attemptsLoading } = useQuery({
-    queryKey: ['all-student-attempts', student?.id],
-    queryFn: async () => {
-      if (!student) return [];
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select(`
-          *,
-          question:questions(
-            question_id,
-            category:question_categories(name)
-          )
-        `)
-        .eq('student_account_id', student.id)
-        .order('attempted_at', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student
-  });
-
-  const { data: questions } = useQuery({
-    queryKey: ['practice-questions-count'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, category:question_categories(name)')
-        .eq('is_original', true)
-        .eq('is_active', true);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student
-  });
-
-  const { data: progress } = useQuery({
-    queryKey: ['student-video-progress', student?.id],
-    queryFn: async () => {
-      if (!student) return [];
-      const { data, error } = await supabase
-        .from('student_progress')
-        .select('question_id, video_watched')
-        .eq('student_account_id', student.id)
-        .eq('video_watched', true);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student
-  });
-
-  if (attemptsLoading) {
+  if (analytics.isLoading) {
     return (
-      <div className="p-4 md:p-6 flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="p-4 md:p-6 space-y-6 select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-primary" />
+              Analytics Dashboard
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Loading your performance data...
+            </p>
+          </div>
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+        <AnalyticsSkeleton />
       </div>
     );
   }
 
-  // Calculate stats
-  const totalAttempts = attempts?.length || 0;
-  const correctAttempts = attempts?.filter(a => a.is_correct).length || 0;
-  const accuracy = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
-  
-  const uniqueQuestionsAttempted = new Set(attempts?.map(a => a.question_id)).size;
-  const questionsCompleted = new Set(
-    attempts?.filter(a => a.is_correct).map(a => a.question_id)
-  ).size;
-  
-  const totalQuestions = questions?.length || 68;
-  const videosWatched = progress?.length || 0;
-
-  // First attempt accuracy
-  const firstAttempts = attempts?.filter(a => a.attempt_number === 1) || [];
-  const firstAttemptCorrect = firstAttempts.filter(a => a.is_correct).length;
-  const firstAttemptAccuracy = firstAttempts.length > 0 
-    ? Math.round((firstAttemptCorrect / firstAttempts.length) * 100) 
-    : 0;
-
-  // Category breakdown
-  const categoryStats = questions?.reduce((acc, q) => {
-    const catName = q.category?.name || 'Unknown';
-    if (!acc[catName]) {
-      acc[catName] = { total: 0, completed: 0, attempts: 0, correct: 0 };
-    }
-    acc[catName].total++;
-    return acc;
-  }, {} as Record<string, { total: number; completed: number; attempts: number; correct: number }>) || {};
-
-  attempts?.forEach(a => {
-    const catName = a.question?.category?.name || 'Unknown';
-    if (categoryStats[catName]) {
-      categoryStats[catName].attempts++;
-      if (a.is_correct) {
-        categoryStats[catName].correct++;
-        categoryStats[catName].completed++;
-      }
-    }
-  });
-
-  // Dedupe completed count per category
-  const completedByCategory: Record<string, Set<string>> = {};
-  attempts?.filter(a => a.is_correct).forEach(a => {
-    const catName = a.question?.category?.name || 'Unknown';
-    if (!completedByCategory[catName]) {
-      completedByCategory[catName] = new Set();
-    }
-    completedByCategory[catName].add(a.question_id);
-  });
-
-  Object.keys(categoryStats).forEach(cat => {
-    categoryStats[cat].completed = completedByCategory[cat]?.size || 0;
-  });
-
-  const getCategoryColor = (categoryName: string) => {
-    const colors: Record<string, string> = {
-      'Advanced Math': 'text-blue-500',
-      'Algebra': 'text-emerald-500',
-      'Geometry and Trigonometry': 'text-purple-500',
-      'Data Analysis and Problem Solving': 'text-orange-500',
-    };
-    return colors[categoryName] || 'text-muted-foreground';
-  };
-
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" />
-          Your Statistics
-        </h1>
-        <p className="text-muted-foreground">
-          Track your progress and performance
-        </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm font-medium">Completed</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{questionsCompleted}</p>
-            <p className="text-xs text-muted-foreground">of {totalQuestions}</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-blue-600">
-              <Target className="h-4 w-4" />
-              <span className="text-sm font-medium">Accuracy</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{accuracy}%</p>
-            <p className="text-xs text-muted-foreground">{correctAttempts}/{totalAttempts} attempts</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-purple-600">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">First Try</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{firstAttemptAccuracy}%</p>
-            <p className="text-xs text-muted-foreground">{firstAttemptCorrect}/{firstAttempts.length}</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-yellow-600">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">Videos</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{videosWatched}</p>
-            <p className="text-xs text-muted-foreground">watched</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Overall Progress */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Award className="h-4 w-4" />
-            Overall Mastery
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span>{questionsCompleted} of {totalQuestions} questions mastered</span>
-            <span className="font-medium">{Math.round((questionsCompleted / totalQuestions) * 100)}%</span>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-primary" />
+            Analytics Dashboard
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Actionable insights to improve your SAT score
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <p className="text-xs text-muted-foreground">Overall Accuracy</p>
+            <p className="text-xl font-bold">{analytics.overallAccuracy}%</p>
           </div>
-          <Progress value={(questionsCompleted / totalQuestions) * 100} className="h-3" />
-        </CardContent>
-      </Card>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.location.reload()}>
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </Button>
+        </div>
+      </motion.div>
 
-      {/* Category Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Category Performance</CardTitle>
-          <CardDescription>See how you're doing in each area</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(categoryStats).map(([category, stats]) => {
-            const catAccuracy = stats.attempts > 0 
-              ? Math.round((stats.correct / stats.attempts) * 100) 
-              : 0;
-            const catCompletion = stats.total > 0 
-              ? Math.round((stats.completed / stats.total) * 100) 
-              : 0;
-            
-            return (
-              <div key={category} className="space-y-2 p-3 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <span className={`font-medium ${getCategoryColor(category)}`}>
-                    {category}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {stats.completed}/{stats.total} mastered
-                  </span>
-                </div>
-                <Progress value={catCompletion} className="h-2" />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{stats.attempts} attempts</span>
-                  <span>{catAccuracy}% accuracy</span>
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      {/* Quick Stats Bar */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+      >
+        <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/30">
+          <p className="text-xs text-muted-foreground">Questions Mastered</p>
+          <p className="text-xl font-bold text-emerald-600">
+            {analytics.questionsCompleted}/{analytics.totalQuestions}
+          </p>
+        </div>
+        <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/30">
+          <p className="text-xs text-muted-foreground">Total Attempts</p>
+          <p className="text-xl font-bold text-blue-600">{analytics.totalAttempts}</p>
+        </div>
+        <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/30">
+          <p className="text-xs text-muted-foreground">Correct Answers</p>
+          <p className="text-xl font-bold text-purple-600">{analytics.totalCorrect}</p>
+        </div>
+        <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/5 border border-amber-500/30 sm:block hidden">
+          <p className="text-xs text-muted-foreground">Current Score</p>
+          <p className="text-xl font-bold text-amber-600">{analytics.currentScore}</p>
+        </div>
+      </motion.div>
 
-      {/* Recent Activity */}
-      {attempts && attempts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Activity</CardTitle>
-            <CardDescription>Your last 10 attempts</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {attempts.slice(0, 10).map((attempt) => (
-              <div 
-                key={attempt.id}
-                className="flex items-center justify-between p-2 rounded-lg border"
-              >
-                <div className="flex items-center gap-3">
-                  {attempt.is_correct ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                  <div>
-                    <span className="font-mono font-bold">
-                      {attempt.question?.question_id}
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      Attempt #{attempt.attempt_number}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(attempt.attempted_at).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* Priority Alert - Full Width */}
+      <PriorityAlertCard weakestTopic={analytics.weakestTopic} />
+
+      {/* Row 1: Weakness + Time Efficiency */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <WeaknessIdentifier topicAccuracy={analytics.topicAccuracy} />
+        <TimeEfficiencyDashboard topicAccuracy={analytics.topicAccuracy} />
+      </div>
+
+      {/* Row 2: Difficulty + Error Patterns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DifficultyAnalysis difficultyBreakdown={analytics.difficultyBreakdown} />
+        <ErrorPatternTracker errorPatterns={analytics.errorPatterns} />
+      </div>
+
+      {/* Row 3: Progress Velocity - Full Width */}
+      <ProgressVelocityGraph 
+        progressHistory={analytics.progressHistory}
+        currentScore={analytics.currentScore}
+        targetScore={analytics.targetScore}
+      />
+
+      {/* Row 4: Goal Gap + Consistency */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GoalGapTracker 
+          currentScore={analytics.currentScore}
+          targetScore={analytics.targetScore}
+          topicAccuracy={analytics.topicAccuracy}
+        />
+        <ConsistencyScoreCard consistencyMetrics={analytics.consistencyMetrics} />
+      </div>
+
+      {/* Footer */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center py-6 text-sm text-muted-foreground"
+      >
+        <p>Analytics update in real-time as you practice.</p>
+        <p className="text-xs mt-1">Every section includes an action—follow them to improve!</p>
+      </motion.div>
     </div>
   );
 }
