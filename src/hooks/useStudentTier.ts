@@ -16,8 +16,8 @@ export function useStudentTier() {
     queryFn: async (): Promise<TierType> => {
       if (!student?.id) return 'unranked';
 
-      // Get the most recent sprint ranking for this student
-      const { data: ranking, error } = await supabase
+      // First check for active sprint ranking
+      const { data: activeRanking } = await supabase
         .from('student_sprint_rankings')
         .select(`
           current_tier,
@@ -27,23 +27,27 @@ export function useStudentTier() {
         .eq('sprints.is_active', true)
         .maybeSingle();
 
-      if (error || !ranking) {
-        // Check if they have any historical ranking
-        const { data: anyRanking } = await supabase
-          .from('student_sprint_rankings')
-          .select('current_tier')
-          .eq('student_account_id', student.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (anyRanking) {
-          return anyRanking.current_tier as TierType;
-        }
-        return 'unranked';
+      if (activeRanking) {
+        return activeRanking.current_tier as TierType;
       }
 
-      return ranking.current_tier as TierType;
+      // No active sprint - check the most recent historical ranking
+      // Use reserved_next_tier if available (promotion from last sprint), otherwise current_tier
+      const { data: lastRanking } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier, reserved_next_tier')
+        .eq('student_account_id', student.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lastRanking) {
+        // If they have a reserved_next_tier (earned promotion), use that
+        // Otherwise use their current_tier from that sprint
+        return (lastRanking.reserved_next_tier || lastRanking.current_tier) as TierType;
+      }
+      
+      return 'unranked';
     },
     enabled: !!student?.id,
     staleTime: 60000, // Cache for 1 minute
