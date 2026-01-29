@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Flame, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { SprintInfo, LeaderboardEntry } from '@/hooks/useLeaderboard';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
@@ -10,6 +11,25 @@ interface SprintTimerProps {
 }
 
 export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+
+  // Live seconds countdown
+  useEffect(() => {
+    if (!sprint) return;
+    
+    const updateSeconds = () => {
+      const endDate = new Date(sprint.endDate);
+      const now = new Date();
+      const diff = endDate.getTime() - now.getTime();
+      const seconds = Math.max(0, Math.floor((diff % (1000 * 60)) / 1000));
+      setSecondsRemaining(seconds);
+    };
+    
+    updateSeconds();
+    const interval = setInterval(updateSeconds, 1000);
+    return () => clearInterval(interval);
+  }, [sprint]);
+
   if (!sprint) {
     return (
       <div className="rounded-2xl border bg-card p-6 animate-pulse">
@@ -71,12 +91,14 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
       </div>
 
       {/* Giant Countdown */}
-      <div className="flex items-center justify-center gap-2 sm:gap-4 relative z-10">
+      <div className="flex items-center justify-center gap-1 sm:gap-3 relative z-10">
         <TimeUnit value={sprint.daysRemaining} label="DAYS" />
-        <span className="text-4xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
         <TimeUnit value={sprint.hoursRemaining} label="HRS" />
-        <span className="text-4xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
         <TimeUnit value={sprint.minutesRemaining} label="MIN" />
+        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <TimeUnit value={secondsRemaining} label="SEC" isLive />
       </div>
 
       {/* Progress bar */}
@@ -138,19 +160,20 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
   );
 }
 
-function TimeUnit({ value, label }: { value: number; label: string }) {
+function TimeUnit({ value, label, isLive }: { value: number; label: string; isLive?: boolean }) {
   return (
     <div className="text-center">
       <motion.span 
         key={value}
-        initial={{ scale: 1.1, opacity: 0 }}
+        initial={isLive ? { scale: 1.05 } : { scale: 1.1, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="text-5xl sm:text-7xl font-black tabular-nums tracking-tighter"
+        transition={isLive ? { duration: 0.15 } : undefined}
+        className="text-4xl sm:text-6xl font-black tabular-nums tracking-tighter"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {String(value).padStart(2, '0')}
       </motion.span>
-      <p className="text-[10px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-1">{label}</p>
+      <p className="text-[9px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-1">{label}</p>
     </div>
   );
 }
