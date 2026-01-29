@@ -1,35 +1,39 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Trophy, Sparkles, Calendar } from 'lucide-react';
+import { Clock, Trophy, Sparkles, Calendar, ArrowUp, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SprintInfo } from '@/hooks/useLeaderboard';
-import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
 
 interface NoActiveSprintCardProps {
   lastEndedSprint: SprintInfo | null;
-  lastRank?: number;
-  lastTier?: TierType;
-  lastPoints?: number;
+  nextSprint: SprintInfo | null;
+  lastSprintResults: {
+    rank: number;
+    tier: TierType;
+    points: number;
+    isTop1: boolean;
+    nextTier: TierType | null;
+  } | null;
 }
 
 export function NoActiveSprintCard({ 
   lastEndedSprint,
-  lastRank,
-  lastTier,
-  lastPoints
+  nextSprint,
+  lastSprintResults
 }: NoActiveSprintCardProps) {
   const [countdown, setCountdown] = useState({
-    days: 1,
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0
   });
 
-  // Simulate countdown to next sprint (1 day from now)
+  // Calculate countdown to next sprint
   useEffect(() => {
-    const nextSprintDate = new Date();
-    nextSprintDate.setDate(nextSprintDate.getDate() + 1);
-    nextSprintDate.setHours(0, 0, 0, 0);
+    if (!nextSprint?.startDate) return;
+
+    const nextSprintDate = new Date(nextSprint.startDate);
 
     const updateCountdown = () => {
       const now = new Date();
@@ -51,9 +55,15 @@ export function NoActiveSprintCard({
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nextSprint?.startDate]);
 
-  const tierColor = lastTier ? TIER_COLORS[lastTier] : TIER_COLORS.bronze;
+  const tierColor = lastSprintResults?.tier ? TIER_COLORS[lastSprintResults.tier] : TIER_COLORS.bronze;
+  
+  // Check if player is advancing to a higher tier
+  const isAdvancing = lastSprintResults?.nextTier && lastSprintResults.nextTier !== lastSprintResults.tier &&
+    TIER_ORDER.indexOf(lastSprintResults.nextTier) > TIER_ORDER.indexOf(lastSprintResults.tier);
+  
+  const nextTierColor = lastSprintResults?.nextTier ? TIER_COLORS[lastSprintResults.nextTier] : tierColor;
 
   return (
     <motion.div
@@ -72,7 +82,9 @@ export function NoActiveSprintCard({
             </div>
             <div>
               <h2 className="text-xl font-bold">New Sprint Coming!</h2>
-              <p className="text-sm text-muted-foreground">Get ready for the next competition</p>
+              <p className="text-sm text-muted-foreground">
+                {nextSprint ? `Season ${nextSprint.seasonNumber} • Sprint ${nextSprint.sprintNumber}` : 'Get ready for the next competition'}
+              </p>
             </div>
           </div>
 
@@ -89,13 +101,15 @@ export function NoActiveSprintCard({
 
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Next sprint starts tomorrow</span>
+            <span>
+              {nextSprint ? `Starts ${new Date(nextSprint.startDate).toLocaleDateString()}` : 'Next sprint coming soon'}
+            </span>
           </div>
         </CardContent>
       </Card>
 
       {/* Last Sprint Results */}
-      {lastEndedSprint && lastRank && (
+      {lastEndedSprint && lastSprintResults && lastSprintResults.rank > 0 && (
         <Card className="relative overflow-hidden" style={{ borderColor: tierColor }}>
           <div 
             className="absolute inset-0 opacity-10"
@@ -118,7 +132,7 @@ export function NoActiveSprintCard({
                   <h3 className="font-semibold">Your Final Results</h3>
                 </div>
               </div>
-              {lastRank === 1 && (
+              {lastSprintResults.isTop1 && (
                 <div className="flex items-center gap-1 text-amber-500">
                   <Sparkles className="h-4 w-4" />
                   <span className="text-sm font-medium">Champion!</span>
@@ -132,7 +146,7 @@ export function NoActiveSprintCard({
                 style={{ borderColor: `${tierColor}50`, backgroundColor: `${tierColor}10` }}
               >
                 <p className="text-2xl font-bold" style={{ color: tierColor }}>
-                  #{lastRank}
+                  #{lastSprintResults.rank}
                 </p>
                 <p className="text-xs text-muted-foreground">Final Rank</p>
               </div>
@@ -141,7 +155,7 @@ export function NoActiveSprintCard({
                 style={{ borderColor: `${tierColor}50`, backgroundColor: `${tierColor}10` }}
               >
                 <p className="text-lg font-bold" style={{ color: tierColor }}>
-                  {lastTier ? TIER_DISPLAY_NAMES[lastTier] : 'Unranked'}
+                  {TIER_DISPLAY_NAMES[lastSprintResults.tier]}
                 </p>
                 <p className="text-xs text-muted-foreground">Tier</p>
               </div>
@@ -150,11 +164,48 @@ export function NoActiveSprintCard({
                 style={{ borderColor: `${tierColor}50`, backgroundColor: `${tierColor}10` }}
               >
                 <p className="text-2xl font-bold">
-                  {lastPoints?.toLocaleString() || 0}
+                  {lastSprintResults.points?.toLocaleString() || 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Points</p>
               </div>
             </div>
+
+            {/* Tier Promotion Info */}
+            {isAdvancing && lastSprintResults.nextTier && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-xl p-4 border-2 flex items-center justify-between"
+                style={{ 
+                  borderColor: nextTierColor,
+                  background: `linear-gradient(135deg, ${nextTierColor}15, ${nextTierColor}05)`
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full" style={{ backgroundColor: `${nextTierColor}30` }}>
+                    <ArrowUp className="h-5 w-5" style={{ color: nextTierColor }} />
+                  </div>
+                  <div>
+                    <p className="font-semibold" style={{ color: nextTierColor }}>
+                      Tier Promotion!
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      You're advancing to {TIER_DISPLAY_NAMES[lastSprintResults.nextTier]}
+                    </p>
+                  </div>
+                </div>
+                <TrendingUp className="h-6 w-6" style={{ color: nextTierColor }} />
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Results Yet */}
+      {lastEndedSprint && (!lastSprintResults || lastSprintResults.rank === 0) && (
+        <Card className="border-dashed">
+          <CardContent className="p-6 text-center text-muted-foreground">
+            <p>No results from the last sprint. Participate in the next one!</p>
           </CardContent>
         </Card>
       )}

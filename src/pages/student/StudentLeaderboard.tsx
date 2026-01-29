@@ -33,6 +33,8 @@ export default function StudentLeaderboard() {
   const {
     activeSprint,
     lastEndedSprint,
+    nextSprint,
+    lastSprintResults,
     leaderboard,
     allTimeLeaderboard,
     currentUserEntry,
@@ -113,9 +115,8 @@ export default function StudentLeaderboard() {
       {noActiveSprint && (
         <NoActiveSprintCard
           lastEndedSprint={lastEndedSprint}
-          lastRank={lastKnownRanking?.entry.rank}
-          lastTier={lastKnownRanking?.entry.currentTier}
-          lastPoints={lastKnownRanking?.entry.totalPoints}
+          nextSprint={nextSprint}
+          lastSprintResults={lastSprintResults}
         />
       )}
 
