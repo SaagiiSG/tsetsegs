@@ -334,7 +334,7 @@ export function useStudentProfile() {
     pointsToNextLevel,
 
     // Rank
-    currentTier: currentUserEntry?.currentTier || 'bronze',
+    currentTier: currentUserEntry?.currentTier || 'unranked',
     reservedNextTier: currentUserEntry?.reservedNextTier || null,
 
     // Activity
