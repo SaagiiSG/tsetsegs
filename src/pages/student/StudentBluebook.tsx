@@ -9,9 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
+import { toast } from 'sonner';
 import { 
   BookOpen, Clock, PlayCircle, CheckCircle2, 
-  FileText, AlertCircle, Trophy, Calculator, Filter
+  FileText, AlertCircle, Trophy, Calculator, Filter,
+  RotateCcw, Eye
 } from 'lucide-react';
 
 interface BluebookTest {
@@ -36,6 +39,35 @@ interface BluebookAttempt {
   total_score: number | null;
   rw_scaled_score: number | null;
   math_scaled_score: number | null;
+  rw_raw_score: number | null;
+  math_raw_score: number | null;
+}
+
+interface QuestionResult {
+  id: string;
+  question_id: string;
+  question_text: string;
+  question_image_url: string | null;
+  question_type: string;
+  multiple_choice_options: any;
+  passage_text: string | null;
+  correct_answer: string;
+  user_answer: string | null;
+  is_correct: boolean;
+  order_index: number;
+  section: 'reading_writing' | 'math';
+  module_number: number;
+}
+
+interface ResultsData {
+  totalScore: number;
+  rwScaled: number;
+  mathScaled: number;
+  rwRaw: number;
+  mathRaw: number;
+  rwTotal: number;
+  mathTotal: number;
+  questions: QuestionResult[];
 }
 
 const MONTHS = [
@@ -60,6 +92,9 @@ export default function StudentBluebook() {
   const [sectionFilter, setSectionFilter] = useState<'all' | 'math' | 'english'>('all');
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [resultsData, setResultsData] = useState<ResultsData | null>(null);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
 
   // Fetch published tests
   const { data: tests, isLoading: testsLoading } = useQuery({
@@ -195,6 +230,135 @@ export default function StudentBluebook() {
     }
   };
 
+  const handleReviewTest = async (attemptId: string, testId: string) => {
+    setIsLoadingResults(true);
+    try {
+      // Fetch all answers with full question data
+      const { data: allAnswers } = await supabase
+        .from('bluebook_answers')
+        .select(`
+          *,
+          question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer)
+        `)
+        .eq('attempt_id', attemptId);
+
+      // Get all modules with questions for ordering
+      const { data: allModulesData } = await supabase
+        .from('bluebook_modules')
+        .select(`
+          id, 
+          section, 
+          module_number,
+          bluebook_module_questions(order_index, question_id)
+        `)
+        .eq('test_id', testId);
+
+      const moduleMap = new Map(allModulesData?.map(m => [m.id, { section: m.section, module_number: m.module_number }]));
+      
+      // Create a map for question order within modules
+      const questionOrderMap = new Map<string, { module_id: string; order_index: number }>();
+      allModulesData?.forEach(m => {
+        m.bluebook_module_questions?.forEach((mq: any) => {
+          questionOrderMap.set(mq.question_id, { module_id: m.id, order_index: mq.order_index });
+        });
+      });
+
+      // Build question results
+      const questionResults: QuestionResult[] = [];
+      let rwCorrect = 0, mathCorrect = 0, rwTotal = 0, mathTotal = 0;
+
+      allAnswers?.forEach(a => {
+        const isCorrect = a.answer_submitted?.toLowerCase() === a.question?.answer?.toLowerCase();
+        const moduleInfo = moduleMap.get(a.module_id!);
+        const orderInfo = questionOrderMap.get(a.question_id!);
+        const section = moduleInfo?.section as 'reading_writing' | 'math';
+        
+        if (section === 'reading_writing') {
+          rwTotal++;
+          if (isCorrect) rwCorrect++;
+        } else if (section === 'math') {
+          mathTotal++;
+          if (isCorrect) mathCorrect++;
+        }
+
+        if (a.question) {
+          questionResults.push({
+            id: a.question.id,
+            question_id: a.question.question_id,
+            question_text: a.question.question_text,
+            question_image_url: a.question.question_image_url,
+            question_type: a.question.question_type,
+            multiple_choice_options: a.question.multiple_choice_options,
+            passage_text: a.question.passage_text,
+            correct_answer: a.question.answer,
+            user_answer: a.answer_submitted,
+            is_correct: isCorrect,
+            order_index: orderInfo?.order_index || 0,
+            section: section,
+            module_number: moduleInfo?.module_number || 1
+          });
+        }
+      });
+
+      // Get attempt scores
+      const attempt = getTestAttempt(testId);
+      const rwScaled = attempt?.rw_scaled_score || Math.round(200 + (rwCorrect / Math.max(rwTotal, 54)) * 600);
+      const mathScaled = attempt?.math_scaled_score || Math.round(200 + (mathCorrect / Math.max(mathTotal, 44)) * 600);
+      const totalScore = attempt?.total_score || (rwScaled + mathScaled);
+
+      setResultsData({
+        totalScore,
+        rwScaled,
+        mathScaled,
+        rwRaw: rwCorrect,
+        mathRaw: mathCorrect,
+        rwTotal,
+        mathTotal,
+        questions: questionResults
+      });
+      setShowResultsDialog(true);
+    } catch (error) {
+      console.error('Failed to load review data:', error);
+      toast.error('Failed to load test review');
+    } finally {
+      setIsLoadingResults(false);
+    }
+  };
+
+  const handleRedoTest = async (testId: string) => {
+    const { data: modules } = await supabase
+      .from('bluebook_modules')
+      .select('id')
+      .eq('test_id', testId)
+      .order('module_number')
+      .limit(1);
+
+    const firstModuleId = modules?.[0]?.id || null;
+
+    const { data: attempt, error } = await supabase
+      .from('bluebook_attempts')
+      .insert({
+        test_id: testId,
+        student_account_id: student?.id,
+        status: 'in_progress',
+        current_module: 1,
+        current_module_id: firstModuleId,
+        started_at: new Date().toISOString(),
+        module_started_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to create attempt:', error);
+      toast.error('Failed to start new attempt');
+      return;
+    }
+
+    logActivity('bluebook_test_redo', { testId, attemptId: attempt.id });
+    navigate(`/practice/bluebook/test/${attempt.id}`);
+  };
+
   const renderTestCard = (test: BluebookTest) => {
     const stats = moduleStats?.[test.id];
     const attempt = getTestAttempt(test.id);
@@ -263,30 +427,49 @@ export default function StudentBluebook() {
             </div>
           </div>
 
-          {/* Action Button */}
-          <Button 
-            className="w-full gap-2"
-            variant={isCompleted ? 'outline' : 'default'}
-            size="sm"
-            onClick={() => handleStartTest(test.id)}
-          >
-            {isCompleted ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
+          {/* Action Buttons */}
+          {isCompleted && attempt ? (
+            <div className="flex gap-2">
+              <Button 
+                className="flex-1 gap-2"
+                variant="outline"
+                size="sm"
+                onClick={() => handleReviewTest(attempt.id, test.id)}
+                disabled={isLoadingResults}
+              >
+                <Eye className="h-4 w-4" />
                 Review
-              </>
-            ) : isInProgress ? (
-              <>
-                <PlayCircle className="h-4 w-4" />
-                Continue
-              </>
-            ) : (
-              <>
-                <PlayCircle className="h-4 w-4" />
-                Start
-              </>
-            )}
-          </Button>
+              </Button>
+              <Button 
+                className="flex-1 gap-2"
+                variant="default"
+                size="sm"
+                onClick={() => handleRedoTest(test.id)}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Redo
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              className="w-full gap-2"
+              variant="default"
+              size="sm"
+              onClick={() => handleStartTest(test.id)}
+            >
+              {isInProgress ? (
+                <>
+                  <PlayCircle className="h-4 w-4" />
+                  Continue
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-4 w-4" />
+                  Start
+                </>
+              )}
+            </Button>
+          )}
 
           {/* Previous Scores */}
           {isCompleted && attempt && (
@@ -332,6 +515,14 @@ export default function StudentBluebook() {
 
   return (
     <div className="p-4 md:p-6 space-y-4 select-none">
+      {/* Results Dialog */}
+      {resultsData && (
+        <BluebookResultsDialog 
+          open={showResultsDialog} 
+          onClose={() => setShowResultsDialog(false)} 
+          results={resultsData} 
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
