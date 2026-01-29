@@ -9,16 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   Save,
   Eye,
-  Plus,
   Clock,
   BookOpen,
   Calculator,
-  FileText,
   Loader2,
 } from "lucide-react";
 import BluebookModuleCard from "./BluebookModuleCard";
@@ -46,12 +45,52 @@ interface ModuleQuestion {
   };
 }
 
-const MODULE_CONFIG = [
-  { section: "reading_writing" as const, module_number: 1, time_limit: 32, label: "Reading & Writing Module 1", target: 27 },
-  { section: "reading_writing" as const, module_number: 2, time_limit: 32, label: "Reading & Writing Module 2", target: 27 },
-  { section: "math" as const, module_number: 1, time_limit: 35, label: "Math Module 1", target: 22 },
-  { section: "math" as const, module_number: 2, time_limit: 35, label: "Math Module 2", target: 22 },
+const MONTHS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
 ];
+
+const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+
+const SECTION_TYPES = [
+  { value: "math", label: "Math Only" },
+  { value: "english", label: "English Only" },
+  { value: "full", label: "Full Test (Both)" },
+];
+
+const getModuleConfig = (sectionType: string) => {
+  const rwModules = [
+    { section: "reading_writing" as const, module_number: 1, time_limit: 32, label: "Reading & Writing Module 1", target: 27 },
+    { section: "reading_writing" as const, module_number: 2, time_limit: 32, label: "Reading & Writing Module 2", target: 27 },
+  ];
+  const mathModules = [
+    { section: "math" as const, module_number: 1, time_limit: 35, label: "Math Module 1", target: 22 },
+    { section: "math" as const, module_number: 2, time_limit: 35, label: "Math Module 2", target: 22 },
+  ];
+
+  if (sectionType === "math") return mathModules;
+  if (sectionType === "english") return rwModules;
+  return [...rwModules, ...mathModules];
+};
+
+const generateTestName = (sectionType: string, month: number | null, year: number | null, variant: string) => {
+  const sectionLabel = sectionType === "math" ? "Math" : sectionType === "english" ? "English" : "Full";
+  const monthLabel = month ? MONTHS.find(m => m.value === month)?.label : "";
+  const yearLabel = year || "";
+  const variantLabel = variant ? ` ${variant}` : "";
+  
+  return `Tsetsegs SAT ${sectionLabel} ${monthLabel} ${yearLabel}${variantLabel}`.trim();
+};
 
 const BluebookTestBuilder = () => {
   const navigate = useNavigate();
@@ -59,10 +98,16 @@ const BluebookTestBuilder = () => {
   const queryClient = useQueryClient();
   const isEditing = !!testId;
 
-  const [name, setName] = useState("");
+  const [sectionType, setSectionType] = useState<string>("math");
+  const [testMonth, setTestMonth] = useState<number | null>(null);
+  const [testYear, setTestYear] = useState<number | null>(2025);
+  const [variant, setVariant] = useState("");
   const [description, setDescription] = useState("");
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+
+  // Auto-generate name
+  const name = generateTestName(sectionType, testMonth, testYear, variant);
 
   // Fetch existing test data
   const { data: test, isLoading: testLoading } = useQuery({
@@ -113,7 +158,10 @@ const BluebookTestBuilder = () => {
   // Set initial values when editing
   useEffect(() => {
     if (test) {
-      setName(test.name);
+      setSectionType((test as any).section_type || "full");
+      setTestMonth((test as any).test_month || null);
+      setTestYear((test as any).test_year || null);
+      setVariant((test as any).variant || "");
       setDescription(test.description || "");
     }
   }, [test]);
@@ -128,14 +176,19 @@ const BluebookTestBuilder = () => {
           name,
           description: description || null,
           is_published: false,
-        })
+          section_type: sectionType,
+          test_month: testMonth,
+          test_year: testYear,
+          variant: variant || null,
+        } as any)
         .select()
         .single();
 
       if (testError) throw testError;
 
-      // Create 4 modules
-      const modulesToCreate = MODULE_CONFIG.map((config) => ({
+      // Create modules based on section type
+      const moduleConfig = getModuleConfig(sectionType);
+      const modulesToCreate = moduleConfig.map((config) => ({
         test_id: newTest.id,
         section: config.section,
         module_number: config.module_number,
@@ -168,8 +221,12 @@ const BluebookTestBuilder = () => {
         .update({
           name,
           description: description || null,
+          section_type: sectionType,
+          test_month: testMonth,
+          test_year: testYear,
+          variant: variant || null,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", testId!);
 
       if (error) throw error;
@@ -206,8 +263,8 @@ const BluebookTestBuilder = () => {
   });
 
   const handleSave = () => {
-    if (!name.trim()) {
-      toast.error("Please enter a test name");
+    if (!testMonth || !testYear) {
+      toast.error("Please select month and year");
       return;
     }
     if (isEditing) {
@@ -229,6 +286,7 @@ const BluebookTestBuilder = () => {
   };
 
   const isSaving = createTestMutation.isPending || updateTestMutation.isPending;
+  const moduleConfig = getModuleConfig(sectionType);
 
   if (isEditing && testLoading) {
     return (
@@ -296,26 +354,89 @@ const BluebookTestBuilder = () => {
       {/* Test Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Test Information</CardTitle>
+          <CardTitle className="text-base">Test Configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Test Name *</Label>
-            <Input
-              id="name"
-              placeholder="e.g., Practice Test 1"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          {/* Section Type */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>Section Type *</Label>
+              <Select value={sectionType} onValueChange={setSectionType} disabled={isEditing}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTION_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Month *</Label>
+              <Select 
+                value={testMonth?.toString() || ""} 
+                onValueChange={(v) => setTestMonth(parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map(month => (
+                    <SelectItem key={month.value} value={month.value.toString()}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Year *</Label>
+              <Select 
+                value={testYear?.toString() || ""} 
+                onValueChange={(v) => setTestYear(parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Variant</Label>
+              <Input
+                placeholder="e.g., A, B, v1"
+                value={variant}
+                onChange={(e) => setVariant(e.target.value)}
+              />
+            </div>
           </div>
+
+          {/* Generated Name Preview */}
+          <div className="p-3 bg-muted rounded-lg">
+            <Label className="text-xs text-muted-foreground">Generated Test Name</Label>
+            <p className="font-medium">{name || "Select options to generate name"}</p>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
               placeholder="Optional description for this test..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+              rows={2}
             />
           </div>
         </CardContent>
@@ -324,19 +445,52 @@ const BluebookTestBuilder = () => {
       {/* Modules */}
       {isEditing && (
         <>
-          {/* Reading & Writing Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-semibold">Reading & Writing Section</h2>
-              <Badge variant="outline" className="ml-2">
-                <Clock className="h-3 w-3 mr-1" />
-                64 min total
-              </Badge>
+          {/* Reading & Writing Section - Only show if applicable */}
+          {(sectionType === "english" || sectionType === "full") && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+                <h2 className="text-lg font-semibold">Reading & Writing Section</h2>
+                <Badge variant="outline" className="ml-2">
+                  <Clock className="h-3 w-3 mr-1" />
+                  64 min total
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {moduleConfig.filter((c) => c.section === "reading_writing").map(
+                  (config) => {
+                    const module = getModuleByConfig(config.section, config.module_number);
+                    return (
+                      <BluebookModuleCard
+                        key={`${config.section}-${config.module_number}`}
+                        label={config.label}
+                        timeLimit={config.time_limit}
+                        targetQuestions={config.target}
+                        currentQuestions={module?.questions?.length || 0}
+                        onAddQuestions={() => module && handleOpenSelector(module)}
+                        disabled={!module}
+                        moduleId={module?.id}
+                      />
+                    );
+                  }
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {MODULE_CONFIG.filter((c) => c.section === "reading_writing").map(
-                (config) => {
+          )}
+
+          {/* Math Section - Only show if applicable */}
+          {(sectionType === "math" || sectionType === "full") && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-green-600" />
+                <h2 className="text-lg font-semibold">Math Section</h2>
+                <Badge variant="outline" className="ml-2">
+                  <Clock className="h-3 w-3 mr-1" />
+                  70 min total
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {moduleConfig.filter((c) => c.section === "math").map((config) => {
                   const module = getModuleByConfig(config.section, config.module_number);
                   return (
                     <BluebookModuleCard
@@ -350,39 +504,10 @@ const BluebookTestBuilder = () => {
                       moduleId={module?.id}
                     />
                   );
-                }
-              )}
+                })}
+              </div>
             </div>
-          </div>
-
-          {/* Math Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-green-600" />
-              <h2 className="text-lg font-semibold">Math Section</h2>
-              <Badge variant="outline" className="ml-2">
-                <Clock className="h-3 w-3 mr-1" />
-                70 min total
-              </Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {MODULE_CONFIG.filter((c) => c.section === "math").map((config) => {
-                const module = getModuleByConfig(config.section, config.module_number);
-                return (
-                  <BluebookModuleCard
-                    key={`${config.section}-${config.module_number}`}
-                    label={config.label}
-                    timeLimit={config.time_limit}
-                    targetQuestions={config.target}
-                    currentQuestions={module?.questions?.length || 0}
-                    onAddQuestions={() => module && handleOpenSelector(module)}
-                    disabled={!module}
-                    moduleId={module?.id}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          )}
         </>
       )}
 
