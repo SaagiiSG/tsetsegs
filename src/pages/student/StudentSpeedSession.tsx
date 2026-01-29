@@ -241,6 +241,9 @@ export default function StudentSpeedSession() {
     queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
     queryClient.invalidateQueries({ queryKey: ['speed-stats'] });
     queryClient.invalidateQueries({ queryKey: ['sprint-leaderboard'] });
+    queryClient.invalidateQueries({ queryKey: ['total-points'] });
+    queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
+    queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
 
     navigate('/practice/speed');
   };

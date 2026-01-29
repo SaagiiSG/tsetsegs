@@ -450,6 +450,10 @@ export default function StudentQuestion() {
       queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
       queryClient.invalidateQueries({ queryKey: ['student-weekly-accuracy'] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['total-points'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
+      queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
     },
     onError: (error: any) => {
       toast({
