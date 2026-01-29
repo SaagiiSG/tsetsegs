@@ -27,6 +27,16 @@ const TIER_BADGE_NAMES: Record<string, string> = {
   ruby: 'Ruby Legend'
 }
 
+// Helper function to get all sprint IDs for a season
+async function getSeasonSprintIds(supabase: any, seasonNumber: number): Promise<string[]> {
+  const { data: sprints } = await supabase
+    .from('sprints')
+    .select('id')
+    .eq('season_number', seasonNumber)
+  
+  return sprints?.map((s: any) => s.id) || []
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -40,6 +50,8 @@ Deno.serve(async (req) => {
     // Get the sprint to finalize (either from body or get the most recent ended one)
     const body = await req.json().catch(() => ({}))
     let sprintId = body.sprintId
+    let sprintNumber: number | null = null
+    let seasonNumber: number | null = null
 
     if (!sprintId) {
       // Find sprints that ended but haven't been finalized (no final_rank set for anyone)
@@ -62,8 +74,22 @@ Deno.serve(async (req) => {
         if (!rankings || rankings.length === 0) {
           // This sprint hasn't been finalized yet
           sprintId = sprint.id
+          sprintNumber = sprint.sprint_number
+          seasonNumber = sprint.season_number
           break
         }
+      }
+    } else {
+      // Get sprint info for provided sprintId
+      const { data: sprint } = await supabase
+        .from('sprints')
+        .select('sprint_number, season_number')
+        .eq('id', sprintId)
+        .single()
+      
+      if (sprint) {
+        sprintNumber = sprint.sprint_number
+        seasonNumber = sprint.season_number
       }
     }
 
@@ -74,7 +100,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`Finalizing sprint: ${sprintId}`)
+    console.log(`Finalizing sprint: ${sprintId} (Season ${seasonNumber}, Sprint ${sprintNumber})`)
 
     // Get all rankings for this sprint, ordered by points
     const { data: rankings, error: rankingsError } = await supabase
@@ -249,12 +275,101 @@ Deno.serve(async (req) => {
       }
     }
 
+    // SEASON END LOGIC: If this is Sprint 3, apply tier demotions for next season
+    let seasonEndDemotions = 0
+    if (sprintNumber === 3) {
+      console.log(`Season ${seasonNumber} ending - applying tier demotions`)
+      
+      // Get all students who participated in this season (from any of the 3 sprints)
+      // We need to find their highest reserved_next_tier (from P1 wins) and current tier
+      const { data: seasonRankings, error: seasonError } = await supabase
+        .from('student_sprint_rankings')
+        .select('student_account_id, current_tier, reserved_next_tier, is_top_1, sprint_id')
+        .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!))
+      
+      if (seasonError) {
+        console.error('Failed to get season rankings:', seasonError)
+      } else if (seasonRankings && seasonRankings.length > 0) {
+        // Group by student to find their final tier and best P1 protection
+        const studentData = new Map<string, {
+          finalTier: string
+          bestP1Tier: string | null // The highest tier they achieved P1 at
+          sprint3Ranking: any | null
+        }>()
+
+        for (const ranking of seasonRankings) {
+          const studentId = ranking.student_account_id
+          const existing = studentData.get(studentId)
+          
+          if (!existing) {
+            studentData.set(studentId, {
+              finalTier: ranking.current_tier,
+              bestP1Tier: ranking.is_top_1 ? ranking.reserved_next_tier : null,
+              sprint3Ranking: ranking.sprint_id === sprintId ? ranking : null
+            })
+          } else {
+            // Update final tier if this is Sprint 3
+            if (ranking.sprint_id === sprintId) {
+              existing.finalTier = ranking.current_tier
+              existing.sprint3Ranking = ranking
+            }
+            // Track highest P1 protection tier earned this season
+            if (ranking.is_top_1 && ranking.reserved_next_tier) {
+              const existingP1Index = existing.bestP1Tier ? TIER_ORDER.indexOf(existing.bestP1Tier) : -1
+              const newP1Index = TIER_ORDER.indexOf(ranking.reserved_next_tier)
+              if (newP1Index > existingP1Index) {
+                existing.bestP1Tier = ranking.reserved_next_tier
+              }
+            }
+          }
+        }
+
+        // Apply demotions for next season
+        for (const [studentId, data] of studentData) {
+          const currentTierIndex = TIER_ORDER.indexOf(data.finalTier || 'unranked')
+          const demotedTierIndex = Math.max(0, currentTierIndex - 1) // Drop 1 tier, min is unranked
+          let newTier = TIER_ORDER[demotedTierIndex]
+          
+          // Check if P1 protection applies
+          if (data.bestP1Tier) {
+            const protectedTierIndex = TIER_ORDER.indexOf(data.bestP1Tier)
+            // If demoted tier would be below protected tier, use protected tier instead
+            if (demotedTierIndex < protectedTierIndex) {
+              newTier = data.bestP1Tier
+              console.log(`Student ${studentId}: P1 protection keeps them at ${newTier} (would have dropped to ${TIER_ORDER[demotedTierIndex]})`)
+            }
+          }
+
+          // Only log if there's an actual demotion
+          if (newTier !== data.finalTier) {
+            console.log(`Student ${studentId}: ${data.finalTier} -> ${newTier} (season end demotion)`)
+            seasonEndDemotions++
+          }
+
+          // Update the Sprint 3 ranking with the demoted tier as reserved_next_tier for next season
+          // This way, when they enroll in Season N+1 Sprint 1, they'll use this tier
+          if (data.sprint3Ranking) {
+            await supabase
+              .from('student_sprint_rankings')
+              .update({ reserved_next_tier: newTier })
+              .eq('sprint_id', sprintId)
+              .eq('student_account_id', studentId)
+          }
+        }
+
+        console.log(`Season end: ${seasonEndDemotions} students demoted`)
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         sprintId,
+        sprintNumber,
+        seasonNumber,
         updated: updates.length,
-        badgesAwarded
+        badgesAwarded,
+        seasonEndDemotions: sprintNumber === 3 ? seasonEndDemotions : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
