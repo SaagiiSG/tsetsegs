@@ -150,7 +150,10 @@ export default function StudentReview() {
         .from('student_attempts')
         .select(`
           id, question_id, is_correct, attempted_at,
-          questions!inner(question_id, subject)
+          questions!inner(
+            question_id, subject, question_text, question_set,
+            category:question_categories(name)
+          )
         `)
         .eq('student_account_id', student.id)
         .order('attempted_at', { ascending: false })
@@ -476,29 +479,65 @@ export default function StudentReview() {
             <CardContent className="flex-1 overflow-hidden p-2">
               <ScrollArea className="h-full">
                 <div className="space-y-2 pr-2">
-                  {reviewHistory?.map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                      onClick={() => navigate(`/practice/question/${item.question_id}`)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {item.is_correct ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-destructive" />
-                          )}
-                          <span className="font-mono font-medium text-sm">
-                            #{item.questions?.question_id}
+                  {reviewHistory?.map((item: any) => {
+                    const questionId = item.questions?.question_id || '';
+                    const questionSet = item.questions?.question_set;
+                    const categoryName = item.questions?.category?.name;
+                    const questionText = item.questions?.question_text || '';
+                    
+                    // Determine source badge
+                    const is68 = questionSet === '68' || questionId.startsWith('68');
+                    const isCB = questionSet === 'CB' || questionId.startsWith('CB') || questionId.startsWith('ENG');
+                    
+                    // Get first few words of question text (strip HTML)
+                    const plainText = questionText.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                    const preview = plainText.length > 30 ? plainText.slice(0, 30) + '...' : plainText;
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                        onClick={() => navigate(`/practice/question/${item.question_id}`)}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="mt-0.5">
+                            {item.is_correct ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-destructive" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {is68 && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-orange-100 text-orange-700 border-orange-200">
+                                  68
+                                </Badge>
+                              )}
+                              {isCB && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
+                                  CB
+                                </Badge>
+                              )}
+                              {categoryName && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 truncate max-w-[100px]">
+                                  {categoryName.length > 12 ? categoryName.slice(0, 12) + '...' : categoryName}
+                                </Badge>
+                              )}
+                            </div>
+                            {preview && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {preview}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                            {formatDistanceToNow(new Date(item.attempted_at), { addSuffix: true })}
                           </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(item.attempted_at), { addSuffix: true })}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {(!reviewHistory || reviewHistory.length === 0) && (
                     <div className="text-center py-8">
                       <p className="text-sm text-muted-foreground">No review history yet</p>
