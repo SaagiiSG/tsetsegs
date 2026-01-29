@@ -29,7 +29,35 @@ import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
+import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
 import { cn } from '@/lib/utils';
+
+interface ResultsData {
+  totalScore: number;
+  rwScaled: number;
+  mathScaled: number;
+  rwRaw: number;
+  mathRaw: number;
+  rwTotal: number;
+  mathTotal: number;
+  questions: QuestionResult[];
+}
+
+interface QuestionResult {
+  id: string;
+  question_id: string;
+  question_text: string;
+  question_image_url: string | null;
+  question_type: string;
+  multiple_choice_options: any;
+  passage_text: string | null;
+  correct_answer: string;
+  user_answer: string | null;
+  is_correct: boolean;
+  order_index: number;
+  section: 'reading_writing' | 'math';
+  module_number: number;
+}
 
 interface Question {
   id: string;
@@ -75,6 +103,8 @@ export default function StudentBluebookTest() {
   const [showBreak, setShowBreak] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
+  const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [resultsData, setResultsData] = useState<ResultsData | null>(null);
   const hasShownFiveMinWarning = useRef(false);
   
   // Track calculator snap state for content offset
@@ -358,39 +388,80 @@ export default function StudentBluebookTest() {
   };
 
   const completeTest = async () => {
-    // Calculate scores
+    // Fetch all answers with full question data
     const { data: allAnswers } = await supabase
       .from('bluebook_answers')
       .select(`
         *,
-        question:questions(answer)
+        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer)
       `)
       .eq('attempt_id', attemptId);
 
-    let rwCorrect = 0;
-    let mathCorrect = 0;
-
-    // Get module sections
-    const { data: modules } = await supabase
+    // Get all modules with questions for ordering
+    const { data: allModulesData } = await supabase
       .from('bluebook_modules')
-      .select('id, section')
+      .select(`
+        id, 
+        section, 
+        module_number,
+        bluebook_module_questions(order_index, question_id)
+      `)
       .eq('test_id', attempt?.test_id);
 
-    const moduleMap = new Map(modules?.map(m => [m.id, m.section]));
+    let rwCorrect = 0;
+    let mathCorrect = 0;
+    let rwTotal = 0;
+    let mathTotal = 0;
+
+    const moduleMap = new Map(allModulesData?.map(m => [m.id, { section: m.section, module_number: m.module_number }]));
+    
+    // Create a map for question order within modules
+    const questionOrderMap = new Map<string, { module_id: string; order_index: number }>();
+    allModulesData?.forEach(m => {
+      m.bluebook_module_questions?.forEach((mq: any) => {
+        questionOrderMap.set(mq.question_id, { module_id: m.id, order_index: mq.order_index });
+      });
+    });
+
+    // Build question results
+    const questionResults: QuestionResult[] = [];
 
     allAnswers?.forEach(a => {
       const isCorrect = a.answer_submitted?.toLowerCase() === a.question?.answer?.toLowerCase();
-      const section = moduleMap.get(a.module_id!);
+      const moduleInfo = moduleMap.get(a.module_id!);
+      const orderInfo = questionOrderMap.get(a.question_id!);
+      const section = moduleInfo?.section as 'reading_writing' | 'math';
       
-      if (isCorrect) {
-        if (section === 'reading_writing') rwCorrect++;
-        else if (section === 'math') mathCorrect++;
+      if (section === 'reading_writing') {
+        rwTotal++;
+        if (isCorrect) rwCorrect++;
+      } else if (section === 'math') {
+        mathTotal++;
+        if (isCorrect) mathCorrect++;
+      }
+
+      if (a.question) {
+        questionResults.push({
+          id: a.question.id,
+          question_id: a.question.question_id,
+          question_text: a.question.question_text,
+          question_image_url: a.question.question_image_url,
+          question_type: a.question.question_type,
+          multiple_choice_options: a.question.multiple_choice_options,
+          passage_text: a.question.passage_text,
+          correct_answer: a.question.answer,
+          user_answer: a.answer_submitted,
+          is_correct: isCorrect,
+          order_index: orderInfo?.order_index || 0,
+          section: section,
+          module_number: moduleInfo?.module_number || 1
+        });
       }
     });
 
     // Simple scaling (placeholder - real SAT uses equating tables)
-    const rwScaled = Math.round(200 + (rwCorrect / 54) * 600);
-    const mathScaled = Math.round(200 + (mathCorrect / 44) * 600);
+    const rwScaled = Math.round(200 + (rwCorrect / Math.max(rwTotal, 54)) * 600);
+    const mathScaled = Math.round(200 + (mathCorrect / Math.max(mathTotal, 44)) * 600);
     const totalScore = rwScaled + mathScaled;
 
     const { error } = await supabase
@@ -412,7 +483,23 @@ export default function StudentBluebookTest() {
     }
 
     logActivity('bluebook_test_complete', { attemptId, totalScore });
-    toast.success(`Test completed! Score: ${totalScore}`);
+
+    // Set results data and show dialog
+    setResultsData({
+      totalScore,
+      rwScaled,
+      mathScaled,
+      rwRaw: rwCorrect,
+      mathRaw: mathCorrect,
+      rwTotal,
+      mathTotal,
+      questions: questionResults
+    });
+    setShowResultsDialog(true);
+  };
+
+  const handleResultsClose = () => {
+    setShowResultsDialog(false);
     navigate('/practice/bluebook');
   };
 
@@ -484,6 +571,15 @@ export default function StudentBluebookTest() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Results Dialog */}
+      {resultsData && (
+        <BluebookResultsDialog 
+          open={showResultsDialog} 
+          onClose={handleResultsClose} 
+          results={resultsData} 
+        />
+      )}
+
       {/* Calculator for Math sections */}
       {currentModule?.section === 'math' && <DesmosCalculator />}
       
