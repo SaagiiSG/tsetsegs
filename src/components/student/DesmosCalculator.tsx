@@ -230,13 +230,13 @@ export function DesmosCalculator() {
       <div
         ref={windowRef}
         data-calculator-window
-        className="fixed z-50 bg-background border rounded-lg shadow-2xl overflow-hidden"
+        className="fixed z-40 bg-background border rounded-lg shadow-2xl overflow-hidden"
         style={{
           left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
           right: snapSide === 'right' ? 0 : 'auto',
-          top: snapSide ? 0 : position.y,
+          top: snapSide ? '60px' : position.y, // Account for header height when snapped
           width: windowWidth,
-          height: snapSide ? '100vh' : 'auto',
+          height: snapSide ? 'calc(100vh - 60px)' : 'auto', // Subtract header height
           maxWidth: '95vw',
           borderRadius: snapSide ? 0 : undefined,
           transition: isDragging ? 'none' : 'all 0.2s ease-out'
@@ -304,7 +304,7 @@ export function DesmosCalculator() {
         {/* Calculator Content - Keep iframe mounted but hidden when minimized */}
         <div 
           style={{ 
-            height: snapSide ? 'calc(100vh - 44px)' : '460px',
+            height: snapSide ? 'calc(100vh - 60px - 44px)' : '460px', // Account for header + title bar
             display: isMinimized ? 'none' : 'block'
           }}
         >

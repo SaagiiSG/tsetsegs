@@ -511,7 +511,10 @@ export default function StudentBluebookTest() {
           <div className="flex-1 flex justify-center">
             <Badge 
               variant={timeRemaining && timeRemaining < 300 ? 'destructive' : 'secondary'}
-              className="gap-1 text-lg px-3 py-1"
+              className={cn(
+                "gap-1 text-lg px-3 py-1 transition-all",
+                timeRemaining !== null && timeRemaining < 60 && "animate-pulse shadow-[0_0_15px_hsl(var(--destructive))]"
+              )}
             >
               <Clock className="h-4 w-4" />
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
