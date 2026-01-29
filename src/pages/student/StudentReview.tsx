@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -7,17 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
 import {
   ChartContainer,
   ChartTooltip,
@@ -31,8 +20,8 @@ import {
   Radar,
 } from 'recharts';
 import { 
-  Brain, Target, FileText, Calendar, Clock, AlertCircle,
-  CheckCircle2, XCircle, History, Zap, Loader2
+  Brain, Target, FileText, Calendar, AlertCircle,
+  CheckCircle2, XCircle, History, Loader2
 } from 'lucide-react';
 import { formatDistanceToNow, subWeeks } from 'date-fns';
 
@@ -44,12 +33,10 @@ const chartConfig = {
 };
 
 export default function StudentReview() {
-  const { student, logActivity } = useStudentAuth();
+  const { student } = useStudentAuth();
   const navigate = useNavigate();
   
   const [subject, setSubject] = useState<'math' | 'english'>('math');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [sessionQuestionCount, setSessionQuestionCount] = useState(10);
 
   // Fetch review queue with category data
   const { data: reviewQueue, isLoading } = useQuery({
@@ -319,18 +306,58 @@ export default function StudentReview() {
     enabled: !!student?.id
   });
 
-  const startReviewSession = () => {
-    logActivity('review_session_start', { 
-      subject,
-      questionCount: sessionQuestionCount 
-    });
-    
-    const firstQuestion = reviewQueue?.dueNow?.[0];
-    if (firstQuestion) {
-      navigate(`/practice/question/${firstQuestion.question_id}?mode=review`);
-    }
-    setDrawerOpen(false);
-  };
+  // Fetch wrong questions with details
+  const { data: wrongQuestions } = useQuery({
+    queryKey: ['wrong-questions-list', student?.id, subject],
+    queryFn: async () => {
+      if (!student) return [];
+      
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select(`
+          question_id, is_correct, attempted_at,
+          questions!inner(id, question_id, subject, question_text, question_set, subtopic, category:question_categories(name))
+        `)
+        .eq('student_account_id', student.id)
+        .order('attempted_at', { ascending: false });
+      
+      // Group by question, check if ever correct
+      const questionMap = new Map<string, { 
+        questionId: string;
+        displayId: string;
+        category: string;
+        subtopic: string;
+        questionSet: string;
+        questionText: string;
+        lastAttempt: string;
+        everCorrect: boolean;
+      }>();
+      
+      attempts?.forEach((a: any) => {
+        if (a.questions?.subject?.toLowerCase() !== subject) return;
+        
+        const existing = questionMap.get(a.question_id);
+        if (!existing) {
+          questionMap.set(a.question_id, {
+            questionId: a.question_id,
+            displayId: a.questions?.question_id || '',
+            category: a.questions?.category?.name || 'Uncategorized',
+            subtopic: a.questions?.subtopic || '',
+            questionSet: a.questions?.question_set || '',
+            questionText: a.questions?.question_text || '',
+            lastAttempt: a.attempted_at,
+            everCorrect: a.is_correct
+          });
+        } else if (a.is_correct) {
+          existing.everCorrect = true;
+        }
+      });
+      
+      // Return only never-correct questions
+      return Array.from(questionMap.values()).filter(q => !q.everCorrect);
+    },
+    enabled: !!student
+  });
 
   if (isLoading) {
     return (
@@ -381,43 +408,6 @@ export default function StudentReview() {
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
         {/* Left 70% */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Top Row - 50/50 Stat Boxes */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Scheduled to Solve - Clickable */}
-            <Card 
-              className="cursor-pointer hover:border-primary/50 transition-colors bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20"
-              onClick={() => setDrawerOpen(true)}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 text-blue-600 mb-2">
-                  <Calendar className="h-5 w-5" />
-                  <span className="font-medium">Scheduled</span>
-                </div>
-                <p className="text-4xl font-bold">{(reviewQueue?.dueNow?.length || 0) + (reviewQueue?.scheduled?.length || 0)}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  questions to review
-                </p>
-                <p className="text-xs text-primary mt-2 flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Tap to start session
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Mistakes Not Corrected */}
-            <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 text-red-600 mb-2">
-                  <AlertCircle className="h-5 w-5" />
-                  <span className="font-medium">Uncorrected</span>
-                </div>
-                <p className="text-4xl font-bold">{mistakesData?.count || 0}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  mistakes to fix
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Radar Chart with Area Breakdown */}
           <Card>
             <CardHeader className="pb-2">
@@ -463,6 +453,60 @@ export default function StudentReview() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Wrong Questions Boxes */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                Wrong Questions ({wrongQuestions?.length || 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {wrongQuestions && wrongQuestions.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {wrongQuestions.map((q) => {
+                    const is68 = q.questionSet === '68' || q.displayId.startsWith('68');
+                    const isCB = q.questionSet === 'CB' || q.displayId.startsWith('CB') || q.displayId.startsWith('ENG');
+                    const plainText = q.questionText.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                    const preview = plainText.length > 40 ? plainText.slice(0, 40) + '...' : plainText;
+                    
+                    return (
+                      <div
+                        key={q.questionId}
+                        className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/practice/question/${q.questionId}`)}
+                      >
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                          {is68 && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-orange-100 text-orange-700 border-orange-200">
+                              68
+                            </Badge>
+                          )}
+                          {isCB && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
+                              CB
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs font-medium truncate">{q.category}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1">
+                          {preview || q.subtopic || 'No preview'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500 opacity-50" />
+                  <p className="text-sm text-muted-foreground">No wrong questions!</p>
+                  <p className="text-xs text-muted-foreground mt-1">Keep practicing to maintain accuracy</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -549,78 +593,6 @@ export default function StudentReview() {
           </Card>
         </div>
       </div>
-
-      {/* Right-side Drawer for Session Builder */}
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
-        <DrawerContent className="h-full w-[400px] max-w-[90vw] ml-auto rounded-l-[10px] rounded-t-none fixed inset-y-0 right-0">
-          <DrawerHeader>
-            <DrawerTitle>Start Review Session</DrawerTitle>
-            <DrawerDescription>
-              Configure your scheduled review session
-            </DrawerDescription>
-          </DrawerHeader>
-          
-          <div className="p-6 space-y-6">
-            {/* Available Questions */}
-            <div className="text-center p-4 rounded-lg bg-primary/10">
-              <p className="text-3xl font-bold text-primary">
-                {reviewQueue?.dueNow?.length || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">questions due now</p>
-            </div>
-            
-            {/* Question Count Slider */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label>Questions to Review</Label>
-                <span className="font-mono font-bold text-primary">
-                  {sessionQuestionCount}
-                </span>
-              </div>
-              <Slider
-                value={[sessionQuestionCount]}
-                onValueChange={([val]) => setSessionQuestionCount(val)}
-                min={5}
-                max={Math.max(5, reviewQueue?.dueNow?.length || 20)}
-                step={5}
-              />
-            </div>
-            
-            {/* Category Filter Badges */}
-            <div>
-              <Label className="mb-2 block">Focus Areas</Label>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(reviewQueue?.byCategory || {}).map(([cat, count]) => (
-                  <Badge 
-                    key={cat} 
-                    variant="outline" 
-                    className="cursor-pointer hover:bg-primary/10"
-                  >
-                    {cat} ({count as number})
-                  </Badge>
-                ))}
-                {Object.keys(reviewQueue?.byCategory || {}).length === 0 && (
-                  <p className="text-sm text-muted-foreground">No categories available</p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <DrawerFooter>
-            <Button 
-              onClick={startReviewSession}
-              disabled={!reviewQueue?.dueNow?.length}
-              className="w-full"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Start Review ({sessionQuestionCount} questions)
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }
