@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CheckCircle2, XCircle, ChevronLeft, Trophy, 
-  Calculator, BookOpen, Target, X
+  Calculator, BookOpen, X, Circle, Minus
 } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { cn } from '@/lib/utils';
@@ -54,29 +54,127 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
   const rwCorrect = rwQuestions.filter(q => q.is_correct).length;
   const mathCorrect = mathQuestions.filter(q => q.is_correct).length;
 
-  const renderQuestionGrid = (questions: QuestionResult[]) => (
-    <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
-      {questions
-        .sort((a, b) => {
-          if (a.module_number !== b.module_number) return a.module_number - b.module_number;
-          return a.order_index - b.order_index;
-        })
-        .map((q, idx) => (
-          <button
-            key={q.id}
-            onClick={() => setSelectedQuestion(q)}
-            className={cn(
-              "aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:scale-105",
-              q.is_correct 
-                ? "bg-green-500/20 text-green-600 hover:bg-green-500/30 border border-green-500/30" 
-                : "bg-red-500/20 text-red-600 hover:bg-red-500/30 border border-red-500/30"
-            )}
-          >
-            {idx + 1}
-          </button>
+  // Group questions by module
+  const groupByModule = (questions: QuestionResult[]) => {
+    const sorted = [...questions].sort((a, b) => {
+      if (a.module_number !== b.module_number) return a.module_number - b.module_number;
+      return a.order_index - b.order_index;
+    });
+    
+    const modules: { moduleNumber: number; questions: QuestionResult[] }[] = [];
+    let currentModule: number | null = null;
+    let currentQuestions: QuestionResult[] = [];
+    
+    sorted.forEach(q => {
+      if (q.module_number !== currentModule) {
+        if (currentQuestions.length > 0) {
+          modules.push({ moduleNumber: currentModule!, questions: currentQuestions });
+        }
+        currentModule = q.module_number;
+        currentQuestions = [q];
+      } else {
+        currentQuestions.push(q);
+      }
+    });
+    
+    if (currentQuestions.length > 0) {
+      modules.push({ moduleNumber: currentModule!, questions: currentQuestions });
+    }
+    
+    return modules;
+  };
+
+  const renderQuestionList = (questions: QuestionResult[], sectionLabel: string) => {
+    const modules = groupByModule(questions);
+    let questionNumber = 0;
+    
+    return (
+      <div className="space-y-4">
+        {modules.map(({ moduleNumber, questions: moduleQuestions }) => (
+          <div key={moduleNumber} className="space-y-1">
+            {/* Module Header */}
+            <div className="sticky top-0 bg-background/95 backdrop-blur-sm py-2 border-b">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {sectionLabel} — Module {moduleNumber}
+              </h3>
+            </div>
+            
+            {/* Question List */}
+            <div className="divide-y">
+              {moduleQuestions.map((q) => {
+                questionNumber++;
+                const hasAnswer = q.user_answer !== null && q.user_answer !== '';
+                
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setSelectedQuestion(q)}
+                    className={cn(
+                      "w-full flex items-center gap-4 py-3 px-2 text-left transition-colors hover:bg-muted/50 rounded-lg",
+                      "focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    )}
+                  >
+                    {/* Question Number */}
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-sm font-semibold shrink-0">
+                      {questionNumber}
+                    </div>
+                    
+                    {/* Status Icon */}
+                    <div className="shrink-0">
+                      {q.is_correct ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : hasAnswer ? (
+                        <XCircle className="h-5 w-5 text-red-600" />
+                      ) : (
+                        <Minus className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    
+                    {/* Answer Info */}
+                    <div className="flex-1 min-w-0 flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Your answer:</span>
+                        <span className={cn(
+                          "font-medium",
+                          q.is_correct ? "text-green-600" : hasAnswer ? "text-red-600" : "text-muted-foreground"
+                        )}>
+                          {hasAnswer ? q.user_answer?.toUpperCase() : "Omitted"}
+                        </span>
+                      </div>
+                      
+                      {!q.is_correct && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Correct:</span>
+                          <span className="font-medium text-green-600">
+                            {q.correct_answer?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Status Badge */}
+                    <Badge 
+                      variant="outline"
+                      className={cn(
+                        "shrink-0",
+                        q.is_correct 
+                          ? "bg-green-50 text-green-700 border-green-200" 
+                          : hasAnswer 
+                            ? "bg-red-50 text-red-700 border-red-200"
+                            : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {q.is_correct ? "Correct" : hasAnswer ? "Incorrect" : "Omitted"}
+                    </Badge>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ))}
-    </div>
-  );
+      </div>
+    );
+  };
 
   if (selectedQuestion) {
     return (
@@ -203,97 +301,69 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
         {/* Header with Score */}
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 text-center border-b">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
-            <Trophy className="h-8 w-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/20 mb-3">
+            <Trophy className="h-7 w-7 text-primary" />
           </div>
-          <h2 className="text-3xl font-bold mb-2">Test Complete!</h2>
-          <div className="text-5xl font-black text-primary mb-4">
+          <h2 className="text-2xl font-bold mb-1">Test Complete!</h2>
+          <div className="text-4xl font-black text-primary mb-3">
             {results.totalScore}
           </div>
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-blue-500" />
-              <span>Reading & Writing: <strong>{results.rwScaled}</strong></span>
+              <span>R&W: <strong>{results.rwScaled}</strong></span>
+              <span className="text-muted-foreground">({rwCorrect}/{rwQuestions.length})</span>
             </div>
             <div className="flex items-center gap-2">
               <Calculator className="h-4 w-4 text-green-500" />
               <span>Math: <strong>{results.mathScaled}</strong></span>
+              <span className="text-muted-foreground">({mathCorrect}/{mathQuestions.length})</span>
             </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 py-3 border-b bg-muted/30 text-sm">
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <span>Correct</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <span>Incorrect</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Minus className="h-4 w-4 text-muted-foreground" />
+            <span>Omitted</span>
           </div>
         </div>
 
         {/* Question Breakdown */}
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="reading_writing" className="h-full flex flex-col">
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-3">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="reading_writing" className="gap-2">
                   <BookOpen className="h-4 w-4" />
                   Reading & Writing
-                  <Badge variant="secondary" className="ml-1">
-                    {rwCorrect}/{rwQuestions.length}
-                  </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="math" className="gap-2">
                   <Calculator className="h-4 w-4" />
                   Math
-                  <Badge variant="secondary" className="ml-1">
-                    {mathCorrect}/{mathQuestions.length}
-                  </Badge>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 px-4 py-3">
               <TabsContent value="reading_writing" className="mt-0">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Click on a question to see details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {renderQuestionGrid(rwQuestions)}
-                  </CardContent>
-                </Card>
-                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-green-500/20 border border-green-500/30" />
-                    <span>Correct</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-red-500/20 border border-red-500/30" />
-                    <span>Incorrect</span>
-                  </div>
-                </div>
+                {renderQuestionList(rwQuestions, "Reading & Writing")}
               </TabsContent>
 
               <TabsContent value="math" className="mt-0">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Click on a question to see details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {renderQuestionGrid(mathQuestions)}
-                  </CardContent>
-                </Card>
-                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-green-500/20 border border-green-500/30" />
-                    <span>Correct</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-red-500/20 border border-red-500/30" />
-                    <span>Incorrect</span>
-                  </div>
-                </div>
+                {renderQuestionList(mathQuestions, "Math")}
               </TabsContent>
             </ScrollArea>
           </Tabs>
