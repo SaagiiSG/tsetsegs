@@ -4,18 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerClose,
-} from '@/components/ui/drawer';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, ChevronUp, Bookmark, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronUp, Bookmark, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface QuestionNavigatorDrawerProps {
+interface QuestionNavigatorDialogProps {
   currentQuestionId: string;
   questionSet?: string;
   subject?: string;
@@ -23,11 +22,11 @@ interface QuestionNavigatorDrawerProps {
 
 type QuestionStatus = 'current' | 'correct' | 'correct_with_mistakes' | 'incorrect' | 'for_review' | 'not_attempted';
 
-export function QuestionNavigatorDrawer({ 
+export function QuestionNavigatorDialog({ 
   currentQuestionId,
   questionSet,
   subject = 'math'
-}: QuestionNavigatorDrawerProps) {
+}: QuestionNavigatorDialogProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { student } = useStudentAuth();
@@ -183,44 +182,37 @@ export function QuestionNavigatorDrawer({
         <ChevronUp className="h-4 w-4" />
       </Button>
 
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader className="flex items-center justify-between pb-2">
-            <DrawerTitle>Question Set</DrawerTitle>
-            <DrawerClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <X className="h-4 w-4" />
-              </Button>
-            </DrawerClose>
-          </DrawerHeader>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Question Set</DialogTitle>
+          </DialogHeader>
 
           {/* Legend */}
-          <div className="px-4 pb-4 space-y-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">For Review</span>
-                <Bookmark className="h-4 w-4 text-orange-600 fill-orange-600" />
-              </div>
-              <div className="flex items-center gap-1.5">
+          <div className="space-y-1.5 text-xs">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-green-100 border border-green-200" />
                 <span className="text-muted-foreground">Correct</span>
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Correct (with mistakes)</span>
-                <div className="w-4 h-4 rounded-sm bg-amber-100 border border-amber-300" />
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-200" />
+                <span className="text-muted-foreground">With mistakes</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-red-100 border border-red-200" />
                 <span className="text-muted-foreground">Incorrect</span>
-                <XCircle className="h-4 w-4 text-red-500" />
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-orange-100 border border-orange-200" />
+                <span className="text-muted-foreground">Review</span>
               </div>
             </div>
           </div>
 
-          {/* Question Grid */}
-          <ScrollArea className="flex-1 px-4 pb-6">
-            <div className="grid grid-cols-6 gap-2">
+          {/* Question Grid - smaller squares */}
+          <ScrollArea className="max-h-[50vh]">
+            <div className="grid grid-cols-10 gap-1.5 p-1">
               {questions?.map((q, index) => {
                 const { status } = statusMap.get(q.id) || { status: 'not_attempted' };
                 const displayNum = getDisplayNumber(q.question_id, index);
@@ -230,7 +222,7 @@ export function QuestionNavigatorDrawer({
                     key={q.id}
                     onClick={() => handleQuestionClick(q.id)}
                     className={cn(
-                      "aspect-square rounded-lg border flex items-center justify-center text-sm font-medium transition-all hover:scale-105",
+                      "w-7 h-7 rounded border flex items-center justify-center text-xs font-medium transition-all hover:scale-105",
                       getStatusStyles(status)
                     )}
                   >
@@ -240,8 +232,8 @@ export function QuestionNavigatorDrawer({
               })}
             </div>
           </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
