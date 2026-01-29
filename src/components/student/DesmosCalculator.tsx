@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calculator, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 
 const SNAP_THRESHOLD = 80; // pixels from edge to trigger snap zone
 const SNAP_WIDTH = 40; // percentage of screen width when snapped
+const MIN_WIDTH = 300;
+const MIN_HEIGHT = 300;
+const DEFAULT_WIDTH = 400;
+const DEFAULT_HEIGHT = 500;
 
 export type SnapSide = 'left' | 'right' | null;
 
@@ -39,15 +43,21 @@ export function useCalculatorSnap() {
   return snapSide;
 }
 
+type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null;
+
 export function DesmosCalculator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [snapSide, setSnapSide] = useState<SnapSide>(null);
   const [position, setPosition] = useState({ x: 20, y: 60 });
+  const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState<ResizeDirection>(null);
   const [showSnapZone, setShowSnapZone] = useState<SnapSide>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentDragX, setCurrentDragX] = useState(0);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
   // Listen for external toggle events
@@ -94,6 +104,114 @@ export function DesmosCalculator() {
     }
   };
 
+  const handleResizeStart = useCallback((e: React.MouseEvent, direction: ResizeDirection) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeDirection(direction);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height,
+      posX: position.x,
+      posY: position.y
+    });
+  }, [size, position]);
+
+  const handleResizeTouchStart = useCallback((e: React.TouchEvent, direction: ResizeDirection) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length === 1) {
+      setIsResizing(true);
+      setResizeDirection(direction);
+      setResizeStart({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        width: size.width,
+        height: size.height,
+        posX: position.x,
+        posY: position.y
+      });
+    }
+  }, [size, position]);
+
+  // Handle resize
+  useEffect(() => {
+    const handleResizeMove = (clientX: number, clientY: number) => {
+      if (!isResizing || !resizeDirection) return;
+
+      const deltaX = clientX - resizeStart.x;
+      const deltaY = clientY - resizeStart.y;
+
+      let newWidth = resizeStart.width;
+      let newHeight = resizeStart.height;
+      let newX = resizeStart.posX;
+      let newY = resizeStart.posY;
+
+      // Handle horizontal resizing
+      if (resizeDirection.includes('e')) {
+        newWidth = Math.max(MIN_WIDTH, resizeStart.width + deltaX);
+      }
+      if (resizeDirection.includes('w')) {
+        const potentialWidth = resizeStart.width - deltaX;
+        if (potentialWidth >= MIN_WIDTH) {
+          newWidth = potentialWidth;
+          newX = resizeStart.posX + deltaX;
+        }
+      }
+
+      // Handle vertical resizing
+      if (resizeDirection.includes('s')) {
+        newHeight = Math.max(MIN_HEIGHT, resizeStart.height + deltaY);
+      }
+      if (resizeDirection.includes('n')) {
+        const potentialHeight = resizeStart.height - deltaY;
+        if (potentialHeight >= MIN_HEIGHT) {
+          newHeight = potentialHeight;
+          newY = resizeStart.posY + deltaY;
+        }
+      }
+
+      // Constrain to viewport
+      newWidth = Math.min(newWidth, window.innerWidth - newX - 10);
+      newHeight = Math.min(newHeight, window.innerHeight - newY - 10);
+
+      setSize({ width: newWidth, height: newHeight });
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleResizeMove(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        handleResizeMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handleEnd = () => {
+      setIsResizing(false);
+      setResizeDirection(null);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleEnd);
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', handleEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isResizing, resizeDirection, resizeStart]);
+
+  // Handle drag
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -178,7 +296,14 @@ export function DesmosCalculator() {
     return null;
   }
 
-  const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : '400px';
+  const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : `${size.width}px`;
+  const windowHeight = snapSide ? 'calc(100vh - 60px)' : `${size.height}px`;
+  const contentHeight = snapSide ? 'calc(100vh - 60px - 44px)' : `${size.height - 44}px`;
+
+  // Resize handle styles
+  const resizeHandleBase = "absolute z-10";
+  const resizeHandleEdge = "bg-transparent hover:bg-primary/20 transition-colors";
+  const resizeHandleCorner = "w-3 h-3";
 
   return (
     <>
@@ -234,14 +359,63 @@ export function DesmosCalculator() {
         style={{
           left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
           right: snapSide === 'right' ? 0 : 'auto',
-          top: snapSide ? '60px' : position.y, // Account for header height when snapped
+          top: snapSide ? '60px' : position.y,
           width: windowWidth,
-          height: snapSide ? 'calc(100vh - 60px)' : 'auto', // Subtract header height
+          height: windowHeight,
           maxWidth: '95vw',
           borderRadius: snapSide ? 0 : undefined,
-          transition: isDragging ? 'none' : 'all 0.2s ease-out'
+          transition: (isDragging || isResizing) ? 'none' : 'all 0.2s ease-out'
         }}
       >
+        {/* Resize Handles - Only show when not snapped and not minimized */}
+        {!snapSide && !isMinimized && (
+          <>
+            {/* Edge handles */}
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleEdge} top-0 left-3 right-3 h-1 cursor-n-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'n')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'n')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleEdge} bottom-0 left-3 right-3 h-1 cursor-s-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 's')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 's')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleEdge} left-0 top-3 bottom-3 w-1 cursor-w-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'w')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'w')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleEdge} right-0 top-3 bottom-3 w-1 cursor-e-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'e')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'e')}
+            />
+
+            {/* Corner handles */}
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleCorner} top-0 left-0 cursor-nw-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'nw')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'nw')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleCorner} top-0 right-0 cursor-ne-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'ne')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'ne')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleCorner} bottom-0 left-0 cursor-sw-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'sw')}
+            />
+            <div 
+              className={`${resizeHandleBase} ${resizeHandleCorner} bottom-0 right-0 cursor-se-resize`}
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'se')}
+            />
+          </>
+        )}
+
         {/* Title Bar */}
         <div
           className="flex items-center justify-between px-3 py-2 bg-muted border-b cursor-move select-none"
@@ -304,7 +478,7 @@ export function DesmosCalculator() {
         {/* Calculator Content - Keep iframe mounted but hidden when minimized */}
         <div 
           style={{ 
-            height: snapSide ? 'calc(100vh - 60px - 44px)' : '460px', // Account for header + title bar
+            height: contentHeight,
             display: isMinimized ? 'none' : 'block'
           }}
         >
