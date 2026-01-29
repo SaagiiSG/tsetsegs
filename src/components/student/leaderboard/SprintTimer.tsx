@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Flame, Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { SprintInfo, LeaderboardEntry } from '@/hooks/useLeaderboard';
-import { TIER_COLORS, TierType } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 
 interface SprintTimerProps {
   sprint: SprintInfo | null;
@@ -25,7 +25,7 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
 
   const tierColor = currentUserRanking?.currentTier 
     ? TIER_COLORS[currentUserRanking.currentTier as TierType]
-    : TIER_COLORS.bronze;
+    : TIER_COLORS.unranked;
 
   return (
     <motion.div 
@@ -102,10 +102,10 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
                 <p className="text-sm text-muted-foreground">Your Rank</p>
                 <div className="flex items-center gap-2">
                   <span 
-                    className="text-lg font-bold capitalize"
+                    className="text-lg font-bold"
                     style={{ color: tierColor }}
                   >
-                    {currentUserRanking.currentTier}
+                    {TIER_DISPLAY_NAMES[currentUserRanking.currentTier as TierType] || 'Unranked'}
                   </span>
                   <RankTrend isAdvancing={currentUserRanking.isAdvancing} />
                 </div>

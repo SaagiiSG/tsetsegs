@@ -240,6 +240,99 @@ All colors MUST be HSL.
   --input: 40 15% 18% !important;
 }
 
+/* Tier-based themes for student portal */
+.tier-unranked {
+  --tier-color: 220 13% 46%;
+  --tier-glow: 220 13% 56%;
+}
+
+.tier-bronze {
+  --tier-color: 30 56% 50%;
+  --tier-glow: 30 56% 60%;
+}
+
+.tier-silver {
+  --tier-color: 0 0% 65%;
+  --tier-glow: 0 0% 75%;
+}
+
+.tier-gold {
+  --tier-color: 51 100% 50%;
+  --tier-glow: 51 100% 60%;
+}
+
+.tier-platinum {
+  --tier-color: 30 5% 75%;
+  --tier-glow: 30 5% 85%;
+}
+
+.tier-diamond {
+  --tier-color: 187 100% 85%;
+  --tier-glow: 187 100% 90%;
+}
+
+.tier-ruby {
+  --tier-color: 343 90% 47%;
+  --tier-glow: 343 90% 57%;
+}
+
+/* Dark mode tier overrides */
+.dark.tier-unranked,
+.dark .tier-unranked {
+  --background: 220 20% 8% !important;
+  --card: 220 18% 12% !important;
+  --muted: 220 15% 15% !important;
+  --border: 220 15% 20% !important;
+}
+
+.dark.tier-bronze,
+.dark .tier-bronze {
+  --background: 30 20% 7% !important;
+  --card: 30 18% 11% !important;
+  --muted: 30 15% 14% !important;
+  --border: 30 15% 18% !important;
+}
+
+.dark.tier-silver,
+.dark .tier-silver {
+  --background: 210 15% 8% !important;
+  --card: 210 12% 12% !important;
+  --muted: 210 10% 15% !important;
+  --border: 210 10% 20% !important;
+}
+
+.dark.tier-gold,
+.dark .tier-gold {
+  --background: 45 20% 7% !important;
+  --card: 45 18% 11% !important;
+  --muted: 45 15% 14% !important;
+  --border: 45 15% 18% !important;
+}
+
+.dark.tier-platinum,
+.dark .tier-platinum {
+  --background: 30 10% 7% !important;
+  --card: 30 8% 11% !important;
+  --muted: 30 6% 14% !important;
+  --border: 30 6% 18% !important;
+}
+
+.dark.tier-diamond,
+.dark .tier-diamond {
+  --background: 190 25% 7% !important;
+  --card: 190 22% 11% !important;
+  --muted: 190 20% 14% !important;
+  --border: 190 20% 18% !important;
+}
+
+.dark.tier-ruby,
+.dark .tier-ruby {
+  --background: 345 20% 8% !important;
+  --card: 345 18% 12% !important;
+  --muted: 345 15% 15% !important;
+  --border: 345 15% 20% !important;
+}
+
 /* MathQuill Editor Styles - Desmos-like appearance */
 .mathquill-editor-container .mq-editable-field {
   @apply w-full px-3 py-2 text-base;

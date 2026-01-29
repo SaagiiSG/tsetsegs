@@ -20,6 +20,7 @@ const tiers: { value: TierType | 'all'; label: string }[] = [
   { value: 'gold', label: 'Gold' },
   { value: 'silver', label: 'Silver' },
   { value: 'bronze', label: 'Bronze' },
+  { value: 'unranked', label: 'Unranked' },
 ];
 
 export function TierFilter({ selectedTier, onTierChange }: TierFilterProps) {
