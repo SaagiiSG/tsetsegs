@@ -530,10 +530,7 @@ const StudentVocabulary = () => {
                               )}>
                                 {isLearned ? <Check className="w-4 h-4" /> : word.word_number}
                               </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{word.english}</p>
-                                <p className="text-sm text-muted-foreground truncate">{word.mongolian}</p>
-                              </div>
+                              <p className="font-medium truncate flex-1">{word.english}</p>
                             </button>
                           );
                         })}
