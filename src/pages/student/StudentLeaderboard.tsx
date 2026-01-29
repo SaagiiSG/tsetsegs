@@ -114,30 +114,48 @@ export default function StudentLeaderboard() {
 
   // Handler for when SprintTimer detects sprint has ended
   const handleSprintEnd = useCallback(async () => {
-    if (!activeSprint || !currentUserEntry || !student?.id) return;
+    console.log('[SprintEnd] Handler triggered', { 
+      activeSprint: activeSprint?.id, 
+      currentUserEntry: currentUserEntry?.userId,
+      lastKnownRanking: lastKnownRanking?.entry?.userId,
+      studentId: student?.id 
+    });
     
-    const celebrationKey = `sprint-celebration-${activeSprint.id}-${student.id}`;
+    // Use lastKnownRanking as fallback if currentUserEntry is stale
+    const userEntry = currentUserEntry || lastKnownRanking?.entry;
+    const sprintToFinalize = activeSprint || lastKnownRanking?.sprint;
+    
+    if (!sprintToFinalize || !userEntry || !student?.id) {
+      console.log('[SprintEnd] Missing data, skipping celebration');
+      return;
+    }
+    
+    const celebrationKey = `sprint-celebration-${sprintToFinalize.id}-${student.id}`;
     const alreadyShown = localStorage.getItem(celebrationKey);
     
+    console.log('[SprintEnd] Celebration check', { celebrationKey, alreadyShown });
+    
     if (!alreadyShown) {
+      console.log('[SprintEnd] Showing celebration and finalizing sprint');
+      
       // Finalize the sprint and check for badge
       await finalizeSprintAndCheckBadge(
-        activeSprint.id, 
-        currentUserEntry.currentTier, 
-        currentUserEntry.rank
+        sprintToFinalize.id, 
+        userEntry.currentTier, 
+        userEntry.rank
       );
       
       setCelebrationData({
-        rank: currentUserEntry.rank,
-        tier: currentUserEntry.currentTier,
-        points: currentUserEntry.totalPoints,
-        sprintNumber: activeSprint.sprintNumber,
-        seasonNumber: activeSprint.seasonNumber
+        rank: userEntry.rank,
+        tier: userEntry.currentTier,
+        points: userEntry.totalPoints,
+        sprintNumber: sprintToFinalize.sprintNumber,
+        seasonNumber: sprintToFinalize.seasonNumber
       });
       setShowCelebration(true);
       localStorage.setItem(celebrationKey, 'true');
     }
-  }, [activeSprint, currentUserEntry, student?.id, finalizeSprintAndCheckBadge]);
+  }, [activeSprint, currentUserEntry, lastKnownRanking, student?.id, finalizeSprintAndCheckBadge]);
 
   const handleCloseCelebration = useCallback(() => {
     setShowCelebration(false);
