@@ -151,9 +151,10 @@ export default function StudentBluebook() {
     return true;
   });
 
-  // Separate Math and English tests
-  const mathTests = filteredTests?.filter(t => t.section_type === 'math' || t.section_type === 'full');
-  const englishTests = filteredTests?.filter(t => t.section_type === 'english' || t.section_type === 'full');
+  // Separate Math, English, and Full tests
+  const mathTests = filteredTests?.filter(t => t.section_type === 'math');
+  const englishTests = filteredTests?.filter(t => t.section_type === 'english');
+  const fullTests = filteredTests?.filter(t => t.section_type === 'full' || !t.section_type);
 
   const handleStartTest = async (testId: string) => {
     const existingAttempt = getTestAttempt(testId);
@@ -384,22 +385,31 @@ export default function StudentBluebook() {
         </Card>
       ) : (
         <Tabs defaultValue="math" className="w-full">
-          <TabsList className="grid w-full max-w-[300px] grid-cols-2">
-            <TabsTrigger value="math" className="gap-2">
+          <TabsList className="grid w-full max-w-[400px] grid-cols-3">
+            <TabsTrigger value="math" className="gap-1.5 text-sm">
               <Calculator className="h-4 w-4" />
-              Math
+              <span className="hidden sm:inline">Math</span>
               {mathTests && mathTests.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                   {mathTests.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="english" className="gap-2">
+            <TabsTrigger value="english" className="gap-1.5 text-sm">
               <BookOpen className="h-4 w-4" />
-              English
+              <span className="hidden sm:inline">English</span>
               {englishTests && englishTests.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                   {englishTests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="full" className="gap-1.5 text-sm">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Full</span>
+              {fullTests && fullTests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {fullTests.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -433,6 +443,23 @@ export default function StudentBluebook() {
                   <BookOpen className="h-8 w-8 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground text-center">
                     No English tests match your filters.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="full" className="mt-4">
+            {fullTests && fullTests.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {fullTests.map(renderTestCard)}
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground text-center">
+                    No full-length tests match your filters.
                   </p>
                 </CardContent>
               </Card>
