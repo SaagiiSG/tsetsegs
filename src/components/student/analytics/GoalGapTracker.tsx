@@ -19,12 +19,16 @@ interface GoalGapTrackerProps {
 
 type GoalType = 'full' | 'math-only';
 
+const TIME_PRESETS = [30, 40, 60, 90];
+
 export function GoalGapTracker({ currentScore, targetScore: initialTarget, topicAccuracy }: GoalGapTrackerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [goalType, setGoalType] = useState<GoalType>('full');
   const [customTarget, setCustomTarget] = useState(initialTarget);
+  const [targetTime, setTargetTime] = useState(40); // seconds per question
   const [savedGoalType, setSavedGoalType] = useState<GoalType>('full');
   const [savedTarget, setSavedTarget] = useState(initialTarget);
+  const [savedTargetTime, setSavedTargetTime] = useState(40);
 
   const targetScore = savedTarget;
   const isMathOnly = savedGoalType === 'math-only';
@@ -94,6 +98,7 @@ export function GoalGapTracker({ currentScore, targetScore: initialTarget, topic
   const handleSaveGoal = () => {
     setSavedGoalType(goalType);
     setSavedTarget(customTarget);
+    setSavedTargetTime(targetTime);
     setIsOpen(false);
   };
 
@@ -201,6 +206,41 @@ export function GoalGapTracker({ currentScore, targetScore: initialTarget, topic
                     </div>
                   </div>
 
+                  <div className="space-y-3">
+                    <Label htmlFor="targetTime" className="flex items-center gap-2">
+                      Target Time per Question
+                      <span className="text-xs text-muted-foreground font-normal">(seconds)</span>
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        id="targetTime"
+                        type="number"
+                        min={20}
+                        max={180}
+                        step={5}
+                        value={targetTime}
+                        onChange={(e) => setTargetTime(Number(e.target.value))}
+                        className="w-24"
+                      />
+                      <span className="text-sm text-muted-foreground">sec</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TIME_PRESETS.map((t) => (
+                        <Button 
+                          key={t}
+                          variant={targetTime === t ? "default" : "outline"} 
+                          size="sm" 
+                          onClick={() => setTargetTime(t)}
+                        >
+                          {t}s
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: 40s for speed practice, 60-90s for accuracy focus
+                    </p>
+                  </div>
+
                   <Button onClick={handleSaveGoal} className="w-full">
                     <Check className="h-4 w-4 mr-2" />
                     Save Goal
@@ -239,6 +279,13 @@ export function GoalGapTracker({ currentScore, targetScore: initialTarget, topic
               <p className="text-xs text-muted-foreground mb-1">Target</p>
               <p className="text-4xl font-bold text-primary">{targetScore}</p>
             </motion.div>
+          </div>
+
+          {/* Target time display */}
+          <div className="flex items-center justify-center gap-2 mb-4 text-sm">
+            <span className="text-muted-foreground">Target solving time:</span>
+            <span className="font-semibold text-primary">{savedTargetTime}s</span>
+            <span className="text-muted-foreground">per question</span>
           </div>
 
           {/* Progress ring visualization */}
