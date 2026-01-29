@@ -49,7 +49,6 @@ const toolsItems: NavItem[] = [
 
 const accountItems: NavItem[] = [
   { to: '/practice/profile', icon: User, label: 'Profile' },
-  { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -115,7 +114,7 @@ export function StudentDashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {/* Home */}
+        {/* Home & Leaderboard */}
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -140,6 +139,30 @@ export function StudentDashboardSidebar() {
                     <Home className="h-4 w-4" />
                   </motion.div>
                   {open && <span className="ml-2">Dashboard</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/practice/leaderboard"
+                  className={cn(
+                    "hover:bg-muted/50 transition-all duration-200 group/item relative",
+                    open ? "" : "justify-center"
+                  )}
+                  activeClassName="bg-primary/10 text-primary font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
+                >
+                  <motion.span 
+                    className="active-dot absolute left-1.5 w-1.5 h-1.5 rounded-full bg-primary opacity-0 scale-0 transition-all duration-200"
+                    layoutId="studentActiveDot"
+                  />
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Trophy className="h-4 w-4" />
+                  </motion.div>
+                  {open && <span className="ml-2">Leaderboard</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
