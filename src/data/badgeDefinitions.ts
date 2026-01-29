@@ -1,5 +1,17 @@
 // Badge definitions for the SAT prep platform gamification system
-
+// 
+// SPRINT & SEASON MECHANICS:
+// - Each sprint lasts 2 weeks
+// - Each season consists of multiple sprints
+// - Sprints start with up to 30 students per tier (fewer if not enough qualify)
+// - At end of each sprint:
+//   - Top performers in each tier advance to the next tier
+//   - Cutoff ranks determine who advances (see TIER_PROMOTION_CUTOFFS)
+// - At end of each season:
+//   - All students drop one rank (Ruby → Diamond → Platinum → etc.)
+//   - Students in Bronze/Unranked stay at their tier
+// - New students always start as "Unranked"
+//
 export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type BadgeCategory = 'speed' | 'discipline' | 'championship' | 'legendary';
 export type TierType = 'unranked' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'ruby';
