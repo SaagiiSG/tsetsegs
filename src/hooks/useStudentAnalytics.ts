@@ -59,14 +59,17 @@ export interface StudentAnalytics {
   isLoading: boolean;
 }
 
+// Target: 40 seconds per question across all topics
+const OPTIMAL_TIME = 40;
+
 const OPTIMAL_TIMES: Record<string, number> = {
-  'Advanced Math': 90,
-  'Algebra': 75,
-  'Geometry and Trigonometry': 90,
-  'Data Analysis and Problem Solving': 60,
-  'Reading': 75,
-  'Writing': 60,
-  'Grammar': 45,
+  'Advanced Math': OPTIMAL_TIME,
+  'Algebra': OPTIMAL_TIME,
+  'Geometry and Trigonometry': OPTIMAL_TIME,
+  'Data Analysis and Problem Solving': OPTIMAL_TIME,
+  'Reading': OPTIMAL_TIME,
+  'Writing': OPTIMAL_TIME,
+  'Grammar': OPTIMAL_TIME,
 };
 
 const TOPIC_SUBJECTS: Record<string, 'Math' | 'English'> = {
