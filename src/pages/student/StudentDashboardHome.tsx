@@ -134,7 +134,6 @@ export default function StudentDashboardHome() {
 
       // Fetch practice tests for linked student
       let practiceTestAvg = 0;
-      let realTestScore: number | null = null;
       if (student.linked_student_id) {
         const { data: practiceTests } = await supabase
           .from('practice_tests')
@@ -146,9 +145,21 @@ export default function StudentDashboardHome() {
         if (tests1to7.length > 0) {
           practiceTestAvg = Math.round(tests1to7.reduce((sum, t) => sum + (t.score || 0), 0) / tests1to7.length);
         }
+      }
 
-        const test8 = practiceTests?.find(t => t.test_number === 8);
-        realTestScore = test8?.score || null;
+      // Fetch latest Bluebook test score as Real Mock Score
+      let realTestScore: number | null = null;
+      const { data: latestBluebook } = await supabase
+        .from('bluebook_attempts')
+        .select('total_score')
+        .eq('student_account_id', student.id)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestBluebook?.total_score) {
+        realTestScore = latestBluebook.total_score;
       }
 
       return {
