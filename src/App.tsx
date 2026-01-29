@@ -41,6 +41,8 @@ import StudentShareProfile from "./pages/student/StudentShareProfile";
 import StudentVocabulary from "./pages/student/StudentVocabulary";
 import StudentEnglishPractice from "./pages/student/StudentEnglishPractice";
 import StudentEnglishQuestion from "./pages/student/StudentEnglishQuestion";
+import StudentBluebook from "./pages/student/StudentBluebook";
+import StudentBluebookTest from "./pages/student/StudentBluebookTest";
 import NewYearCard from "./pages/NewYearCard";
 
 // Registration Pages
@@ -138,6 +140,7 @@ const App = () => (
                   <Route path="/practice" element={<StudentLayout />}>
                     <Route path="home" element={<StudentDashboardHome />} />
                     <Route path="dashboard" element={<StudentPractice />} />
+                    <Route path="bluebook" element={<StudentBluebook />} />
                     <Route path="speed" element={<StudentSpeedMode />} />
                     <Route path="speed/session" element={<StudentSpeedSession />} />
                     <Route path="review" element={<StudentReview />} />
@@ -149,6 +152,8 @@ const App = () => (
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
                   </Route>
+                  {/* Bluebook test-taking - outside StudentLayout for full screen */}
+                  <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
                   
                   <Route path="/student/:id" element={<StudentReveal />} />
                   <Route path="/student/share/:shareToken" element={<StudentShareProfile />} />

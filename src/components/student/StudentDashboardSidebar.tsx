@@ -4,7 +4,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ interface NavItem {
 
 const learningItems: NavItem[] = [
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
+  { to: '/practice/bluebook', icon: FileText, label: 'Practice Tests' },
   { to: '/practice/speed', icon: Zap, label: 'Speed Mode' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
 ];
