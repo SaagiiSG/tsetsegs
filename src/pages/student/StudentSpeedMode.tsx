@@ -389,14 +389,14 @@ export default function StudentSpeedMode() {
           <CardContent className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-medium text-muted-foreground">Last Session</p>
-              <Drawer open={historyOpen} onOpenChange={setHistoryOpen}>
+              <Drawer open={historyOpen} onOpenChange={setHistoryOpen} direction="right">
                 <DrawerTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
                     <History className="h-3.5 w-3.5" />
                     History
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent className="h-[85vh]">
+                <DrawerContent className="h-full w-[400px] rounded-l-[10px] rounded-r-none">
                   <DrawerHeader>
                     <DrawerTitle className="flex items-center gap-2">
                       <History className="h-5 w-5" />
