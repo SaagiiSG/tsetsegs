@@ -33,6 +33,9 @@ import {
   GripVertical,
   Trash2,
   FileText,
+  ImagePlus,
+  X,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MathText } from "@/components/MathText";
@@ -91,6 +94,9 @@ const BluebookQuestionSelector = ({
   const [customOptions, setCustomOptions] = useState({ A: "", B: "", C: "", D: "" });
   const [customDifficulty, setCustomDifficulty] = useState<string>("medium");
   const [questionType, setQuestionType] = useState<"multiple_choice" | "fill_in">("multiple_choice");
+  const [questionImage, setQuestionImage] = useState<File | null>(null);
+  const [questionImagePreview, setQuestionImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Get already-added question IDs
   const existingQuestionIds = new Set(
@@ -180,6 +186,25 @@ const BluebookQuestionSelector = ({
       }
       const newQuestionId = `BBK${String(nextNumber).padStart(4, "0")}`;
 
+      // Upload image if provided
+      let questionImageUrl: string | null = null;
+      if (questionImage) {
+        const fileExt = questionImage.name.split('.').pop();
+        const fileName = `${newQuestionId}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('question-images')
+          .upload(fileName, questionImage);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('question-images')
+          .getPublicUrl(fileName);
+        
+        questionImageUrl = publicUrl;
+      }
+
       // Build multiple choice options if applicable
       const mcOptions = questionType === "multiple_choice" 
         ? {
@@ -202,6 +227,7 @@ const BluebookQuestionSelector = ({
           difficulty_level: customDifficulty,
           question_type: questionType,
           subject: subjectFilter,
+          question_image_url: questionImageUrl,
           is_active: true,
           is_original: true,
         })
@@ -262,6 +288,29 @@ const BluebookQuestionSelector = ({
     setCustomOptions({ A: "", B: "", C: "", D: "" });
     setCustomDifficulty("medium");
     setQuestionType("multiple_choice");
+    setQuestionImage(null);
+    setQuestionImagePreview(null);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setQuestionImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setQuestionImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setQuestionImage(null);
+    setQuestionImagePreview(null);
   };
 
   const toggleQuestion = (questionId: string) => {
@@ -456,6 +505,50 @@ const BluebookQuestionSelector = ({
                     onChange={(e) => setCustomPassage(e.target.value)}
                     rows={3}
                   />
+                </div>
+
+                {/* Question Image Upload */}
+                <div className="space-y-2">
+                  <Label>Question Image (optional)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Upload graphs, diagrams, or visual content for the question
+                  </p>
+                  {questionImagePreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={questionImagePreview}
+                        alt="Question preview"
+                        className="max-w-full max-h-48 rounded-lg border object-contain"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={removeImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Click to upload image
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 {/* Question Text */}
