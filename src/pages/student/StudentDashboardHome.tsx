@@ -7,7 +7,7 @@ import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO, a
 import { motion } from 'framer-motion';
 import {
   CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, CalendarIcon,
-  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown
+  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown, Trophy
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreDrawer';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import {
   Drawer,
   DrawerClose,
@@ -436,38 +438,12 @@ export default function StudentDashboardHome() {
     },
   });
 
-  // Fetch student rank
-  const { data: rankData } = useQuery({
-    queryKey: ['student-rank', student?.id],
-    queryFn: async () => {
-      if (!student?.id) return null;
-
-      // Get all students' correct attempt counts
-      const { data: allStudents } = await supabase
-        .from('student_accounts')
-        .select('id')
-        .eq('is_active', true);
-
-      const studentScores = await Promise.all(
-        (allStudents || []).map(async (s) => {
-          const { count } = await supabase
-            .from('student_attempts')
-            .select('*', { count: 'exact', head: true })
-            .eq('student_account_id', s.id)
-            .eq('is_correct', true);
-
-          return { id: s.id, score: count || 0 };
-        })
-      );
-
-      studentScores.sort((a, b) => b.score - a.score);
-      const rank = studentScores.findIndex(s => s.id === student.id) + 1;
-      const myScore = studentScores.find(s => s.id === student.id)?.score || 0;
-
-      return { rank, total: studentScores.length, score: myScore };
-    },
-    enabled: !!student?.id,
-  });
+  // Use leaderboard hook for sprint data
+  const { 
+    currentUserEntry, 
+    leaderboard,
+    activeSprint 
+  } = useLeaderboard();
 
   // Fetch speed mode stats
   const { data: speedStats } = useQuery({
@@ -911,22 +887,51 @@ export default function StudentDashboardHome() {
         >
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Your Standing</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Your Standing
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                {/* Rank */}
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-3xl font-bold text-primary">
-                    #{rankData?.rank || '—'}
+                {/* Sprint Rank */}
+                <button 
+                  onClick={() => navigate('/practice/leaderboard')}
+                  className="text-center p-4 rounded-lg transition-colors hover:bg-muted"
+                  style={{ 
+                    backgroundColor: currentUserEntry 
+                      ? `${TIER_COLORS[currentUserEntry.currentTier as TierType]}15` 
+                      : 'hsl(var(--muted) / 0.5)'
+                  }}
+                >
+                  <div 
+                    className="text-3xl font-bold"
+                    style={{ 
+                      color: currentUserEntry 
+                        ? TIER_COLORS[currentUserEntry.currentTier as TierType]
+                        : 'hsl(var(--primary))'
+                    }}
+                  >
+                    #{currentUserEntry?.rank || '—'}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    of {rankData?.total || 0} students
+                    in {TIER_DISPLAY_NAMES[currentUserEntry?.currentTier as TierType] || 'Unranked'}
                   </p>
-                  <Badge variant="secondary" className="mt-2">
-                    {rankData?.score || 0} correct
+                  <Badge 
+                    variant="secondary" 
+                    className="mt-2"
+                    style={{
+                      backgroundColor: currentUserEntry 
+                        ? `${TIER_COLORS[currentUserEntry.currentTier as TierType]}20`
+                        : undefined,
+                      color: currentUserEntry 
+                        ? TIER_COLORS[currentUserEntry.currentTier as TierType]
+                        : undefined
+                    }}
+                  >
+                    {currentUserEntry?.totalPoints?.toLocaleString() || 0} pts
                   </Badge>
-                </div>
+                </button>
 
                 {/* SAT Countdown */}
                 <div className="text-center p-4 rounded-lg bg-muted/50">
@@ -1002,14 +1007,16 @@ export default function StudentDashboardHome() {
                 </div>
               </div>
 
-              {/* Motivational message */}
+              {/* Sprint Status Message */}
               <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
                 <p className="text-sm text-center">
-                  {rankData?.rank === 1 
-                    ? "🏆 You're leading the pack! Keep it up!"
-                    : rankData?.rank && rankData.rank <= 3
-                    ? "🔥 You're in the top 3! Amazing work!"
-                    : "💪 Keep practicing to climb the ranks!"}
+                  {currentUserEntry?.isTop1
+                    ? "🏆 You're leading your tier! Keep it up!"
+                    : currentUserEntry?.isAdvancing
+                    ? "🔥 You're on track to advance! Keep going!"
+                    : activeSprint
+                    ? "💪 Practice more to climb the leaderboard!"
+                    : "📊 Join the sprint to compete with others!"}
                 </p>
               </div>
             </CardContent>
