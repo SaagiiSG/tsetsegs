@@ -6,3 +6,4 @@ export { CurrentSprintTab } from './CurrentSprintTab';
 export { AllTimeTab } from './AllTimeTab';
 export { MyRankTab } from './MyRankTab';
 export { SprintEndCelebration } from './SprintEndCelebration';
+export { NoActiveSprintCard } from './NoActiveSprintCard';
