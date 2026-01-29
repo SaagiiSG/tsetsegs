@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   Search,
@@ -35,11 +36,12 @@ import {
   FileText,
   ImagePlus,
   X,
-  Upload,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MathText } from "@/components/MathText";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
+import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
 
 interface Module {
   id: string;
@@ -97,6 +99,8 @@ const BluebookQuestionSelector = ({
   const [questionImage, setQuestionImage] = useState<File | null>(null);
   const [questionImagePreview, setQuestionImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  // Math-only mode uses Desmos-style MathQuill editor instead of rich text
+  const [mathOnlyMode, setMathOnlyMode] = useState(false);
 
   // Get already-added question IDs
   const existingQuestionIds = new Set(
@@ -290,6 +294,7 @@ const BluebookQuestionSelector = ({
     setQuestionType("multiple_choice");
     setQuestionImage(null);
     setQuestionImagePreview(null);
+    setMathOnlyMode(false);
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -594,7 +599,25 @@ const BluebookQuestionSelector = ({
                 {/* Multiple Choice Options */}
                 {questionType === "multiple_choice" && (
                   <div className="space-y-3">
-                    <Label>Answer Choices *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Answer Choices *</Label>
+                      <div className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="math-mode" className="text-sm font-normal text-muted-foreground">
+                          Desmos-style math editor
+                        </Label>
+                        <Switch
+                          id="math-mode"
+                          checked={mathOnlyMode}
+                          onCheckedChange={setMathOnlyMode}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {mathOnlyMode 
+                        ? "Type naturally: / for fractions, sqrt for √, ^ for exponents, pi for π"
+                        : "Use the rich text editor with optional math. Toggle above for Desmos-style input."}
+                    </p>
                     <div className="space-y-4">
                       {(["A", "B", "C", "D"] as const).map((letter) => (
                         <div key={letter} className="space-y-1">
@@ -602,17 +625,31 @@ const BluebookQuestionSelector = ({
                             <Badge variant="outline" className="shrink-0">{letter}</Badge>
                             <span className="text-sm text-muted-foreground">Option {letter}</span>
                           </div>
-                          <RichTextEditor
-                            value={customOptions[letter]}
-                            onChange={(value) =>
-                              setCustomOptions((prev) => ({
-                                ...prev,
-                                [letter]: value,
-                              }))
-                            }
-                            placeholder={`Enter option ${letter}...`}
-                            minHeight="60px"
-                          />
+                          {mathOnlyMode ? (
+                            <MathQuillEditor
+                              value={customOptions[letter].replace(/^\$|\$$/g, '')}
+                              onChange={(latex) =>
+                                setCustomOptions((prev) => ({
+                                  ...prev,
+                                  [letter]: latex ? `$${latex}$` : '',
+                                }))
+                              }
+                              placeholder={`Type math for option ${letter}...`}
+                              minHeight="48px"
+                            />
+                          ) : (
+                            <RichTextEditor
+                              value={customOptions[letter]}
+                              onChange={(value) =>
+                                setCustomOptions((prev) => ({
+                                  ...prev,
+                                  [letter]: value,
+                                }))
+                              }
+                              placeholder={`Enter option ${letter}...`}
+                              minHeight="60px"
+                            />
+                          )}
                         </div>
                       ))}
                     </div>

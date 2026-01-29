@@ -239,3 +239,93 @@ All colors MUST be HSL.
   --border: 40 15% 18% !important;
   --input: 40 15% 18% !important;
 }
+
+/* MathQuill Editor Styles - Desmos-like appearance */
+.mathquill-editor-container .mq-editable-field {
+  @apply w-full px-3 py-2 text-base;
+  min-height: inherit;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mathquill-editor-container .mq-editable-field.mq-focused {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mathquill-editor-container .mq-editable-field .mq-cursor {
+  border-left-color: hsl(var(--primary));
+}
+
+/* Math field styling */
+.mq-editable-field,
+.mq-math-mode {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.mq-editable-field .mq-root-block {
+  @apply text-foreground;
+}
+
+/* Fraction styling */
+.mq-fraction .mq-numerator,
+.mq-fraction .mq-denominator {
+  padding: 0.1em 0.3em;
+}
+
+.mq-fraction .mq-fraction-bar {
+  border-top: 1px solid currentColor;
+}
+
+/* Square root styling */
+.mq-sqrt-prefix {
+  @apply text-foreground;
+}
+
+/* Superscript/subscript sizing */
+.mq-supsub .mq-sup,
+.mq-supsub .mq-sub {
+  font-size: 0.75em;
+}
+
+/* Selection highlight */
+.mq-editable-field .mq-selection {
+  background: hsl(var(--primary) / 0.2);
+}
+
+/* Inline math field - more compact */
+.mathquill-inline .mq-editable-field {
+  @apply px-2 py-0.5 text-sm rounded border border-input bg-background;
+  display: inline-block;
+  min-width: 60px;
+}
+
+.mathquill-inline .mq-editable-field.mq-focused {
+  @apply ring-1 ring-ring;
+}
+
+/* Dark mode adjustments */
+.dark .mq-editable-field .mq-root-block,
+.dark .mq-math-mode {
+  @apply text-foreground;
+}
+
+.dark .mq-editable-field .mq-selection {
+  background: hsl(var(--primary) / 0.3);
+}
+
+/* Static math field (read-only) */
+.mathquill-readonly .mq-math-mode {
+  @apply text-foreground;
+}
+
+/* Placeholder alignment */
+.mathquill-editor-container {
+  position: relative;
+}
+
+/* Operator styling */
+.mq-operator-name {
+  font-style: normal;
+  font-family: inherit;
+}
