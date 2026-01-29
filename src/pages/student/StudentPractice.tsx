@@ -48,9 +48,23 @@ export default function StudentPractice() {
     }
   }, [student]);
 
+  // Fetch questions that are NOT part of bluebook tests
+  const { data: bluebookQuestionIds } = useQuery({
+    queryKey: ['bluebook-question-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      if (error) throw error;
+      return new Set(data?.map(q => q.question_id) || []);
+    },
+    enabled: !!student,
+    staleTime: 10 * 60 * 1000
+  });
+
   // Fetch questions based on selected question set and subject
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['practice-questions', questionSet, subject],
+    queryKey: ['practice-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -77,45 +91,56 @@ export default function StudentPractice() {
       
       const { data, error } = await query.order('question_id');
       if (error) throw error;
+      
+      // Filter out bluebook questions
+      if (bluebookQuestionIds && data) {
+        return data.filter(q => !bluebookQuestionIds.has(q.id));
+      }
       return data;
     },
-    enabled: !!student
+    enabled: !!student && !!bluebookQuestionIds
   });
 
-  // Fetch question counts for all sets
+  // Fetch question counts for all sets (excluding bluebook questions)
   const { data: questionCounts } = useQuery({
-    queryKey: ['question-set-counts'],
+    queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       const [set68Result, cbResult, englishResult] = await Promise.all([
         supabase
           .from('questions')
-          .select('id', { count: 'exact', head: true })
+          .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
         supabase
           .from('questions')
-          .select('id', { count: 'exact', head: true })
+          .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
           .eq('question_set', 'CollegeBoard')
           .eq('subject', 'math'),
         supabase
           .from('questions')
-          .select('id', { count: 'exact', head: true })
+          .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
           .eq('subject', 'english')
       ]);
       
+      // Filter out bluebook questions from counts
+      const filterBluebook = (data: { id: string }[] | null) => {
+        if (!data || !bluebookQuestionIds) return 0;
+        return data.filter(q => !bluebookQuestionIds.has(q.id)).length;
+      };
+      
       return {
-        set68: set68Result.count || 0,
-        cb: cbResult.count || 0,
-        english: englishResult.count || 0
+        set68: filterBluebook(set68Result.data),
+        cb: filterBluebook(cbResult.data),
+        english: filterBluebook(englishResult.data)
       };
     },
-    enabled: !!student
+    enabled: !!student && !!bluebookQuestionIds
   });
 
   const categoryNames = subject === 'english' ? ENGLISH_CATEGORIES : MATH_CATEGORIES;
