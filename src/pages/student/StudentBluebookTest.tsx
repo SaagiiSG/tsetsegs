@@ -596,7 +596,7 @@ export default function StudentBluebookTest() {
                         <img 
                           src={currentQuestion.question.question_image_url}
                           alt="Question"
-                          className="max-w-full h-auto rounded-lg mb-4"
+                          className="w-[55%] h-auto rounded-lg mb-4"
                         />
                       )}
 
