@@ -4,6 +4,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { calculateLevel, getLevelProgress, getPointsForLevel, TierType } from '@/data/badgeDefinitions';
 import { useBadges } from './useBadges';
 import { useLeaderboard } from './useLeaderboard';
+import { useStudentTier } from './useStudentTier';
 import { format, subDays, differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 export interface ActivityDay {
@@ -62,6 +63,7 @@ export function useStudentProfile() {
   const { student } = useStudentAuth();
   const { badgeStats, featuredBadges, allBadges } = useBadges();
   const { currentUserEntry, currentUserAllTime, activeSprint } = useLeaderboard();
+  const { tier: currentTierFromHook } = useStudentTier();
 
   // Fetch total points
   const { data: totalPoints } = useQuery({
@@ -339,8 +341,8 @@ export function useStudentProfile() {
     totalPoints: totalPoints || 0,
     pointsToNextLevel,
 
-    // Rank
-    currentTier: currentUserEntry?.currentTier || 'unranked',
+    // Rank - use centralized tier hook which handles active/historical sprints
+    currentTier: currentTierFromHook,
     reservedNextTier: currentUserEntry?.reservedNextTier || null,
 
     // Activity
