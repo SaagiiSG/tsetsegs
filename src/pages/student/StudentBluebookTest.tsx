@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
-import { ReferenceSheet } from '@/components/student/ReferenceSheet';
+import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { cn } from '@/lib/utils';
 
 interface Question {
@@ -486,6 +486,9 @@ export default function StudentBluebookTest() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Calculator for Math sections */}
       {currentModule?.section === 'math' && <DesmosCalculator />}
+      
+      {/* Reference Sheet for Math sections */}
+      {currentModule?.section === 'math' && <ReferenceSheet />}
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card border-b px-4 py-3">
@@ -538,7 +541,7 @@ export default function StudentBluebookTest() {
             )}
 
             {/* Reference Button - Only for Math */}
-            {currentModule?.section === 'math' && <ReferenceSheet />}
+            {currentModule?.section === 'math' && <ReferenceSheetButton />}
 
             {/* Settings Dropdown */}
             <DropdownMenu>
