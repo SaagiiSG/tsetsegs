@@ -1,5 +1,5 @@
 import { NavLink } from '@/components/NavLink';
-import { Home, BookOpen, Zap, Trophy, Award } from 'lucide-react';
+import { Home, BookOpen, Zap, Trophy, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -7,7 +7,7 @@ const navItems = [
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/speed', icon: Zap, label: 'Speed' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Ranks' },
-  { to: '/practice/badges', icon: Award, label: 'Badges' },
+  { to: '/practice/profile', icon: User, label: 'Profile' },
 ];
 
 export function StudentBottomNav() {

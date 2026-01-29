@@ -14,10 +14,12 @@ export interface StudentBadge {
 }
 
 export interface BadgeStats {
+  total: number;
+  earned: number;
   totalBadges: number;
   earnedBadges: number;
   totalPoints: number;
-  byRarity: Record<BadgeRarity, { earned: number; total: number }>;
+  byRarity: Record<BadgeRarity, { earned: number; total: number }> & { common: number; uncommon: number; rare: number; epic: number; legendary: number };
   rarestEarned: BadgeDefinition | null;
 }
 
@@ -175,31 +177,31 @@ export function useBadges(filter?: {
   }) || [];
 
   // Calculate stats
+  const earnedCount = studentBadges?.filter(sb => sb.isUnlocked).length || 0;
   const badgeStats: BadgeStats = {
+    total: badgeDefinitions.length,
+    earned: earnedCount,
     totalBadges: badgeDefinitions.length,
-    earnedBadges: studentBadges?.filter(sb => sb.isUnlocked).length || 0,
+    earnedBadges: earnedCount,
     totalPoints: studentBadges
       ?.filter(sb => sb.isUnlocked)
       .reduce((sum, sb) => sum + sb.badge.pointValue, 0) || 0,
     byRarity: {
-      common: { earned: 0, total: 0 },
-      uncommon: { earned: 0, total: 0 },
-      rare: { earned: 0, total: 0 },
-      epic: { earned: 0, total: 0 },
-      legendary: { earned: 0, total: 0 }
-    },
+      common: 0,
+      uncommon: 0,
+      rare: 0,
+      epic: 0,
+      legendary: 0
+    } as BadgeStats['byRarity'],
     rarestEarned: null
   };
 
   // Calculate by rarity
   const rarityOrder: BadgeRarity[] = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
   
-  badgeDefinitions.forEach(badge => {
-    badgeStats.byRarity[badge.rarity].total++;
-  });
-  
   studentBadges?.filter(sb => sb.isUnlocked).forEach(sb => {
-    badgeStats.byRarity[sb.badge.rarity].earned++;
+    // Count by rarity
+    (badgeStats.byRarity as any)[sb.badge.rarity]++;
     
     // Track rarest earned
     if (!badgeStats.rarestEarned || 

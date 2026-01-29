@@ -48,6 +48,7 @@ const toolsItems: NavItem[] = [
 ];
 
 const accountItems: NavItem[] = [
+  { to: '/practice/profile', icon: User, label: 'Profile' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
 ];
