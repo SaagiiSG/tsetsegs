@@ -8,13 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
-  Zap, Play, Trophy, Award, Lock
+  Zap, Play, Trophy, Award, Lock, History, Clock, Target, ChevronRight
 } from 'lucide-react';
 import { useBadges } from '@/hooks/useBadges';
 import { Progress } from '@/components/ui/progress';
-import { format, subDays } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 // iOS-style scroll picker component
 interface ScrollPickerProps {
@@ -240,10 +251,54 @@ export default function StudentSpeedMode() {
     enabled: !!student?.id
   });
 
+  // Fetch ALL speed sessions for history drawer
+  const { data: allSessions } = useQuery({
+    queryKey: ['all-speed-sessions', student?.id],
+    queryFn: async () => {
+      if (!student?.id) return [];
+      
+      const { data: sessions } = await supabase
+        .from('student_activity_logs')
+        .select('metadata, created_at')
+        .eq('student_account_id', student.id)
+        .eq('activity_type', 'speed_mode_complete')
+        .order('created_at', { ascending: false });
+      
+      if (!sessions?.length) return [];
+
+      return sessions.map(s => {
+        const meta = s.metadata as { total?: number; correct?: number; avgTimePerQuestion?: number; duration?: number } | null;
+        const total = meta?.total || 0;
+        const correct = meta?.correct || 0;
+        return {
+          date: format(parseISO(s.created_at), 'MMM d, yyyy'),
+          time: format(parseISO(s.created_at), 'h:mm a'),
+          total,
+          correct,
+          accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
+          avgTime: Math.round(meta?.avgTimePerQuestion || 0),
+          duration: meta?.duration || 0
+        };
+      });
+    },
+    enabled: !!student?.id
+  });
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   const lastSession = useMemo(() => {
     if (!speedHistory?.length) return null;
     return speedHistory[speedHistory.length - 1];
   }, [speedHistory]);
+
+  // Get performance rating based on avg time
+  const getPerformanceRating = (avgTime: number) => {
+    if (avgTime <= 15) return { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-500/10' };
+    if (avgTime <= 25) return { label: 'Great', color: 'text-emerald-600', bg: 'bg-emerald-500/10' };
+    if (avgTime <= 40) return { label: 'Good', color: 'text-yellow-600', bg: 'bg-yellow-500/10' };
+    if (avgTime <= 60) return { label: 'Average', color: 'text-orange-600', bg: 'bg-orange-500/10' };
+    return { label: 'Needs Work', color: 'text-red-600', bg: 'bg-red-500/10' };
+  };
 
   const startSpeedMode = () => {
     logActivity('speed_mode_start', { 
@@ -330,21 +385,115 @@ export default function StudentSpeedMode() {
         </Card>
 
         {/* Last Session Stats (30%) */}
-        <Card className="lg:w-[30%] w-full flex flex-col justify-center">
-          <CardContent className="p-6 text-center">
-            <p className="text-sm text-muted-foreground mb-1">Last Session</p>
-            <div className="relative inline-block">
-              <span className="text-5xl font-bold text-primary">
-                {lastSession?.timePerProblem ? Math.round(lastSession.timePerProblem) : '--'}
-                <span className="text-2xl">s</span>
-              </span>
-              <span className="absolute -top-1 -right-12 text-sm text-muted-foreground">
-                {lastSession?.accuracy !== undefined ? `${lastSession.accuracy}%` : '--'}
-              </span>
+        <Card className="lg:w-[30%] w-full flex flex-col">
+          <CardContent className="p-6 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium text-muted-foreground">Last Session</p>
+              <Drawer open={historyOpen} onOpenChange={setHistoryOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                    <History className="h-3.5 w-3.5" />
+                    History
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="h-[85vh]">
+                  <DrawerHeader>
+                    <DrawerTitle className="flex items-center gap-2">
+                      <History className="h-5 w-5" />
+                      Speed Session History
+                    </DrawerTitle>
+                    <DrawerDescription>
+                      All your completed speed practice sessions
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <ScrollArea className="flex-1 px-4">
+                    <div className="space-y-3 pb-4">
+                      {allSessions && allSessions.length > 0 ? (
+                        allSessions.map((session, i) => {
+                          const rating = getPerformanceRating(session.avgTime);
+                          return (
+                            <div 
+                              key={i} 
+                              className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={cn("p-2 rounded-lg", rating.bg)}>
+                                  <Clock className={cn("h-5 w-5", rating.color)} />
+                                </div>
+                                <div>
+                                  <p className="font-medium">{session.date}</p>
+                                  <p className="text-xs text-muted-foreground">{session.time}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-6 text-right">
+                                <div>
+                                  <p className="text-sm font-medium">{session.total} questions</p>
+                                  <p className="text-xs text-muted-foreground">{session.accuracy}% accuracy</p>
+                                </div>
+                                <div className="min-w-[70px]">
+                                  <p className={cn("text-lg font-bold", rating.color)}>{session.avgTime}s</p>
+                                  <p className="text-xs text-muted-foreground">per problem</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                          <p>No sessions yet</p>
+                          <p className="text-sm">Complete a speed session to see it here</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                  <DrawerFooter>
+                    <DrawerClose asChild>
+                      <Button variant="outline">Close</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              per problem
-            </p>
+            
+            <div className="flex-1 flex flex-col items-center justify-center">
+              {lastSession ? (
+                <>
+                  <div className="text-center">
+                    <span className="text-5xl font-bold text-primary">
+                      {Math.round(lastSession.timePerProblem)}
+                      <span className="text-2xl">s</span>
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-1">per problem</p>
+                  </div>
+                  
+                  {/* Performance indicator */}
+                  <div className="mt-4 space-y-2 w-full">
+                    {(() => {
+                      const rating = getPerformanceRating(lastSession.timePerProblem);
+                      return (
+                        <Badge variant="outline" className={cn("w-full justify-center py-1", rating.bg, rating.color)}>
+                          {rating.label}
+                        </Badge>
+                      );
+                    })()}
+                    <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Target className="h-3 w-3" />
+                        {lastSession.accuracy}%
+                      </span>
+                      <span>•</span>
+                      <span>{lastSession.total} questions</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <span className="text-4xl font-bold">--</span>
+                  <p className="text-xs mt-1">No sessions yet</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
