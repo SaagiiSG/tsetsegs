@@ -190,7 +190,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
               <ChevronLeft className="h-4 w-4" />
               Back to Results
             </Button>
-            <Badge variant={selectedQuestion.is_correct ? "default" : "destructive"}>
+            <Badge variant={selectedQuestion.is_correct ? "default" : "destructive"} className="mr-8">
               {selectedQuestion.is_correct ? "Correct" : "Incorrect"}
             </Badge>
           </div>
