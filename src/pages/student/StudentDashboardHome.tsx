@@ -691,7 +691,17 @@ export default function StudentDashboardHome() {
 
               {/* Recent Sessions */}
               <div className="flex-1 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6">
-                <h4 className="font-medium text-sm mb-3">Recent Sessions</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-sm">Recent Sessions</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-6 px-2 text-muted-foreground hover:text-primary"
+                    onClick={() => navigate('/practice/speed')}
+                  >
+                    View All →
+                  </Button>
+                </div>
                 {speedStats?.sessions && speedStats.sessions.length > 0 ? (
                   <div className="grid grid-cols-5 gap-2">
                     {speedStats.sessions.map((session, i) => (
