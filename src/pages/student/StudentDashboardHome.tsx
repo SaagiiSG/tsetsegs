@@ -19,6 +19,7 @@ import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreD
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import {
   Drawer,
@@ -461,6 +462,9 @@ export default function StudentDashboardHome() {
     leaderboard,
     activeSprint 
   } = useLeaderboard();
+  
+  // Get consistent tier from hook (handles no-active-sprint fallback)
+  const { tier: currentTier } = useStudentTier();
 
   // Fetch speed mode stats
   const { data: speedStats } = useQuery({
@@ -916,34 +920,26 @@ export default function StudentDashboardHome() {
                   onClick={() => navigate('/practice/leaderboard')}
                   className="text-center p-4 rounded-lg transition-colors hover:bg-muted"
                   style={{ 
-                    backgroundColor: currentUserEntry 
-                      ? `${TIER_COLORS[currentUserEntry.currentTier as TierType]}15` 
-                      : 'hsl(var(--muted) / 0.5)'
+                    backgroundColor: `${TIER_COLORS[currentUserEntry?.currentTier as TierType || currentTier]}15`
                   }}
                 >
                   <div 
                     className="text-3xl font-bold"
                     style={{ 
-                      color: currentUserEntry 
-                        ? TIER_COLORS[currentUserEntry.currentTier as TierType]
-                        : 'hsl(var(--primary))'
+                      color: TIER_COLORS[currentUserEntry?.currentTier as TierType || currentTier]
                     }}
                   >
                     #{currentUserEntry?.rank || '—'}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    in {TIER_DISPLAY_NAMES[currentUserEntry?.currentTier as TierType] || 'Unranked'}
+                    in {TIER_DISPLAY_NAMES[currentUserEntry?.currentTier as TierType || currentTier]}
                   </p>
                   <Badge 
                     variant="secondary" 
                     className="mt-2"
                     style={{
-                      backgroundColor: currentUserEntry 
-                        ? `${TIER_COLORS[currentUserEntry.currentTier as TierType]}20`
-                        : undefined,
-                      color: currentUserEntry 
-                        ? TIER_COLORS[currentUserEntry.currentTier as TierType]
-                        : undefined
+                      backgroundColor: `${TIER_COLORS[currentUserEntry?.currentTier as TierType || currentTier]}20`,
+                      color: TIER_COLORS[currentUserEntry?.currentTier as TierType || currentTier]
                     }}
                   >
                     {currentUserEntry?.totalPoints?.toLocaleString() || 0} pts
