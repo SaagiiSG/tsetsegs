@@ -5,7 +5,8 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Search, BookOpen, Check, X, Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Search, Check, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
@@ -17,6 +18,8 @@ interface VocabularyWord {
   mongolian: string;
 }
 
+type VocabType = 'english' | 'math';
+
 const StudentVocabulary = () => {
   const { student } = useStudentAuth();
   const queryClient = useQueryClient();
@@ -26,6 +29,7 @@ const StudentVocabulary = () => {
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [isShuffled, setIsShuffled] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [vocabType, setVocabType] = useState<VocabType>('english');
 
   // Fetch vocabulary from database
   const { data: vocabulary = [], isLoading } = useQuery({
@@ -40,7 +44,7 @@ const StudentVocabulary = () => {
       if (error) throw error;
       return data as VocabularyWord[];
     },
-    staleTime: 10 * 60 * 1000 // Cache for 10 minutes
+    staleTime: 10 * 60 * 1000
   });
 
   // Fetch learned words for this student
@@ -60,8 +64,8 @@ const StudentVocabulary = () => {
   });
 
   const learnedWordIds = new Set(learnedWords.map(w => w.word_id));
-
   const totalWords = vocabulary.length;
+  const progressPercent = totalWords > 0 ? Math.round((learnedWordIds.size / totalWords) * 100) : 0;
 
   // Get current word based on shuffle state
   const getCurrentWord = useCallback(() => {
@@ -74,7 +78,7 @@ const StudentVocabulary = () => {
 
   const currentWord = getCurrentWord();
 
-  // Generate 4 multiple choice options (1 correct + 3 random wrong)
+  // Generate 4 multiple choice options
   const multipleChoiceOptions = useMemo(() => {
     if (!currentWord || !vocabulary.length) return [];
     
@@ -91,7 +95,6 @@ const StudentVocabulary = () => {
       }
     }
     
-    // Shuffle all 4 options
     const allOptions = [correctAnswer, ...wrongAnswers];
     for (let i = allOptions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -123,10 +126,6 @@ const StudentVocabulary = () => {
     }, 150);
   };
 
-  const handleFlip = () => {
-    setIsFlipped(true);
-  };
-
   const handleSelectAnswer = async (index: number) => {
     if (selectedAnswer !== null) return;
     setSelectedAnswer(index);
@@ -134,14 +133,11 @@ const StudentVocabulary = () => {
     const selectedOption = multipleChoiceOptions[index];
     const isCorrect = isCorrectAnswer(selectedOption);
     
-    // Track progress if correct and student is logged in
     if (isCorrect && student?.id && currentWord) {
       try {
-        // Upsert progress - increment confidence if already learned
         const existingProgress = learnedWords.find(w => w.word_id === currentWord.id);
         
         if (existingProgress) {
-          // Update existing - increment review count
           await supabase
             .from('student_vocabulary_progress')
             .update({
@@ -153,7 +149,6 @@ const StudentVocabulary = () => {
             .eq('student_account_id', student.id)
             .eq('word_id', currentWord.id);
         } else {
-          // Insert new progress
           await supabase
             .from('student_vocabulary_progress')
             .insert({
@@ -164,7 +159,6 @@ const StudentVocabulary = () => {
             });
         }
         
-        // Invalidate queries to refresh stats
         queryClient.invalidateQueries({ queryKey: ['student-vocab-progress'] });
         queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
       } catch (err) {
@@ -229,22 +223,85 @@ const StudentVocabulary = () => {
     <SecurityWrapper>
       <div className="min-h-screen bg-background p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <BookOpen className="w-6 h-6 text-primary" />
-              <h1 className="text-2xl font-bold">SAT Vocabulary</h1>
+          
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              placeholder="Search vocabulary..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-11 h-12 text-base"
+            />
+          </div>
+
+          {/* Search Results Dropdown */}
+          {searchQuery && (
+            <Card className="p-2 max-h-60 overflow-y-auto">
+              {filteredWords.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  No words found
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {filteredWords.map((word) => (
+                    <button
+                      key={word.id}
+                      onClick={() => handleWordClick(vocabulary.indexOf(word))}
+                      className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
+                    >
+                      <span className="font-medium">{word.english}</span>
+                      <span className="text-sm text-muted-foreground truncate max-w-[50%]">
+                        {word.mongolian}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Progress Bar + Vocab Type Toggle */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Progress Section */}
+            <div className="flex-1 w-full space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">{learnedWordIds.size} / {totalWords} ({progressPercent}%)</span>
+              </div>
+              <Progress value={progressPercent} className="h-3" />
             </div>
-            <p className="text-muted-foreground text-sm">
-              {totalWords} words • {learnedWordIds.size} learned ({totalWords > 0 ? Math.round((learnedWordIds.size / totalWords) * 100) : 0}%)
-            </p>
-            {currentWord && learnedWordIds.has(currentWord.id) && (
-              <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+
+            {/* Vocab Type Toggle */}
+            <div className="flex rounded-lg border bg-muted p-1 shrink-0">
+              <Button
+                variant={vocabType === 'english' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setVocabType('english')}
+                className="px-4"
+              >
+                English
+              </Button>
+              <Button
+                variant={vocabType === 'math' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setVocabType('math')}
+                className="px-4"
+              >
+                Math
+              </Button>
+            </div>
+          </div>
+
+          {/* Current Word Info */}
+          {currentWord && learnedWordIds.has(currentWord.id) && (
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full">
                 <Check className="w-3 h-3" />
                 Already learned
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Flashcard */}
           <div className="flex justify-center">
@@ -415,51 +472,6 @@ const StudentVocabulary = () => {
             </Button>
           </div>
 
-          {/* Word List Search */}
-          <Card className="p-4">
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search words..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              {searchQuery && (
-                <div className="max-h-60 overflow-y-auto space-y-1">
-                  {filteredWords.length === 0 ? (
-                    <p className="text-muted-foreground text-sm text-center py-4">
-                      No words found
-                    </p>
-                  ) : (
-                    filteredWords.map((word) => (
-                      <button
-                        key={word.id}
-                        onClick={() => handleWordClick(vocabulary.indexOf(word))}
-                        className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
-                      >
-                        <span className="font-medium">{word.english}</span>
-                        <span className="text-sm text-muted-foreground truncate max-w-[50%]">
-                          {word.mongolian}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Progress indicator */}
-          <div className="w-full bg-muted rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
-            />
-          </div>
         </div>
       </div>
     </SecurityWrapper>
