@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
@@ -27,6 +28,7 @@ const TIER_BADGE_NAMES: Record<string, string> = {
 };
 
 export default function StudentLeaderboard() {
+  const queryClient = useQueryClient();
   const { student } = useStudentAuth();
   const [showCelebration, setShowCelebration] = useState(false);
   const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
@@ -164,7 +166,15 @@ export default function StudentLeaderboard() {
   const handleClaimBadge = useCallback(() => {
     setShowBadgeUnlock(false);
     setUnlockedBadge(null);
-  }, []);
+    
+    // Invalidate queries to sync badge collection and points/level
+    queryClient.invalidateQueries({ queryKey: ['badges'] });
+    queryClient.invalidateQueries({ queryKey: ['badge-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['total-points'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-achievements'] });
+  }, [queryClient]);
 
   // Determine if there's no active sprint
   const noActiveSprint = !activeSprint && !isLoading;
