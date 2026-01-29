@@ -87,19 +87,8 @@ export function useStudentTier() {
       TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
       root.classList.add(`tier-${tierToApply}`);
     }
-
-    return () => {
-      // Cleanup on unmount
-      const root = document.documentElement;
-      root.style.removeProperty('--primary');
-      root.style.removeProperty('--ring');
-      root.style.removeProperty('--background');
-      root.style.removeProperty('--card');
-      root.style.removeProperty('--muted');
-      root.style.removeProperty('--border');
-      root.style.removeProperty('--input');
-      TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
-    };
+    
+    // Don't cleanup on unmount - theme should persist across navigation
   }, [currentTier, themePreference]);
 
   return {

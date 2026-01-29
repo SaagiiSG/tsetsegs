@@ -242,95 +242,165 @@ All colors MUST be HSL.
 
 /* Tier-based themes for student portal */
 .tier-unranked {
+  --primary: 220 13% 46% !important;
+  --ring: 220 13% 46% !important;
   --tier-color: 220 13% 46%;
   --tier-glow: 220 13% 56%;
+  --background: 220 15% 97% !important;
+  --card: 220 12% 99% !important;
+  --muted: 220 12% 94% !important;
+  --border: 220 13% 88% !important;
+  --input: 220 13% 88% !important;
 }
 
 .tier-bronze {
+  --primary: 30 56% 50% !important;
+  --ring: 30 56% 50% !important;
   --tier-color: 30 56% 50%;
   --tier-glow: 30 56% 60%;
+  --background: 30 30% 97% !important;
+  --card: 30 25% 99% !important;
+  --muted: 30 20% 94% !important;
+  --border: 30 25% 88% !important;
+  --input: 30 25% 88% !important;
 }
 
 .tier-silver {
+  --primary: 0 0% 55% !important;
+  --ring: 0 0% 55% !important;
   --tier-color: 0 0% 65%;
   --tier-glow: 0 0% 75%;
+  --background: 210 10% 97% !important;
+  --card: 210 8% 99% !important;
+  --muted: 210 8% 94% !important;
+  --border: 210 10% 88% !important;
+  --input: 210 10% 88% !important;
 }
 
 .tier-gold {
+  --primary: 43 88% 48% !important;
+  --ring: 43 88% 48% !important;
   --tier-color: 51 100% 50%;
   --tier-glow: 51 100% 60%;
+  --background: 45 35% 97% !important;
+  --card: 45 30% 99% !important;
+  --muted: 45 25% 94% !important;
+  --border: 45 30% 88% !important;
+  --input: 45 30% 88% !important;
 }
 
 .tier-platinum {
+  --primary: 30 5% 60% !important;
+  --ring: 30 5% 60% !important;
   --tier-color: 30 5% 75%;
   --tier-glow: 30 5% 85%;
+  --background: 30 8% 97% !important;
+  --card: 30 6% 99% !important;
+  --muted: 30 6% 94% !important;
+  --border: 30 8% 88% !important;
+  --input: 30 8% 88% !important;
 }
 
 .tier-diamond {
+  --primary: 187 80% 55% !important;
+  --ring: 187 80% 55% !important;
   --tier-color: 187 100% 85%;
   --tier-glow: 187 100% 90%;
+  --background: 190 30% 97% !important;
+  --card: 190 25% 99% !important;
+  --muted: 190 20% 94% !important;
+  --border: 190 25% 88% !important;
+  --input: 190 25% 88% !important;
 }
 
 .tier-ruby {
+  --primary: 343 90% 47% !important;
+  --ring: 343 90% 47% !important;
   --tier-color: 343 90% 47%;
   --tier-glow: 343 90% 57%;
+  --background: 345 30% 97% !important;
+  --card: 345 25% 99% !important;
+  --muted: 345 20% 94% !important;
+  --border: 345 25% 88% !important;
+  --input: 345 25% 88% !important;
 }
 
 /* Dark mode tier overrides */
 .dark.tier-unranked,
 .dark .tier-unranked {
+  --primary: 220 13% 56% !important;
+  --ring: 220 13% 56% !important;
   --background: 220 20% 8% !important;
   --card: 220 18% 12% !important;
   --muted: 220 15% 15% !important;
   --border: 220 15% 20% !important;
+  --input: 220 15% 20% !important;
 }
 
 .dark.tier-bronze,
 .dark .tier-bronze {
+  --primary: 30 56% 55% !important;
+  --ring: 30 56% 55% !important;
   --background: 30 20% 7% !important;
   --card: 30 18% 11% !important;
   --muted: 30 15% 14% !important;
   --border: 30 15% 18% !important;
+  --input: 30 15% 18% !important;
 }
 
 .dark.tier-silver,
 .dark .tier-silver {
+  --primary: 0 0% 65% !important;
+  --ring: 0 0% 65% !important;
   --background: 210 15% 8% !important;
   --card: 210 12% 12% !important;
   --muted: 210 10% 15% !important;
   --border: 210 10% 20% !important;
+  --input: 210 10% 20% !important;
 }
 
 .dark.tier-gold,
 .dark .tier-gold {
+  --primary: 43 88% 55% !important;
+  --ring: 43 88% 55% !important;
   --background: 45 20% 7% !important;
   --card: 45 18% 11% !important;
   --muted: 45 15% 14% !important;
   --border: 45 15% 18% !important;
+  --input: 45 15% 18% !important;
 }
 
 .dark.tier-platinum,
 .dark .tier-platinum {
+  --primary: 30 5% 70% !important;
+  --ring: 30 5% 70% !important;
   --background: 30 10% 7% !important;
   --card: 30 8% 11% !important;
   --muted: 30 6% 14% !important;
   --border: 30 6% 18% !important;
+  --input: 30 6% 18% !important;
 }
 
 .dark.tier-diamond,
 .dark .tier-diamond {
+  --primary: 187 80% 60% !important;
+  --ring: 187 80% 60% !important;
   --background: 190 25% 7% !important;
   --card: 190 22% 11% !important;
   --muted: 190 20% 14% !important;
   --border: 190 20% 18% !important;
+  --input: 190 20% 18% !important;
 }
 
 .dark.tier-ruby,
 .dark .tier-ruby {
+  --primary: 343 90% 55% !important;
+  --ring: 343 90% 55% !important;
   --background: 345 20% 8% !important;
   --card: 345 18% 12% !important;
   --muted: 345 15% 15% !important;
   --border: 345 15% 20% !important;
+  --input: 345 15% 20% !important;
 }
 
 /* MathQuill Editor Styles - Desmos-like appearance */
