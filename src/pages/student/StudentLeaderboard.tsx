@@ -111,90 +111,87 @@ export default function StudentLeaderboard() {
         </p>
       </motion.div>
 
-      {/* No Active Sprint State */}
-      {noActiveSprint && (
-        <NoActiveSprintCard
-          lastEndedSprint={lastEndedSprint}
-          nextSprint={nextSprint}
-          lastSprintResults={lastSprintResults}
-        />
-      )}
+      {/* Tabs - always show, but Current Sprint tab content changes based on active sprint */}
+      <Tabs defaultValue={noActiveSprint ? "alltime" : "current"} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="current" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Current Sprint</span>
+            <span className="sm:hidden">Sprint</span>
+          </TabsTrigger>
+          <TabsTrigger value="alltime" className="gap-2">
+            <Crown className="h-4 w-4" />
+            <span className="hidden sm:inline">All-Time</span>
+            <span className="sm:hidden">All-Time</span>
+          </TabsTrigger>
+          <TabsTrigger value="myrank" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">My Rank</span>
+            <span className="sm:hidden">My Rank</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tabs - only show when sprint is active */}
-      {!noActiveSprint && (
-        <Tabs defaultValue="current" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="current" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Current Sprint</span>
-              <span className="sm:hidden">Sprint</span>
-            </TabsTrigger>
-            <TabsTrigger value="alltime" className="gap-2">
-              <Crown className="h-4 w-4" />
-              <span className="hidden sm:inline">All-Time</span>
-              <span className="sm:hidden">All-Time</span>
-            </TabsTrigger>
-            <TabsTrigger value="myrank" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">My Rank</span>
-              <span className="sm:hidden">My Rank</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <AnimatePresence mode="wait">
-            <TabsContent value="current" className="mt-0">
-              <motion.div
-                key="current"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-              >
+        <AnimatePresence mode="wait">
+          <TabsContent value="current" className="mt-0">
+            <motion.div
+              key="current"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {noActiveSprint ? (
+                <NoActiveSprintCard
+                  lastEndedSprint={lastEndedSprint}
+                  nextSprint={nextSprint}
+                  lastSprintResults={lastSprintResults}
+                />
+              ) : (
                 <CurrentSprintTab
                   sprint={activeSprint}
                   leaderboard={leaderboard}
                   currentUserId={student?.id}
                   isLoading={isLoading}
                 />
-              </motion.div>
-            </TabsContent>
+              )}
+            </motion.div>
+          </TabsContent>
 
-            <TabsContent value="alltime" className="mt-0">
-              <motion.div
-                key="alltime"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AllTimeTab
-                  leaderboard={allTimeLeaderboard}
-                  currentUserId={student?.id}
-                  isLoading={isAllTimeLoading}
-                />
-              </motion.div>
-            </TabsContent>
+          <TabsContent value="alltime" className="mt-0">
+            <motion.div
+              key="alltime"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AllTimeTab
+                leaderboard={allTimeLeaderboard}
+                currentUserId={student?.id}
+                isLoading={isAllTimeLoading}
+              />
+            </motion.div>
+          </TabsContent>
 
-            <TabsContent value="myrank" className="mt-0">
-              <motion.div
-                key="myrank"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <MyRankTab
-                  currentEntry={currentUserEntry}
-                  leaderboard={leaderboard}
-                  pointsToAdvance={pointsToAdvance}
-                  pointsToTop1={pointsToTop1}
-                  sprint={activeSprint}
-                />
-              </motion.div>
-            </TabsContent>
-          </AnimatePresence>
-        </Tabs>
-      )}
+          <TabsContent value="myrank" className="mt-0">
+            <motion.div
+              key="myrank"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MyRankTab
+                currentEntry={currentUserEntry}
+                leaderboard={leaderboard}
+                pointsToAdvance={pointsToAdvance}
+                pointsToTop1={pointsToTop1}
+                sprint={activeSprint}
+              />
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
+      </Tabs>
 
       {/* Sprint End Celebration - Shows for ALL users */}
       {celebrationData && (
