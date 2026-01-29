@@ -44,6 +44,7 @@ import StudentEnglishQuestion from "./pages/student/StudentEnglishQuestion";
 import StudentBluebook from "./pages/student/StudentBluebook";
 import StudentBluebookTest from "./pages/student/StudentBluebookTest";
 import NewYearCard from "./pages/NewYearCard";
+import StudentBadges from "./pages/student/StudentBadges";
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
@@ -146,6 +147,7 @@ const App = () => (
                     <Route path="review" element={<StudentReview />} />
                     <Route path="stats" element={<StudentStats />} />
                     <Route path="leaderboard" element={<StudentLeaderboard />} />
+                    <Route path="badges" element={<StudentBadges />} />
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="vocabulary" element={<StudentVocabulary />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />

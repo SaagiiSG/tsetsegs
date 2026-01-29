@@ -175,6 +175,42 @@ export type Database = {
           },
         ]
       }
+      badges: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          icon_name: string
+          id: string
+          name: string
+          point_value: number
+          rarity: string
+          requirements: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          icon_name: string
+          id?: string
+          name: string
+          point_value: number
+          rarity: string
+          requirements?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          icon_name?: string
+          id?: string
+          name?: string
+          point_value?: number
+          rarity?: string
+          requirements?: Json
+        }
+        Relationships: []
+      }
       batches: {
         Row: {
           batch_name: string | null
@@ -547,6 +583,45 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_badges: {
+        Row: {
+          badge_id: string
+          created_at: string
+          id: string
+          slot_position: number
+          student_account_id: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          id?: string
+          slot_position: number
+          student_account_id: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          id?: string
+          slot_position?: number
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_badges_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homework: {
         Row: {
           batch_id: string
@@ -794,6 +869,51 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: true
             referencedRelation: "intense_prep_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      point_transactions: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          points: number
+          sprint_id: string | null
+          student_account_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          points: number
+          sprint_id?: string | null
+          student_account_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          points?: number
+          sprint_id?: string | null
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_transactions_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1164,6 +1284,36 @@ export type Database = {
           },
         ]
       }
+      sprints: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean
+          season_number: number
+          sprint_number: number
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          season_number: number
+          sprint_number: number
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          season_number?: number
+          sprint_number?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
       student_accounts: {
         Row: {
           blocked_at: string | null
@@ -1309,6 +1459,57 @@ export type Database = {
           },
           {
             foreignKeyName: "student_attempts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_badges: {
+        Row: {
+          badge_id: string
+          created_at: string
+          id: string
+          is_unlocked: boolean
+          progress: number
+          requirements_progress: Json | null
+          student_account_id: string
+          unlocked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          progress?: number
+          requirements_progress?: Json | null
+          student_account_id: string
+          unlocked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          progress?: number
+          requirements_progress?: Json | null
+          student_account_id?: string
+          unlocked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_badges_student_account_id_fkey"
             columns: ["student_account_id"]
             isOneToOne: false
             referencedRelation: "student_accounts"
@@ -1488,6 +1689,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "student_sessions_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_sprint_rankings: {
+        Row: {
+          created_at: string
+          current_tier: string
+          final_rank: number | null
+          id: string
+          is_top_1: boolean
+          reserved_next_tier: string | null
+          sprint_id: string
+          student_account_id: string
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_tier?: string
+          final_rank?: number | null
+          id?: string
+          is_top_1?: boolean
+          reserved_next_tier?: string | null
+          sprint_id: string
+          student_account_id: string
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_tier?: string
+          final_rank?: number | null
+          id?: string
+          is_top_1?: boolean
+          reserved_next_tier?: string | null
+          sprint_id?: string
+          student_account_id?: string
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_sprint_rankings_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_sprint_rankings_student_account_id_fkey"
             columns: ["student_account_id"]
             isOneToOne: false
             referencedRelation: "student_accounts"

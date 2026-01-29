@@ -1,13 +1,13 @@
 import { NavLink } from '@/components/NavLink';
-import { Home, BookOpen, Zap, Brain, BarChart3 } from 'lucide-react';
+import { Home, BookOpen, Zap, Trophy, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/practice/home', icon: Home, label: 'Home' },
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/speed', icon: Zap, label: 'Speed' },
-  { to: '/practice/review', icon: Brain, label: 'Review' },
-  { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
+  { to: '/practice/leaderboard', icon: Trophy, label: 'Ranks' },
+  { to: '/practice/badges', icon: Award, label: 'Badges' },
 ];
 
 export function StudentBottomNav() {
