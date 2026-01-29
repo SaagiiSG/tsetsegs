@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MathText } from "@/components/MathText";
+import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 
 interface Module {
   id: string;
@@ -459,13 +460,12 @@ const BluebookQuestionSelector = ({
 
                 {/* Question Text */}
                 <div className="space-y-2">
-                  <Label htmlFor="question-text">Question Text *</Label>
-                  <Textarea
-                    id="question-text"
-                    placeholder="Enter the question text..."
+                  <Label>Question Text *</Label>
+                  <RichTextEditor
                     value={customQuestionText}
-                    onChange={(e) => setCustomQuestionText(e.target.value)}
-                    rows={3}
+                    onChange={setCustomQuestionText}
+                    placeholder="Enter the question text..."
+                    minHeight="100px"
                   />
                 </div>
 
