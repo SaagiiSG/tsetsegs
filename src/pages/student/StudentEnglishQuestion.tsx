@@ -13,8 +13,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark } from 'lucide-react';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
+import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -22,6 +23,9 @@ export default function StudentEnglishQuestion() {
   const { student, logActivity } = useStudentAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const markedQuestions = useMarkedQuestions();
+  const isCurrentMarked = questionId ? markedQuestions.has(questionId) : false;
   
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -261,13 +265,32 @@ export default function StudentEnglishQuestion() {
                 </span>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
-              <Flag className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => questionId && toggleQuestionMark(questionId)}
+                className={isCurrentMarked ? 'text-yellow-500' : 'text-muted-foreground'}
+              >
+                <Bookmark className={`h-4 w-4 ${isCurrentMarked ? 'fill-yellow-500' : ''}`} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
+                <Flag className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </header>
 
-        {/* Navigation */}
+        {/* Question Navigator - positioned at bottom left */}
+        <div className="fixed bottom-6 left-4 z-20">
+          <QuestionNavigatorDialog 
+            currentQuestionId={questionId || ''} 
+            questionSet={question?.question_set}
+            subject="english"
+          />
+        </div>
+
+        {/* Prev/Next Navigation - centered */}
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
           <Button
             variant="outline"
