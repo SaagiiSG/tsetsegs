@@ -174,30 +174,30 @@ export const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
 
 export const badgeDefinitions: BadgeDefinition[] = [
   // Speed Badges - Common (300 pts)
+  // Lightning Strike: Single session - 10 questions in under 5 min with 80%+ accuracy
   {
     id: 'lightning-strike',
     name: 'Lightning Strike',
-    description: 'Complete 10 questions under 5 minutes with 80%+ accuracy',
+    description: 'Complete 10 questions in under 5 minutes with 80%+ accuracy in a single speed session',
     rarity: 'common',
     pointValue: 300,
     iconName: 'Zap',
     category: 'speed',
     requirements: [
-      { type: 'questions_under_time', target: 10, label: '10 questions under 5 min' },
-      { type: 'accuracy_threshold', target: 80, label: '80%+ accuracy' }
+      { type: 'speed_session_combo', target: 1, label: '10 questions, <5 min, 80%+ accuracy' }
     ]
   },
+  // Speedster: Single session - 20 questions in under 5 min with 90%+ accuracy
   {
     id: 'speedster',
     name: 'Speedster',
-    description: 'Complete 20 questions under 5 minutes with 90%+ accuracy',
+    description: 'Complete 20 questions in under 5 minutes with 90%+ accuracy in a single speed session',
     rarity: 'common',
     pointValue: 300,
     iconName: 'Timer',
     category: 'speed',
     requirements: [
-      { type: 'questions_under_time', target: 20, label: '20 questions under 5 min' },
-      { type: 'accuracy_threshold', target: 90, label: '90%+ accuracy' }
+      { type: 'speed_session_combo', target: 1, label: '20 questions, <5 min, 90%+ accuracy' }
     ]
   },
   {

@@ -13,6 +13,8 @@ import {
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { checkSpeedBadgeProgress } from '@/hooks/useSpeedBadgeProgress';
+import { toast } from 'sonner';
 
 interface Question {
   id: string;
@@ -223,10 +225,12 @@ export default function StudentSpeedSession() {
     setIsCorrect(false);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     const correctCount = results.filter(r => r.correct).length;
     const totalTime = results.reduce((sum, r) => sum + r.timeSpent, 0);
+    const totalTimeSeconds = Math.round(totalTime / 1000);
     const avgTimePerQuestion = results.length > 0 ? totalTime / results.length / 1000 : 0;
+    const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
 
     logActivity('speed_mode_complete', {
       total: results.length,
@@ -235,6 +239,33 @@ export default function StudentSpeedSession() {
       maxQuestions,
       avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10
     });
+
+    // Check badge progress after session completes
+    if (student?.id) {
+      try {
+        const { badgesUnlocked } = await checkSpeedBadgeProgress(student.id, {
+          totalQuestions: results.length,
+          correctCount,
+          totalTimeSeconds,
+          accuracy
+        });
+
+        // Show toast for each badge unlocked
+        badgesUnlocked.forEach(badgeName => {
+          toast.success(`🏆 Badge Unlocked: ${badgeName}!`, {
+            description: 'Check your badges page to see your achievement!',
+            duration: 5000
+          });
+        });
+
+        // Invalidate badge cache if any were unlocked
+        if (badgesUnlocked.length > 0) {
+          queryClient.invalidateQueries({ queryKey: ['student-badges'] });
+        }
+      } catch (error) {
+        console.error('Failed to check badge progress:', error);
+      }
+    }
 
     // Invalidate caches for auto-sync across the app
     queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
