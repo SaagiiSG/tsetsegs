@@ -42,9 +42,23 @@ export default function StudentEnglishQuestion() {
     }
   }, [student, questionId]);
 
-  // Fetch all English questions for navigation
+  // Fetch bluebook question IDs to exclude
+  const { data: bluebookQuestionIds } = useQuery({
+    queryKey: ['bluebook-question-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      if (error) throw error;
+      return new Set(data?.map(q => q.question_id) || []);
+    },
+    enabled: !!student,
+    staleTime: 10 * 60 * 1000
+  });
+
+  // Fetch all English questions for navigation (excluding bluebook)
   const { data: allQuestions } = useQuery({
-    queryKey: ['all-english-questions'],
+    queryKey: ['all-english-questions', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
@@ -55,9 +69,14 @@ export default function StudentEnglishQuestion() {
         .order('question_id');
       
       if (error) throw error;
+      
+      // Filter out bluebook questions
+      if (bluebookQuestionIds && data) {
+        return data.filter(q => !bluebookQuestionIds.has(q.id));
+      }
       return data;
     },
-    enabled: !!student,
+    enabled: !!student && !!bluebookQuestionIds,
     staleTime: 5 * 60 * 1000
   });
 

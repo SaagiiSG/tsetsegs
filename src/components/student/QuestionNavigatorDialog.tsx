@@ -74,9 +74,23 @@ export function QuestionNavigatorDialog({
   const { student } = useStudentAuth();
   const markedQuestions = useMarkedQuestions();
 
-  // Fetch all questions for the current set
+  // Fetch bluebook question IDs to exclude
+  const { data: bluebookQuestionIds } = useQuery({
+    queryKey: ['bluebook-question-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      if (error) throw error;
+      return new Set(data?.map(q => q.question_id) || []);
+    },
+    enabled: !!student,
+    staleTime: 10 * 60 * 1000
+  });
+
+  // Fetch all questions for the current set (excluding bluebook)
   const { data: questions } = useQuery({
-    queryKey: ['navigator-questions', questionSet, subject],
+    queryKey: ['navigator-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -91,9 +105,14 @@ export function QuestionNavigatorDialog({
       
       const { data, error } = await query.order('question_id');
       if (error) throw error;
+      
+      // Filter out bluebook questions
+      if (bluebookQuestionIds && data) {
+        return data.filter(q => !bluebookQuestionIds.has(q.id));
+      }
       return data || [];
     },
-    enabled: !!student
+    enabled: !!student && !!bluebookQuestionIds
   });
 
   // Fetch all attempts for status
