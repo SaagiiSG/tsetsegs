@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Crown, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,11 +7,21 @@ import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
-  MyRankTab 
+  MyRankTab,
+  SprintEndCelebration
 } from '@/components/student/leaderboard';
+import { TierType } from '@/data/badgeDefinitions';
 
 export default function StudentLeaderboard() {
   const { student } = useStudentAuth();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<{
+    rank: number;
+    tier: TierType;
+    points: number;
+    sprintNumber: number;
+    seasonNumber: number;
+  } | null>(null);
   
   const {
     activeSprint,
@@ -22,6 +33,46 @@ export default function StudentLeaderboard() {
     isLoading,
     isAllTimeLoading
   } = useLeaderboard();
+
+  // Check if sprint has ended and user was #1
+  useEffect(() => {
+    if (!activeSprint || !currentUserEntry) return;
+
+    const checkSprintEnd = () => {
+      const endDate = new Date(activeSprint.endDate);
+      const now = new Date();
+      
+      // Sprint just ended (within last 5 seconds)
+      if (now >= endDate && now.getTime() - endDate.getTime() < 5000) {
+        // Check if user was #1
+        if (currentUserEntry.rank === 1) {
+          const celebrationKey = `sprint-celebration-${activeSprint.id}`;
+          const alreadyShown = localStorage.getItem(celebrationKey);
+          
+          if (!alreadyShown) {
+            setCelebrationData({
+              rank: currentUserEntry.rank,
+              tier: currentUserEntry.currentTier,
+              points: currentUserEntry.totalPoints,
+              sprintNumber: activeSprint.sprintNumber,
+              seasonNumber: activeSprint.seasonNumber
+            });
+            setShowCelebration(true);
+            localStorage.setItem(celebrationKey, 'true');
+          }
+        }
+      }
+    };
+
+    // Check immediately and then every second
+    checkSprintEnd();
+    const interval = setInterval(checkSprintEnd, 1000);
+    return () => clearInterval(interval);
+  }, [activeSprint, currentUserEntry]);
+
+  const handleCloseCelebration = useCallback(() => {
+    setShowCelebration(false);
+  }, []);
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
@@ -113,6 +164,19 @@ export default function StudentLeaderboard() {
           </TabsContent>
         </AnimatePresence>
       </Tabs>
+
+      {/* Sprint End Celebration */}
+      {celebrationData && (
+        <SprintEndCelebration
+          isOpen={showCelebration}
+          onClose={handleCloseCelebration}
+          rank={celebrationData.rank}
+          tierReached={celebrationData.tier}
+          totalPoints={celebrationData.points}
+          sprintNumber={celebrationData.sprintNumber}
+          seasonNumber={celebrationData.seasonNumber}
+        />
+      )}
     </div>
   );
 }
