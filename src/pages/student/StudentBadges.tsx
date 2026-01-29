@@ -18,7 +18,31 @@ export default function StudentBadges() {
   const [search, setSearch] = useState('');
   const [selectedBadge, setSelectedBadge] = useState<StudentBadge | null>(null);
 
-  const { allBadges, inProgressBadges, badgeStats, isLoading } = useBadges();
+  const { allBadges, inProgressBadges, badgeStats, featuredBadges, isLoading, pinBadge, unpinBadge, isPinning } = useBadges();
+
+  // Find next available slot for pinning
+  const findNextAvailableSlot = (): number => {
+    for (let i = 0; i < 6; i++) {
+      if (!featuredBadges[i]) return i + 1;
+    }
+    return 1; // Overwrite first slot if all full
+  };
+
+  // Check if badge is currently pinned
+  const isPinned = (badgeId: string): boolean => {
+    return featuredBadges.some(fb => fb?.badgeId === badgeId);
+  };
+
+  // Handle pin/unpin
+  const handlePin = (badgeId: string) => {
+    const pinnedSlot = featuredBadges.findIndex(fb => fb?.badgeId === badgeId);
+    if (pinnedSlot >= 0) {
+      unpinBadge(pinnedSlot + 1);
+    } else {
+      const slot = findNextAvailableSlot();
+      pinBadge({ badgeId, slotPosition: slot });
+    }
+  };
 
   // Apply filters locally for better UX
   const filteredBadges = useMemo(() => {
@@ -138,6 +162,9 @@ export default function StudentBadges() {
         badge={selectedBadge}
         open={!!selectedBadge}
         onClose={() => setSelectedBadge(null)}
+        onPin={handlePin}
+        isPinned={selectedBadge ? isPinned(selectedBadge.badgeId) : false}
+        isPinning={isPinning}
       />
     </div>
   );
