@@ -77,7 +77,9 @@ export function useStudentProfile() {
       if (error) throw error;
       return data?.reduce((sum, t) => sum + t.points, 0) || 0;
     },
-    enabled: !!student?.id
+    enabled: !!student?.id,
+    refetchOnWindowFocus: true,
+    staleTime: 30000
   });
 
   // Fetch activity heatmap (last 365 days)
@@ -121,7 +123,9 @@ export function useStudentProfile() {
 
       return result;
     },
-    enabled: !!student?.id
+    enabled: !!student?.id,
+    refetchOnWindowFocus: true,
+    staleTime: 30000
   });
 
   // Calculate streaks from activity
@@ -232,7 +236,9 @@ export function useStudentProfile() {
         totalActiveDays: activeDays
       };
     },
-    enabled: !!student?.id && !!activityHeatmap
+    enabled: !!student?.id && !!activityHeatmap,
+    refetchOnWindowFocus: true,
+    staleTime: 30000
   });
 
   // Fetch rank history
