@@ -11,13 +11,15 @@ interface CurrentSprintTabProps {
   leaderboard: LeaderboardEntry[];
   currentUserId: string | undefined;
   isLoading: boolean;
+  onSprintEnd?: () => void;
 }
 
 export function CurrentSprintTab({ 
   sprint, 
   leaderboard, 
   currentUserId, 
-  isLoading
+  isLoading,
+  onSprintEnd
 }: CurrentSprintTabProps) {
   // Find current user's ranking to get their tier
   const currentUserRanking = currentUserId 
@@ -33,7 +35,7 @@ export function CurrentSprintTab({
 
   return (
     <div className="space-y-6">
-      <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} />
+      <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
 
       <Card>
         <CardHeader className="pb-2">
