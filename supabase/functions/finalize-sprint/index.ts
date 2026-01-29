@@ -153,14 +153,16 @@ Deno.serve(async (req) => {
     const top1Finishers = updates.filter(u => u.is_top_1)
     console.log(`Found ${top1Finishers.length} top 1 finishers to award badges`)
 
+    let badgesAwarded = 0
+
     for (const finisher of top1Finishers) {
       const badgeName = TIER_BADGE_NAMES[finisher.current_tier]
       if (!badgeName) continue
 
-      // Get badge ID from database
+      // Get badge ID and point value from database
       const { data: badge } = await supabase
         .from('badges')
-        .select('id')
+        .select('id, point_value')
         .eq('name', badgeName)
         .single()
 
@@ -182,6 +184,8 @@ Deno.serve(async (req) => {
         continue
       }
 
+      let badgeAwarded = false
+
       if (existingBadge) {
         // Update existing record
         const { error } = await supabase
@@ -197,6 +201,7 @@ Deno.serve(async (req) => {
           console.error(`Failed to update badge for ${finisher.student_account_id}:`, error)
         } else {
           console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id}`)
+          badgeAwarded = true
         }
       } else {
         // Insert new record
@@ -214,7 +219,33 @@ Deno.serve(async (req) => {
           console.error(`Failed to insert badge for ${finisher.student_account_id}:`, error)
         } else {
           console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id}`)
+          badgeAwarded = true
         }
+      }
+
+      // Award badge points as a point transaction
+      if (badgeAwarded && badge.point_value > 0) {
+        const { error: pointError } = await supabase
+          .from('point_transactions')
+          .insert({
+            student_account_id: finisher.student_account_id,
+            points: badge.point_value,
+            category: 'badge_earned',
+            sprint_id: sprintId,
+            metadata: { 
+              badge_name: badgeName, 
+              badge_id: badge.id,
+              tier: finisher.current_tier
+            }
+          })
+
+        if (pointError) {
+          console.error(`Failed to award badge points for ${finisher.student_account_id}:`, pointError)
+        } else {
+          console.log(`Awarded ${badge.point_value} points for badge ${badgeName} to ${finisher.student_account_id}`)
+        }
+
+        badgesAwarded++
       }
     }
 
@@ -223,7 +254,7 @@ Deno.serve(async (req) => {
         success: true,
         sprintId,
         updated: updates.length,
-        badgesAwarded: top1Finishers.length
+        badgesAwarded
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
