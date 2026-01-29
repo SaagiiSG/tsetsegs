@@ -15,4 +15,8 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // Polyfill for Node.js global object (needed by react-mathquill)
+    global: 'globalThis',
+  },
 }));
