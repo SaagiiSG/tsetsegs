@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { BadgeDefinition, RARITY_COLORS } from '@/data/badgeDefinitions';
@@ -19,11 +20,17 @@ interface EpicBadgeUnlockProps {
 }
 
 export function EpicBadgeUnlock({ isOpen, onClaim, badge }: EpicBadgeUnlockProps) {
+  const navigate = useNavigate();
   const [showBadge, setShowBadge] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
   
   const rarityColors = RARITY_COLORS[badge.rarity];
   const IconComponent = ICON_MAP[badge.iconName] || Medal;
+
+  const handleClaim = () => {
+    onClaim();
+    navigate('/practice/badges');
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -325,7 +332,7 @@ export function EpicBadgeUnlock({ isOpen, onClaim, badge }: EpicBadgeUnlockProps
                     }}
                   >
                     <Button
-                      onClick={onClaim}
+                      onClick={handleClaim}
                       size="lg"
                       className="text-lg px-12 py-6 rounded-full font-bold text-white border-2"
                       style={{
