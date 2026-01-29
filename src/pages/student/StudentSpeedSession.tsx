@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -28,6 +28,7 @@ export default function StudentSpeedSession() {
   const { student, logActivity } = useStudentAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const calculatorSnapSide = useCalculatorSnap();
 
   // New params: duration (seconds) and questions (count)
@@ -188,6 +189,13 @@ export default function StudentSpeedSession() {
       maxQuestions,
       avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10
     });
+
+    // Invalidate caches for auto-sync across the app
+    queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
+    queryClient.invalidateQueries({ queryKey: ['speed-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['sprint-leaderboard'] });
+
     navigate('/practice/speed');
   };
 

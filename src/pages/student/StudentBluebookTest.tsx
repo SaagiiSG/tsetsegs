@@ -500,6 +500,10 @@ export default function StudentBluebookTest() {
 
   const handleResultsClose = () => {
     setShowResultsDialog(false);
+    // Invalidate dashboard caches so scores sync automatically
+    queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['bluebook-attempts'] });
+    queryClient.invalidateQueries({ queryKey: ['bluebook-tests'] });
     navigate('/practice/bluebook');
   };
 

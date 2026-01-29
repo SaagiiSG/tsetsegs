@@ -53,6 +53,8 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current active sprint
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
     queryKey: ['active-sprint'],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<SprintInfo | null> => {
       const { data, error } = await supabase
         .from('sprints')
@@ -88,6 +90,8 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current sprint leaderboard
   const { data: leaderboard, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
     queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<LeaderboardEntry[]> => {
       if (!activeSprint?.id) return [];
 
