@@ -523,9 +523,22 @@ export default function StudentPractice() {
                   </div>
                 ) : filteredQuestions.length > 0 ? (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-4">
-                    {filteredQuestions.map((question) => {
+                    {filteredQuestions.map((question, index) => {
                       const status = getQuestionStatus(question.id);
                       const inReview = reviewQueueSet.has(question.id);
+                      
+                      // Convert question_id to simpler display format
+                      const displayId = question.question_id;
+                      let simpleId = displayId;
+                      
+                      // For CB questions, extract just the number
+                      if (displayId.startsWith('CB')) {
+                        const num = parseInt(displayId.replace('CB', ''), 10);
+                        simpleId = isNaN(num) ? displayId : String(num);
+                      } else if (displayId.startsWith('ENG')) {
+                        const num = parseInt(displayId.replace('ENG', ''), 10);
+                        simpleId = isNaN(num) ? displayId : String(num);
+                      }
                       
                       return (
                         <Card 
@@ -546,7 +559,7 @@ export default function StudentPractice() {
                         >
                           <CardContent className="p-2 space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-mono font-bold text-xs">{question.question_id}</span>
+                              <span className="font-mono font-bold text-xs">{simpleId}</span>
                               {status === 'completed' && (
                                 <CheckCircle2 className="h-3 w-3 text-green-500" />
                               )}
