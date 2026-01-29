@@ -1,338 +1,120 @@
 
-# Bluebook SAT Simulator - Implementation Plan
+# Desmos-Style Math Editor for Question Creation
 
 ## Overview
 
-This plan adds a **Bluebook SAT Simulator** feature that replicates the College Board's digital SAT testing experience. The feature includes:
+Build a WYSIWYG math editor that mirrors Desmos's input experience - where teachers can type naturally and math automatically transforms into beautiful formatted equations. This replaces the current plain-text LaTeX approach with a live, visual editing experience.
 
-1. **Admin Management Page** - Create and manage full practice tests
-2. **Student Test-Taking Experience** - Timed, adaptive-style modules with Bluebook-like UI
-3. **Results & Analytics** - Score reports and performance tracking
+## How Desmos Input Works
 
----
+When you type in Desmos:
+- `/` after something creates a fraction with cursor ready in numerator
+- `sqrt` transforms into a square root symbol with cursor inside
+- `Shift+6` (^) moves cursor up for exponents
+- `_` moves cursor down for subscripts
+- `pi`, `theta`, `alpha` auto-convert to Greek symbols
+- Arrow keys navigate between parts of expressions naturally
 
-## Digital SAT Structure (Reference)
+## Solution: MathQuill Integration
 
-The real Digital SAT has this structure:
+**MathQuill** is the exact library that powers Desmos's calculator. It's maintained by the Desmos team themselves and provides all the behaviors your teachers are already familiar with.
 
-| Section | Modules | Time per Module | Questions per Module |
-|---------|---------|-----------------|---------------------|
-| Reading & Writing | 2 modules | 32 min each (64 min total) | 27 questions each (54 total) |
-| Math | 2 modules | 35 min each (70 min total) | 22 questions each (44 total) |
-| **Break** | 10 minutes between sections | | |
-| **Total** | 4 modules | 2 hours 14 minutes | 98 questions |
+### Key Features We'll Enable
 
----
+| Typing This | Auto-Converts To |
+|-------------|------------------|
+| `1/2` | Fraction ½ with cursor flow |
+| `sqrt` | √ with box for content |
+| `x^2` | x² with proper superscript |
+| `x_n` | xₙ with proper subscript |
+| `pi`, `theta`, `alpha` | π, θ, α |
+| `sin`, `cos`, `log` | Properly formatted operators |
+| `sum`, `int` | Σ, ∫ with bounds |
 
-## Database Schema (New Tables)
+## Technical Implementation
 
-### Table: `bluebook_tests`
-Stores test metadata and configuration.
+### Phase 1: Core MathQuill Component
 
-```sql
-CREATE TABLE bluebook_tests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,                    -- "Practice Test 1"
-  description TEXT,
-  is_published BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  created_by TEXT,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-```
+**New File: `src/components/admin/questions/MathQuillEditor.tsx`**
 
-### Table: `bluebook_modules`
-Each test has 4 modules (RW1, RW2, Math1, Math2).
+A reusable React component wrapping MathQuill with:
+- Desmos-identical keyboard shortcuts
+- LaTeX output for database storage
+- Dark mode support
+- Customizable height/placeholder
 
-```sql
-CREATE TABLE bluebook_modules (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  test_id UUID REFERENCES bluebook_tests(id) ON DELETE CASCADE,
-  section TEXT NOT NULL,                 -- 'reading_writing' | 'math'
-  module_number INT NOT NULL,            -- 1 or 2
-  time_limit_minutes INT NOT NULL,       -- 32 for RW, 35 for Math
-  difficulty TEXT,                       -- 'standard' | 'harder' | 'easier' (for module 2)
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### Table: `bluebook_module_questions`
-Links questions to modules with ordering.
-
-```sql
-CREATE TABLE bluebook_module_questions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  module_id UUID REFERENCES bluebook_modules(id) ON DELETE CASCADE,
-  question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
-  order_index INT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(module_id, order_index)
-);
-```
-
-### Table: `bluebook_attempts`
-Tracks student test attempts.
-
-```sql
-CREATE TABLE bluebook_attempts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  test_id UUID REFERENCES bluebook_tests(id),
-  student_account_id UUID REFERENCES student_accounts(id),
-  status TEXT DEFAULT 'in_progress',     -- 'in_progress' | 'completed' | 'abandoned'
-  current_module INT DEFAULT 1,
-  started_at TIMESTAMPTZ DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  rw_raw_score INT,                      -- Reading/Writing raw score
-  math_raw_score INT,                    -- Math raw score
-  rw_scaled_score INT,                   -- 200-800
-  math_scaled_score INT,                 -- 200-800
-  total_score INT                        -- 400-1600
-);
-```
-
-### Table: `bluebook_answers`
-Individual question responses within an attempt.
-
-```sql
-CREATE TABLE bluebook_answers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  attempt_id UUID REFERENCES bluebook_attempts(id) ON DELETE CASCADE,
-  module_id UUID REFERENCES bluebook_modules(id),
-  question_id UUID REFERENCES questions(id),
-  answer_submitted TEXT,
-  is_correct BOOLEAN,
-  is_marked BOOLEAN DEFAULT false,       -- "Mark for Review" flag
-  time_spent_seconds INT,
-  answered_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
----
-
-## Admin Features
-
-### New Admin Page: `/admin/bluebook`
-
-Add to admin sidebar under "Tools" section (dev-only like Question Bank).
-
-**Tabs:**
-1. **Tests** - List all practice tests with status (draft/published)
-2. **Create Test** - Build new practice tests
-3. **Analytics** - View student performance across tests
-
-### Test Builder UI
-
+Configuration matching Desmos behavior:
 ```text
-+------------------------------------------------------------------+
-| CREATE PRACTICE TEST                                              |
-+------------------------------------------------------------------+
-| Test Name: [________________________]                             |
-| Description: [________________________]                           |
-+------------------------------------------------------------------+
-|                                                                   |
-| READING & WRITING SECTION                                         |
-| +----------------------+ +----------------------+                 |
-| | MODULE 1 (32 min)    | | MODULE 2 (32 min)    |                 |
-| | 27 questions         | | 27 questions         |                 |
-| | [+ Add Questions]    | | [+ Add Questions]    |                 |
-| +----------------------+ +----------------------+                 |
-|                                                                   |
-| MATH SECTION                                                      |
-| +----------------------+ +----------------------+                 |
-| | MODULE 1 (35 min)    | | MODULE 2 (35 min)    |                 |
-| | 22 questions         | | 22 questions         |                 |
-| | [+ Add Questions]    | | [+ Add Questions]    |                 |
-| +----------------------+ +----------------------+                 |
-|                                                                   |
-| [Save Draft]                          [Publish Test]              |
-+------------------------------------------------------------------+
++-------------------+------------------------------------------+
+| autoCommands      | pi theta sqrt sum prod int alpha beta... |
++-------------------+------------------------------------------+
+| autoOperatorNames | sin cos tan log ln exp...                |
++-------------------+------------------------------------------+
+| spaceBehavesLikeTab        | true (space exits blocks)       |
++-------------------+------------------------------------------+
+| leftRightIntoCmdGoes       | 'up' (Desmos-style navigation)  |
++-------------------+------------------------------------------+
+| supSubsRequireOperand      | true (prevents x^^2 typos)      |
++-------------------+------------------------------------------+
+| charsThatBreakOutOfSupSub  | '+-=<>'                         |
++-------------------+------------------------------------------+
 ```
 
-### Question Selection Dialog
+### Phase 2: Hybrid RichTextEditor
 
-When clicking "Add Questions":
-- Shows available questions filtered by subject (English for RW, Math for Math)
-- Can bulk-select from existing CollegeBoard questions
-- Can search/filter by category and difficulty
-- Shows question preview before adding
-- Drag-and-drop reordering within module
+**Modify: `src/components/admin/questions/RichTextEditor.tsx`**
 
----
+The math editor needs to work alongside regular text (for question stems like "If x = 5, what is..."). Options:
 
-## Student Features
+**Approach A - Inline Math Blocks:**
+- Keep text editor, add "Insert Math" button that opens MathQuill inline
+- Similar to current but with live editing instead of raw LaTeX
 
-### New Student Route: `/practice/bluebook`
+**Approach B - Full MathQuill (Recommended for Math Questions):**
+- Provide a dedicated MathQuillEditor for pure math expressions
+- Use in answer choices where content is primarily mathematical
 
-**Tests List Page:**
-- Shows available practice tests
-- "Start Test" button for unpublished attempts
-- "Continue" for in-progress attempts
-- "View Results" for completed attempts
+### Phase 3: Integration Points
 
-### Test-Taking Interface
+**Modify: `src/components/admin/bluebook/BluebookQuestionSelector.tsx`**
+- Replace question text and answer choice editors with MathQuill-enabled versions
+- Output remains LaTeX-compatible for existing rendering pipeline
 
-Full-screen, distraction-free UI mimicking Bluebook:
+### Files to Create/Modify
 
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/components/admin/questions/MathQuillEditor.tsx` | Create | Core Desmos-style editor |
+| `src/components/admin/questions/RichTextEditor.tsx` | Modify | Add inline MathQuill blocks |
+| `src/components/admin/bluebook/BluebookQuestionSelector.tsx` | Modify | Use new editors for custom questions |
+| `src/index.css` | Modify | MathQuill styling + dark mode |
+| `package.json` | Modify | Add `react-mathquill` dependency |
+
+## User Experience
+
+**Before (Current):**
 ```text
-+------------------------------------------------------------------+
-| PRACTICE TEST 1 - MATH MODULE 1              ⏱️ 32:45 remaining   |
-+------------------------------------------------------------------+
-| Question 15 of 22                                                 |
-|                                                                   |
-| [Question content here with images/math rendering]                |
-|                                                                   |
-| A) Option A                                                       |
-| B) Option B                                                       |
-| C) Option C                                                       |
-| D) Option D                                                       |
-|                                                                   |
-+------------------------------------------------------------------+
-| [< Back]  [Mark for Review ★]  [Next >]       Question Navigator  |
-|                                               [1][2][3][4][5]...  |
-+------------------------------------------------------------------+
+Type LaTeX manually: "\frac{x^2 + 1}{2}"
+Click "Preview" to see result
 ```
 
-**Key Features:**
-- Countdown timer per module
-- Question navigator (shows answered/unanswered/marked)
-- "Mark for Review" functionality
-- Can move freely between questions within a module
-- Auto-save answers
-- 10-minute break screen between sections
-- Calculator toggle for Math section (Desmos integration exists)
-
-### Module Transition Flow
-
+**After (Desmos-style):**
 ```text
-RW Module 1 → RW Module 2 → 10 min Break → Math Module 1 → Math Module 2 → Results
+Type naturally: "x^2+1" then "/" then "2"
+See fraction appear live as you type ─┐
+                                       │
+    x² + 1                             │
+    ──────   ◄─────────────────────────┘
+      2
 ```
 
-### Results Page
+## Dependencies
 
-After completion:
-- Score breakdown (RW: 200-800, Math: 200-800, Total: 400-1600)
-- Per-section accuracy
-- Time analysis per question
-- Review incorrect answers with explanations
-- Compare with previous attempts
+- **`react-mathquill`**: React wrapper for MathQuill (~25KB gzipped)
+- Uses existing `katex` for rendering in student-facing views (no change needed)
 
----
+## Backward Compatibility
 
-## File Structure
-
-### New Files
-
-```text
-src/pages/admin/BluebookManager.tsx       -- Admin test management
-src/components/admin/bluebook/
-  ├── BluebookTestList.tsx                -- List of all tests
-  ├── BluebookTestBuilder.tsx             -- Create/edit test
-  ├── BluebookModuleBuilder.tsx           -- Add questions to module
-  ├── BluebookQuestionSelector.tsx        -- Question picker dialog
-  └── BluebookAnalytics.tsx               -- Performance analytics
-
-src/pages/student/BluebookTests.tsx       -- Student test list
-src/pages/student/BluebookSession.tsx     -- Test-taking experience
-src/pages/student/BluebookResults.tsx     -- Score report
-src/components/student/bluebook/
-  ├── BluebookTimer.tsx                   -- Countdown timer
-  ├── BluebookNavigator.tsx               -- Question navigation
-  ├── BluebookBreakScreen.tsx             -- 10-min break UI
-  └── BluebookScoreCard.tsx               -- Results display
-```
-
-### Modified Files
-
-| File | Changes |
-|------|---------|
-| `src/components/admin/AdminSidebar.tsx` | Add "Bluebook" link under Tools (dev-only) |
-| `src/pages/Admin.tsx` | Add route for `/admin/bluebook` |
-| `src/App.tsx` | Add student routes for bluebook pages |
-
----
-
-## Implementation Phases
-
-### Phase 1: Database & Admin Foundation
-1. Create database tables with migrations
-2. Add RLS policies for admin access
-3. Create admin sidebar link
-4. Build `BluebookTestList` component (empty state + list view)
-
-### Phase 2: Test Builder
-1. Build `BluebookTestBuilder` with module cards
-2. Create `BluebookQuestionSelector` dialog
-3. Implement question ordering/reordering
-4. Add save draft and publish functionality
-
-### Phase 3: Student Test Interface
-1. Create `BluebookTests` list page
-2. Build `BluebookSession` full-screen test experience
-3. Implement timer, navigation, and auto-save
-4. Add break screen between sections
-
-### Phase 4: Results & Analytics
-1. Create `BluebookResults` score report
-2. Add score calculation (raw to scaled)
-3. Build admin analytics dashboard
-4. Add attempt history tracking
-
----
-
-## Technical Details
-
-### Score Calculation
-
-The SAT uses a raw-to-scaled score conversion. For simplicity, we'll use a linear approximation:
-- RW: (correct answers / 54) * 600 + 200
-- Math: (correct answers / 44) * 600 + 200
-- Total: RW + Math
-
-### Auto-Save Strategy
-
-Use debounced saves (every 5 seconds when answer changes) to `bluebook_answers` table. Store:
-- Current answer for each question
-- Time spent on current question
-- "Marked for review" status
-
-### Timer Persistence
-
-Store remaining time in the `bluebook_attempts` table and calculate elapsed time on resume. Handle edge cases:
-- Browser refresh: Resume from saved state
-- Tab close: Show "resume" option on return
-- Time expired: Auto-submit module and proceed
-
-### RLS Policies
-
-```sql
--- Students can only see published tests
-CREATE POLICY "Students see published tests" ON bluebook_tests
-  FOR SELECT USING (is_published = true);
-
--- Students can only access their own attempts
-CREATE POLICY "Students own attempts" ON bluebook_attempts
-  FOR ALL USING (student_account_id = auth.uid());
-
--- Admins have full access (via user_roles check)
-```
-
----
-
-## UI/UX Considerations
-
-### Test-Taking Experience
-- Full-screen mode encouragement (not forced)
-- Clean, minimal interface matching Bluebook aesthetic
-- Large, readable fonts
-- High-contrast answer options
-- Smooth transitions between questions
-
-### Mobile Support
-- Responsive but optimized for tablet/desktop
-- Show warning if screen too small
-- Maintain functionality on mobile if needed
-
-### Accessibility
-- Keyboard navigation support
-- ARIA labels for screen readers
-- Sufficient color contrast
+- Stored format remains LaTeX strings (compatible with existing `MathText` component)
+- Existing questions will continue to render correctly
+- Students see no change - same beautiful KaTeX rendering
