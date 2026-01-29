@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
-import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
 
 interface Question {
@@ -75,6 +75,9 @@ export default function StudentBluebookTest() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
   const hasShownFiveMinWarning = useRef(false);
+  
+  // Track calculator snap state for content offset
+  const calculatorSnapSide = useCalculatorSnap();
 
   // Fetch attempt details
   const { data: attempt, isLoading: attemptLoading } = useQuery({
@@ -574,11 +577,20 @@ export default function StudentBluebookTest() {
         </div>
       </header>
 
-      {/* Main Content - Full width, no sidebar */}
-      <div className="flex-1 overflow-auto pb-20">
+      {/* Main Content - Offset when calculator is snapped */}
+      <div 
+        className={cn(
+          "flex-1 overflow-auto pb-20 transition-all duration-300",
+          calculatorSnapSide === 'left' && "ml-[40vw]",
+          calculatorSnapSide === 'right' && "mr-[40vw]"
+        )}
+      >
         <main className="p-6">
           {currentQuestion?.question && (
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className={cn(
+              "space-y-6 transition-all duration-300",
+              calculatorSnapSide ? "max-w-2xl mx-auto" : "max-w-4xl mx-auto"
+            )}>
               {/* Passage (if any) */}
               {currentQuestion.question.passage_text && (
                 <Card className="bg-muted/30">
