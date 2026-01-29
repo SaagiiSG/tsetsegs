@@ -12,14 +12,22 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Clock, Flag, ChevronLeft, ChevronRight, 
   CheckCircle2, AlertCircle, Grid3X3,
-  Pause, Play, X
+  Pause, Play, X, Calculator, BookOpen, Settings,
+  Save, LogOut, Coffee
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
-import { DesmosCalculator } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
 
 interface Question {
@@ -472,7 +480,8 @@ export default function StudentBluebookTest() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+          {/* Left: Exit and Test Info */}
+          <div className="flex items-center gap-4 flex-1">
             <Button 
               variant="ghost" 
               size="icon"
@@ -489,8 +498,8 @@ export default function StudentBluebookTest() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Timer */}
+          {/* Center: Timer */}
+          <div className="flex-1 flex justify-center">
             <Badge 
               variant={timeRemaining && timeRemaining < 300 ? 'destructive' : 'secondary'}
               className="gap-1 text-lg px-3 py-1"
@@ -498,7 +507,63 @@ export default function StudentBluebookTest() {
               <Clock className="h-4 w-4" />
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
             </Badge>
+          </div>
 
+          {/* Right: Calculator, Reference, Settings */}
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            {/* Calculator Button - Only for Math */}
+            {currentModule?.section === 'math' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleCalculator()}
+                className="gap-2"
+              >
+                <Calculator className="h-4 w-4" />
+                <span className="hidden sm:inline">Calculator</span>
+              </Button>
+            )}
+
+            {/* Reference Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.info('Reference sheet coming soon!')}
+              className="gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Reference</span>
+            </Button>
+
+            {/* Settings Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => {
+                  // Save progress
+                  toast.success('Progress saved!');
+                }}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowBreak(true)}>
+                  <Coffee className="h-4 w-4 mr-2" />
+                  Take a Break
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => navigate('/practice/bluebook')}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Exit Test
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

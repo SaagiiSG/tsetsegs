@@ -10,8 +10,15 @@ export type SnapSide = 'left' | 'right' | null;
 // Custom event for snap state changes
 export const CALCULATOR_SNAP_EVENT = 'calculatorSnapChange';
 
+// Event to toggle calculator from external sources
+export const CALCULATOR_TOGGLE_EVENT = 'calculatorToggle';
+
 export function dispatchSnapEvent(snapSide: SnapSide) {
   window.dispatchEvent(new CustomEvent(CALCULATOR_SNAP_EVENT, { detail: { snapSide } }));
+}
+
+export function toggleCalculator() {
+  window.dispatchEvent(new CustomEvent(CALCULATOR_TOGGLE_EVENT));
 }
 
 // Hook for listening to snap state
@@ -42,6 +49,18 @@ export function DesmosCalculator() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentDragX, setCurrentDragX] = useState(0);
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // Listen for external toggle events
+  useEffect(() => {
+    const handleToggle = () => {
+      setIsOpen(prev => !prev);
+    };
+
+    window.addEventListener(CALCULATOR_TOGGLE_EVENT, handleToggle);
+    return () => {
+      window.removeEventListener(CALCULATOR_TOGGLE_EVENT, handleToggle);
+    };
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (windowRef.current) {
@@ -154,19 +173,9 @@ export function DesmosCalculator() {
     };
   }, [snapSide]);
 
+  // When closed, don't render anything - toggle is handled via header button
   if (!isOpen) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed top-4 right-4 z-40 gap-2 shadow-md bg-background"
-        onClick={() => setIsOpen(true)}
-        title="Open Graphing Calculator"
-      >
-        <Calculator className="h-4 w-4" />
-        <span className="hidden sm:inline">Calculator</span>
-      </Button>
-    );
+    return null;
   }
 
   const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : '400px';
