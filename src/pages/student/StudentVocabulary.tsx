@@ -267,15 +267,10 @@ const StudentVocabulary = () => {
                     <button
                       key={word.id}
                       onClick={() => handleWordClick(vocabulary.indexOf(word))}
-                      className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex justify-between items-center gap-4"
+                      className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors flex items-center gap-3"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">#{word.word_number}</span>
-                        <span className="font-medium">{word.english}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground truncate max-w-[40%]">
-                        {word.mongolian}
-                      </span>
+                      <span className="text-xs text-muted-foreground">#{word.word_number}</span>
+                      <span className="font-medium">{word.english}</span>
                     </button>
                   ))}
                 </div>
