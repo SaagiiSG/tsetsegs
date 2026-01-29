@@ -252,7 +252,7 @@ export function useLeaderboard(selectedTier?: TierType) {
               : account?.phone_number?.slice(-4) || 'Anonymous',
             level: calculateLevel(totalsByStudent[id]),
             totalPoints: totalsByStudent[id],
-            highestTier: highestTiers[id] || 'bronze',
+            highestTier: highestTiers[id] || 'unranked',
             rubyWeeks: rubyWeeks[id] || 0,
             isRubyLegend: (rubyWeeks[id] || 0) >= 4
           };

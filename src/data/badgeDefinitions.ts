@@ -2,7 +2,7 @@
 
 export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type BadgeCategory = 'speed' | 'discipline' | 'championship' | 'legendary';
-export type TierType = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'ruby';
+export type TierType = 'unranked' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'ruby';
 
 export interface BadgeRequirement {
   type: string;
@@ -59,7 +59,8 @@ export const RARITY_COLORS: Record<BadgeRarity, { border: string; glow: string; 
   }
 };
 
-export const TIER_COLORS: Record<string, string> = {
+export const TIER_COLORS: Record<TierType, string> = {
+  unranked: '#6B7280', // Gray
   bronze: '#CD7F32',
   silver: '#C0C0C0',
   gold: '#FFD700',
@@ -68,7 +69,89 @@ export const TIER_COLORS: Record<string, string> = {
   ruby: '#E0115F'
 };
 
-export const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
+// HSL values for tier themes (used in CSS variables)
+export const TIER_THEME_HSL: Record<TierType, { 
+  primary: string; 
+  primaryLight: string;
+  background: string;
+  card: string;
+  muted: string;
+  border: string;
+}> = {
+  unranked: {
+    primary: '220 13% 46%',
+    primaryLight: '220 13% 56%',
+    background: '220 15% 97%',
+    card: '220 12% 99%',
+    muted: '220 12% 94%',
+    border: '220 13% 88%'
+  },
+  bronze: {
+    primary: '30 56% 50%',
+    primaryLight: '30 56% 60%',
+    background: '30 25% 97%',
+    card: '30 20% 99%',
+    muted: '30 20% 94%',
+    border: '30 25% 88%'
+  },
+  silver: {
+    primary: '0 0% 65%',
+    primaryLight: '0 0% 75%',
+    background: '210 10% 97%',
+    card: '210 8% 99%',
+    muted: '210 8% 94%',
+    border: '210 10% 88%'
+  },
+  gold: {
+    primary: '51 100% 50%',
+    primaryLight: '51 100% 60%',
+    background: '48 30% 97%',
+    card: '48 25% 99%',
+    muted: '48 25% 94%',
+    border: '48 30% 88%'
+  },
+  platinum: {
+    primary: '30 5% 75%',
+    primaryLight: '30 5% 85%',
+    background: '30 8% 97%',
+    card: '30 6% 99%',
+    muted: '30 6% 94%',
+    border: '30 8% 88%'
+  },
+  diamond: {
+    primary: '187 100% 85%',
+    primaryLight: '187 100% 90%',
+    background: '190 30% 97%',
+    card: '190 25% 99%',
+    muted: '190 25% 94%',
+    border: '190 30% 88%'
+  },
+  ruby: {
+    primary: '343 90% 47%',
+    primaryLight: '343 90% 57%',
+    background: '345 25% 97%',
+    card: '345 20% 99%',
+    muted: '345 20% 94%',
+    border: '345 25% 88%'
+  }
+};
+
+// Tier display names
+export const TIER_DISPLAY_NAMES: Record<TierType, string> = {
+  unranked: 'Unranked',
+  bronze: 'Bronze',
+  silver: 'Silver',
+  gold: 'Gold',
+  platinum: 'Platinum',
+  diamond: 'Diamond',
+  ruby: 'Ruby'
+};
+
+// Tier order for progression
+export const TIER_ORDER: TierType[] = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
+
+export const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
+  unranked: 50,  // Top 50 advance to Bronze
   bronze: 30,    // Top 30 advance to Silver
   silver: 20,    // Top 20 advance to Gold
   gold: 15,      // Top 15 advance to Platinum

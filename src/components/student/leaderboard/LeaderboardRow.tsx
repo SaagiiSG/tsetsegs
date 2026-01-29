@@ -3,7 +3,7 @@ import { Crown, ArrowUp, AlertTriangle, Shield, Flame } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LeaderboardEntry } from '@/hooks/useLeaderboard';
-import { TIER_COLORS, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { PointsBreakdownTooltip } from './PointsBreakdownTooltip';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ interface LeaderboardRowProps {
 }
 
 export function LeaderboardRow({ entry, isCurrentUser, cutoffRank }: LeaderboardRowProps) {
-  const tierColor = TIER_COLORS[entry.currentTier];
+  const tierColor = TIER_COLORS[entry.currentTier as TierType] || TIER_COLORS.unranked;
   const isCutoffRow = entry.rank === cutoffRank;
 
   return (
@@ -106,7 +106,7 @@ export function LeaderboardRow({ entry, isCurrentUser, cutoffRank }: Leaderboard
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: tierColor }}
             />
-            <span className="capitalize">{entry.currentTier}</span>
+            <span>{TIER_DISPLAY_NAMES[entry.currentTier as TierType] || 'Unranked'}</span>
           </div>
         </div>
       </div>
