@@ -296,13 +296,14 @@ export default function StudentQuestion() {
       
       const correct = answer.toUpperCase() === currentQuestion.answer.toUpperCase();
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+      const attemptNumber = currentAttempts.length + 1;
       
       await supabase
         .from('student_attempts')
         .insert({
           student_account_id: student.id,
           question_id: currentQuestion.id,
-          attempt_number: currentAttempts.length + 1,
+          attempt_number: attemptNumber,
           answer_submitted: answer,
           is_correct: correct,
           time_spent_seconds: timeSpent,
@@ -312,9 +313,53 @@ export default function StudentQuestion() {
       logActivity('question_attempt', {
         question_id: currentQuestion.id,
         is_correct: correct,
-        attempt_number: currentAttempts.length + 1,
+        attempt_number: attemptNumber,
         time_spent: timeSpent
       });
+
+      // Award points for correct answers (first attempt = 10 pts, second = 5 pts, third = 2 pts)
+      if (correct) {
+        const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
+        
+        // Get active sprint
+        const { data: activeSprint } = await supabase
+          .from('sprints')
+          .select('id')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (activeSprint) {
+          // Insert point transaction
+          await supabase
+            .from('point_transactions')
+            .insert({
+              student_account_id: student.id,
+              sprint_id: activeSprint.id,
+              points,
+              category: 'questions',
+              metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
+            });
+
+          // Update sprint ranking total - first get current, then update
+          const { data: currentRanking } = await supabase
+            .from('student_sprint_rankings')
+            .select('total_points')
+            .eq('student_account_id', student.id)
+            .eq('sprint_id', activeSprint.id)
+            .maybeSingle();
+
+          if (currentRanking) {
+            await supabase
+              .from('student_sprint_rankings')
+              .update({ 
+                total_points: (currentRanking.total_points || 0) + points,
+                updated_at: new Date().toISOString()
+              })
+              .eq('student_account_id', student.id)
+              .eq('sprint_id', activeSprint.id);
+          }
+        }
+      }
 
       // Add to spaced repetition queue if incorrect
       if (!correct && questionId) {

@@ -109,6 +109,52 @@ export default function StudentSpeedSession() {
         attempt_number: attemptNumber,
         time_spent_seconds: Math.round(timeSpent / 1000)
       });
+
+      // Award points for correct answers in speed mode (bonus for fast answers)
+      if (correct) {
+        const timeInSeconds = timeSpent / 1000;
+        // Speed bonus: under 10s = 15pts, under 20s = 10pts, under 30s = 5pts, else 2pts
+        const points = timeInSeconds < 10 ? 15 : timeInSeconds < 20 ? 10 : timeInSeconds < 30 ? 5 : 2;
+        
+        // Get active sprint
+        const { data: activeSprint } = await supabase
+          .from('sprints')
+          .select('id')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (activeSprint) {
+          // Insert point transaction
+          await supabase
+            .from('point_transactions')
+            .insert({
+              student_account_id: student.id,
+              sprint_id: activeSprint.id,
+              points,
+              category: 'speed_session',
+              metadata: { question_id: questionId, time_seconds: timeInSeconds }
+            });
+
+          // Update sprint ranking total
+          const { data: currentRanking } = await supabase
+            .from('student_sprint_rankings')
+            .select('total_points')
+            .eq('student_account_id', student.id)
+            .eq('sprint_id', activeSprint.id)
+            .maybeSingle();
+
+          if (currentRanking) {
+            await supabase
+              .from('student_sprint_rankings')
+              .update({ 
+                total_points: (currentRanking.total_points || 0) + points,
+                updated_at: new Date().toISOString()
+              })
+              .eq('student_account_id', student.id)
+              .eq('sprint_id', activeSprint.id);
+          }
+        }
+      }
     }
   });
 
