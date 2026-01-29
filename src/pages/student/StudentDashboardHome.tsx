@@ -804,29 +804,44 @@ export default function StudentDashboardHome() {
                   <h4 className="font-medium text-sm mb-3">Recent Practice</h4>
                   <ScrollArea className="h-[180px]">
                     <div className="space-y-2 pr-3">
-                      {recentHistory?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className={item.isCorrect ? 'text-green-600' : 'text-destructive'}>
-                              {item.isCorrect ? '✓' : '✗'}
-                            </span>
-                            <span className="text-muted-foreground">
-                              #{item.displayId}
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2"
-                            onClick={() => navigate(`/practice/question/${item.questionId}`)}
+                      {recentHistory?.map((item, index) => {
+                        // Convert displayId to simpler format
+                        const displayId = item.displayId;
+                        let simpleId = displayId;
+                        
+                        // For CB questions, extract just the number
+                        if (displayId.startsWith('CB')) {
+                          const num = parseInt(displayId.replace('CB', ''), 10);
+                          simpleId = isNaN(num) ? displayId : String(num);
+                        } else if (displayId.startsWith('ENG')) {
+                          const num = parseInt(displayId.replace('ENG', ''), 10);
+                          simpleId = isNaN(num) ? displayId : String(num);
+                        }
+                        
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between text-sm"
                           >
-                            <RotateCcw className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-2">
+                              <span className={item.isCorrect ? 'text-green-600' : 'text-destructive'}>
+                                {item.isCorrect ? '✓' : '✗'}
+                              </span>
+                              <span className="text-muted-foreground">
+                                #{simpleId}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2"
+                              onClick={() => navigate(`/practice/question/${item.questionId}`)}
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
                       {(!recentHistory || recentHistory.length === 0) && (
                         <p className="text-xs text-muted-foreground text-center py-4">
                           No practice history yet
