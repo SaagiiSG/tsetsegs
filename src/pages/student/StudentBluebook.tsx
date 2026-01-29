@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -6,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   BookOpen, Clock, PlayCircle, CheckCircle2, 
-  FileText, AlertCircle, Trophy
+  FileText, AlertCircle, Trophy, Calculator, Filter
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 
 interface BluebookTest {
   id: string;
@@ -19,6 +21,10 @@ interface BluebookTest {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+  section_type: string | null;
+  test_month: number | null;
+  test_year: number | null;
+  variant: string | null;
 }
 
 interface BluebookAttempt {
@@ -32,9 +38,28 @@ interface BluebookAttempt {
   math_scaled_score: number | null;
 }
 
+const MONTHS = [
+  { value: 1, label: "January", short: "Jan" },
+  { value: 2, label: "February", short: "Feb" },
+  { value: 3, label: "March", short: "Mar" },
+  { value: 4, label: "April", short: "Apr" },
+  { value: 5, label: "May", short: "May" },
+  { value: 6, label: "June", short: "Jun" },
+  { value: 7, label: "July", short: "Jul" },
+  { value: 8, label: "August", short: "Aug" },
+  { value: 9, label: "September", short: "Sep" },
+  { value: 10, label: "October", short: "Oct" },
+  { value: 11, label: "November", short: "Nov" },
+  { value: 12, label: "December", short: "Dec" },
+];
+
 export default function StudentBluebook() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
+  
+  const [sectionFilter, setSectionFilter] = useState<'all' | 'math' | 'english'>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('all');
 
   // Fetch published tests
   const { data: tests, isLoading: testsLoading } = useQuery({
@@ -44,6 +69,8 @@ export default function StudentBluebook() {
         .from('bluebook_tests')
         .select('*')
         .eq('is_published', true)
+        .order('test_year', { ascending: false })
+        .order('test_month', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -51,6 +78,9 @@ export default function StudentBluebook() {
     },
     enabled: !!student
   });
+
+  // Get unique years from tests
+  const availableYears = [...new Set(tests?.map(t => t.test_year).filter(Boolean) as number[])].sort((a, b) => b - a);
 
   // Fetch module counts for tests
   const { data: moduleStats } = useQuery({
@@ -66,7 +96,6 @@ export default function StudentBluebook() {
 
       if (error) throw error;
 
-      // Aggregate per test
       const stats: Record<string, { questions: number; totalTime: number }> = {};
       data?.forEach((module: any) => {
         const testId = module.test_id;
@@ -104,14 +133,34 @@ export default function StudentBluebook() {
     return attempts?.find(a => a.test_id === testId);
   };
 
+  // Filter tests
+  const filteredTests = tests?.filter(test => {
+    // Section filter
+    if (sectionFilter !== 'all') {
+      const testSection = test.section_type || 'full';
+      if (sectionFilter === 'math' && testSection !== 'math' && testSection !== 'full') return false;
+      if (sectionFilter === 'english' && testSection !== 'english' && testSection !== 'full') return false;
+    }
+    
+    // Year filter
+    if (yearFilter !== 'all' && test.test_year?.toString() !== yearFilter) return false;
+    
+    // Month filter
+    if (monthFilter !== 'all' && test.test_month?.toString() !== monthFilter) return false;
+    
+    return true;
+  });
+
+  // Separate Math and English tests
+  const mathTests = filteredTests?.filter(t => t.section_type === 'math' || t.section_type === 'full');
+  const englishTests = filteredTests?.filter(t => t.section_type === 'english' || t.section_type === 'full');
+
   const handleStartTest = async (testId: string) => {
     const existingAttempt = getTestAttempt(testId);
     
     if (existingAttempt && existingAttempt.status !== 'completed') {
-      // Resume existing attempt
       navigate(`/practice/bluebook/test/${existingAttempt.id}`);
     } else {
-      // Create new attempt
       const { data: modules } = await supabase
         .from('bluebook_modules')
         .select('id')
@@ -145,6 +194,117 @@ export default function StudentBluebook() {
     }
   };
 
+  const renderTestCard = (test: BluebookTest) => {
+    const stats = moduleStats?.[test.id];
+    const attempt = getTestAttempt(test.id);
+    const isCompleted = attempt?.status === 'completed';
+    const isInProgress = attempt?.status === 'in_progress';
+    const monthLabel = test.test_month ? MONTHS.find(m => m.value === test.test_month)?.short : '';
+
+    return (
+      <Card 
+        key={test.id}
+        className={`transition-all hover:border-primary/50 ${
+          isCompleted ? 'border-green-500/50 bg-green-500/5' : 
+          isInProgress ? 'border-amber-500/50 bg-amber-500/5' : ''
+        }`}
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-base flex items-center gap-2">
+                {test.section_type === 'math' ? (
+                  <Calculator className="h-4 w-4 text-green-600" />
+                ) : test.section_type === 'english' ? (
+                  <BookOpen className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <FileText className="h-4 w-4 text-primary" />
+                )}
+                <span className="line-clamp-1">{test.name}</span>
+              </CardTitle>
+              <div className="flex items-center gap-2 mt-1">
+                {test.test_month && test.test_year && (
+                  <Badge variant="outline" className="text-xs">
+                    {monthLabel} {test.test_year}
+                  </Badge>
+                )}
+                {test.variant && (
+                  <Badge variant="secondary" className="text-xs">
+                    {test.variant}
+                  </Badge>
+                )}
+              </div>
+              {isCompleted && attempt?.total_score && (
+                <Badge variant="default" className="mt-2 gap-1 bg-green-500">
+                  <Trophy className="h-3 w-3" />
+                  Score: {attempt.total_score}
+                </Badge>
+              )}
+              {isInProgress && (
+                <Badge variant="secondary" className="mt-2 gap-1 bg-amber-500/20 text-amber-600">
+                  <AlertCircle className="h-3 w-3" />
+                  In Progress
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Stats */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              <span>{stats?.questions || 0} questions</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>{stats?.totalTime || 0} min</span>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <Button 
+            className="w-full gap-2"
+            variant={isCompleted ? 'outline' : 'default'}
+            size="sm"
+            onClick={() => handleStartTest(test.id)}
+          >
+            {isCompleted ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Review
+              </>
+            ) : isInProgress ? (
+              <>
+                <PlayCircle className="h-4 w-4" />
+                Continue
+              </>
+            ) : (
+              <>
+                <PlayCircle className="h-4 w-4" />
+                Start
+              </>
+            )}
+          </Button>
+
+          {/* Previous Scores */}
+          {isCompleted && attempt && (
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">R&W</p>
+                <p className="text-sm font-bold">{attempt.rw_scaled_score || '-'}</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Math</p>
+                <p className="text-sm font-bold">{attempt.math_scaled_score || '-'}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (testsLoading) {
     return (
       <div className="p-4 md:p-6 space-y-4">
@@ -152,7 +312,7 @@ export default function StudentBluebook() {
           <BookOpen className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold">Practice Tests</h1>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => (
             <Card key={i}>
               <CardHeader>
@@ -172,17 +332,46 @@ export default function StudentBluebook() {
   return (
     <div className="p-4 md:p-6 space-y-4 select-none">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <BookOpen className="h-5 w-5 text-primary" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <BookOpen className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Practice Tests</h1>
+            <p className="text-sm text-muted-foreground">Full SAT practice tests</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold">Practice Tests</h1>
-          <p className="text-sm text-muted-foreground">Full SAT practice tests</p>
+
+        {/* Filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="w-[100px] h-8">
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger className="w-[110px] h-8">
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Months</SelectItem>
+              {MONTHS.map(month => (
+                <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Tests Grid */}
+      {/* Tests Tabs */}
       {!tests || tests.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -194,104 +383,62 @@ export default function StudentBluebook() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tests.map(test => {
-            const stats = moduleStats?.[test.id];
-            const attempt = getTestAttempt(test.id);
-            const isCompleted = attempt?.status === 'completed';
-            const isInProgress = attempt?.status === 'in_progress';
+        <Tabs defaultValue="math" className="w-full">
+          <TabsList className="grid w-full max-w-[300px] grid-cols-2">
+            <TabsTrigger value="math" className="gap-2">
+              <Calculator className="h-4 w-4" />
+              Math
+              {mathTests && mathTests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {mathTests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="english" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              English
+              {englishTests && englishTests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {englishTests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-            return (
-              <Card 
-                key={test.id}
-                className={`transition-all hover:border-primary/50 ${
-                  isCompleted ? 'border-green-500/50 bg-green-500/5' : 
-                  isInProgress ? 'border-amber-500/50 bg-amber-500/5' : ''
-                }`}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-primary" />
-                        {test.name}
-                      </CardTitle>
-                      {isCompleted && attempt?.total_score && (
-                        <Badge variant="default" className="mt-2 gap-1 bg-green-500">
-                          <Trophy className="h-3 w-3" />
-                          Score: {attempt.total_score}
-                        </Badge>
-                      )}
-                      {isInProgress && (
-                        <Badge variant="secondary" className="mt-2 gap-1 bg-amber-500/20 text-amber-600">
-                          <AlertCircle className="h-3 w-3" />
-                          In Progress
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {test.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {test.description}
-                    </p>
-                  )}
-                  
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <FileText className="h-4 w-4" />
-                      <span>{stats?.questions || 0} questions</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{stats?.totalTime || 0} min</span>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <Button 
-                    className="w-full gap-2"
-                    variant={isCompleted ? 'outline' : 'default'}
-                    onClick={() => handleStartTest(test.id)}
-                  >
-                    {isCompleted ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        Review Test
-                      </>
-                    ) : isInProgress ? (
-                      <>
-                        <PlayCircle className="h-4 w-4" />
-                        Continue Test
-                      </>
-                    ) : (
-                      <>
-                        <PlayCircle className="h-4 w-4" />
-                        Start Test
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Previous Scores */}
-                  {isCompleted && attempt && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-                      <div className="text-center p-2 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Reading & Writing</p>
-                        <p className="text-lg font-bold">{attempt.rw_scaled_score || '-'}</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Math</p>
-                        <p className="text-lg font-bold">{attempt.math_scaled_score || '-'}</p>
-                      </div>
-                    </div>
-                  )}
+          <TabsContent value="math" className="mt-4">
+            {mathTests && mathTests.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {mathTests.map(renderTestCard)}
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <Calculator className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground text-center">
+                    No math tests match your filters.
+                  </p>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="english" className="mt-4">
+            {englishTests && englishTests.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {englishTests.map(renderTestCard)}
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <BookOpen className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground text-center">
+                    No English tests match your filters.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

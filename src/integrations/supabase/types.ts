@@ -436,7 +436,11 @@ export type Database = {
           id: string
           is_published: boolean | null
           name: string
+          section_type: string | null
+          test_month: number | null
+          test_year: number | null
           updated_at: string | null
+          variant: string | null
         }
         Insert: {
           created_at?: string | null
@@ -445,7 +449,11 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name: string
+          section_type?: string | null
+          test_month?: number | null
+          test_year?: number | null
           updated_at?: string | null
+          variant?: string | null
         }
         Update: {
           created_at?: string | null
@@ -454,7 +462,11 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name?: string
+          section_type?: string | null
+          test_month?: number | null
+          test_year?: number | null
           updated_at?: string | null
+          variant?: string | null
         }
         Relationships: []
       }
