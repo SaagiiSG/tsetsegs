@@ -326,11 +326,18 @@ Deno.serve(async (req) => {
 
         // Apply demotions for next season
         for (const [studentId, data] of studentData) {
+          // If the student got P1 in Sprint 3, they keep their NEW promoted tier (no demotion)
+          if (data.sprint3Ranking?.is_top_1) {
+            console.log(`Student ${studentId}: P1 in Sprint 3 - keeps promoted tier ${data.sprint3Ranking.reserved_next_tier}`)
+            // reserved_next_tier is already set correctly from the main finalization above
+            continue
+          }
+          
           const currentTierIndex = TIER_ORDER.indexOf(data.finalTier || 'unranked')
           const demotedTierIndex = Math.max(0, currentTierIndex - 1) // Drop 1 tier, min is unranked
           let newTier = TIER_ORDER[demotedTierIndex]
           
-          // Check if P1 protection applies
+          // Check if P1 protection from earlier sprints applies
           if (data.bestP1Tier) {
             const protectedTierIndex = TIER_ORDER.indexOf(data.bestP1Tier)
             // If demoted tier would be below protected tier, use protected tier instead
@@ -347,7 +354,6 @@ Deno.serve(async (req) => {
           }
 
           // Update the Sprint 3 ranking with the demoted tier as reserved_next_tier for next season
-          // This way, when they enroll in Season N+1 Sprint 1, they'll use this tier
           if (data.sprint3Ranking) {
             await supabase
               .from('student_sprint_rankings')
