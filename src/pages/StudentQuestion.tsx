@@ -11,10 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark, BookOpen } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet } from '@/components/student/ReferenceSheet';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 
 // SM-2 spaced repetition algorithm helper
@@ -536,6 +537,7 @@ export default function StudentQuestion() {
               )}
             </div>
             <div className="flex items-center gap-1">
+              <ReferenceSheet />
               <Button variant="ghost" size="sm" onClick={() => toggleCalculator()}>
                 <Calculator className="h-4 w-4" />
               </Button>
