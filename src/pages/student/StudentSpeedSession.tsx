@@ -476,14 +476,18 @@ export default function StudentSpeedSession() {
                 })}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Your Answer
+                </label>
                 <Input
                   placeholder="Type your answer..."
                   value={selectedAnswer}
                   onChange={(e) => setSelectedAnswer(e.target.value)}
                   disabled={showResult}
-                  className="text-lg"
+                  className="text-lg h-12 border-2"
                   onKeyDown={(e) => e.key === 'Enter' && !showResult && handleSubmit()}
+                  autoFocus
                 />
               </div>
             )}
