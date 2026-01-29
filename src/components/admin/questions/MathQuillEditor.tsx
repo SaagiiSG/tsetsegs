@@ -44,7 +44,7 @@ export function MathQuillEditor({
   // MathQuill configuration matching Desmos behavior
   const config = {
     // Auto-convert typed commands to symbols
-    autoCommands: 'pi theta alpha beta gamma delta epsilon sigma omega phi lambda sqrt sum prod int infty pm mp neq leq geq approx cdot times div',
+    autoCommands: 'pi theta alpha beta gamma delta epsilon sigma omega phi lambda sqrt nthroot sum prod int infty pm mp neq leq geq approx cdot times div abs',
     // Auto-format function names
     autoOperatorNames: 'sin cos tan cot sec csc arcsin arccos arctan log ln exp lim',
     // Space behaves like Tab - exits current block
@@ -143,7 +143,7 @@ export function InlineMathField({
   className?: string;
 }) {
   const config = {
-    autoCommands: 'pi theta alpha beta gamma sqrt sum prod int infty pm neq leq geq',
+    autoCommands: 'pi theta alpha beta gamma sqrt nthroot sum prod int infty pm neq leq geq abs',
     autoOperatorNames: 'sin cos tan log ln exp',
     spaceBehavesLikeTab: true,
     leftRightIntoCmdGoes: 'up' as const,

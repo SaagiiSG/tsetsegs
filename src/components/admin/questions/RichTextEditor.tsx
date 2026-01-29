@@ -27,7 +27,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
 
   // MathQuill config for the inline editor
   const mathQuillConfig = {
-    autoCommands: 'pi theta alpha beta gamma sqrt sum prod int infty pm neq leq geq',
+    autoCommands: 'pi theta alpha beta gamma sqrt nthroot sum prod int infty pm neq leq geq abs',
     autoOperatorNames: 'sin cos tan log ln exp',
     spaceBehavesLikeTab: true,
     leftRightIntoCmdGoes: 'up' as const,
