@@ -264,16 +264,23 @@ export default function StudentBluebookTest() {
   const handleModuleComplete = async () => {
     if (!attempt) return;
 
-    // Check if this is the last module
+    // Fetch all modules and sort them correctly: RW first (both modules), then Math (both modules)
     const { data: allModules } = await supabase
       .from('bluebook_modules')
       .select('id, module_number, section')
-      .eq('test_id', attempt.test_id)
-      .order('section')
-      .order('module_number');
+      .eq('test_id', attempt.test_id);
 
-    const currentModuleIndex = allModules?.findIndex(m => m.id === attempt.current_module_id) ?? -1;
-    const nextModule = allModules?.[currentModuleIndex + 1];
+    // Sort modules: reading_writing before math, then by module_number
+    const sortedModules = allModules?.sort((a, b) => {
+      // reading_writing should come before math
+      if (a.section !== b.section) {
+        return a.section === 'reading_writing' ? -1 : 1;
+      }
+      return a.module_number - b.module_number;
+    }) || [];
+
+    const currentModuleIndex = sortedModules.findIndex(m => m.id === attempt.current_module_id);
+    const nextModule = sortedModules[currentModuleIndex + 1];
 
     if (nextModule) {
       // Check if we need to show a break (between RW and Math sections)
@@ -374,20 +381,26 @@ export default function StudentBluebookTest() {
     navigate('/practice/bluebook');
   };
 
-  const handleContinueFromBreak = () => {
-    const nextModuleIndex = (attempt?.current_module || 1);
-    supabase
+  const handleContinueFromBreak = async () => {
+    if (!attempt?.test_id) return;
+    
+    const { data, error } = await supabase
       .from('bluebook_modules')
       .select('id')
-      .eq('test_id', attempt?.test_id)
+      .eq('test_id', attempt.test_id)
       .eq('section', 'math')
       .eq('module_number', 1)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          moveToNextModule(data.id);
-        }
-      });
+      .single();
+
+    if (error) {
+      console.error('Failed to find math module:', error);
+      toast.error('Failed to continue to math section');
+      return;
+    }
+
+    if (data) {
+      await moveToNextModule(data.id);
+    }
   };
 
   const formatTime = (seconds: number) => {
