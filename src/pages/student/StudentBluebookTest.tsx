@@ -188,7 +188,6 @@ export default function StudentBluebookTest() {
       setTimeRemaining(prev => {
         if (prev === null || prev <= 0) {
           clearInterval(interval);
-          handleModuleComplete();
           return 0;
         }
         
@@ -207,7 +206,14 @@ export default function StudentBluebookTest() {
 
     return () => clearInterval(interval);
   }, [timeRemaining, isPaused, showBreak]);
-  
+
+  // Handle time expiration - separate effect to avoid stale closure
+  useEffect(() => {
+    if (timeRemaining === 0 && !isPaused && !showBreak) {
+      toast.error('Time is up!', { duration: 3000 });
+      handleModuleComplete();
+    }
+  }, [timeRemaining, isPaused, showBreak]);
   // Reset warning flag when module changes
   useEffect(() => {
     hasShownFiveMinWarning.current = false;
@@ -593,11 +599,13 @@ export default function StudentBluebookTest() {
                       
                       {/* Question Image */}
                       {currentQuestion.question.question_image_url && (
-                        <img 
-                          src={currentQuestion.question.question_image_url}
-                          alt="Question"
-                          className="w-[55%] h-auto rounded-lg mb-4"
-                        />
+                        <div className="flex justify-center mb-4">
+                          <img 
+                            src={currentQuestion.question.question_image_url}
+                            alt="Question"
+                            className="w-[55%] h-auto rounded-lg"
+                          />
+                        </div>
                       )}
 
                       {/* Question Text */}
