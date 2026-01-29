@@ -2,11 +2,14 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Bold, Italic, Subscript, Superscript, Pi, Eye } from 'lucide-react';
+import { Bold, Italic, Subscript, Superscript, Pi, Eye, Calculator } from 'lucide-react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { addStyles, EditableMathField } from 'react-mathquill';
+
+// Initialize MathQuill styles
+addStyles();
 
 interface RichTextEditorProps {
   value: string;
@@ -21,6 +24,16 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
   const [showPreview, setShowPreview] = useState(false);
   const [mathInput, setMathInput] = useState('');
   const [mathPopoverOpen, setMathPopoverOpen] = useState(false);
+
+  // MathQuill config for the inline editor
+  const mathQuillConfig = {
+    autoCommands: 'pi theta alpha beta gamma sqrt sum prod int infty pm neq leq geq',
+    autoOperatorNames: 'sin cos tan log ln exp',
+    spaceBehavesLikeTab: true,
+    leftRightIntoCmdGoes: 'up' as const,
+    supSubsRequireOperand: true,
+    charsThatBreakOutOfSupSub: '+-=<>',
+  };
 
   const insertText = useCallback((before: string, after: string = '') => {
     const textarea = textareaRef.current;
@@ -110,21 +123,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
     });
   }, []);
 
-  const mathExamples = [
-    { label: 'Fraction', latex: '\\frac{a}{b}' },
-    { label: 'Square root', latex: '\\sqrt{x}' },
-    { label: 'Exponent', latex: 'x^{2}' },
-    { label: 'Subscript', latex: 'x_{n}' },
-    { label: 'Sum', latex: '\\sum_{i=1}^{n}' },
-    { label: 'Integral', latex: '\\int_{a}^{b}' },
-    { label: 'Pi', latex: '\\pi' },
-    { label: 'Infinity', latex: '\\infty' },
-    { label: 'Plus/Minus', latex: '\\pm' },
-    { label: 'Not equal', latex: '\\neq' },
-    { label: 'Less/Equal', latex: '\\leq' },
-    { label: 'Greater/Equal', latex: '\\geq' },
-  ];
-
   return (
     <div className="space-y-2">
       {/* Toolbar */}
@@ -174,31 +172,38 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
               type="button"
               variant="ghost"
               size="sm"
-              title="Insert Math (LaTeX)"
+              title="Insert Math (Desmos-style editor)"
+              className="gap-1"
             >
-              <Pi className="h-4 w-4" />
+              <Calculator className="h-4 w-4" />
+              <span className="text-xs">Math</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80" align="start">
+          <PopoverContent className="w-96" align="start">
             <div className="space-y-3">
               <div>
-                <Label>LaTeX Expression</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    value={mathInput}
-                    onChange={(e) => setMathInput(e.target.value)}
-                    placeholder="e.g., \frac{1}{2}"
-                    onKeyDown={(e) => e.key === 'Enter' && insertMath()}
-                  />
-                  <Button type="button" size="sm" onClick={insertMath}>
-                    Insert
-                  </Button>
-                </div>
+                <Label className="flex items-center gap-2">
+                  <Pi className="h-4 w-4" />
+                  Desmos-Style Math Editor
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type naturally: / for fractions, sqrt for √, ^ for exponents
+                </p>
               </div>
               
+              {/* MathQuill Editor */}
+              <div className="border rounded-md bg-background p-2 min-h-[48px]">
+                <EditableMathField
+                  latex={mathInput}
+                  onChange={(mathField) => setMathInput(mathField.latex())}
+                  config={mathQuillConfig}
+                />
+              </div>
+              
+              {/* Live Preview */}
               {mathInput && (
                 <div className="p-2 border rounded bg-muted/50">
-                  <Label className="text-xs text-muted-foreground">Preview:</Label>
+                  <Label className="text-xs text-muted-foreground">Preview (as students see it):</Label>
                   <div className="mt-1 text-lg">
                     {(() => {
                       try {
@@ -211,24 +216,39 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
                   </div>
                 </div>
               )}
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setMathInput('');
+                    setMathPopoverOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  onClick={insertMath}
+                  disabled={!mathInput.trim()}
+                >
+                  Insert
+                </Button>
+              </div>
               
-              <div>
-                <Label className="text-xs text-muted-foreground">Quick Insert:</Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {mathExamples.map((ex) => (
-                    <Button
-                      key={ex.latex}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-7"
-                      onClick={() => {
-                        setMathInput(ex.latex);
-                      }}
-                    >
-                      {ex.label}
-                    </Button>
-                  ))}
+              {/* Quick Reference */}
+              <div className="border-t pt-2">
+                <Label className="text-xs text-muted-foreground">Quick shortcuts:</Label>
+                <div className="grid grid-cols-3 gap-1 mt-1 text-xs text-muted-foreground">
+                  <span>/ → fraction</span>
+                  <span>sqrt → √</span>
+                  <span>^ → exponent</span>
+                  <span>_ → subscript</span>
+                  <span>pi → π</span>
+                  <span>theta → θ</span>
                 </div>
               </div>
             </div>
@@ -273,7 +293,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
 
       {/* Help text */}
       <p className="text-xs text-muted-foreground">
-        Use **bold**, *italic*, ^superscript^, ~subscript~, and $math$ for LaTeX expressions
+        Use **bold**, *italic*, ^superscript^, ~subscript~. Click "Math" for Desmos-style math input.
       </p>
     </div>
   );
