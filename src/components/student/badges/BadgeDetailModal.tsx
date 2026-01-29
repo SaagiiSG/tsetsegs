@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem } from 'lucide-react';
+import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { StudentBadge } from '@/hooks/useBadges';
 import { RARITY_COLORS } from '@/data/badgeDefinitions';
 import { cn } from '@/lib/utils';
@@ -17,12 +18,15 @@ interface BadgeDetailModalProps {
   badge: StudentBadge | null;
   open: boolean;
   onClose: () => void;
+  onPin?: (badgeId: string) => void;
+  isPinned?: boolean;
+  isPinning?: boolean;
 }
 
-export function BadgeDetailModal({ badge, open, onClose }: BadgeDetailModalProps) {
+export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinning }: BadgeDetailModalProps) {
   if (!badge) return null;
 
-  const { badge: badgeDef, isUnlocked, progress, unlockedAt, requirementsProgress } = badge;
+  const { badge: badgeDef, isUnlocked, progress, unlockedAt, requirementsProgress, badgeId } = badge;
   const colors = RARITY_COLORS[badgeDef.rarity];
   
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -82,6 +86,29 @@ export function BadgeDetailModal({ badge, open, onClose }: BadgeDetailModalProps
                 <Check className="h-4 w-4" />
                 Unlocked on {format(new Date(unlockedAt), 'MMM d, yyyy')}
               </p>
+            )}
+
+            {/* Pin to Profile Button */}
+            {isUnlocked && onPin && (
+              <Button
+                variant={isPinned ? "secondary" : "default"}
+                size="sm"
+                className="mt-3 gap-2"
+                onClick={() => onPin(badgeId)}
+                disabled={isPinning}
+              >
+                {isPinned ? (
+                  <>
+                    <PinOff className="h-4 w-4" />
+                    Unpin from Profile
+                  </>
+                ) : (
+                  <>
+                    <Pin className="h-4 w-4" />
+                    Pin to Profile
+                  </>
+                )}
+              </Button>
             )}
           </motion.div>
 
