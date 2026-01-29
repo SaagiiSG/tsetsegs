@@ -1,11 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { TierType, TIER_THEME_HSL } from '@/data/badgeDefinitions';
-import { useEffect } from 'react';
+import { TierType, TIER_THEME_HSL, TIER_ORDER } from '@/data/badgeDefinitions';
+import { useEffect, useState } from 'react';
 
 export function useStudentTier() {
   const { student } = useStudentAuth();
+  const [themePreference, setThemePreference] = useState<'rank' | TierType>(() => {
+    const saved = localStorage.getItem('student_color_theme');
+    return (saved as 'rank' | TierType) || 'rank';
+  });
 
   const { data: currentTier, isLoading } = useQuery({
     queryKey: ['student-tier', student?.id],
@@ -45,10 +49,29 @@ export function useStudentTier() {
     staleTime: 60000, // Cache for 1 minute
   });
 
-  // Apply theme to document root when tier changes
+  // Listen for theme preference changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('student_color_theme');
+      setThemePreference((saved as 'rank' | TierType) || 'rank');
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically for same-tab changes
+    const interval = setInterval(handleStorageChange, 500);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Apply theme to document root when tier or preference changes
   useEffect(() => {
     const tier = currentTier || 'unranked';
-    const theme = TIER_THEME_HSL[tier];
+    const tierToApply = themePreference === 'rank' ? tier : themePreference;
+    const theme = TIER_THEME_HSL[tierToApply];
     
     if (theme) {
       const root = document.documentElement;
@@ -61,8 +84,8 @@ export function useStudentTier() {
       root.style.setProperty('--input', theme.border);
       
       // Add tier class for additional styling
-      root.classList.remove('tier-unranked', 'tier-bronze', 'tier-silver', 'tier-gold', 'tier-platinum', 'tier-diamond', 'tier-ruby');
-      root.classList.add(`tier-${tier}`);
+      TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
+      root.classList.add(`tier-${tierToApply}`);
     }
 
     return () => {
@@ -75,13 +98,14 @@ export function useStudentTier() {
       root.style.removeProperty('--muted');
       root.style.removeProperty('--border');
       root.style.removeProperty('--input');
-      root.classList.remove('tier-unranked', 'tier-bronze', 'tier-silver', 'tier-gold', 'tier-platinum', 'tier-diamond', 'tier-ruby');
+      TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
     };
-  }, [currentTier]);
+  }, [currentTier, themePreference]);
 
   return {
     tier: currentTier || 'unranked',
     isLoading,
-    themeColors: TIER_THEME_HSL[currentTier || 'unranked']
+    themeColors: TIER_THEME_HSL[currentTier || 'unranked'],
+    themePreference
   };
 }

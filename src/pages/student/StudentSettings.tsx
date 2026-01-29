@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,34 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from 'next-themes';
 import { 
-  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap
+  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap, Palette, Sparkles
 } from 'lucide-react';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
+import { useStudentTier } from '@/hooks/useStudentTier';
+import { cn } from '@/lib/utils';
+
+type ThemeOption = 'rank' | TierType;
+
+const THEME_OPTIONS: { value: ThemeOption; label: string }[] = [
+  { value: 'rank', label: 'Use My Rank' },
+  { value: 'unranked', label: 'Gray' },
+  { value: 'bronze', label: 'Bronze' },
+  { value: 'silver', label: 'Silver' },
+  { value: 'gold', label: 'Gold' },
+  { value: 'platinum', label: 'Platinum' },
+  { value: 'diamond', label: 'Diamond' },
+  { value: 'ruby', label: 'Ruby' },
+];
 
 export default function StudentSettings() {
   const { student, logout } = useStudentAuth();
   const { theme, setTheme } = useTheme();
+  const { tier: currentTier } = useStudentTier();
+  
+  const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(() => {
+    const saved = localStorage.getItem('student_color_theme');
+    return (saved as ThemeOption) || 'rank';
+  });
 
   const linkedStudent = student?.linked_student as {
     first_name: string;
@@ -19,6 +42,38 @@ export default function StudentSettings() {
     school_name?: string;
     grade?: string;
   } | null;
+
+  // Apply theme when selection changes
+  useEffect(() => {
+    localStorage.setItem('student_color_theme', selectedTheme);
+    
+    const tierToApply = selectedTheme === 'rank' ? currentTier : selectedTheme;
+    const themeColors = TIER_THEME_HSL[tierToApply];
+    
+    if (themeColors) {
+      const root = document.documentElement;
+      root.style.setProperty('--primary', themeColors.primary);
+      root.style.setProperty('--ring', themeColors.primary);
+      root.style.setProperty('--background', themeColors.background);
+      root.style.setProperty('--card', themeColors.card);
+      root.style.setProperty('--muted', themeColors.muted);
+      root.style.setProperty('--border', themeColors.border);
+      root.style.setProperty('--input', themeColors.border);
+      
+      // Update tier class
+      TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
+      root.classList.add(`tier-${tierToApply}`);
+    }
+  }, [selectedTheme, currentTier]);
+
+  const handleThemeSelect = (value: ThemeOption) => {
+    setSelectedTheme(value);
+  };
+
+  const getDisplayColor = (option: ThemeOption): string => {
+    if (option === 'rank') return TIER_COLORS[currentTier];
+    return TIER_COLORS[option];
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
@@ -53,9 +108,15 @@ export default function StudentSettings() {
                   ? `${linkedStudent.first_name} ${linkedStudent.last_name || ''}`
                   : 'Student'}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                SAT Practice Student
-              </p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Current Rank:</span>
+                <span 
+                  className="font-semibold"
+                  style={{ color: TIER_COLORS[currentTier] }}
+                >
+                  {TIER_DISPLAY_NAMES[currentTier]}
+                </span>
+              </div>
             </div>
           </div>
           
@@ -85,10 +146,14 @@ export default function StudentSettings() {
       {/* Appearance */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Appearance</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Appearance
+          </CardTitle>
           <CardDescription>Customize how the app looks</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Dark Mode Toggle */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {theme === 'dark' ? (
@@ -108,6 +173,59 @@ export default function StudentSettings() {
               checked={theme === 'dark'}
               onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
             />
+          </div>
+
+          <Separator />
+
+          {/* Color Theme Picker */}
+          <div className="space-y-3">
+            <div>
+              <Label>Color Theme</Label>
+              <p className="text-xs text-muted-foreground">
+                Choose your preferred color scheme
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2">
+              {THEME_OPTIONS.map((option) => {
+                const isSelected = selectedTheme === option.value;
+                const color = getDisplayColor(option.value);
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleThemeSelect(option.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all",
+                      isSelected 
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20" 
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="relative">
+                      <div 
+                        className="w-8 h-8 rounded-full shadow-md"
+                        style={{ backgroundColor: color }}
+                      />
+                      {option.value === 'rank' && (
+                        <Sparkles 
+                          className="absolute -top-1 -right-1 h-4 w-4 text-amber-500" 
+                        />
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium text-center leading-tight">
+                      {option.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedTheme === 'rank' && (
+              <p className="text-xs text-muted-foreground text-center bg-muted/50 rounded-lg p-2">
+                Theme will automatically change as you rank up! 🚀
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
