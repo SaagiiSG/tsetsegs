@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Crown, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
-import { TierType } from '@/data/badgeDefinitions';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
@@ -13,7 +11,6 @@ import {
 
 export default function StudentLeaderboard() {
   const { student } = useStudentAuth();
-  const [selectedTier, setSelectedTier] = useState<TierType | undefined>(undefined);
   
   const {
     activeSprint,
@@ -24,7 +21,7 @@ export default function StudentLeaderboard() {
     pointsToTop1,
     isLoading,
     isAllTimeLoading
-  } = useLeaderboard(selectedTier);
+  } = useLeaderboard();
 
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
@@ -77,7 +74,6 @@ export default function StudentLeaderboard() {
                 leaderboard={leaderboard}
                 currentUserId={student?.id}
                 isLoading={isLoading}
-                onTierChange={setSelectedTier}
               />
             </motion.div>
           </TabsContent>
