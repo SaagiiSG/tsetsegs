@@ -397,9 +397,14 @@ export default function StudentQuestion() {
       setSubmitted(true);
       setIsCorrect(correct || false);
       setAttemptCount(prev => prev + 1);
+      // Invalidate all related caches for auto-sync
       queryClient.invalidateQueries({ queryKey: ['question-attempts-all'] });
       queryClient.invalidateQueries({ queryKey: ['student-progress'] });
       queryClient.invalidateQueries({ queryKey: ['review-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['student-mastery-data'] });
+      queryClient.invalidateQueries({ queryKey: ['student-weekly-accuracy'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
     },
     onError: (error: any) => {
       toast({

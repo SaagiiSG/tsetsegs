@@ -79,9 +79,11 @@ export default function StudentDashboardHome() {
     }
   }, [student?.linked_student?.sat_test_month]);
 
-  // Fetch dashboard stats
+  // Fetch dashboard stats - auto-refresh on focus
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['student-dashboard-stats', student?.id],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000, // Consider stale after 30 seconds
     queryFn: async () => {
       if (!student?.id) return null;
 
@@ -179,6 +181,8 @@ export default function StudentDashboardHome() {
   // Fetch mastery data for radar chart
   const { data: masteryData, isLoading: masteryLoading } = useQuery({
     queryKey: ['student-mastery-data', student?.id],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!student?.id) return [];
 
@@ -294,6 +298,8 @@ export default function StudentDashboardHome() {
   // Fetch weekly accuracy history
   const { data: weeklyData, isLoading: weeklyLoading } = useQuery({
     queryKey: ['student-weekly-accuracy', student?.id],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!student?.id) return [];
 
