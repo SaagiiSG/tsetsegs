@@ -15,7 +15,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, Ch
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
-import { ReferenceSheet } from '@/components/student/ReferenceSheet';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 
 // SM-2 spaced repetition algorithm helper
@@ -513,6 +513,7 @@ export default function StudentQuestion() {
   return (
     <SecurityWrapper>
       <DesmosCalculator />
+      <ReferenceSheet />
       <div 
         className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 transition-all duration-300"
         style={{ 
@@ -537,7 +538,9 @@ export default function StudentQuestion() {
               )}
             </div>
             <div className="flex items-center gap-1">
-              <ReferenceSheet />
+              <Button variant="ghost" size="sm" onClick={() => toggleReferenceSheet()}>
+                <BookOpen className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => toggleCalculator()}>
                 <Calculator className="h-4 w-4" />
               </Button>
