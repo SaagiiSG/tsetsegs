@@ -21,31 +21,41 @@ export interface BadgeDefinition {
   requirements: BadgeRequirement[];
 }
 
-export const RARITY_COLORS: Record<BadgeRarity, { border: string; glow: string; text: string }> = {
+export const RARITY_COLORS: Record<BadgeRarity, { border: string; glow: string; text: string; primary: string; secondary: string }> = {
   common: {
     border: 'border-gray-400',
-    glow: 'shadow-gray-400/20',
-    text: 'text-gray-400'
+    glow: '#9CA3AF',
+    text: 'text-gray-400',
+    primary: '#6B7280',
+    secondary: '#9CA3AF'
   },
   uncommon: {
     border: 'border-green-500',
-    glow: 'shadow-green-500/30',
-    text: 'text-green-500'
+    glow: '#22C55E',
+    text: 'text-green-500',
+    primary: '#16A34A',
+    secondary: '#22C55E'
   },
   rare: {
     border: 'border-blue-500',
-    glow: 'shadow-blue-500/40',
-    text: 'text-blue-500'
+    glow: '#3B82F6',
+    text: 'text-blue-500',
+    primary: '#2563EB',
+    secondary: '#3B82F6'
   },
   epic: {
     border: 'border-purple-500',
-    glow: 'shadow-purple-500/50',
-    text: 'text-purple-500'
+    glow: '#A855F7',
+    text: 'text-purple-500',
+    primary: '#9333EA',
+    secondary: '#A855F7'
   },
   legendary: {
     border: 'border-amber-500',
-    glow: 'shadow-amber-500/60',
-    text: 'text-amber-500'
+    glow: '#F59E0B',
+    text: 'text-amber-500',
+    primary: '#D97706',
+    secondary: '#F59E0B'
   }
 };
 
