@@ -44,14 +44,24 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
       {/* Header */}
       <div className="flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-orange-500/20">
-            <Flame className="h-6 w-6 text-orange-500" />
+          <div 
+            className="p-2 rounded-xl"
+            style={{ backgroundColor: `${tierColor}30` }}
+          >
+            <Flame className="h-6 w-6" style={{ color: tierColor }} />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
               Season {sprint.seasonNumber}
+            </p>
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <span style={{ color: tierColor }}>
+                {TIER_DISPLAY_NAMES[currentUserRanking?.currentTier as TierType] || 'Unranked'}
+              </span>
+              <span className="text-muted-foreground">
+                Sprint ({sprint.sprintNumber}/3)
+              </span>
             </h2>
-            <p className="text-sm text-muted-foreground">Sprint {sprint.sprintNumber}</p>
           </div>
         </div>
         <div className="text-right">
