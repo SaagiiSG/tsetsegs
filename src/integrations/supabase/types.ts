@@ -1681,6 +1681,7 @@ export type Database = {
           id: string
           is_active: boolean
           mongolian: string
+          subject: string
           word_number: number
         }
         Insert: {
@@ -1689,6 +1690,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           mongolian: string
+          subject?: string
           word_number: number
         }
         Update: {
@@ -1697,6 +1699,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           mongolian?: string
+          subject?: string
           word_number?: number
         }
         Relationships: []
