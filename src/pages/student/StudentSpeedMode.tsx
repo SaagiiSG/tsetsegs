@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
-  Zap, Play, Trophy, Award
+  Zap, Play, Trophy, Award, Lock
 } from 'lucide-react';
+import { useBadges } from '@/hooks/useBadges';
+import { Progress } from '@/components/ui/progress';
 import { format, subDays } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
@@ -466,18 +468,114 @@ export default function StudentSpeedMode() {
           </CardContent>
         </Card>
         
-        {/* Badge Placeholder */}
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-purple-600 mb-2">
-              <Award className="h-4 w-4" />
-              <span className="font-medium text-sm">Badge</span>
-            </div>
-            <p className="text-lg font-bold text-muted-foreground">Coming Soon</p>
-            <p className="text-xs text-muted-foreground">Earn badges!</p>
-          </CardContent>
-        </Card>
+        {/* Speed Badges Progress */}
+        <SpeedBadgesCard studentId={student?.id} />
       </div>
     </div>
+  );
+}
+
+// Speed Badges Card Component
+function SpeedBadgesCard({ studentId }: { studentId?: string }) {
+  const { badges, isLoading } = useBadges();
+  
+  // Find Lightning Strike and Speedster badges
+  const lightningStrike = badges.find(b => b.badge.name === 'Lightning Strike');
+  const speedster = badges.find(b => b.badge.name === 'Speedster');
+  
+  // Get best session stats from progress
+  const getBestSession = (badge: typeof lightningStrike) => {
+    if (!badge?.requirementsProgress) return null;
+    const progress = badge.requirementsProgress as { 
+      best_questions?: number; 
+      best_accuracy?: number;
+      best_time?: number;
+    };
+    return {
+      questions: progress.best_questions || 0,
+      accuracy: progress.best_accuracy || 0,
+      time: progress.best_time || 0
+    };
+  };
+
+  const lightningBest = getBestSession(lightningStrike);
+  const speedsterBest = getBestSession(speedster);
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+        <CardContent className="p-4">
+          <div className="animate-pulse space-y-2">
+            <div className="h-4 bg-muted rounded w-20" />
+            <div className="h-6 bg-muted rounded w-16" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2 text-purple-600 mb-1">
+          <Award className="h-4 w-4" />
+          <span className="font-medium text-sm">Speed Badges</span>
+        </div>
+        
+        {/* Lightning Strike */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium flex items-center gap-1">
+              {lightningStrike?.isUnlocked ? (
+                <Zap className="h-3 w-3 text-yellow-500" />
+              ) : (
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              )}
+              Lightning Strike
+            </span>
+            {lightningStrike?.isUnlocked && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-yellow-500/20 text-yellow-600">
+                Unlocked!
+              </Badge>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            10+ Qs in &lt;5min with 80%+ acc
+          </p>
+          {!lightningStrike?.isUnlocked && lightningBest && lightningBest.questions > 0 && (
+            <div className="text-[10px] text-muted-foreground/70">
+              Best: {lightningBest.questions}Q, {lightningBest.accuracy}%, {Math.round(lightningBest.time)}s
+            </div>
+          )}
+        </div>
+
+        {/* Speedster */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium flex items-center gap-1">
+              {speedster?.isUnlocked ? (
+                <Zap className="h-3 w-3 text-purple-500" />
+              ) : (
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              )}
+              Speedster
+            </span>
+            {speedster?.isUnlocked && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-purple-500/20 text-purple-600">
+                Unlocked!
+              </Badge>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            20+ Qs in &lt;5min with 90%+ acc
+          </p>
+          {!speedster?.isUnlocked && speedsterBest && speedsterBest.questions > 0 && (
+            <div className="text-[10px] text-muted-foreground/70">
+              Best: {speedsterBest.questions}Q, {speedsterBest.accuracy}%, {Math.round(speedsterBest.time)}s
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
