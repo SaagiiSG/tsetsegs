@@ -396,7 +396,7 @@ export default function StudentSpeedMode() {
                     History
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent className="h-full w-[400px] rounded-l-[10px] rounded-r-none">
+                <DrawerContent className="fixed right-0 top-0 bottom-0 left-auto h-full w-[400px] rounded-l-[10px] rounded-r-none mt-0">
                   <DrawerHeader>
                     <DrawerTitle className="flex items-center gap-2">
                       <History className="h-5 w-5" />
