@@ -532,7 +532,7 @@ export default function StudentReview() {
                             )}
                           </div>
                           <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
-                            {formatDistanceToNow(new Date(item.attempted_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(item.attempted_at), { addSuffix: true }).replace('about ', '')}
                           </span>
                         </div>
                       </div>
