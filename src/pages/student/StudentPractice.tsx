@@ -49,14 +49,14 @@ export default function StudentPractice() {
   }, [student]);
 
   // Fetch questions that are NOT part of bluebook tests
-  const { data: bluebookQuestionIds } = useQuery({
+  const { data: bluebookQuestionIds = new Set<string>(), isSuccess: bluebookLoaded } = useQuery({
     queryKey: ['bluebook-question-ids'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bluebook_module_questions')
         .select('question_id');
       if (error) throw error;
-      return new Set(data?.map(q => q.question_id) || []);
+      return new Set((data?.map(q => q.question_id).filter(Boolean) as string[]) || []);
     },
     enabled: !!student,
     staleTime: 10 * 60 * 1000
@@ -98,7 +98,7 @@ export default function StudentPractice() {
       }
       return data;
     },
-    enabled: !!student && !!bluebookQuestionIds
+    enabled: !!student && bluebookLoaded
   });
 
   // Fetch question counts for all sets (excluding bluebook questions)
@@ -140,7 +140,7 @@ export default function StudentPractice() {
         english: filterBluebook(englishResult.data)
       };
     },
-    enabled: !!student && !!bluebookQuestionIds
+    enabled: !!student && bluebookLoaded
   });
 
   const categoryNames = subject === 'english' ? ENGLISH_CATEGORIES : MATH_CATEGORIES;
