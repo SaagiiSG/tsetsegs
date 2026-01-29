@@ -179,9 +179,9 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
   if (selectedQuestion) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 overflow-hidden">
           {/* Question Detail Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b shrink-0">
             <Button 
               variant="ghost" 
               onClick={() => setSelectedQuestion(null)}
@@ -195,9 +195,9 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
             </Badge>
           </div>
           
-          {/* Question Content */}
-          <ScrollArea className="flex-1 p-6">
-            <div className="space-y-6">
+          {/* Question Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6 max-w-4xl mx-auto">
               {/* Passage if exists */}
               {selectedQuestion.passage_text && (
                 <Card>
@@ -230,11 +230,13 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                   </div>
 
                   {selectedQuestion.question_image_url && (
-                    <img 
-                      src={selectedQuestion.question_image_url} 
-                      alt="Question" 
-                      className="max-w-full h-auto rounded-lg border"
-                    />
+                    <div className="flex justify-center">
+                      <img 
+                        src={selectedQuestion.question_image_url} 
+                        alt="Question" 
+                        className="max-w-md w-full h-auto rounded-lg border object-contain"
+                      />
+                    </div>
                   )}
 
                   {/* Multiple Choice Options */}
@@ -255,7 +257,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                             )}
                           >
                             <span className={cn(
-                              "font-semibold w-6 h-6 flex items-center justify-center rounded-full text-sm",
+                              "font-semibold w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0",
                               isCorrect && "bg-green-500 text-white",
                               isUserAnswer && !isCorrect && "bg-red-500 text-white",
                               !isCorrect && !isUserAnswer && "bg-muted"
@@ -265,8 +267,8 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                             <span className="flex-1">
                               <MathText text={value} />
                             </span>
-                            {isCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
-                            {isUserAnswer && !isCorrect && <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />}
+                            {isCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />}
+                            {isUserAnswer && !isCorrect && <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
                           </div>
                         );
                       })}
@@ -293,7 +295,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                 </CardContent>
               </Card>
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     );
