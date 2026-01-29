@@ -599,25 +599,45 @@ export default function StudentBluebookTest() {
                         onValueChange={(value) => questionId && handleAnswerChange(questionId, value)}
                         className="space-y-3"
                       >
-                        {(currentQuestion.question.multiple_choice_options as string[])?.map((option, idx) => {
-                          const optionLetter = String.fromCharCode(65 + idx);
-                          return (
-                            <Label
-                              key={idx}
-                              htmlFor={`option-${idx}`}
-                              className={cn(
-                                "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
-                                currentAnswer?.answer_submitted === optionLetter 
-                                  ? "border-primary bg-primary/5" 
-                                  : "hover:bg-muted/50"
-                              )}
-                            >
-                              <RadioGroupItem value={optionLetter} id={`option-${idx}`} />
-                              <span className="font-medium mr-2">{optionLetter}.</span>
-                              <MathText text={option} />
-                            </Label>
-                          );
-                        })}
+                        {(() => {
+                          // Parse multiple_choice_options - could be string, array, or object
+                          let options: string[] = [];
+                          const rawOptions = currentQuestion.question.multiple_choice_options;
+                          
+                          if (Array.isArray(rawOptions)) {
+                            options = rawOptions;
+                          } else if (typeof rawOptions === 'string') {
+                            try {
+                              const parsed = JSON.parse(rawOptions);
+                              options = Array.isArray(parsed) ? parsed : [];
+                            } catch {
+                              options = [];
+                            }
+                          } else if (rawOptions && typeof rawOptions === 'object') {
+                            // Handle object format like {A: "option1", B: "option2"}
+                            options = Object.values(rawOptions) as string[];
+                          }
+
+                          return options.map((option, idx) => {
+                            const optionLetter = String.fromCharCode(65 + idx);
+                            return (
+                              <Label
+                                key={idx}
+                                htmlFor={`option-${idx}`}
+                                className={cn(
+                                  "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                                  currentAnswer?.answer_submitted === optionLetter 
+                                    ? "border-primary bg-primary/5" 
+                                    : "hover:bg-muted/50"
+                                )}
+                              >
+                                <RadioGroupItem value={optionLetter} id={`option-${idx}`} />
+                                <span className="font-medium mr-2">{optionLetter}.</span>
+                                <MathText text={option} />
+                              </Label>
+                            );
+                          });
+                        })()}
                       </RadioGroup>
                     ) : (
                       <div className="space-y-2">
