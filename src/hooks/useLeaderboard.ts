@@ -115,6 +115,102 @@ export function useLeaderboard(selectedTier?: TierType) {
     }
   });
 
+  // Fetch next upcoming sprint (for countdown)
+  const { data: nextSprint } = useQuery({
+    queryKey: ['next-sprint'],
+    queryFn: async (): Promise<SprintInfo | null> => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('*')
+        .eq('is_active', false)
+        .gt('start_date', now)
+        .order('start_date', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (error || !data) return null;
+
+      const startDate = new Date(data.start_date);
+      const nowDate = new Date();
+      const diff = startDate.getTime() - nowDate.getTime();
+      
+      const daysRemaining = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+      const hoursRemaining = Math.max(0, Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+      const minutesRemaining = Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)));
+
+      return {
+        id: data.id,
+        sprintNumber: data.sprint_number,
+        seasonNumber: data.season_number,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        daysRemaining,
+        hoursRemaining,
+        minutesRemaining,
+        isActive: false
+      };
+    },
+    refetchInterval: 60000
+  });
+
+  // Fetch user's last sprint results (with final_rank)
+  const { data: lastSprintResults } = useQuery({
+    queryKey: ['last-sprint-results', student?.id, lastEndedSprint?.id],
+    enabled: !!student?.id && !!lastEndedSprint?.id,
+    queryFn: async () => {
+      if (!student?.id || !lastEndedSprint?.id) return null;
+
+      const { data, error } = await supabase
+        .from('student_sprint_rankings')
+        .select('*')
+        .eq('sprint_id', lastEndedSprint.id)
+        .eq('student_account_id', student.id)
+        .single();
+
+      if (error) return null;
+
+      return {
+        rank: data.final_rank || 0,
+        tier: data.current_tier as TierType,
+        points: data.total_points,
+        isTop1: data.is_top_1,
+        nextTier: data.reserved_next_tier as TierType | null
+      };
+    }
+  });
+
+  // Trigger sprint finalization when viewing ended sprints (one-time check)
+  useQuery({
+    queryKey: ['finalize-sprint-check', lastEndedSprint?.id],
+    enabled: !!lastEndedSprint?.id && !activeSprint,
+    staleTime: Infinity,
+    queryFn: async () => {
+      if (!lastEndedSprint?.id) return null;
+
+      // Check if sprint has been finalized
+      const { data: rankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('final_rank')
+        .eq('sprint_id', lastEndedSprint.id)
+        .not('final_rank', 'is', null)
+        .limit(1);
+
+      // If not finalized, trigger the edge function
+      if (!rankings || rankings.length === 0) {
+        try {
+          await supabase.functions.invoke('finalize-sprint', {
+            body: { sprintId: lastEndedSprint.id }
+          });
+        } catch (e) {
+          console.error('Failed to finalize sprint:', e);
+        }
+      }
+
+      return true;
+    }
+  });
+
   // Auto-enroll student in active sprint if not already enrolled
   useQuery({
     queryKey: ['auto-enroll-sprint', activeSprint?.id, student?.id],
@@ -375,6 +471,8 @@ export function useLeaderboard(selectedTier?: TierType) {
   return {
     activeSprint,
     lastEndedSprint,
+    nextSprint,
+    lastSprintResults,
     leaderboard: leaderboard || [],
     allTimeLeaderboard: allTimeLeaderboard || [],
     currentUserEntry,
