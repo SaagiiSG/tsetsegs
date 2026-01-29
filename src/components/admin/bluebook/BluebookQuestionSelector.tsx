@@ -502,19 +502,23 @@ const BluebookQuestionSelector = ({
                 {questionType === "multiple_choice" && (
                   <div className="space-y-3">
                     <Label>Answer Choices *</Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-4">
                       {(["A", "B", "C", "D"] as const).map((letter) => (
-                        <div key={letter} className="flex items-center gap-2">
-                          <Badge variant="outline" className="shrink-0">{letter}</Badge>
-                          <Input
-                            placeholder={`Option ${letter}`}
+                        <div key={letter} className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="shrink-0">{letter}</Badge>
+                            <span className="text-sm text-muted-foreground">Option {letter}</span>
+                          </div>
+                          <RichTextEditor
                             value={customOptions[letter]}
-                            onChange={(e) =>
+                            onChange={(value) =>
                               setCustomOptions((prev) => ({
                                 ...prev,
-                                [letter]: e.target.value,
+                                [letter]: value,
                               }))
                             }
+                            placeholder={`Enter option ${letter}...`}
+                            minHeight="60px"
                           />
                         </div>
                       ))}
