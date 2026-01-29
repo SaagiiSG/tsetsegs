@@ -4,18 +4,33 @@ import { Trophy, Users, Crown, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
   MyRankTab,
   SprintEndCelebration,
-  NoActiveSprintCard
+  NoActiveSprintCard,
+  EpicBadgeUnlock
 } from '@/components/student/leaderboard';
-import { TierType } from '@/data/badgeDefinitions';
+import { TierType, badgeDefinitions, BadgeDefinition } from '@/data/badgeDefinitions';
+
+// Badge name to tier mapping (same as in edge function)
+const TIER_BADGE_NAMES: Record<string, string> = {
+  unranked: 'Bronze Novice',
+  bronze: 'Bronze Novice',
+  silver: 'Silver Challenger',
+  gold: 'Gold Scholar',
+  platinum: 'Platinum Legend',
+  diamond: 'Diamond Apex',
+  ruby: 'Ruby Legend'
+};
 
 export default function StudentLeaderboard() {
   const { student } = useStudentAuth();
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
+  const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
   const [celebrationData, setCelebrationData] = useState<{
     rank: number;
     tier: TierType;
@@ -23,6 +38,7 @@ export default function StudentLeaderboard() {
     sprintNumber: number;
     seasonNumber: number;
   } | null>(null);
+  const [isFinalizingSprint, setIsFinalizingSprint] = useState(false);
   
   // Store last known ranking for when sprint ends
   const [lastKnownRanking, setLastKnownRanking] = useState<{
@@ -41,7 +57,8 @@ export default function StudentLeaderboard() {
     pointsToAdvance,
     pointsToTop1,
     isLoading,
-    isAllTimeLoading
+    isAllTimeLoading,
+    refetchLeaderboard
   } = useLeaderboard();
 
   // Store the current user's ranking whenever it updates
@@ -54,11 +71,50 @@ export default function StudentLeaderboard() {
     }
   }, [currentUserEntry, activeSprint]);
 
+  // Finalize sprint and check for badge unlock
+  const finalizeSprintAndCheckBadge = useCallback(async (sprintId: string, userTier: TierType, userRank: number) => {
+    if (isFinalizingSprint) return;
+    setIsFinalizingSprint(true);
+
+    try {
+      // First, mark the sprint as inactive
+      await supabase
+        .from('sprints')
+        .update({ is_active: false })
+        .eq('id', sprintId);
+
+      // Call finalize-sprint edge function
+      const { error } = await supabase.functions.invoke('finalize-sprint', {
+        body: { sprintId }
+      });
+
+      if (error) {
+        console.error('Failed to finalize sprint:', error);
+      }
+
+      // Refetch leaderboard data
+      await refetchLeaderboard();
+
+      // Check if user got a badge (only top 1 gets badge)
+      if (userRank === 1) {
+        const badgeName = TIER_BADGE_NAMES[userTier];
+        const badge = badgeDefinitions.find(b => b.name === badgeName);
+        if (badge) {
+          setUnlockedBadge(badge);
+        }
+      }
+    } catch (err) {
+      console.error('Error finalizing sprint:', err);
+    } finally {
+      setIsFinalizingSprint(false);
+    }
+  }, [isFinalizingSprint, refetchLeaderboard]);
+
   // Check if sprint has ended and show celebration for ALL users
   useEffect(() => {
     if (!activeSprint || !currentUserEntry) return;
 
-    const checkSprintEnd = () => {
+    const checkSprintEnd = async () => {
       const endDate = new Date(activeSprint.endDate);
       const now = new Date();
       
@@ -68,6 +124,13 @@ export default function StudentLeaderboard() {
         const alreadyShown = localStorage.getItem(celebrationKey);
         
         if (!alreadyShown) {
+          // Finalize the sprint and check for badge
+          await finalizeSprintAndCheckBadge(
+            activeSprint.id, 
+            currentUserEntry.currentTier, 
+            currentUserEntry.rank
+          );
+          
           setCelebrationData({
             rank: currentUserEntry.rank,
             tier: currentUserEntry.currentTier,
@@ -85,10 +148,22 @@ export default function StudentLeaderboard() {
     checkSprintEnd();
     const interval = setInterval(checkSprintEnd, 1000);
     return () => clearInterval(interval);
-  }, [activeSprint, currentUserEntry, student?.id]);
+  }, [activeSprint, currentUserEntry, student?.id, finalizeSprintAndCheckBadge]);
 
   const handleCloseCelebration = useCallback(() => {
     setShowCelebration(false);
+    
+    // If there's a badge to unlock, show the badge unlock animation
+    if (unlockedBadge) {
+      setTimeout(() => {
+        setShowBadgeUnlock(true);
+      }, 300);
+    }
+  }, [unlockedBadge]);
+
+  const handleClaimBadge = useCallback(() => {
+    setShowBadgeUnlock(false);
+    setUnlockedBadge(null);
   }, []);
 
   // Determine if there's no active sprint
@@ -203,6 +278,15 @@ export default function StudentLeaderboard() {
           totalPoints={celebrationData.points}
           sprintNumber={celebrationData.sprintNumber}
           seasonNumber={celebrationData.seasonNumber}
+        />
+      )}
+
+      {/* Epic Badge Unlock Animation - Shows after celebration for badge winners */}
+      {unlockedBadge && (
+        <EpicBadgeUnlock
+          isOpen={showBadgeUnlock}
+          onClaim={handleClaimBadge}
+          badge={unlockedBadge}
         />
       )}
     </div>
