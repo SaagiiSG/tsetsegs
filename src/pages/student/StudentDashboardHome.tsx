@@ -483,38 +483,41 @@ export default function StudentDashboardHome() {
         .gte('attempted_at', twoWeeksAgo)
         .not('time_spent_seconds', 'is', null);
 
-      if (!recentAttempts || recentAttempts.length === 0) {
-        return { avgTime: null, totalQuestions: 0, accuracy: 0, sessions: [] };
+      // Calculate average time and accuracy from attempts
+      let avgTime: number | null = null;
+      let accuracy = 0;
+      let totalQuestions = 0;
+
+      if (recentAttempts && recentAttempts.length > 0) {
+        const totalTime = recentAttempts.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0);
+        avgTime = Math.round(totalTime / recentAttempts.length);
+        const correctCount = recentAttempts.filter(a => a.is_correct).length;
+        accuracy = Math.round((correctCount / recentAttempts.length) * 100);
+        totalQuestions = recentAttempts.length;
       }
 
-      // Calculate average time
-      const totalTime = recentAttempts.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0);
-      const avgTime = Math.round(totalTime / recentAttempts.length);
-      const correctCount = recentAttempts.filter(a => a.is_correct).length;
-      const accuracy = Math.round((correctCount / recentAttempts.length) * 100);
+      // Fetch last 3 actual speed sessions from activity logs
+      const { data: speedSessions } = await supabase
+        .from('student_activity_logs')
+        .select('metadata, created_at')
+        .eq('student_account_id', student.id)
+        .eq('activity_type', 'speed_mode_complete')
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-      // Group by day to show recent "sessions"
-      const sessionMap = new Map<string, { date: string; questions: number; correct: number; totalTime: number }>();
-      recentAttempts.forEach(attempt => {
-        const date = format(parseISO(attempt.attempted_at), 'MMM d');
-        const existing = sessionMap.get(date) || { date, questions: 0, correct: 0, totalTime: 0 };
-        existing.questions++;
-        if (attempt.is_correct) existing.correct++;
-        existing.totalTime += attempt.time_spent_seconds || 0;
-        sessionMap.set(date, existing);
+      const sessions = (speedSessions || []).map(s => {
+        const meta = s.metadata as { total?: number; correct?: number; avgTimePerQuestion?: number } | null;
+        const total = meta?.total || 0;
+        const correct = meta?.correct || 0;
+        return {
+          date: format(parseISO(s.created_at), 'MMM d'),
+          questions: total,
+          accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
+          avgTime: Math.round(meta?.avgTimePerQuestion || 0),
+        };
       });
 
-      const sessions = Array.from(sessionMap.values())
-        .slice(-5)
-        .reverse()
-        .map(s => ({
-          date: s.date,
-          questions: s.questions,
-          accuracy: Math.round((s.correct / s.questions) * 100),
-          avgTime: Math.round(s.totalTime / s.questions),
-        }));
-
-      return { avgTime, totalQuestions: recentAttempts.length, accuracy, sessions };
+      return { avgTime, totalQuestions, accuracy, sessions };
     },
     enabled: !!student?.id,
   });
@@ -703,12 +706,12 @@ export default function StudentDashboardHome() {
                   </Button>
                 </div>
                 {speedStats?.sessions && speedStats.sessions.length > 0 ? (
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-3 gap-3">
                     {speedStats.sessions.map((session, i) => (
-                      <div key={i} className="text-center p-2 rounded-lg bg-muted/50">
-                        <div className="text-xs text-muted-foreground">{session.date}</div>
-                        <div className="font-semibold text-sm mt-1">{session.avgTime}s</div>
-                        <div className="text-xs text-muted-foreground">{session.accuracy}%</div>
+                      <div key={i} className="text-center p-3 rounded-lg bg-muted/50 border">
+                        <div className="text-xs text-muted-foreground font-medium">{session.date}</div>
+                        <div className="font-bold text-lg mt-1">{session.avgTime}s</div>
+                        <div className="text-xs text-muted-foreground">{session.accuracy}% · {session.questions}q</div>
                       </div>
                     ))}
                   </div>
