@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,8 +11,56 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, Bookmark, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronUp, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Event for marking questions
+export const QUESTION_MARK_EVENT = 'questionMarkChange';
+
+// Get marked questions from session storage
+export function getMarkedQuestions(): Set<string> {
+  try {
+    const stored = sessionStorage.getItem('markedQuestions');
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+// Toggle mark for a question
+export function toggleQuestionMark(questionId: string): boolean {
+  const marked = getMarkedQuestions();
+  const isNowMarked = !marked.has(questionId);
+  
+  if (isNowMarked) {
+    marked.add(questionId);
+  } else {
+    marked.delete(questionId);
+  }
+  
+  sessionStorage.setItem('markedQuestions', JSON.stringify([...marked]));
+  window.dispatchEvent(new CustomEvent(QUESTION_MARK_EVENT, { 
+    detail: { questionId, isMarked: isNowMarked } 
+  }));
+  
+  return isNowMarked;
+}
+
+// Hook to listen for mark changes
+export function useMarkedQuestions() {
+  const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(getMarkedQuestions);
+
+  useEffect(() => {
+    const handleMarkChange = () => {
+      setMarkedQuestions(getMarkedQuestions());
+    };
+
+    window.addEventListener(QUESTION_MARK_EVENT, handleMarkChange);
+    return () => window.removeEventListener(QUESTION_MARK_EVENT, handleMarkChange);
+  }, []);
+
+  return markedQuestions;
+}
 
 interface QuestionNavigatorDialogProps {
   currentQuestionId: string;
@@ -20,7 +68,7 @@ interface QuestionNavigatorDialogProps {
   subject?: string;
 }
 
-type QuestionStatus = 'current' | 'correct' | 'correct_with_mistakes' | 'incorrect' | 'for_review' | 'not_attempted';
+type QuestionStatus = 'current' | 'marked' | 'correct' | 'correct_with_mistakes' | 'incorrect' | 'for_review' | 'not_attempted';
 
 export function QuestionNavigatorDialog({ 
   currentQuestionId,
@@ -30,6 +78,7 @@ export function QuestionNavigatorDialog({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { student } = useStudentAuth();
+  const markedQuestions = useMarkedQuestions();
 
   // Fetch all questions for the current set
   const { data: questions } = useQuery({
@@ -86,7 +135,7 @@ export function QuestionNavigatorDialog({
 
   // Build status map
   const statusMap = useMemo(() => {
-    const map = new Map<string, { status: QuestionStatus; hadMistakes: boolean }>();
+    const map = new Map<string, { status: QuestionStatus; isMarked: boolean }>();
     
     // Group attempts by question
     const attemptsByQuestion = new Map<string, { correct: boolean; hasIncorrect: boolean }>();
@@ -108,26 +157,27 @@ export function QuestionNavigatorDialog({
     questions?.forEach(q => {
       const attemptData = attemptsByQuestion.get(q.id);
       const inReview = reviewSet.has(q.id);
+      const isMarked = markedQuestions.has(q.id);
       
       let status: QuestionStatus = 'not_attempted';
-      let hadMistakes = false;
       
       if (q.id === currentQuestionId) {
         status = 'current';
+      } else if (isMarked) {
+        status = 'marked';
       } else if (inReview) {
         status = 'for_review';
       } else if (attemptData?.correct) {
-        hadMistakes = attemptData.hasIncorrect;
-        status = hadMistakes ? 'correct_with_mistakes' : 'correct';
+        status = attemptData.hasIncorrect ? 'correct_with_mistakes' : 'correct';
       } else if (attemptData && !attemptData.correct) {
         status = 'incorrect';
       }
       
-      map.set(q.id, { status, hadMistakes });
+      map.set(q.id, { status, isMarked });
     });
     
     return map;
-  }, [questions, attempts, reviewQueue, currentQuestionId]);
+  }, [questions, attempts, reviewQueue, currentQuestionId, markedQuestions]);
 
   // Current question index
   const currentIndex = questions?.findIndex(q => q.id === currentQuestionId) ?? 0;
@@ -137,6 +187,8 @@ export function QuestionNavigatorDialog({
     switch (status) {
       case 'current':
         return 'border-2 border-foreground bg-background text-foreground font-bold';
+      case 'marked':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
       case 'correct':
         return 'bg-green-100 text-green-700 border-green-200';
       case 'correct_with_mistakes':
@@ -192,6 +244,10 @@ export function QuestionNavigatorDialog({
           <div className="space-y-1.5 text-xs">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-300" />
+                <span className="text-muted-foreground">Marked</span>
+              </div>
+              <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-sm bg-green-100 border border-green-200" />
                 <span className="text-muted-foreground">Correct</span>
               </div>
@@ -203,10 +259,6 @@ export function QuestionNavigatorDialog({
                 <div className="w-3 h-3 rounded-sm bg-red-100 border border-red-200" />
                 <span className="text-muted-foreground">Incorrect</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-sm bg-orange-100 border border-orange-200" />
-                <span className="text-muted-foreground">Review</span>
-              </div>
             </div>
           </div>
 
@@ -214,7 +266,7 @@ export function QuestionNavigatorDialog({
           <ScrollArea className="max-h-[50vh]">
             <div className="grid grid-cols-10 gap-1.5 p-1">
               {questions?.map((q, index) => {
-                const { status } = statusMap.get(q.id) || { status: 'not_attempted' };
+                const { status, isMarked } = statusMap.get(q.id) || { status: 'not_attempted', isMarked: false };
                 const displayNum = getDisplayNumber(q.question_id, index);
                 
                 return (
@@ -222,11 +274,14 @@ export function QuestionNavigatorDialog({
                     key={q.id}
                     onClick={() => handleQuestionClick(q.id)}
                     className={cn(
-                      "w-7 h-7 rounded border flex items-center justify-center text-xs font-medium transition-all hover:scale-105",
+                      "w-7 h-7 rounded border flex items-center justify-center text-xs font-medium transition-all hover:scale-105 relative",
                       getStatusStyles(status)
                     )}
                   >
                     {displayNum}
+                    {isMarked && status !== 'marked' && (
+                      <Bookmark className="absolute -top-1 -right-1 h-3 w-3 text-yellow-500 fill-yellow-500" />
+                    )}
                   </button>
                 );
               })}

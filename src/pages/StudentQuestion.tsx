@@ -11,11 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
-import { QuestionNavigatorDialog } from '@/components/student/QuestionNavigatorDialog';
+import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -42,6 +42,8 @@ export default function StudentQuestion() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const calculatorSnapSide = useCalculatorSnap();
+  const markedQuestions = useMarkedQuestions();
+  const isCurrentMarked = questionId ? markedQuestions.has(questionId) : false;
   
   const [videoWatched, setVideoWatched] = useState(false);
   const [currentVariationIndex, setCurrentVariationIndex] = useState(0);
@@ -625,13 +627,21 @@ export default function StudentQuestion() {
               )}
 
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>
                     {practiceQuestions.length > 1 
                       ? `Practice ${currentVariationIndex + 1}` 
                       : `Question ${question.question_id}`
                     }
                   </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => questionId && toggleQuestionMark(questionId)}
+                    className={isCurrentMarked ? 'text-yellow-500' : 'text-muted-foreground'}
+                  >
+                    <Bookmark className={`h-5 w-5 ${isCurrentMarked ? 'fill-yellow-500' : ''}`} />
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Question Text */}
