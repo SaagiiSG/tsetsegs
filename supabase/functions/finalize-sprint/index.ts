@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
           .insert({
             student_account_id: finisher.student_account_id,
             points: badge.point_value,
-            category: 'badge_earned',
+            category: 'badge',
             sprint_id: sprintId,
             metadata: { 
               badge_name: badgeName, 
