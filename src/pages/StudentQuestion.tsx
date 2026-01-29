@@ -546,7 +546,16 @@ export default function StudentQuestion() {
           </div>
         </header>
 
-        {/* Prev/Next Navigation */}
+        {/* Question Navigator - positioned at bottom left */}
+        <div className="fixed bottom-6 left-4 z-20">
+          <QuestionNavigatorDialog 
+            currentQuestionId={questionId || ''} 
+            questionSet={question?.question_set}
+            subject={question?.subject || 'math'}
+          />
+        </div>
+
+        {/* Prev/Next Navigation - centered */}
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
           <Button
             variant="outline"
@@ -558,13 +567,6 @@ export default function StudentQuestion() {
             <ChevronLeft className="h-4 w-4 mr-1" />
             Prev
           </Button>
-          
-          {/* Question Navigator Trigger */}
-          <QuestionNavigatorDialog 
-            currentQuestionId={questionId || ''} 
-            questionSet={question?.question_set}
-            subject={question?.subject || 'math'}
-          />
           
           <Button
             variant="outline"

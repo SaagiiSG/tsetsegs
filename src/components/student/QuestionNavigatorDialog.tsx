@@ -3,15 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, Bookmark } from 'lucide-react';
+import { ChevronUp, Bookmark, CheckCircle2, XCircle, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Event for marking questions
@@ -188,17 +182,17 @@ export function QuestionNavigatorDialog({
       case 'current':
         return 'border-2 border-foreground bg-background text-foreground font-bold';
       case 'marked':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'correct':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-green-50 text-green-700 border-green-200';
       case 'correct_with_mistakes':
-        return 'bg-amber-100 text-amber-700 border-amber-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'incorrect':
-        return 'bg-red-100 text-red-600 border-red-200';
+        return 'bg-red-50 text-red-600 border-red-200';
       case 'for_review':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+        return 'bg-orange-50 text-orange-700 border-orange-200';
       default:
-        return 'bg-muted text-muted-foreground border-border hover:bg-muted/80';
+        return 'bg-background text-foreground border-border hover:bg-muted/50';
     }
   };
 
@@ -223,7 +217,7 @@ export function QuestionNavigatorDialog({
 
   return (
     <>
-      {/* Trigger Button */}
+      {/* Trigger Button - positioned at bottom left */}
       <Button
         variant="default"
         size="sm"
@@ -234,61 +228,78 @@ export function QuestionNavigatorDialog({
         <ChevronUp className="h-4 w-4" />
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Question Set</DialogTitle>
-          </DialogHeader>
+      {/* Overlay */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-50"
+          onClick={() => setOpen(false)}
+        >
+          {/* Panel - positioned bottom left with 4:3 aspect ratio */}
+          <div 
+            className="absolute bottom-20 left-4 bg-background border rounded-xl shadow-2xl overflow-hidden"
+            style={{ width: '380px', aspectRatio: '4/3' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="font-semibold text-lg">Question Set</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                className="h-8 w-8 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-          {/* Legend */}
-          <div className="space-y-1.5 text-xs">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-300" />
-                <span className="text-muted-foreground">Marked</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-sm bg-green-100 border border-green-200" />
-                <span className="text-muted-foreground">Correct</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-200" />
-                <span className="text-muted-foreground">With mistakes</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-sm bg-red-100 border border-red-200" />
-                <span className="text-muted-foreground">Incorrect</span>
+            {/* Legend */}
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">For Review</span>
+                  <Bookmark className="h-4 w-4 text-orange-500 fill-orange-500" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Correct</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Correct (incorrect attempts)</span>
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Incorrect</span>
+                  <XCircle className="h-4 w-4 text-red-500" />
+                </div>
               </div>
             </div>
+
+            {/* Question Grid */}
+            <ScrollArea className="flex-1" style={{ height: 'calc(100% - 120px)' }}>
+              <div className="grid grid-cols-6 gap-2 p-4">
+                {questions?.map((q, index) => {
+                  const { status, isMarked } = statusMap.get(q.id) || { status: 'not_attempted', isMarked: false };
+                  const displayNum = getDisplayNumber(q.question_id, index);
+                  
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => handleQuestionClick(q.id)}
+                      className={cn(
+                        "w-10 h-10 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all hover:scale-105",
+                        getStatusStyles(status)
+                      )}
+                    >
+                      {displayNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </ScrollArea>
           </div>
-
-          {/* Question Grid - smaller squares */}
-          <ScrollArea className="max-h-[50vh]">
-            <div className="grid grid-cols-10 gap-1.5 p-1">
-              {questions?.map((q, index) => {
-                const { status, isMarked } = statusMap.get(q.id) || { status: 'not_attempted', isMarked: false };
-                const displayNum = getDisplayNumber(q.question_id, index);
-                
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => handleQuestionClick(q.id)}
-                    className={cn(
-                      "w-7 h-7 rounded border flex items-center justify-center text-xs font-medium transition-all hover:scale-105 relative",
-                      getStatusStyles(status)
-                    )}
-                  >
-                    {displayNum}
-                    {isMarked && status !== 'marked' && (
-                      <Bookmark className="absolute -top-1 -right-1 h-3 w-3 text-yellow-500 fill-yellow-500" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
