@@ -1,312 +1,421 @@
 
-# Ultra-Detailed Student Analytics Dashboard
+# Leaderboard, Badge Tracking & Profile Pages Implementation
 
 ## Overview
-This plan redesigns the `/practice/stats` page into a comprehensive, gaming-inspired analytics dashboard that identifies student weaknesses and provides actionable next steps. Every metric section will end with a clear "Action" recommendation.
-
-## Design Philosophy
-- **Gaming-inspired UI**: Dark mode support with competitive gaming color scheme (reds for weaknesses, yellows for moderate, greens for strengths)
-- **Action-first approach**: Every section must have a concrete next step
-- **Data-driven insights**: All analytics derived from real `student_attempts` data including `time_spent_seconds`, `is_correct`, difficulty levels, and categories
+This plan implements three major gaming-inspired pages for the SAT prep platform:
+1. **Leaderboard Page** - Competitive sprint-based rankings with tier system
+2. **Badge Tracking Page** - Achievement collection with progress tracking
+3. **Profile Page** - Comprehensive student dashboard with activity visualization
 
 ---
 
-## Page Structure
+## Database Schema Changes
 
-### 1. Priority Alert Card (Hero Section)
-A large, attention-grabbing card at the top highlighting the #1 weakness.
+### New Tables Required
 
-**Data Sources:**
-- `student_attempts` joined with `questions` (category, subtopic)
-- Calculate accuracy per topic, identify lowest
+**1. `sprints` table** - Manages 14-day competition periods
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| season_number | integer | Season (e.g., Season 3) |
+| sprint_number | integer | Sprint within season |
+| start_date | timestamp | Sprint start |
+| end_date | timestamp | Sprint end |
+| is_active | boolean | Current active sprint |
 
-**Display:**
-- Weakest topic name with icon
-- Current accuracy % (large, red-tinted)
-- Target accuracy: 85%
-- Pulse animation on the card border
+**2. `student_sprint_rankings` table** - Tracks student rankings per sprint
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| student_account_id | uuid | Foreign key |
+| sprint_id | uuid | Foreign key to sprints |
+| current_tier | text | bronze/silver/gold/platinum/diamond/ruby |
+| total_points | integer | Accumulated points |
+| final_rank | integer | Final position (set at sprint end) |
+| is_top_1 | boolean | Won the sprint |
+| reserved_next_tier | text | Reserved tier for next season |
 
-**Action Button:** "Start Practice Session" - navigates to `/practice/dashboard` with the category pre-selected
+**3. `point_transactions` table** - Detailed point breakdown
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| student_account_id | uuid | Foreign key |
+| sprint_id | uuid | Foreign key |
+| points | integer | Points earned |
+| category | text | questions/section_bonus/speed_session/badge/bank_completion |
+| created_at | timestamp | When earned |
 
----
+**4. `badges` table** - Badge definitions
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| name | text | Badge name |
+| description | text | Requirements description |
+| rarity | text | common/uncommon/rare/epic/legendary |
+| point_value | integer | Points awarded |
+| icon_name | text | Lucide icon name |
+| category | text | speed/discipline/championship/legendary |
+| requirements | jsonb | Structured requirements |
 
-### 2. Weakness Identifier Section
-Bar chart visualization of accuracy by topic/subtopic.
+**5. `student_badges` table** - Student badge progress
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| student_account_id | uuid | Foreign key |
+| badge_id | uuid | Foreign key |
+| progress | integer | 0-100 percentage |
+| is_unlocked | boolean | Badge earned |
+| unlocked_at | timestamp | When earned |
+| requirements_progress | jsonb | Detailed progress per requirement |
 
-**Data Sources:**
-- `student_attempts` with `questions.subject`, `questions.subtopic`, `question_categories.name`
-
-**Display:**
-- Horizontal bar chart (Recharts)
-- Topics grouped by Math (Algebra, Geometry, Advanced Math, Data Analysis) and Verbal (Reading, Writing, Grammar)
-- Color coding: Red (`<70%`), Yellow (`70-85%`), Green (`>85%`)
-- Sorted by lowest accuracy first
-
-**Actionable Output:**
-```
-"Your weakest areas: Geometry (45%), Advanced Math (52%)
-Action: Complete 20 geometry problems this week."
-```
-
----
-
-### 3. Time Efficiency Dashboard
-Analysis of time spent per question vs optimal time.
-
-**Data Sources:**
-- `student_attempts.time_spent_seconds` grouped by category
-- Optimal times: Math ~90s, Easy ~60s, Hard ~120s
-
-**Metrics:**
-- Average time per question by category (comparison bars)
-- Topics where student is too slow (>2x optimal)
-- Topics where student is rushing (<0.5x optimal with low accuracy)
-
-**Display:**
-- Dual-bar chart: Student avg vs Target
-- Alert badges for slow/rushing topics
-
-**Actionable Output:**
-```
-"You're spending 2.5 min on geometry (target: 1.5 min)
-You're rushing reading questions - 38 sec avg but 60% wrong
-Action: Slow down on reading, speed up on geometry."
-```
-
----
-
-### 4. Question Difficulty Analysis
-Breakdown of performance by Easy/Medium/Hard questions.
-
-**Data Sources:**
-- `questions.difficulty_level` + `student_attempts`
-
-**Display:**
-- Three columns with large accuracy percentages
-- Visual indicators for each difficulty
-- Highlight if missing easy questions (careless errors indicator)
-
-**Actionable Output:**
-```
-"Missing 30% of EASY questions but only 40% of HARD
-This indicates careless errors, not skill gaps
-Action: 10-min focused practice with NO distractions"
-```
+**6. `featured_badges` table** - Student's pinned showcase badges
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| student_account_id | uuid | Foreign key |
+| badge_id | uuid | Foreign key |
+| slot_position | integer | 1-6 position |
 
 ---
 
-### 5. Error Pattern Tracker
-Categorization of mistake types.
+## Page 1: Leaderboard (`/practice/leaderboard`)
 
-**Data Sources:**
-- `student_attempts` with `time_spent_seconds` and `is_correct`
-- Categories derived algorithmically:
-  - **Careless**: Quick answer (<30s) + incorrect on easy questions
-  - **Time Pressure**: Long time (>3min) + incorrect
-  - **Conceptual**: Multiple attempts on same question still wrong
-  - **Trap Answers**: Wrong answer matches common trap patterns
-
-**Display:**
-- Pie chart showing distribution
-- Primary error type highlighted
-
-**Actionable Output:**
+### File Structure
 ```
-"67% of mistakes are CARELESS
-Action: Review each wrong answer for 30 seconds. Use scratch paper."
-```
-
----
-
-### 6. Progress Velocity Graph
-Score progression over time with projections.
-
-**Data Sources:**
-- `bluebook_attempts.total_score` or derived from `student_attempts` weekly accuracy
-- `practice_tests.score` from linked student
-
-**Display:**
-- Line graph: Score/accuracy over last 4 weeks
-- Points gained per week calculation
-- Projection lines for 4/8/12 weeks (dashed lines)
-- Target score marker (horizontal line)
-
-**Actionable Output:**
-```
-"Improving +15 pts/week. You'll hit 1400 in 6 weeks.
-To hit 1500, need +25 pts/week
-Action: Add 2 more practice sessions weekly"
+src/
+├── pages/student/
+│   └── StudentLeaderboard.tsx (complete rewrite)
+├── components/student/leaderboard/
+│   ├── SprintTimer.tsx
+│   ├── LeaderboardTabs.tsx
+│   ├── CurrentSprintTab.tsx
+│   ├── AllTimeTab.tsx
+│   ├── MyRankTab.tsx
+│   ├── LeaderboardRow.tsx
+│   ├── TierFilter.tsx
+│   ├── PointsBreakdownTooltip.tsx
+│   └── HallOfFame.tsx
+├── hooks/
+│   └── useLeaderboard.ts
 ```
 
----
+### Key Components
 
-### 7. Goal Gap Tracker
-Visual gap between current and target scores.
+**SprintTimer** - Countdown display
+- Shows "Season X - Sprint Y"
+- Countdown: days:hours:mins remaining
+- Progress bar for sprint duration
 
-**Data Sources:**
-- `bluebook_attempts.total_score` (latest)
-- `practice_tests.score` (latest)
-- Student's target score (from `students.sat_test_month` context or default 1400)
+**LeaderboardRow** - Individual player row
+- Rank with crown icon for #1
+- Username and level
+- Total points with hover tooltip for breakdown
+- Promotion status badges:
+  - Green "ADVANCING" for promotion zone
+  - Yellow "AT RISK" for just below cutoff
+- Animated point changes
 
-**Display:**
-- Large score display: Current | Target | Gap
-- Circular progress ring showing % to goal
-- Gap breakdown by section (Math vs Verbal)
-- Top 3 skill blockers with estimated point values
+**TierFilter** - Dropdown to filter by rank tier
+- Colors: Bronze (#CD7F32), Silver (#C0C0C0), Gold (#FFD700), Platinum (#E5E4E2), Diamond (#B9F2FF), Ruby (#E0115F)
 
-**Actionable Output:**
-```
-"Target: 1450 | Current: 1320 | Gap: 130 pts
-Math gap: 80 pts (focus here first)
-Biggest blockers: Algebra (35 pts), Data Analysis (25 pts)
-Action: Master these 2 = 80% gap closed"
-```
+**Promotion Cutoffs Logic**:
+- Bronze: Top 30 advance to Silver
+- Silver: Top 20 advance to Gold
+- Gold: Top 15 advance to Platinum
+- Platinum: Top 10 advance to Diamond
+- Diamond: Top 5 advance to Ruby
+- Ruby: Top 1 retains Ruby rank
 
----
-
-### 8. Consistency Score Card
-Performance stability analysis.
-
-**Data Sources:**
-- `student_attempts.attempted_at` for time-of-day analysis
-- `bluebook_attempts` or weekly accuracy variance
-
-**Metrics:**
-- Score variance chart (min/max range visualization)
-- Best performance time of day (morning/afternoon/evening)
-- Best day of week
-- Session quality trend (rolling average)
-
-**Display:**
-- Variance visualization with confidence bands
-- Time-of-day heatmap or icons
-- Calendar heatmap for consistency
-
-**Actionable Output:**
-```
-"Scores swing 150 points between sessions
-You perform 23% better in morning sessions
-Action: Schedule practice for 8-10am daily"
-```
-
----
-
-## File Structure
-
-### New Files to Create:
-1. **`src/pages/student/StudentStats.tsx`** - Complete rewrite of the stats page
-2. **`src/components/student/analytics/PriorityAlertCard.tsx`** - Hero weakness card
-3. **`src/components/student/analytics/WeaknessIdentifier.tsx`** - Bar chart weakness section
-4. **`src/components/student/analytics/TimeEfficiencyDashboard.tsx`** - Time analysis
-5. **`src/components/student/analytics/DifficultyAnalysis.tsx`** - Easy/Medium/Hard breakdown
-6. **`src/components/student/analytics/ErrorPatternTracker.tsx`** - Pie chart of error types
-7. **`src/components/student/analytics/ProgressVelocityGraph.tsx`** - Score over time
-8. **`src/components/student/analytics/GoalGapTracker.tsx`** - Target vs current
-9. **`src/components/student/analytics/ConsistencyScoreCard.tsx`** - Variance analysis
-10. **`src/components/student/analytics/ActionBox.tsx`** - Reusable action recommendation component
-11. **`src/hooks/useStudentAnalytics.ts`** - Central data fetching hook
-
----
-
-## Technical Implementation
-
-### Data Fetching Strategy
-Create a central `useStudentAnalytics` hook that fetches all necessary data in parallel:
-
+### Data Hook: `useLeaderboard`
 ```typescript
-interface StudentAnalytics {
-  studentId: string;
-  currentScore: number;
-  targetScore: number;
-  topicAccuracy: {
-    topicName: string;
-    subject: 'Math' | 'English';
-    accuracy: number;
-    questionsAttempted: number;
-    averageTime: number;
-    optimalTime: number;
-  }[];
-  errorPatterns: {
-    careless: number;
-    conceptual: number;
-    timePressure: number;
-    trapAnswers: number;
-  };
-  progressHistory: {
-    date: string;
-    score: number;
-    accuracy: number;
-  }[];
-  difficultyBreakdown: {
-    easy: { total: number; correct: number; accuracy: number };
-    medium: { total: number; correct: number; accuracy: number };
-    hard: { total: number; correct: number; accuracy: number };
-  };
-  consistencyMetrics: {
-    scoreVariance: number;
-    bestTimeOfDay: 'morning' | 'afternoon' | 'evening';
-    bestDayOfWeek: string;
-    dailyActivity: { date: string; attempts: number; accuracy: number }[];
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  level: number;
+  totalPoints: number;
+  currentTier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'ruby';
+  isAdvancing: boolean;
+  isTop1: boolean;
+  reservedNextTier: string | null;
+  pointsBreakdown: {
+    questions: number;
+    sectionBonuses: number;
+    speedSessions: number;
+    badges: number;
+    bankCompletions: number;
   };
 }
 ```
 
-### Component Libraries Used
-- **Recharts**: BarChart, LineChart, PieChart, RadarChart
-- **Framer Motion**: Smooth loading animations
-- **shadcn/ui**: Card, Progress, Badge, Button, Skeleton, Tabs, Tooltip
+---
 
-### Styling Approach
-- Gaming color palette variables in CSS
-- Gradient backgrounds for cards
-- Glow effects for important metrics
-- Smooth transitions on data load
-- Dark mode native support via Tailwind
+## Page 2: Badge Tracking (`/practice/badges`)
+
+### File Structure
+```
+src/
+├── pages/student/
+│   └── StudentBadges.tsx (new)
+├── components/student/badges/
+│   ├── BadgeGrid.tsx
+│   ├── BadgeCard.tsx
+│   ├── BadgeDetailModal.tsx
+│   ├── BadgeFilters.tsx
+│   ├── BadgeStatsOverview.tsx
+│   ├── BadgeProgressSection.tsx
+│   └── BadgeUnlockCelebration.tsx
+├── hooks/
+│   └── useBadges.ts
+├── data/
+│   └── badgeDefinitions.ts
+```
+
+### Badge Definitions (hardcoded initially)
+
+**Speed Badges - Common (300 pts)**
+- Lightning Strike: 10 questions under 5 min, 80%+ accuracy
+- Speedster: 20 questions under 5 min, 90%+ accuracy
+- Hot Streak: 5 speed sessions over 5 consecutive days
+- Chain Lightning: 3 consecutive perfect speed drills
+
+**Speed Badges - Uncommon (500 pts)**
+- Peak of Speed: 10 speed sessions with 95%+ accuracy
+
+**Discipline Badges - Rare (1000 pts)**
+- Blitz: Complete Module 1 in under 15 minutes
+- Discipline King: 20+ consecutive days of speed + practice
+- Sniper: 10 consecutive correct in under 8 minutes
+- Rush Delivery: 20 consecutive correct in under 12 minutes
+
+**Elite Badges - Epic (2000 pts)**
+- Time Lord: 50 questions under 17 min, 90%+ accuracy
+- Flawless Execution: Zero mistakes in practice test, under 30 min
+- God Amongst Human: Hold Top 1 all-time for 3 consecutive weeks
+- Problem Slayer: 300 problems solved correctly on first try
+
+**Sprint Championship - Rare (1000 pts)**
+- Bronze Novice: Top 1 in Bronze Sprint
+- Silver Challenger: Top 1 in Silver Sprint
+- Gold Scholar: Top 1 in Gold Sprint
+
+**Sprint Championship - Epic (2000 pts)**
+- Platinum Legend: Top 1 in Platinum Sprint
+- Diamond Apex: Top 1 in Diamond Sprint
+
+**Legendary Badges (30000 pts)**
+- The Penguin: All 68 questions + All 1074 CB problems + 750+ avg + 100% vocab
+- The Glacier Penguin: The Penguin + All English bank
+- Ruby Legend: Ruby rank for 4 consecutive weeks
+
+### Key Components
+
+**BadgeCard** - Individual badge display
+- Rarity-based glow effects and borders
+- Progress bar for incomplete badges
+- Lock/unlock status indicator
+- Point value display
+
+**BadgeDetailModal** - Full badge info
+- Large icon with effects
+- Requirements checklist with progress
+- Tips for earning
+- Recent earners list
+
+**BadgeUnlockCelebration** - Unlock animation
+- Confetti effect (react-confetti already installed)
+- Badge zoom-in animation
+- Points counter animation
+
+### Rarity Visual Hierarchy
+| Rarity | Border Color | Glow | Animation |
+|--------|--------------|------|-----------|
+| Common | Gray | Subtle | None |
+| Uncommon | Green | Moderate | Gentle pulse |
+| Rare | Blue | Strong | Strong pulse |
+| Epic | Purple | Intense | Sparkle effect |
+| Legendary | Gold/Red gradient | Constant glow | Particle effects |
 
 ---
 
-## Layout Responsive Grid
+## Page 3: Profile Page (`/practice/profile`)
 
+### File Structure
 ```
-Desktop (lg+):
-+------------------+------------------+
-|   Priority Alert (full width)      |
-+------------------+------------------+
-| Weakness Chart   | Time Efficiency  |
-+------------------+------------------+
-| Difficulty       | Error Patterns   |
-+------------------+------------------+
-| Progress Velocity (full width)     |
-+------------------+------------------+
-| Goal Gap         | Consistency      |
-+------------------+------------------+
+src/
+├── pages/student/
+│   └── StudentProfile.tsx (new)
+├── components/student/profile/
+│   ├── ProfileHeader.tsx
+│   ├── ActivityHeatmap.tsx
+│   ├── FeaturedBadges.tsx
+│   ├── CourseHistoryTimeline.tsx
+│   ├── PerformanceStatsGrid.tsx
+│   ├── LevelProgressCard.tsx
+│   ├── RankHistoryGraph.tsx
+│   └── RecentAchievementsFeed.tsx
+├── hooks/
+│   └── useStudentProfile.ts
+```
 
-Mobile (sm):
-All sections stacked vertically
+### Key Components
+
+**ProfileHeader**
+- Avatar (circular, 120px) with initials fallback
+- Username in large bold text
+- Level display with metallic styling
+- Progress bar to next level
+- Total accumulated points
+- Current rank tier with icon
+- Last login and account creation date
+
+**ActivityHeatmap** - GitHub-style 365-day grid
+- Color intensity based on daily points:
+  - Very light: 0-100 pts
+  - Light: 101-500 pts
+  - Medium: 501-1000 pts
+  - Dark: 1001+ pts
+- Hover tooltip with date and details
+- Current streak display with fire icon
+- Longest streak record
+
+**FeaturedBadges** - 6 pinnable badges
+- Large badge cards with rarity glow
+- Empty slots with "Pin a badge" placeholder
+- Quick stats summary (earned/total, points, rarest)
+
+**CourseHistoryTimeline** - Scrollable vertical timeline
+- Date, topic, score, time, points for each entry
+- Filter by Math/English
+- Milestone markers (100th problem, 1000th, etc.)
+- Lazy loading with infinite scroll
+
+**PerformanceStatsGrid** - 2x2 card grid
+- Questions: total solved, accuracy, avg time
+- Speed Sessions: completed, avg time, best time, perfect sessions
+- Practice Tests: taken, avg score, best score, trend
+- Streak Record: longest, current, total active days
+
+**LevelProgressCard**
+- Large circular progress indicator
+- Current level in center
+- Formula display: Level = 200 + 50 x 2^x
+- Points needed for next level
+- Level history graph
+
+**RankHistoryGraph** - Line chart
+- X-axis: Sprint numbers
+- Y-axis: Tier levels
+- Badge icons at earning moments
+- Color-coded by tier
+
+**RecentAchievementsFeed** - Activity feed
+- Trophy/arrow/fire/chart icons by type
+- Timestamp (relative)
+- Points gained
+- Clickable to view details
+
+---
+
+## Technical Implementation Details
+
+### Point Calculation System
+Points are calculated from:
+1. **Questions Solved**: 10 pts per correct answer
+2. **Section Bonuses**: 50 pts for completing a category
+3. **Speed Sessions**: 25 pts per session completed
+4. **Badge Acquisitions**: Badge point value when earned
+5. **Bank Completions**: 100 pts for completing 68/CB bank
+
+### Level Formula
 ```
+Level = floor(log2((totalPoints - 200) / 50) + 1)
+```
+Inverse to show points needed:
+```
+Points for Level N = 200 + 50 * 2^(N-1)
+```
+
+### Sprint Management
+- Sprints run for 14 days
+- Automatic tier promotion/demotion at sprint end
+- Top 1 reserves their tier for next season
+- New season resets everyone to Bronze
+
+### Real-time Updates
+- Use Supabase realtime subscriptions for:
+  - Leaderboard point changes (every 30s polling fallback)
+  - Badge unlock notifications
+  - Rank changes
+
+### Animations (Framer Motion)
+- Rank changes: slide up/down animation
+- Point increases: counter animation
+- Badge unlocks: scale + glow animation
+- Tab switches: fade + slide transitions
+
+---
+
+## Routing Updates
+
+Add to `App.tsx`:
+```typescript
+<Route path="badges" element={<StudentBadges />} />
+<Route path="profile" element={<StudentProfile />} />
+```
+
+Update `StudentBottomNav.tsx` to include new navigation items.
 
 ---
 
 ## Implementation Order
 
-1. **Create the data hook** (`useStudentAnalytics.ts`) - Foundation for all components
-2. **Build the ActionBox component** - Reusable across all sections
-3. **Implement PriorityAlertCard** - Most impactful, visible first
-4. **Build WeaknessIdentifier** - Core feature
-5. **Build TimeEfficiencyDashboard** - Key differentiator
-6. **Build DifficultyAnalysis** - Careless error detection
-7. **Build ErrorPatternTracker** - Pie chart
-8. **Build ProgressVelocityGraph** - Motivation driver
-9. **Build GoalGapTracker** - Goal visualization
-10. **Build ConsistencyScoreCard** - Optimization insights
-11. **Integrate all into StudentStats.tsx** - Final assembly
+1. **Database migrations** - Create all new tables with RLS policies
+2. **Badge definitions** - Create `badgeDefinitions.ts` with all badges
+3. **Data hooks** - `useLeaderboard`, `useBadges`, `useStudentProfile`
+4. **Leaderboard page** - Complete rewrite with all components
+5. **Badge page** - New page with all components
+6. **Profile page** - New page with all components
+7. **Navigation updates** - Add routes and nav items
+8. **Point transaction triggers** - Database functions to award points
+9. **Badge progress triggers** - Database functions to update badge progress
+
+---
+
+## Files to Create/Modify
+
+### New Files (25+ files)
+- `src/pages/student/StudentBadges.tsx`
+- `src/pages/student/StudentProfile.tsx`
+- `src/components/student/leaderboard/*.tsx` (8 files)
+- `src/components/student/badges/*.tsx` (7 files)
+- `src/components/student/profile/*.tsx` (8 files)
+- `src/hooks/useLeaderboard.ts`
+- `src/hooks/useBadges.ts`
+- `src/hooks/useStudentProfile.ts`
+- `src/data/badgeDefinitions.ts`
+
+### Modified Files
+- `src/pages/student/StudentLeaderboard.tsx` - Complete rewrite
+- `src/App.tsx` - Add routes
+- `src/components/student/StudentBottomNav.tsx` - Add nav items
+- `src/components/student/StudentSidebar.tsx` - Add nav items
+
+### Database Migrations
+- Create `sprints` table
+- Create `student_sprint_rankings` table
+- Create `point_transactions` table
+- Create `badges` table
+- Create `student_badges` table
+- Create `featured_badges` table
+- Create point calculation triggers
+- Create badge progress update triggers
+- Add RLS policies for all tables
 
 ---
 
 ## Estimated Complexity
-- **New components**: 11 files
-- **Data queries**: 5-6 parallel queries in the hook
-- **Charts**: 5 different chart types
-- **Lines of code**: ~1500-2000
-
-This redesign transforms the basic stats page into a powerful, actionable analytics dashboard that genuinely helps students improve their SAT scores.
+- **New components**: 25+ files
+- **New database tables**: 6 tables
+- **Database triggers/functions**: 4-5
+- **Lines of code**: ~4000-5000
