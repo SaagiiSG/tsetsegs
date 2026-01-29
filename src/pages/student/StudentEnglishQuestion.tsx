@@ -174,13 +174,14 @@ export default function StudentEnglishQuestion() {
       
       const correct = answer.toUpperCase() === question.answer.toUpperCase();
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      const attemptNumber = attemptCount + 1;
       
       const { error } = await supabase
         .from('student_attempts')
         .insert({
           student_account_id: student.id,
           question_id: questionId,
-          attempt_number: attemptCount + 1,
+          attempt_number: attemptNumber,
           answer_submitted: answer,
           is_correct: correct,
           time_spent_seconds: timeSpent
@@ -192,8 +193,52 @@ export default function StudentEnglishQuestion() {
         question_id: questionId,
         answer,
         is_correct: correct,
-        attempt_number: attemptCount + 1
+        attempt_number: attemptNumber
       });
+
+      // Award points for correct answers
+      if (correct) {
+        const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
+        
+        // Get active sprint
+        const { data: activeSprint } = await supabase
+          .from('sprints')
+          .select('id')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (activeSprint) {
+          // Insert point transaction
+          await supabase
+            .from('point_transactions')
+            .insert({
+              student_account_id: student.id,
+              sprint_id: activeSprint.id,
+              points,
+              category: 'questions',
+              metadata: { question_id: questionId, attempt_number: attemptNumber, subject: 'english' }
+            });
+
+          // Update sprint ranking total
+          const { data: currentRanking } = await supabase
+            .from('student_sprint_rankings')
+            .select('total_points')
+            .eq('student_account_id', student.id)
+            .eq('sprint_id', activeSprint.id)
+            .maybeSingle();
+
+          if (currentRanking) {
+            await supabase
+              .from('student_sprint_rankings')
+              .update({ 
+                total_points: (currentRanking.total_points || 0) + points,
+                updated_at: new Date().toISOString()
+              })
+              .eq('student_account_id', student.id)
+              .eq('sprint_id', activeSprint.id);
+          }
+        }
+      }
       
       return { correct };
     },
@@ -203,6 +248,8 @@ export default function StudentEnglishQuestion() {
       setAttemptCount(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['english-question-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['student-english-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-leaderboard'] });
     }
   });
 
