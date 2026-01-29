@@ -112,44 +112,31 @@ export default function StudentLeaderboard() {
     }
   }, [isFinalizingSprint, refetchLeaderboard]);
 
-  // Check if sprint has ended and show celebration for ALL users
-  useEffect(() => {
-    if (!activeSprint || !currentUserEntry) return;
-
-    const checkSprintEnd = async () => {
-      const endDate = new Date(activeSprint.endDate);
-      const now = new Date();
+  // Handler for when SprintTimer detects sprint has ended
+  const handleSprintEnd = useCallback(async () => {
+    if (!activeSprint || !currentUserEntry || !student?.id) return;
+    
+    const celebrationKey = `sprint-celebration-${activeSprint.id}-${student.id}`;
+    const alreadyShown = localStorage.getItem(celebrationKey);
+    
+    if (!alreadyShown) {
+      // Finalize the sprint and check for badge
+      await finalizeSprintAndCheckBadge(
+        activeSprint.id, 
+        currentUserEntry.currentTier, 
+        currentUserEntry.rank
+      );
       
-      // Sprint just ended (within last 10 seconds)
-      if (now >= endDate && now.getTime() - endDate.getTime() < 10000) {
-        const celebrationKey = `sprint-celebration-${activeSprint.id}-${student?.id}`;
-        const alreadyShown = localStorage.getItem(celebrationKey);
-        
-        if (!alreadyShown) {
-          // Finalize the sprint and check for badge
-          await finalizeSprintAndCheckBadge(
-            activeSprint.id, 
-            currentUserEntry.currentTier, 
-            currentUserEntry.rank
-          );
-          
-          setCelebrationData({
-            rank: currentUserEntry.rank,
-            tier: currentUserEntry.currentTier,
-            points: currentUserEntry.totalPoints,
-            sprintNumber: activeSprint.sprintNumber,
-            seasonNumber: activeSprint.seasonNumber
-          });
-          setShowCelebration(true);
-          localStorage.setItem(celebrationKey, 'true');
-        }
-      }
-    };
-
-    // Check immediately and then every second
-    checkSprintEnd();
-    const interval = setInterval(checkSprintEnd, 1000);
-    return () => clearInterval(interval);
+      setCelebrationData({
+        rank: currentUserEntry.rank,
+        tier: currentUserEntry.currentTier,
+        points: currentUserEntry.totalPoints,
+        sprintNumber: activeSprint.sprintNumber,
+        seasonNumber: activeSprint.seasonNumber
+      });
+      setShowCelebration(true);
+      localStorage.setItem(celebrationKey, 'true');
+    }
   }, [activeSprint, currentUserEntry, student?.id, finalizeSprintAndCheckBadge]);
 
   const handleCloseCelebration = useCallback(() => {
@@ -237,6 +224,7 @@ export default function StudentLeaderboard() {
                   leaderboard={leaderboard}
                   currentUserId={student?.id}
                   isLoading={isLoading}
+                  onSprintEnd={handleSprintEnd}
                 />
               )}
             </motion.div>

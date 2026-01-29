@@ -8,10 +8,12 @@ import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitio
 interface SprintTimerProps {
   sprint: SprintInfo | null;
   currentUserRanking?: LeaderboardEntry | null;
+  onSprintEnd?: () => void;
 }
 
-export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
+export function SprintTimer({ sprint, currentUserRanking, onSprintEnd }: SprintTimerProps) {
   const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [hasTriggeredEnd, setHasTriggeredEnd] = useState(false);
 
   // Live seconds countdown
   useEffect(() => {
@@ -21,6 +23,13 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
       const endDate = new Date(sprint.endDate);
       const now = new Date();
       const diff = endDate.getTime() - now.getTime();
+      
+      // Check if sprint just ended
+      if (diff <= 0 && !hasTriggeredEnd && onSprintEnd) {
+        setHasTriggeredEnd(true);
+        onSprintEnd();
+      }
+      
       const seconds = Math.max(0, Math.floor((diff % (1000 * 60)) / 1000));
       setSecondsRemaining(seconds);
     };
@@ -28,7 +37,12 @@ export function SprintTimer({ sprint, currentUserRanking }: SprintTimerProps) {
     updateSeconds();
     const interval = setInterval(updateSeconds, 1000);
     return () => clearInterval(interval);
-  }, [sprint]);
+  }, [sprint, hasTriggeredEnd, onSprintEnd]);
+
+  // Reset trigger when sprint changes
+  useEffect(() => {
+    setHasTriggeredEnd(false);
+  }, [sprint?.id]);
 
   if (!sprint) {
     return (
