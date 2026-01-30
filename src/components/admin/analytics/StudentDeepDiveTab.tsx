@@ -1,64 +1,26 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Search, User, BarChart3, BookOpen, Brain, TrendingUp, MessageSquare } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { BarChart3, BookOpen, Brain, TrendingUp, MessageSquare, User } from 'lucide-react';
+import { StudentSelector } from './StudentSelector';
+import { StudentProfileHeader } from './StudentProfileHeader';
+import { StudentOverviewSubTab } from './StudentOverviewSubTab';
+import { TopicMasterySubTab } from './TopicMasterySubTab';
+import { LearningBehaviorSubTab } from './LearningBehaviorSubTab';
+import { ProgressTimelineSubTab } from './ProgressTimelineSubTab';
+import { InterventionSubTab } from './InterventionSubTab';
 
 export function StudentDeepDiveTab() {
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
-      {/* Sticky Student Selector */}
-      <Card className="sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <CardContent className="py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      <StudentSelector 
+        selectedStudentId={selectedStudentId} 
+        onSelectStudent={setSelectedStudentId} 
+      />
 
-            {/* Quick Filters */}
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="cursor-pointer hover:bg-destructive/10 hover:text-destructive">
-                At Risk
-              </Badge>
-              <Badge variant="outline" className="cursor-pointer hover:bg-green-500/10 hover:text-green-500">
-                Top Performers
-              </Badge>
-              <Badge variant="outline" className="cursor-pointer hover:bg-yellow-500/10 hover:text-yellow-500">
-                Inactive 7+
-              </Badge>
-              <Badge variant="outline" className="cursor-pointer hover:bg-primary/10 hover:text-primary">
-                Sprint Leaders
-              </Badge>
-            </div>
-          </div>
-
-          {/* Recently Viewed */}
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Recent:</span>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-6 w-20 rounded-full" />
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Student Profile or Empty State */}
-      {!selectedStudent ? (
+      {!selectedStudentId ? (
         <Card>
           <CardContent className="py-16">
             <div className="flex flex-col items-center justify-center text-center">
@@ -67,57 +29,15 @@ export function StudentDeepDiveTab() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Select a Student</h3>
               <p className="text-muted-foreground max-w-md">
-                Use the search above to find a student or click on quick filters to see students matching specific criteria.
+                Use the search above to find a student or click on quick filters.
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* Profile Header */}
-          <Card>
-            <CardContent className="py-6">
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">JD</span>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold">John Doe</h2>
-                    <p className="text-muted-foreground">+976 9999 1234</p>
-                    <Badge variant="secondary" className="mt-1">January 2025 SAT</Badge>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Rank</p>
-                    <p className="text-lg font-bold text-yellow-500">Gold</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Level</p>
-                    <p className="text-lg font-bold">12</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Hours</p>
-                    <p className="text-lg font-bold">24.5</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Risk</p>
-                    <Badge variant="outline" className="text-green-500 border-green-500">Low</Badge>
-                  </div>
-                </div>
+          <StudentProfileHeader studentId={selectedStudentId} />
 
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline">Message</Button>
-                  <Button size="sm" variant="outline">Assign</Button>
-                  <Button size="sm" variant="outline">View Account</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Sub-Tabs */}
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center gap-1">
@@ -143,33 +63,19 @@ export function StudentDeepDiveTab() {
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Student overview coming in Phase 4</p>
-              </div>
+              <StudentOverviewSubTab studentId={selectedStudentId} />
             </TabsContent>
-
             <TabsContent value="mastery" className="mt-6">
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Topic mastery grid coming in Phase 4</p>
-              </div>
+              <TopicMasterySubTab studentId={selectedStudentId} />
             </TabsContent>
-
             <TabsContent value="behavior" className="mt-6">
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Learning behavior charts coming in Phase 4</p>
-              </div>
+              <LearningBehaviorSubTab studentId={selectedStudentId} />
             </TabsContent>
-
             <TabsContent value="progress" className="mt-6">
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Progress timeline coming in Phase 4</p>
-              </div>
+              <ProgressTimelineSubTab studentId={selectedStudentId} />
             </TabsContent>
-
             <TabsContent value="intervention" className="mt-6">
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Intervention panel coming in Phase 4</p>
-              </div>
+              <InterventionSubTab studentId={selectedStudentId} />
             </TabsContent>
           </Tabs>
         </>

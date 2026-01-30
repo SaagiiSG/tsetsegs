@@ -1,0 +1,160 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { MessageSquare, BookOpen, Key, User, UserX, StickyNote, Crown, Gem, Medal, Award, Trophy } from 'lucide-react';
+import { useStudentProfileData } from '@/hooks/useAdminAnalytics';
+import { formatDistanceToNow } from 'date-fns';
+import { getRiskLevelColor } from '@/hooks/useRiskCalculation';
+
+interface StudentProfileHeaderProps {
+  studentId: string;
+}
+
+export function StudentProfileHeader({ studentId }: StudentProfileHeaderProps) {
+  const { data: profile, isLoading } = useStudentProfileData(studentId);
+
+  const getTierIcon = (tier: string) => {
+    switch (tier?.toLowerCase()) {
+      case 'ruby': return <Crown className="h-4 w-4 text-rose-500" />;
+      case 'diamond': return <Gem className="h-4 w-4 text-cyan-400" />;
+      case 'gold': return <Medal className="h-4 w-4 text-yellow-500" />;
+      case 'silver': return <Award className="h-4 w-4 text-slate-400" />;
+      case 'bronze': return <Trophy className="h-4 w-4 text-amber-700" />;
+      default: return null;
+    }
+  };
+
+  const getTierColor = (tier: string) => {
+    switch (tier?.toLowerCase()) {
+      case 'ruby': return 'text-rose-500';
+      case 'diamond': return 'text-cyan-400';
+      case 'gold': return 'text-yellow-500';
+      case 'silver': return 'text-slate-400';
+      case 'bronze': return 'text-amber-700';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-28" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-16 w-20" />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!profile) return null;
+
+  const riskColors = getRiskLevelColor(profile.riskLevel);
+
+  return (
+    <Card>
+      <CardContent className="py-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+          {/* Left: Avatar & Info */}
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary">{profile.initials}</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{profile.name}</h2>
+              <p className="text-muted-foreground">{profile.phone}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary">{profile.batchName}</Badge>
+                <Badge variant="outline">{profile.courseType}</Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Center: Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Rank */}
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Rank</p>
+              <div className="flex items-center justify-center gap-1">
+                {getTierIcon(profile.tier)}
+                <span className={`text-lg font-bold ${getTierColor(profile.tier)}`}>
+                  {profile.tier}
+                </span>
+              </div>
+            </div>
+
+            {/* Level */}
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Level</p>
+              <p className="text-lg font-bold">{profile.level}</p>
+              <Progress value={profile.levelProgress} className="h-1 mt-1" />
+            </div>
+
+            {/* Hours */}
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Hours</p>
+              <p className="text-lg font-bold">{profile.totalHours}</p>
+            </div>
+
+            {/* Risk */}
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Risk</p>
+              <Badge className={`${riskColors.bg} ${riskColors.text} ${riskColors.border}`}>
+                {profile.riskLevel.charAt(0).toUpperCase() + profile.riskLevel.slice(1)} ({profile.riskScore})
+              </Badge>
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline">
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Message
+            </Button>
+            <Button size="sm" variant="outline">
+              <BookOpen className="h-4 w-4 mr-1" />
+              Assign
+            </Button>
+            <Button size="sm" variant="outline">
+              <Key className="h-4 w-4 mr-1" />
+              Reset Pass
+            </Button>
+            <Button size="sm" variant="outline">
+              <User className="h-4 w-4 mr-1" />
+              Account
+            </Button>
+            <Button size="sm" variant="outline" className="text-destructive">
+              <UserX className="h-4 w-4 mr-1" />
+              Deactivate
+            </Button>
+            <Button size="sm" variant="outline">
+              <StickyNote className="h-4 w-4 mr-1" />
+              Note
+            </Button>
+          </div>
+        </div>
+
+        {/* Last Login */}
+        <p className="text-xs text-muted-foreground mt-4">
+          Last login: {profile.lastLogin 
+            ? formatDistanceToNow(new Date(profile.lastLogin), { addSuffix: true })
+            : 'Never'}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
