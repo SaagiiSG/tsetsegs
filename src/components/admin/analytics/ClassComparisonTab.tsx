@@ -26,15 +26,6 @@ export function ClassComparisonTab() {
     }
   };
 
-  const formatSchedule = (schedule: string) => {
-    if (!schedule) return 'No schedule';
-    // Simplify schedule display
-    const parts = schedule.split(',').map(s => s.trim());
-    if (parts.length > 2) {
-      return `${parts[0]}, ${parts[1]}...`;
-    }
-    return schedule;
-  };
 
   return (
     <div className="space-y-6">
@@ -77,15 +68,10 @@ export function ClassComparisonTab() {
                     disabled={selectedClasses.length >= 5 && !selectedClasses.includes(batch.id)}
                     className="mt-0.5"
                   />
-                  <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-sm font-semibold truncate">{batch.batch_name}</p>
-                    {batch.teacher && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        👤 {batch.teacher}
-                      </p>
-                    )}
                     <p className="text-xs text-muted-foreground truncate">
-                      📅 {formatSchedule(batch.schedule)}
+                      {batch.teacher || 'No teacher assigned'}
                     </p>
                   </div>
                 </div>
