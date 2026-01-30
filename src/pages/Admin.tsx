@@ -19,6 +19,7 @@ import StudentSearch from '@/pages/admin/StudentSearch';
 import SATSchedule from '@/pages/admin/SATSchedule';
 import BluebookManager from '@/pages/admin/BluebookManager';
 import SprintMonitor from '@/pages/admin/SprintMonitor';
+import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -69,6 +70,7 @@ const Admin = () => {
           <main className="flex-1 container mx-auto px-4 py-8">
             <Routes>
               <Route index element={<DashboardStats />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
               <Route path="overview" element={<BatchOverview />} />
               <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
               <Route path="batches" element={<BatchesView />} />

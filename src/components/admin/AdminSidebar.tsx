@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy, LineChart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,6 +41,7 @@ const menuSections: MenuSection[] = [
     icon: LayoutDashboard,
     items: [
       { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
+      { title: "Analytics", url: "/admin/analytics", icon: LineChart },
       { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
     ],
     defaultOpen: true,
