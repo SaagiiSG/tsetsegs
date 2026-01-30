@@ -7,12 +7,12 @@ const corsHeaders = {
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby']
 const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
-  unranked: 50,
-  bronze: 30,
-  silver: 20,
-  gold: 15,
-  platinum: 10,
-  diamond: 5,
+  unranked: 30,
+  bronze: 20,
+  silver: 15,
+  gold: 10,
+  platinum: 5,
+  diamond: 1,
   ruby: 1
 }
 
@@ -153,8 +153,15 @@ Deno.serve(async (req) => {
       groupRankings.forEach((ranking, index) => {
         const rank = index + 1
         const isTop1 = rank === 1 // Each group has its own P1 winner
-        const isAdvancing = rank <= cutoff && currentTierIndex < TIER_ORDER.length - 1
-        const reservedNextTier = isAdvancing ? nextTier : tier
+        
+        // Ruby tier special logic: only rank 1 stays, others drop to Diamond
+        let reservedNextTier: string
+        if (tier === 'ruby') {
+          reservedNextTier = rank === 1 ? 'ruby' : 'diamond'
+        } else {
+          const isAdvancing = rank <= cutoff && currentTierIndex < TIER_ORDER.length - 1
+          reservedNextTier = isAdvancing ? nextTier : tier
+        }
 
         updates.push({
           id: ranking.id,
@@ -300,10 +307,10 @@ Deno.serve(async (req) => {
       if (seasonError) {
         console.error('Failed to get season rankings:', seasonError)
       } else if (seasonRankings && seasonRankings.length > 0) {
-        // Group by student to find their final tier and best P1 protection
+        // Group by student to find their Sprint 3 ranking
+        // NOTE: Only P1 in Sprint 3 provides protection - P1 in Sprint 1 or 2 awards badges only
         const studentData = new Map<string, {
           finalTier: string
-          bestP1Tier: string | null // The highest tier they achieved P1 at
           sprint3Ranking: any | null
         }>()
 
@@ -314,7 +321,6 @@ Deno.serve(async (req) => {
           if (!existing) {
             studentData.set(studentId, {
               finalTier: ranking.current_tier,
-              bestP1Tier: ranking.is_top_1 ? ranking.reserved_next_tier : null,
               sprint3Ranking: ranking.sprint_id === sprintId ? ranking : null
             })
           } else {
@@ -323,20 +329,12 @@ Deno.serve(async (req) => {
               existing.finalTier = ranking.current_tier
               existing.sprint3Ranking = ranking
             }
-            // Track highest P1 protection tier earned this season
-            if (ranking.is_top_1 && ranking.reserved_next_tier) {
-              const existingP1Index = existing.bestP1Tier ? TIER_ORDER.indexOf(existing.bestP1Tier) : -1
-              const newP1Index = TIER_ORDER.indexOf(ranking.reserved_next_tier)
-              if (newP1Index > existingP1Index) {
-                existing.bestP1Tier = ranking.reserved_next_tier
-              }
-            }
           }
         }
 
         // Apply demotions for next season
         for (const [studentId, data] of studentData) {
-          // If the student got P1 in Sprint 3, they keep their NEW promoted tier (no demotion)
+          // If the student got P1 in Sprint 3, they keep their promoted tier (no demotion)
           if (data.sprint3Ranking?.is_top_1) {
             console.log(`Student ${studentId}: P1 in Sprint 3 - keeps promoted tier ${data.sprint3Ranking.reserved_next_tier}`)
             // reserved_next_tier is already set correctly from the main finalization above
@@ -345,17 +343,7 @@ Deno.serve(async (req) => {
           
           const currentTierIndex = TIER_ORDER.indexOf(data.finalTier || 'unranked')
           const demotedTierIndex = Math.max(0, currentTierIndex - 1) // Drop 1 tier, min is unranked
-          let newTier = TIER_ORDER[demotedTierIndex]
-          
-          // Check if P1 protection from earlier sprints applies
-          if (data.bestP1Tier) {
-            const protectedTierIndex = TIER_ORDER.indexOf(data.bestP1Tier)
-            // If demoted tier would be below protected tier, use protected tier instead
-            if (demotedTierIndex < protectedTierIndex) {
-              newTier = data.bestP1Tier
-              console.log(`Student ${studentId}: P1 protection keeps them at ${newTier} (would have dropped to ${TIER_ORDER[demotedTierIndex]})`)
-            }
-          }
+          const newTier = TIER_ORDER[demotedTierIndex]
 
           // Only log if there's an actual demotion
           if (newTier !== data.finalTier) {
