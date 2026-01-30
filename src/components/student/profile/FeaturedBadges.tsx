@@ -19,7 +19,7 @@ const BadgeIcon = ({ iconName, rarity }: { iconName: string; rarity: string }) =
   return (
     <div 
       className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center relative z-10",
+        "w-12 h-12 rounded-full flex items-center justify-center relative z-10",
         rarity === 'legendary' && 'animate-pulse'
       )}
       style={{ 
@@ -27,7 +27,7 @@ const BadgeIcon = ({ iconName, rarity }: { iconName: string; rarity: string }) =
         boxShadow: `0 0 16px ${colors.glow}`
       }}
     >
-      <Icon className="w-5 h-5 text-white" />
+      <Icon className="w-6 h-6 text-white" />
     </div>
   );
 };
@@ -38,7 +38,7 @@ const BackgroundBadgeIcon = ({ iconName }: { iconName: string }) => {
   
   return (
     <Icon 
-      className="absolute inset-0 w-full h-full text-primary opacity-[0.12]" 
+      className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] text-primary opacity-[0.12]" 
       strokeWidth={1}
     />
   );
@@ -96,7 +96,7 @@ export function FeaturedBadges({ featuredBadges, badgeStats }: FeaturedBadgesPro
                   </div>
                   
                   {/* Badge name pushed to bottom with Chillax font */}
-                  <p className="font-chillax text-xs font-semibold text-center leading-tight line-clamp-2 relative z-10 text-foreground pb-0.5">
+                  <p className="font-chillax text-sm font-semibold text-center leading-tight line-clamp-2 relative z-10 text-foreground pb-0.5">
                     {badge.badge.name}
                   </p>
                 </>
