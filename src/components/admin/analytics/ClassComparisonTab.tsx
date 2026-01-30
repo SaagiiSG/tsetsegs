@@ -15,12 +15,25 @@ export function ClassComparisonTab() {
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const { data: batches } = useBatchesList();
 
+  // Filter to only SAT batches
+  const satBatches = batches?.filter((batch: any) => batch.course_type === 'SAT') || [];
+
   const toggleClass = (id: string) => {
     if (selectedClasses.includes(id)) {
       setSelectedClasses(selectedClasses.filter(c => c !== id));
     } else if (selectedClasses.length < 5) {
       setSelectedClasses([...selectedClasses, id]);
     }
+  };
+
+  const formatSchedule = (schedule: string) => {
+    if (!schedule) return 'No schedule';
+    // Simplify schedule display
+    const parts = schedule.split(',').map(s => s.trim());
+    if (parts.length > 2) {
+      return `${parts[0]}, ${parts[1]}...`;
+    }
+    return schedule;
   };
 
   return (
@@ -47,29 +60,42 @@ export function ClassComparisonTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {batches?.map((batch: any) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {satBatches.map((batch: any) => (
               <div
                 key={batch.id}
-                className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                  selectedClasses.includes(batch.id) ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'
+                className={`p-4 border rounded-xl cursor-pointer transition-all ${
+                  selectedClasses.includes(batch.id) 
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                    : 'hover:border-muted-foreground/50 hover:shadow-sm'
                 }`}
                 onClick={() => toggleClass(batch.id)}
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-3">
                   <Checkbox
                     checked={selectedClasses.includes(batch.id)}
                     disabled={selectedClasses.length >= 5 && !selectedClasses.includes(batch.id)}
+                    className="mt-0.5"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{batch.batch_name}</p>
-                    <p className="text-xs text-muted-foreground">{batch.course_type}</p>
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <p className="text-sm font-semibold truncate">{batch.batch_name}</p>
+                    {batch.teacher && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        👤 {batch.teacher}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground truncate">
+                      📅 {formatSchedule(batch.schedule)}
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-2">
+          {satBatches.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">No SAT batches found</p>
+          )}
+          <div className="mt-4 flex items-center gap-2">
             <Badge variant="secondary">{selectedClasses.length}/5 selected</Badge>
             {selectedClasses.length > 0 && (
               <Button variant="ghost" size="sm" onClick={() => setSelectedClasses([])}>Clear All</Button>
