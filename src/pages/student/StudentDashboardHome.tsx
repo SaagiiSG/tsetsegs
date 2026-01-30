@@ -65,6 +65,7 @@ export default function StudentDashboardHome() {
   const { student } = useStudentAuth();
   const navigate = useNavigate();
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
+  const [radarSubject, setRadarSubject] = useState<'math' | 'english'>('math');
   const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
 
   // Initialize selectedSatDate from student data
@@ -179,7 +180,7 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  // Fetch mastery data for MATH radar chart
+  // Fetch mastery data for MATH radar chart (6 axes: 4 categories + speed + vocab)
   const { data: mathMasteryData, isLoading: mathMasteryLoading } = useQuery({
     queryKey: ['student-math-mastery-data', student?.id],
     refetchOnWindowFocus: true,
@@ -187,40 +188,45 @@ export default function StudentDashboardHome() {
     queryFn: async () => {
       if (!student?.id) return [];
 
-      // Fetch all math question attempts with category info
-      const { data: mathAttempts } = await supabase
-        .from('student_attempts')
-        .select(`
-          question_id,
-          is_correct,
-          time_spent_seconds,
-          attempt_number,
-          questions!inner(subject, subtopic, category_id, question_categories(name))
-        `)
-        .eq('student_account_id', student.id)
-        .eq('questions.subject', 'Math');
+      // Fetch ALL active Math questions (68 + CollegeBoard)
+      const { data: allMathQuestions } = await supabase
+        .from('questions')
+        .select('id, subtopic, question_categories(name)')
+        .eq('subject', 'Math')
+        .eq('is_active', true);
 
-      // Math categories based on actual SAT structure
+      // Fetch student's correct attempts for math questions
+      const mathQuestionIds = allMathQuestions?.map(q => q.id) || [];
+      const { data: correctAttempts } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', student.id)
+        .eq('is_correct', true)
+        .in('question_id', mathQuestionIds.length > 0 ? mathQuestionIds : ['00000000-0000-0000-0000-000000000000']);
+
+      const correctQuestionIds = new Set(correctAttempts?.map(a => a.question_id) || []);
+
+      // Categorize questions into 4 main SAT Math categories
       const mathCategories = {
-        'Algebra': { correct: 0, total: 0 },
-        'Advanced Math': { correct: 0, total: 0 },
-        'Geometry & Trig': { correct: 0, total: 0 },
-        'Problem Solving': { correct: 0, total: 0 },
+        'Algebra': { total: 0, completed: 0 },
+        'Advanced Math': { total: 0, completed: 0 },
+        'Geo & Trig': { total: 0, completed: 0 },
+        'Problem Solving': { total: 0, completed: 0 },
       };
 
-      mathAttempts?.forEach((attempt: any) => {
-        const categoryName = attempt.questions?.question_categories?.name || '';
-        const subtopic = attempt.questions?.subtopic || '';
+      allMathQuestions?.forEach((q: any) => {
+        const categoryName = q.question_categories?.name || '';
+        const subtopic = q.subtopic || '';
         
         let category = 'Algebra'; // default
         
-        // Map to our 4 main categories based on category name or subtopic
         if (categoryName.toLowerCase().includes('advanced') || 
             subtopic.toLowerCase().includes('advanced') || 
             subtopic.toLowerCase().includes('quadratic') || 
             subtopic.toLowerCase().includes('polynomial') ||
             subtopic.toLowerCase().includes('exponential') ||
-            subtopic.toLowerCase().includes('function')) {
+            subtopic.toLowerCase().includes('function') ||
+            subtopic.toLowerCase().includes('nonlinear')) {
           category = 'Advanced Math';
         } else if (categoryName.toLowerCase().includes('geometry') || 
                    categoryName.toLowerCase().includes('trigonometry') ||
@@ -228,61 +234,98 @@ export default function StudentDashboardHome() {
                    subtopic.toLowerCase().includes('trig') || 
                    subtopic.toLowerCase().includes('circle') ||
                    subtopic.toLowerCase().includes('angle') ||
-                   subtopic.toLowerCase().includes('triangle')) {
-          category = 'Geometry & Trig';
+                   subtopic.toLowerCase().includes('triangle') ||
+                   subtopic.toLowerCase().includes('area') ||
+                   subtopic.toLowerCase().includes('volume')) {
+          category = 'Geo & Trig';
         } else if (categoryName.toLowerCase().includes('problem') || 
                    categoryName.toLowerCase().includes('data') ||
                    subtopic.toLowerCase().includes('data') || 
                    subtopic.toLowerCase().includes('problem') || 
                    subtopic.toLowerCase().includes('ratio') ||
                    subtopic.toLowerCase().includes('percent') ||
-                   subtopic.toLowerCase().includes('probability')) {
+                   subtopic.toLowerCase().includes('probability') ||
+                   subtopic.toLowerCase().includes('statistics')) {
           category = 'Problem Solving';
         }
 
-        if (mathCategories[category as keyof typeof mathCategories]) {
-          mathCategories[category as keyof typeof mathCategories].total++;
-          if (attempt.is_correct) {
-            mathCategories[category as keyof typeof mathCategories].correct++;
-          }
+        mathCategories[category as keyof typeof mathCategories].total++;
+        if (correctQuestionIds.has(q.id)) {
+          mathCategories[category as keyof typeof mathCategories].completed++;
         }
       });
+
+      // Calculate Speed score (target: 20s per problem)
+      const { data: speedAttempts } = await supabase
+        .from('student_attempts')
+        .select('time_spent_seconds')
+        .eq('student_account_id', student.id)
+        .eq('attempt_number', 1)
+        .eq('is_correct', true)
+        .in('question_id', mathQuestionIds.length > 0 ? mathQuestionIds : ['00000000-0000-0000-0000-000000000000'])
+        .not('time_spent_seconds', 'is', null);
+
+      let speedScore = 0;
+      if (speedAttempts && speedAttempts.length > 0) {
+        const avgTime = speedAttempts.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0) / speedAttempts.length;
+        // Target: 20s = 100%, 60s+ = 0%
+        speedScore = Math.max(0, Math.min(100, Math.round(100 - ((avgTime - 20) / 40) * 100)));
+      }
+
+      // Fetch Math vocab progress
+      const { data: mathVocabTotal } = await supabase
+        .from('vocabulary_words')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .eq('subject', 'Math');
+
+      const { data: mathVocabLearned } = await supabase
+        .from('student_vocabulary_progress')
+        .select('word_id, vocabulary_words!inner(subject)')
+        .eq('student_account_id', student.id)
+        .eq('vocabulary_words.subject', 'Math');
+
+      const totalMathWords = (mathVocabTotal as any)?.count || 0;
+      const learnedMathWords = mathVocabLearned?.length || 0;
+      const vocabScore = totalMathWords > 0 ? Math.round((learnedMathWords / totalMathWords) * 100) : 0;
 
       return [
         { 
           area: 'Algebra', 
           score: mathCategories['Algebra'].total > 0 
-            ? Math.round((mathCategories['Algebra'].correct / mathCategories['Algebra'].total) * 100) 
+            ? Math.round((mathCategories['Algebra'].completed / mathCategories['Algebra'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Advanced Math', 
           score: mathCategories['Advanced Math'].total > 0 
-            ? Math.round((mathCategories['Advanced Math'].correct / mathCategories['Advanced Math'].total) * 100) 
+            ? Math.round((mathCategories['Advanced Math'].completed / mathCategories['Advanced Math'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
-          area: 'Geometry & Trig', 
-          score: mathCategories['Geometry & Trig'].total > 0 
-            ? Math.round((mathCategories['Geometry & Trig'].correct / mathCategories['Geometry & Trig'].total) * 100) 
+          area: 'Geo & Trig', 
+          score: mathCategories['Geo & Trig'].total > 0 
+            ? Math.round((mathCategories['Geo & Trig'].completed / mathCategories['Geo & Trig'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Problem Solving', 
           score: mathCategories['Problem Solving'].total > 0 
-            ? Math.round((mathCategories['Problem Solving'].correct / mathCategories['Problem Solving'].total) * 100) 
+            ? Math.round((mathCategories['Problem Solving'].completed / mathCategories['Problem Solving'].total) * 100) 
             : 0,
           fullMark: 100 
         },
+        { area: 'Speed', score: speedScore, fullMark: 100 },
+        { area: 'Vocab', score: vocabScore, fullMark: 100 },
       ];
     },
     enabled: !!student?.id,
   });
 
-  // Fetch mastery data for ENGLISH radar chart
+  // Fetch mastery data for ENGLISH radar chart (4 SAT English categories)
   const { data: englishMasteryData, isLoading: englishMasteryLoading } = useQuery({
     queryKey: ['student-english-mastery-data', student?.id],
     refetchOnWindowFocus: true,
@@ -290,32 +333,39 @@ export default function StudentDashboardHome() {
     queryFn: async () => {
       if (!student?.id) return [];
 
-      // Fetch all English question attempts with category info
-      const { data: englishAttempts } = await supabase
+      // Fetch ALL active English questions
+      const { data: allEnglishQuestions } = await supabase
+        .from('questions')
+        .select('id, subtopic, question_categories(name)')
+        .eq('subject', 'English')
+        .eq('is_active', true);
+
+      const englishQuestionIds = allEnglishQuestions?.map(q => q.id) || [];
+      
+      // Fetch student's correct attempts
+      const { data: correctAttempts } = await supabase
         .from('student_attempts')
-        .select(`
-          question_id,
-          is_correct,
-          questions!inner(subject, subtopic, category_id, question_categories(name))
-        `)
+        .select('question_id')
         .eq('student_account_id', student.id)
-        .eq('questions.subject', 'English');
+        .eq('is_correct', true)
+        .in('question_id', englishQuestionIds.length > 0 ? englishQuestionIds : ['00000000-0000-0000-0000-000000000000']);
+
+      const correctQuestionIds = new Set(correctAttempts?.map(a => a.question_id) || []);
 
       // SAT English categories
       const englishCategories = {
-        'Information & Ideas': { correct: 0, total: 0 },
-        'Craft & Structure': { correct: 0, total: 0 },
-        'Standard English': { correct: 0, total: 0 },
-        'Expression of Ideas': { correct: 0, total: 0 },
+        'Information & Ideas': { total: 0, completed: 0 },
+        'Craft & Structure': { total: 0, completed: 0 },
+        'Standard English': { total: 0, completed: 0 },
+        'Expression of Ideas': { total: 0, completed: 0 },
       };
 
-      englishAttempts?.forEach((attempt: any) => {
-        const categoryName = attempt.questions?.question_categories?.name || '';
-        const subtopic = attempt.questions?.subtopic || '';
+      allEnglishQuestions?.forEach((q: any) => {
+        const categoryName = q.question_categories?.name || '';
+        const subtopic = q.subtopic || '';
         
         let category = 'Information & Ideas'; // default
         
-        // Map to English categories
         if (categoryName.toLowerCase().includes('craft') || 
             subtopic.toLowerCase().includes('craft') ||
             subtopic.toLowerCase().includes('structure') ||
@@ -336,11 +386,9 @@ export default function StudentDashboardHome() {
           category = 'Expression of Ideas';
         }
 
-        if (englishCategories[category as keyof typeof englishCategories]) {
-          englishCategories[category as keyof typeof englishCategories].total++;
-          if (attempt.is_correct) {
-            englishCategories[category as keyof typeof englishCategories].correct++;
-          }
+        englishCategories[category as keyof typeof englishCategories].total++;
+        if (correctQuestionIds.has(q.id)) {
+          englishCategories[category as keyof typeof englishCategories].completed++;
         }
       });
 
@@ -348,28 +396,28 @@ export default function StudentDashboardHome() {
         { 
           area: 'Information & Ideas', 
           score: englishCategories['Information & Ideas'].total > 0 
-            ? Math.round((englishCategories['Information & Ideas'].correct / englishCategories['Information & Ideas'].total) * 100) 
+            ? Math.round((englishCategories['Information & Ideas'].completed / englishCategories['Information & Ideas'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Craft & Structure', 
           score: englishCategories['Craft & Structure'].total > 0 
-            ? Math.round((englishCategories['Craft & Structure'].correct / englishCategories['Craft & Structure'].total) * 100) 
+            ? Math.round((englishCategories['Craft & Structure'].completed / englishCategories['Craft & Structure'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Standard English', 
           score: englishCategories['Standard English'].total > 0 
-            ? Math.round((englishCategories['Standard English'].correct / englishCategories['Standard English'].total) * 100) 
+            ? Math.round((englishCategories['Standard English'].completed / englishCategories['Standard English'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Expression of Ideas', 
           score: englishCategories['Expression of Ideas'].total > 0 
-            ? Math.round((englishCategories['Expression of Ideas'].correct / englishCategories['Expression of Ideas'].total) * 100) 
+            ? Math.round((englishCategories['Expression of Ideas'].completed / englishCategories['Expression of Ideas'].total) * 100) 
             : 0,
           fullMark: 100 
         },
@@ -810,59 +858,61 @@ export default function StudentDashboardHome() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Radar Charts Section - 40% */}
+        {/* Radar Chart with Toggle - 40% */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="lg:col-span-2 space-y-4"
+          className="lg:col-span-2"
         >
-          {/* Math Mastery Radar */}
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Brain className="h-4 w-4" />
-                Math Mastery
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  Mastery Overview
+                </CardTitle>
+                {/* Toggle Button Group */}
+                <div className="flex rounded-lg border bg-muted p-0.5">
+                  <Button
+                    variant={radarSubject === 'math' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-3 text-xs rounded-md"
+                    onClick={() => setRadarSubject('math')}
+                  >
+                    Math
+                  </Button>
+                  <Button
+                    variant={radarSubject === 'english' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-3 text-xs rounded-md"
+                    onClick={() => setRadarSubject('english')}
+                  >
+                    English
+                  </Button>
+                </div>
+              </div>
+              <CardDescription>
+                {radarSubject === 'math' 
+                  ? 'Completion across 68 + CB questions'
+                  : 'Completion across English questions'
+                }
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[180px] w-full">
-                <RadarChart data={mathMasteryData || []} outerRadius="70%">
+              <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                <RadarChart 
+                  data={radarSubject === 'math' ? (mathMasteryData || []) : (englishMasteryData || [])} 
+                  outerRadius="70%"
+                >
                   <PolarGrid />
                   <PolarAngleAxis dataKey="area" tick={{ fontSize: 10 }} />
                   <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
                   <Radar
-                    name="Math"
+                    name={radarSubject === 'math' ? 'Math' : 'English'}
                     dataKey="score"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.4}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </RadarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          {/* English Mastery Radar */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                English Mastery
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[180px] w-full">
-                <RadarChart data={englishMasteryData || []} outerRadius="70%">
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="area" tick={{ fontSize: 10 }} />
-                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                  <Radar
-                    name="English"
-                    dataKey="score"
-                    stroke="hsl(var(--chart-2))"
-                    fill="hsl(var(--chart-2))"
+                    stroke={radarSubject === 'math' ? 'hsl(var(--primary))' : 'hsl(var(--chart-2))'}
+                    fill={radarSubject === 'math' ? 'hsl(var(--primary))' : 'hsl(var(--chart-2))'}
                     fillOpacity={0.4}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
