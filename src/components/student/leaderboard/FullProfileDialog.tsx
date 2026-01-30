@@ -24,7 +24,7 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+      <DialogContent className="w-[60vw] max-w-none max-h-[90vh] p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>{username || profile.username}'s Profile</DialogTitle>
         </DialogHeader>
