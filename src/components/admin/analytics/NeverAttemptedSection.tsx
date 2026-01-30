@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HelpCircle, SkipForward, Download, Send, Star, Eye } from 'lucide-react';
+import { HelpCircle, SkipForward, Download } from 'lucide-react';
 import { useNeverAttemptedQuestions, useSkippedQuestions } from '@/hooks/useAdminAnalytics';
 import { format } from 'date-fns';
 
@@ -66,7 +66,6 @@ export function NeverAttemptedSection() {
                     <TableHead className="hidden sm:table-cell">Topic</TableHead>
                     <TableHead className="hidden md:table-cell">Added</TableHead>
                     <TableHead className="hidden lg:table-cell">Suspected Reason</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -81,21 +80,6 @@ export function NeverAttemptedSection() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
                         {question.suspectedReason}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" className="h-7">
-                            <Send className="h-3 w-3 mr-1" />
-                            Push
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7">
-                            <Star className="h-3 w-3 mr-1" />
-                            Feature
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -124,7 +108,6 @@ export function NeverAttemptedSection() {
                     <TableHead className="text-center">Skip Rate</TableHead>
                     <TableHead className="hidden sm:table-cell">Topic</TableHead>
                     <TableHead className="hidden lg:table-cell">Feedback</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,16 +124,6 @@ export function NeverAttemptedSection() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground text-sm max-w-xs truncate">
                         {question.feedback || 'No feedback'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" className="h-7">
-                            Add Hint
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7">
-                            Simplify
-                          </Button>
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
