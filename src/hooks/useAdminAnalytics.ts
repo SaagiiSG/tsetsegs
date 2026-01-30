@@ -965,6 +965,110 @@ export function useStudentSearch(query: string) {
   });
 }
 
+// Filtered Students for Student Selector
+interface FilteredStudent {
+  id: string;
+  name: string;
+  initials: string;
+  phone: string;
+  batchName: string;
+  tier: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  daysSinceLogin: number;
+  isSprintLeader: boolean;
+}
+
+export function useFilteredStudents() {
+  return useQuery<FilteredStudent[]>({
+    queryKey: ['admin-analytics', 'filtered-students'],
+    queryFn: async () => {
+      const { data: accounts } = await supabase
+        .from('student_accounts')
+        .select(`
+          id,
+          phone_number,
+          last_login,
+          linked_student_id,
+          students (
+            name,
+            first_name,
+            batches (batch_name)
+          )
+        `)
+        .eq('is_active', true)
+        .order('last_login', { ascending: false, nullsFirst: false })
+        .limit(200);
+
+      if (!accounts) return [];
+
+      // Get sprint rankings for all students
+      const studentIds = accounts.map((a: any) => a.id);
+      const { data: rankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('student_account_id, current_tier, is_top_1, final_rank')
+        .in('student_account_id', studentIds)
+        .order('created_at', { ascending: false });
+
+      // Get recent attempt counts for risk calculation
+      const twoWeeksAgo = format(subDays(new Date(), 14), 'yyyy-MM-dd');
+      const { data: recentAttempts } = await supabase
+        .from('student_attempts')
+        .select('student_account_id')
+        .in('student_account_id', studentIds)
+        .gte('attempted_at', twoWeeksAgo);
+
+      // Count attempts per student
+      const attemptCounts: Record<string, number> = {};
+      recentAttempts?.forEach((a: any) => {
+        attemptCounts[a.student_account_id] = (attemptCounts[a.student_account_id] || 0) + 1;
+      });
+
+      // Map rankings by student id (most recent)
+      const rankingMap: Record<string, any> = {};
+      rankings?.forEach((r: any) => {
+        if (!rankingMap[r.student_account_id]) {
+          rankingMap[r.student_account_id] = r;
+        }
+      });
+
+      return accounts.map((a: any) => {
+        const student = a.students;
+        const name = student?.name || student?.first_name || a.phone_number;
+        const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+        
+        const daysSinceLogin = a.last_login 
+          ? differenceInDays(new Date(), new Date(a.last_login))
+          : 30;
+
+        const ranking = rankingMap[a.id];
+        const tier = ranking?.current_tier || 'Bronze';
+        const isSprintLeader = ranking?.is_top_1 === true || ranking?.final_rank === 1;
+
+        // Calculate risk level
+        const attemptCount = attemptCounts[a.id] || 0;
+        const inactivityRisk = Math.min(daysSinceLogin * 4, 60);
+        const practiceRisk = attemptCount < 10 ? 30 : attemptCount < 30 ? 15 : 0;
+        const riskScore = Math.min(inactivityRisk + practiceRisk, 100);
+        const riskLevel: 'low' | 'medium' | 'high' = 
+          riskScore >= 70 ? 'high' : riskScore >= 40 ? 'medium' : 'low';
+
+        return {
+          id: a.id,
+          name,
+          initials,
+          phone: a.phone_number,
+          batchName: student?.batches?.batch_name || 'Unassigned',
+          tier,
+          riskLevel,
+          daysSinceLogin,
+          isSprintLeader,
+        };
+      });
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 // Student Profile Data
 interface StudentProfile {
   id: string;
