@@ -19,7 +19,7 @@ export interface BadgeStats {
   totalBadges: number;
   earnedBadges: number;
   totalPoints: number;
-  byRarity: Record<BadgeRarity, { earned: number; total: number }> & { common: number; uncommon: number; rare: number; epic: number; legendary: number };
+  byRarity: Record<BadgeRarity, { earned: number; total: number }>;
   rarestEarned: BadgeDefinition | null;
 }
 
@@ -178,6 +178,35 @@ export function useBadges(filter?: {
 
   // Calculate stats
   const earnedCount = studentBadges?.filter(sb => sb.isUnlocked).length || 0;
+  
+  // Initialize byRarity with earned/total structure
+  const byRarity: BadgeStats['byRarity'] = {
+    common: { earned: 0, total: 0 },
+    uncommon: { earned: 0, total: 0 },
+    rare: { earned: 0, total: 0 },
+    epic: { earned: 0, total: 0 },
+    legendary: { earned: 0, total: 0 }
+  } as BadgeStats['byRarity'];
+
+  // Count totals per rarity from all badge definitions
+  badgeDefinitions.forEach(badge => {
+    byRarity[badge.rarity].total++;
+  });
+
+  // Count earned per rarity
+  const rarityOrder: BadgeRarity[] = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+  let rarestEarned: BadgeDefinition | null = null;
+
+  studentBadges?.filter(sb => sb.isUnlocked).forEach(sb => {
+    byRarity[sb.badge.rarity].earned++;
+    
+    // Track rarest earned
+    if (!rarestEarned || 
+        rarityOrder.indexOf(sb.badge.rarity) < rarityOrder.indexOf(rarestEarned.rarity)) {
+      rarestEarned = sb.badge;
+    }
+  });
+
   const badgeStats: BadgeStats = {
     total: badgeDefinitions.length,
     earned: earnedCount,
@@ -186,29 +215,9 @@ export function useBadges(filter?: {
     totalPoints: studentBadges
       ?.filter(sb => sb.isUnlocked)
       .reduce((sum, sb) => sum + sb.badge.pointValue, 0) || 0,
-    byRarity: {
-      common: 0,
-      uncommon: 0,
-      rare: 0,
-      epic: 0,
-      legendary: 0
-    } as BadgeStats['byRarity'],
-    rarestEarned: null
+    byRarity,
+    rarestEarned
   };
-
-  // Calculate by rarity
-  const rarityOrder: BadgeRarity[] = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
-  
-  studentBadges?.filter(sb => sb.isUnlocked).forEach(sb => {
-    // Count by rarity
-    (badgeStats.byRarity as any)[sb.badge.rarity]++;
-    
-    // Track rarest earned
-    if (!badgeStats.rarestEarned || 
-        rarityOrder.indexOf(sb.badge.rarity) < rarityOrder.indexOf(badgeStats.rarestEarned.rarity)) {
-      badgeStats.rarestEarned = sb.badge;
-    }
-  });
 
   // Get in-progress badges (for progress section)
   const inProgressBadges = studentBadges

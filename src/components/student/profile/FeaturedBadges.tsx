@@ -101,11 +101,11 @@ export function FeaturedBadges({ featuredBadges, badgeStats }: FeaturedBadgesPro
             <p className="text-[10px] text-muted-foreground">Badge Pts</p>
           </div>
           <div className="p-2 rounded-lg bg-muted/30">
-            <p className="text-lg font-bold text-purple-400">{badgeStats.byRarity.epic}</p>
+            <p className="text-lg font-bold text-purple-400">{badgeStats.byRarity.epic.earned}</p>
             <p className="text-[10px] text-muted-foreground">Epic</p>
           </div>
           <div className="p-2 rounded-lg bg-muted/30">
-            <p className="text-lg font-bold text-amber-400">{badgeStats.byRarity.legendary}</p>
+            <p className="text-lg font-bold text-amber-400">{badgeStats.byRarity.legendary.earned}</p>
             <p className="text-[10px] text-muted-foreground">Legendary</p>
           </div>
         </div>
