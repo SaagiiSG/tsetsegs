@@ -179,118 +179,200 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  // Fetch mastery data for radar chart
-  const { data: masteryData, isLoading: masteryLoading } = useQuery({
-    queryKey: ['student-mastery-data', student?.id],
+  // Fetch mastery data for MATH radar chart
+  const { data: mathMasteryData, isLoading: mathMasteryLoading } = useQuery({
+    queryKey: ['student-math-mastery-data', student?.id],
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
     queryFn: async () => {
       if (!student?.id) return [];
 
-      const twoWeeksAgo = subWeeks(new Date(), 2).toISOString();
-
-      // Fetch recent attempts with question info
-      const { data: recentAttempts } = await supabase
+      // Fetch all math question attempts with category info
+      const { data: mathAttempts } = await supabase
         .from('student_attempts')
         .select(`
           question_id,
           is_correct,
           time_spent_seconds,
           attempt_number,
-          attempted_at,
-          questions!inner(subject, subtopic)
+          questions!inner(subject, subtopic, category_id, question_categories(name))
         `)
         .eq('student_account_id', student.id)
-        .gte('attempted_at', twoWeeksAgo);
+        .eq('questions.subject', 'Math');
 
-      // Category mapping
-      const categories = {
-        'Algebra': { correct: 0, total: 0, totalTime: 0, correctCount: 0 },
-        'Advanced Math': { correct: 0, total: 0, totalTime: 0, correctCount: 0 },
-        'Geometry & Trig': { correct: 0, total: 0, totalTime: 0, correctCount: 0 },
-        'Problem Solving': { correct: 0, total: 0, totalTime: 0, correctCount: 0 },
+      // Math categories based on actual SAT structure
+      const mathCategories = {
+        'Algebra': { correct: 0, total: 0 },
+        'Advanced Math': { correct: 0, total: 0 },
+        'Geometry & Trig': { correct: 0, total: 0 },
+        'Problem Solving': { correct: 0, total: 0 },
       };
 
-      let totalFirstAttemptTime = 0;
-      let firstAttemptCount = 0;
-
-      recentAttempts?.forEach((attempt: any) => {
+      mathAttempts?.forEach((attempt: any) => {
+        const categoryName = attempt.questions?.question_categories?.name || '';
         const subtopic = attempt.questions?.subtopic || '';
-        let category = 'Algebra';
-
-        if (subtopic.toLowerCase().includes('advanced') || subtopic.toLowerCase().includes('quadratic') || subtopic.toLowerCase().includes('polynomial')) {
+        
+        let category = 'Algebra'; // default
+        
+        // Map to our 4 main categories based on category name or subtopic
+        if (categoryName.toLowerCase().includes('advanced') || 
+            subtopic.toLowerCase().includes('advanced') || 
+            subtopic.toLowerCase().includes('quadratic') || 
+            subtopic.toLowerCase().includes('polynomial') ||
+            subtopic.toLowerCase().includes('exponential') ||
+            subtopic.toLowerCase().includes('function')) {
           category = 'Advanced Math';
-        } else if (subtopic.toLowerCase().includes('geometry') || subtopic.toLowerCase().includes('trig') || subtopic.toLowerCase().includes('circle')) {
+        } else if (categoryName.toLowerCase().includes('geometry') || 
+                   categoryName.toLowerCase().includes('trigonometry') ||
+                   subtopic.toLowerCase().includes('geometry') || 
+                   subtopic.toLowerCase().includes('trig') || 
+                   subtopic.toLowerCase().includes('circle') ||
+                   subtopic.toLowerCase().includes('angle') ||
+                   subtopic.toLowerCase().includes('triangle')) {
           category = 'Geometry & Trig';
-        } else if (subtopic.toLowerCase().includes('data') || subtopic.toLowerCase().includes('problem') || subtopic.toLowerCase().includes('ratio')) {
+        } else if (categoryName.toLowerCase().includes('problem') || 
+                   categoryName.toLowerCase().includes('data') ||
+                   subtopic.toLowerCase().includes('data') || 
+                   subtopic.toLowerCase().includes('problem') || 
+                   subtopic.toLowerCase().includes('ratio') ||
+                   subtopic.toLowerCase().includes('percent') ||
+                   subtopic.toLowerCase().includes('probability')) {
           category = 'Problem Solving';
         }
 
-        if (categories[category as keyof typeof categories]) {
-          categories[category as keyof typeof categories].total++;
+        if (mathCategories[category as keyof typeof mathCategories]) {
+          mathCategories[category as keyof typeof mathCategories].total++;
           if (attempt.is_correct) {
-            categories[category as keyof typeof categories].correct++;
+            mathCategories[category as keyof typeof mathCategories].correct++;
           }
         }
-
-        // Speed calculation from first attempts
-        if (attempt.attempt_number === 1 && attempt.time_spent_seconds && attempt.is_correct) {
-          totalFirstAttemptTime += attempt.time_spent_seconds;
-          firstAttemptCount++;
-        }
       });
-
-      // Calculate speed score (goal: 15-20 seconds with 90%+ accuracy)
-      const avgTime = firstAttemptCount > 0 ? totalFirstAttemptTime / firstAttemptCount : 60;
-      // Normalize: 15s = 100, 60s+ = 0
-      const speedScore = Math.max(0, Math.min(100, Math.round(100 - ((avgTime - 15) / 45) * 100)));
-
-      // Fetch vocab progress
-      const { data: totalVocabWords } = await supabase
-        .from('vocabulary_words')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
-
-      const { data: learnedVocab } = await supabase
-        .from('student_vocabulary_progress')
-        .select('word_id')
-        .eq('student_account_id', student.id);
-
-      const totalWords = (totalVocabWords as any)?.count || 325;
-      const learnedWords = learnedVocab?.length || 0;
-      const vocabScore = totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0;
 
       return [
         { 
           area: 'Algebra', 
-          score: categories['Algebra'].total > 0 
-            ? Math.round((categories['Algebra'].correct / categories['Algebra'].total) * 100) 
+          score: mathCategories['Algebra'].total > 0 
+            ? Math.round((mathCategories['Algebra'].correct / mathCategories['Algebra'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Advanced Math', 
-          score: categories['Advanced Math'].total > 0 
-            ? Math.round((categories['Advanced Math'].correct / categories['Advanced Math'].total) * 100) 
+          score: mathCategories['Advanced Math'].total > 0 
+            ? Math.round((mathCategories['Advanced Math'].correct / mathCategories['Advanced Math'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Geometry & Trig', 
-          score: categories['Geometry & Trig'].total > 0 
-            ? Math.round((categories['Geometry & Trig'].correct / categories['Geometry & Trig'].total) * 100) 
+          score: mathCategories['Geometry & Trig'].total > 0 
+            ? Math.round((mathCategories['Geometry & Trig'].correct / mathCategories['Geometry & Trig'].total) * 100) 
             : 0,
           fullMark: 100 
         },
         { 
           area: 'Problem Solving', 
-          score: categories['Problem Solving'].total > 0 
-            ? Math.round((categories['Problem Solving'].correct / categories['Problem Solving'].total) * 100) 
+          score: mathCategories['Problem Solving'].total > 0 
+            ? Math.round((mathCategories['Problem Solving'].correct / mathCategories['Problem Solving'].total) * 100) 
             : 0,
           fullMark: 100 
         },
-        { area: 'Speed', score: speedScore, fullMark: 100 },
-        { area: 'Vocab', score: vocabScore, fullMark: 100 },
+      ];
+    },
+    enabled: !!student?.id,
+  });
+
+  // Fetch mastery data for ENGLISH radar chart
+  const { data: englishMasteryData, isLoading: englishMasteryLoading } = useQuery({
+    queryKey: ['student-english-mastery-data', student?.id],
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      if (!student?.id) return [];
+
+      // Fetch all English question attempts with category info
+      const { data: englishAttempts } = await supabase
+        .from('student_attempts')
+        .select(`
+          question_id,
+          is_correct,
+          questions!inner(subject, subtopic, category_id, question_categories(name))
+        `)
+        .eq('student_account_id', student.id)
+        .eq('questions.subject', 'English');
+
+      // SAT English categories
+      const englishCategories = {
+        'Information & Ideas': { correct: 0, total: 0 },
+        'Craft & Structure': { correct: 0, total: 0 },
+        'Standard English': { correct: 0, total: 0 },
+        'Expression of Ideas': { correct: 0, total: 0 },
+      };
+
+      englishAttempts?.forEach((attempt: any) => {
+        const categoryName = attempt.questions?.question_categories?.name || '';
+        const subtopic = attempt.questions?.subtopic || '';
+        
+        let category = 'Information & Ideas'; // default
+        
+        // Map to English categories
+        if (categoryName.toLowerCase().includes('craft') || 
+            subtopic.toLowerCase().includes('craft') ||
+            subtopic.toLowerCase().includes('structure') ||
+            subtopic.toLowerCase().includes('purpose') ||
+            subtopic.toLowerCase().includes('tone')) {
+          category = 'Craft & Structure';
+        } else if (categoryName.toLowerCase().includes('standard') || 
+                   categoryName.toLowerCase().includes('convention') ||
+                   subtopic.toLowerCase().includes('convention') ||
+                   subtopic.toLowerCase().includes('grammar') ||
+                   subtopic.toLowerCase().includes('punctuation') ||
+                   subtopic.toLowerCase().includes('sentence')) {
+          category = 'Standard English';
+        } else if (categoryName.toLowerCase().includes('expression') ||
+                   subtopic.toLowerCase().includes('expression') ||
+                   subtopic.toLowerCase().includes('transition') ||
+                   subtopic.toLowerCase().includes('rhetorical')) {
+          category = 'Expression of Ideas';
+        }
+
+        if (englishCategories[category as keyof typeof englishCategories]) {
+          englishCategories[category as keyof typeof englishCategories].total++;
+          if (attempt.is_correct) {
+            englishCategories[category as keyof typeof englishCategories].correct++;
+          }
+        }
+      });
+
+      return [
+        { 
+          area: 'Information & Ideas', 
+          score: englishCategories['Information & Ideas'].total > 0 
+            ? Math.round((englishCategories['Information & Ideas'].correct / englishCategories['Information & Ideas'].total) * 100) 
+            : 0,
+          fullMark: 100 
+        },
+        { 
+          area: 'Craft & Structure', 
+          score: englishCategories['Craft & Structure'].total > 0 
+            ? Math.round((englishCategories['Craft & Structure'].correct / englishCategories['Craft & Structure'].total) * 100) 
+            : 0,
+          fullMark: 100 
+        },
+        { 
+          area: 'Standard English', 
+          score: englishCategories['Standard English'].total > 0 
+            ? Math.round((englishCategories['Standard English'].correct / englishCategories['Standard English'].total) * 100) 
+            : 0,
+          fullMark: 100 
+        },
+        { 
+          area: 'Expression of Ideas', 
+          score: englishCategories['Expression of Ideas'].total > 0 
+            ? Math.round((englishCategories['Expression of Ideas'].correct / englishCategories['Expression of Ideas'].total) * 100) 
+            : 0,
+          fullMark: 100 
+        },
       ];
     },
     enabled: !!student?.id,
@@ -522,7 +604,7 @@ export default function StudentDashboardHome() {
     enabled: !!student?.id,
   });
 
-  const isLoading = statsLoading || masteryLoading || weeklyLoading;
+  const isLoading = statsLoading || mathMasteryLoading || englishMasteryLoading || weeklyLoading;
 
   if (isLoading) {
     return (
@@ -728,32 +810,59 @@ export default function StudentDashboardHome() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Radar Chart - 40% */}
+        {/* Radar Charts Section - 40% */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="lg:col-span-2"
+          className="lg:col-span-2 space-y-4"
         >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Mastery Overview
+          {/* Math Mastery Radar */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Math Mastery
               </CardTitle>
-              <CardDescription>Your skills across all areas</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[280px] w-full">
-                <RadarChart data={masteryData || []} outerRadius="70%">
+              <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                <RadarChart data={mathMasteryData || []} outerRadius="70%">
                   <PolarGrid />
-                  <PolarAngleAxis dataKey="area" tick={{ fontSize: 11 }} />
-                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                  <PolarAngleAxis dataKey="area" tick={{ fontSize: 10 }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
                   <Radar
-                    name="Mastery"
+                    name="Math"
                     dataKey="score"
                     stroke="hsl(var(--primary))"
                     fill="hsl(var(--primary))"
+                    fillOpacity={0.4}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </RadarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* English Mastery Radar */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                English Mastery
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                <RadarChart data={englishMasteryData || []} outerRadius="70%">
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="area" tick={{ fontSize: 10 }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                  <Radar
+                    name="English"
+                    dataKey="score"
+                    stroke="hsl(var(--chart-2))"
+                    fill="hsl(var(--chart-2))"
                     fillOpacity={0.4}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
