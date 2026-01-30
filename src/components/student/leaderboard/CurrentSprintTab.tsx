@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { Loader2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LeaderboardEntry, SprintInfo, GroupInfo } from '@/hooks/useLeaderboard';
-import { TIER_PROMOTION_CUTOFFS, TierType } from '@/data/badgeDefinitions';
+import { TIER_PROMOTION_CUTOFFS, TierType, TIER_DISPLAY_NAMES } from '@/data/badgeDefinitions';
 import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
-import { StudentProfileDialog } from './StudentProfileDialog';
+import { FullProfileSheet } from './FullProfileSheet';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -26,8 +27,9 @@ export function CurrentSprintTab({
   groupInfo,
   onSprintEnd
 }: CurrentSprintTabProps) {
-  const [selectedProfile, setSelectedProfile] = useState<LeaderboardEntry | null>(null);
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUsername, setSelectedUsername] = useState<string>('');
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
 
   // Find current user's ranking to get their tier
   const currentUserRanking = currentUserId 
@@ -41,8 +43,9 @@ export function CurrentSprintTab({
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
 
   const handleProfileClick = (entry: LeaderboardEntry) => {
-    setSelectedProfile(entry);
-    setProfileDialogOpen(true);
+    setSelectedUserId(entry.userId);
+    setSelectedUsername(entry.username);
+    setProfileSheetOpen(true);
   };
 
   return (
@@ -61,7 +64,7 @@ export function CurrentSprintTab({
           </div>
           {groupInfo && (
             <p className="text-xs text-muted-foreground mt-1">
-              You compete against up to 40 students in your group. Tap a competitor to view their profile!
+              You compete against up to 40 students in your group. Tap a competitor to view their full profile!
             </p>
           )}
         </CardHeader>
@@ -71,28 +74,54 @@ export function CurrentSprintTab({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : leaderboard.length > 0 ? (
-            <motion.div 
-              className="space-y-2"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: { 
-                  opacity: 1,
-                  transition: { staggerChildren: 0.02 }
-                }
-              }}
-            >
-              {leaderboard.map((entry, index) => (
-                <LeaderboardRow
-                  key={entry.userId}
-                  entry={{ ...entry, rank: index + 1 }}
-                  isCurrentUser={entry.userId === currentUserId}
-                  cutoffRank={cutoffRank}
-                  onProfileClick={sprint ? handleProfileClick : undefined}
-                />
-              ))}
-            </motion.div>
+            <TooltipProvider delayDuration={300}>
+              <motion.div 
+                className="space-y-2"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { 
+                    opacity: 1,
+                    transition: { staggerChildren: 0.02 }
+                  }
+                }}
+              >
+                {leaderboard.map((entry, index) => {
+                  const isCurrentUser = entry.userId === currentUserId;
+                  const entryWithRank = { ...entry, rank: index + 1 };
+                  
+                  return (
+                    <Tooltip key={entry.userId}>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <LeaderboardRow
+                            entry={entryWithRank}
+                            isCurrentUser={isCurrentUser}
+                            cutoffRank={cutoffRank}
+                            onProfileClick={sprint && !isCurrentUser ? handleProfileClick : undefined}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      {!isCurrentUser && sprint && (
+                        <TooltipContent side="left" className="max-w-xs">
+                          <div className="space-y-1">
+                            <p className="font-medium">{entry.username}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Level {entry.level} • {TIER_DISPLAY_NAMES[entry.currentTier as TierType]}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {entry.totalPoints.toLocaleString()} points this sprint
+                            </p>
+                            <p className="text-xs text-primary mt-1">Click to view full profile →</p>
+                          </div>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  );
+                })}
+              </motion.div>
+            </TooltipProvider>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -103,12 +132,12 @@ export function CurrentSprintTab({
         </CardContent>
       </Card>
 
-      {/* Profile Dialog */}
-      <StudentProfileDialog
-        open={profileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
-        entry={selectedProfile}
-        sprintId={sprint?.id || null}
+      {/* Full Profile Sheet */}
+      <FullProfileSheet
+        open={profileSheetOpen}
+        onOpenChange={setProfileSheetOpen}
+        userId={selectedUserId}
+        username={selectedUsername}
       />
     </div>
   );
