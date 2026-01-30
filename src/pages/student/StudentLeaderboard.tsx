@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, Crown, BarChart3 } from 'lucide-react';
+import { Trophy, Users, Crown, BarChart3, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
@@ -10,6 +10,7 @@ import {
   CurrentSprintTab, 
   AllTimeTab, 
   MyRankTab,
+  HistoryTab,
   SprintEndCelebration,
   NoActiveSprintCard,
   EpicBadgeUnlock,
@@ -272,21 +273,24 @@ export default function StudentLeaderboard() {
 
       {/* Tabs - always show, but Current Sprint tab content changes based on active sprint */}
       <Tabs defaultValue={noActiveSprint ? "alltime" : "current"} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="current" className="gap-2">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsTrigger value="current" className="gap-1 sm:gap-2 text-xs sm:text-sm">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Current Sprint</span>
             <span className="sm:hidden">Sprint</span>
           </TabsTrigger>
-          <TabsTrigger value="alltime" className="gap-2">
+          <TabsTrigger value="alltime" className="gap-1 sm:gap-2 text-xs sm:text-sm">
             <Crown className="h-4 w-4" />
-            <span className="hidden sm:inline">All-Time</span>
-            <span className="sm:hidden">All-Time</span>
+            <span>All-Time</span>
           </TabsTrigger>
-          <TabsTrigger value="myrank" className="gap-2">
+          <TabsTrigger value="myrank" className="gap-1 sm:gap-2 text-xs sm:text-sm">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">My Rank</span>
-            <span className="sm:hidden">My Rank</span>
+            <span className="sm:hidden">Rank</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+            <History className="h-4 w-4" />
+            <span>History</span>
           </TabsTrigger>
         </TabsList>
 
@@ -349,6 +353,18 @@ export default function StudentLeaderboard() {
                 pointsToTop1={pointsToTop1}
                 sprint={activeSprint}
               />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0">
+            <motion.div
+              key="history"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <HistoryTab studentAccountId={student?.id} />
             </motion.div>
           </TabsContent>
         </AnimatePresence>
