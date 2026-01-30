@@ -149,7 +149,7 @@ export default function StudentQuestion() {
     });
   }, [allQuestions, questionId, student, queryClient]);
 
-  // Fetch original question details
+  // Fetch question details
   const { data: question, isLoading: questionLoading, isPlaceholderData } = useQuery({
     queryKey: ['question', questionId],
     queryFn: async () => {
@@ -170,10 +170,16 @@ export default function StudentQuestion() {
     staleTime: 5 * 60 * 1000
   });
 
-  // Fetch variations for this question
+  // Check if this is a "68" question set - if so, treat as standalone (no variations UI)
+  const is68Set = question?.question_set === '68';
+
+  // Fetch variations for this question (only for non-68 sets)
   const { data: variations } = useQuery({
-    queryKey: ['question-variations', questionId],
+    queryKey: ['question-variations', questionId, is68Set],
     queryFn: async () => {
+      // For 68 set, don't fetch variations - each question is standalone
+      if (is68Set) return [];
+      
       // Get approved variations that are children of this original question
       const { data, error } = await supabase
         .from('questions')
