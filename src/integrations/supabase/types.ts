@@ -1814,6 +1814,7 @@ export type Database = {
           first_name: string
           first_session_completed: boolean | null
           grade: string | null
+          has_taken_sat: boolean | null
           id: string
           is_review_student: boolean | null
           last_name: string | null
@@ -1821,6 +1822,7 @@ export type Database = {
           name: string
           parent_phone: string | null
           phone: string
+          previous_sat_score: number | null
           review_teacher: string | null
           sat_test_month: string | null
           school_name: string | null
@@ -1835,6 +1837,7 @@ export type Database = {
           first_name?: string
           first_session_completed?: boolean | null
           grade?: string | null
+          has_taken_sat?: boolean | null
           id?: string
           is_review_student?: boolean | null
           last_name?: string | null
@@ -1842,6 +1845,7 @@ export type Database = {
           name: string
           parent_phone?: string | null
           phone: string
+          previous_sat_score?: number | null
           review_teacher?: string | null
           sat_test_month?: string | null
           school_name?: string | null
@@ -1856,6 +1860,7 @@ export type Database = {
           first_name?: string
           first_session_completed?: boolean | null
           grade?: string | null
+          has_taken_sat?: boolean | null
           id?: string
           is_review_student?: boolean | null
           last_name?: string | null
@@ -1863,6 +1868,7 @@ export type Database = {
           name?: string
           parent_phone?: string | null
           phone?: string
+          previous_sat_score?: number | null
           review_teacher?: string | null
           sat_test_month?: string | null
           school_name?: string | null
