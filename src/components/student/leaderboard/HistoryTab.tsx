@@ -80,13 +80,18 @@ export function HistoryTab({ studentAccountId }: HistoryTabProps) {
     return acc;
   }, {} as Record<string, SprintRecord[]>);
 
-  // Calculate stats
+  // Calculate stats - use the higher of current_tier or reserved_next_tier for peak
+  const tierOrder: TierType[] = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
+  
   const stats = {
     totalSprints: sprintHistory?.length || 0,
     totalTop1s: sprintHistory?.filter(s => s.isTop1).length || 0,
     highestTier: sprintHistory?.reduce((highest, s) => {
-      const tierOrder: TierType[] = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
-      return tierOrder.indexOf(s.tier) > tierOrder.indexOf(highest) ? s.tier : highest;
+      // Check both current tier and next tier for peak
+      const currentIdx = tierOrder.indexOf(s.tier);
+      const nextIdx = s.nextTier ? tierOrder.indexOf(s.nextTier) : -1;
+      const sprintPeak = nextIdx > currentIdx ? s.nextTier! : s.tier;
+      return tierOrder.indexOf(sprintPeak) > tierOrder.indexOf(highest) ? sprintPeak : highest;
     }, 'unranked' as TierType) || 'unranked',
     totalPointsEarned: sprintHistory?.reduce((sum, s) => sum + s.totalPoints, 0) || 0
   };
