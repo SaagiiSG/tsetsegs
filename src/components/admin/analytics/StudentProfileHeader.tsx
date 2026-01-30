@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { MessageSquare, BookOpen, Key, User, UserX, StickyNote, Crown, Gem, Medal, Award, Trophy, UserCheck } from 'lucide-react';
+import { Key, User, UserX, StickyNote, Crown, Gem, Medal, Award, Trophy, UserCheck, AlertTriangle, Star, Clock, Zap } from 'lucide-react';
 import { useStudentProfileData } from '@/hooks/useAdminAnalytics';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { getRiskLevelColor } from '@/hooks/useRiskCalculation';
 import { StudentActionDialogs } from './StudentActionDialogs';
 
@@ -14,7 +14,7 @@ interface StudentProfileHeaderProps {
   studentId: string;
 }
 
-type DialogType = 'message' | 'assign' | 'resetPass' | 'account' | 'deactivate' | 'note' | null;
+type DialogType = 'resetPass' | 'account' | 'deactivate' | 'note' | null;
 
 export function StudentProfileHeader({ studentId }: StudentProfileHeaderProps) {
   const { data: profile, isLoading } = useStudentProfileData(studentId);
@@ -83,9 +83,49 @@ export function StudentProfileHeader({ studentId }: StudentProfileHeaderProps) {
               <div>
                 <h2 className="text-xl font-bold">{profile.name}</h2>
                 <p className="text-muted-foreground">{profile.phone}</p>
-                <div className="flex items-center gap-2 mt-1">
+                {/* Status Badges */}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <Badge variant="secondary">{profile.batchName}</Badge>
                   <Badge variant="outline">{profile.courseType}</Badge>
+                  
+                  {/* At Risk Badge - based on risk score */}
+                  {profile.riskLevel === 'high' && (
+                    <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      At Risk
+                    </Badge>
+                  )}
+                  
+                  {/* Top Performer Badge - based on tier */}
+                  {['ruby', 'diamond'].includes(profile.tier?.toLowerCase()) && (
+                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+                      <Star className="h-3 w-3 mr-1" />
+                      Top Performer
+                    </Badge>
+                  )}
+                  
+                  {/* Inactive 7+ Badge - based on last login */}
+                  {profile.lastLogin && differenceInDays(new Date(), new Date(profile.lastLogin)) > 7 && (
+                    <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Inactive 7+
+                    </Badge>
+                  )}
+                  {!profile.lastLogin && (
+                    <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Never Logged In
+                    </Badge>
+                  )}
+                  
+                  {/* Sprint Leader Badge - based on sprint ranking */}
+                  {profile.isSprintLeader && (
+                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100">
+                      <Zap className="h-3 w-3 mr-1" />
+                      Sprint Leader
+                    </Badge>
+                  )}
+                  
                   {profile.isBlocked && (
                     <Badge variant="destructive">Blocked</Badge>
                   )}
@@ -130,14 +170,6 @@ export function StudentProfileHeader({ studentId }: StudentProfileHeaderProps) {
 
             {/* Right: Actions */}
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => setOpenDialog('message')}>
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Message
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setOpenDialog('assign')}>
-                <BookOpen className="h-4 w-4 mr-1" />
-                Assign
-              </Button>
               <Button size="sm" variant="outline" onClick={() => setOpenDialog('resetPass')}>
                 <Key className="h-4 w-4 mr-1" />
                 Reset Device

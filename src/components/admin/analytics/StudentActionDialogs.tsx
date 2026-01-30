@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,7 +13,7 @@ interface StudentActionDialogsProps {
   phone: string;
   linkedStudentId?: string | null;
   isBlocked?: boolean;
-  openDialog: 'message' | 'assign' | 'resetPass' | 'account' | 'deactivate' | 'note' | null;
+  openDialog: 'resetPass' | 'account' | 'deactivate' | 'note' | null;
   onClose: () => void;
 }
 
@@ -32,20 +30,6 @@ export function StudentActionDialogs({
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [noteContent, setNoteContent] = useState('');
-  const [assignType, setAssignType] = useState<string>('');
-  const [selectedBatch, setSelectedBatch] = useState<string>('');
-
-  const handleSendMessage = () => {
-    // Open WhatsApp with the student's phone number
-    const formattedPhone = phone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/976${formattedPhone}`;
-    window.open(whatsappUrl, '_blank');
-    toast({
-      title: 'Opening WhatsApp',
-      description: `Starting conversation with ${studentName}`,
-    });
-    onClose();
-  };
 
   const handleResetPassword = async () => {
     setLoading(true);
@@ -151,120 +135,8 @@ export function StudentActionDialogs({
     }
   };
 
-  const handleAssignToBatch = async () => {
-    if (!linkedStudentId) {
-      toast({
-        title: 'Error',
-        description: 'No linked student record found',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!selectedBatch) {
-      toast({
-        title: 'Error',
-        description: 'Please select a batch',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('students')
-        .update({ batch_id: selectedBatch })
-        .eq('id', linkedStudentId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Batch Assigned',
-        description: `${studentName} has been assigned to the selected batch`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['studentProfile', studentId] });
-      setSelectedBatch('');
-      onClose();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to assign batch',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
-      {/* Message Dialog */}
-      <Dialog open={openDialog === 'message'} onOpenChange={() => onClose()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send Message</DialogTitle>
-            <DialogDescription>
-              Open WhatsApp to message {studentName}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Phone: <span className="font-medium text-foreground">{phone}</span>
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSendMessage}>Open WhatsApp</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Assign Dialog */}
-      <Dialog open={openDialog === 'assign'} onOpenChange={() => onClose()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Student</DialogTitle>
-            <DialogDescription>
-              Assign {studentName} to a batch or homework
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Assignment Type</Label>
-              <Select value={assignType} onValueChange={setAssignType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="batch">Assign to Batch</SelectItem>
-                  <SelectItem value="homework">Assign Homework</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {assignType === 'batch' && (
-              <div className="space-y-2">
-                <Label>Select Batch</Label>
-                <BatchSelector value={selectedBatch} onChange={setSelectedBatch} />
-              </div>
-            )}
-            {assignType === 'homework' && (
-              <p className="text-sm text-muted-foreground">
-                Homework assignment feature coming soon
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button 
-              onClick={handleAssignToBatch} 
-              disabled={loading || !assignType || (assignType === 'batch' && !selectedBatch)}
-            >
-              {loading ? 'Assigning...' : 'Assign'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Reset Pass (Device Reset) */}
       <AlertDialog open={openDialog === 'resetPass'} onOpenChange={() => onClose()}>
@@ -375,37 +247,5 @@ export function StudentActionDialogs({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-// Simple batch selector component
-function BatchSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [batches, setBatches] = useState<{ id: string; batch_name: string | null }[]>([]);
-
-  useEffect(() => {
-    const fetchBatches = async () => {
-      const { data } = await supabase
-        .from('batches')
-        .select('id, batch_name')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (data) setBatches(data);
-    };
-    fetchBatches();
-  }, []);
-
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select batch" />
-      </SelectTrigger>
-      <SelectContent>
-        {batches.map((batch) => (
-          <SelectItem key={batch.id} value={batch.id}>
-            {batch.batch_name || batch.id.slice(0, 8)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
