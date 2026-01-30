@@ -982,6 +982,7 @@ interface StudentProfile {
   lastLogin: string | null;
   isBlocked: boolean;
   linkedStudentId: string | null;
+  isSprintLeader: boolean;
 }
 
 export function useStudentProfileData(studentId: string) {
@@ -1013,11 +1014,14 @@ export function useStudentProfileData(studentId: string) {
       // Get sprint ranking
       const { data: ranking } = await supabase
         .from('student_sprint_rankings')
-        .select('current_tier, total_points')
+        .select('current_tier, total_points, is_top_1, final_rank')
         .eq('student_account_id', studentId)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
+
+      // Check if student is a sprint leader (top 1 or final_rank = 1)
+      const isSprintLeader = (ranking as any)?.is_top_1 === true || (ranking as any)?.final_rank === 1;
 
       // Calculate risk based on activity
       const daysSinceLogin = (account as any).last_login 
@@ -1054,6 +1058,7 @@ export function useStudentProfileData(studentId: string) {
         lastLogin: (account as any).last_login,
         isBlocked: (account as any).is_blocked || false,
         linkedStudentId: (account as any).linked_student_id,
+        isSprintLeader,
       };
     },
     staleTime: 2 * 60 * 1000,
