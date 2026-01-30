@@ -43,10 +43,17 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
     }
   });
 
-  // Fetch questions based on question set
+  // Fetch questions based on question set (excluding bluebook questions)
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, search],
     queryFn: async () => {
+      // First, get all question IDs that are in bluebook tests
+      const { data: bluebookQuestionIds } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      
+      const excludeIds = bluebookQuestionIds?.map(q => q.question_id).filter(Boolean) || [];
+
       let query = supabase
         .from('questions')
         .select(`
@@ -73,6 +80,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
       if (search) {
         query = query.or(`question_id.ilike.%${search}%,question_text.ilike.%${search}%`);
+      }
+
+      // Exclude bluebook questions
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
       }
 
       const { data, error } = await query;
