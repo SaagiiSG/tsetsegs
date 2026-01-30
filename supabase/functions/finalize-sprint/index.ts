@@ -377,6 +377,100 @@ Deno.serve(async (req) => {
       }
     }
 
+    // AUTO-ENROLL: Enroll all participants in the next active sprint
+    let autoEnrolledCount = 0
+    
+    // Find the next active sprint
+    const { data: nextActiveSprint } = await supabase
+      .from('sprints')
+      .select('id, season_number, sprint_number')
+      .eq('is_active', true)
+      .neq('id', sprintId)
+      .order('start_date', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (nextActiveSprint) {
+      console.log(`Found next active sprint: Season ${nextActiveSprint.season_number}, Sprint ${nextActiveSprint.sprint_number}`)
+      
+      // Get all unique students from the finalized sprint
+      const studentsToEnroll = new Map<string, { tier: string }>()
+      
+      for (const update of updates) {
+        // Use reserved_next_tier for their starting tier in the new sprint
+        studentsToEnroll.set(update.student_account_id, {
+          tier: update.reserved_next_tier || update.current_tier
+        })
+      }
+
+      // Check which students are already enrolled in the next sprint
+      const { data: existingEnrollments } = await supabase
+        .from('student_sprint_rankings')
+        .select('student_account_id')
+        .eq('sprint_id', nextActiveSprint.id)
+
+      const alreadyEnrolled = new Set(existingEnrollments?.map(e => e.student_account_id) || [])
+
+      // Enroll students who aren't already enrolled
+      for (const [studentId, { tier }] of studentsToEnroll) {
+        if (alreadyEnrolled.has(studentId)) {
+          continue
+        }
+
+        // Get current group counts for this tier to assign appropriate group
+        const { data: groupCounts } = await supabase
+          .from('student_sprint_rankings')
+          .select('group_number')
+          .eq('sprint_id', nextActiveSprint.id)
+          .eq('current_tier', tier)
+
+        // Calculate which group to assign
+        let assignedGroup = 1
+        if (groupCounts && groupCounts.length > 0) {
+          const groupMap: Record<number, number> = {}
+          groupCounts.forEach(r => {
+            const g = r.group_number || 1
+            groupMap[g] = (groupMap[g] || 0) + 1
+          })
+
+          const maxGroup = Math.max(...Object.keys(groupMap).map(Number), 1)
+          let foundGroup = false
+          for (let i = 1; i <= maxGroup; i++) {
+            if ((groupMap[i] || 0) < 40) { // MAX_GROUP_SIZE = 40
+              assignedGroup = i
+              foundGroup = true
+              break
+            }
+          }
+          if (!foundGroup) {
+            assignedGroup = maxGroup + 1
+          }
+        }
+
+        // Insert the enrollment
+        const { error: enrollError } = await supabase
+          .from('student_sprint_rankings')
+          .insert({
+            sprint_id: nextActiveSprint.id,
+            student_account_id: studentId,
+            current_tier: tier,
+            total_points: 0,
+            is_top_1: false,
+            group_number: assignedGroup
+          })
+
+        if (enrollError) {
+          console.error(`Failed to auto-enroll student ${studentId}:`, enrollError)
+        } else {
+          autoEnrolledCount++
+        }
+      }
+
+      console.log(`Auto-enrolled ${autoEnrolledCount} students in next sprint`)
+    } else {
+      console.log('No next active sprint found - students will enroll when they visit the leaderboard')
+    }
+
     // Get unique group count for summary
     const uniqueGroups = new Set(updates.map(u => `${u.current_tier}:${u.group_number}`))
 
@@ -390,7 +484,8 @@ Deno.serve(async (req) => {
         badgesAwarded,
         totalGroups: uniqueGroups.size,
         p1WinnersCount: top1Finishers.length,
-        seasonEndDemotions: sprintNumber === 3 ? seasonEndDemotions : undefined
+        seasonEndDemotions: sprintNumber === 3 ? seasonEndDemotions : undefined,
+        autoEnrolledInNextSprint: autoEnrolledCount
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
