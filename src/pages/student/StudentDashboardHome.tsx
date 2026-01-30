@@ -192,7 +192,7 @@ export default function StudentDashboardHome() {
       const { data: allMathQuestions } = await supabase
         .from('questions')
         .select('id, subtopic, question_categories(name)')
-        .eq('subject', 'Math')
+        .ilike('subject', 'math')
         .eq('is_active', true);
 
       // Fetch student's correct attempts for math questions
@@ -272,22 +272,20 @@ export default function StudentDashboardHome() {
         speedScore = Math.max(0, Math.min(100, Math.round(100 - ((avgTime - 20) / 40) * 100)));
       }
 
-      // Fetch Math vocab progress
-      const { data: mathVocabTotal } = await supabase
+      // Fetch Math vocab progress (vocabulary is shared, count all)
+      const { data: vocabTotal } = await supabase
         .from('vocabulary_words')
         .select('id', { count: 'exact', head: true })
-        .eq('is_active', true)
-        .eq('subject', 'Math');
+        .eq('is_active', true);
 
-      const { data: mathVocabLearned } = await supabase
+      const { data: vocabLearned } = await supabase
         .from('student_vocabulary_progress')
-        .select('word_id, vocabulary_words!inner(subject)')
-        .eq('student_account_id', student.id)
-        .eq('vocabulary_words.subject', 'Math');
+        .select('word_id')
+        .eq('student_account_id', student.id);
 
-      const totalMathWords = (mathVocabTotal as any)?.count || 0;
-      const learnedMathWords = mathVocabLearned?.length || 0;
-      const vocabScore = totalMathWords > 0 ? Math.round((learnedMathWords / totalMathWords) * 100) : 0;
+      const totalWords = (vocabTotal as any)?.count || 0;
+      const learnedWords = vocabLearned?.length || 0;
+      const vocabScore = totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0;
 
       return [
         { 
@@ -337,7 +335,7 @@ export default function StudentDashboardHome() {
       const { data: allEnglishQuestions } = await supabase
         .from('questions')
         .select('id, subtopic, question_categories(name)')
-        .eq('subject', 'English')
+        .ilike('subject', 'english')
         .eq('is_active', true);
 
       const englishQuestionIds = allEnglishQuestions?.map(q => q.id) || [];
