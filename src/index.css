@@ -290,15 +290,15 @@ All colors MUST be HSL.
 }
 
 .tier-platinum {
-  --primary: 181 100% 41% !important;
-  --ring: 181 100% 41% !important;
-  --tier-color: 181 100% 41%;
-  --tier-glow: 181 100% 51%;
-  --background: 180 25% 97% !important;
-  --card: 180 20% 99% !important;
-  --muted: 180 18% 94% !important;
-  --border: 180 22% 88% !important;
-  --input: 180 22% 88% !important;
+  --primary: 145 63% 49% !important;
+  --ring: 145 63% 49% !important;
+  --tier-color: 145 63% 49%;
+  --tier-glow: 145 63% 59%;
+  --background: 145 25% 97% !important;
+  --card: 145 20% 99% !important;
+  --muted: 145 18% 94% !important;
+  --border: 145 22% 88% !important;
+  --input: 145 22% 88% !important;
 }
 
 .tier-diamond {
@@ -372,13 +372,13 @@ All colors MUST be HSL.
 
 .dark.tier-platinum,
 .dark .tier-platinum {
-  --primary: 181 100% 45% !important;
-  --ring: 181 100% 45% !important;
-  --background: 180 20% 7% !important;
-  --card: 180 18% 11% !important;
-  --muted: 180 15% 14% !important;
-  --border: 180 15% 18% !important;
-  --input: 180 15% 18% !important;
+  --primary: 145 63% 55% !important;
+  --ring: 145 63% 55% !important;
+  --background: 145 20% 7% !important;
+  --card: 145 18% 11% !important;
+  --muted: 145 15% 14% !important;
+  --border: 145 15% 18% !important;
+  --input: 145 15% 18% !important;
 }
 
 .dark.tier-diamond,
