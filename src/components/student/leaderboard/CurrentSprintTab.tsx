@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { LeaderboardEntry, SprintInfo, GroupInfo } from '@/hooks/useLeaderboard'
 import { TIER_PROMOTION_CUTOFFS, TierType } from '@/data/badgeDefinitions';
 import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
+import { StudentProfileDialog } from './StudentProfileDialog';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -24,6 +26,9 @@ export function CurrentSprintTab({
   groupInfo,
   onSprintEnd
 }: CurrentSprintTabProps) {
+  const [selectedProfile, setSelectedProfile] = useState<LeaderboardEntry | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+
   // Find current user's ranking to get their tier
   const currentUserRanking = currentUserId 
     ? leaderboard.find(e => e.userId === currentUserId) 
@@ -34,6 +39,11 @@ export function CurrentSprintTab({
 
   // Get cutoff for user's tier (within their group)
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
+
+  const handleProfileClick = (entry: LeaderboardEntry) => {
+    setSelectedProfile(entry);
+    setProfileDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -51,7 +61,7 @@ export function CurrentSprintTab({
           </div>
           {groupInfo && (
             <p className="text-xs text-muted-foreground mt-1">
-              You compete against up to 40 students in your group. Each group has its own P1 winner!
+              You compete against up to 40 students in your group. Tap a competitor to view their profile!
             </p>
           )}
         </CardHeader>
@@ -79,6 +89,7 @@ export function CurrentSprintTab({
                   entry={{ ...entry, rank: index + 1 }}
                   isCurrentUser={entry.userId === currentUserId}
                   cutoffRank={cutoffRank}
+                  onProfileClick={sprint ? handleProfileClick : undefined}
                 />
               ))}
             </motion.div>
@@ -91,6 +102,14 @@ export function CurrentSprintTab({
           )}
         </CardContent>
       </Card>
+
+      {/* Profile Dialog */}
+      <StudentProfileDialog
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+        entry={selectedProfile}
+        sprintId={sprint?.id || null}
+      />
     </div>
   );
 }

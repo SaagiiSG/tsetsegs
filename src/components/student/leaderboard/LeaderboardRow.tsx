@@ -11,24 +11,34 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isCurrentUser: boolean;
   cutoffRank: number;
+  onProfileClick?: (entry: LeaderboardEntry) => void;
 }
 
-export function LeaderboardRow({ entry, isCurrentUser, cutoffRank }: LeaderboardRowProps) {
+export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, onProfileClick }: LeaderboardRowProps) {
   const tierColor = TIER_COLORS[entry.currentTier as TierType] || TIER_COLORS.unranked;
   const isCutoffRow = entry.rank === cutoffRank;
+
+  const handleClick = () => {
+    // Don't open profile for current user - they can use the profile page
+    if (!isCurrentUser && onProfileClick) {
+      onProfileClick(entry);
+    }
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: entry.rank * 0.02 }}
+      onClick={handleClick}
       className={cn(
         "flex items-center gap-3 p-3 rounded-lg border transition-all",
         isCurrentUser && "bg-primary/10 border-primary/30 ring-1 ring-primary/20",
         entry.isTop1 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30",
         entry.isAdvancing && !entry.isTop1 && !isCurrentUser && "bg-green-500/5 border-green-500/20",
         entry.isAtRisk && "bg-yellow-500/10 border-yellow-500/30",
-        !entry.isAdvancing && !entry.isAtRisk && "hover:bg-muted/50"
+        !entry.isAdvancing && !entry.isAtRisk && "hover:bg-muted/50",
+        !isCurrentUser && onProfileClick && "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
       )}
     >
       {/* Rank */}
