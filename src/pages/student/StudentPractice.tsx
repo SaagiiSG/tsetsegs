@@ -75,18 +75,24 @@ export default function StudentPractice() {
           question_set,
           subject,
           subtopic,
+          is_original,
+          parent_question_id,
           category:question_categories(id, name)
         `)
-        .eq('is_original', true)
         .eq('is_active', true)
         .eq('subject', subject);
       
       if (subject === 'math') {
         if (questionSet === '68') {
+          // For 68 set: include ALL questions (original + variations as separate)
           query = query.eq('question_set', '68');
         } else {
-          query = query.eq('question_set', 'CollegeBoard');
+          // For CB set: only originals (no variations)
+          query = query.eq('question_set', 'CollegeBoard').eq('is_original', true);
         }
+      } else {
+        // For English: only originals
+        query = query.eq('is_original', true);
       }
       
       const { data, error } = await query.order('question_id');
@@ -106,13 +112,14 @@ export default function StudentPractice() {
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       const [set68Result, cbResult, englishResult] = await Promise.all([
+        // For 68 set: count ALL questions (including variations)
         supabase
           .from('questions')
           .select('id')
-          .eq('is_original', true)
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
+        // For CB: only count originals
         supabase
           .from('questions')
           .select('id')
@@ -120,6 +127,7 @@ export default function StudentPractice() {
           .eq('is_active', true)
           .eq('question_set', 'CollegeBoard')
           .eq('subject', 'math'),
+        // For English: only count originals
         supabase
           .from('questions')
           .select('id')
