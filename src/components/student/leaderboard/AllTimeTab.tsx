@@ -14,6 +14,7 @@ import {
 import { AllTimeEntry } from '@/hooks/useLeaderboard';
 import { TIER_COLORS } from '@/data/badgeDefinitions';
 import { cn } from '@/lib/utils';
+import { AllTimeProfileDialog } from './AllTimeProfileDialog';
 
 interface AllTimeTabProps {
   leaderboard: AllTimeEntry[];
@@ -23,9 +24,18 @@ interface AllTimeTabProps {
 
 export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTabProps) {
   const [filter, setFilter] = useState<'all' | 'last30' | 'lastSeason'>('all');
+  const [selectedProfile, setSelectedProfile] = useState<AllTimeEntry | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   // Get Ruby Legends (4+ weeks at Ruby)
   const rubyLegends = leaderboard.filter(e => e.isRubyLegend);
+
+  const handleProfileClick = (entry: AllTimeEntry) => {
+    if (entry.userId !== currentUserId) {
+      setSelectedProfile(entry);
+      setProfileDialogOpen(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,7 +65,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-rose-500/20"
+                  onClick={() => handleProfileClick(legend)}
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-rose-500/20 transition-transform",
+                    legend.userId !== currentUserId && "cursor-pointer hover:scale-105 active:scale-95"
+                  )}
                 >
                   <Avatar className="h-8 w-8 border-2 border-rose-500">
                     <AvatarFallback className="bg-rose-500 text-white text-sm">
@@ -92,6 +106,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">All-Time Rankings</CardTitle>
+          <p className="text-xs text-muted-foreground">Tap a player to view their profile</p>
         </CardHeader>
         <CardContent className="space-y-2">
           {leaderboard.length > 0 ? (
@@ -105,10 +120,12 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.02 }}
+                  onClick={() => handleProfileClick(entry)}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                    "flex items-center gap-3 p-3 rounded-lg border transition-all",
                     isCurrentUser && "bg-primary/10 border-primary/30",
-                    index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30"
+                    index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30",
+                    !isCurrentUser && "cursor-pointer hover:bg-muted/50 hover:scale-[1.01] active:scale-[0.99]"
                   )}
                 >
                   {/* Rank */}
@@ -167,6 +184,13 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
           )}
         </CardContent>
       </Card>
+
+      {/* Profile Dialog */}
+      <AllTimeProfileDialog
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+        entry={selectedProfile}
+      />
     </div>
   );
 }
