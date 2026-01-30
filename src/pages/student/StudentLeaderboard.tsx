@@ -56,6 +56,7 @@ export default function StudentLeaderboard() {
     leaderboard,
     allTimeLeaderboard,
     currentUserEntry,
+    groupInfo,
     pointsToAdvance,
     pointsToTop1,
     isLoading,
@@ -242,6 +243,7 @@ export default function StudentLeaderboard() {
                   leaderboard={leaderboard}
                   currentUserId={student?.id}
                   isLoading={isLoading}
+                  groupInfo={groupInfo}
                   onSprintEnd={handleSprintEnd}
                 />
               )}

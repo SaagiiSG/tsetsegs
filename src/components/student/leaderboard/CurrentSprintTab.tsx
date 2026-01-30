@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { Loader2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
+import { Badge } from '@/components/ui/badge';
+import { LeaderboardEntry, SprintInfo, GroupInfo } from '@/hooks/useLeaderboard';
 import { TIER_PROMOTION_CUTOFFS, TierType } from '@/data/badgeDefinitions';
 import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
@@ -11,6 +12,7 @@ interface CurrentSprintTabProps {
   leaderboard: LeaderboardEntry[];
   currentUserId: string | undefined;
   isLoading: boolean;
+  groupInfo?: GroupInfo | null;
   onSprintEnd?: () => void;
 }
 
@@ -19,6 +21,7 @@ export function CurrentSprintTab({
   leaderboard, 
   currentUserId, 
   isLoading,
+  groupInfo,
   onSprintEnd
 }: CurrentSprintTabProps) {
   // Find current user's ranking to get their tier
@@ -26,11 +29,10 @@ export function CurrentSprintTab({
     ? leaderboard.find(e => e.userId === currentUserId) 
     : null;
 
-  // Filter to only show competitors in the same tier as the current user
+  // Leaderboard is already filtered by user's tier and group from the hook
   const userTier = currentUserRanking?.currentTier || 'unranked';
-  const tierCompetitors = leaderboard.filter(e => e.currentTier === userTier);
 
-  // Get cutoff for user's tier
+  // Get cutoff for user's tier (within their group)
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
 
   return (
@@ -39,14 +41,26 @@ export function CurrentSprintTab({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Your Sprint Competitors</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Your Sprint Competitors</CardTitle>
+            {groupInfo && groupInfo.totalGroups > 1 && (
+              <Badge variant="outline" className="font-normal">
+                Group {groupInfo.groupNumber} of {groupInfo.totalGroups}
+              </Badge>
+            )}
+          </div>
+          {groupInfo && (
+            <p className="text-xs text-muted-foreground mt-1">
+              You compete against up to 40 students in your group. Each group has its own P1 winner!
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : tierCompetitors.length > 0 ? (
+          ) : leaderboard.length > 0 ? (
             <motion.div 
               className="space-y-2"
               initial="hidden"
@@ -59,7 +73,7 @@ export function CurrentSprintTab({
                 }
               }}
             >
-              {tierCompetitors.map((entry, index) => (
+              {leaderboard.map((entry, index) => (
                 <LeaderboardRow
                   key={entry.userId}
                   entry={{ ...entry, rank: index + 1 }}
@@ -71,7 +85,7 @@ export function CurrentSprintTab({
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No competitors in your tier yet</p>
+              <p>No competitors in your group yet</p>
               <p className="text-sm">Start practicing to earn points!</p>
             </div>
           )}
