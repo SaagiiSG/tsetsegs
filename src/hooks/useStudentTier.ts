@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { TierType, TIER_THEME_HSL, TIER_ORDER } from '@/data/badgeDefinitions';
+import { TierType, TIER_THEME_HSL_LIGHT, TIER_THEME_HSL_DARK, TIER_ORDER } from '@/data/badgeDefinitions';
 import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 export function useStudentTier() {
   const { student } = useStudentAuth();
+  const { resolvedTheme } = useTheme();
   const [themePreference, setThemePreference] = useState<'rank' | TierType>(() => {
     const saved = localStorage.getItem('student_color_theme');
     return (saved as 'rank' | TierType) || 'rank';
@@ -71,11 +73,13 @@ export function useStudentTier() {
     };
   }, []);
 
-  // Apply theme to document root when tier or preference changes
+  // Apply theme to document root when tier, preference, or dark/light mode changes
   useEffect(() => {
     const tier = currentTier || 'unranked';
     const tierToApply = themePreference === 'rank' ? tier : themePreference;
-    const theme = TIER_THEME_HSL[tierToApply];
+    const isDark = resolvedTheme === 'dark';
+    const themeSource = isDark ? TIER_THEME_HSL_DARK : TIER_THEME_HSL_LIGHT;
+    const theme = themeSource[tierToApply];
     
     if (theme) {
       const root = document.documentElement;
@@ -93,12 +97,15 @@ export function useStudentTier() {
     }
     
     // Don't cleanup on unmount - theme should persist across navigation
-  }, [currentTier, themePreference]);
+  }, [currentTier, themePreference, resolvedTheme]);
+
+  const isDark = resolvedTheme === 'dark';
+  const themeSource = isDark ? TIER_THEME_HSL_DARK : TIER_THEME_HSL_LIGHT;
 
   return {
     tier: currentTier || 'unranked',
     isLoading,
-    themeColors: TIER_THEME_HSL[currentTier || 'unranked'],
+    themeColors: themeSource[currentTier || 'unranked'],
     themePreference
   };
 }

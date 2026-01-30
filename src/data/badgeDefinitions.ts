@@ -76,13 +76,13 @@ export const TIER_COLORS: Record<TierType, string> = {
   bronze: '#CD7F32',
   silver: '#C0C0C0',
   gold: '#FFD700',
-  platinum: '#E5E4E2',
+  platinum: '#00CED1', // Distinct teal/cyan for platinum
   diamond: '#B9F2FF',
   ruby: '#E0115F'
 };
 
-// HSL values for tier themes (used in CSS variables)
-export const TIER_THEME_HSL: Record<TierType, { 
+// HSL values for tier themes - light mode
+export const TIER_THEME_HSL_LIGHT: Record<TierType, { 
   primary: string; 
   primaryLight: string;
   background: string;
@@ -107,36 +107,36 @@ export const TIER_THEME_HSL: Record<TierType, {
     border: '30 25% 88%'
   },
   silver: {
-    primary: '0 0% 65%',
-    primaryLight: '0 0% 75%',
+    primary: '0 0% 55%',
+    primaryLight: '0 0% 65%',
     background: '210 10% 97%',
     card: '210 8% 99%',
     muted: '210 8% 94%',
     border: '210 10% 88%'
   },
   gold: {
-    primary: '51 100% 50%',
-    primaryLight: '51 100% 60%',
-    background: '48 30% 97%',
-    card: '48 25% 99%',
-    muted: '48 25% 94%',
-    border: '48 30% 88%'
+    primary: '43 88% 48%',
+    primaryLight: '43 88% 58%',
+    background: '45 35% 97%',
+    card: '45 30% 99%',
+    muted: '45 25% 94%',
+    border: '45 30% 88%'
   },
   platinum: {
-    primary: '30 5% 75%',
-    primaryLight: '30 5% 85%',
-    background: '30 8% 97%',
-    card: '30 6% 99%',
-    muted: '30 6% 94%',
-    border: '30 8% 88%'
+    primary: '181 100% 41%', // Vibrant teal
+    primaryLight: '181 100% 51%',
+    background: '180 25% 97%',
+    card: '180 20% 99%',
+    muted: '180 18% 94%',
+    border: '180 22% 88%'
   },
   diamond: {
-    primary: '187 100% 85%',
-    primaryLight: '187 100% 90%',
+    primary: '187 80% 55%',
+    primaryLight: '187 80% 65%',
     background: '190 30% 97%',
     card: '190 25% 99%',
-    muted: '190 25% 94%',
-    border: '190 30% 88%'
+    muted: '190 20% 94%',
+    border: '190 25% 88%'
   },
   ruby: {
     primary: '343 90% 47%',
@@ -147,6 +147,76 @@ export const TIER_THEME_HSL: Record<TierType, {
     border: '345 25% 88%'
   }
 };
+
+// HSL values for tier themes - dark mode
+export const TIER_THEME_HSL_DARK: Record<TierType, { 
+  primary: string; 
+  primaryLight: string;
+  background: string;
+  card: string;
+  muted: string;
+  border: string;
+}> = {
+  unranked: {
+    primary: '220 13% 56%',
+    primaryLight: '220 13% 66%',
+    background: '220 20% 8%',
+    card: '220 18% 12%',
+    muted: '220 15% 15%',
+    border: '220 15% 20%'
+  },
+  bronze: {
+    primary: '30 56% 55%',
+    primaryLight: '30 56% 65%',
+    background: '30 20% 7%',
+    card: '30 18% 11%',
+    muted: '30 15% 14%',
+    border: '30 15% 18%'
+  },
+  silver: {
+    primary: '0 0% 65%',
+    primaryLight: '0 0% 75%',
+    background: '210 15% 8%',
+    card: '210 12% 12%',
+    muted: '210 10% 15%',
+    border: '210 10% 20%'
+  },
+  gold: {
+    primary: '43 88% 55%',
+    primaryLight: '43 88% 65%',
+    background: '45 20% 7%',
+    card: '45 18% 11%',
+    muted: '45 15% 14%',
+    border: '45 15% 18%'
+  },
+  platinum: {
+    primary: '181 100% 45%', // Vibrant teal for dark mode
+    primaryLight: '181 100% 55%',
+    background: '180 20% 7%',
+    card: '180 18% 11%',
+    muted: '180 15% 14%',
+    border: '180 15% 18%'
+  },
+  diamond: {
+    primary: '187 80% 60%',
+    primaryLight: '187 80% 70%',
+    background: '190 25% 7%',
+    card: '190 22% 11%',
+    muted: '190 20% 14%',
+    border: '190 20% 18%'
+  },
+  ruby: {
+    primary: '343 90% 55%',
+    primaryLight: '343 90% 65%',
+    background: '345 20% 8%',
+    card: '345 18% 12%',
+    muted: '345 15% 15%',
+    border: '345 15% 20%'
+  }
+};
+
+// Backwards compatibility - use light mode as default
+export const TIER_THEME_HSL = TIER_THEME_HSL_LIGHT;
 
 // Tier display names
 export const TIER_DISPLAY_NAMES: Record<TierType, string> = {

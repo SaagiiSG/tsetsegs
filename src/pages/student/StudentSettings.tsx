@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 import { 
   Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap, Palette, Sparkles
 } from 'lucide-react';
-import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL_LIGHT, TIER_THEME_HSL_DARK, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { cn } from '@/lib/utils';
 import { Lock } from 'lucide-react';
@@ -57,7 +57,9 @@ export default function StudentSettings() {
     localStorage.setItem('student_color_theme', selectedTheme);
     
     const tierToApply = selectedTheme === 'rank' ? currentTier : selectedTheme;
-    const themeColors = TIER_THEME_HSL[tierToApply];
+    const isDark = theme === 'dark';
+    const themeSource = isDark ? TIER_THEME_HSL_DARK : TIER_THEME_HSL_LIGHT;
+    const themeColors = themeSource[tierToApply];
     
     if (themeColors) {
       const root = document.documentElement;
@@ -73,7 +75,7 @@ export default function StudentSettings() {
       TIER_ORDER.forEach(t => root.classList.remove(`tier-${t}`));
       root.classList.add(`tier-${tierToApply}`);
     }
-  }, [selectedTheme, currentTier]);
+  }, [selectedTheme, currentTier, theme]);
 
   const handleThemeSelect = (value: ThemeOption) => {
     setSelectedTheme(value);
