@@ -76,7 +76,7 @@ export const TIER_COLORS: Record<TierType, string> = {
   bronze: '#CD7F32',
   silver: '#C0C0C0',
   gold: '#FFD700',
-  platinum: '#00CED1', // Distinct teal/cyan for platinum
+  platinum: '#50C878', // Emerald green
   diamond: '#B9F2FF',
   ruby: '#E0115F'
 };
@@ -123,12 +123,12 @@ export const TIER_THEME_HSL_LIGHT: Record<TierType, {
     border: '45 30% 88%'
   },
   platinum: {
-    primary: '181 100% 41%', // Vibrant teal
-    primaryLight: '181 100% 51%',
-    background: '180 25% 97%',
-    card: '180 20% 99%',
-    muted: '180 18% 94%',
-    border: '180 22% 88%'
+    primary: '145 63% 49%', // Emerald green
+    primaryLight: '145 63% 59%',
+    background: '145 25% 97%',
+    card: '145 20% 99%',
+    muted: '145 18% 94%',
+    border: '145 22% 88%'
   },
   diamond: {
     primary: '187 80% 55%',
@@ -190,12 +190,12 @@ export const TIER_THEME_HSL_DARK: Record<TierType, {
     border: '45 15% 18%'
   },
   platinum: {
-    primary: '181 100% 45%', // Vibrant teal for dark mode
-    primaryLight: '181 100% 55%',
-    background: '180 20% 7%',
-    card: '180 18% 11%',
-    muted: '180 15% 14%',
-    border: '180 15% 18%'
+    primary: '145 63% 55%', // Emerald green for dark mode
+    primaryLight: '145 63% 65%',
+    background: '145 20% 7%',
+    card: '145 18% 11%',
+    muted: '145 15% 14%',
+    border: '145 15% 18%'
   },
   diamond: {
     primary: '187 80% 60%',
