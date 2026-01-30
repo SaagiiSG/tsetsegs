@@ -12,9 +12,10 @@ import {
   MyRankTab,
   SprintEndCelebration,
   NoActiveSprintCard,
-  EpicBadgeUnlock
+  EpicBadgeUnlock,
+  RankAdvancementCelebration
 } from '@/components/student/leaderboard';
-import { TierType, badgeDefinitions, BadgeDefinition } from '@/data/badgeDefinitions';
+import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER } from '@/data/badgeDefinitions';
 
 // Badge name to tier mapping (same as in edge function)
 const TIER_BADGE_NAMES: Record<string, string> = {
@@ -27,10 +28,22 @@ const TIER_BADGE_NAMES: Record<string, string> = {
   ruby: 'Ruby Legend'
 };
 
+// Promotion cutoffs - must match finalize-sprint edge function
+const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
+  unranked: 30,
+  bronze: 20,
+  silver: 15,
+  gold: 10,
+  platinum: 5,
+  diamond: 1,
+  ruby: 1
+};
+
 export default function StudentLeaderboard() {
   const queryClient = useQueryClient();
   const { student } = useStudentAuth();
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showAdvancementCelebration, setShowAdvancementCelebration] = useState(false);
   const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
   const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
   const [celebrationData, setCelebrationData] = useState<{
@@ -39,6 +52,14 @@ export default function StudentLeaderboard() {
     points: number;
     sprintNumber: number;
     seasonNumber: number;
+  } | null>(null);
+  const [advancementData, setAdvancementData] = useState<{
+    previousTier: TierType;
+    newTier: TierType;
+    points: number;
+    sprintNumber: number;
+    seasonNumber: number;
+    badge: BadgeDefinition | null;
   } | null>(null);
   const [isFinalizingSprint, setIsFinalizingSprint] = useState(false);
   
@@ -146,14 +167,46 @@ export default function StudentLeaderboard() {
         userEntry.rank
       );
       
-      setCelebrationData({
-        rank: userEntry.rank,
-        tier: userEntry.currentTier,
-        points: userEntry.totalPoints,
-        sprintNumber: sprintToFinalize.sprintNumber,
-        seasonNumber: sprintToFinalize.seasonNumber
-      });
-      setShowCelebration(true);
+      // Check if user is advancing to a new tier
+      const currentTier = userEntry.currentTier;
+      const cutoff = TIER_PROMOTION_CUTOFFS[currentTier];
+      const currentTierIndex = TIER_ORDER.indexOf(currentTier);
+      const isAdvancing = userEntry.rank <= cutoff && currentTierIndex < TIER_ORDER.length - 1;
+      
+      // Get the badge if they're P1
+      let badgeForAdvancement: BadgeDefinition | null = null;
+      if (userEntry.rank === 1) {
+        const badgeName = TIER_BADGE_NAMES[currentTier];
+        badgeForAdvancement = badgeDefinitions.find(b => b.name === badgeName) || null;
+      }
+      
+      if (isAdvancing) {
+        // Show the new RankAdvancementCelebration
+        const nextTier = TIER_ORDER[currentTierIndex + 1];
+        setAdvancementData({
+          previousTier: currentTier,
+          newTier: nextTier,
+          points: userEntry.totalPoints,
+          sprintNumber: sprintToFinalize.sprintNumber,
+          seasonNumber: sprintToFinalize.seasonNumber,
+          badge: badgeForAdvancement
+        });
+        setShowAdvancementCelebration(true);
+      } else {
+        // Show regular celebration (and possibly badge unlock for P1)
+        if (badgeForAdvancement) {
+          setUnlockedBadge(badgeForAdvancement);
+        }
+        setCelebrationData({
+          rank: userEntry.rank,
+          tier: currentTier,
+          points: userEntry.totalPoints,
+          sprintNumber: sprintToFinalize.sprintNumber,
+          seasonNumber: sprintToFinalize.seasonNumber
+        });
+        setShowCelebration(true);
+      }
+      
       localStorage.setItem(celebrationKey, 'true');
     }
   }, [activeSprint, currentUserEntry, lastKnownRanking, student?.id, finalizeSprintAndCheckBadge]);
@@ -180,6 +233,21 @@ export default function StudentLeaderboard() {
     queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
     queryClient.invalidateQueries({ queryKey: ['recent-achievements'] });
+  }, [queryClient]);
+
+  // Handler for advancement celebration completion
+  const handleAdvancementComplete = useCallback(() => {
+    setShowAdvancementCelebration(false);
+    setAdvancementData(null);
+    
+    // Invalidate queries to sync data
+    queryClient.invalidateQueries({ queryKey: ['badges'] });
+    queryClient.invalidateQueries({ queryKey: ['badge-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['total-points'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-achievements'] });
+    queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
   }, [queryClient]);
 
   // Determine if there's no active sprint
@@ -286,7 +354,21 @@ export default function StudentLeaderboard() {
         </AnimatePresence>
       </Tabs>
 
-      {/* Sprint End Celebration - Shows for ALL users */}
+      {/* Rank Advancement Celebration - Shows when advancing to new tier */}
+      {advancementData && (
+        <RankAdvancementCelebration
+          isOpen={showAdvancementCelebration}
+          onComplete={handleAdvancementComplete}
+          previousTier={advancementData.previousTier}
+          newTier={advancementData.newTier}
+          pointsEarned={advancementData.points}
+          sprintNumber={advancementData.sprintNumber}
+          seasonNumber={advancementData.seasonNumber}
+          badge={advancementData.badge}
+        />
+      )}
+
+      {/* Sprint End Celebration - Shows for users NOT advancing */}
       {celebrationData && (
         <SprintEndCelebration
           isOpen={showCelebration}
