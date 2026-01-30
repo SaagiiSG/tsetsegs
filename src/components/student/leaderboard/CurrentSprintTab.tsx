@@ -8,7 +8,7 @@ import { LeaderboardEntry, SprintInfo, GroupInfo } from '@/hooks/useLeaderboard'
 import { TIER_PROMOTION_CUTOFFS, TierType, TIER_DISPLAY_NAMES } from '@/data/badgeDefinitions';
 import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
-import { FullProfileSheet } from './FullProfileSheet';
+import { FullProfileDialog } from './FullProfileDialog';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -132,8 +132,8 @@ export function CurrentSprintTab({
         </CardContent>
       </Card>
 
-      {/* Full Profile Sheet */}
-      <FullProfileSheet
+      {/* Full Profile Dialog */}
+      <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}

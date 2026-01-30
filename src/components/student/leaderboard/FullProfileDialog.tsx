@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOtherStudentProfile } from '@/hooks/useOtherStudentProfile';
@@ -12,24 +12,24 @@ import {
 } from '@/components/student/profile';
 import { FeaturedBadgesReadOnly } from '@/components/student/profile/FeaturedBadgesReadOnly';
 
-interface FullProfileSheetProps {
+interface FullProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string | null;
   username?: string;
 }
 
-export function FullProfileSheet({ open, onOpenChange, userId, username }: FullProfileSheetProps) {
+export function FullProfileDialog({ open, onOpenChange, userId, username }: FullProfileDialogProps) {
   const profile = useOtherStudentProfile(open ? userId : null);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl p-0">
-        <SheetHeader className="px-6 py-4 border-b">
-          <SheetTitle>{username || profile.username}'s Profile</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle>{username || profile.username}'s Profile</DialogTitle>
+        </DialogHeader>
         
-        <ScrollArea className="h-[calc(100vh-80px)]">
+        <ScrollArea className="max-h-[calc(90vh-80px)]">
           {profile.isLoading ? (
             <div className="space-y-6 p-6">
               <Skeleton className="h-40 w-full" />
@@ -85,7 +85,7 @@ export function FullProfileSheet({ open, onOpenChange, userId, username }: FullP
             </div>
           )}
         </ScrollArea>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
