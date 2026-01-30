@@ -11,3 +11,4 @@ export { NoActiveSprintCard } from './NoActiveSprintCard';
 export { EpicBadgeUnlock } from './EpicBadgeUnlock';
 export { RankAdvancementCelebration } from './RankAdvancementCelebration';
 export { LockFallAnimation } from './LockFallAnimation';
+export { StudentProfileDialog } from './StudentProfileDialog';
