@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,7 +32,6 @@ type MenuSection = {
   icon: React.ComponentType<{ className?: string }>;
   items: MenuItem[];
   defaultOpen: boolean;
-  devItems?: MenuItem[];
 };
 
 // Menu sections with their items
@@ -70,12 +69,11 @@ const menuSections: MenuSection[] = [
     items: [
       { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
       { title: "Registration", url: "/register/admin", icon: QrCode },
-    ],
-    defaultOpen: false,
-    devItems: [
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
+      { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
     ],
+    defaultOpen: false,
   },
   {
     label: "Admin",
@@ -87,14 +85,6 @@ const menuSections: MenuSection[] = [
     defaultOpen: false,
   },
 ];
-
-// Process sections to add dev-only items
-const processedSections = menuSections.map(section => ({
-  ...section,
-  items: import.meta.env.DEV && section.devItems 
-    ? [...section.items, ...section.devItems]
-    : section.items,
-}));
 
 export function AdminSidebar() {
   const { open } = useSidebar();
@@ -134,7 +124,7 @@ export function AdminSidebar() {
         </motion.div>
 
         {/* Menu Sections */}
-        {processedSections.map((section, sectionIndex) => (
+        {menuSections.map((section, sectionIndex) => (
           <motion.div
             key={section.label}
             initial={{ opacity: 0, x: -20 }}

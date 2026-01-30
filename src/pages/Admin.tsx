@@ -18,6 +18,7 @@ import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
 import StudentSearch from '@/pages/admin/StudentSearch';
 import SATSchedule from '@/pages/admin/SATSchedule';
 import BluebookManager from '@/pages/admin/BluebookManager';
+import SprintMonitor from '@/pages/admin/SprintMonitor';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -72,8 +73,9 @@ const Admin = () => {
               <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
               <Route path="batches" element={<BatchesView />} />
               <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
-              {import.meta.env.DEV && <Route path="questions" element={<QuestionBank />} />}
-              {import.meta.env.DEV && <Route path="bluebook/*" element={<BluebookManager />} />}
+              <Route path="questions" element={<QuestionBank />} />
+              <Route path="bluebook/*" element={<BluebookManager />} />
+              <Route path="sprint-monitor" element={<SprintMonitor />} />
               <Route path="team" element={<TeamManagement />} />
               <Route path="students" element={<StudentAccountsManagement />} />
               <Route path="search" element={<StudentSearch />} />
