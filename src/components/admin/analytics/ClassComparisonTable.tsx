@@ -26,7 +26,7 @@ export function ClassComparisonTable({ selectedBatchIds }: ClassComparisonTableP
   const getValueColor = (key: string, value: number | string, allValues: (number | string)[]) => {
     if (typeof value === 'string') return '';
     
-    const numValues = allValues.filter(v => typeof v === 'number') as number[];
+    const numValues = allValues.filter((v): v is number => typeof v === 'number');
     const max = Math.max(...numValues);
     const min = Math.min(...numValues);
     
@@ -96,18 +96,32 @@ export function ClassComparisonTable({ selectedBatchIds }: ClassComparisonTableP
             </TableHeader>
             <TableBody>
               {metrics.map((metric) => {
-                const values = classes.map((cls) => (cls as any)[metric.key]);
+                const getMetricValue = (cls: typeof classes[0]): number | string => {
+                  switch (metric.key) {
+                    case 'studentCount': return cls.studentCount;
+                    case 'avgAccuracy': return cls.avgAccuracy;
+                    case 'avgQuestions': return cls.avgQuestions;
+                    case 'avgHours': return cls.avgHours;
+                    case 'engagementPercent': return cls.engagementPercent;
+                    case 'topStudent': return cls.topStudent;
+                    case 'atRiskCount': return cls.atRiskCount;
+                    case 'healthScore': return cls.healthScore;
+                    default: return 0;
+                  }
+                };
+                
+                const values: (number | string)[] = classes.map(getMetricValue);
                 
                 return (
                   <TableRow key={metric.key}>
                     <TableCell className="font-medium">{metric.label}</TableCell>
                     {classes.map((cls) => {
-                      const value = (cls as any)[metric.key];
+                      const value = getMetricValue(cls);
                       const colorClass = getValueColor(metric.key, value, values);
                       
                       return (
                         <TableCell key={cls.id} className={`text-center ${colorClass}`}>
-                          {metric.format(value)}
+                          {metric.format(value as never)}
                         </TableCell>
                       );
                     })}
