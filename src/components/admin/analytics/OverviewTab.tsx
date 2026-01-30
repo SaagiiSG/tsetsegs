@@ -1,10 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlatformHealthCard } from './PlatformHealthCard';
 import { AtRiskStudentsTable } from './AtRiskStudentsTable';
 import { TopicStruggleHeatmap } from './TopicStruggleHeatmap';
 import { PracticePatternsChart } from './PracticePatternsChart';
 import { CohortAnalysis } from './CohortAnalysis';
-import { InterventionRecommendations } from './InterventionRecommendations';
 import { ImprovementMetricsCard } from './ImprovementMetricsCard';
 import { MostImprovedStudents } from './MostImprovedStudents';
 import { WeeklyTrendsChart } from './WeeklyTrendsChart';
@@ -41,9 +39,6 @@ export function OverviewTab() {
 
       {/* Cohort Analysis (Collapsible) */}
       <CohortAnalysis />
-
-      {/* Intervention Recommendations */}
-      <InterventionRecommendations />
     </div>
   );
 }
