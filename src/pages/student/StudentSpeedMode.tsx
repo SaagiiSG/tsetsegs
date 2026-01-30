@@ -80,7 +80,7 @@ function ScrollPicker({ values, selectedValue, onChange, label }: ScrollPickerPr
         {/* Scrollable list */}
         <div
           ref={containerRef}
-          className="h-full overflow-y-auto scrollbar-hide snap-y snap-mandatory"
+          className="h-full overflow-y-auto overflow-x-hidden scrollbar-hide snap-y snap-mandatory"
           onScroll={handleScroll}
           style={{ 
             paddingTop: itemHeight,
