@@ -4,13 +4,15 @@ import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { useEffect } from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
+import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
 
-export function StudentLayout() {
+function StudentLayoutContent() {
   const { student, isLoading } = useStudentAuth();
   const { tier } = useStudentTier();
+  const { setOpenMobile, setOpen } = useSidebar();
 
   // Security: Prevent screenshots (CSS-based)
   useEffect(() => {
@@ -22,6 +24,21 @@ export function StudentLayout() {
       document.body.style.webkitUserSelect = '';
     };
   }, []);
+
+  // Collapse sidebar when calculator snaps left
+  useEffect(() => {
+    const handleSnapChange = (e: CustomEvent<{ snapSide: SnapSide }>) => {
+      if (e.detail.snapSide === 'left') {
+        setOpen(false);
+        setOpenMobile(false);
+      }
+    };
+
+    window.addEventListener(CALCULATOR_SNAP_EVENT, handleSnapChange as EventListener);
+    return () => {
+      window.removeEventListener(CALCULATOR_SNAP_EVENT, handleSnapChange as EventListener);
+    };
+  }, [setOpen, setOpenMobile]);
 
   if (isLoading) {
     return (
@@ -36,46 +53,52 @@ export function StudentLayout() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex w-full">
-        <StudentDashboardSidebar />
-        
-        <main className="flex-1 pb-20 md:pb-0 overflow-auto">
-          {/* Header with sidebar trigger and tier badge */}
-          <div className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <span className="font-semibold text-sm">SAT Practice</span>
-            </div>
-            <div 
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-              style={{ 
-                backgroundColor: `${TIER_COLORS[tier]}20`,
-                color: TIER_COLORS[tier],
-                border: `1.5px solid ${TIER_COLORS[tier]}40`
-              }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: TIER_COLORS[tier] }}
-              />
-              {TIER_DISPLAY_NAMES[tier]}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex w-full">
+      <StudentDashboardSidebar />
+      
+      <main className="flex-1 pb-20 md:pb-0 overflow-auto">
+        {/* Header with sidebar trigger and tier badge */}
+        <div className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger />
+            <span className="font-semibold text-sm">SAT Practice</span>
           </div>
-          
-          <Outlet />
-        </main>
+          <div 
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+            style={{ 
+              backgroundColor: `${TIER_COLORS[tier]}20`,
+              color: TIER_COLORS[tier],
+              border: `1.5px solid ${TIER_COLORS[tier]}40`
+            }}
+          >
+            <div 
+              className="w-2 h-2 rounded-full" 
+              style={{ backgroundColor: TIER_COLORS[tier] }}
+            />
+            {TIER_DISPLAY_NAMES[tier]}
+          </div>
+        </div>
         
-        <StudentBottomNav />
-        
-        {/* Security overlay */}
-        <div 
-          className="fixed inset-0 pointer-events-none z-40 opacity-0 select-none"
-          style={{ 
-            background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.01) 10px, rgba(0,0,0,0.01) 20px)'
-          }}
-        />
-      </div>
+        <Outlet />
+      </main>
+      
+      <StudentBottomNav />
+      
+      {/* Security overlay */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-40 opacity-0 select-none"
+        style={{ 
+          background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.01) 10px, rgba(0,0,0,0.01) 20px)'
+        }}
+      />
+    </div>
+  );
+}
+
+export function StudentLayout() {
+  return (
+    <SidebarProvider>
+      <StudentLayoutContent />
     </SidebarProvider>
   );
 }
