@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, FileText, Loader2, CheckCircle, XCircle, Edit2, Save, Trash2 } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, XCircle, Edit2, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -205,17 +205,35 @@ export function CBQuestionImport() {
     setParsedQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Check if a question has empty options (for multiple choice)
+  const hasEmptyOptions = (q: ParsedQuestion): boolean => {
+    const isMultipleChoice = ['A', 'B', 'C', 'D'].includes(q.correct_answer?.toUpperCase() || '');
+    if (!isMultipleChoice) return false;
+    
+    return (
+      (!q.option_a || q.option_a.trim() === '') &&
+      (!q.option_b || q.option_b.trim() === '') &&
+      (!q.option_c || q.option_c.trim() === '') &&
+      (!q.option_d || q.option_d.trim() === '')
+    );
+  };
+
+  const questionsWithEmptyOptions = parsedQuestions.filter(q => 
+    q.status === 'success' && hasEmptyOptions(q)
+  );
+
   const saveMutation = useMutation({
     mutationFn: async (questions: ParsedQuestion[]) => {
-      // Filter only valid questions with required fields
+      // Filter only valid questions with required fields AND non-empty options
       const validQuestions = questions.filter(q => 
         q.status === 'success' && 
         q.question_text && 
-        q.correct_answer // Just need a non-empty answer
+        q.correct_answer &&
+        !hasEmptyOptions(q)
       );
       
       if (validQuestions.length === 0) {
-        throw new Error('No valid questions to save. Ensure all questions have text and a correct answer.');
+        throw new Error('No valid questions to save. Ensure all questions have text, a correct answer, and non-empty options.');
       }
 
       // Fetch categories for mapping
@@ -296,10 +314,12 @@ export function CBQuestionImport() {
   const validCount = parsedQuestions.filter(q => 
     q.status === 'success' && 
     q.question_text && 
-    q.correct_answer
+    q.correct_answer &&
+    !hasEmptyOptions(q)
   ).length;
   const successCount = parsedQuestions.filter(q => q.status === 'success').length;
   const errorCount = parsedQuestions.filter(q => q.status === 'error').length;
+  const emptyOptionsCount = questionsWithEmptyOptions.length;
 
   return (
     <div className="space-y-6">
@@ -376,10 +396,16 @@ export function CBQuestionImport() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="default" className="bg-green-500">
+                  <Badge variant="default" className="bg-green-600">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     {successCount} Success
                   </Badge>
+                  {emptyOptionsCount > 0 && (
+                    <Badge variant="outline" className="border-amber-500 text-amber-600">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      {emptyOptionsCount} Empty Options
+                    </Badge>
+                  )}
                   {errorCount > 0 && (
                     <Badge variant="destructive">
                       <XCircle className="h-3 w-3 mr-1" />
@@ -417,13 +443,27 @@ export function CBQuestionImport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {parsedQuestions.map((q, idx) => (
-                    <TableRow key={idx} className={q.status === 'error' ? 'bg-destructive/10' : ''}>
+                  {parsedQuestions.map((q, idx) => {
+                    const isEmpty = hasEmptyOptions(q);
+                    return (
+                    <TableRow 
+                      key={idx} 
+                      className={
+                        q.status === 'error' ? 'bg-destructive/10' : 
+                        isEmpty ? 'bg-amber-500/10' : ''
+                      }
+                    >
                       <TableCell>{q.pageNumber}</TableCell>
                       <TableCell>
                         {q.status === 'pending' && <Badge variant="secondary">Pending</Badge>}
                         {q.status === 'parsing' && <Loader2 className="h-4 w-4 animate-spin" />}
-                        {q.status === 'success' && <Badge className="bg-green-500">OK</Badge>}
+                        {q.status === 'success' && !isEmpty && <Badge className="bg-green-600">OK</Badge>}
+                        {q.status === 'success' && isEmpty && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Empty
+                          </Badge>
+                        )}
                         {q.status === 'error' && <Badge variant="destructive">Error</Badge>}
                       </TableCell>
                       <TableCell>
@@ -531,7 +571,8 @@ export function CBQuestionImport() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>
