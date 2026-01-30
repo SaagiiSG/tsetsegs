@@ -1,8 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileQuestion, AlertTriangle, HelpCircle, TrendingUp } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useQuestionPerformanceData } from '@/hooks/useAdminAnalytics';
+import { QuestionTable } from './QuestionTable';
+import { DifficultyCalibrationAlerts } from './DifficultyCalibrationAlerts';
+import { TimeOutliersTable } from './TimeOutliersTable';
+import { WrongAnswerPatterns } from './WrongAnswerPatterns';
+import { NeverAttemptedSection } from './NeverAttemptedSection';
 
 export function QuestionPerformanceTab() {
+  const { data } = useQuestionPerformanceData(1, 50);
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -13,7 +20,7 @@ export function QuestionPerformanceTab() {
             <FileQuestion className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-16" />
+            <p className="text-2xl font-bold">{data?.total || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">Active in question bank</p>
           </CardContent>
         </Card>
@@ -24,7 +31,7 @@ export function QuestionPerformanceTab() {
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-16" />
+            <p className="text-2xl font-bold">{data?.questions?.filter(q => q.status === 'needs_review').length || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">Flagged or low accuracy</p>
           </CardContent>
         </Card>
@@ -35,7 +42,7 @@ export function QuestionPerformanceTab() {
             <HelpCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-16" />
+            <p className="text-2xl font-bold">{data?.questions?.filter(q => q.status === 'never_attempted').length || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">No student attempts</p>
           </CardContent>
         </Card>
@@ -46,74 +53,21 @@ export function QuestionPerformanceTab() {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-16" />
+            <p className="text-2xl font-bold">{data?.questions?.filter(q => q.accuracy >= 90).length || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">90%+ accuracy rate</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Question Table Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Question Performance Table</CardTitle>
-          <CardDescription>
-            Detailed question-level analytics with filtering and sorting
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">Question table with pagination coming in Phase 3</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Two Column Layout */}
+      <QuestionTable />
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Difficulty Calibration Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Difficulty Calibration Alerts</CardTitle>
-            <CardDescription>
-              Questions with mismatched difficulty settings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">Calibration alerts coming in Phase 3</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Wrong Answer Patterns */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Wrong Answer Patterns</CardTitle>
-            <CardDescription>
-              Common mistakes and error patterns
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">Error patterns coming in Phase 3</p>
-            </div>
-          </CardContent>
-        </Card>
+        <DifficultyCalibrationAlerts />
+        <WrongAnswerPatterns />
       </div>
 
-      {/* Time Outliers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Time Outliers</CardTitle>
-          <CardDescription>
-            Questions taking significantly longer than expected
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">Time outliers analysis coming in Phase 3</p>
-          </div>
-        </CardContent>
-      </Card>
+      <TimeOutliersTable />
+      <NeverAttemptedSection />
     </div>
   );
 }
