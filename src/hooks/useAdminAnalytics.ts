@@ -980,6 +980,8 @@ interface StudentProfile {
   riskScore: number;
   riskLevel: 'low' | 'medium' | 'high';
   lastLogin: string | null;
+  isBlocked: boolean;
+  linkedStudentId: string | null;
 }
 
 export function useStudentProfileData(studentId: string) {
@@ -992,6 +994,8 @@ export function useStudentProfileData(studentId: string) {
           id,
           phone_number,
           last_login,
+          is_blocked,
+          linked_student_id,
           students (
             name,
             first_name,
@@ -1048,6 +1052,8 @@ export function useStudentProfileData(studentId: string) {
         riskScore,
         riskLevel,
         lastLogin: (account as any).last_login,
+        isBlocked: (account as any).is_blocked || false,
+        linkedStudentId: (account as any).linked_student_id,
       };
     },
     staleTime: 2 * 60 * 1000,
