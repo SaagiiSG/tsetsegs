@@ -253,6 +253,7 @@ export function useStudentProfile() {
         .from('student_sprint_rankings')
         .select(`
           current_tier,
+          reserved_next_tier,
           total_points,
           final_rank,
           sprints!inner (
@@ -265,14 +266,22 @@ export function useStudentProfile() {
 
       if (error) throw error;
 
-      return (data || []).map(r => ({
-        sprint: `Season ${r.sprints.season_number} - Sprint ${r.sprints.sprint_number}`,
-        sprintNumber: r.sprints.sprint_number,
-        seasonNumber: r.sprints.season_number,
-        rank: r.current_tier as TierType,
-        finalPoints: r.total_points,
-        position: r.final_rank || 0
-      }));
+      return (data || []).map(r => {
+        // Use reserved_next_tier if it's higher than current_tier (represents actual advancement)
+        const tierOrder: TierType[] = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
+        const currentTierIdx = tierOrder.indexOf(r.current_tier as TierType);
+        const nextTierIdx = r.reserved_next_tier ? tierOrder.indexOf(r.reserved_next_tier as TierType) : -1;
+        const displayTier = nextTierIdx > currentTierIdx ? r.reserved_next_tier : r.current_tier;
+        
+        return {
+          sprint: `Season ${r.sprints.season_number} - Sprint ${r.sprints.sprint_number}`,
+          sprintNumber: r.sprints.sprint_number,
+          seasonNumber: r.sprints.season_number,
+          rank: displayTier as TierType,
+          finalPoints: r.total_points,
+          position: r.final_rank || 0
+        };
+      });
     },
     enabled: !!student?.id
   });
