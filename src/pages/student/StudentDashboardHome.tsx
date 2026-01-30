@@ -88,58 +88,26 @@ export default function StudentDashboardHome() {
     queryFn: async () => {
       if (!student?.id) return null;
 
-      // Fetch 68 problems - get ORIGINAL questions only (is_original = true)
-      const { data: originalQuestions68 } = await supabase
+      // Fetch ALL 68 problems (original + variations treated as separate)
+      const { data: questions68 } = await supabase
         .from('questions')
         .select('id')
         .eq('question_set', '68')
-        .eq('is_active', true)
-        .eq('is_original', true);
-
-      const originalQuestion68Ids = originalQuestions68?.map(q => q.id) || [];
-      const total68Count = originalQuestion68Ids.length;
-
-      // Also get all variations that belong to these originals
-      const { data: allQuestions68 } = await supabase
-        .from('questions')
-        .select('id, parent_question_id, is_original')
-        .eq('question_set', '68')
         .eq('is_active', true);
 
-      // Build a map of original question ID -> all related question IDs (original + variations)
-      const originalToAllIds: Record<string, string[]> = {};
-      originalQuestion68Ids.forEach(origId => {
-        originalToAllIds[origId] = [origId]; // Start with the original
-      });
-      allQuestions68?.forEach(q => {
-        if (!q.is_original && q.parent_question_id && originalToAllIds[q.parent_question_id]) {
-          originalToAllIds[q.parent_question_id].push(q.id);
-        }
-      });
+      const question68Ids = questions68?.map(q => q.id) || [];
+      const total68Count = question68Ids.length;
 
-      // Get all question IDs in the 68 set (original + variations)
-      const allQuestion68Ids = allQuestions68?.map(q => q.id) || [];
-
-      // Fetch correct attempts for any question in the 68 set
+      // Count correct attempts - each question (original or variation) counts separately
       const { data: attempts68 } = await supabase
         .from('student_attempts')
         .select('question_id')
         .eq('student_account_id', student.id)
         .eq('is_correct', true)
-        .in('question_id', allQuestion68Ids.length > 0 ? allQuestion68Ids : ['00000000-0000-0000-0000-000000000000']);
+        .in('question_id', question68Ids.length > 0 ? question68Ids : ['00000000-0000-0000-0000-000000000000']);
 
-      const correctQuestionIds = new Set(attempts68?.map(a => a.question_id) || []);
-
-      // Count how many ORIGINAL questions have been completed (via original or any variation)
-      let completed68Count = 0;
-      originalQuestion68Ids.forEach(origId => {
-        const relatedIds = originalToAllIds[origId] || [origId];
-        const hasCorrect = relatedIds.some(id => correctQuestionIds.has(id));
-        if (hasCorrect) {
-          completed68Count++;
-        }
-      });
-
+      const unique68Correct = new Set(attempts68?.map(a => a.question_id) || []);
+      const completed68Count = unique68Correct.size;
       const completion68 = total68Count > 0
         ? Math.round((completed68Count / total68Count) * 100) 
         : 0;
