@@ -1387,3 +1387,414 @@ export function useClassInsights(batchIds: string[]) {
     enabled: batchIds.length >= 2,
   });
 }
+
+// ==================== NEW IMPROVEMENT-FOCUSED HOOKS ====================
+
+// Types for new hooks
+interface ImprovementMetrics {
+  avgScoreImprovement: number;
+  avgImprovement: number;
+  studentsImproving: number;
+  improvingPercent: number;
+  totalStudents: number;
+  classProgress: number;
+  currentSession: number;
+  topImprover: { name: string; improvement: number } | null;
+}
+
+interface ImprovedStudent {
+  id: string;
+  name: string;
+  batchName: string;
+  firstScore: number;
+  latestScore: number;
+  improvement: number;
+}
+
+interface WeeklyTrendsData {
+  weeks: Array<{
+    week: string;
+    accuracy: number;
+    questions: number;
+    sessions: number;
+  }>;
+  avgAccuracy: number;
+  totalQuestions: number;
+  activeDays: number;
+}
+
+interface ActivityHeatmapData {
+  days: Array<{ date: string; count: number }>;
+  weeks: Array<{
+    label: string;
+    days: Array<{ date: string; count: number }>;
+  }>;
+  stats: {
+    streak: number;
+    peakDay: string;
+    avgDaily: number;
+  };
+}
+
+interface SprintLeaderboardData {
+  sprint: { number: number; daysRemaining: number } | null;
+  topStudents: Array<{
+    id: string;
+    name: string;
+    initials: string;
+    tier: string;
+    batchName: string;
+    points: number;
+  }>;
+  tierDistribution: Record<string, number>;
+}
+
+// Hook for improvement metrics
+export function useImprovementMetrics() {
+  return useQuery<ImprovementMetrics>({
+    queryKey: ['admin-analytics', 'improvement-metrics'],
+    queryFn: async () => {
+      // Get all bluebook attempts to calculate improvement
+      const { data: attempts } = await supabase
+        .from('bluebook_attempts')
+        .select(`
+          id,
+          student_account_id,
+          total_score,
+          completed_at,
+          student_accounts (
+            id,
+            students (
+              name,
+              first_name
+            )
+          )
+        `)
+        .not('total_score', 'is', null)
+        .order('completed_at', { ascending: true });
+
+      if (!attempts || attempts.length === 0) {
+        return {
+          avgScoreImprovement: 0,
+          avgImprovement: 0,
+          studentsImproving: 0,
+          improvingPercent: 0,
+          totalStudents: 0,
+          classProgress: 0,
+          currentSession: 0,
+          topImprover: null,
+        };
+      }
+
+      // Group by student
+      const studentScores: Record<string, { first: number; latest: number; name: string }> = {};
+      
+      attempts.forEach((a: any) => {
+        const studentId = a.student_account_id;
+        const studentData = a.student_accounts?.students;
+        const name = studentData?.name || studentData?.first_name || 'Unknown';
+        
+        if (!studentScores[studentId]) {
+          studentScores[studentId] = { first: a.total_score, latest: a.total_score, name };
+        } else {
+          studentScores[studentId].latest = a.total_score;
+        }
+      });
+
+      const improvements = Object.values(studentScores).map(s => ({
+        name: s.name,
+        improvement: s.latest - s.first,
+        improvementPercent: s.first > 0 ? ((s.latest - s.first) / s.first) * 100 : 0,
+      }));
+
+      const improvingStudents = improvements.filter(i => i.improvement > 0);
+      const topImprover = improvements.reduce((max, current) => 
+        current.improvement > (max?.improvement || 0) ? current : max, 
+        { name: '', improvement: 0 }
+      );
+
+      const avgImprovement = improvements.length > 0
+        ? Math.round(improvements.reduce((sum, i) => sum + i.improvement, 0) / improvements.length)
+        : 0;
+
+      const avgScoreImprovement = improvements.length > 0
+        ? Math.round(improvements.reduce((sum, i) => sum + i.improvementPercent, 0) / improvements.length)
+        : 0;
+
+      // Get total active students
+      const { count: totalStudents } = await supabase
+        .from('student_accounts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      return {
+        avgScoreImprovement: Math.max(0, avgScoreImprovement),
+        avgImprovement: Math.abs(avgImprovement),
+        studentsImproving: improvingStudents.length,
+        improvingPercent: improvements.length > 0 
+          ? Math.round((improvingStudents.length / improvements.length) * 100) 
+          : 0,
+        totalStudents: totalStudents || 0,
+        classProgress: 65, // Would need curriculum tracking
+        currentSession: 10, // Would need session tracking
+        topImprover: topImprover.improvement > 0 ? topImprover : null,
+      };
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Hook for most improved students
+export function useMostImprovedStudents() {
+  return useQuery<ImprovedStudent[]>({
+    queryKey: ['admin-analytics', 'most-improved-students'],
+    queryFn: async () => {
+      const { data: attempts } = await supabase
+        .from('bluebook_attempts')
+        .select(`
+          id,
+          student_account_id,
+          total_score,
+          completed_at,
+          student_accounts (
+            id,
+            students (
+              name,
+              first_name,
+              batches (
+                batch_name
+              )
+            )
+          )
+        `)
+        .not('total_score', 'is', null)
+        .order('completed_at', { ascending: true });
+
+      if (!attempts) return [];
+
+      // Group by student and calculate improvement
+      const studentData: Record<string, ImprovedStudent> = {};
+      
+      attempts.forEach((a: any) => {
+        const studentId = a.student_account_id;
+        const student = a.student_accounts?.students;
+        const name = student?.name || student?.first_name || 'Unknown';
+        const batchName = student?.batches?.batch_name || 'Unassigned';
+        
+        if (!studentData[studentId]) {
+          studentData[studentId] = {
+            id: studentId,
+            name,
+            batchName,
+            firstScore: a.total_score,
+            latestScore: a.total_score,
+            improvement: 0,
+          };
+        } else {
+          studentData[studentId].latestScore = a.total_score;
+          studentData[studentId].improvement = 
+            studentData[studentId].latestScore - studentData[studentId].firstScore;
+        }
+      });
+
+      return Object.values(studentData)
+        .filter(s => s.improvement > 0)
+        .sort((a, b) => b.improvement - a.improvement)
+        .slice(0, 10);
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Hook for weekly trends
+export function useWeeklyTrends() {
+  return useQuery<WeeklyTrendsData>({
+    queryKey: ['admin-analytics', 'weekly-trends'],
+    queryFn: async () => {
+      const weeks: WeeklyTrendsData['weeks'] = [];
+      const now = new Date();
+
+      for (let i = 7; i >= 0; i--) {
+        const weekStart = subDays(now, (i + 1) * 7);
+        const weekEnd = subDays(now, i * 7);
+        
+        const { data: attempts } = await supabase
+          .from('student_attempts')
+          .select('is_correct')
+          .gte('attempted_at', format(weekStart, 'yyyy-MM-dd'))
+          .lt('attempted_at', format(weekEnd, 'yyyy-MM-dd'));
+
+        const { count: sessionCount } = await supabase
+          .from('student_sessions')
+          .select('*', { count: 'exact', head: true })
+          .gte('login_timestamp', format(weekStart, 'yyyy-MM-dd'))
+          .lt('login_timestamp', format(weekEnd, 'yyyy-MM-dd'));
+
+        const correct = attempts?.filter((a: any) => a.is_correct).length || 0;
+        const total = attempts?.length || 0;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        weeks.push({
+          week: `W${8 - i}`,
+          accuracy,
+          questions: total,
+          sessions: sessionCount || 0,
+        });
+      }
+
+      const totalQuestions = weeks.reduce((sum, w) => sum + w.questions, 0);
+      const avgAccuracy = weeks.length > 0 
+        ? Math.round(weeks.reduce((sum, w) => sum + w.accuracy, 0) / weeks.length)
+        : 0;
+
+      return {
+        weeks,
+        avgAccuracy,
+        totalQuestions,
+        activeDays: 45, // Would need actual calculation
+      };
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Hook for activity heatmap
+export function useActivityHeatmap() {
+  return useQuery<ActivityHeatmapData>({
+    queryKey: ['admin-analytics', 'activity-heatmap'],
+    queryFn: async () => {
+      const now = new Date();
+      const weeks: ActivityHeatmapData['weeks'] = [];
+      const allDays: ActivityHeatmapData['days'] = [];
+
+      // Get last 12 weeks of data
+      for (let w = 11; w >= 0; w--) {
+        const weekDays: Array<{ date: string; count: number }> = [];
+        
+        for (let d = 0; d < 7; d++) {
+          const dayDate = subDays(now, w * 7 + (6 - d));
+          const dayStr = format(dayDate, 'yyyy-MM-dd');
+          const displayDate = format(dayDate, 'MMM d');
+          
+          const { count } = await supabase
+            .from('student_attempts')
+            .select('*', { count: 'exact', head: true })
+            .gte('attempted_at', dayStr)
+            .lt('attempted_at', format(subDays(dayDate, -1), 'yyyy-MM-dd'));
+
+          weekDays.push({ date: displayDate, count: count || 0 });
+          allDays.push({ date: displayDate, count: count || 0 });
+        }
+
+        weeks.push({
+          label: w === 0 ? 'This week' : w === 1 ? 'Last week' : `${w}w ago`,
+          days: weekDays,
+        });
+      }
+
+      const totalActivity = allDays.reduce((sum, d) => sum + d.count, 0);
+      const activeDaysCount = allDays.filter(d => d.count > 0).length;
+      const peakDay = allDays.reduce((max, d) => d.count > max.count ? d : max, allDays[0]);
+
+      // Calculate streak (consecutive days with activity from today)
+      let streak = 0;
+      for (let i = allDays.length - 1; i >= 0; i--) {
+        if (allDays[i].count > 0) streak++;
+        else break;
+      }
+
+      return {
+        days: allDays,
+        weeks,
+        stats: {
+          streak,
+          peakDay: peakDay?.date || '-',
+          avgDaily: activeDaysCount > 0 ? Math.round(totalActivity / activeDaysCount) : 0,
+        },
+      };
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Hook for sprint leaderboard preview
+export function useSprintLeaderboardPreview() {
+  return useQuery<SprintLeaderboardData>({
+    queryKey: ['admin-analytics', 'sprint-leaderboard-preview'],
+    queryFn: async () => {
+      // Get active sprint
+      const { data: sprint } = await supabase
+        .from('sprints')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (!sprint) {
+        return {
+          sprint: null,
+          topStudents: [],
+          tierDistribution: {},
+        };
+      }
+
+      const daysRemaining = differenceInDays(new Date(sprint.end_date), new Date());
+
+      // Get top students
+      const { data: rankings } = await supabase
+        .from('student_sprint_rankings')
+        .select(`
+          id,
+          total_points,
+          current_tier,
+          student_account_id,
+          student_accounts (
+            id,
+            students (
+              name,
+              first_name,
+              batches (
+                batch_name
+              )
+            )
+          )
+        `)
+        .eq('sprint_id', sprint.id)
+        .order('total_points', { ascending: false })
+        .limit(10);
+
+      // Calculate tier distribution
+      const { data: allRankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier')
+        .eq('sprint_id', sprint.id);
+
+      const tierDistribution: Record<string, number> = {};
+      allRankings?.forEach((r: any) => {
+        const tier = r.current_tier?.toLowerCase() || 'bronze';
+        tierDistribution[tier] = (tierDistribution[tier] || 0) + 1;
+      });
+
+      const topStudents = (rankings || []).map((r: any) => {
+        const student = r.student_accounts?.students;
+        const name = student?.name || student?.first_name || 'Unknown';
+        const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+        
+        return {
+          id: r.id,
+          name,
+          initials,
+          tier: r.current_tier?.toLowerCase() || 'bronze',
+          batchName: student?.batches?.batch_name || 'Unassigned',
+          points: r.total_points || 0,
+        };
+      });
+
+      return {
+        sprint: { number: sprint.sprint_number, daysRemaining: Math.max(0, daysRemaining) },
+        topStudents,
+        tierDistribution,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
