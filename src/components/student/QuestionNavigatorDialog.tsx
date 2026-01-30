@@ -89,18 +89,26 @@ export function QuestionNavigatorDialog({
   });
 
   // Fetch all questions for the current set (excluding bluebook)
+  // For 68 set: include ALL questions (original + variations as separate standalone problems)
   const { data: questions } = useQuery({
     queryKey: ['navigator-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       let query = supabase
         .from('questions')
         .select('id, question_id, question_set')
-        .eq('is_original', true)
         .eq('is_active', true)
         .eq('subject', subject);
       
-      if (questionSet) {
-        query = query.eq('question_set', questionSet === 'CB' ? 'CollegeBoard' : questionSet);
+      // For 68 set: include ALL questions (no is_original filter)
+      // For other sets: only show originals
+      if (questionSet === '68') {
+        query = query.eq('question_set', '68');
+      } else if (questionSet) {
+        query = query
+          .eq('question_set', questionSet === 'CB' ? 'CollegeBoard' : questionSet)
+          .eq('is_original', true);
+      } else {
+        query = query.eq('is_original', true);
       }
       
       const { data, error } = await query.order('question_id');
