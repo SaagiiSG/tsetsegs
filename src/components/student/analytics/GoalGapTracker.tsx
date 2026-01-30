@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, TrendingUp, Crosshair, Settings2, Check } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,18 +20,64 @@ interface GoalGapTrackerProps {
 type GoalType = 'full' | 'math-only';
 
 const TIME_PRESETS = [30, 40, 60, 90];
+const STORAGE_KEY = 'goal-gap-tracker-settings';
+
+interface SavedGoalSettings {
+  goalType: GoalType;
+  targetScore: number;
+  targetTime: number;
+}
+
+function loadSavedSettings(defaultTarget: number): SavedGoalSettings {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        goalType: parsed.goalType || 'full',
+        targetScore: parsed.targetScore || defaultTarget,
+        targetTime: parsed.targetTime || 40
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load goal settings:', e);
+  }
+  return { goalType: 'full', targetScore: defaultTarget, targetTime: 40 };
+}
+
+function saveSettings(settings: SavedGoalSettings) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Failed to save goal settings:', e);
+  }
+}
 
 export function GoalGapTracker({ currentScore, targetScore: initialTarget, topicAccuracy }: GoalGapTrackerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [goalType, setGoalType] = useState<GoalType>('full');
-  const [customTarget, setCustomTarget] = useState(initialTarget);
-  const [targetTime, setTargetTime] = useState(40); // seconds per question
-  const [savedGoalType, setSavedGoalType] = useState<GoalType>('full');
-  const [savedTarget, setSavedTarget] = useState(initialTarget);
-  const [savedTargetTime, setSavedTargetTime] = useState(40);
+  
+  // Load saved settings on mount
+  const [savedSettings, setSavedSettings] = useState<SavedGoalSettings>(() => 
+    loadSavedSettings(initialTarget)
+  );
+  
+  // Form state (for editing in dialog)
+  const [goalType, setGoalType] = useState<GoalType>(savedSettings.goalType);
+  const [customTarget, setCustomTarget] = useState(savedSettings.targetScore);
+  const [targetTime, setTargetTime] = useState(savedSettings.targetTime);
+  
+  // Reset form state when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setGoalType(savedSettings.goalType);
+      setCustomTarget(savedSettings.targetScore);
+      setTargetTime(savedSettings.targetTime);
+    }
+  }, [isOpen, savedSettings]);
 
-  const targetScore = savedTarget;
-  const isMathOnly = savedGoalType === 'math-only';
+  const targetScore = savedSettings.targetScore;
+  const isMathOnly = savedSettings.goalType === 'math-only';
+  const savedTargetTime = savedSettings.targetTime;
 
   const gap = targetScore - currentScore;
   const maxScore = isMathOnly ? 800 : 1600;
@@ -96,9 +142,13 @@ export function GoalGapTracker({ currentScore, targetScore: initialTarget, topic
   }
 
   const handleSaveGoal = () => {
-    setSavedGoalType(goalType);
-    setSavedTarget(customTarget);
-    setSavedTargetTime(targetTime);
+    const newSettings: SavedGoalSettings = {
+      goalType,
+      targetScore: customTarget,
+      targetTime
+    };
+    saveSettings(newSettings);
+    setSavedSettings(newSettings);
     setIsOpen(false);
   };
 
