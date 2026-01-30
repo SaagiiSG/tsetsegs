@@ -18,12 +18,20 @@ export interface LeaderboardEntry {
   level: number;
   totalPoints: number;
   currentTier: TierType;
+  groupNumber: number;
   isAdvancing: boolean;
   isAtRisk: boolean;
   isTop1: boolean;
   reservedNextTier: string | null;
   pointsBreakdown: PointsBreakdown;
 }
+
+export interface GroupInfo {
+  groupNumber: number;
+  totalGroups: number;
+}
+
+const MAX_GROUP_SIZE = 40;
 
 export interface SprintInfo {
   id: string;
@@ -240,7 +248,40 @@ export function useLeaderboard(selectedTier?: TierType) {
 
       const startingTier = previousRanking?.reserved_next_tier || previousRanking?.current_tier || 'unranked';
 
-      // Enroll in new sprint
+      // Get current group counts for this tier to assign appropriate group
+      const { data: groupCounts } = await supabase
+        .from('student_sprint_rankings')
+        .select('group_number')
+        .eq('sprint_id', activeSprint.id)
+        .eq('current_tier', startingTier);
+
+      // Calculate which group to assign
+      let assignedGroup = 1;
+      if (groupCounts && groupCounts.length > 0) {
+        // Count students per group
+        const groupMap: Record<number, number> = {};
+        groupCounts.forEach(r => {
+          const g = r.group_number || 1;
+          groupMap[g] = (groupMap[g] || 0) + 1;
+        });
+
+        // Find first group with space (less than MAX_GROUP_SIZE)
+        const maxGroup = Math.max(...Object.keys(groupMap).map(Number));
+        let foundGroup = false;
+        for (let i = 1; i <= maxGroup; i++) {
+          if ((groupMap[i] || 0) < MAX_GROUP_SIZE) {
+            assignedGroup = i;
+            foundGroup = true;
+            break;
+          }
+        }
+        // If all groups are full, create a new group
+        if (!foundGroup) {
+          assignedGroup = maxGroup + 1;
+        }
+      }
+
+      // Enroll in new sprint with assigned group
       const { data: newRanking, error } = await supabase
         .from('student_sprint_rankings')
         .insert({
@@ -248,7 +289,8 @@ export function useLeaderboard(selectedTier?: TierType) {
           student_account_id: student.id,
           current_tier: startingTier,
           total_points: 0,
-          is_top_1: false
+          is_top_1: false,
+          group_number: assignedGroup
         })
         .select()
         .single();
@@ -263,15 +305,35 @@ export function useLeaderboard(selectedTier?: TierType) {
     staleTime: Infinity // Only run once
   });
 
-  // Fetch current sprint leaderboard
-  const { data: leaderboard, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
-    queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier],
+  // Fetch current sprint leaderboard (filtered by user's group)
+  const { data: leaderboardData, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
+    queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier, student?.id],
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
-    queryFn: async (): Promise<LeaderboardEntry[]> => {
-      if (!activeSprint?.id) return [];
+    queryFn: async (): Promise<{ entries: LeaderboardEntry[]; groupInfo: GroupInfo | null }> => {
+      if (!activeSprint?.id) return { entries: [], groupInfo: null };
 
-      // Get all rankings for current sprint
+      // First, get the current user's group and tier
+      let userGroupNumber = 1;
+      let userTier: string | null = null;
+      
+      if (student?.id) {
+        const { data: userRanking } = await supabase
+          .from('student_sprint_rankings')
+          .select('group_number, current_tier')
+          .eq('sprint_id', activeSprint.id)
+          .eq('student_account_id', student.id)
+          .single();
+        
+        if (userRanking) {
+          userGroupNumber = userRanking.group_number || 1;
+          userTier = userRanking.current_tier;
+        }
+      }
+
+      // Get rankings for the user's tier and group
+      const tierToQuery = selectedTier || userTier || 'unranked';
+      
       let query = supabase
         .from('student_sprint_rankings')
         .select(`
@@ -281,6 +343,7 @@ export function useLeaderboard(selectedTier?: TierType) {
           total_points,
           is_top_1,
           reserved_next_tier,
+          group_number,
           student_accounts!inner (
             id,
             phone_number,
@@ -288,15 +351,23 @@ export function useLeaderboard(selectedTier?: TierType) {
           )
         `)
         .eq('sprint_id', activeSprint.id)
+        .eq('current_tier', tierToQuery)
+        .eq('group_number', userGroupNumber)
         .order('total_points', { ascending: false });
-
-      if (selectedTier) {
-        query = query.eq('current_tier', selectedTier);
-      }
 
       const { data: rankings, error } = await query;
 
       if (error) throw error;
+
+      // Get total groups count for this tier
+      const { data: allGroupsInTier } = await supabase
+        .from('student_sprint_rankings')
+        .select('group_number')
+        .eq('sprint_id', activeSprint.id)
+        .eq('current_tier', tierToQuery);
+
+      const uniqueGroups = new Set(allGroupsInTier?.map(r => r.group_number || 1));
+      const totalGroups = uniqueGroups.size || 1;
 
       // Get point transactions breakdown for each student
       const studentIds = rankings?.map(r => r.student_account_id) || [];
@@ -338,10 +409,13 @@ export function useLeaderboard(selectedTier?: TierType) {
         }
       });
 
-      return (rankings || []).map((ranking, index) => {
+      // Calculate cutoff based on group size (P1 wins within group)
+      const groupSize = rankings?.length || 0;
+      const cutoff = Math.min(TIER_PROMOTION_CUTOFFS[tierToQuery as TierType] || 30, Math.ceil(groupSize * 0.25)); // Top 25% or tier cutoff, whichever is smaller
+
+      const entries = (rankings || []).map((ranking, index) => {
         const linkedStudent = ranking.student_accounts?.linked_student as { first_name: string; last_name: string } | null;
         const tier = ranking.current_tier as TierType;
-        const cutoff = TIER_PROMOTION_CUTOFFS[tier] || 30;
         const rank = index + 1;
 
         return {
@@ -353,6 +427,7 @@ export function useLeaderboard(selectedTier?: TierType) {
           level: calculateLevel(ranking.total_points),
           totalPoints: ranking.total_points,
           currentTier: tier,
+          groupNumber: ranking.group_number || 1,
           isAdvancing: rank <= cutoff,
           isAtRisk: rank === cutoff + 1,
           isTop1: ranking.is_top_1 || rank === 1,
@@ -366,10 +441,18 @@ export function useLeaderboard(selectedTier?: TierType) {
           }
         };
       });
+
+      return { 
+        entries, 
+        groupInfo: { groupNumber: userGroupNumber, totalGroups } 
+      };
     },
     enabled: !!activeSprint?.id,
     refetchInterval: 30000 // Refetch every 30 seconds
   });
+
+  const leaderboard = leaderboardData?.entries || [];
+  const groupInfo = leaderboardData?.groupInfo || null;
 
   // Fetch all-time leaderboard
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
@@ -473,11 +556,12 @@ export function useLeaderboard(selectedTier?: TierType) {
     lastEndedSprint,
     nextSprint,
     lastSprintResults,
-    leaderboard: leaderboard || [],
+    leaderboard,
     allTimeLeaderboard: allTimeLeaderboard || [],
     currentUserEntry,
     currentUserAllTime,
     currentUserRank,
+    groupInfo,
     pointsToAdvance: getPointsToAdvance(),
     pointsToTop1: getPointsToTop1(),
     isLoading: sprintLoading || leaderboardLoading,

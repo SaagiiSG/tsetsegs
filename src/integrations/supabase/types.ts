@@ -1701,6 +1701,7 @@ export type Database = {
           created_at: string
           current_tier: string
           final_rank: number | null
+          group_number: number | null
           id: string
           is_top_1: boolean
           reserved_next_tier: string | null
@@ -1713,6 +1714,7 @@ export type Database = {
           created_at?: string
           current_tier?: string
           final_rank?: number | null
+          group_number?: number | null
           id?: string
           is_top_1?: boolean
           reserved_next_tier?: string | null
@@ -1725,6 +1727,7 @@ export type Database = {
           created_at?: string
           current_tier?: string
           final_rank?: number | null
+          group_number?: number | null
           id?: string
           is_top_1?: boolean
           reserved_next_tier?: string | null

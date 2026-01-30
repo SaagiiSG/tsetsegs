@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     // Get all rankings for this sprint, ordered by points
     const { data: rankings, error: rankingsError } = await supabase
       .from('student_sprint_rankings')
-      .select('id, student_account_id, current_tier, total_points')
+      .select('id, student_account_id, current_tier, total_points, group_number')
       .eq('sprint_id', sprintId)
       .order('total_points', { ascending: false })
 
@@ -118,15 +118,17 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Group by tier
-    const byTier: Record<string, typeof rankings> = {}
+    // Group by tier AND group_number
+    const byTierAndGroup: Record<string, typeof rankings> = {}
     for (const r of rankings) {
       const tier = r.current_tier || 'unranked'
-      if (!byTier[tier]) byTier[tier] = []
-      byTier[tier].push(r)
+      const groupNumber = r.group_number || 1
+      const key = `${tier}:${groupNumber}`
+      if (!byTierAndGroup[key]) byTierAndGroup[key] = []
+      byTierAndGroup[key].push(r)
     }
 
-    // Calculate ranks within each tier and determine promotions
+    // Calculate ranks within each tier+group and determine promotions
     const updates: Array<{
       id: string
       final_rank: number
@@ -134,17 +136,23 @@ Deno.serve(async (req) => {
       reserved_next_tier: string
       student_account_id: string
       current_tier: string
+      group_number: number
     }> = []
 
-    for (const tier of Object.keys(byTier)) {
-      const tierRankings = byTier[tier]
+    for (const key of Object.keys(byTierAndGroup)) {
+      const [tier, groupNumStr] = key.split(':')
+      const groupNumber = parseInt(groupNumStr)
+      const groupRankings = byTierAndGroup[key]
       const cutoff = TIER_PROMOTION_CUTOFFS[tier] || 30
       const currentTierIndex = TIER_ORDER.indexOf(tier)
       const nextTier = currentTierIndex < TIER_ORDER.length - 1 ? TIER_ORDER[currentTierIndex + 1] : tier
 
-      tierRankings.forEach((ranking, index) => {
+      // Sort by points within group (should already be sorted, but ensure it)
+      groupRankings.sort((a, b) => b.total_points - a.total_points)
+
+      groupRankings.forEach((ranking, index) => {
         const rank = index + 1
-        const isTop1 = rank === 1
+        const isTop1 = rank === 1 // Each group has its own P1 winner
         const isAdvancing = rank <= cutoff && currentTierIndex < TIER_ORDER.length - 1
         const reservedNextTier = isAdvancing ? nextTier : tier
 
@@ -154,7 +162,8 @@ Deno.serve(async (req) => {
           is_top_1: isTop1,
           reserved_next_tier: reservedNextTier,
           student_account_id: ranking.student_account_id,
-          current_tier: tier
+          current_tier: tier,
+          group_number: groupNumber
         })
       })
     }
@@ -175,9 +184,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Award badges to top 1 finishers
+    // Award badges to ALL P1 finishers (one per group)
     const top1Finishers = updates.filter(u => u.is_top_1)
-    console.log(`Found ${top1Finishers.length} top 1 finishers to award badges`)
+    console.log(`Found ${top1Finishers.length} P1 finishers across all groups to award badges`)
 
     let badgesAwarded = 0
 
@@ -226,7 +235,7 @@ Deno.serve(async (req) => {
         if (error) {
           console.error(`Failed to update badge for ${finisher.student_account_id}:`, error)
         } else {
-          console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id}`)
+          console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id} (Group ${finisher.group_number})`)
           badgeAwarded = true
         }
       } else {
@@ -244,7 +253,7 @@ Deno.serve(async (req) => {
         if (error) {
           console.error(`Failed to insert badge for ${finisher.student_account_id}:`, error)
         } else {
-          console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id}`)
+          console.log(`Awarded badge ${badgeName} to ${finisher.student_account_id} (Group ${finisher.group_number})`)
           badgeAwarded = true
         }
       }
@@ -261,7 +270,8 @@ Deno.serve(async (req) => {
             metadata: { 
               badge_name: badgeName, 
               badge_id: badge.id,
-              tier: finisher.current_tier
+              tier: finisher.current_tier,
+              group_number: finisher.group_number
             }
           })
 
@@ -284,7 +294,7 @@ Deno.serve(async (req) => {
       // We need to find their highest reserved_next_tier (from P1 wins) and current tier
       const { data: seasonRankings, error: seasonError } = await supabase
         .from('student_sprint_rankings')
-        .select('student_account_id, current_tier, reserved_next_tier, is_top_1, sprint_id')
+        .select('student_account_id, current_tier, reserved_next_tier, is_top_1, sprint_id, group_number')
         .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!))
       
       if (seasonError) {
@@ -367,6 +377,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Get unique group count for summary
+    const uniqueGroups = new Set(updates.map(u => `${u.current_tier}:${u.group_number}`))
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -375,6 +388,8 @@ Deno.serve(async (req) => {
         seasonNumber,
         updated: updates.length,
         badgesAwarded,
+        totalGroups: uniqueGroups.size,
+        p1WinnersCount: top1Finishers.length,
         seasonEndDemotions: sprintNumber === 3 ? seasonEndDemotions : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

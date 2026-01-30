@@ -41,6 +41,7 @@ interface SprintRanking {
   total_points: number;
   final_rank: number | null;
   is_top_1: boolean;
+  group_number: number | null;
   student_accounts?: {
     phone_number: string;
     linked_student_id: string | null;
@@ -48,6 +49,13 @@ interface SprintRanking {
       name: string;
     } | null;
   };
+}
+
+interface GroupData {
+  groupNumber: number;
+  studentCount: number;
+  p1Winner: SprintRanking | null;
+  rankings: SprintRanking[];
 }
 
 function useCountdown(endDate: string | null) {
@@ -137,18 +145,40 @@ export default function SprintMonitor() {
     enabled: !!activeSprint,
   });
 
-  // Calculate tier breakdown
+  // Calculate tier breakdown with real group data
   const tierBreakdown = TIER_ORDER.map(tier => {
     const tierRankings = rankings?.filter(r => r.current_tier === tier) || [];
     const studentCount = tierRankings.length;
-    const groupCount = Math.ceil(studentCount / MAX_GROUP_SIZE);
-    const p1Winners = tierRankings.filter(r => r.is_top_1);
+    
+    // Group rankings by actual group_number
+    const groupsMap: Record<number, SprintRanking[]> = {};
+    tierRankings.forEach(r => {
+      const gn = r.group_number || 1;
+      if (!groupsMap[gn]) groupsMap[gn] = [];
+      groupsMap[gn].push(r);
+    });
+
+    // Create group data with P1 winner per group
+    const groups: GroupData[] = Object.entries(groupsMap).map(([gn, members]) => {
+      const sorted = [...members].sort((a, b) => b.total_points - a.total_points);
+      const p1Winner = sorted.find(r => r.is_top_1) || (sorted.length > 0 ? sorted[0] : null);
+      return {
+        groupNumber: parseInt(gn),
+        studentCount: members.length,
+        p1Winner,
+        rankings: sorted,
+      };
+    }).sort((a, b) => a.groupNumber - b.groupNumber);
+
+    const actualGroupCount = groups.length;
+    const allP1Winners = groups.map(g => g.p1Winner).filter(Boolean) as SprintRanking[];
     
     return {
       tier,
       studentCount,
-      groupCount,
-      p1Winners,
+      groupCount: actualGroupCount,
+      groups,
+      p1Winners: allP1Winners,
       rankings: tierRankings.sort((a, b) => b.total_points - a.total_points),
     };
   }).filter(t => t.studentCount > 0);
@@ -372,7 +402,7 @@ export default function SprintMonitor() {
               </div>
             ) : tierBreakdown.length > 0 ? (
               <div className="space-y-2">
-                {tierBreakdown.map(({ tier, studentCount, groupCount, p1Winners, rankings }) => {
+                {tierBreakdown.map(({ tier, studentCount, groupCount, groups, p1Winners }) => {
                   const style = TIER_STYLES[tier];
                   const isExpanded = expandedTier === tier;
                   
@@ -397,14 +427,14 @@ export default function SprintMonitor() {
                           <div className="text-right">
                             <p className="text-sm font-medium">{studentCount} students</p>
                             <p className="text-xs text-muted-foreground">
-                              {groupCount} group{groupCount > 1 ? 's' : ''}
+                              {groupCount} group{groupCount !== 1 ? 's' : ''} • {p1Winners.length} P1{p1Winners.length !== 1 ? 's' : ''}
                             </p>
                           </div>
                           
                           {p1Winners.length > 0 && (
                             <div className="flex items-center gap-1">
-                              <Crown className="h-4 w-4 text-yellow-500" />
-                              <span className="text-sm">{p1Winners.length}</span>
+                              <Crown className="h-4 w-4 text-amber-500" />
+                              <span className="text-sm font-medium">{p1Winners.length}</span>
                             </div>
                           )}
                           
@@ -416,47 +446,75 @@ export default function SprintMonitor() {
                         </div>
                       </button>
                       
-                      {isExpanded && rankings.length > 0 && (
-                        <div className="border-t">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-16">Rank</TableHead>
-                                <TableHead>Student</TableHead>
-                                <TableHead className="text-right">Points</TableHead>
-                                <TableHead className="w-20 text-center">P1</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {rankings.slice(0, 20).map((ranking, idx) => (
-                                <TableRow key={ranking.id}>
-                                  <TableCell className="font-medium">
-                                    #{idx + 1}
-                                  </TableCell>
-                                  <TableCell>
-                                    {ranking.student_accounts?.students?.name || 
-                                     ranking.student_accounts?.phone_number || 
-                                     'Unknown'}
-                                  </TableCell>
-                                  <TableCell className="text-right font-mono">
-                                    {ranking.total_points.toLocaleString()}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    {ranking.is_top_1 && (
-                                      <Crown className="h-4 w-4 text-yellow-500 mx-auto" />
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                              {rankings.length > 20 && (
-                                <TableRow>
-                                  <TableCell colSpan={4} className="text-center text-muted-foreground text-sm">
-                                    + {rankings.length - 20} more students
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                            </TableBody>
-                          </Table>
+                      {isExpanded && groups.length > 0 && (
+                        <div className="border-t divide-y">
+                          {groups.map((group) => (
+                            <div key={group.groupNumber} className="p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-mono">
+                                    Group {group.groupNumber}
+                                  </Badge>
+                                  <span className="text-sm text-muted-foreground">
+                                    {group.studentCount} student{group.studentCount !== 1 ? 's' : ''}
+                                  </span>
+                                </div>
+                                {group.p1Winner && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Crown className="h-4 w-4 text-amber-500" />
+                                    <span className="font-medium">
+                                      {group.p1Winner.student_accounts?.students?.name || 
+                                       group.p1Winner.student_accounts?.phone_number || 
+                                       'Unknown'}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      ({group.p1Winner.total_points.toLocaleString()} pts)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-16">Rank</TableHead>
+                                    <TableHead>Student</TableHead>
+                                    <TableHead className="text-right">Points</TableHead>
+                                    <TableHead className="w-20 text-center">P1</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.rankings.slice(0, 10).map((ranking, idx) => (
+                                    <TableRow key={ranking.id}>
+                                      <TableCell className="font-medium">
+                                        #{idx + 1}
+                                      </TableCell>
+                                      <TableCell>
+                                        {ranking.student_accounts?.students?.name || 
+                                         ranking.student_accounts?.phone_number || 
+                                         'Unknown'}
+                                      </TableCell>
+                                      <TableCell className="text-right font-mono">
+                                        {ranking.total_points.toLocaleString()}
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        {(ranking.is_top_1 || idx === 0) && (
+                                          <Crown className="h-4 w-4 text-amber-500 mx-auto" />
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                  {group.rankings.length > 10 && (
+                                    <TableRow>
+                                      <TableCell colSpan={4} className="text-center text-muted-foreground text-sm">
+                                        + {group.rankings.length - 10} more students
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
