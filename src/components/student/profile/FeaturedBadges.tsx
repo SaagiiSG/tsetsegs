@@ -19,16 +19,28 @@ const BadgeIcon = ({ iconName, rarity }: { iconName: string; rarity: string }) =
   return (
     <div 
       className={cn(
-        "w-12 h-12 rounded-full flex items-center justify-center",
+        "w-10 h-10 rounded-full flex items-center justify-center relative z-10",
         rarity === 'legendary' && 'animate-pulse'
       )}
       style={{ 
         background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-        boxShadow: `0 0 20px ${colors.glow}`
+        boxShadow: `0 0 16px ${colors.glow}`
       }}
     >
-      <Icon className="w-6 h-6 text-white" />
+      <Icon className="w-5 h-5 text-white" />
     </div>
+  );
+};
+
+// Background icon component for the slot
+const BackgroundBadgeIcon = ({ iconName }: { iconName: string }) => {
+  const Icon = (LucideIcons as any)[iconName] || LucideIcons.Award;
+  
+  return (
+    <Icon 
+      className="absolute inset-0 w-full h-full text-primary opacity-[0.12]" 
+      strokeWidth={1}
+    />
   );
 };
 
@@ -66,7 +78,7 @@ export function FeaturedBadges({ featuredBadges, badgeStats }: FeaturedBadgesPro
             <div
               key={idx}
               className={cn(
-                "aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center p-2 transition-all",
+                "aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-between p-2 transition-all relative overflow-hidden",
                 badge 
                   ? "border-primary/30 bg-primary/5 cursor-pointer hover:bg-primary/10" 
                   : "border-muted-foreground/20 bg-muted/20"
@@ -75,15 +87,25 @@ export function FeaturedBadges({ featuredBadges, badgeStats }: FeaturedBadgesPro
             >
               {badge ? (
                 <>
-                  <BadgeIcon iconName={badge.badge.iconName} rarity={badge.badge.rarity} />
-                  <p className="text-[10px] font-medium text-center mt-1.5 line-clamp-2">
+                  {/* Background icon */}
+                  <BackgroundBadgeIcon iconName={badge.badge.iconName} />
+                  
+                  {/* Foreground badge icon - centered at top */}
+                  <div className="flex-1 flex items-center justify-center pt-1">
+                    <BadgeIcon iconName={badge.badge.iconName} rarity={badge.badge.rarity} />
+                  </div>
+                  
+                  {/* Badge name pushed to bottom with Chillax font */}
+                  <p className="font-chillax text-xs font-semibold text-center leading-tight line-clamp-2 relative z-10 text-foreground pb-0.5">
                     {badge.badge.name}
                   </p>
                 </>
               ) : (
                 <>
-                  <Plus className="w-6 h-6 text-muted-foreground/40" />
-                  <p className="text-[10px] text-muted-foreground/40 mt-1">Pin badge</p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <Plus className="w-6 h-6 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/40">Pin badge</p>
                 </>
               )}
             </div>
