@@ -15,7 +15,7 @@ import {
 import { AllTimeEntry } from '@/hooks/useLeaderboard';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { cn } from '@/lib/utils';
-import { FullProfileSheet } from './FullProfileSheet';
+import { FullProfileDialog } from './FullProfileDialog';
 
 interface AllTimeTabProps {
   leaderboard: AllTimeEntry[];
@@ -222,8 +222,8 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
         </CardContent>
       </Card>
 
-      {/* Full Profile Sheet */}
-      <FullProfileSheet
+      {/* Full Profile Dialog */}
+      <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}
