@@ -113,11 +113,49 @@ IMPORTANT:
     let parsedQuestion;
     try {
       // Try to extract JSON from the response (it might be wrapped in markdown code blocks)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsedQuestion = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
+      let cleaned = content
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      
+      const jsonStart = cleaned.indexOf("{");
+      const jsonEnd = cleaned.lastIndexOf("}");
+      
+      if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error('No JSON object found in response');
+      }
+      
+      cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      
+      try {
+        parsedQuestion = JSON.parse(cleaned);
+      } catch (e) {
+        // Try to fix common issues
+        cleaned = cleaned
+          .replace(/,\s*}/g, "}") // Remove trailing commas
+          .replace(/,\s*]/g, "]")
+          .replace(/[\x00-\x1F\x7F]/g, ""); // Remove control characters
+        parsedQuestion = JSON.parse(cleaned);
+      }
+      
+      // Validate that options are not empty for multiple choice
+      if (parsedQuestion.option_a !== null && parsedQuestion.option_b !== null) {
+        const optionsEmpty = 
+          (!parsedQuestion.option_a || parsedQuestion.option_a.trim() === '') &&
+          (!parsedQuestion.option_b || parsedQuestion.option_b.trim() === '') &&
+          (!parsedQuestion.option_c || parsedQuestion.option_c.trim() === '') &&
+          (!parsedQuestion.option_d || parsedQuestion.option_d.trim() === '');
+        
+        if (optionsEmpty) {
+          console.error('All options are empty - parsing likely failed');
+          return new Response(
+            JSON.stringify({ 
+              error: 'Failed to extract answer options from the image. The question may require manual entry.',
+              raw_content: content 
+            }),
+            { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     } catch (parseError) {
       console.error('Failed to parse JSON:', parseError);
