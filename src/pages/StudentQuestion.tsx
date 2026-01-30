@@ -617,11 +617,11 @@ export default function StudentQuestion() {
               )}
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => toggleReferenceSheet()}>
-                <BookOpen className="h-4 w-4" />
-              </Button>
               <Button variant="ghost" size="sm" onClick={() => toggleCalculator()}>
                 <Calculator className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => toggleReferenceSheet()}>
+                <BookOpen className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
                 <Flag className="h-4 w-4" />
