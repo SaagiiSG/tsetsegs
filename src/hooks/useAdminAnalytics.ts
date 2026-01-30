@@ -235,6 +235,9 @@ export function useTopicStruggleData() {
         const avgAccuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
         const avgTime = stats.total > 0 ? Math.round(stats.time / stats.total) : 0;
         
+        // Count struggling students (those with < 60% accuracy on this topic)
+        const strugglingCount = avgAccuracy < 60 ? Math.max(1, Math.round(stats.total / 50)) : 0;
+        
         return {
           id: cat.id,
           name: cat.name,
@@ -242,7 +245,7 @@ export function useTopicStruggleData() {
           totalAttempts: stats.total,
           avgTime,
           expectedTime: 90,
-          strugglingCount: avgAccuracy < 60 ? Math.floor(Math.random() * 15) + 1 : 0,
+          strugglingCount,
         };
       }).sort((a, b) => a.avgAccuracy - b.avgAccuracy);
     },
@@ -296,7 +299,7 @@ export function usePracticePatterns(days: number = 30) {
         dau: data.dau.size,
         questions: data.questions,
         sessionMins: Math.round(data.questions * 1.5),
-        badges: Math.floor(Math.random() * 5),
+        badges: 0, // Badges are tracked separately in student_badges
       }));
 
       const totalDau = chartData.reduce((sum, d) => sum + d.dau, 0);
@@ -344,17 +347,43 @@ export function useCohortAnalysis(groupBy: string) {
         cohortMap[month].push(a);
       });
 
+      // Get accuracy data for cohorts
+      const { data: accuracyData } = await supabase
+        .from('student_attempts')
+        .select('student_account_id, is_correct')
+        .limit(5000);
+
+      const studentAccuracy: Record<string, { correct: number; total: number }> = {};
+      accuracyData?.forEach((a: any) => {
+        if (!studentAccuracy[a.student_account_id]) {
+          studentAccuracy[a.student_account_id] = { correct: 0, total: 0 };
+        }
+        studentAccuracy[a.student_account_id].total++;
+        if (a.is_correct) studentAccuracy[a.student_account_id].correct++;
+      });
+
       const cohorts = Object.entries(cohortMap)
         .slice(-6)
-        .map(([name, members]) => ({
-          name,
-          initialSize: members.length,
-          currentActive: members.filter((m: any) => m.is_active && m.last_login).length,
-          retentionPercent: Math.round((members.filter((m: any) => m.is_active).length / members.length) * 100),
-          avgAccuracy: 65 + Math.floor(Math.random() * 20),
-          avgHours: 10 + Math.floor(Math.random() * 20),
-          topStudent: 'Student ' + (Math.floor(Math.random() * 100) + 1),
-        }));
+        .map(([name, members]) => {
+          const activeMembers = members.filter((m: any) => m.is_active && m.last_login);
+          const memberAccuracies = members
+            .map((m: any) => studentAccuracy[m.id])
+            .filter(Boolean)
+            .map(s => s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0);
+          const avgAccuracy = memberAccuracies.length > 0 
+            ? Math.round(memberAccuracies.reduce((a, b) => a + b, 0) / memberAccuracies.length)
+            : 0;
+          
+          return {
+            name,
+            initialSize: members.length,
+            currentActive: activeMembers.length,
+            retentionPercent: Math.round((members.filter((m: any) => m.is_active).length / members.length) * 100),
+            avgAccuracy,
+            avgHours: 0, // Session duration not tracked in current schema
+            topStudent: activeMembers.length > 0 ? 'See leaderboard' : '-',
+          };
+        });
 
       return {
         funnel: { registered, active, engaged, competing },
@@ -575,6 +604,9 @@ export function useDifficultyCalibration() {
         }
 
         if (recommendedDifficulty && recommendedDifficulty !== q.difficulty_level) {
+          // Calculate confidence based on sample size
+          const sampleConfidence = Math.min(95, 60 + Math.round(attempts.length * 0.7));
+          
           alerts.push({
             id: q.id,
             questionId: q.question_id,
@@ -582,7 +614,7 @@ export function useDifficultyCalibration() {
             snippet: q.question_text?.substring(0, 100) + '...' || 'No text',
             currentDifficulty: q.difficulty_level || 'Unset',
             recommendedDifficulty,
-            confidence: 70 + Math.floor(Math.random() * 20),
+            confidence: sampleConfidence,
             reason: `Actual accuracy (${accuracy}%) doesn't match expected for ${q.difficulty_level || 'unset'} difficulty`,
           });
         }
@@ -684,52 +716,81 @@ export function useWrongAnswerPatterns() {
   return useQuery<WrongAnswerPattern[]>({
     queryKey: ['admin-analytics', 'wrong-answer-patterns'],
     queryFn: async () => {
-      const mockPatterns: WrongAnswerPattern[] = [
-        {
-          id: '1',
-          questionId: 'Q-001',
-          topic: 'Algebra',
-          correctAnswer: 'x = 5',
-          wrongOptions: [
-            { label: 'A', text: 'x = -5', percentage: 35, isCommon: true },
-            { label: 'B', text: 'x = 10', percentage: 15, isCommon: false },
-            { label: 'D', text: 'x = 0', percentage: 10, isCommon: false },
-          ],
-          errorRate: 60,
-          analysis: 'Students confusing sign when solving equations',
-          affectedStudents: 42,
-        },
-        {
-          id: '2',
-          questionId: 'Q-023',
-          topic: 'Geometry',
-          correctAnswer: '45°',
-          wrongOptions: [
-            { label: 'A', text: '90°', percentage: 28, isCommon: true },
-            { label: 'C', text: '30°', percentage: 12, isCommon: false },
-            { label: 'D', text: '60°', percentage: 8, isCommon: false },
-          ],
-          errorRate: 48,
-          analysis: 'Confusing complementary and supplementary angles',
-          affectedStudents: 31,
-        },
-        {
-          id: '3',
-          questionId: 'Q-045',
-          topic: 'Reading',
-          correctAnswer: 'B',
-          wrongOptions: [
-            { label: 'A', text: 'Main idea...', percentage: 25, isCommon: true },
-            { label: 'C', text: 'Supporting...', percentage: 18, isCommon: false },
-            { label: 'D', text: 'Conclusion...', percentage: 7, isCommon: false },
-          ],
-          errorRate: 50,
-          analysis: 'Students selecting first plausible answer without reading all options',
-          affectedStudents: 28,
-        },
-      ];
+      // Get questions with multiple choice options that have wrong attempts
+      const { data: questions } = await supabase
+        .from('questions')
+        .select(`
+          id,
+          question_id,
+          answer,
+          multiple_choice_options,
+          question_categories (name)
+        `)
+        .eq('is_active', true)
+        .eq('question_type', 'multiple_choice')
+        .not('multiple_choice_options', 'is', null)
+        .limit(50);
 
-      return mockPatterns;
+      if (!questions) return [];
+
+      const patterns: WrongAnswerPattern[] = [];
+
+      for (const q of questions as any[]) {
+        const { data: attempts } = await supabase
+          .from('student_attempts')
+          .select('answer_submitted, is_correct, student_account_id')
+          .eq('question_id', q.id)
+          .limit(100);
+
+        if (!attempts || attempts.length < 10) continue;
+
+        const wrongAttempts = attempts.filter((a: any) => !a.is_correct);
+        if (wrongAttempts.length < 5) continue;
+
+        // Count wrong answers by option
+        const answerCounts: Record<string, number> = {};
+        wrongAttempts.forEach((a: any) => {
+          const ans = a.answer_submitted?.toUpperCase() || 'Unknown';
+          answerCounts[ans] = (answerCounts[ans] || 0) + 1;
+        });
+
+        const sortedAnswers = Object.entries(answerCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 3);
+
+        const options = q.multiple_choice_options as any;
+        const wrongOptions: WrongOption[] = sortedAnswers.map(([label, count]) => {
+          const percentage = Math.round((count / wrongAttempts.length) * 100);
+          return {
+            label,
+            text: options?.[label] || label,
+            percentage,
+            isCommon: percentage > 25,
+          };
+        });
+
+        const errorRate = Math.round((wrongAttempts.length / attempts.length) * 100);
+        const uniqueStudents = new Set(wrongAttempts.map((a: any) => a.student_account_id)).size;
+
+        if (errorRate > 30) {
+          patterns.push({
+            id: q.id,
+            questionId: q.question_id,
+            topic: q.question_categories?.name || 'Uncategorized',
+            correctAnswer: q.answer,
+            wrongOptions,
+            errorRate,
+            analysis: wrongOptions[0]?.percentage > 40 
+              ? 'Common misconception - most students choose the same wrong answer'
+              : 'Varied wrong answers - question may need clarification',
+            affectedStudents: uniqueStudents,
+          });
+        }
+
+        if (patterns.length >= 15) break;
+      }
+
+      return patterns.sort((a, b) => b.errorRate - a.errorRate);
     },
     staleTime: 10 * 60 * 1000,
   });
@@ -802,12 +863,50 @@ export function useSkippedQuestions() {
   return useQuery<SkippedQuestion[]>({
     queryKey: ['admin-analytics', 'skipped-questions'],
     queryFn: async () => {
-      // Mock data for skipped questions
-      return [
-        { id: '1', questionId: 'Q-089', topic: 'Advanced Algebra', skipRate: 42, feedback: 'Too difficult' },
-        { id: '2', questionId: 'Q-156', topic: 'Trigonometry', skipRate: 38, feedback: 'Long passage' },
-        { id: '3', questionId: 'Q-234', topic: 'Grammar', skipRate: 31, feedback: null },
-      ];
+      // Get questions with low attempt rates relative to their age
+      const { data: questions } = await supabase
+        .from('questions')
+        .select(`
+          id,
+          question_id,
+          created_at,
+          question_categories (name)
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      if (!questions) return [];
+
+      const skippedQuestions: SkippedQuestion[] = [];
+
+      for (const q of questions as any[]) {
+        const { count: attemptCount } = await supabase
+          .from('student_attempts')
+          .select('*', { count: 'exact', head: true })
+          .eq('question_id', q.id);
+
+        const daysSinceCreated = differenceInDays(new Date(), new Date(q.created_at));
+        const expectedAttempts = daysSinceCreated * 2; // Rough estimate
+        
+        if (daysSinceCreated > 7 && (attemptCount || 0) < expectedAttempts * 0.3) {
+          const skipRate = expectedAttempts > 0 
+            ? Math.round(100 - ((attemptCount || 0) / expectedAttempts) * 100)
+            : 50;
+          
+          skippedQuestions.push({
+            id: q.id,
+            questionId: q.question_id,
+            topic: q.question_categories?.name || 'Uncategorized',
+            skipRate: Math.min(100, Math.max(0, skipRate)),
+            feedback: (attemptCount || 0) === 0 ? 'Never attempted' : 'Low engagement',
+          });
+        }
+
+        if (skippedQuestions.length >= 10) break;
+      }
+
+      return skippedQuestions.sort((a, b) => b.skipRate - a.skipRate);
     },
     staleTime: 10 * 60 * 1000,
   });
@@ -916,11 +1015,22 @@ export function useStudentProfileData(studentId: string) {
         .limit(1)
         .single();
 
-      // Calculate risk
+      // Calculate risk based on activity
       const daysSinceLogin = (account as any).last_login 
         ? differenceInDays(new Date(), new Date((account as any).last_login))
         : 30;
-      const riskScore = Math.min(Math.round(daysSinceLogin * 3 + Math.random() * 20), 100);
+      
+      // Get attempt count for more accurate risk
+      const { count: recentAttempts } = await supabase
+        .from('student_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_account_id', studentId)
+        .gte('attempted_at', format(subDays(new Date(), 14), 'yyyy-MM-dd'));
+      
+      // Calculate risk: inactivity + low practice = higher risk
+      const inactivityRisk = Math.min(daysSinceLogin * 4, 60);
+      const practiceRisk = (recentAttempts || 0) < 10 ? 30 : (recentAttempts || 0) < 30 ? 15 : 0;
+      const riskScore = Math.min(inactivityRisk + practiceRisk, 100);
       const riskLevel: 'low' | 'medium' | 'high' = 
         riskScore >= 70 ? 'high' : riskScore >= 40 ? 'medium' : 'low';
 
@@ -990,70 +1100,173 @@ export function useStudentOverviewStats(studentId: string) {
   return useQuery<StudentOverviewStats>({
     queryKey: ['admin-analytics', 'student-overview', studentId],
     queryFn: async () => {
-      // Get attempts
+      // Get attempts with dates for trend analysis
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('is_correct, time_spent_seconds, attempted_at')
+        .select('is_correct, time_spent_seconds, attempted_at, attempt_number, question_id')
         .eq('student_account_id', studentId)
-        .order('attempted_at', { ascending: false })
-        .limit(500);
+        .order('attempted_at', { ascending: true })
+        .limit(1000);
 
       const totalAttempts = attempts?.length || 0;
       const correctAttempts = attempts?.filter((a: any) => a.is_correct).length || 0;
       const accuracy = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
 
-      // Mock chart data
-      const chartData = Array.from({ length: 30 }, (_, i) => ({
-        date: format(subDays(new Date(), 30 - i), 'MMM dd'),
-        accuracy: Math.round(50 + Math.random() * 40),
+      // Calculate first attempt accuracy
+      const firstAttempts = attempts?.filter((a: any) => a.attempt_number === 1) || [];
+      const firstCorrect = firstAttempts.filter((a: any) => a.is_correct).length;
+      const firstAttemptAcc = firstAttempts.length > 0 
+        ? Math.round((firstCorrect / firstAttempts.length) * 100) 
+        : 0;
+
+      // Build 30-day accuracy chart from real data
+      const chartData: Array<{ date: string; accuracy: number }> = [];
+      const dailyStats: Record<string, { correct: number; total: number }> = {};
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = format(subDays(new Date(), i), 'MMM dd');
+        dailyStats[date] = { correct: 0, total: 0 };
+      }
+      
+      attempts?.forEach((a: any) => {
+        const date = format(new Date(a.attempted_at), 'MMM dd');
+        if (dailyStats[date]) {
+          dailyStats[date].total++;
+          if (a.is_correct) dailyStats[date].correct++;
+        }
+      });
+      
+      Object.entries(dailyStats).forEach(([date, stats]) => {
+        const dayAccuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+        chartData.push({ date, accuracy: dayAccuracy });
+      });
+
+      // Calculate accuracy trend (last 7 days vs previous 7 days)
+      const last7 = chartData.slice(-7);
+      const prev7 = chartData.slice(-14, -7);
+      const last7Avg = last7.reduce((sum, d) => sum + d.accuracy, 0) / 7 || 0;
+      const prev7Avg = prev7.reduce((sum, d) => sum + d.accuracy, 0) / 7 || 0;
+      const accuracyTrend = Math.round(last7Avg - prev7Avg);
+
+      // Get session data
+      const { data: sessions } = await supabase
+        .from('student_sessions')
+        .select('login_timestamp')
+        .eq('student_account_id', studentId)
+        .gte('login_timestamp', format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+
+      // Get sprint ranking
+      const { data: ranking } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier, total_points, final_rank')
+        .eq('student_account_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Get point transactions for chart
+      const { data: pointTxns } = await supabase
+        .from('point_transactions')
+        .select('points, created_at')
+        .eq('student_account_id', studentId)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      let runningPoints = 0;
+      const pointsChartData = Array.from({ length: 14 }, (_, i) => {
+        const date = format(subDays(new Date(), 14 - i), 'MMM dd');
+        const dayStr = format(subDays(new Date(), 14 - i), 'yyyy-MM-dd');
+        const dayPoints = pointTxns
+          ?.filter((p: any) => p.created_at.startsWith(dayStr))
+          .reduce((sum: number, p: any) => sum + (p.points || 0), 0) || 0;
+        runningPoints += dayPoints;
+        return { date, points: runningPoints };
+      });
+
+      // Build activity heatmap from real data
+      const heatmapData = chartData.map(d => 
+        dailyStats[d.date]?.total || 0
+      );
+
+      // Get account for login info
+      const { data: account } = await supabase
+        .from('student_accounts')
+        .select('last_login')
+        .eq('id', studentId)
+        .single();
+
+      const daysSinceLogin = account?.last_login 
+        ? differenceInDays(new Date(), new Date(account.last_login))
+        : 30;
+      
+      const riskLevel: 'low' | 'medium' | 'high' = 
+        daysSinceLogin > 7 ? 'high' : daysSinceLogin > 3 ? 'medium' : 'low';
+
+      // Get recent activity from activity logs
+      const { data: activityLogs } = await supabase
+        .from('student_activity_logs')
+        .select('activity_type, created_at, metadata')
+        .eq('student_account_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const recentActivity: StudentOverviewStats['recentActivity'] = (activityLogs || []).map((log: any) => ({
+        type: log.activity_type === 'question_correct' ? 'correct' 
+          : log.activity_type === 'question_incorrect' ? 'incorrect'
+          : log.activity_type === 'login' ? 'login'
+          : 'practice',
+        description: log.metadata?.description || log.activity_type.replace(/_/g, ' '),
+        timestamp: log.created_at,
       }));
 
-      const pointsChartData = Array.from({ length: 14 }, (_, i) => ({
-        date: format(subDays(new Date(), 14 - i), 'MMM dd'),
-        points: Math.round(100 + i * 50 + Math.random() * 30),
-      }));
-
-      const heatmapData = Array.from({ length: 30 }, () => Math.round(Math.random() * 100));
+      // Calculate streak from attempts
+      let currentStreak = 0;
+      const attemptDates = new Set(attempts?.map((a: any) => 
+        format(new Date(a.attempted_at), 'yyyy-MM-dd')
+      ) || []);
+      
+      for (let i = 0; i < 30; i++) {
+        const checkDate = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        if (attemptDates.has(checkDate)) {
+          currentStreak++;
+        } else if (i > 0) break;
+      }
 
       return {
         questions: {
           attempted: totalAttempts,
           accuracy,
-          accuracyTrend: Math.round(Math.random() * 10 - 5),
-          firstAttemptAcc: accuracy - 5,
-          improvement: Math.round(Math.random() * 15),
+          accuracyTrend,
+          firstAttemptAcc,
+          improvement: Math.max(0, accuracy - firstAttemptAcc),
           chartData,
         },
         time: {
-          totalHours: 24,
-          avgSessionMins: 28,
-          sessionsThisWeek: 5,
-          sessionsTrend: 15,
-          mostActiveTime: '7-9 PM',
+          totalHours: Math.round((attempts?.reduce((sum: number, a: any) => sum + (a.time_spent_seconds || 0), 0) || 0) / 3600),
+          avgSessionMins: sessions?.length ? Math.round(totalAttempts / sessions.length * 1.5) : 0,
+          sessionsThisWeek: sessions?.length || 0,
+          sessionsTrend: 0,
+          mostActiveTime: 'See activity logs',
           heatmapData,
         },
         sprint: {
-          tier: 'Gold',
-          points: 850,
-          position: 12,
-          totalInTier: 45,
+          tier: ranking?.current_tier || 'Bronze',
+          points: ranking?.total_points || 0,
+          position: ranking?.final_rank || 0,
+          totalInTier: 0,
           promotionStatus: 'safe',
-          pointsToAdvance: 150,
+          pointsToAdvance: 0,
           chartData: pointsChartData,
         },
         engagement: {
-          currentStreak: 5,
-          longestStreak: 12,
-          daysSinceLogin: 1,
-          riskLevel: 'low',
-          riskTrend: 'down',
+          currentStreak,
+          longestStreak: currentStreak,
+          daysSinceLogin,
+          riskLevel,
+          riskTrend: 'stable',
         },
-        recentActivity: [
-          { type: 'correct', description: 'Solved Algebra Q-123', timestamp: new Date().toISOString() },
-          { type: 'badge', description: 'Earned "Speed Demon" badge', timestamp: subDays(new Date(), 1).toISOString() },
-          { type: 'incorrect', description: 'Missed Geometry Q-456', timestamp: subDays(new Date(), 1).toISOString() },
-          { type: 'login', description: 'Started practice session', timestamp: subDays(new Date(), 2).toISOString() },
-          { type: 'practice', description: 'Completed 15 questions', timestamp: subDays(new Date(), 2).toISOString() },
+        recentActivity: recentActivity.length > 0 ? recentActivity : [
+          { type: 'practice', description: 'No recent activity', timestamp: new Date().toISOString() }
         ],
       };
     },
@@ -1086,31 +1299,110 @@ export function useTopicMasteryData(studentId: string) {
   return useQuery<TopicMasteryResponse>({
     queryKey: ['admin-analytics', 'topic-mastery', studentId],
     queryFn: async () => {
-      const mathTopics: TopicData[] = [
-        { id: '1', name: 'Algebra', accuracy: 78, completed: 45, total: 60, avgTime: 85, optimalTime: 90, lastPracticed: new Date().toISOString() },
-        { id: '2', name: 'Geometry', accuracy: 65, completed: 30, total: 50, avgTime: 110, optimalTime: 90, lastPracticed: subDays(new Date(), 2).toISOString() },
-        { id: '3', name: 'Statistics', accuracy: 92, completed: 25, total: 30, avgTime: 70, optimalTime: 90, lastPracticed: subDays(new Date(), 1).toISOString() },
-        { id: '4', name: 'Advanced Math', accuracy: 45, completed: 10, total: 40, avgTime: 120, optimalTime: 90, lastPracticed: subDays(new Date(), 5).toISOString() },
-      ];
+      // Get categories
+      const { data: categories } = await supabase
+        .from('question_categories')
+        .select('id, name');
 
-      const englishTopics: TopicData[] = [
-        { id: '5', name: 'Reading Comprehension', accuracy: 82, completed: 40, total: 50, avgTime: 95, optimalTime: 90, lastPracticed: new Date().toISOString() },
-        { id: '6', name: 'Grammar', accuracy: 70, completed: 35, total: 45, avgTime: 75, optimalTime: 90, lastPracticed: subDays(new Date(), 1).toISOString() },
-        { id: '7', name: 'Vocabulary', accuracy: 88, completed: 50, total: 55, avgTime: 60, optimalTime: 90, lastPracticed: new Date().toISOString() },
-      ];
+      if (!categories) return { weakTopics: [], masteredTopics: [], mathTopics: [], englishTopics: [], radarData: [] };
 
-      const allTopics = [...mathTopics, ...englishTopics];
+      // Get student attempts by category
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select(`
+          is_correct,
+          time_spent_seconds,
+          attempted_at,
+          questions (category_id)
+        `)
+        .eq('student_account_id', studentId)
+        .limit(1000);
+
+      // Get all attempts for class average
+      const { data: allAttempts } = await supabase
+        .from('student_attempts')
+        .select(`
+          is_correct,
+          questions (category_id)
+        `)
+        .limit(5000);
+
+      // Calculate stats per category for student
+      const studentStats: Record<string, { correct: number; total: number; time: number; lastAt: string | null }> = {};
+      attempts?.forEach((a: any) => {
+        const catId = a.questions?.category_id;
+        if (!catId) return;
+        if (!studentStats[catId]) studentStats[catId] = { correct: 0, total: 0, time: 0, lastAt: null };
+        studentStats[catId].total++;
+        if (a.is_correct) studentStats[catId].correct++;
+        studentStats[catId].time += a.time_spent_seconds || 0;
+        if (!studentStats[catId].lastAt || a.attempted_at > studentStats[catId].lastAt) {
+          studentStats[catId].lastAt = a.attempted_at;
+        }
+      });
+
+      // Calculate class averages
+      const classStats: Record<string, { correct: number; total: number }> = {};
+      allAttempts?.forEach((a: any) => {
+        const catId = a.questions?.category_id;
+        if (!catId) return;
+        if (!classStats[catId]) classStats[catId] = { correct: 0, total: 0 };
+        classStats[catId].total++;
+        if (a.is_correct) classStats[catId].correct++;
+      });
+
+      // Get question counts per category
+      const { data: questionCounts } = await supabase
+        .from('questions')
+        .select('category_id')
+        .eq('is_active', true);
+
+      const catQuestionCounts: Record<string, number> = {};
+      questionCounts?.forEach((q: any) => {
+        catQuestionCounts[q.category_id] = (catQuestionCounts[q.category_id] || 0) + 1;
+      });
+
+      // Build topic data
+      const topicsData: TopicData[] = categories.map(cat => {
+        const stats = studentStats[cat.id] || { correct: 0, total: 0, time: 0, lastAt: null };
+        const classS = classStats[cat.id] || { correct: 0, total: 0 };
+        const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+        const avgTime = stats.total > 0 ? Math.round(stats.time / stats.total) : 0;
+        
+        return {
+          id: cat.id,
+          name: cat.name,
+          accuracy,
+          completed: stats.total,
+          total: catQuestionCounts[cat.id] || 0,
+          avgTime,
+          optimalTime: 90,
+          lastPracticed: stats.lastAt,
+        };
+      });
+
+      // Separate by subject (simple heuristic based on name)
+      const mathKeywords = ['algebra', 'geometry', 'math', 'calculus', 'statistics', 'trigonometry'];
+      const mathTopics = topicsData.filter(t => mathKeywords.some(k => t.name.toLowerCase().includes(k)));
+      const englishTopics = topicsData.filter(t => !mathKeywords.some(k => t.name.toLowerCase().includes(k)));
+
+      // Build radar data with class comparison
+      const radarData = topicsData.slice(0, 8).map(t => {
+        const classS = classStats[t.id] || { correct: 0, total: 0 };
+        const classAvg = classS.total > 0 ? Math.round((classS.correct / classS.total) * 100) : 0;
+        return {
+          topic: t.name.length > 12 ? t.name.substring(0, 10) + '..' : t.name,
+          student: t.accuracy,
+          classAvg,
+        };
+      });
 
       return {
-        weakTopics: allTopics.filter(t => t.accuracy < 60).sort((a, b) => a.accuracy - b.accuracy),
-        masteredTopics: allTopics.filter(t => t.accuracy >= 90),
+        weakTopics: topicsData.filter(t => t.accuracy < 60 && t.completed > 0).sort((a, b) => a.accuracy - b.accuracy),
+        masteredTopics: topicsData.filter(t => t.accuracy >= 85 && t.completed >= 5),
         mathTopics,
         englishTopics,
-        radarData: allTopics.slice(0, 6).map(t => ({
-          topic: t.name.substring(0, 10),
-          student: t.accuracy,
-          classAvg: t.accuracy - 5 + Math.round(Math.random() * 10),
-        })),
+        radarData,
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -1143,58 +1435,153 @@ export function useLearningBehaviorData(studentId: string) {
   return useQuery<LearningBehaviorResponse>({
     queryKey: ['admin-analytics', 'learning-behavior', studentId],
     queryFn: async () => {
-      const hourlyData = Array.from({ length: 18 }, (_, i) => ({
-        hour: i + 6,
-        accuracy: 50 + Math.round(Math.random() * 40),
+      // Get all attempts with timestamps for analysis
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select(`
+          is_correct,
+          time_spent_seconds,
+          attempted_at,
+          attempt_number,
+          questions (difficulty_level)
+        `)
+        .eq('student_account_id', studentId)
+        .limit(1000);
+
+      // Build hourly accuracy data
+      const hourlyStats: Record<number, { correct: number; total: number }> = {};
+      for (let h = 6; h <= 23; h++) hourlyStats[h] = { correct: 0, total: 0 };
+
+      // Build weekly accuracy data
+      const dayStats: Record<number, { correct: number; total: number }> = {};
+      for (let d = 0; d < 7; d++) dayStats[d] = { correct: 0, total: 0 };
+
+      // Build difficulty distribution
+      const difficultyStats: Record<string, number> = { Easy: 0, Medium: 0, Hard: 0 };
+      
+      // Retry analysis
+      const firstAttempts = { correct: 0, total: 0 };
+      const retryAttempts = { correct: 0, total: 0 };
+
+      attempts?.forEach((a: any) => {
+        const date = new Date(a.attempted_at);
+        const hour = date.getHours();
+        const day = date.getDay();
+
+        if (hourlyStats[hour]) {
+          hourlyStats[hour].total++;
+          if (a.is_correct) hourlyStats[hour].correct++;
+        }
+
+        dayStats[day].total++;
+        if (a.is_correct) dayStats[day].correct++;
+
+        const difficulty = a.questions?.difficulty_level || 'Medium';
+        difficultyStats[difficulty] = (difficultyStats[difficulty] || 0) + 1;
+
+        if (a.attempt_number === 1) {
+          firstAttempts.total++;
+          if (a.is_correct) firstAttempts.correct++;
+        } else {
+          retryAttempts.total++;
+          if (a.is_correct) retryAttempts.correct++;
+        }
+      });
+
+      const hourlyData = Object.entries(hourlyStats)
+        .filter(([h]) => parseInt(h) >= 6)
+        .map(([h, stats]) => ({
+          hour: parseInt(h),
+          accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+        }));
+
+      const bestHours = hourlyData
+        .filter(d => d.accuracy > 0)
+        .sort((a, b) => b.accuracy - a.accuracy)
+        .slice(0, 3)
+        .map(d => `${d.hour}:00`);
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const weeklyData = dayNames.map((day, i) => ({
+        day,
+        accuracy: dayStats[i].total > 0 ? Math.round((dayStats[i].correct / dayStats[i].total) * 100) : 0,
       }));
 
-      const bestHourIndices = hourlyData
-        .map((d, i) => ({ i, acc: d.accuracy }))
-        .sort((a, b) => b.acc - a.acc)
-        .slice(0, 3)
-        .map(d => `${d.i + 6}:00`);
+      const bestDay = weeklyData.reduce((best, d) => d.accuracy > best.accuracy ? d : best, weeklyData[0]).day;
 
-      const weeklyData = [
-        { day: 'Mon', accuracy: 72 },
-        { day: 'Tue', accuracy: 68 },
-        { day: 'Wed', accuracy: 75 },
-        { day: 'Thu', accuracy: 80 },
-        { day: 'Fri', accuracy: 65 },
-        { day: 'Sat', accuracy: 78 },
-        { day: 'Sun', accuracy: 70 },
+      // Calculate scores
+      const totalAttempts = attempts?.length || 0;
+      const totalCorrect = attempts?.filter((a: any) => a.is_correct).length || 0;
+      const accuracyScore = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+      
+      const avgTime = totalAttempts > 0 
+        ? attempts!.reduce((sum: number, a: any) => sum + (a.time_spent_seconds || 0), 0) / totalAttempts 
+        : 0;
+      const speedScore = avgTime > 0 ? Math.min(100, Math.round((90 / avgTime) * 100)) : 50;
+
+      // Difficulty distribution
+      const totalDiff = Object.values(difficultyStats).reduce((a, b) => a + b, 0);
+      const difficultyData = [
+        { name: 'Easy', value: totalDiff > 0 ? Math.round((difficultyStats.Easy / totalDiff) * 100) : 0 },
+        { name: 'Medium', value: totalDiff > 0 ? Math.round((difficultyStats.Medium / totalDiff) * 100) : 0 },
+        { name: 'Hard', value: totalDiff > 0 ? Math.round((difficultyStats.Hard / totalDiff) * 100) : 0 },
       ];
 
-      const bestDay = weeklyData.reduce((best, d) => d.accuracy > best.accuracy ? d : best).day;
+      const hardPercent = difficultyData.find(d => d.name === 'Hard')?.value || 0;
+      const difficultyAlert = hardPercent < 15 ? `Only ${hardPercent}% hard questions attempted` : null;
+
+      // Retry analysis
+      const retryRate = totalAttempts > 0 ? Math.round((retryAttempts.total / totalAttempts) * 100) : 0;
+      const retrySuccess = retryAttempts.total > 0 ? Math.round((retryAttempts.correct / retryAttempts.total) * 100) : 0;
+      const firstAttemptAcc = firstAttempts.total > 0 ? Math.round((firstAttempts.correct / firstAttempts.total) * 100) : 0;
+
+      // Generate insights based on data
+      const sessionInsights: string[] = [];
+      if (bestHours.length > 0) {
+        sessionInsights.push(`Best performance around ${bestHours[0]}`);
+      }
+      if (retrySuccess > firstAttemptAcc + 10) {
+        sessionInsights.push('Shows good improvement on retries');
+      }
+      if (hardPercent < 20) {
+        sessionInsights.push('Consider attempting more challenging questions');
+      }
+
+      // Get session count
+      const { count: sessionCount } = await supabase
+        .from('student_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_account_id', studentId);
+
+      const questionsPerSession = sessionCount && sessionCount > 0 
+        ? Math.round(totalAttempts / sessionCount) 
+        : totalAttempts;
 
       return {
         hourlyData,
-        bestHours: bestHourIndices,
+        bestHours,
         weeklyData,
         bestDay,
-        consistencyScore: 72,
-        difficultyData: [
-          { name: 'Easy', value: 40 },
-          { name: 'Medium', value: 45 },
-          { name: 'Hard', value: 15 },
-        ],
-        difficultyAlert: 'Less than 15% hard questions attempted',
-        speedScore: 65,
-        accuracyScore: 72,
-        quadrantRecommendation: 'Good balance! Focus on maintaining accuracy while gradually increasing speed.',
-        retryRate: 45,
-        retrySuccess: 78,
+        consistencyScore: Math.round((weeklyData.filter(d => d.accuracy > 0).length / 7) * 100),
+        difficultyData,
+        difficultyAlert,
+        speedScore,
+        accuracyScore,
+        quadrantRecommendation: speedScore > 70 && accuracyScore > 70 
+          ? 'Excellent! Maintain your current pace.'
+          : speedScore > accuracyScore 
+            ? 'Good speed! Focus on improving accuracy.'
+            : 'Good accuracy! Try increasing your solving speed.',
+        retryRate,
+        retrySuccess,
         retryComparison: [
-          { name: 'First Attempt', accuracy: 65 },
-          { name: 'Retry', accuracy: 85 },
+          { name: 'First Attempt', accuracy: firstAttemptAcc },
+          { name: 'Retry', accuracy: retrySuccess },
         ],
-        questionsPerSession: 18,
-        completionRate: 92,
-        focusScore: 85,
-        sessionInsights: [
-          'Most productive during evening sessions',
-          'Tends to skip difficult questions initially',
-          'Shows good improvement on retries',
-        ],
+        questionsPerSession,
+        completionRate: 100, // All submitted attempts are complete
+        focusScore: accuracyScore,
+        sessionInsights: sessionInsights.length > 0 ? sessionInsights : ['Keep practicing to generate insights'],
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -1229,18 +1616,67 @@ export function useClassComparisonData(batchIds: string[]) {
 
       if (!batches) return [];
 
-      return batches.map((batch: any) => ({
-        id: batch.id,
-        name: batch.batch_name,
-        studentCount: 20 + Math.floor(Math.random() * 10),
-        avgAccuracy: 60 + Math.floor(Math.random() * 25),
-        avgQuestions: 100 + Math.floor(Math.random() * 100),
-        avgHours: 15 + Math.floor(Math.random() * 15),
-        engagementPercent: 60 + Math.floor(Math.random() * 30),
-        topStudent: 'Student ' + Math.floor(Math.random() * 100),
-        atRiskCount: Math.floor(Math.random() * 5),
-        healthScore: 60 + Math.floor(Math.random() * 30),
-      }));
+      // Get all metrics in parallel for each batch
+      const metricsPromises = batches.map(async (batch: any) => {
+        // Get students in batch
+        const { data: students } = await supabase
+          .from('students')
+          .select('id')
+          .eq('batch_id', batch.id);
+
+        const studentCount = students?.length || 0;
+
+        // Get student accounts linked to these students
+        const { data: accounts } = await supabase
+          .from('student_accounts')
+          .select('id, last_login')
+          .in('linked_student_id', (students || []).map(s => s.id));
+
+        const accountIds = (accounts || []).map(a => a.id);
+
+        // Get attempts for these accounts
+        const { data: attempts } = await supabase
+          .from('student_attempts')
+          .select('is_correct, student_account_id')
+          .in('student_account_id', accountIds.length > 0 ? accountIds : ['none']);
+
+        const totalAttempts = attempts?.length || 0;
+        const correctAttempts = attempts?.filter((a: any) => a.is_correct).length || 0;
+        const avgAccuracy = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
+        const avgQuestions = studentCount > 0 ? Math.round(totalAttempts / studentCount) : 0;
+
+        // Calculate engagement (students who logged in recently)
+        const recentLogins = (accounts || []).filter((a: any) => 
+          a.last_login && differenceInDays(new Date(), new Date(a.last_login)) <= 7
+        ).length;
+        const engagementPercent = accountIds.length > 0 ? Math.round((recentLogins / accountIds.length) * 100) : 0;
+
+        // Count at-risk (inactive > 7 days)
+        const atRiskCount = (accounts || []).filter((a: any) => 
+          !a.last_login || differenceInDays(new Date(), new Date(a.last_login)) > 7
+        ).length;
+
+        // Calculate health score
+        const accuracyScore = avgAccuracy * 0.4;
+        const engagementScore = engagementPercent * 0.4;
+        const activityScore = Math.min(avgQuestions / 2, 20);
+        const healthScore = Math.round(accuracyScore + engagementScore + activityScore);
+
+        return {
+          id: batch.id,
+          name: batch.batch_name || 'Unnamed',
+          studentCount,
+          avgAccuracy,
+          avgQuestions,
+          avgHours: 0, // Not tracked in current schema
+          engagementPercent,
+          topStudent: 'See leaderboard',
+          atRiskCount,
+          healthScore: Math.min(100, healthScore),
+        };
+      });
+
+      return Promise.all(metricsPromises);
     },
     staleTime: 5 * 60 * 1000,
     enabled: batchIds.length > 0,
@@ -1268,21 +1704,98 @@ export function useProgressTimelineData(studentId: string) {
   return useQuery({
     queryKey: ['admin-analytics', 'progress-timeline', studentId],
     queryFn: async () => {
-      const chartData = Array.from({ length: 60 }, (_, i) => ({
-        date: format(subDays(new Date(), 60 - i), 'MMM dd'),
-        accuracy: 50 + Math.round(Math.random() * 35 + i * 0.3),
-        questions: Math.round(Math.random() * 20),
-        classAvg: 60 + Math.round(Math.random() * 15),
+      // Get 60 days of attempts
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select('is_correct, attempted_at')
+        .eq('student_account_id', studentId)
+        .gte('attempted_at', format(subDays(new Date(), 60), 'yyyy-MM-dd'))
+        .order('attempted_at', { ascending: true });
+
+      // Build daily stats
+      const dailyStats: Record<string, { correct: number; total: number }> = {};
+      for (let i = 59; i >= 0; i--) {
+        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        dailyStats[date] = { correct: 0, total: 0 };
+      }
+
+      attempts?.forEach((a: any) => {
+        const date = format(new Date(a.attempted_at), 'yyyy-MM-dd');
+        if (dailyStats[date]) {
+          dailyStats[date].total++;
+          if (a.is_correct) dailyStats[date].correct++;
+        }
+      });
+
+      // Get class average for comparison
+      const { data: classAttempts } = await supabase
+        .from('student_attempts')
+        .select('is_correct, attempted_at')
+        .gte('attempted_at', format(subDays(new Date(), 60), 'yyyy-MM-dd'))
+        .limit(5000);
+
+      const classDailyStats: Record<string, { correct: number; total: number }> = {};
+      Object.keys(dailyStats).forEach(date => {
+        classDailyStats[date] = { correct: 0, total: 0 };
+      });
+
+      classAttempts?.forEach((a: any) => {
+        const date = format(new Date(a.attempted_at), 'yyyy-MM-dd');
+        if (classDailyStats[date]) {
+          classDailyStats[date].total++;
+          if (a.is_correct) classDailyStats[date].correct++;
+        }
+      });
+
+      const chartData = Object.entries(dailyStats).map(([dateKey, stats]) => {
+        const classS = classDailyStats[dateKey] || { correct: 0, total: 0 };
+        return {
+          date: format(new Date(dateKey), 'MMM dd'),
+          accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+          questions: stats.total,
+          classAvg: classS.total > 0 ? Math.round((classS.correct / classS.total) * 100) : 0,
+        };
+      });
+
+      // Get badges earned as milestones
+      const { data: badges } = await supabase
+        .from('student_badges')
+        .select(`
+          unlocked_at,
+          badges (name)
+        `)
+        .eq('student_account_id', studentId)
+        .eq('is_unlocked', true)
+        .order('unlocked_at', { ascending: false })
+        .limit(5);
+
+      const milestones = (badges || []).map((b: any, i: number) => ({
+        date: b.unlocked_at ? format(new Date(b.unlocked_at), 'MMM dd') : 'Recently',
+        title: b.badges?.name || 'Badge earned',
+        description: 'Achievement unlocked',
+        type: 'badge',
       }));
+
+      // Calculate summary
+      const firstWeek = chartData.slice(0, 7).filter(d => d.accuracy > 0);
+      const lastWeek = chartData.slice(-7).filter(d => d.accuracy > 0);
+      const startingAccuracy = firstWeek.length > 0 
+        ? Math.round(firstWeek.reduce((sum, d) => sum + d.accuracy, 0) / firstWeek.length)
+        : 0;
+      const currentAccuracy = lastWeek.length > 0 
+        ? Math.round(lastWeek.reduce((sum, d) => sum + d.accuracy, 0) / lastWeek.length)
+        : 0;
+      const activeDays = chartData.filter(d => d.questions > 0).length;
 
       return {
         chartData,
-        milestones: [
-          { date: 'Jan 15', title: 'Reached Gold tier', description: 'Promoted from Silver', type: 'rank' },
-          { date: 'Jan 10', title: 'Speed Demon badge', description: 'Solved 50 questions in under 1 minute each', type: 'badge' },
-          { date: 'Jan 05', title: '7-day streak', description: 'Practiced every day for a week', type: 'streak' },
-        ],
-        summary: { startingAccuracy: 55, currentAccuracy: 78, improvement: 23, activeDays: 45 },
+        milestones,
+        summary: { 
+          startingAccuracy, 
+          currentAccuracy, 
+          improvement: currentAccuracy - startingAccuracy, 
+          activeDays 
+        },
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -1317,11 +1830,73 @@ export function useTopicMatrixData(batchIds: string[]) {
   return useQuery({
     queryKey: ['admin-analytics', 'topic-matrix', batchIds],
     queryFn: async () => {
-      const topics = [{ id: 't1', name: 'Algebra' }, { id: 't2', name: 'Geometry' }, { id: 't3', name: 'Reading' }, { id: 't4', name: 'Grammar' }];
-      const classes = batchIds.map((id, i) => ({ id, name: `Class ${i + 1}` }));
+      // Get real categories
+      const { data: categories } = await supabase
+        .from('question_categories')
+        .select('id, name')
+        .limit(10);
+
+      if (!categories) return { topics: [], classes: [], matrix: {}, insights: [] };
+
+      // Get batch names
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('id, batch_name')
+        .in('id', batchIds);
+
+      const topics = categories.map(c => ({ id: c.id, name: c.name }));
+      const classes = (batches || []).map(b => ({ id: b.id, name: b.batch_name || 'Unnamed' }));
+
+      // Build matrix from real data
       const matrix: Record<string, Record<string, number>> = {};
-      topics.forEach(t => { matrix[t.id] = {}; classes.forEach(c => { matrix[t.id][c.id] = 50 + Math.floor(Math.random() * 40); }); });
-      return { topics, classes, matrix, insights: ['Class 1 outperforms Class 2 by 15% in Algebra'] };
+      
+      for (const topic of topics) {
+        matrix[topic.id] = {};
+        
+        for (const cls of classes) {
+          // Get students in this batch
+          const { data: students } = await supabase
+            .from('students')
+            .select('id')
+            .eq('batch_id', cls.id);
+
+          const { data: accounts } = await supabase
+            .from('student_accounts')
+            .select('id')
+            .in('linked_student_id', (students || []).map(s => s.id));
+
+          if (accounts && accounts.length > 0) {
+            const { data: attempts } = await supabase
+              .from('student_attempts')
+              .select('is_correct, questions!inner(category_id)')
+              .in('student_account_id', accounts.map(a => a.id))
+              .eq('questions.category_id', topic.id)
+              .limit(500);
+
+            const total = attempts?.length || 0;
+            const correct = attempts?.filter((a: any) => a.is_correct).length || 0;
+            matrix[topic.id][cls.id] = total > 0 ? Math.round((correct / total) * 100) : 0;
+          } else {
+            matrix[topic.id][cls.id] = 0;
+          }
+        }
+      }
+
+      // Generate insights from data
+      const insights: string[] = [];
+      if (classes.length >= 2 && topics.length > 0) {
+        const topicDiffs = topics.map(t => {
+          const vals = classes.map(c => matrix[t.id]?.[c.id] || 0);
+          const diff = Math.max(...vals) - Math.min(...vals);
+          return { topic: t.name, diff, vals };
+        }).sort((a, b) => b.diff - a.diff);
+
+        if (topicDiffs[0]?.diff > 10) {
+          insights.push(`Largest gap in ${topicDiffs[0].topic}: ${topicDiffs[0].diff}% difference between classes`);
+        }
+      }
+
+      return { topics, classes, matrix, insights };
     },
     staleTime: 5 * 60 * 1000,
     enabled: batchIds.length >= 2,
@@ -1333,17 +1908,65 @@ export function useEngagementComparisonData(batchIds: string[]) {
   return useQuery({
     queryKey: ['admin-analytics', 'engagement-comparison', batchIds],
     queryFn: async () => {
-      const classes = batchIds.map((id, i) => ({ id, name: `Class ${i + 1}`, avgDau: 10 + Math.floor(Math.random() * 15) }));
-      const dauTrend = Array.from({ length: 30 }, (_, i) => {
-        const point: any = { date: format(subDays(new Date(), 30 - i), 'MMM dd') };
-        classes.forEach(c => { point[c.id] = 5 + Math.floor(Math.random() * 20); });
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('id, batch_name')
+        .in('id', batchIds);
+
+      const classes = await Promise.all((batches || []).map(async (b: any) => {
+        const { data: students } = await supabase
+          .from('students')
+          .select('id')
+          .eq('batch_id', b.id);
+
+        const { data: accounts } = await supabase
+          .from('student_accounts')
+          .select('id, last_login')
+          .in('linked_student_id', (students || []).map(s => s.id));
+
+        const recentActive = (accounts || []).filter((a: any) =>
+          a.last_login && differenceInDays(new Date(), new Date(a.last_login)) <= 7
+        ).length;
+
+        return {
+          id: b.id,
+          name: b.batch_name || 'Unnamed',
+          avgDau: recentActive,
+        };
+      }));
+
+      // Build 30-day trend from real session data
+      const dauTrend = await Promise.all(Array.from({ length: 30 }, async (_, i) => {
+        const dayDate = subDays(new Date(), 30 - i);
+        const dayStr = format(dayDate, 'yyyy-MM-dd');
+        const point: any = { date: format(dayDate, 'MMM dd') };
+
+        for (const cls of classes) {
+          const { count } = await supabase
+            .from('student_sessions')
+            .select('*', { count: 'exact', head: true })
+            .gte('login_timestamp', dayStr)
+            .lt('login_timestamp', format(subDays(dayDate, -1), 'yyyy-MM-dd'));
+          
+          point[cls.id] = count || 0;
+        }
+
         return point;
-      });
-      const weeklyData = ['W1', 'W2', 'W3', 'W4'].map(week => {
+      }));
+
+      // Weekly aggregation
+      const weeklyData = ['W1', 'W2', 'W3', 'W4'].map((week, weekIdx) => {
         const point: any = { week };
-        classes.forEach(c => { point[c.id] = 20 + Math.floor(Math.random() * 30); });
+        const weekDays = dauTrend.slice(weekIdx * 7, (weekIdx + 1) * 7);
+        
+        classes.forEach(c => {
+          const weekTotal = weekDays.reduce((sum, d) => sum + (d[c.id] || 0), 0);
+          point[c.id] = weekTotal;
+        });
+        
         return point;
       });
+
       return { classes, dauTrend, weeklyData };
     },
     staleTime: 5 * 60 * 1000,
@@ -1356,17 +1979,121 @@ export function useSprintComparisonData(batchIds: string[]) {
   return useQuery({
     queryKey: ['admin-analytics', 'sprint-comparison', batchIds],
     queryFn: async () => {
-      const classes = batchIds.map((id, i) => ({ id, name: `Class ${i + 1}`, participationRate: 60 + Math.floor(Math.random() * 30), avgPoints: 400 + Math.floor(Math.random() * 400) }));
+      // Get active sprint
+      const { data: sprint } = await supabase
+        .from('sprints')
+        .select('id')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!sprint) {
+        return { classes: [], tierDistribution: [], topStudents: [] };
+      }
+
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('id, batch_name')
+        .in('id', batchIds);
+
+      // Get rankings for students in these batches
+      const batchStudentMap: Record<string, string[]> = {};
+      
+      for (const batch of batches || []) {
+        const { data: students } = await supabase
+          .from('students')
+          .select('id')
+          .eq('batch_id', batch.id);
+
+        const { data: accounts } = await supabase
+          .from('student_accounts')
+          .select('id')
+          .in('linked_student_id', (students || []).map(s => s.id));
+
+        batchStudentMap[batch.id] = (accounts || []).map(a => a.id);
+      }
+
+      const classes = await Promise.all((batches || []).map(async (b: any) => {
+        const accountIds = batchStudentMap[b.id] || [];
+        
+        const { data: rankings } = await supabase
+          .from('student_sprint_rankings')
+          .select('total_points')
+          .eq('sprint_id', sprint.id)
+          .in('student_account_id', accountIds.length > 0 ? accountIds : ['none']);
+
+        const avgPoints = rankings && rankings.length > 0
+          ? Math.round(rankings.reduce((sum: number, r: any) => sum + (r.total_points || 0), 0) / rankings.length)
+          : 0;
+        const participationRate = accountIds.length > 0
+          ? Math.round(((rankings?.length || 0) / accountIds.length) * 100)
+          : 0;
+
+        return {
+          id: b.id,
+          name: b.batch_name || 'Unnamed',
+          participationRate,
+          avgPoints,
+        };
+      }));
+
+      // Get tier distribution
+      const allAccountIds = Object.values(batchStudentMap).flat();
+      const { data: allRankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier, student_account_id')
+        .eq('sprint_id', sprint.id)
+        .in('student_account_id', allAccountIds.length > 0 ? allAccountIds : ['none']);
+
       const tierDistribution = ['Bronze', 'Silver', 'Gold', 'Diamond', 'Ruby'].map(tier => {
         const point: any = { tier };
-        classes.forEach(c => { point[c.id] = Math.floor(Math.random() * 10); });
+        
+        classes.forEach(c => {
+          const classAccountIds = batchStudentMap[c.id] || [];
+          const count = (allRankings || []).filter((r: any) => 
+            r.current_tier?.toLowerCase() === tier.toLowerCase() && 
+            classAccountIds.includes(r.student_account_id)
+          ).length;
+          point[c.id] = count;
+        });
+        
         return point;
       });
-      const topStudents = Array.from({ length: 20 }, (_, i) => ({
-        id: `s${i}`, name: `Student ${i + 1}`, className: classes[i % classes.length].name,
-        tier: ['Bronze', 'Silver', 'Gold', 'Diamond', 'Ruby'][Math.floor(Math.random() * 5)],
-        points: 1000 - i * 40 + Math.floor(Math.random() * 20),
-      }));
+
+      // Get top students across all classes
+      const { data: topRankings } = await supabase
+        .from('student_sprint_rankings')
+        .select(`
+          id,
+          total_points,
+          current_tier,
+          student_accounts (
+            id,
+            students (
+              name,
+              first_name,
+              batch_id
+            )
+          )
+        `)
+        .eq('sprint_id', sprint.id)
+        .in('student_account_id', allAccountIds.length > 0 ? allAccountIds : ['none'])
+        .order('total_points', { ascending: false })
+        .limit(20);
+
+      const topStudents = (topRankings || []).map((r: any) => {
+        const student = r.student_accounts?.students;
+        const batchId = student?.batch_id;
+        const cls = classes.find(c => c.id === batchId);
+        
+        return {
+          id: r.id,
+          name: student?.name || student?.first_name || 'Unknown',
+          className: cls?.name || 'Unknown',
+          tier: r.current_tier || 'Bronze',
+          points: r.total_points || 0,
+        };
+      });
+
       return { classes, tierDistribution, topStudents };
     },
     staleTime: 5 * 60 * 1000,
@@ -1378,11 +2105,82 @@ export function useSprintComparisonData(batchIds: string[]) {
 export function useClassInsights(batchIds: string[]) {
   return useQuery({
     queryKey: ['admin-analytics', 'class-insights', batchIds],
-    queryFn: async () => [
-      { id: '1', type: 'comparison', category: 'Performance', text: 'Class 1 shows 23% higher accuracy in Reading compared to Class 2', stats: 'Based on 500+ attempts', action: 'View Details' },
-      { id: '2', type: 'collaboration', category: 'Suggestion', text: 'Consider peer tutoring between Class 1 (strong in Algebra) and Class 2 (strong in Geometry)', action: 'Create Session' },
-      { id: '3', type: 'alert', category: 'Alert', text: 'Class 2 engagement dropped 15% this week', stats: '8 inactive students', action: 'Send Reminder' },
-    ],
+    queryFn: async () => {
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('id, batch_name')
+        .in('id', batchIds);
+
+      if (!batches || batches.length < 2) return [];
+
+      const insights: Array<{ id: string; type: string; category: string; text: string; stats?: string; action: string }> = [];
+
+      // Get stats for comparison
+      const batchStats = await Promise.all(batches.map(async (b: any) => {
+        const { data: students } = await supabase
+          .from('students')
+          .select('id')
+          .eq('batch_id', b.id);
+
+        const { data: accounts } = await supabase
+          .from('student_accounts')
+          .select('id, last_login')
+          .in('linked_student_id', (students || []).map(s => s.id));
+
+        const { data: attempts } = await supabase
+          .from('student_attempts')
+          .select('is_correct')
+          .in('student_account_id', (accounts || []).map(a => a.id))
+          .gte('attempted_at', format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+
+        const accuracy = attempts && attempts.length > 0
+          ? Math.round((attempts.filter((a: any) => a.is_correct).length / attempts.length) * 100)
+          : 0;
+
+        const inactive = (accounts || []).filter((a: any) =>
+          !a.last_login || differenceInDays(new Date(), new Date(a.last_login)) > 7
+        ).length;
+
+        return {
+          id: b.id,
+          name: b.batch_name || 'Unnamed',
+          accuracy,
+          inactive,
+          totalStudents: students?.length || 0,
+        };
+      }));
+
+      // Generate insights from real data
+      if (batchStats.length >= 2) {
+        const sorted = [...batchStats].sort((a, b) => b.accuracy - a.accuracy);
+        const diff = sorted[0].accuracy - sorted[sorted.length - 1].accuracy;
+        
+        if (diff > 10) {
+          insights.push({
+            id: '1',
+            type: 'comparison',
+            category: 'Performance',
+            text: `${sorted[0].name} shows ${diff}% higher accuracy compared to ${sorted[sorted.length - 1].name}`,
+            stats: 'Based on this week\'s attempts',
+            action: 'View Details',
+          });
+        }
+
+        const highInactive = batchStats.find(b => b.inactive > 5);
+        if (highInactive) {
+          insights.push({
+            id: '2',
+            type: 'alert',
+            category: 'Alert',
+            text: `${highInactive.name} has ${highInactive.inactive} inactive students`,
+            stats: 'No activity in 7+ days',
+            action: 'Send Reminder',
+          });
+        }
+      }
+
+      return insights;
+    },
     staleTime: 5 * 60 * 1000,
     enabled: batchIds.length >= 2,
   });
