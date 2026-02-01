@@ -26,12 +26,22 @@ interface StudentAccount {
   linked_student?: LinkedStudent | null;
   registered_device_id: string | null;
   device_registered_at: string | null;
+  password_hash: string | null;
+  password_set_at: string | null;
 }
+
+export type AuthStep = 'phone' | 'password' | 'set_password';
 
 interface StudentAuthContextType {
   student: StudentAccount | null;
   isLoading: boolean;
-  login: (phoneNumber: string) => Promise<{ error: string | null }>;
+  authStep: AuthStep;
+  pendingPhone: string | null;
+  pendingStudentAccount: StudentAccount | null;
+  checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean }>;
+  loginWithPassword: (password: string) => Promise<{ error: string | null }>;
+  setPassword: (password: string) => Promise<{ error: string | null }>;
+  resetAuthFlow: () => void;
   logout: () => void;
   logActivity: (activityType: string, metadata?: Record<string, any>) => Promise<void>;
 }
@@ -59,6 +69,9 @@ const getDaysRemaining = (registrationDate: string): number => {
 export function StudentAuthProvider({ children }: { children: ReactNode }) {
   const [student, setStudent] = useState<StudentAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authStep, setAuthStep] = useState<AuthStep>('phone');
+  const [pendingPhone, setPendingPhone] = useState<string | null>(null);
+  const [pendingStudentAccount, setPendingStudentAccount] = useState<StudentAccount | null>(null);
 
   useEffect(() => {
     checkExistingSession();
@@ -157,10 +170,23 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (phoneNumber: string): Promise<{ error: string | null }> => {
+  const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean }> => {
     try {
-      const deviceId = getDeviceId();
-      
+      // First check if phone exists in students table
+      const { data: studentRecord, error: studentError } = await supabase
+        .from('students')
+        .select('id, first_name, phone')
+        .eq('phone', phoneNumber)
+        .maybeSingle();
+
+      if (studentError && studentError.code !== 'PGRST116') {
+        throw studentError;
+      }
+
+      if (!studentRecord) {
+        return { error: 'No student found with this phone number. Please contact your teacher.' };
+      }
+
       // Check if student account exists
       let { data: studentAccount, error: fetchError } = await supabase
         .from('student_accounts')
@@ -171,6 +197,8 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
       }
+
+      const deviceId = getDeviceId();
 
       if (!studentAccount) {
         // Create new student account (trigger will auto-link to students table)
@@ -186,51 +214,125 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
         if (createError) throw createError;
         studentAccount = newStudent;
+      }
+
+      // Check if account is blocked
+      if (studentAccount.is_blocked) {
+        return { 
+          error: `Your account has been suspended: ${studentAccount.blocked_reason || 'Contact administrator for help.'}` 
+        };
+      }
+
+      // Store pending info
+      setPendingPhone(phoneNumber);
+      setPendingStudentAccount(studentAccount as StudentAccount);
+
+      // Check if password is set
+      if (studentAccount.password_hash) {
+        setAuthStep('password');
+        return { error: null, needsPassword: true };
       } else {
-        // Check if account is blocked
-        if (studentAccount.is_blocked) {
+        setAuthStep('set_password');
+        return { error: null, needsSetup: true };
+      }
+
+    } catch (err: any) {
+      console.error('Phone check error:', err);
+      return { error: err.message || 'Failed to check phone number' };
+    }
+  };
+
+  const setPassword = async (password: string): Promise<{ error: string | null }> => {
+    try {
+      if (!pendingStudentAccount || !pendingPhone) {
+        return { error: 'Session expired. Please start over.' };
+      }
+
+      // Hash the password using database function
+      const { data: hashResult, error: hashError } = await supabase
+        .rpc('hash_student_password', { password });
+
+      if (hashError) throw hashError;
+
+      // Update the student account with the password hash
+      const { error: updateError } = await supabase
+        .from('student_accounts')
+        .update({
+          password_hash: hashResult,
+          password_set_at: new Date().toISOString()
+        })
+        .eq('id', pendingStudentAccount.id);
+
+      if (updateError) throw updateError;
+
+      // Now complete the login
+      return await completeLogin(pendingStudentAccount);
+
+    } catch (err: any) {
+      console.error('Set password error:', err);
+      return { error: err.message || 'Failed to set password' };
+    }
+  };
+
+  const loginWithPassword = async (password: string): Promise<{ error: string | null }> => {
+    try {
+      if (!pendingStudentAccount || !pendingPhone) {
+        return { error: 'Session expired. Please start over.' };
+      }
+
+      // Verify password using database function
+      const { data: isValid, error: verifyError } = await supabase
+        .rpc('verify_student_password', { 
+          stored_hash: pendingStudentAccount.password_hash,
+          input_password: password 
+        });
+
+      if (verifyError) throw verifyError;
+
+      if (!isValid) {
+        return { error: 'Incorrect password. Please try again.' };
+      }
+
+      // Password is correct, complete login
+      return await completeLogin(pendingStudentAccount);
+
+    } catch (err: any) {
+      console.error('Login with password error:', err);
+      return { error: err.message || 'Login failed' };
+    }
+  };
+
+  const completeLogin = async (studentAccount: StudentAccount): Promise<{ error: string | null }> => {
+    try {
+      const deviceId = getDeviceId();
+
+      // Check device registration lock (30-day lock) - skip for dev accounts
+      const isDevAccount = (studentAccount as any).is_dev_account === true;
+      
+      if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
+        const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
+        
+        if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
+          // Log the attempt
+          await supabase.from('security_alerts').insert({
+            student_account_id: studentAccount.id,
+            alert_type: 'unauthorized_device_attempt',
+            severity: 'high',
+            metadata: {
+              attempted_device_id: deviceId,
+              registered_device_id: studentAccount.registered_device_id,
+              days_remaining: daysRemaining,
+              user_agent: navigator.userAgent
+            }
+          });
+          
           return { 
-            error: `Your account has been suspended: ${studentAccount.blocked_reason || 'Contact administrator for help.'}` 
+            error: `This account is registered to another device. You can log in from a new device in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
           };
         }
-
-        // Check device registration lock (30-day lock) - skip for dev accounts
-        const isDevAccount = (studentAccount as any).is_dev_account === true;
         
-        if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
-          const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
-          
-          if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
-            // Log the attempt
-            await supabase.from('security_alerts').insert({
-              student_account_id: studentAccount.id,
-              alert_type: 'unauthorized_device_attempt',
-              severity: 'high',
-              metadata: {
-                attempted_device_id: deviceId,
-                registered_device_id: studentAccount.registered_device_id,
-                days_remaining: daysRemaining,
-                user_agent: navigator.userAgent
-              }
-            });
-            
-            return { 
-              error: `This account is registered to another device. You can log in from a new device in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
-            };
-          }
-          
-          // If 30 days have passed, allow new device registration
-          if (studentAccount.registered_device_id !== deviceId && daysRemaining <= 0) {
-            await supabase
-              .from('student_accounts')
-              .update({
-                registered_device_id: deviceId,
-                device_registered_at: new Date().toISOString()
-              })
-              .eq('id', studentAccount.id);
-          }
-        } else {
-          // First time device registration
+        // If 30 days have passed, allow new device registration
+        if (studentAccount.registered_device_id !== deviceId && daysRemaining <= 0) {
           await supabase
             .from('student_accounts')
             .update({
@@ -239,6 +341,15 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
             })
             .eq('id', studentAccount.id);
         }
+      } else if (!studentAccount.registered_device_id) {
+        // First time device registration
+        await supabase
+          .from('student_accounts')
+          .update({
+            registered_device_id: deviceId,
+            device_registered_at: new Date().toISOString()
+          })
+          .eq('id', studentAccount.id);
       }
 
       // Deactivate ALL existing sessions for this student
@@ -297,6 +408,11 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       
       setStudent(fullStudent);
 
+      // Reset auth flow state
+      setPendingPhone(null);
+      setPendingStudentAccount(null);
+      setAuthStep('phone');
+
       // Log login activity with IP address via edge function
       try {
         await supabase.functions.invoke('log-ip', {
@@ -324,9 +440,15 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
 
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('Complete login error:', err);
       return { error: err.message || 'Login failed' };
     }
+  };
+
+  const resetAuthFlow = () => {
+    setPendingPhone(null);
+    setPendingStudentAccount(null);
+    setAuthStep('phone');
   };
 
   const logout = () => {
@@ -353,10 +475,23 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('student_session_id');
     localStorage.removeItem('student_id');
     setStudent(null);
+    resetAuthFlow();
   };
 
   return (
-    <StudentAuthContext.Provider value={{ student, isLoading, login, logout, logActivity }}>
+    <StudentAuthContext.Provider value={{ 
+      student, 
+      isLoading, 
+      authStep,
+      pendingPhone,
+      pendingStudentAccount,
+      checkPhone,
+      loginWithPassword,
+      setPassword,
+      resetAuthFlow,
+      logout, 
+      logActivity 
+    }}>
       {children}
     </StudentAuthContext.Provider>
   );
