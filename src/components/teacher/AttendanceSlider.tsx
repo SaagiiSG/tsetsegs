@@ -78,7 +78,7 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
   };
 
   return (
-    <div className="relative h-[84px] w-full min-w-[120px] overflow-hidden rounded-lg border bg-background/80 backdrop-blur-sm">
+    <div className="relative h-[84px] w-[104px] overflow-hidden rounded-lg border bg-background/80 backdrop-blur-sm">
       {/* Selection highlight band */}
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[28px] bg-primary/10 border-y border-primary/20 pointer-events-none z-10" />
 
