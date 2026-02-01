@@ -1326,6 +1326,8 @@ export type Database = {
           is_dev_account: boolean | null
           last_login: string | null
           linked_student_id: string | null
+          password_hash: string | null
+          password_set_at: string | null
           phone_number: string
           registered_device_id: string | null
           share_token: string | null
@@ -1342,6 +1344,8 @@ export type Database = {
           is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
+          password_hash?: string | null
+          password_set_at?: string | null
           phone_number: string
           registered_device_id?: string | null
           share_token?: string | null
@@ -1358,6 +1362,8 @@ export type Database = {
           is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
+          password_hash?: string | null
+          password_set_at?: string | null
           phone_number?: string
           registered_device_id?: string | null
           share_token?: string | null
@@ -2002,6 +2008,11 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      hash_student_password: { Args: { password: string }; Returns: string }
+      verify_student_password: {
+        Args: { input_password: string; stored_hash: string }
         Returns: boolean
       }
     }
