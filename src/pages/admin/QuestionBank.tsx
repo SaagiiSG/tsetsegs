@@ -24,28 +24,54 @@ export default function QuestionBank() {
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
 
-  // Fetch 68 questions count
+  // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
     queryKey: ['questions-68-count'],
     queryFn: async () => {
-      const { count } = await supabase
+      // Get bluebook question IDs to exclude
+      const { data: bluebookQuestionIds } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      
+      const excludeIds = bluebookQuestionIds?.map(q => q.question_id).filter(Boolean) || [];
+
+      let query = supabase
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('is_original', true)
         .eq('question_set', '68');
+      
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+      
+      const { count } = await query;
       return count || 0;
     }
   });
 
-  // Fetch CB questions count
+  // Fetch CB questions count (excluding bluebook questions)
   const { data: questionsCBCount } = useQuery({
     queryKey: ['questions-cb-count'],
     queryFn: async () => {
-      const { count } = await supabase
+      // Get bluebook question IDs to exclude
+      const { data: bluebookQuestionIds } = await supabase
+        .from('bluebook_module_questions')
+        .select('question_id');
+      
+      const excludeIds = bluebookQuestionIds?.map(q => q.question_id).filter(Boolean) || [];
+
+      let query = supabase
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('is_original', true)
         .eq('question_set', 'CollegeBoard');
+      
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+      
+      const { count } = await query;
       return count || 0;
     }
   });
