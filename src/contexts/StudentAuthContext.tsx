@@ -58,12 +58,15 @@ const getDeviceId = (): string => {
   return deviceId;
 };
 
+// Device lock duration in days
+const DEVICE_LOCK_DAYS = 90;
+
 // Calculate days remaining for device lock
 const getDaysRemaining = (registrationDate: string): number => {
   const registered = new Date(registrationDate);
   const now = new Date();
   const daysPassed = Math.floor((now.getTime() - registered.getTime()) / (1000 * 60 * 60 * 24));
-  return Math.max(0, 30 - daysPassed);
+  return Math.max(0, DEVICE_LOCK_DAYS - daysPassed);
 };
 
 export function StudentAuthProvider({ children }: { children: ReactNode }) {
@@ -306,7 +309,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     try {
       const deviceId = getDeviceId();
 
-      // Check device registration lock (30-day lock) - skip for dev accounts
+      // Check device registration lock (90-day lock) - skip for dev accounts
       const isDevAccount = (studentAccount as any).is_dev_account === true;
       
       if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
@@ -331,7 +334,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           };
         }
         
-        // If 30 days have passed, allow new device registration
+        // If 90 days have passed, allow new device registration
         if (studentAccount.registered_device_id !== deviceId && daysRemaining <= 0) {
           await supabase
             .from('student_accounts')

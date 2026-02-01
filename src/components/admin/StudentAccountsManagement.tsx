@@ -41,7 +41,8 @@ import {
 import {
   Search, Smartphone, Monitor, Laptop, 
   ChevronDown, ChevronRight, Power, PowerOff, 
-  RefreshCw, Trash2, User, ExternalLink, Phone, GraduationCap
+  RefreshCw, Trash2, User, ExternalLink, Phone, GraduationCap,
+  Key, KeyRound, RotateCcw, Shield, ShieldOff
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -70,6 +71,10 @@ interface StudentAccount {
   created_at: string;
   last_login: string | null;
   is_active: boolean;
+  password_hash: string | null;
+  password_set_at: string | null;
+  registered_device_id: string | null;
+  device_registered_at: string | null;
   sessions: StudentSession[];
   studentInfo?: StudentInfo;
 }
@@ -125,7 +130,7 @@ export function StudentAccountsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    type: 'terminate_session' | 'deactivate_account' | 'activate_account';
+    type: 'terminate_session' | 'deactivate_account' | 'activate_account' | 'reset_password' | 'reset_device';
     targetId: string;
     accountPhone?: string;
   } | null>(null);
@@ -242,6 +247,46 @@ export function StudentAccountsManagement() {
       }
       
       toast({ title: activate ? 'Account activated' : 'Account deactivated' });
+      fetchAccounts();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+    setConfirmDialog(null);
+  };
+
+  const resetPassword = async (accountId: string) => {
+    try {
+      const { error } = await supabase
+        .from('student_accounts')
+        .update({
+          password_hash: null,
+          password_set_at: null
+        })
+        .eq('id', accountId);
+
+      if (error) throw error;
+
+      toast({ title: 'Password reset', description: 'Student will need to set a new password on next login.' });
+      fetchAccounts();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+    setConfirmDialog(null);
+  };
+
+  const resetDevice = async (accountId: string) => {
+    try {
+      const { error } = await supabase
+        .from('student_accounts')
+        .update({
+          registered_device_id: null,
+          device_registered_at: null
+        })
+        .eq('id', accountId);
+
+      if (error) throw error;
+
+      toast({ title: 'Device reset', description: 'Student can now log in from any device.' });
       fetchAccounts();
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -477,58 +522,150 @@ export function StudentAccountsManagement() {
                     {isExpanded && (
                       <TableRow key={`${account.id}-expanded`} className="bg-muted/30">
                         <TableCell colSpan={9} className="p-0">
-                          <div className="px-6 py-4">
-                            <h4 className="text-sm font-semibold mb-3">Sessions ({account.sessions.length})</h4>
-                            {account.sessions.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">No sessions found</p>
-                            ) : (
-                              <div className="space-y-2">
-                                {account.sessions.map((session) => {
-                                  const { device, browser, icon } = parseUserAgent(session.user_agent);
-                                  const isExpired = new Date(session.expires_at) < new Date();
-                                  
-                                  return (
-                                    <div 
-                                      key={session.id} 
-                                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                                        session.is_active && !isExpired ? 'bg-green-500/5 border-green-500/20' : 'bg-muted/50'
-                                      }`}
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        {icon}
-                                        <div>
-                                          <p className="text-sm font-medium">{device} • {browser}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            Logged in {formatDistanceToNow(new Date(session.login_timestamp), { addSuffix: true })}
-                                            {' • '}
-                                            Expires {format(new Date(session.expires_at), 'MMM d, yyyy')}
-                                          </p>
+                          <div className="px-6 py-4 space-y-4">
+                            {/* Security Info Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Password Info */}
+                              <div className="p-3 rounded-lg border">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-medium text-sm">Password</span>
+                                  </div>
+                                  {account.password_hash ? (
+                                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                                      Set
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary">Not Set</Badge>
+                                  )}
+                                </div>
+                                {account.password_set_at && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Set {formatDistanceToNow(new Date(account.password_set_at), { addSuffix: true })}
+                                  </p>
+                                )}
+                                {account.password_hash && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfirmDialog({
+                                        open: true,
+                                        type: 'reset_password',
+                                        targetId: account.id,
+                                        accountPhone: account.phone_number
+                                      });
+                                    }}
+                                  >
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    Reset Password
+                                  </Button>
+                                )}
+                              </div>
+
+                              {/* Device Lock Info */}
+                              <div className="p-3 rounded-lg border">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-medium text-sm">Device Lock (90 days)</span>
+                                  </div>
+                                  {account.registered_device_id ? (
+                                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                                      <Shield className="h-3 w-3 mr-1" />
+                                      Locked
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary">
+                                      <ShieldOff className="h-3 w-3 mr-1" />
+                                      Unlocked
+                                    </Badge>
+                                  )}
+                                </div>
+                                {account.device_registered_at && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Registered {formatDistanceToNow(new Date(account.device_registered_at), { addSuffix: true })}
+                                  </p>
+                                )}
+                                {account.registered_device_id && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfirmDialog({
+                                        open: true,
+                                        type: 'reset_device',
+                                        targetId: account.id,
+                                        accountPhone: account.phone_number
+                                      });
+                                    }}
+                                  >
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    Reset Device Lock
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Sessions Section */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-3">Sessions ({account.sessions.length})</h4>
+                              {account.sessions.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No sessions found</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {account.sessions.map((session) => {
+                                    const { device, browser, icon } = parseUserAgent(session.user_agent);
+                                    const isExpired = new Date(session.expires_at) < new Date();
+                                    
+                                    return (
+                                      <div 
+                                        key={session.id} 
+                                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                                          session.is_active && !isExpired ? 'bg-primary/5 border-primary/20' : 'bg-muted/50'
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          {icon}
+                                          <div>
+                                            <p className="text-sm font-medium">{device} • {browser}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                              Logged in {formatDistanceToNow(new Date(session.login_timestamp), { addSuffix: true })}
+                                              {' • '}
+                                              Expires {format(new Date(session.expires_at), 'MMM d, yyyy')}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant={session.is_active && !isExpired ? 'default' : 'secondary'}>
+                                            {isExpired ? 'Expired' : session.is_active ? 'Active' : 'Terminated'}
+                                          </Badge>
+                                          {session.is_active && !isExpired && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => setConfirmDialog({
+                                                open: true,
+                                                type: 'terminate_session',
+                                                targetId: session.id
+                                              })}
+                                            >
+                                              <Trash2 className="h-3 w-3 mr-1" />
+                                              Terminate
+                                            </Button>
+                                          )}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant={session.is_active && !isExpired ? 'default' : 'secondary'}>
-                                          {isExpired ? 'Expired' : session.is_active ? 'Active' : 'Terminated'}
-                                        </Badge>
-                                        {session.is_active && !isExpired && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setConfirmDialog({
-                                              open: true,
-                                              type: 'terminate_session',
-                                              targetId: session.id
-                                            })}
-                                          >
-                                            <Trash2 className="h-3 w-3 mr-1" />
-                                            Terminate
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -615,6 +752,8 @@ export function StudentAccountsManagement() {
               {confirmDialog?.type === 'terminate_session' && 'Terminate Session'}
               {confirmDialog?.type === 'deactivate_account' && 'Deactivate Account'}
               {confirmDialog?.type === 'activate_account' && 'Activate Account'}
+              {confirmDialog?.type === 'reset_password' && 'Reset Password'}
+              {confirmDialog?.type === 'reset_device' && 'Reset Device Lock'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog?.type === 'terminate_session' && 
@@ -623,6 +762,10 @@ export function StudentAccountsManagement() {
                 `This will deactivate the account (${confirmDialog?.accountPhone}) and terminate all active sessions. The student will not be able to log in.`}
               {confirmDialog?.type === 'activate_account' && 
                 `This will reactivate the account (${confirmDialog?.accountPhone}). The student will be able to log in again.`}
+              {confirmDialog?.type === 'reset_password' && 
+                `This will reset the password for ${confirmDialog?.accountPhone}. The student will need to set a new password on next login.`}
+              {confirmDialog?.type === 'reset_device' && 
+                `This will reset the device lock for ${confirmDialog?.accountPhone}. The student will be able to log in from any device.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -632,6 +775,10 @@ export function StudentAccountsManagement() {
                 if (!confirmDialog) return;
                 if (confirmDialog.type === 'terminate_session') {
                   terminateSession(confirmDialog.targetId);
+                } else if (confirmDialog.type === 'reset_password') {
+                  resetPassword(confirmDialog.targetId);
+                } else if (confirmDialog.type === 'reset_device') {
+                  resetDevice(confirmDialog.targetId);
                 } else {
                   toggleAccountStatus(confirmDialog.targetId, confirmDialog.type === 'activate_account');
                 }

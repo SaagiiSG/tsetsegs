@@ -7,12 +7,12 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from 'next-themes';
 import { 
-  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap, Palette, Sparkles
+  Settings, Moon, Sun, LogOut, User, Phone, School, GraduationCap, Palette, Sparkles, Lock
 } from 'lucide-react';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL_LIGHT, TIER_THEME_HSL_DARK, TierType, TIER_ORDER } from '@/data/badgeDefinitions';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { cn } from '@/lib/utils';
-import { Lock } from 'lucide-react';
+import { PasswordChangeCard } from '@/components/student/PasswordChangeCard';
 
 type ThemeOption = 'rank' | TierType;
 
@@ -253,6 +253,9 @@ export default function StudentSettings() {
         </CardContent>
       </Card>
 
+      {/* Password Change */}
+      <PasswordChangeCard />
+
       {/* About */}
       <Card>
         <CardHeader>
@@ -264,8 +267,6 @@ export default function StudentSettings() {
           <p>Version 1.0.0</p>
         </CardContent>
       </Card>
-
-      {/* Logout */}
       <Button 
         variant="destructive" 
         className="w-full"
