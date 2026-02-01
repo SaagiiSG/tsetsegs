@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AttendanceSlider } from '@/components/teacher/AttendanceSlider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -499,21 +499,11 @@ export default function TeacherClassAttendance() {
                             const status = studentAttendance?.[sessionKey] as string | null;
                             
                             return (
-                              <td key={i} className="p-2 text-center">
-                                <Select
-                                  value={status || ''}
-                                  onValueChange={(value) => updateAttendance(student.id, i + 1, value)}
-                                >
-                                  <SelectTrigger className="w-[90px] h-8 text-xs">
-                                    <SelectValue placeholder="-" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background z-50 pointer-events-auto">
-                                    <SelectItem value="present" className="text-xs">✓ Present</SelectItem>
-                                    <SelectItem value="late" className="text-xs">⏰ Late</SelectItem>
-                                    <SelectItem value="absent" className="text-xs">✗ Absent</SelectItem>
-                                    <SelectItem value="sick" className="text-xs">🤒 Sick</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                              <td key={i} className="p-1 text-center">
+                                <AttendanceSlider
+                                  value={(status as "present" | "late" | "absent" | "sick" | "") || ""}
+                                  onChange={(value) => updateAttendance(student.id, i + 1, value)}
+                                />
                               </td>
                             );
                           })}
