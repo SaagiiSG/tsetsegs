@@ -79,8 +79,8 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
               className={cn(
                 "h-11 flex items-center justify-center cursor-pointer transition-all duration-200 snap-center",
                 isSelected 
-                  ? cn("font-bold text-base scale-105", option.selectedColor)
-                  : "text-muted-foreground/70 text-sm"
+                  ? cn("font-semibold text-xs scale-105", option.selectedColor)
+                  : "text-muted-foreground/70 text-[10px]"
               )}
               onClick={() => scrollToIndex(index)}
             >
