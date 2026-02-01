@@ -14,6 +14,7 @@ interface NoActiveSprintCardProps {
     points: number;
     isTop1: boolean;
     nextTier: TierType | null;
+    sprintInfo?: { season_number: number; sprint_number: number } | null;
   } | null;
 }
 
@@ -109,7 +110,7 @@ export function NoActiveSprintCard({
       </Card>
 
       {/* Last Sprint Results */}
-      {lastEndedSprint && lastSprintResults && lastSprintResults.rank > 0 && (
+      {lastSprintResults && lastSprintResults.rank > 0 && (
         <Card className="relative overflow-hidden" style={{ borderColor: tierColor }}>
           <div 
             className="absolute inset-0 opacity-10"
@@ -127,7 +128,11 @@ export function NoActiveSprintCard({
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Season {lastEndedSprint.seasonNumber} • Sprint {lastEndedSprint.sprintNumber}
+                    {lastSprintResults.sprintInfo 
+                      ? `Season ${lastSprintResults.sprintInfo.season_number} • Sprint ${lastSprintResults.sprintInfo.sprint_number}`
+                      : lastEndedSprint 
+                        ? `Season ${lastEndedSprint.seasonNumber} • Sprint ${lastEndedSprint.sprintNumber}` 
+                        : 'Last Sprint'}
                   </p>
                   <h3 className="font-semibold">Your Final Results</h3>
                 </div>
@@ -201,11 +206,11 @@ export function NoActiveSprintCard({
         </Card>
       )}
 
-      {/* No Results Yet */}
-      {lastEndedSprint && (!lastSprintResults || lastSprintResults.rank === 0) && (
+      {/* No Results Message - only show if no results at all and no upcoming sprint */}
+      {!lastSprintResults && !nextSprint && (
         <Card className="border-dashed">
           <CardContent className="p-6 text-center text-muted-foreground">
-            <p>No results from the last sprint. Participate in the next one!</p>
+            <p>No sprint results yet. Participate in the next sprint!</p>
           </CardContent>
         </Card>
       )}

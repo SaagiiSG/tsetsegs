@@ -162,28 +162,41 @@ export function useLeaderboard(selectedTier?: TierType) {
     refetchInterval: 60000
   });
 
-  // Fetch user's last sprint results (with final_rank)
+  // Fetch user's last sprint results (with final_rank) - from any completed sprint they participated in
   const { data: lastSprintResults } = useQuery({
-    queryKey: ['last-sprint-results', student?.id, lastEndedSprint?.id],
-    enabled: !!student?.id && !!lastEndedSprint?.id,
+    queryKey: ['last-sprint-results', student?.id],
+    enabled: !!student?.id,
     queryFn: async () => {
-      if (!student?.id || !lastEndedSprint?.id) return null;
+      if (!student?.id) return null;
 
+      // Find the most recent sprint where this student has results
       const { data, error } = await supabase
         .from('student_sprint_rankings')
-        .select('*')
-        .eq('sprint_id', lastEndedSprint.id)
+        .select(`
+          *,
+          sprints!inner (
+            id,
+            season_number,
+            sprint_number,
+            is_active
+          )
+        `)
         .eq('student_account_id', student.id)
-        .single();
+        .eq('sprints.is_active', false)
+        .not('final_rank', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error) return null;
+      if (error || !data) return null;
 
       return {
         rank: data.final_rank || 0,
         tier: data.current_tier as TierType,
         points: data.total_points,
         isTop1: data.is_top_1,
-        nextTier: data.reserved_next_tier as TierType | null
+        nextTier: data.reserved_next_tier as TierType | null,
+        sprintInfo: data.sprints as { season_number: number; sprint_number: number } | null
       };
     }
   });
