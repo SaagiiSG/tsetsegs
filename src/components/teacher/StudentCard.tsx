@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AttendanceSlider } from "@/components/teacher/AttendanceSlider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -588,32 +589,24 @@ export function StudentCard({
 
             <TabsContent value="tracking" className="mt-0">
               <div className="border rounded-lg p-2">
-                <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
                   {attendance.map((session) => {
                     const hw = homework.find(h => h.session_number === session.session_number);
                     return (
                       <div key={session.session_number} className="pb-1.5 border-b last:border-0">
                         <p className="text-[10px] font-medium text-muted-foreground mb-1">S{session.session_number}</p>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <Select value={session.status || ""} onValueChange={(value) => onAttendanceChange(session.session_number, value)}>
-                            <SelectTrigger className={`h-7 text-[11px] ${getAttendanceBgColor(session.status)}`}>
-                              <SelectValue placeholder="Att" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background z-50">
-                              <SelectItem value="present" className="text-[#03C988] text-xs">✓ Present</SelectItem>
-                              <SelectItem value="late" className="text-[#FFDE0B] text-xs">⏰ Late</SelectItem>
-                              <SelectItem value="absent" className="text-[#FA6363] text-xs">✗ Absent</SelectItem>
-                              <SelectItem value="sick" className="text-blue-400 text-xs">🤒 Sick</SelectItem>
-                              <SelectItem value="excused" className="text-purple-400 text-xs">🆓 Excused</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="flex items-center gap-2">
+                          <AttendanceSlider
+                            value={(session.status as "present" | "late" | "absent" | "sick" | "excused" | "") || ""}
+                            onChange={(value) => onAttendanceChange(session.session_number, value)}
+                          />
                           <Select value={hw?.status || ""} onValueChange={(value) => onHomeworkChange(session.session_number, value)}>
-                            <SelectTrigger className={`h-7 text-[11px] ${getHomeworkBgColor(hw?.status || null)}`}>
+                            <SelectTrigger className={`h-7 text-[11px] w-[70px] ${getHomeworkBgColor(hw?.status || null)}`}>
                               <SelectValue placeholder="HW" />
                             </SelectTrigger>
                             <SelectContent className="bg-background z-50">
                               <SelectItem value="completed" className="text-[#03C988] text-xs">✓ Done</SelectItem>
-                              <SelectItem value="incomplete" className="text-[#FA6363] text-xs">✗ Incomplete</SelectItem>
+                              <SelectItem value="incomplete" className="text-[#FA6363] text-xs">✗ Not</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -704,21 +697,13 @@ export function StudentCard({
                 return (
                   <div key={session.session_number} className="pb-2 border-b last:border-0">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Session {session.session_number}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Select value={session.status || ""} onValueChange={(value) => onAttendanceChange(session.session_number, value)}>
-                        <SelectTrigger className={`h-8 text-xs ${getAttendanceBgColor(session.status)}`}>
-                          <SelectValue placeholder="Attendance" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="present" className="text-[#03C988] text-xs">✓ Present</SelectItem>
-                          <SelectItem value="late" className="text-[#FFDE0B] text-xs">⏰ Late</SelectItem>
-                          <SelectItem value="absent" className="text-[#FA6363] text-xs">✗ Absent</SelectItem>
-                          <SelectItem value="sick" className="text-blue-400 text-xs">🤒 Sick</SelectItem>
-                          <SelectItem value="excused" className="text-purple-400 text-xs">🆓 Excused</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center gap-3">
+                      <AttendanceSlider
+                        value={(session.status as "present" | "late" | "absent" | "sick" | "excused" | "") || ""}
+                        onChange={(value) => onAttendanceChange(session.session_number, value)}
+                      />
                       <Select value={hw?.status || ""} onValueChange={(value) => onHomeworkChange(session.session_number, value)}>
-                        <SelectTrigger className={`h-8 text-xs ${getHomeworkBgColor(hw?.status || null)}`}>
+                        <SelectTrigger className={`h-8 text-xs w-[90px] ${getHomeworkBgColor(hw?.status || null)}`}>
                           <SelectValue placeholder="Homework" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
