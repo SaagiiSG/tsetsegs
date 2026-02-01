@@ -244,25 +244,32 @@ export default function TeacherClassAttendance() {
 
     const sessionKey = `session_${session}` as keyof Attendance;
 
+    // Optimistic update - update UI immediately
+    setAttendance((prev) => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [sessionKey]: status,
+      },
+    }));
+
     try {
       const { error } = await supabase
         .from('attendance')
         .update({ [sessionKey]: status })
         .eq('id', attendanceRecord.id);
 
-      if (error) throw error;
-
-      // Update local state
-      setAttendance((prev) => ({
-        ...prev,
-        [studentId]: {
-          ...prev[studentId],
-          [sessionKey]: status,
-        },
-      }));
-
-      // Refresh to get updated total_attended
-      fetchData();
+      if (error) {
+        // Revert on error
+        setAttendance((prev) => ({
+          ...prev,
+          [studentId]: {
+            ...prev[studentId],
+            [sessionKey]: attendanceRecord[sessionKey],
+          },
+        }));
+        throw error;
+      }
     } catch (error: any) {
       const errorToast = getErrorToast(error, "update attendance");
       toast({
