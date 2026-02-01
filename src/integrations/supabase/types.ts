@@ -1040,6 +1040,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          alternate_answers: string[] | null
           answer: string
           category_id: string | null
           created_at: string
@@ -1063,6 +1064,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          alternate_answers?: string[] | null
           answer: string
           category_id?: string | null
           created_at?: string
@@ -1086,6 +1088,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          alternate_answers?: string[] | null
           answer?: string
           category_id?: string | null
           created_at?: string
