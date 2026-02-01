@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -24,6 +24,19 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
   const [showPreview, setShowPreview] = useState(false);
   const [mathInput, setMathInput] = useState('');
   const [mathPopoverOpen, setMathPopoverOpen] = useState(false);
+
+  // Keyboard shortcut: Cmd+D to open math editor
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        e.preventDefault();
+        setMathPopoverOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // MathQuill config for the inline editor
   const mathQuillConfig = {
@@ -172,7 +185,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
               type="button"
               variant="ghost"
               size="sm"
-              title="Insert Math (Desmos-style editor)"
+              title="Insert Math (Cmd+D)"
               className="gap-1"
             >
               <Calculator className="h-4 w-4" />
