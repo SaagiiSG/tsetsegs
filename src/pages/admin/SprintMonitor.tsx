@@ -9,8 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
@@ -96,32 +95,22 @@ export default function SprintMonitor() {
   const [expandedTier, setExpandedTier] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [newSprintDays, setNewSprintDays] = useState('14');
 
-  // Create new sprint handler
-  const handleCreateSprint = async () => {
+  const SPRINT_DURATION_DAYS = 14;
+  const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
+  const FIRST_SPRINT_DELAY_DAYS = 5; // First sprint of new season starts 5 days from now
+
+  // Create new season handler - creates all 3 back-to-back sprints
+  const handleCreateSeason = async () => {
     setIsCreating(true);
     
     try {
-      // Determine next season and sprint numbers
+      // Determine next season number
       let nextSeasonNumber = 1;
-      let nextSprintNumber = 1;
       
       if (sprints && sprints.length > 0) {
-        // Find the highest season
         const maxSeason = Math.max(...sprints.map(s => s.season_number));
-        const maxSeasonSprints = sprints.filter(s => s.season_number === maxSeason);
-        const maxSprintInSeason = Math.max(...maxSeasonSprints.map(s => s.sprint_number));
-        
-        if (maxSprintInSeason >= 3) {
-          // Start new season
-          nextSeasonNumber = maxSeason + 1;
-          nextSprintNumber = 1;
-        } else {
-          // Continue current season
-          nextSeasonNumber = maxSeason;
-          nextSprintNumber = maxSprintInSeason + 1;
-        }
+        nextSeasonNumber = maxSeason + 1;
       }
       
       // Deactivate any active sprints
@@ -132,21 +121,52 @@ export default function SprintMonitor() {
           .eq('id', activeSprint.id);
       }
       
-      // Calculate dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + parseInt(newSprintDays));
+      // Calculate sprint dates - first sprint starts 5 days from now
+      const sprint1Start = new Date();
+      sprint1Start.setDate(sprint1Start.getDate() + FIRST_SPRINT_DELAY_DAYS);
+      sprint1Start.setHours(0, 0, 0, 0); // Start at midnight
       
-      // Create new sprint
+      const sprint1End = new Date(sprint1Start);
+      sprint1End.setDate(sprint1End.getDate() + SPRINT_DURATION_DAYS);
+      
+      // Sprint 2 starts immediately after Sprint 1 ends (back-to-back)
+      const sprint2Start = new Date(sprint1End);
+      const sprint2End = new Date(sprint2Start);
+      sprint2End.setDate(sprint2End.getDate() + SPRINT_DURATION_DAYS);
+      
+      // Sprint 3 starts immediately after Sprint 2 ends (back-to-back)
+      const sprint3Start = new Date(sprint2End);
+      const sprint3End = new Date(sprint3Start);
+      sprint3End.setDate(sprint3End.getDate() + SPRINT_DURATION_DAYS);
+      
+      // Create all 3 sprints for the season
+      const sprintsToCreate = [
+        {
+          season_number: nextSeasonNumber,
+          sprint_number: 1,
+          start_date: sprint1Start.toISOString(),
+          end_date: sprint1End.toISOString(),
+          is_active: false // Will be activated when it starts
+        },
+        {
+          season_number: nextSeasonNumber,
+          sprint_number: 2,
+          start_date: sprint2Start.toISOString(),
+          end_date: sprint2End.toISOString(),
+          is_active: false
+        },
+        {
+          season_number: nextSeasonNumber,
+          sprint_number: 3,
+          start_date: sprint3Start.toISOString(),
+          end_date: sprint3End.toISOString(),
+          is_active: false
+        }
+      ];
+      
       const { error } = await supabase
         .from('sprints')
-        .insert({
-          season_number: nextSeasonNumber,
-          sprint_number: nextSprintNumber,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          is_active: true
-        });
+        .insert(sprintsToCreate);
       
       if (error) throw error;
       
@@ -155,17 +175,16 @@ export default function SprintMonitor() {
       await queryClient.invalidateQueries({ queryKey: ['active-sprint'] });
       
       toast({
-        title: 'Sprint Created',
-        description: `Season ${nextSeasonNumber}, Sprint ${nextSprintNumber} is now active!`
+        title: 'Season Created',
+        description: `Season ${nextSeasonNumber} scheduled! Sprint 1 starts on ${format(sprint1Start, 'MMM d, yyyy')}`
       });
       
       setIsCreateDialogOpen(false);
-      setNewSprintDays('14');
     } catch (err: any) {
-      console.error('Failed to create sprint:', err);
+      console.error('Failed to create season:', err);
       toast({
         title: 'Error',
-        description: err.message || 'Failed to create sprint',
+        description: err.message || 'Failed to create season',
         variant: 'destructive'
       });
     } finally {
@@ -308,70 +327,90 @@ export default function SprintMonitor() {
           </p>
         </div>
         
-        {/* Start New Sprint Button */}
+        {/* Start New Season Button */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Start New Sprint
+              Start New Season
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Start New Sprint</DialogTitle>
+              <DialogTitle>Start New Season</DialogTitle>
               <DialogDescription>
-                {activeSprint 
-                  ? `This will end the current sprint (Season ${activeSprint.season_number}, Sprint ${activeSprint.sprint_number}) and start a new one.`
-                  : 'Create a new competition sprint for students to compete in.'}
+                This will create a new season with 3 back-to-back sprints, each lasting 14 days.
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="duration">Sprint Duration (days)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={newSprintDays}
-                  onChange={(e) => setNewSprintDays(e.target.value)}
-                  placeholder="14"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Default is 14 days. Students will compete for points during this period.
-                </p>
-              </div>
-              
-              {sprints && sprints.length > 0 && (
-                <div className="rounded-lg border p-3 bg-muted/50 space-y-1">
-                  <p className="text-sm font-medium">Next Sprint Will Be:</p>
-                  {(() => {
-                    const maxSeason = Math.max(...sprints.map(s => s.season_number));
-                    const maxSeasonSprints = sprints.filter(s => s.season_number === maxSeason);
-                    const maxSprintInSeason = Math.max(...maxSeasonSprints.map(s => s.sprint_number));
-                    
-                    if (maxSprintInSeason >= 3) {
-                      return <p className="text-sm text-muted-foreground">Season {maxSeason + 1}, Sprint 1 (New Season!)</p>;
-                    }
-                    return <p className="text-sm text-muted-foreground">Season {maxSeason}, Sprint {maxSprintInSeason + 1}</p>;
-                  })()}
-                </div>
-              )}
+              {(() => {
+                const nextSeasonNumber = sprints && sprints.length > 0 
+                  ? Math.max(...sprints.map(s => s.season_number)) + 1 
+                  : 1;
+                
+                const sprint1Start = new Date();
+                sprint1Start.setDate(sprint1Start.getDate() + 5);
+                sprint1Start.setHours(0, 0, 0, 0);
+                
+                const sprint1End = new Date(sprint1Start);
+                sprint1End.setDate(sprint1End.getDate() + 14);
+                
+                const sprint2End = new Date(sprint1End);
+                sprint2End.setDate(sprint2End.getDate() + 14);
+                
+                const sprint3End = new Date(sprint2End);
+                sprint3End.setDate(sprint3End.getDate() + 14);
+                
+                return (
+                  <>
+                    <div className="rounded-lg border p-4 bg-muted/50 space-y-3">
+                      <p className="font-semibold text-lg">Season {nextSeasonNumber}</p>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Sprint 1:</span>
+                          <span className="text-muted-foreground">
+                            {format(sprint1Start, 'MMM d')} - {format(sprint1End, 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Sprint 2:</span>
+                          <span className="text-muted-foreground">
+                            {format(sprint1End, 'MMM d')} - {format(sprint2End, 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Sprint 3:</span>
+                          <span className="text-muted-foreground">
+                            {format(sprint2End, 'MMM d')} - {format(sprint3End, 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 border-t text-xs text-muted-foreground">
+                        <p>• First sprint starts in 5 days</p>
+                        <p>• Sprints run back-to-back (no gaps)</p>
+                        <p>• 1-day break after season ends before next season</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateSprint} disabled={isCreating}>
+              <Button onClick={handleCreateSeason} disabled={isCreating}>
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Creating...
                   </>
                 ) : (
-                  'Create Sprint'
+                  'Create Season'
                 )}
               </Button>
             </DialogFooter>
