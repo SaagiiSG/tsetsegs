@@ -300,7 +300,18 @@ export default function StudentQuestion() {
     mutationFn: async (answer: string) => {
       if (!student || !currentQuestion) return;
       
-      const correct = answer.toUpperCase() === currentQuestion.answer.toUpperCase();
+      // Normalize answer for comparison
+      const normalizeAnswer = (ans: string) => ans.trim().toUpperCase();
+      const normalizedInput = normalizeAnswer(answer);
+      const primaryCorrect = normalizedInput === normalizeAnswer(currentQuestion.answer);
+      
+      // Check alternate answers if primary doesn't match
+      const alternatesArray = currentQuestion.alternate_answers as string[] | null;
+      const alternateCorrect = alternatesArray?.some(
+        alt => normalizedInput === normalizeAnswer(alt)
+      ) ?? false;
+      
+      const correct = primaryCorrect || alternateCorrect;
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
       const attemptNumber = currentAttempts.length + 1;
       

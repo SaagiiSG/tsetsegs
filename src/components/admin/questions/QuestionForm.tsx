@@ -39,6 +39,7 @@ const questionSchema = z.object({
   video_url: z.string().optional(),
   generate_variations: z.boolean().default(false),
   manual_variations: z.array(variationSchema).default([]),
+  alternate_answers: z.array(z.object({ value: z.string() })).default([]),
 });
 
 type QuestionFormData = z.infer<typeof questionSchema>;
@@ -110,6 +111,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       video_url: '',
       generate_variations: false,
       manual_variations: [],
+      alternate_answers: [],
     }
   });
 
@@ -118,12 +120,18 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     name: 'manual_variations',
   });
 
+  const { fields: alternateFields, append: appendAlternate, remove: removeAlternate } = useFieldArray({
+    control: form.control,
+    name: 'alternate_answers',
+  });
+
   const questionType = form.watch('question_type');
 
   // Set form values when editing or when nextQuestionId changes
   useEffect(() => {
     if (editingQuestion) {
       const options = editingQuestion.multiple_choice_options || {};
+      const existingAlternates = (editingQuestion.alternate_answers as string[] | null) || [];
       form.reset({
         question_id: editingQuestion.question_id,
         question_text: editingQuestion.question_text,
@@ -136,6 +144,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         option_d: options.D || '',
         video_url: editingQuestion.video_url || '',
         generate_variations: false,
+        alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
@@ -175,6 +184,11 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         imageUrl = await uploadImage(imageFile);
       }
 
+      // Filter out empty alternate answers
+      const alternateAnswers = data.alternate_answers
+        .map(a => a.value.trim())
+        .filter(v => v.length > 0);
+
       const questionData = {
         question_id: data.question_id,
         question_text: data.question_text,
@@ -185,6 +199,9 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         video_url: data.video_url || null,
         multiple_choice_options: data.question_type === 'multiple_choice' 
           ? { A: data.option_a, B: data.option_b, C: data.option_c, D: data.option_d }
+          : null,
+        alternate_answers: data.question_type === 'fill_blank' && alternateAnswers.length > 0 
+          ? alternateAnswers 
           : null,
         is_original: true,
         is_active: true,
@@ -317,6 +334,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       video_url: '',
       generate_variations: false,
       manual_variations: [],
+      alternate_answers: [],
     });
     setImageFile(null);
     setImagePreview(null);
@@ -633,6 +651,63 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 </FormItem>
               )}
             />
+
+            {/* Alternate Answers Section - only for fill_blank */}
+            {questionType === 'fill_blank' && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">Alternate Correct Answers</span>
+                    <p className="text-xs text-muted-foreground">Add equivalent answers (e.g., 0.5 and 1/2)</p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => appendAlternate({ value: '' })}
+                    disabled={alternateFields.length >= 4}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Alternate
+                  </Button>
+                </div>
+
+                {alternateFields.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    <p className="text-sm">No alternate answers added</p>
+                    <p className="text-xs mt-1">Students can answer with any equivalent form (e.g., fractions vs decimals)</p>
+                  </div>
+                ) : (
+                  <div className="p-4 space-y-2">
+                    {alternateFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
+                        <FormField
+                          control={form.control}
+                          name={`alternate_answers.${index}.value`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input {...field} placeholder="e.g., 1/2 or .5" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeAlternate(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* YouTube Video URL */}
             <FormField

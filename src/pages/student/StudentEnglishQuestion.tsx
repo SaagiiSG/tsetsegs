@@ -172,7 +172,18 @@ export default function StudentEnglishQuestion() {
     mutationFn: async ({ answer, questionId }: { answer: string; questionId: string }) => {
       if (!student || !question) throw new Error('Not authenticated');
       
-      const correct = answer.toUpperCase() === question.answer.toUpperCase();
+      // Normalize answer for comparison
+      const normalizeAnswer = (ans: string) => ans.trim().toUpperCase();
+      const normalizedInput = normalizeAnswer(answer);
+      const primaryCorrect = normalizedInput === normalizeAnswer(question.answer);
+      
+      // Check alternate answers if primary doesn't match
+      const alternatesArray = question.alternate_answers as string[] | null;
+      const alternateCorrect = alternatesArray?.some(
+        alt => normalizedInput === normalizeAnswer(alt)
+      ) ?? false;
+      
+      const correct = primaryCorrect || alternateCorrect;
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const attemptNumber = attemptCount + 1;
       

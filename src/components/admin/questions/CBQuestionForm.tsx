@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Plus, Trash2 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
@@ -33,6 +33,7 @@ const cbQuestionSchema = z.object({
   option_d: z.string().optional(),
   rationale: z.string().optional(),
   video_url: z.string().optional(),
+  alternate_answers: z.array(z.object({ value: z.string() })).default([]),
 });
 
 type CBQuestionFormData = z.infer<typeof cbQuestionSchema>;
@@ -110,7 +111,13 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
       option_d: '',
       rationale: '',
       video_url: '',
+      alternate_answers: [],
     }
+  });
+
+  const { fields: alternateFields, append: appendAlternate, remove: removeAlternate } = useFieldArray({
+    control: form.control,
+    name: 'alternate_answers',
   });
 
   const questionType = form.watch('question_type');
@@ -119,6 +126,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   useEffect(() => {
     if (editingQuestion) {
       const options = editingQuestion.multiple_choice_options || {};
+      const existingAlternates = (editingQuestion.alternate_answers as string[] | null) || [];
       form.reset({
         question_id: editingQuestion.question_id,
         original_cb_id: editingQuestion.original_cb_id || '',
@@ -134,6 +142,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         option_d: options.D || '',
         rationale: editingQuestion.rationale || '',
         video_url: editingQuestion.video_url || '',
+        alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
@@ -173,6 +182,11 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         imageUrl = await uploadImage(imageFile);
       }
 
+      // Filter out empty alternate answers
+      const alternateAnswers = data.alternate_answers
+        .map(a => a.value.trim())
+        .filter(v => v.length > 0);
+
       const questionData = {
         question_id: data.question_id,
         original_cb_id: data.original_cb_id || null,
@@ -187,6 +201,9 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         video_url: data.video_url || null,
         multiple_choice_options: data.question_type === 'multiple_choice' 
           ? { A: data.option_a, B: data.option_b, C: data.option_c, D: data.option_d }
+          : null,
+        alternate_answers: data.question_type === 'fill_blank' && alternateAnswers.length > 0 
+          ? alternateAnswers 
           : null,
         is_original: true,
         is_active: true,
@@ -244,6 +261,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
       option_d: '',
       rationale: '',
       video_url: '',
+      alternate_answers: [],
     });
     setImageFile(null);
     setImagePreview(null);
@@ -524,6 +542,63 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                     </FormItem>
                   )}
                 />
+
+                {/* Alternate Answers Section - only for fill_blank */}
+                {questionType === 'fill_blank' && (
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium">Alternate Correct Answers</span>
+                        <p className="text-xs text-muted-foreground">Add equivalent answers (e.g., 0.5 and 1/2)</p>
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => appendAlternate({ value: '' })}
+                        disabled={alternateFields.length >= 4}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Alternate
+                      </Button>
+                    </div>
+
+                    {alternateFields.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground">
+                        <p className="text-sm">No alternate answers added</p>
+                        <p className="text-xs mt-1">Students can answer with any equivalent form</p>
+                      </div>
+                    ) : (
+                      <div className="p-4 space-y-2">
+                        {alternateFields.map((field, index) => (
+                          <div key={field.id} className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
+                            <FormField
+                              control={form.control}
+                              name={`alternate_answers.${index}.value`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input {...field} placeholder="e.g., 1/2 or .5" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeAlternate(index)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Rationale */}
                 <FormField
