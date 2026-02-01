@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, Crown, TrendingUp, Zap } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -86,8 +90,88 @@ function useCountdown(endDate: string | null) {
 }
 
 export default function SprintMonitor() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [expandedTier, setExpandedTier] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newSprintDays, setNewSprintDays] = useState('14');
+
+  // Create new sprint handler
+  const handleCreateSprint = async () => {
+    setIsCreating(true);
+    
+    try {
+      // Determine next season and sprint numbers
+      let nextSeasonNumber = 1;
+      let nextSprintNumber = 1;
+      
+      if (sprints && sprints.length > 0) {
+        // Find the highest season
+        const maxSeason = Math.max(...sprints.map(s => s.season_number));
+        const maxSeasonSprints = sprints.filter(s => s.season_number === maxSeason);
+        const maxSprintInSeason = Math.max(...maxSeasonSprints.map(s => s.sprint_number));
+        
+        if (maxSprintInSeason >= 3) {
+          // Start new season
+          nextSeasonNumber = maxSeason + 1;
+          nextSprintNumber = 1;
+        } else {
+          // Continue current season
+          nextSeasonNumber = maxSeason;
+          nextSprintNumber = maxSprintInSeason + 1;
+        }
+      }
+      
+      // Deactivate any active sprints
+      if (activeSprint) {
+        await supabase
+          .from('sprints')
+          .update({ is_active: false })
+          .eq('id', activeSprint.id);
+      }
+      
+      // Calculate dates
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + parseInt(newSprintDays));
+      
+      // Create new sprint
+      const { error } = await supabase
+        .from('sprints')
+        .insert({
+          season_number: nextSeasonNumber,
+          sprint_number: nextSprintNumber,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          is_active: true
+        });
+      
+      if (error) throw error;
+      
+      // Refresh data
+      await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
+      await queryClient.invalidateQueries({ queryKey: ['active-sprint'] });
+      
+      toast({
+        title: 'Sprint Created',
+        description: `Season ${nextSeasonNumber}, Sprint ${nextSprintNumber} is now active!`
+      });
+      
+      setIsCreateDialogOpen(false);
+      setNewSprintDays('14');
+    } catch (err: any) {
+      console.error('Failed to create sprint:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to create sprint',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // Fetch all sprints
   const { data: sprints, isLoading: sprintsLoading } = useQuery({
@@ -223,6 +307,76 @@ export default function SprintMonitor() {
             Track competition sprints and season progress
           </p>
         </div>
+        
+        {/* Start New Sprint Button */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Start New Sprint
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Start New Sprint</DialogTitle>
+              <DialogDescription>
+                {activeSprint 
+                  ? `This will end the current sprint (Season ${activeSprint.season_number}, Sprint ${activeSprint.sprint_number}) and start a new one.`
+                  : 'Create a new competition sprint for students to compete in.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="duration">Sprint Duration (days)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={newSprintDays}
+                  onChange={(e) => setNewSprintDays(e.target.value)}
+                  placeholder="14"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Default is 14 days. Students will compete for points during this period.
+                </p>
+              </div>
+              
+              {sprints && sprints.length > 0 && (
+                <div className="rounded-lg border p-3 bg-muted/50 space-y-1">
+                  <p className="text-sm font-medium">Next Sprint Will Be:</p>
+                  {(() => {
+                    const maxSeason = Math.max(...sprints.map(s => s.season_number));
+                    const maxSeasonSprints = sprints.filter(s => s.season_number === maxSeason);
+                    const maxSprintInSeason = Math.max(...maxSeasonSprints.map(s => s.sprint_number));
+                    
+                    if (maxSprintInSeason >= 3) {
+                      return <p className="text-sm text-muted-foreground">Season {maxSeason + 1}, Sprint 1 (New Season!)</p>;
+                    }
+                    return <p className="text-sm text-muted-foreground">Season {maxSeason}, Sprint {maxSprintInSeason + 1}</p>;
+                  })()}
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSprint} disabled={isCreating}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Sprint'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Overview Cards */}
