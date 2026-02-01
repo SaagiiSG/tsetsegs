@@ -78,7 +78,7 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
   };
 
   return (
-    <div className="relative h-[84px] w-[52px] overflow-hidden rounded-lg border bg-background/80 backdrop-blur-sm">
+    <div className="relative h-[84px] w-full min-w-[120px] overflow-hidden rounded-lg border bg-background/80 backdrop-blur-sm">
       {/* Selection highlight band */}
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[28px] bg-primary/10 border-y border-primary/20 pointer-events-none z-10" />
 
@@ -101,13 +101,13 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
             key={option.value || "empty"}
             onClick={() => handleClick(index)}
             className={cn(
-              "w-full flex items-center justify-center font-bold transition-all snap-center",
+              "w-full flex items-center justify-center text-xs font-medium transition-all snap-center",
               option.color,
-              currentIndex === index ? "opacity-100 scale-110" : "opacity-40 scale-90"
+              currentIndex === index ? "opacity-100 scale-105" : "opacity-40 scale-95"
             )}
             style={{ height: ITEM_HEIGHT }}
           >
-            {option.shortLabel}
+            {option.label}
           </button>
         ))}
 
