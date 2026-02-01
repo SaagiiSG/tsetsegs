@@ -377,7 +377,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                   <FormItem>
                     <FormLabel>Question ID</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="6801" disabled={!!editingQuestion} />
+                      <Input {...field} placeholder="6801" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
