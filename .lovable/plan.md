@@ -1,107 +1,178 @@
 
-# Plan: Add Alternate Correct Answers for Fill-in-the-Blank Questions
+# Plan: Fix SAT Date Error & Badge Progress Syncing
 
-## Overview
-For SAT math fill-in-the-blank questions, the same answer can be expressed in different ways (e.g., "1/2", "0.5", ".5", "2/4" are all valid for the same answer). This plan adds optional alternate answer inputs for both the "68 Questions" and "CollegeBoard" question forms.
+## Problem Analysis
 
-## User Experience Flow
-1. When an admin creates or edits a fill-in-the-blank question, they enter the primary correct answer
-2. Below the primary answer, they see an "Add Alternate Answer" button
-3. They can add up to 4 alternate answers (e.g., decimal form, fraction form, etc.)
-4. When a student submits an answer, the system checks against all valid answers
+### Issue 1: SAT Date Update Error
+When students try to set their SAT test date, the database throws "infinite recursion detected in policy for relation 'students'".
+
+**Root Cause**: The RLS policy "Anonymous can update accessed status only" contains a self-referential subquery that creates infinite recursion:
+```sql
+WHERE (students_1.id = students_1.id)  -- This is always true, causing recursive evaluation
+```
+
+### Issue 2: Badge Progress Not Syncing for Complex Requirements
+Currently, only speed badges (Lightning Strike, Speedster) have progress tracking implemented. Badges with complex requirements like:
+- `first_try_correct` (300 first-try correct answers)
+- `consecutive_days_speed` (5 consecutive days)
+- `vocabulary_completion` (100% completion)
+- `all_68_questions`, `all_cb_problems`, etc.
+
+These are not being calculated or synced to the database.
 
 ---
 
-## Technical Implementation
+## Solution Overview
 
-### Phase 1: Database Schema Update
-Add a new column to store alternate answers:
+### Part 1: Fix RLS Policy (SAT Date)
+
+**Problem**: Recursive policy is blocking all student table updates.
+
+**Solution**: 
+1. Drop the problematic "Anonymous can update accessed status only" policy
+2. Create a new policy that allows students to update their own records (specifically the `sat_test_month` field) without recursive queries
+3. Add a separate policy for students to update their own linked record using a non-recursive approach
+
+**New Policies**:
+```sql
+-- Allow students to update their own sat_test_month
+CREATE POLICY "Students can update own sat_test_month"
+ON public.students
+FOR UPDATE
+TO anon, authenticated
+USING (true)
+WITH CHECK (
+  id IN (
+    SELECT linked_student_id 
+    FROM student_accounts 
+    WHERE id::text = coalesce(
+      current_setting('request.jwt.claims', true)::json->>'sub',
+      ''
+    )
+  )
+);
+```
+
+---
+
+### Part 2: Badge Progress Sync System
+
+Create a comprehensive badge progress calculation service that:
+1. Calculates progress for ALL badge requirement types
+2. Syncs progress to the database periodically
+3. Automatically awards badges when all requirements are met
+
+**Implementation Approach**:
+
+#### A. Create Badge Progress Calculator Hook
+New file: `src/hooks/useBadgeProgressCalculator.ts`
+
+This hook will:
+1. Query student's activity data (attempts, vocabulary progress, practice tests)
+2. Calculate current progress for each badge requirement type
+3. Return calculated progress percentages
+
+#### B. Supported Requirement Types
+
+| Requirement Type | Data Source | Calculation |
+|-----------------|-------------|-------------|
+| `first_try_correct` | `student_attempts` | COUNT where attempt_number=1 AND is_correct=true |
+| `consecutive_days_speed` | `point_transactions` | Analyze dates with category='speed' |
+| `consecutive_days_both` | `point_transactions` | Days with both speed + practice transactions |
+| `all_68_questions` | `student_attempts` | DISTINCT questions with correct answer |
+| `vocabulary_completion` | `student_vocabulary_progress` | Percentage of words with high confidence |
+| `practice_test_avg` | `bluebook_attempts` | AVG total_score where completed |
+| `speed_sessions_high_accuracy` | `point_transactions` | Count sessions with 95%+ accuracy (from metadata) |
+| `consecutive_perfect_drills` | `point_transactions` | Analyze consecutive 100% accuracy sessions |
+
+#### C. Create Badge Progress Sync Function
+New file: `src/hooks/useSyncBadgeProgress.ts`
+
+This will:
+1. Run on dashboard mount and after key activities
+2. Calculate all badge progress
+3. Upsert to `student_badges` table with `requirements_progress` JSON
+4. Automatically unlock badges when progress reaches 100%
+
+#### D. Integration Points
+
+Update the following to trigger badge progress sync:
+- `StudentDashboardHome.tsx` - on mount
+- `StudentSpeedSession.tsx` - after session completes (already done for speed badges)
+- `StudentPractice.tsx` - after answering questions
+- `StudentVocabulary.tsx` - after vocabulary practice
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| **Database Migration** | Create | Fix RLS policies on students table |
+| `src/hooks/useBadgeProgressCalculator.ts` | Create | Calculate progress for all badge types |
+| `src/hooks/useSyncBadgeProgress.ts` | Create | Sync calculated progress to database |
+| `src/hooks/useSpeedBadgeProgress.ts` | Modify | Integrate with new sync system |
+| `src/pages/student/StudentDashboardHome.tsx` | Modify | Add badge sync on mount |
+| `src/hooks/useBadges.ts` | Modify | Include real-time progress from calculator |
+
+---
+
+## Technical Details
+
+### RLS Policy Fix (Migration SQL)
 
 ```sql
-ALTER TABLE questions 
-ADD COLUMN alternate_answers text[] DEFAULT NULL;
+-- Drop the problematic recursive policy
+DROP POLICY IF EXISTS "Anonymous can update accessed status only" ON public.students;
+
+-- Create a proper policy for student self-updates
+-- Uses student_accounts join to verify ownership
+CREATE POLICY "Students can update their own record"
+ON public.students
+FOR UPDATE
+TO anon, authenticated
+USING (true)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM student_accounts sa
+    WHERE sa.linked_student_id = students.id
+    AND sa.phone_number = current_setting('request.headers', true)::json->>'x-student-phone'
+  )
+);
 ```
 
-This stores alternate correct answers as an array of text values, applicable only when `question_type = 'fill_blank'`.
+### Badge Progress Calculator Logic
 
-### Phase 2: Update QuestionForm.tsx (68 Questions)
-
-**Changes:**
-1. Add `alternate_answers` to the form schema (optional array of strings)
-2. Add a collapsible section below the "Correct Answer" field that appears only when `question_type = 'fill_blank'`
-3. Use `useFieldArray` to manage dynamic alternate answer inputs
-4. Include Add/Remove buttons for each alternate answer
-5. Update the save mutation to include `alternate_answers` in the database insert/update
-
-**UI Layout:**
-```text
-Correct Answer: [____0.5____]
-
-[+ Add Alternate Answer]
-
-Alternate Answers (optional):
-  1: [____1/2____] [x Remove]
-  2: [____.5_____] [x Remove]
-  
-[+ Add Alternate Answer]
-```
-
-### Phase 3: Update CBQuestionForm.tsx (CollegeBoard Questions)
-
-Same implementation as Phase 2 but for the CollegeBoard question form:
-1. Add `alternate_answers` field to the CB question schema
-2. Add collapsible alternate answers section (visible only for fill_blank type)
-3. Update save mutation to include alternate_answers
-
-### Phase 4: Update Answer Validation (StudentQuestion.tsx)
-
-**Current Logic (line ~303):**
 ```typescript
-const correct = answer.toUpperCase() === currentQuestion.answer.toUpperCase();
+// Calculate first_try_correct
+const firstTryCorrect = await supabase
+  .from('student_attempts')
+  .select('id', { count: 'exact' })
+  .eq('student_account_id', studentId)
+  .eq('attempt_number', 1)
+  .eq('is_correct', true);
+
+// Calculate vocabulary_completion  
+const vocabProgress = await supabase
+  .from('student_vocabulary_progress')
+  .select('id', { count: 'exact' })
+  .eq('student_account_id', studentId)
+  .gte('confidence_level', 3);  // High confidence = mastered
 ```
 
-**Updated Logic:**
-```typescript
-const normalizeAnswer = (ans: string) => ans.trim().toUpperCase();
-const primaryCorrect = normalizeAnswer(answer) === normalizeAnswer(currentQuestion.answer);
-const alternatesArray = currentQuestion.alternate_answers as string[] | null;
-const alternateCorrect = alternatesArray?.some(
-  alt => normalizeAnswer(answer) === normalizeAnswer(alt)
-) ?? false;
-const correct = primaryCorrect || alternateCorrect;
-```
+---
 
-This checks the student's answer against:
-1. The primary correct answer
-2. All alternate answers (if any exist)
+## Expected Outcome
 
-### Phase 5: Update English Question Validation (StudentEnglishQuestion.tsx)
-
-Apply the same answer validation logic update to the English practice question page.
+1. **SAT Date**: Students can successfully update their SAT test date without errors
+2. **Badge Progress**: All badges show accurate progress based on student activity
+3. **Auto-Unlock**: Badges automatically unlock when all requirements are met
+4. **Real-time Sync**: Progress updates after each relevant activity
 
 ---
 
-## Files to Modify
+## Security Considerations
 
-| File | Changes |
-|------|---------|
-| `supabase/migrations/` | New migration to add `alternate_answers` column |
-| `src/components/admin/questions/QuestionForm.tsx` | Add alternate answers UI for fill_blank type |
-| `src/components/admin/questions/CBQuestionForm.tsx` | Add alternate answers UI for fill_blank type |
-| `src/pages/StudentQuestion.tsx` | Update answer validation logic |
-| `src/pages/student/StudentEnglishQuestion.tsx` | Update answer validation logic |
-
----
-
-## Edge Cases Handled
-
-1. **Empty alternates**: Only non-empty strings are saved
-2. **Whitespace normalization**: Answers are trimmed before comparison
-3. **Case insensitivity**: All comparisons are case-insensitive
-4. **Multiple choice questions**: The alternate answers section is hidden for multiple choice
-5. **Editing existing questions**: Load existing alternate answers when editing
-
----
-
-## Summary
-This feature ensures that students who provide mathematically equivalent answers (like 0.5 vs 1/2) receive credit, improving the accuracy and fairness of the practice system.
+- RLS policies ensure students can only update their own records
+- Badge progress calculations use server-side queries
+- No sensitive data exposed through badge progress tracking
