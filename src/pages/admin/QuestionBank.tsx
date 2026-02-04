@@ -150,15 +150,16 @@ export default function QuestionBank() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Question Bank</h1>
-          <p className="text-muted-foreground">Manage SAT practice questions and variations</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Question Bank</h1>
+          <p className="text-sm text-muted-foreground">Manage SAT practice questions</p>
         </div>
         {getAddButtonText() && (
           <Button 
-            className={`gap-2 ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+            className={`gap-2 w-full sm:w-auto ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
             onClick={handleAddQuestion}
           >
             <Plus className="h-4 w-4" />
@@ -167,89 +168,90 @@ export default function QuestionBank() {
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions-68')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">68 Questions</CardTitle>
+      {/* Stats Cards - Scrollable on mobile */}
+      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">68 Questions</CardTitle>
             <FileQuestion className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{questions68Count ?? 0}/68</div>
-            <p className="text-xs text-muted-foreground">Original questions</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{questions68Count ?? 0}/68</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Original questions</p>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('questions-cb')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CollegeBoard</CardTitle>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-cb')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">CollegeBoard</CardTitle>
             <FileQuestion className="h-4 w-4 text-blue-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{questionsCBCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Imported CB questions</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{questionsCBCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Imported CB</p>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('students')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Practice Students</CardTitle>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('students')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">Students</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{studentsCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Registered students</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{studentsCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Registered</p>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('flags')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Flagged Questions</CardTitle>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('flags')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">Flagged</CardTitle>
             <Flag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{flaggedCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Need attention</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{flaggedCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Need attention</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="questions-68">68 Questions</TabsTrigger>
-          <TabsTrigger value="questions-cb">CollegeBoard ({questionsCBCount ?? 0})</TabsTrigger>
-          <TabsTrigger value="import">
-            <Upload className="h-4 w-4 mr-1" />
-            Import Math
-          </TabsTrigger>
-          <TabsTrigger value="import-english">
-            <Upload className="h-4 w-4 mr-1" />
-            Import English
-          </TabsTrigger>
-          <TabsTrigger value="variations">
-            AI Variations
-            {(pendingVariationsCount ?? 0) > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 px-1.5">
-                {pendingVariationsCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="flags">
-            Flags
-            {(flaggedCount ?? 0) > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 px-1.5">
-                {flaggedCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Settings className="h-4 w-4 mr-1" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-max md:w-auto md:flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
+            <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
+            <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
+              <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Import </span>Math
+            </TabsTrigger>
+            <TabsTrigger value="import-english" className="text-xs md:text-sm px-2 md:px-3">
+              <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Import </span>Eng
+            </TabsTrigger>
+            <TabsTrigger value="variations" className="text-xs md:text-sm px-2 md:px-3">
+              AI
+              {(pendingVariationsCount ?? 0) > 0 && (
+                <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                  {pendingVariationsCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="students" className="text-xs md:text-sm px-2 md:px-3">Students</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs md:text-sm px-2 md:px-3">Analytics</TabsTrigger>
+            <TabsTrigger value="flags" className="text-xs md:text-sm px-2 md:px-3">
+              Flags
+              {(flaggedCount ?? 0) > 0 && (
+                <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                  {flaggedCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs md:text-sm px-2 md:px-3">
+              <Settings className="h-3 w-3 md:h-4 md:w-4" />
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="questions-68" className="space-y-4">
           <QuestionList onEdit={handleEdit} questionSet="68" />
