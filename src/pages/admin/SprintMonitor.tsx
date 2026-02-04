@@ -100,7 +100,7 @@ export default function SprintMonitor() {
   const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
   const FIRST_SPRINT_DELAY_DAYS = 5; // First sprint of new season starts 5 days from now
 
-  // Create new season handler - creates all 3 back-to-back sprints
+  // Create new season handler - creates all 3 back-to-back sprints and seeds students
   const handleCreateSeason = async () => {
     setIsCreating(true);
     
@@ -164,19 +164,50 @@ export default function SprintMonitor() {
         }
       ];
       
-      const { error } = await supabase
+      const { data: createdSprints, error } = await supabase
         .from('sprints')
-        .insert(sprintsToCreate);
+        .insert(sprintsToCreate)
+        .select();
       
       if (error) throw error;
+      
+      // Auto-enroll all active students into Sprint 1 as unranked
+      const sprint1Id = createdSprints?.find(s => s.sprint_number === 1)?.id;
+      if (sprint1Id) {
+        // Fetch all active student accounts
+        const { data: activeStudents } = await supabase
+          .from('student_accounts')
+          .select('id')
+          .eq('is_active', true);
+        
+        if (activeStudents && activeStudents.length > 0) {
+          // Distribute students into groups (max 40 per group)
+          const rankings = activeStudents.map((student, index) => ({
+            student_account_id: student.id,
+            sprint_id: sprint1Id,
+            current_tier: 'unranked',
+            group_number: Math.floor(index / MAX_GROUP_SIZE) + 1,
+            total_points: 0,
+          }));
+          
+          const { error: rankingsError } = await supabase
+            .from('student_sprint_rankings')
+            .insert(rankings);
+          
+          if (rankingsError) {
+            console.error('Failed to seed students:', rankingsError);
+          }
+        }
+      }
       
       // Refresh data
       await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
       await queryClient.invalidateQueries({ queryKey: ['active-sprint'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-sprint-rankings'] });
       
       toast({
         title: 'Season Created',
-        description: `Season ${nextSeasonNumber} scheduled! Sprint 1 starts on ${format(sprint1Start, 'MMM d, yyyy')}`
+        description: `Season ${nextSeasonNumber} scheduled with all students enrolled! Sprint 1 starts on ${format(sprint1Start, 'MMM d, yyyy')}`
       });
       
       setIsCreateDialogOpen(false);
