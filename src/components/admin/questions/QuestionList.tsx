@@ -215,176 +215,231 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
   return (
     <>
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div>
-              <CardTitle>{questionSet === '68' ? '68 Questions' : 'CollegeBoard Questions'} ({questions?.length || 0})</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">
-                Tip: Drag to select multiple • Shift+click for range
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 items-center">
+        <CardHeader className="p-3 md:p-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base md:text-xl">
+                  {questionSet === '68' ? '68 Questions' : 'CB Questions'} ({questions?.length || 0})
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 hidden md:block">
+                  Tip: Drag to select multiple • Shift+click for range
+                </p>
+              </div>
               {selectedIds.size > 0 && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowBulkDeleteDialog(true)}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete ({selectedIds.size})
+                  <Trash2 className="h-4 w-4 md:mr-1" />
+                  <span className="hidden md:inline">Delete</span> ({selectedIds.size})
                 </Button>
               )}
-              <div className="relative">
+            </div>
+            {/* Filters - Stack on mobile */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-40"
+                  className="pl-9 w-full sm:w-40"
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {questionSet === 'CB' && (
-                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Difficulty" />
+              <div className="flex gap-2">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="flex-1 sm:w-36">
+                    <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              )}
+                {questionSet === 'CB' && (
+                  <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                    <SelectTrigger className="flex-1 sm:w-28">
+                      <SelectValue placeholder="Diff" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-0">
           {questions && questions.length > 0 ? (
-            <div 
-              ref={tableContainerRef}
-              className="rounded-md border overflow-auto max-h-[60vh] relative select-none"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-            >
-              {/* Marquee selection box */}
-              {marquee.isSelecting && marqueeRect.width > 5 && marqueeRect.height > 5 && (
-                <div
-                  className="absolute pointer-events-none bg-primary/20 border-2 border-primary/50 z-50"
-                  style={{
-                    left: marqueeRect.left,
-                    top: marqueeRect.top,
-                    width: marqueeRect.width,
-                    height: marqueeRect.height,
-                  }}
-                />
-              )}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={questions.length > 0 && selectedIds.size === questions.length}
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead className="w-24">ID</TableHead>
-                    <TableHead>Question</TableHead>
-                    <TableHead className="w-36">Category</TableHead>
-                    {questionSet === 'CB' && <TableHead className="w-24">Difficulty</TableHead>}
-                    <TableHead className="w-28">Type</TableHead>
-                    <TableHead className="w-20">Media</TableHead>
-                    <TableHead className="w-24 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {questions.map((q, index) => (
-                    <TableRow 
-                      key={q.id} 
-                      className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                      onClick={(e) => handleRowClick(index, q.id, e)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.has(q.id)}
-                          onCheckedChange={() => toggleSelect(q.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
-                      <TableCell className="max-w-md">
-                        <div className="truncate">
-                          <MathText text={q.question_text} />
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-2">
+                {questions.map((q) => (
+                  <div 
+                    key={q.id}
+                    className={`p-3 rounded-lg border ${selectedIds.has(q.id) ? 'bg-primary/10 border-primary/30' : 'bg-card'}`}
+                    onClick={() => toggleSelect(q.id)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-sm font-medium">{q.question_id}</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5">
+                            {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
+                          </Badge>
+                          {q.question_image_url && <Image className="h-3 w-3 text-muted-foreground" />}
+                          {q.video_url && <Youtube className="h-3 w-3 text-red-500" />}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={getCategoryColor(q.category?.name || '')}>
-                          {q.category?.name || 'N/A'}
-                        </Badge>
-                      </TableCell>
-                      {questionSet === 'CB' && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          <MathText text={q.question_text} />
+                        </p>
+                        <div className="flex gap-1.5 mt-2 flex-wrap">
+                          <Badge variant="secondary" className={`text-[10px] ${getCategoryColor(q.category?.name || '')}`}>
+                            {q.category?.name || 'N/A'}
+                          </Badge>
+                          {questionSet === 'CB' && q.difficulty_level && (
+                            <Badge variant="outline" className={`text-[10px] ${getDifficultyColor(q.difficulty_level)}`}>
+                              {q.difficulty_level}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(q)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteId(q.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div 
+                ref={tableContainerRef}
+                className="hidden md:block rounded-md border overflow-auto max-h-[60vh] relative select-none"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+              >
+                {/* Marquee selection box */}
+                {marquee.isSelecting && marqueeRect.width > 5 && marqueeRect.height > 5 && (
+                  <div
+                    className="absolute pointer-events-none bg-primary/20 border-2 border-primary/50 z-50"
+                    style={{
+                      left: marqueeRect.left,
+                      top: marqueeRect.top,
+                      width: marqueeRect.width,
+                      height: marqueeRect.height,
+                    }}
+                  />
+                )}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={questions.length > 0 && selectedIds.size === questions.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead className="w-24">ID</TableHead>
+                      <TableHead>Question</TableHead>
+                      <TableHead className="w-36">Category</TableHead>
+                      {questionSet === 'CB' && <TableHead className="w-24">Difficulty</TableHead>}
+                      <TableHead className="w-28">Type</TableHead>
+                      <TableHead className="w-20">Media</TableHead>
+                      <TableHead className="w-24 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {questions.map((q, index) => (
+                      <TableRow 
+                        key={q.id} 
+                        className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                        onClick={(e) => handleRowClick(index, q.id, e)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(q.id)}
+                            onCheckedChange={() => toggleSelect(q.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
+                        <TableCell className="max-w-md">
+                          <div className="truncate">
+                            <MathText text={q.question_text} />
+                          </div>
+                        </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
-                            {q.difficulty_level || 'N/A'}
+                          <Badge variant="secondary" className={getCategoryColor(q.category?.name || '')}>
+                            {q.category?.name || 'N/A'}
                           </Badge>
                         </TableCell>
-                      )}
-                      <TableCell>
-                        <Badge variant="outline">
-                          {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {q.question_image_url && (
-                            <Image className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          {q.video_url && (
-                            <Youtube className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEdit(q)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(q.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                        {questionSet === 'CB' && (
+                          <TableCell>
+                            <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
+                              {q.difficulty_level || 'N/A'}
+                            </Badge>
+                          </TableCell>
+                        )}
+                        <TableCell>
+                          <Badge variant="outline">
+                            {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {q.question_image_url && (
+                              <Image className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            {q.video_url && (
+                              <Youtube className="h-4 w-4 text-red-500" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEdit(q)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(q.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileQuestion className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="text-center py-8 md:py-12 text-muted-foreground">
+              <FileQuestion className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 opacity-50" />
               <p>No questions found</p>
-              <p className="text-sm">Click "Add Question" to create your first question</p>
+              <p className="text-sm">Tap "Add" to create your first question</p>
             </div>
           )}
         </CardContent>

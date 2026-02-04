@@ -88,11 +88,45 @@ export function StudentsTab() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Practice Students ({students.length})</CardTitle>
+      <CardHeader className="p-3 md:p-6">
+        <CardTitle className="text-base md:text-xl">Practice Students ({students.length})</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border overflow-auto max-h-[60vh]">
+      <CardContent className="p-3 md:p-6 pt-0">
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-2">
+          {students.map((student) => (
+            <div key={student.id} className="p-3 rounded-lg border bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-sm">{student.phone_number}</span>
+                <Badge 
+                  variant={student.accuracy >= 70 ? 'default' : student.accuracy >= 50 ? 'secondary' : 'destructive'}
+                >
+                  {student.accuracy}%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <span className="block text-foreground font-medium">{student.videosWatched}/68</span>
+                  Videos
+                </div>
+                <div>
+                  <span className="block text-foreground font-medium">{student.totalAttempts}</span>
+                  Attempts
+                </div>
+                <div>
+                  <span className="block text-foreground font-medium">{student.activeSessions}</span>
+                  Sessions
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground mt-2">
+                Last login: {student.last_login ? new Date(student.last_login).toLocaleDateString() : 'Never'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block rounded-md border overflow-auto max-h-[60vh]">
           <Table>
             <TableHeader>
               <TableRow>

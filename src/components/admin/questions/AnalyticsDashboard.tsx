@@ -369,20 +369,20 @@ export function AnalyticsDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header with Student Selector */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <CardHeader className="p-3 md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-base md:text-xl">
+                <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                 Performance Analytics
               </CardTitle>
-              <CardDescription>Comprehensive insights into student practice performance</CardDescription>
+              <CardDescription className="text-xs md:text-sm">Student practice performance insights</CardDescription>
             </div>
             <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-              <SelectTrigger className="w-56">
+              <SelectTrigger className="w-full md:w-56">
                 <SelectValue placeholder="Select student" />
               </SelectTrigger>
               <SelectContent>
@@ -400,98 +400,100 @@ export function AnalyticsDashboard() {
 
       {/* Analytics Tabs */}
       <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="questions">Question Analytics</TabsTrigger>
-          <TabsTrigger value="comparison">68 vs CB</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="patterns">Wrong Answer Patterns</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-max md:w-auto h-auto gap-1 p-1">
+            <TabsTrigger value="overview" className="text-xs md:text-sm px-2 md:px-3">Overview</TabsTrigger>
+            <TabsTrigger value="questions" className="text-xs md:text-sm px-2 md:px-3">Questions</TabsTrigger>
+            <TabsTrigger value="comparison" className="text-xs md:text-sm px-2 md:px-3">68 vs CB</TabsTrigger>
+            <TabsTrigger value="leaderboard" className="text-xs md:text-sm px-2 md:px-3">Leaderboard</TabsTrigger>
+            <TabsTrigger value="patterns" className="text-xs md:text-sm px-2 md:px-3">Patterns</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* OVERVIEW TAB */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Total Attempts</CardTitle>
+        <TabsContent value="overview" className="space-y-4 md:space-y-6">
+          {/* Stats Overview - Scrollable on mobile */}
+          <div className="flex gap-2 overflow-x-auto pb-2 md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 -mx-2 px-2 md:mx-0 md:px-0">
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+                <CardTitle className="text-xs font-medium">Attempts</CardTitle>
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalAttempts}</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{totalAttempts}</div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Overall Accuracy</CardTitle>
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+                <CardTitle className="text-xs font-medium">Accuracy</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{accuracy}%</div>
-                <Progress value={accuracy} className="mt-2 h-1" />
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{accuracy}%</div>
+                <Progress value={accuracy} className="mt-2 h-1 hidden md:block" />
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">1st Attempt Rate</CardTitle>
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+                <CardTitle className="text-xs font-medium">1st Try</CardTitle>
                 <Zap className="h-4 w-4 text-yellow-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{firstAttemptRate}%</div>
-                <p className="text-xs text-muted-foreground">{firstAttempts.length} attempts</p>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{firstAttemptRate}%</div>
+                <p className="text-xs text-muted-foreground hidden md:block">{firstAttempts.length} attempts</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Retry Success</CardTitle>
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+                <CardTitle className="text-xs font-medium">Retry</CardTitle>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{retrySuccessRate}%</div>
-                <p className="text-xs text-muted-foreground">{retryAttempts.length} retries</p>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{retrySuccessRate}%</div>
+                <p className="text-xs text-muted-foreground hidden md:block">{retryAttempts.length} retries</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
                 <CardTitle className="text-xs font-medium">Avg Time</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{avgTimeSpent}s</div>
-                <p className="text-xs text-muted-foreground">{fastestTime}s - {slowestTime}s</p>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{avgTimeSpent}s</div>
+                <p className="text-xs text-muted-foreground hidden md:block">{fastestTime}s - {slowestTime}s</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Videos Watched</CardTitle>
+            <Card className="min-w-[120px] flex-shrink-0 md:min-w-0">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+                <CardTitle className="text-xs font-medium">Videos</CardTitle>
                 <Video className="h-4 w-4 text-purple-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{videoWatchRate}%</div>
-                <p className="text-xs text-muted-foreground">{videosWatched}/{totalQuestions}</p>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{videoWatchRate}%</div>
+                <p className="text-xs text-muted-foreground hidden md:block">{videosWatched}/{totalQuestions}</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Category Performance */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Performance by Category</CardTitle>
+              <CardHeader className="p-3 md:p-6">
+                <CardTitle className="text-sm md:text-base">Performance by Category</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
                 {categoryData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={categoryData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" domain={[0, 100]} unit="%" />
-                      <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
+                      <XAxis type="number" domain={[0, 100]} unit="%" tick={{ fontSize: 10 }} />
+                      <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 9 }} />
                       <Tooltip 
                         formatter={(value: number, name: string) => [
                           name === 'accuracy' ? `${value}%` : value,
@@ -503,7 +505,7 @@ export function AnalyticsDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
                     No data available
                   </div>
                 )}
@@ -512,16 +514,16 @@ export function AnalyticsDashboard() {
 
             {/* Progress Over Time */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Accuracy Over Time</CardTitle>
+              <CardHeader className="p-3 md:p-6">
+                <CardTitle className="text-sm md:text-base">Accuracy Over Time</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
                 {progressOverTime.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={progressOverTime}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-                      <YAxis domain={[0, 100]} unit="%" />
+                      <XAxis dataKey="week" tick={{ fontSize: 9 }} />
+                      <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 10 }} />
                       <Tooltip formatter={(value: number) => [`${value}%`, 'Accuracy']} />
                       <Area 
                         type="monotone" 
@@ -533,7 +535,7 @@ export function AnalyticsDashboard() {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
                     Not enough data yet
                   </div>
                 )}
@@ -542,7 +544,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Correct vs Incorrect Pie */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Correct vs Incorrect</CardTitle>
