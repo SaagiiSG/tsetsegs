@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
+import { useSyncBadgeProgress } from '@/hooks/useSyncBadgeProgress';
 import {
   Drawer,
   DrawerClose,
@@ -67,6 +68,22 @@ export default function StudentDashboardHome() {
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
   const [radarSubject, setRadarSubject] = useState<'math' | 'english'>('math');
   const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
+  
+  // Badge progress sync
+  const { syncBadgeProgress } = useSyncBadgeProgress();
+  const badgeSyncRef = useRef(false);
+
+  // Sync badge progress on mount (once)
+  useEffect(() => {
+    if (student?.id && !badgeSyncRef.current) {
+      badgeSyncRef.current = true;
+      syncBadgeProgress().then(newlyUnlocked => {
+        if (newlyUnlocked.length > 0) {
+          toast.success(`🎉 Badge${newlyUnlocked.length > 1 ? 's' : ''} unlocked: ${newlyUnlocked.join(', ')}`);
+        }
+      });
+    }
+  }, [student?.id, syncBadgeProgress]);
 
   // Initialize selectedSatDate from student data
   useEffect(() => {
