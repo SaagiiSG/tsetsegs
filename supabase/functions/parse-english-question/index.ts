@@ -47,28 +47,43 @@ Extract the question data and return ONLY a valid JSON object with this exact st
   "difficulty": "easy or medium or hard (based on filled squares: 1=easy, 2=medium, 3=hard)",
   "passage_text": "the full reading passage text if present (can be multiple paragraphs)",
   "question_text": "the actual question being asked",
-  "option_a": "option A text",
-  "option_b": "option B text", 
-  "option_c": "option C text",
-  "option_d": "option D text",
-  "correct_answer": "A or B or C or D",
+  "question_type": "multiple_choice or fill_in_blank",
+  "option_a": "option A text (null for fill-in-blank questions)",
+  "option_b": "option B text (null for fill-in-blank questions)", 
+  "option_c": "option C text (null for fill-in-blank questions)",
+  "option_d": "option D text (null for fill-in-blank questions)",
+  "correct_answer": "A/B/C/D for multiple choice, OR the actual text answer for fill-in-blank",
   "rationale": "the full explanation text explaining WHY the answer is correct"
 }
 
-IMPORTANT:
-- Preserve the passage text exactly as written
-- Keep paragraph breaks in passages
-- The question_text should be the specific question asked, NOT the passage
-- The rationale should explain the reasoning behind the correct answer
-- If any field cannot be extracted, use null
-- Return ONLY the JSON object, no other text`
+CRITICAL INSTRUCTIONS:
+1. QUESTION TYPE DETECTION:
+   - If the question has options A, B, C, D to choose from → question_type: "multiple_choice"
+   - If the question asks student to write their own answer → question_type: "fill_in_blank"
+   - For fill-in-blank: set option_a, option_b, option_c, option_d to null
+
+2. CORRECT ANSWER EXTRACTION:
+   - For multiple choice: the correct_answer should be A, B, C, or D
+   - For fill-in-blank: the correct_answer should be the actual text/value
+   - IMPORTANT: If the correct answer letter is NOT visible in the question area, LOOK FOR IT IN THE RATIONALE/EXPLANATION SECTION!
+   - The rationale often contains phrases like "The correct answer is...", "Choice A is correct because...", "The answer is B..."
+   - Always check the explanation text to find the correct answer if not clearly marked elsewhere
+
+3. PASSAGE AND QUESTION:
+   - Preserve the passage text exactly as written
+   - Keep paragraph breaks in passages
+   - The question_text should be the specific question asked, NOT the passage
+   - The rationale should explain the reasoning behind the correct answer
+
+4. If any field cannot be extracted, use null
+5. Return ONLY the JSON object, no other text`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Extract the SAT Reading & Writing question from this CollegeBoard PDF page screenshot. Return only the JSON object.'
+                text: 'Extract the SAT Reading & Writing question from this CollegeBoard PDF page screenshot. Pay special attention to: 1) Whether this is multiple choice or fill-in-blank, 2) Finding the correct answer even if it is only shown in the rationale/explanation section. Return only the JSON object.'
               },
               {
                 type: 'image_url',
@@ -131,7 +146,7 @@ IMPORTANT:
       );
     }
 
-    console.log('Successfully parsed English question:', parsedQuestion.question_id);
+    console.log('Successfully parsed English question:', parsedQuestion.question_id, 'Type:', parsedQuestion.question_type);
 
     return new Response(
       JSON.stringify({ 

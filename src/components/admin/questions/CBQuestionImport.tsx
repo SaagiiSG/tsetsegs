@@ -25,6 +25,7 @@ interface ParsedQuestion {
   skill: string;
   difficulty: string;
   question_text: string;
+  question_type?: 'multiple_choice' | 'fill_in_blank';
   option_a: string;
   option_b: string;
   option_c: string;
@@ -205,8 +206,11 @@ export function CBQuestionImport() {
     setParsedQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Check if a question has empty options (for multiple choice)
+  // Check if a question has empty options (for multiple choice only)
   const hasEmptyOptions = (q: ParsedQuestion): boolean => {
+    // Fill-in-blank questions don't have options - that's expected
+    if (q.question_type === 'fill_in_blank') return false;
+    
     const isMultipleChoice = ['A', 'B', 'C', 'D'].includes(q.correct_answer?.toUpperCase() || '');
     if (!isMultipleChoice) return false;
     
