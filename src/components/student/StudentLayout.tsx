@@ -1,4 +1,6 @@
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
@@ -10,20 +12,29 @@ import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
 
 function StudentLayoutContent() {
-  const { student, isLoading } = useStudentAuth();
+  const { student, isLoading: studentLoading } = useStudentAuth();
+  const { user: teacherUser, teacherName, isLoading: teacherLoading } = useTeacherAuth();
+  const { isAdmin, isLoading: adminLoading } = useAuth();
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
 
-  // Security: Prevent screenshots (CSS-based)
+  // Allow access if user is a student, teacher, or admin
+  const isTeacherOrAdmin = (teacherUser && teacherName) || isAdmin;
+  const hasAccess = student || isTeacherOrAdmin;
+  const isLoading = studentLoading && teacherLoading && adminLoading;
+
+  // Security: Prevent screenshots (CSS-based) - only for students
   useEffect(() => {
-    document.body.style.userSelect = 'none';
-    document.body.style.webkitUserSelect = 'none';
+    if (student && !isTeacherOrAdmin) {
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none';
+    }
     
     return () => {
       document.body.style.userSelect = '';
       document.body.style.webkitUserSelect = '';
     };
-  }, []);
+  }, [student, isTeacherOrAdmin]);
 
   // Collapse sidebar when calculator snaps left
   useEffect(() => {
@@ -48,7 +59,7 @@ function StudentLayoutContent() {
     );
   }
 
-  if (!student) {
+  if (!hasAccess) {
     return <Navigate to="/practice" replace />;
   }
 
