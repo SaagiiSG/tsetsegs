@@ -373,29 +373,29 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] p-0 flex flex-col">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <DialogTitle>
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] md:h-[95vh] p-0 flex flex-col">
+        <DialogHeader className="px-4 md:px-6 py-3 md:py-4 border-b shrink-0">
+          <DialogTitle className="text-base md:text-lg">
             {editingQuestion ? 'Edit Question' : 'Add New Question'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Side - Form */}
-          <ScrollArea className="flex-1 px-6 border-r">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* Form Section - Full width on mobile */}
+          <ScrollArea className="flex-1 px-4 md:px-6 md:border-r">
             <Form {...form}>
               <form id="question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
-              {/* Basic Info Row */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Basic Info Row - Stack on mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               {/* Question ID */}
               <FormField
                 control={form.control}
                 name="question_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Question ID</FormLabel>
+                    <FormLabel className="text-sm">Question ID</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="6801" />
+                      <Input {...field} placeholder="6801" className="h-9 md:h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -408,10 +408,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 name="category_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel className="text-sm">Category</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 md:h-10">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
@@ -454,38 +454,38 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
             {/* Question Preview Section */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 border-b">
-                <span className="text-sm font-medium">Question Preview Layout</span>
-                <span className="text-xs text-muted-foreground ml-2">(Image on top, text below)</span>
+              <div className="bg-muted/50 px-3 md:px-4 py-2 border-b">
+                <span className="text-xs md:text-sm font-medium">Question Preview Layout</span>
+                <span className="text-xs text-muted-foreground ml-1 md:ml-2 hidden sm:inline">(Image on top, text below)</span>
               </div>
               
               {/* Graph/Table Image - FIRST (Top) */}
-              <div className="p-4 border-b bg-background">
-                <Label className="text-sm font-medium mb-2 block">
+              <div className="p-3 md:p-4 border-b bg-background">
+                <Label className="text-xs md:text-sm font-medium mb-2 block">
                   Graph / Table / Figure (optional)
                 </Label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Upload your Figma/Canva exported image here - it will display above the question text
+                <p className="text-xs text-muted-foreground mb-2 md:mb-3 hidden sm:block">
+                  Upload your Figma/Canva exported image here
                 </p>
                 {imagePreview ? (
                   <div className="relative w-full">
                     <img 
                       src={imagePreview} 
                       alt="Question figure" 
-                      className="rounded-lg border w-full max-h-64 object-contain bg-white"
+                      className="rounded-lg border w-full max-h-48 md:max-h-64 object-contain bg-white"
                     />
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
+                      className="absolute top-2 right-2 h-7 w-7 md:h-8 md:w-8"
                       onClick={removeImage}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                  <div className="border-2 border-dashed rounded-lg p-4 md:p-6 text-center hover:border-primary/50 transition-colors">
                     <Input
                       type="file"
                       accept="image/*"
@@ -495,8 +495,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                     />
                     <label htmlFor="image-upload" className="cursor-pointer">
                       <div className="text-muted-foreground">
-                        <p className="font-medium">Click to upload image</p>
-                        <p className="text-xs">PNG, JPG from Figma/Canva</p>
+                        <p className="font-medium text-sm">Click to upload image</p>
+                        <p className="text-xs">PNG, JPG</p>
                       </div>
                     </label>
                   </div>
@@ -504,13 +504,13 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               </div>
 
               {/* Question Text - SECOND (Below image) */}
-              <div className="p-4">
+              <div className="p-3 md:p-4">
                 <FormField
                   control={form.control}
                   name="question_text"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Question Text</FormLabel>
+                      <FormLabel className="text-sm">Question Text</FormLabel>
                       <FormControl>
                         <RichTextEditor
                           value={field.value}
@@ -527,12 +527,12 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
             {/* Multiple Choice Options */}
             {questionType === 'multiple_choice' && (
-              <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
-                <Label>Answer Options</Label>
-                <p className="text-xs text-muted-foreground">
+              <div className="space-y-2 md:space-y-3 p-3 md:p-4 border rounded-lg bg-muted/50">
+                <Label className="text-sm">Answer Options</Label>
+                <p className="text-xs text-muted-foreground hidden sm:block">
                   Use $math$ for LaTeX notation (e.g., $x^2 + 1$)
                 </p>
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2 md:gap-3">
                   <FormField
                     control={form.control}
                     name="option_a"
@@ -655,10 +655,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
             {/* Alternate Answers Section - only for fill_blank */}
             {questionType === 'fill_blank' && (
               <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+                <div className="bg-muted/50 px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
                   <div>
-                    <span className="text-sm font-medium">Alternate Correct Answers</span>
-                    <p className="text-xs text-muted-foreground">Add equivalent answers (e.g., 0.5 and 1/2)</p>
+                    <span className="text-xs md:text-sm font-medium">Alternate Correct Answers</span>
+                    <p className="text-xs text-muted-foreground hidden sm:block">Add equivalent answers (e.g., 0.5 and 1/2)</p>
                   </div>
                   <Button 
                     type="button" 
@@ -666,8 +666,9 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                     size="sm" 
                     onClick={() => appendAlternate({ value: '' })}
                     disabled={alternateFields.length >= 4}
+                    className="w-full sm:w-auto h-8 text-xs"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-3 w-3 mr-1" />
                     Add Alternate
                   </Button>
                 </div>
@@ -751,13 +752,13 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
             {/* Manual Variations Section */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-3 border-b flex items-center justify-between">
+              <div className="bg-muted/50 px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
                 <div>
-                  <span className="text-sm font-medium">Manual Question Variations</span>
-                  <p className="text-xs text-muted-foreground">Add custom variations of this question</p>
+                  <span className="text-xs md:text-sm font-medium">Manual Question Variations</span>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Add custom variations</p>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addVariation}>
-                  <Plus className="h-4 w-4 mr-1" />
+                <Button type="button" variant="outline" size="sm" onClick={addVariation} className="w-full sm:w-auto h-8 text-xs">
+                  <Plus className="h-3 w-3 mr-1" />
                   Add Variation
                 </Button>
               </div>
@@ -806,7 +807,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
                       {/* Variation Options (if multiple choice) */}
                       {questionType === 'multiple_choice' && (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <FormField
                             control={form.control}
                             name={`manual_variations.${index}.option_a`}
@@ -922,24 +923,24 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
               )}
             </div>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-2 pt-4 pb-2">
-                <Button type="button" variant="outline" onClick={handleClose}>
+              {/* Actions - Sticky on mobile */}
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 pb-2 sticky bottom-0 bg-background py-3 border-t mt-4 -mx-4 px-4 md:static md:border-0 md:mt-0 md:mx-0 md:px-0 md:py-0 md:bg-transparent">
+                <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto h-9">
                   Cancel
                 </Button>
-                <Button type="submit" form="question-form" disabled={saveMutation.isPending || isUploading}>
+                <Button type="submit" form="question-form" disabled={saveMutation.isPending || isUploading} className="w-full sm:w-auto h-9">
                   {(saveMutation.isPending || isUploading) && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {editingQuestion ? 'Update Question' : 'Add Question'}
+                  {editingQuestion ? 'Update' : 'Add Question'}
                 </Button>
               </div>
               </form>
             </Form>
           </ScrollArea>
 
-          {/* Right Side - Live Preview */}
-          <div className="w-[40%] shrink-0 flex flex-col bg-muted/30">
+          {/* Right Side - Live Preview (Hidden on mobile) */}
+          <div className="hidden md:flex w-[40%] shrink-0 flex-col bg-muted/30">
             <div className="px-4 py-3 border-b bg-muted/50">
               <span className="text-sm font-medium">Live Preview</span>
               <span className="text-xs text-muted-foreground ml-2">(How students will see it)</span>
