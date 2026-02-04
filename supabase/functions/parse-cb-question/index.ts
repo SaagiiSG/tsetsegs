@@ -46,28 +46,43 @@ Extract the question data and return ONLY a valid JSON object with this exact st
   "skill": "the specific skill/subtopic like Equivalent expressions",
   "difficulty": "easy or medium or hard (based on filled squares: 1=easy, 2=medium, 3=hard)",
   "question_text": "the full question text including any math expressions in LaTeX format like $x^2 + 3x$",
-  "option_a": "option A text/expression",
-  "option_b": "option B text/expression", 
-  "option_c": "option C text/expression",
-  "option_d": "option D text/expression",
-  "correct_answer": "A or B or C or D",
+  "question_type": "multiple_choice or fill_in_blank",
+  "option_a": "option A text/expression (null for fill-in-blank questions)",
+  "option_b": "option B text/expression (null for fill-in-blank questions)", 
+  "option_c": "option C text/expression (null for fill-in-blank questions)",
+  "option_d": "option D text/expression (null for fill-in-blank questions)",
+  "correct_answer": "A/B/C/D for multiple choice, OR the actual numeric/text answer for fill-in-blank",
   "rationale": "the full explanation text"
 }
 
-IMPORTANT:
-- Convert all math expressions to LaTeX format wrapped in $ symbols
-- For fractions use \\frac{a}{b}
-- For exponents use ^{} like x^{2}
-- For subscripts use _{} like a_{1}
-- If any field cannot be extracted, use null
-- Return ONLY the JSON object, no other text`
+CRITICAL INSTRUCTIONS:
+1. QUESTION TYPE DETECTION:
+   - If the question has options A, B, C, D to choose from → question_type: "multiple_choice"
+   - If the question asks student to enter/write their own answer (Student-Produced Response) → question_type: "fill_in_blank"
+   - For fill-in-blank: set option_a, option_b, option_c, option_d to null
+
+2. CORRECT ANSWER EXTRACTION:
+   - For multiple choice: the correct_answer should be A, B, C, or D
+   - For fill-in-blank: the correct_answer should be the actual value (number, fraction, text)
+   - IMPORTANT: If the correct answer is NOT clearly marked in the question section, LOOK FOR IT IN THE RATIONALE/EXPLANATION SECTION!
+   - The rationale often contains phrases like "The correct answer is...", "Choice X is correct...", "The answer is..."
+   - Always check the explanation text to find the correct answer if not visible elsewhere
+
+3. MATH FORMATTING:
+   - Convert all math expressions to LaTeX format wrapped in $ symbols
+   - For fractions use \\frac{a}{b}
+   - For exponents use ^{} like x^{2}
+   - For subscripts use _{} like a_{1}
+
+4. If any field cannot be extracted, use null
+5. Return ONLY the JSON object, no other text`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Extract the SAT question from this CollegeBoard PDF page screenshot. Return only the JSON object.'
+                text: 'Extract the SAT question from this CollegeBoard PDF page screenshot. Pay special attention to: 1) Whether this is multiple choice or fill-in-blank, 2) Finding the correct answer even if it is only shown in the rationale/explanation section. Return only the JSON object.'
               },
               {
                 type: 'image_url',
@@ -138,8 +153,10 @@ IMPORTANT:
         parsedQuestion = JSON.parse(cleaned);
       }
       
-      // Validate that options are not empty for multiple choice
-      if (parsedQuestion.option_a !== null && parsedQuestion.option_b !== null) {
+      // Validate options only for multiple choice questions
+      const isFillInBlank = parsedQuestion.question_type === 'fill_in_blank';
+      
+      if (!isFillInBlank && parsedQuestion.option_a !== null && parsedQuestion.option_b !== null) {
         const optionsEmpty = 
           (!parsedQuestion.option_a || parsedQuestion.option_a.trim() === '') &&
           (!parsedQuestion.option_b || parsedQuestion.option_b.trim() === '') &&
@@ -168,7 +185,7 @@ IMPORTANT:
       );
     }
 
-    console.log('Successfully parsed question:', parsedQuestion.question_id);
+    console.log('Successfully parsed question:', parsedQuestion.question_id, 'Type:', parsedQuestion.question_type);
 
     return new Response(
       JSON.stringify({ 
