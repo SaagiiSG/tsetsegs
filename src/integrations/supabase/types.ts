@@ -2014,6 +2014,10 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      student_owns_record: {
+        Args: { phone: string; student_id: string }
+        Returns: boolean
+      }
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
