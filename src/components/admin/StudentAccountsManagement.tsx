@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -134,6 +134,8 @@ export function StudentAccountsManagement() {
     targetId: string;
     accountPhone?: string;
   } | null>(null);
+  const [highlightedAccountId, setHighlightedAccountId] = useState<string | null>(null);
+  const accountRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   useEffect(() => {
     fetchAccounts();
@@ -418,10 +420,18 @@ export function StudentAccountsManagement() {
               {paginatedAccounts.map((account) => {
                 const activeSessions = account.sessions.filter(s => s.is_active);
                 const isExpanded = expandedAccounts.has(account.id);
+                const isHighlighted = highlightedAccountId === account.id;
                 
                 return (
                   <>
-                    <TableRow key={account.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleExpanded(account.id)}>
+                    <TableRow 
+                      key={account.id} 
+                      ref={(el) => { accountRowRefs.current[account.id] = el; }}
+                      className={`cursor-pointer hover:bg-muted/50 transition-colors ${
+                        isHighlighted ? 'bg-primary/20 ring-2 ring-primary ring-inset' : ''
+                      }`} 
+                      onClick={() => toggleExpanded(account.id)}
+                    >
                       <TableCell className="w-12">
                         <Button variant="ghost" size="icon" className="h-6 w-6">
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -836,9 +846,21 @@ export function StudentAccountsManagement() {
                     value={`${account.studentInfo?.first_name} ${account.studentInfo?.last_name} ${account.phone_number}`}
                     onSelect={() => {
                       setSearchOpen(false);
-                      if (account.studentInfo?.student_id) {
-                        navigate(`/admin/student/${account.studentInfo.student_id}`);
-                      }
+                      // Filter to show just this student and highlight them
+                      setSearchQuery(account.phone_number);
+                      setCurrentPage(1);
+                      setHighlightedAccountId(account.id);
+                      // Expand the account row
+                      setExpandedAccounts(new Set([account.id]));
+                      // Scroll to the account after a short delay
+                      setTimeout(() => {
+                        const row = accountRowRefs.current[account.id];
+                        if (row) {
+                          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        // Clear highlight after 3 seconds
+                        setTimeout(() => setHighlightedAccountId(null), 3000);
+                      }, 100);
                     }}
                     className="flex items-center justify-between cursor-pointer"
                   >
