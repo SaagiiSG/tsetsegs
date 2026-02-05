@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, User, GraduationCap, Users, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react';
+import { Search, User, GraduationCap, ChevronLeft, ChevronRight, Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 
@@ -419,113 +419,87 @@ export default function StudentSearch() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Student Search
-          </CardTitle>
-          <CardDescription>
-            Search by student name or phone number
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Enter name or phone number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              autoFocus
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Header with search */}
+      <div>
+        <h2 className="text-2xl font-bold">Student Search</h2>
+        <p className="text-muted-foreground">Search and manage all registered students</p>
+      </div>
 
-      {searchQuery.trim() && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Search Results</CardTitle>
-              <CardDescription>
-                {isPending ? 'Searching...' : `${results.length} found`}
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {results.length === 0 && !isPending ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No students found</p>
-              </div>
-            ) : (
-              <div className={`transition-opacity duration-150 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
-                {renderStudentTable(results)}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Search Bar */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+            autoFocus
+          />
+        </div>
+        <Button variant="outline" onClick={fetchAllStudents} disabled={isLoadingAll}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingAll ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          {searchQuery.trim() 
+            ? (isPending ? 'Searching...' : `${results.length} found`)
+            : `${totalCount.toLocaleString()} total`
+          }
+        </div>
+      </div>
 
-      {/* All Students Table */}
+      {/* Students Table */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              All Students
-            </CardTitle>
-            <CardDescription>
-              {totalCount.toLocaleString()} total students
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoadingAll ? (
+        <CardContent className="pt-6">
+          {(isLoadingAll && !searchQuery.trim()) ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : allStudents.length === 0 ? (
+          ) : (searchQuery.trim() ? results : allStudents).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No students found</p>
+              <p>{searchQuery.trim() ? 'No students found matching your search' : 'No students found'}</p>
             </div>
           ) : (
             <>
-              {renderStudentTable(allStudents)}
-              
-              {/* Pagination */}
-              <div className="flex flex-col items-center gap-3 mt-4 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1 || isLoadingAll}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  <div className="flex items-center gap-1 px-2">
-                    <span className="text-sm font-medium">{currentPage}</span>
-                    <span className="text-sm text-muted-foreground">of</span>
-                    <span className="text-sm font-medium">{totalPages}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages || isLoadingAll}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Showing {((currentPage - 1) * PAGE_SIZE) + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount.toLocaleString()}
-                </div>
+              <div className={`transition-opacity duration-150 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
+                {renderStudentTable(searchQuery.trim() ? results : allStudents)}
               </div>
+              
+              {/* Pagination - only show when not searching */}
+              {!searchQuery.trim() && (
+                <div className="flex flex-col items-center gap-3 mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1 || isLoadingAll}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1 px-2">
+                      <span className="text-sm font-medium">{currentPage}</span>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <span className="text-sm font-medium">{totalPages}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || isLoadingAll}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * PAGE_SIZE) + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount.toLocaleString()}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
