@@ -41,6 +41,13 @@ export function SecurityWrapper({ children }: SecurityWrapperProps) {
   // Check if focus is on an allowed element (like Desmos calculator)
   const isAllowedFocusTarget = useCallback(() => {
     const activeElement = document.activeElement;
+    const tagName = activeElement?.tagName?.toLowerCase();
+    
+    // Allow focus on input/textarea elements (for mobile keyboard)
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+      return true;
+    }
+    
     // Check if focus moved to Desmos iframe or calculator window
     if (activeElement?.tagName === 'IFRAME') {
       const iframe = activeElement as HTMLIFrameElement;

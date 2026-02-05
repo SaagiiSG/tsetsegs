@@ -181,14 +181,53 @@ export default function SprintMonitor() {
           .eq('is_active', true);
         
         if (activeStudents && activeStudents.length > 0) {
-          // Distribute students into groups (max 40 per group)
-          const rankings = activeStudents.map((student, index) => ({
-            student_account_id: student.id,
-            sprint_id: sprint1Id,
-            current_tier: 'unranked',
-            group_number: Math.floor(index / MAX_GROUP_SIZE) + 1,
-            total_points: 0,
-          }));
+          // Fetch previous sprint rankings to get each student's tier
+          const { data: previousRankings } = await supabase
+            .from('student_sprint_rankings')
+            .select('student_account_id, current_tier, reserved_next_tier')
+            .order('created_at', { ascending: false });
+          
+          // Build a map of student_account_id -> their starting tier
+          const studentTierMap: Record<string, string> = {};
+          if (previousRankings) {
+            // Use the most recent ranking for each student
+            const seen = new Set<string>();
+            for (const r of previousRankings) {
+              if (!seen.has(r.student_account_id)) {
+                seen.add(r.student_account_id);
+                studentTierMap[r.student_account_id] = r.reserved_next_tier || r.current_tier || 'unranked';
+              }
+            }
+          }
+          
+          // Group students by their starting tier for proper group assignment
+          const tierGroups: Record<string, string[]> = {};
+          for (const student of activeStudents) {
+            const tier = studentTierMap[student.id] || 'unranked';
+            if (!tierGroups[tier]) tierGroups[tier] = [];
+            tierGroups[tier].push(student.id);
+          }
+          
+          // Create rankings with proper tier and group assignment
+          const rankings: Array<{
+            student_account_id: string;
+            sprint_id: string;
+            current_tier: string;
+            group_number: number;
+            total_points: number;
+          }> = [];
+          
+          for (const [tier, studentIds] of Object.entries(tierGroups)) {
+            studentIds.forEach((studentId, index) => {
+              rankings.push({
+                student_account_id: studentId,
+                sprint_id: sprint1Id,
+                current_tier: tier,
+                group_number: Math.floor(index / MAX_GROUP_SIZE) + 1,
+                total_points: 0,
+              });
+            });
+          }
           
           const { error: rankingsError } = await supabase
             .from('student_sprint_rankings')
