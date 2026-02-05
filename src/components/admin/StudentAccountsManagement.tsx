@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -21,15 +21,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
-import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -41,7 +32,7 @@ import {
 import {
   Search, Smartphone, Monitor, Laptop, 
   ChevronDown, ChevronRight, Power, PowerOff, 
-  RefreshCw, Trash2, User, ExternalLink, Phone, GraduationCap,
+  RefreshCw, Trash2, User, ExternalLink, Phone,
   Key, KeyRound, RotateCcw, Shield, ShieldOff
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -126,7 +117,6 @@ export function StudentAccountsManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
-  const [searchOpen, setSearchOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -140,18 +130,6 @@ export function StudentAccountsManagement() {
   useEffect(() => {
     fetchAccounts();
   }, []);
-
-  // Global keyboard shortcut for search
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setSearchOpen(!searchOpen);
-      }
-    };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, [searchOpen]);
 
   const fetchAccounts = async () => {
     try {
@@ -381,17 +359,15 @@ export function StudentAccountsManagement() {
 
       {/* Search and Actions */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          className="flex-1 max-w-sm justify-start text-muted-foreground"
-          onClick={() => setSearchOpen(true)}
-        >
-          <Search className="h-4 w-4 mr-2" />
-          Search students...
-          <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </Button>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         <Button variant="outline" onClick={fetchAccounts}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
@@ -800,85 +776,6 @@ export function StudentAccountsManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Student Search Command Dialog */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search students by name or phone..." />
-        <CommandList>
-          <CommandEmpty>No students found.</CommandEmpty>
-          
-          {/* Group by batch */}
-          {Object.entries(
-            accounts.reduce((acc, account) => {
-              if (!account.studentInfo) return acc;
-              const key = account.studentInfo.batch_name || 'Not Enrolled';
-              if (!acc[key]) {
-                acc[key] = { students: [], course_type: account.studentInfo.course_type };
-              }
-              acc[key].students.push(account);
-              return acc;
-            }, {} as Record<string, { students: StudentAccount[]; course_type: string | null }>)
-          ).map(([batchName, { students, course_type }], index) => (
-            <div key={batchName}>
-              {index > 0 && <CommandSeparator />}
-              <CommandGroup 
-                heading={
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-3 w-3" />
-                    <span>{batchName}</span>
-                    {course_type && (
-                      <Badge 
-                        variant="outline" 
-                        className={`text-[10px] px-1 py-0 ${
-                          course_type === 'SAT' 
-                            ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' 
-                            : 'bg-purple-500/10 text-purple-600 border-purple-500/30'
-                        }`}
-                      >
-                        {course_type}
-                      </Badge>
-                    )}
-                  </div>
-                }
-              >
-                {students.map((account) => (
-                  <CommandItem
-                    key={account.id}
-                    value={`${account.studentInfo?.first_name} ${account.studentInfo?.last_name} ${account.phone_number}`}
-                    onSelect={() => {
-                      setSearchOpen(false);
-                      // Filter to show just this student and highlight them
-                      setSearchQuery(account.phone_number);
-                      setCurrentPage(1);
-                      setHighlightedAccountId(account.id);
-                      // Expand the account row
-                      setExpandedAccounts(new Set([account.id]));
-                      // Scroll to the account after a short delay
-                      setTimeout(() => {
-                        const row = accountRowRefs.current[account.id];
-                        if (row) {
-                          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                        // Clear highlight after 3 seconds
-                        setTimeout(() => setHighlightedAccountId(null), 3000);
-                      }, 100);
-                    }}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{account.studentInfo?.first_name} {account.studentInfo?.last_name}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Phone className="h-3 w-3" />
-                      <span>{account.phone_number}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </div>
-          ))}
-        </CommandList>
-      </CommandDialog>
     </div>
   );
 }
