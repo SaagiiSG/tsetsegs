@@ -14,6 +14,11 @@ const isInIframe = () => {
   }
 };
 
+// Check if device is mobile (mobile keyboards affect viewport height)
+const isMobileDevice = () => {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
 // Check if it's a development/preview environment
 const isDevEnvironment = () => {
   const hostname = window.location.hostname;
@@ -38,8 +43,9 @@ export function useDevToolsDetection({ onDetected, enabled = true }: UseDevTools
     
     // Method 1: Window size difference (works when DevTools is docked)
     // Using higher threshold to reduce false positives
+    // On mobile, disable height threshold because keyboard causes significant height changes
     const widthThreshold = window.outerWidth - window.innerWidth > 200;
-    const heightThreshold = window.outerHeight - window.innerHeight > 200;
+    const heightThreshold = !isMobileDevice() && (window.outerHeight - window.innerHeight > 200);
     
     if (widthThreshold || heightThreshold) {
       hasDetectedRef.current = true;
@@ -58,8 +64,9 @@ export function useDevToolsDetection({ onDetected, enabled = true }: UseDevTools
       // Extra safety: don't check if in iframe
       if (isInIframe()) return;
       
+      // On mobile, only check width (keyboard affects height significantly)
       const widthThreshold = window.outerWidth - window.innerWidth > 200;
-      const heightThreshold = window.outerHeight - window.innerHeight > 200;
+      const heightThreshold = !isMobileDevice() && (window.outerHeight - window.innerHeight > 200);
       
       if ((widthThreshold || heightThreshold) && !hasDetectedRef.current) {
         hasDetectedRef.current = true;

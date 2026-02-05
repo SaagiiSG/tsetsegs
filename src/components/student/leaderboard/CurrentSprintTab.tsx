@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Crown, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -122,6 +122,25 @@ export function CurrentSprintTab({
                 })}
               </motion.div>
             </TooltipProvider>
+          ) : currentUserRanking && ['ruby', 'diamond', 'platinum'].includes(currentUserRanking.currentTier) ? (
+            // Special message for exclusive tiers with no/few competitors
+            <div className="text-center py-12 space-y-4">
+              <div className="relative inline-block">
+                <Crown className="h-16 w-16 mx-auto text-primary opacity-80" />
+                <Sparkles className="h-6 w-6 absolute -top-1 -right-1 text-primary animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">
+                  {TIER_DISPLAY_NAMES[currentUserRanking.currentTier as TierType]} Tier
+                </h3>
+                <p className="text-muted-foreground max-w-sm mx-auto">
+                  You've reached an exclusive rank! There are no other competitors in your tier group this sprint.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Keep earning points to maintain your elite status.
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
