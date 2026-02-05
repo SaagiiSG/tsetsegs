@@ -1,115 +1,170 @@
 
+# Plan: Fix Ruby Tier Sprint Placement & Mobile Keyboard DevTools False Positive
 
-# Plan: Fix AI Parsing for Fill-in-the-Blank and Answer Extraction
+## Problem Analysis
 
-## Problem Summary
+### Issue 1: Ruby Ranked Student in Unranked Sprint
 
-The AI parsing edge functions (`parse-cb-question` and `parse-english-question`) have two issues:
+**Root Cause Identified:**
+- Student `Bayrkhuu` (ID: `8e3329df-23ff-48a0-825c-7c729934e115`) has a history showing:
+  - Season 4, Sprint 1: Diamond tier → P1 → `reserved_next_tier: ruby`
+  - Season 5, Sprint 1: Placed in `unranked` group with 0 points
 
-1. **Fill-in-the-blank questions not recognized**: The current prompt only expects answers to be "A, B, C, or D" and doesn't account for fill-in-the-blank questions where the answer is a numeric value or text
-2. **Correct answers in explanation section**: Some CollegeBoard PDFs don't show the correct answer prominently in the question area—instead, the answer is revealed in the rationale/explanation section. The AI needs to check there if not found elsewhere
+- The auto-enrollment logic in `SprintMonitor.tsx` (lines 183-191) assigns ALL students to `unranked` tier:
+  ```typescript
+  const rankings = activeStudents.map((student, index) => ({
+    ...
+    current_tier: 'unranked', // ❌ Ignores previous tier/reserved tier
+    ...
+  }));
+  ```
 
----
+- The `useLeaderboard.ts` auto-enrollment (lines 252-262) DOES respect previous tier:
+  ```typescript
+  const startingTier = previousRanking?.reserved_next_tier || previousRanking?.current_tier || 'unranked';
+  ```
 
-## Technical Changes
+- **The admin bulk-seeding overrides the correct tier logic.**
 
-### 1. Update `parse-cb-question` Edge Function
-
-**File**: `supabase/functions/parse-cb-question/index.ts`
-
-**Changes to the system prompt**:
-
-```text
-- Add instruction to detect question type (multiple choice vs fill-in-the-blank)
-- For fill-in-the-blank: set option_a through option_d to null, correct_answer to the actual value
-- Add instruction to extract correct answer from rationale/explanation if not found in question section
-- Add a new field "question_type" to the JSON schema: "multiple_choice" or "fill_in_blank"
-```
-
-**Updated prompt structure**:
-```json
-{
-  "question_id": "hex ID",
-  "domain": "...",
-  "skill": "...",
-  "difficulty": "easy|medium|hard",
-  "question_text": "...",
-  "question_type": "multiple_choice or fill_in_blank",
-  "option_a": "option A (null for fill-in-blank)",
-  "option_b": "option B (null for fill-in-blank)", 
-  "option_c": "option C (null for fill-in-blank)",
-  "option_d": "option D (null for fill-in-blank)",
-  "correct_answer": "A/B/C/D for MC, or the actual answer value for fill-in-blank",
-  "rationale": "explanation text"
-}
-```
-
-**Key prompt additions**:
-- "Determine if this is a multiple choice question (has A, B, C, D options) or a fill-in-the-blank/student-produced-response question"
-- "For fill-in-the-blank questions, set all options to null and put the actual answer value in correct_answer"
-- "IMPORTANT: If the correct answer is not clearly marked in the question section, look for it in the rationale/explanation section. The explanation often starts with 'The correct answer is...' or 'Choice X is correct...'"
+**Additional Issue for Ruby Tier:**
+- Ruby tier will typically have only 1-2 students (since only P1 from Diamond advances)
+- Students in a tier with no group mates have no leaderboard to display
+- Need to show a graceful message: "No active sprint for your tier - you're in an exclusive group!"
 
 ---
 
-### 2. Update `parse-english-question` Edge Function
+### Issue 2: Mobile Keyboard Triggers DevTools Warning
 
-**File**: `supabase/functions/parse-english-question/index.ts`
+**Root Cause Identified:**
+- The `SecurityWrapper.tsx` handles window blur events (lines 77-87):
+  ```typescript
+  const handleWindowBlur = () => {
+    setTimeout(() => {
+      if (isAllowedFocusTarget()) return;
+      setIsBlurred(true);
+      setBlurReason('Window not in focus');
+    }, 100);
+  };
+  ```
 
-**Changes to the system prompt**:
+- The `isAllowedFocusTarget()` function (lines 42-57) only allows Desmos calculator iframes
+- When students tap on an `<Input>` field on mobile, the keyboard appears and can trigger:
+  1. Window blur events (focus shifts to keyboard area)
+  2. Viewport resize (which `useDevToolsDetection` monitors)
 
-- Add instruction to extract correct answer from rationale if not visible elsewhere
-- English questions can also have fill-in-the-blank format (though less common)
-- Add same question_type detection
+- `useDevToolsDetection.ts` uses window size thresholds (line 40-42):
+  ```typescript
+  const widthThreshold = window.outerWidth - window.innerWidth > 200;
+  const heightThreshold = window.outerHeight - window.innerHeight > 200;
+  ```
 
-**Key prompt additions**:
-- "If the correct answer letter is not visible in the question area, extract it from the rationale section. Look for phrases like 'The correct answer is...', 'Choice A is correct because...', etc."
-- "For fill-in-the-blank questions (where student enters their own text), set options to null and put the actual answer in correct_answer"
+- On mobile, keyboard appearance causes significant viewport height changes that can exceed 200px
 
 ---
 
-### 3. Update Frontend Validation Logic
+## Technical Solution
 
-**File**: `src/components/admin/questions/CBQuestionImport.tsx`
+### Fix 1: Respect Previous Tier in Admin Bulk Enrollment
 
-**Changes**:
-- Update `hasEmptyOptions` function to NOT flag fill-in-the-blank questions as having "empty options"—they legitimately have no options
-- Check `question_type` from the parsed response to determine validation behavior
+**File:** `src/pages/admin/SprintMonitor.tsx`
+
+**Changes:**
+1. Fetch each student's latest tier from `student_sprint_rankings` before inserting
+2. Use `reserved_next_tier` (if exists) or `current_tier` as starting tier for the new sprint
+3. Group students by their actual tier, not just as "unranked"
 
 ```typescript
-const hasEmptyOptions = (q: ParsedQuestion): boolean => {
-  // Fill-in-blank questions don't have options - that's expected
-  if (q.question_type === 'fill_in_blank') return false;
-  
-  const isMultipleChoice = ['A', 'B', 'C', 'D'].includes(q.correct_answer?.toUpperCase() || '');
-  if (!isMultipleChoice) return false;
-  
-  return (
-    (!q.option_a || q.option_a.trim() === '') &&
-    (!q.option_b || q.option_b.trim() === '') &&
-    (!q.option_c || q.option_c.trim() === '') &&
-    (!q.option_d || q.option_d.trim() === '')
-  );
-};
+// Instead of flat assignment to 'unranked':
+// 1. Fetch previous rankings for all students
+// 2. Map each student to their proper starting tier
+// 3. Group by tier, then by group_number within each tier
 ```
 
-- Add `question_type` field to the `ParsedQuestion` interface
+### Fix 2: Handle Ruby Tier with No Sprint Group
+
+**File:** `src/components/student/leaderboard/CurrentSprintTab.tsx` (or wherever leaderboard renders)
+
+**Changes:**
+1. Check if leaderboard is empty for current tier
+2. Display special message for solo/empty tier groups:
+   - "You're in the {Tier Name} tier - a very exclusive rank!"
+   - "There's no competition in your tier group this sprint. Keep earning points to maintain your status!"
+
+### Fix 3: Prevent Mobile Keyboard from Triggering Security Alerts
+
+**File:** `src/components/security/useDevToolsDetection.ts`
+
+**Changes:**
+1. Detect mobile devices and disable height-based DevTools detection on mobile
+2. Mobile keyboards naturally change viewport height significantly
+3. Keep width-based detection as fallback (DevTools on mobile is extremely rare)
+
+```typescript
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// On mobile, only use width threshold (keyboard affects height, not width)
+const widthThreshold = window.outerWidth - window.innerWidth > 200;
+const heightThreshold = !isMobile && (window.outerHeight - window.innerHeight > 200);
+```
+
+**File:** `src/components/security/SecurityWrapper.tsx`
+
+**Changes:**
+1. Extend `isAllowedFocusTarget()` to include input/textarea elements
+2. When focus is on a form field, don't trigger blur security
+
+```typescript
+const isAllowedFocusTarget = useCallback(() => {
+  const activeElement = document.activeElement;
+  const tagName = activeElement?.tagName?.toLowerCase();
+  
+  // Allow focus on input fields (for mobile keyboard)
+  if (tagName === 'input' || tagName === 'textarea') {
+    return true;
+  }
+  
+  // Existing Desmos checks...
+}, []);
+```
+
+### Fix 4: Add Mobile-Friendly Numpad (Optional Enhancement)
+
+**New Component:** `src/components/student/MobileNumpad.tsx`
+
+If desired, create a custom on-screen numpad that students can use for fill-in-the-blank answers:
+- Appears when tapping the input field on mobile
+- Numbers 0-9, decimal point, negative sign, backspace
+- Avoids native keyboard entirely
 
 ---
 
-## Summary of Files to Modify
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `supabase/functions/parse-cb-question/index.ts` | Update AI prompt to handle fill-in-blank and extract answers from rationale |
-| `supabase/functions/parse-english-question/index.ts` | Update AI prompt to extract answers from rationale section |
-| `src/components/admin/questions/CBQuestionImport.tsx` | Add `question_type` to interface, update validation logic |
+| `src/pages/admin/SprintMonitor.tsx` | Fetch and use previous tier when bulk-enrolling students |
+| `src/components/security/useDevToolsDetection.ts` | Disable height threshold on mobile devices |
+| `src/components/security/SecurityWrapper.tsx` | Allow input/textarea focus without triggering blur |
+| `src/components/student/leaderboard/CurrentSprintTab.tsx` | Add empty tier/group message for Ruby or solo players |
 
 ---
 
-## Expected Outcome
+## Database Considerations
 
-After implementation:
-- Fill-in-the-blank questions will be correctly identified with `question_type: "fill_in_blank"` and their numeric/text answers extracted
-- Multiple choice questions where the answer is only shown in the explanation will have the correct answer properly extracted
-- The admin UI will correctly display fill-in-the-blank questions without flagging them as "empty options"
+For the Ruby student who was incorrectly assigned:
+- Need to UPDATE their current record in `student_sprint_rankings`:
+  ```sql
+  UPDATE student_sprint_rankings
+  SET current_tier = 'ruby', group_number = 1
+  WHERE student_account_id = '8e3329df-23ff-48a0-825c-7c729934e115'
+  AND sprint_id = 'ea788cb6-c684-47a8-8547-f50fcacfd0d9';
+  ```
 
+---
+
+## Summary
+
+1. **Ruby tier fix**: Update enrollment logic to respect previous/reserved tiers + fix the specific student's record
+2. **Empty tier UX**: Add graceful messaging when a student's tier has no other competitors  
+3. **Mobile keyboard fix**: Exempt input fields from blur detection + disable height-based DevTools check on mobile
+4. **Optional numpad**: Build a custom numpad to completely avoid native keyboard issues
