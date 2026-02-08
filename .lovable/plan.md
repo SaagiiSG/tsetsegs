@@ -1,162 +1,228 @@
 
-# Admin Dashboard Redesign Plan
+
+# Batch Overview Page Redesign
 
 ## Overview
+The current `/admin/overview` page (Batch Overview) displays all batches at once in a grid or table view, which becomes overwhelming when there are many classes. We'll redesign this with a cleaner, more digestible layout featuring pagination and a refined visual hierarchy.
 
-The current `/admin` dashboard displays basic aggregate stats (total students, batches, SAT/IELTS breakdown) with two charts. This plan transforms it into a **command center** with actionable, real-time insights that surface the most important information at a glance.
+## Current Issues
+1. All batches load at once - no pagination
+2. Dense card grid can be visually overwhelming  
+3. Summary stats + filters + batches all compete for attention
+4. Generic card styling lacks visual distinction
 
-## Design Philosophy
+## Proposed Design: "Control Island" + Paginated Batch Grid
 
-**Aesthetic Direction: "Mission Control"**
-- Dark-first design with a subtle grid/dot pattern background for depth
-- Monospace accent typography (JetBrains Mono for metrics) paired with the existing Chillax for headings
-- Vibrant accent colors on dark surfaces: Cyan for positive metrics, Amber for warnings, Rose for alerts
-- Staggered fade-in animations on page load for a polished reveal
-- Glassmorphism cards with subtle backdrop blur
-
-## Data Architecture
-
-### Key Metrics to Surface (Based on Available Data)
-
-| Metric | Source | Why It Matters |
-|--------|--------|----------------|
-| **Active Today** | `student_attempts` (last 24h) | Real-time engagement pulse |
-| **This Week Attempts** | 3,162 questions | Volume indicator |
-| **Platform Accuracy** | 63.4% rolling 7-day | Quality of learning |
-| **Sprint Participants** | 103/107 active | Gamification health |
-| **Struggling Topics** | Geometry (49.5%), Data Analysis (49%) | Intervention targets |
-| **Peak Hours** | 10am, 12pm (UTC+8) | Scheduling insights |
-| **At-Risk Students** | Inactive 7+ days | Retention focus |
-
-## New Dashboard Layout
-
+### Visual Concept
 ```text
-+--------------------------------------------------+
-|  HEADER: "Command Center" + Live pulse indicator |
-+--------------------------------------------------+
-|  [Hero Stats Row - 5 Cards with Sparklines]      |
-|  Active Now | Weekly Volume | Accuracy | Sprint  |
-|  Participation | Questions Solved                |
-+--------------------------------------------------+
-|  [Two-Column Grid]                               |
-|  +---------------------+  +--------------------+ |
-|  | ACTIVITY HEATMAP    |  | TOPIC WEAK SPOTS   | |
-|  | Hour × Day matrix   |  | Horizontal bars    | |
-|  | Color = intensity   |  | with accuracy %    | |
-|  +---------------------+  +--------------------+ |
-+--------------------------------------------------+
-|  [Sprint Leaderboard Preview]                    |
-|  Top 5 performers with tier badges + points      |
-+--------------------------------------------------+
-|  [Two-Column Grid]                               |
-|  +---------------------+  +--------------------+ |
-|  | RECENT CLASSES      |  | AT-RISK QUICK VIEW | |
-|  | Last 6 batches      |  | Top 5 flagged      | |
-|  | with teacher + size |  | students + reason  | |
-|  +---------------------+  +--------------------+ |
-+--------------------------------------------------+
-|  [Quick Actions Bar]                             |
-|  → View Analytics | → Student Search | → Sprints |
-+--------------------------------------------------+
++----------------------------------------------------------+
+|  Class Overview                                          |
+|  Monitor all active batches at a glance                  |
++----------------------------------------------------------+
+
++------------------+  +------------------+  +------------------+  +------------------+
+|  [icon] 24       |  |  [icon] 412      |  |  [icon] 87.3%    |  |  [icon] 12       |
+|  Total Batches   |  |  Total Students  |  |  Avg Attendance  |  |  At Risk         |
++------------------+  +------------------+  +------------------+  +------------------+
+
++----------------------------------------------------------+
+|  Control Island                                           |
+|  +--------+  +--------+  +--------+     Search...    [=][#]|
+|  |  All   |  |  SAT   |  | IELTS  |                       |
+|  +--------+  +--------+  +--------+     Teacher ▼         |
+|                                                           |
+|  Showing 1-9 of 24 batches                   [<] 1 2 3 [>]|
++----------------------------------------------------------+
+
++------------------+  +------------------+  +------------------+
+|  #### SAT ####   |  |  #### SAT ####   |  |  ### IELTS ###   |
+|  Batch Name      |  |  Batch Name      |  |  Batch Name      |
+|  Teacher Name    |  |  Teacher Name    |  |  Teacher Name    |
+|  ----------      |  |  ----------      |  |  ----------      |
+|  15 students     |  |  22 students     |  |  8 students      |
+|  92% attendance  |  |  78% attendance  |  |  95% attendance  |
+|  0 alerts        |  |  3 alerts [!]    |  |  1 alert         |
++------------------+  +------------------+  +------------------+
+
++------------------+  +------------------+  +------------------+
+|       ...        |  |       ...        |  |       ...        |
++------------------+  +------------------+  +------------------+
+
+           Bottom Pagination: [<] 1 2 3 [>]
 ```
 
-## Component Breakdown
+### Key Design Changes
 
-### 1. Hero Stats Row
-Five stat cards with:
-- Large numeric value (JetBrains Mono)
-- Mini sparkline showing 7-day trend
-- Comparison badge (e.g., "+12% vs last week")
-- Subtle glow effect on primary metric
+**1. Control Island**
+A single, cohesive control bar that houses:
+- Pill-style course type filters (All / SAT / IELTS) - click to toggle
+- Inline search input (filters as you type)
+- Teacher dropdown filter
+- Grid/Table view toggle (compact icon buttons)
+- Pagination info and controls integrated
 
-### 2. Activity Heatmap
-- 7×24 grid (days × hours)
-- Color intensity based on attempt count
-- Tooltip shows exact numbers
-- Highlights peak practice windows
+**2. Pagination**
+- 9 batches per page (3x3 grid)
+- Page controls at bottom of grid
+- "Showing X-Y of Z batches" indicator in control island
+- Smooth page transitions with fade animation
 
-### 3. Topic Weak Spots
-- Horizontal bar chart
-- Categories sorted by lowest accuracy
-- Color gradient: Red (bad) → Green (good)
-- Shows `(X attempts)` for context
+**3. Refined Batch Cards**
+- Subtle gradient accent on left edge based on course type (blue for SAT, purple for IELTS)
+- Cleaner typography hierarchy
+- Alert indicator as a dot/icon rather than full badge when count > 0
+- Attendance displayed as a thin progress bar
+- Micro-interaction: subtle lift + glow on hover
 
-### 4. Sprint Leaderboard Preview
-- Compact view of top 5 in current sprint
-- Shows tier badge, name, points, rank change
-- Link to full Sprint Monitor
-
-### 5. Recent Classes
-- Last 6 batches created/started
-- Shows: Name, Teacher(s), Student count, Course type badge
-- Click to navigate to batch analytics
-
-### 6. At-Risk Quick View
-- Top 5 highest risk students
-- Shows: Name, Days inactive, Risk score badge
-- Click navigates to Student Deep Dive
-
-### 7. Quick Actions Bar
-- Floating bottom bar with icon buttons
-- Direct links to: Analytics, Student Search, Sprint Monitor, Question Bank
+**4. Typography & Spacing**
+- Use `font-chillax` for headings (already in tailwind config)
+- More generous padding within cards
+- Reduced visual clutter by removing redundant badges
 
 ## Technical Implementation
 
-### Files to Create/Modify
+### Files to Modify
+- `src/components/admin/BatchOverview.tsx` - Complete redesign
 
-| File | Action |
-|------|--------|
-| `src/components/admin/DashboardStats.tsx` | **Complete rewrite** |
-| `src/components/admin/dashboard/HeroStatsRow.tsx` | **New** |
-| `src/components/admin/dashboard/ActivityHeatmap.tsx` | **New** |
-| `src/components/admin/dashboard/TopicWeakSpots.tsx` | **New** |
-| `src/components/admin/dashboard/SprintPreview.tsx` | **New** |
-| `src/components/admin/dashboard/RecentClasses.tsx` | **New** |
-| `src/components/admin/dashboard/AtRiskQuickView.tsx` | **New** |
-| `src/components/admin/dashboard/QuickActionsBar.tsx` | **New** |
-| `src/hooks/useAdminDashboard.ts` | **New** - Consolidated data fetching |
-| `src/index.css` | **Add** JetBrains Mono font import + grid background pattern |
+### State Management
+```typescript
+const [currentPage, setCurrentPage] = useState(1);
+const [searchQuery, setSearchQuery] = useState('');
+const [courseFilter, setCourseFilter] = useState<'all' | 'SAT' | 'IELTS'>('all');
+const [teacherFilter, setTeacherFilter] = useState<string>('all');
+const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-### Data Fetching Strategy
-Single custom hook `useAdminDashboard` that fetches all required data in parallel:
-- Reuses existing hooks where available (`useAtRiskStudents`, `usePracticePatterns`)
-- Adds new queries for: hourly heatmap, topic accuracy, sprint leaders
-- Uses `staleTime: 5 * 60 * 1000` (5 min) for performance
-
-### Animation Approach
-- Use Tailwind's `animate-fade-in` with `animation-delay` utilities
-- Stagger: 0ms, 75ms, 150ms, 225ms, 300ms for hero cards
-- Cards fade in from opacity-0, translateY(10px)
-
-## Aesthetic Details
-
-### Color Palette (HSL)
-- **Cyan accent**: `187 100% 50%` (live/active indicators)
-- **Amber warning**: `43 96% 56%` (attention items)
-- **Emerald success**: `142 76% 45%` (positive trends)
-- **Rose alert**: `343 90% 55%` (critical issues)
-
-### Background
-```css
-.dashboard-grid-bg {
-  background-image: 
-    radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.15) 1px, transparent 0);
-  background-size: 24px 24px;
-}
+const ITEMS_PER_PAGE = 9;
 ```
 
-### Typography
-- Stats: `font-mono tracking-tight tabular-nums`
-- Headings: Existing `font-chillax` if available, else system
-- Labels: `text-xs uppercase tracking-widest text-muted-foreground`
+### Filtering Logic (client-side)
+```typescript
+const filteredBatches = useMemo(() => {
+  return batches.filter(batch => {
+    const matchesCourse = courseFilter === 'all' || batch.course_type === courseFilter;
+    const matchesTeacher = teacherFilter === 'all' || 
+      batch.teacher?.toLowerCase().includes(teacherFilter.toLowerCase());
+    const matchesSearch = searchQuery.length < 2 || 
+      batch.batch_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      batch.teacher?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCourse && matchesTeacher && matchesSearch;
+  });
+}, [batches, courseFilter, teacherFilter, searchQuery]);
+```
+
+### Pagination Logic
+```typescript
+const totalPages = Math.ceil(filteredBatches.length / ITEMS_PER_PAGE);
+const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+const paginatedBatches = filteredBatches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+// Reset to page 1 when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [courseFilter, teacherFilter, searchQuery]);
+```
+
+### Control Island Component Structure
+```typescript
+<div className="rounded-xl border bg-card/50 backdrop-blur-sm p-4 space-y-4">
+  {/* Top row: Filters + Search */}
+  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+    {/* Course type pills */}
+    <div className="flex gap-1 p-1 rounded-lg bg-muted/50">
+      {['all', 'SAT', 'IELTS'].map(type => (
+        <button
+          key={type}
+          onClick={() => setCourseFilter(type)}
+          className={cn(
+            "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+            courseFilter === type 
+              ? "bg-primary text-primary-foreground shadow-sm" 
+              : "hover:bg-muted text-muted-foreground"
+          )}
+        >
+          {type === 'all' ? 'All Classes' : type}
+        </button>
+      ))}
+    </div>
+    
+    {/* Search + Teacher + View toggle */}
+    <div className="flex gap-2 items-center">
+      <Input placeholder="Search..." value={searchQuery} onChange={...} />
+      <Select value={teacherFilter} onValueChange={setTeacherFilter} />
+      <ViewToggle mode={viewMode} onChange={setViewMode} />
+    </div>
+  </div>
+  
+  {/* Bottom row: Count + Pagination */}
+  <div className="flex items-center justify-between text-sm text-muted-foreground">
+    <span>Showing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filtered.length)} of {filtered.length}</span>
+    <Pagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
+  </div>
+</div>
+```
+
+### Refined Batch Card Design
+```typescript
+<Card 
+  className={cn(
+    "group relative overflow-hidden transition-all duration-300",
+    "hover:shadow-lg hover:-translate-y-1 cursor-pointer",
+    "border-l-4",
+    batch.course_type === 'SAT' ? "border-l-blue-500" : "border-l-purple-500"
+  )}
+  onClick={() => navigate(`/admin/analytics/${batch.id}`)}
+>
+  <CardContent className="p-5 space-y-4">
+    {/* Header */}
+    <div className="flex items-start justify-between">
+      <div className="space-y-1 flex-1 min-w-0">
+        <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
+          {batch.batch_name}
+        </h3>
+        <p className="text-sm text-muted-foreground truncate">{batch.teacher}</p>
+      </div>
+      <Badge variant="outline" className="shrink-0 ml-2">
+        {batch.course_type}
+      </Badge>
+    </div>
+    
+    {/* Attendance Progress */}
+    <div className="space-y-1.5">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">Attendance</span>
+        <span className="font-medium">{batch.attendanceRate.toFixed(0)}%</span>
+      </div>
+      <Progress value={batch.attendanceRate} className="h-1.5" />
+    </div>
+    
+    {/* Footer Stats */}
+    <div className="flex items-center justify-between pt-2 border-t text-sm">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        <Users className="h-4 w-4" />
+        <span>{batch.studentCount}</span>
+      </div>
+      {batch.alertCount > 0 && (
+        <div className="flex items-center gap-1.5 text-destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <span>{batch.alertCount} at risk</span>
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
+```
+
+### Animations
+- Page transitions: `animate-fade-in` when page changes
+- Cards: staggered entrance with `animation-delay` on first load
+- Control island: subtle backdrop blur for depth
 
 ## Summary
+This redesign transforms the overwhelming batch overview into a digestible, paginated interface with:
+- Clear information hierarchy (stats → controls → content)
+- Single "Control Island" for all filtering/pagination
+- 9 items per page with smooth pagination
+- Refined card design with course-type accent and cleaner metrics
+- Instant search filtering
+- Responsive layout (collapses gracefully on mobile)
 
-This redesign transforms the admin dashboard from a static stats page into a dynamic command center that:
-1. **Prioritizes actionable data** - What needs attention right now?
-2. **Uses visual hierarchy** - Most important metrics are largest
-3. **Provides context** - Sparklines and comparisons show trends
-4. **Enables quick navigation** - Every card links to deeper analysis
-5. **Delivers a distinctive aesthetic** - Grid patterns, monospace numbers, staggered animations
-
-The implementation leverages existing analytics hooks while adding focused queries for dashboard-specific data, ensuring fast load times and real-time accuracy.
