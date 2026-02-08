@@ -427,77 +427,92 @@ export function BatchOverview() {
       {/* Batch Grid */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {paginatedBatches.map((batch, idx) => (
-            <Card 
-              key={batch.id}
-              className={cn(
-                "group relative overflow-hidden transition-all duration-300 cursor-pointer",
-                "hover:shadow-lg hover:-translate-y-1",
-                "border-l-4",
-                batch.course_type === 'SAT' ? "border-l-blue-500" : "border-l-purple-500",
-                "animate-fade-in"
-              )}
-              style={{ animationDelay: `${idx * 50}ms` }}
-              onClick={() => navigate(`/admin/analytics/${batch.id}`)}
-            >
-              <CardContent className="p-5 space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
-                      {batch.batch_name || 'Unnamed Batch'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {batch.teacher || 'No teacher assigned'}
-                    </p>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "shrink-0 ml-2",
-                      batch.course_type === 'SAT' 
-                        ? "border-blue-500/50 text-blue-600 bg-blue-500/5" 
-                        : "border-purple-500/50 text-purple-600 bg-purple-500/5"
-                    )}
-                  >
-                    {batch.course_type}
-                  </Badge>
-                </div>
-                
-                {/* Attendance Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Attendance</span>
-                    <span className={cn("font-medium", getAttendanceColor(batch.attendanceRate))}>
-                      {batch.attendanceRate.toFixed(0)}%
-                    </span>
-                  </div>
-                  <Progress 
-                    value={batch.attendanceRate} 
-                    className="h-1.5" 
-                  />
-                </div>
-                
-                {/* Footer Stats */}
-                <div className="flex items-center justify-between pt-3 border-t text-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{batch.studentCount} students</span>
-                  </div>
-                  {batch.alertCount > 0 ? (
-                    <div className="flex items-center gap-1.5 text-destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>{batch.alertCount} at risk</span>
+          {paginatedBatches.map((batch, idx) => {
+            // Parse schedule for display (e.g., "Mon, Wed, Fri | 4:40")
+            const scheduleDisplay = batch.schedule || '';
+            const startDate = new Date(batch.start_date);
+            const monthYear = format(startDate, 'MMM | yyyy');
+            
+            // Calculate course progress (only show if > 0)
+            const showProgress = batch.attendanceRate > 0;
+            
+            return (
+              <Card 
+                key={batch.id}
+                className={cn(
+                  "group relative overflow-hidden transition-all duration-300 cursor-pointer",
+                  "hover:shadow-lg hover:-translate-y-1",
+                  "border-l-4",
+                  batch.course_type === 'SAT' ? "border-l-blue-500" : "border-l-purple-500",
+                  "animate-fade-in"
+                )}
+                style={{ animationDelay: `${idx * 50}ms` }}
+                onClick={() => navigate(`/admin/analytics/${batch.id}`)}
+              >
+                <CardContent className="p-5 space-y-3">
+                  {/* Header: Month | Year */}
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <h3 className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors">
+                        {monthYear}
+                      </h3>
+                      <p className="text-sm text-muted-foreground font-medium">
+                        {scheduleDisplay}
+                      </p>
                     </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(batch.start_date), 'MMM d, yyyy')}
-                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "shrink-0",
+                        batch.course_type === 'SAT' 
+                          ? "border-blue-500/50 text-blue-600 bg-blue-500/5" 
+                          : "border-purple-500/50 text-purple-600 bg-purple-500/5"
+                      )}
+                    >
+                      {batch.course_type}
+                    </Badge>
+                  </div>
+                  
+                  {/* Teacher */}
+                  <p className="text-sm text-foreground">
+                    {batch.teacher || 'No teacher assigned'}
+                  </p>
+                  
+                  {/* Course Progress (only if started) */}
+                  {showProgress && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Course Progress</span>
+                        <span className={cn("font-medium", getAttendanceColor(batch.attendanceRate))}>
+                          {batch.attendanceRate.toFixed(0)}%
+                        </span>
+                      </div>
+                      <Progress value={batch.attendanceRate} className="h-1.5" />
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  
+                  {/* Footer Stats */}
+                  <div className="flex items-center justify-between pt-3 border-t text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>{batch.studentCount} students</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {batch.alertCount > 0 && (
+                        <div className="flex items-center gap-1 text-destructive">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span className="text-xs font-medium">{batch.alertCount}</span>
+                        </div>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        Started {format(startDate, 'MMM d')}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card className="overflow-hidden">
