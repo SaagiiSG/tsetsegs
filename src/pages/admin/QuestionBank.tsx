@@ -15,6 +15,7 @@ import { AnalyticsDashboard } from '@/components/admin/questions/AnalyticsDashbo
 import { StudentsTab } from '@/components/admin/questions/StudentsTab';
 import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
+import { CBImportReviewSessions } from '@/components/admin/questions/CBImportReviewSessions';
 import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuestionImport';
 
 export default function QuestionBank() {
@@ -263,6 +264,7 @@ export default function QuestionBank() {
 
         <TabsContent value="import" className="space-y-4">
           <CBQuestionImport />
+          <CBImportReviewSessions />
         </TabsContent>
 
         <TabsContent value="import-english" className="space-y-4">
