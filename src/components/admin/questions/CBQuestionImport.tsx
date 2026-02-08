@@ -162,6 +162,8 @@ export function CBQuestionImport() {
     };
   };
 
+  const BATCH_SIZE = 5; // Parse 5 pages in parallel
+
   const startParsing = async () => {
     if (!file) return;
 
@@ -193,33 +195,61 @@ export function CBQuestionImport() {
       }));
       setParsedQuestions(initialQuestions);
 
-      // Parse pages one by one (to avoid rate limits)
-      for (let i = 0; i < numPages; i++) {
-        const pageNum = i + 1;
+      // Parse pages in parallel batches
+      let completedCount = 0;
+      
+      for (let batchStart = 0; batchStart < numPages; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, numPages);
+        const batchIndices = Array.from({ length: batchEnd - batchStart }, (_, i) => batchStart + i);
         
-        // Update status to parsing
+        // Mark batch as parsing
         setParsedQuestions(prev => prev.map((q, idx) => 
-          idx === i ? { ...q, status: 'parsing' } : q
+          batchIndices.includes(idx) ? { ...q, status: 'parsing' } : q
         ));
 
-        try {
-          const imageBase64 = await convertPageToBase64(pdf, pageNum);
-          const result = await parseQuestion(imageBase64, pageNum);
-          
-          setParsedQuestions(prev => prev.map((q, idx) => 
-            idx === i ? result : q
-          ));
-        } catch (err) {
-          setParsedQuestions(prev => prev.map((q, idx) => 
-            idx === i ? { ...q, status: 'error', error: String(err) } : q
-          ));
-        }
+        // Parse batch in parallel
+        const batchPromises = batchIndices.map(async (i) => {
+          const pageNum = i + 1;
+          try {
+            const imageBase64 = await convertPageToBase64(pdf, pageNum);
+            return await parseQuestion(imageBase64, pageNum);
+          } catch (err) {
+            return {
+              pageNumber: pageNum,
+              question_id: '',
+              domain: '',
+              skill: '',
+              difficulty: '',
+              question_text: '',
+              option_a: '',
+              option_b: '',
+              option_c: '',
+              option_d: '',
+              correct_answer: '',
+              rationale: '',
+              status: 'error' as const,
+              error: String(err)
+            };
+          }
+        });
 
-        setParseProgress(((i + 1) / numPages) * 100);
+        const batchResults = await Promise.all(batchPromises);
         
-        // Small delay between requests to avoid rate limiting
-        if (i < numPages - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        // Update state with batch results
+        setParsedQuestions(prev => {
+          const updated = [...prev];
+          batchResults.forEach((result, batchIdx) => {
+            updated[batchStart + batchIdx] = result;
+          });
+          return updated;
+        });
+
+        completedCount += batchResults.length;
+        setParseProgress((completedCount / numPages) * 100);
+        
+        // Small delay between batches to avoid rate limiting
+        if (batchEnd < numPages) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
