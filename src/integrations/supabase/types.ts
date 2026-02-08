@@ -506,6 +506,86 @@ export type Database = {
         }
         Relationships: []
       }
+      cb_import_issues: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          issue_type: string
+          page_image_url: string | null
+          page_number: number
+          raw_data: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          session_id: string
+          skip_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          issue_type: string
+          page_image_url?: string | null
+          page_number: number
+          raw_data?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          session_id: string
+          skip_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          issue_type?: string
+          page_image_url?: string | null
+          page_number?: number
+          raw_data?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          session_id?: string
+          skip_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cb_import_issues_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cb_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cb_import_sessions: {
+        Row: {
+          created_at: string
+          error_count: number
+          filename: string
+          id: string
+          skipped_count: number
+          success_count: number
+          total_pages: number
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number
+          filename: string
+          id?: string
+          skipped_count?: number
+          success_count?: number
+          total_pages: number
+        }
+        Update: {
+          created_at?: string
+          error_count?: number
+          filename?: string
+          id?: string
+          skipped_count?: number
+          success_count?: number
+          total_pages?: number
+        }
+        Relationships: []
+      }
       curriculum_sessions: {
         Row: {
           created_at: string

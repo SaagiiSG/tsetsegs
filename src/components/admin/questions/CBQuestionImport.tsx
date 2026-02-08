@@ -374,11 +374,79 @@ export function CBQuestionImport() {
         .insert(questionsToInsert);
 
       if (error) throw error;
-      return questionsToInsert.length;
+
+      // Collect issues (errors, skipped, empty options) to save for review
+      const errorQuestions = questions.filter(q => q.status === 'error');
+      const skippedQuestions = questions.filter(q => q.status === 'skipped');
+      const emptyOptionsQuestions = questions.filter(q => q.status === 'success' && hasEmptyOptions(q));
+      
+      const hasIssues = errorQuestions.length > 0 || skippedQuestions.length > 0 || emptyOptionsQuestions.length > 0;
+      
+      if (hasIssues && file) {
+        // Create import session
+        const { data: session, error: sessionError } = await supabase
+          .from('cb_import_sessions')
+          .insert({
+            filename: file.name,
+            total_pages: totalPages,
+            success_count: validQuestions.length,
+            error_count: errorQuestions.length,
+            skipped_count: skippedQuestions.length + emptyOptionsQuestions.length
+          })
+          .select('id')
+          .single();
+
+        if (!sessionError && session) {
+          // Insert all issues
+          const issuesToInsert = [
+            ...errorQuestions.map(q => ({
+              session_id: session.id,
+              page_number: q.pageNumber,
+              issue_type: 'error' as const,
+              error_message: q.error || 'Unknown error',
+              raw_data: {
+                question_id: q.question_id,
+                domain: q.domain,
+                skill: q.skill,
+                question_text: q.question_text,
+                correct_answer: q.correct_answer
+              }
+            })),
+            ...skippedQuestions.map(q => ({
+              session_id: session.id,
+              page_number: q.pageNumber,
+              issue_type: 'skipped' as const,
+              skip_reason: q.skipReason || 'Page does not contain a complete question'
+            })),
+            ...emptyOptionsQuestions.map(q => ({
+              session_id: session.id,
+              page_number: q.pageNumber,
+              issue_type: 'empty_options' as const,
+              error_message: 'Multiple choice question has empty options',
+              raw_data: {
+                question_id: q.question_id,
+                domain: q.domain,
+                skill: q.skill,
+                question_text: q.question_text,
+                correct_answer: q.correct_answer,
+                option_a: q.option_a,
+                option_b: q.option_b,
+                option_c: q.option_c,
+                option_d: q.option_d
+              }
+            }))
+          ];
+
+          await supabase.from('cb_import_issues').insert(issuesToInsert);
+        }
+      }
+
+      return { savedCount: questionsToInsert.length, issueCount: errorQuestions.length + skippedQuestions.length + emptyOptionsQuestions.length };
     },
-    onSuccess: (count) => {
-      toast.success(`Saved ${count} questions to database`);
+    onSuccess: (result) => {
+      toast.success(`Saved ${result.savedCount} questions${result.issueCount > 0 ? ` (${result.issueCount} issues saved for review)` : ''}`);
       queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['cb-import-sessions'] });
       setParsedQuestions([]);
       setFile(null);
     },
