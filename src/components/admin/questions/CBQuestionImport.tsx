@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, FileText, Loader2, CheckCircle, XCircle, Edit2, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, XCircle, Edit2, Save, Trash2, AlertTriangle, SkipForward } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -32,8 +32,9 @@ interface ParsedQuestion {
   option_d: string;
   correct_answer: string;
   rationale: string;
-  status: 'pending' | 'parsing' | 'success' | 'error';
+  status: 'pending' | 'parsing' | 'success' | 'error' | 'skipped';
   error?: string;
+  skipReason?: string;
   isEditing?: boolean;
   pageImageBase64?: string;
 }
@@ -92,7 +93,7 @@ export function CBQuestionImport() {
       body: { imageBase64, pageNumber }
     });
 
-    if (error || !data?.success) {
+    if (error) {
       return {
         pageNumber,
         question_id: '',
@@ -107,7 +108,48 @@ export function CBQuestionImport() {
         correct_answer: '',
         rationale: '',
         status: 'error',
-        error: error?.message || data?.error || 'Failed to parse',
+        error: error.message || 'Failed to parse',
+        pageImageBase64: imageBase64
+      };
+    }
+
+    // Handle skipped pages (pages without complete questions)
+    if (data?.skipped) {
+      return {
+        pageNumber,
+        question_id: '',
+        domain: '',
+        skill: '',
+        difficulty: '',
+        question_text: '',
+        option_a: '',
+        option_b: '',
+        option_c: '',
+        option_d: '',
+        correct_answer: '',
+        rationale: '',
+        status: 'skipped',
+        skipReason: data.reason || 'Page does not contain a complete question',
+        pageImageBase64: imageBase64
+      };
+    }
+
+    if (!data?.success) {
+      return {
+        pageNumber,
+        question_id: '',
+        domain: '',
+        skill: '',
+        difficulty: '',
+        question_text: '',
+        option_a: '',
+        option_b: '',
+        option_c: '',
+        option_d: '',
+        correct_answer: '',
+        rationale: '',
+        status: 'error',
+        error: data?.error || 'Failed to parse',
         pageImageBase64: imageBase64
       };
     }
@@ -323,6 +365,7 @@ export function CBQuestionImport() {
   ).length;
   const successCount = parsedQuestions.filter(q => q.status === 'success').length;
   const errorCount = parsedQuestions.filter(q => q.status === 'error').length;
+  const skippedCount = parsedQuestions.filter(q => q.status === 'skipped').length;
   const emptyOptionsCount = questionsWithEmptyOptions.length;
 
   return (
@@ -401,12 +444,18 @@ export function CBQuestionImport() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="default" className="bg-green-600">
+                  <Badge variant="default" className="bg-primary">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     {successCount} Success
                   </Badge>
+                  {skippedCount > 0 && (
+                    <Badge variant="secondary">
+                      <SkipForward className="h-3 w-3 mr-1" />
+                      {skippedCount} Skipped
+                    </Badge>
+                  )}
                   {emptyOptionsCount > 0 && (
-                    <Badge variant="outline" className="border-amber-500 text-amber-600">
+                    <Badge variant="secondary" className="border border-muted-foreground/30">
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       {emptyOptionsCount} Empty Options
                     </Badge>
@@ -448,23 +497,23 @@ export function CBQuestionImport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {parsedQuestions.map((q, idx) => {
+                  {parsedQuestions.filter(q => q.status !== 'skipped').map((q, idx) => {
                     const isEmpty = hasEmptyOptions(q);
                     return (
                     <TableRow 
                       key={idx} 
                       className={
                         q.status === 'error' ? 'bg-destructive/10' : 
-                        isEmpty ? 'bg-amber-500/10' : ''
+                        isEmpty ? 'bg-muted' : ''
                       }
                     >
                       <TableCell>{q.pageNumber}</TableCell>
                       <TableCell>
                         {q.status === 'pending' && <Badge variant="secondary">Pending</Badge>}
                         {q.status === 'parsing' && <Loader2 className="h-4 w-4 animate-spin" />}
-                        {q.status === 'success' && !isEmpty && <Badge className="bg-green-600">OK</Badge>}
+                        {q.status === 'success' && !isEmpty && <Badge variant="default">OK</Badge>}
                         {q.status === 'success' && isEmpty && (
-                          <Badge variant="outline" className="border-amber-500 text-amber-600">
+                          <Badge variant="secondary" className="border border-muted-foreground/30">
                             <AlertTriangle className="h-3 w-3 mr-1" />
                             Empty
                           </Badge>
