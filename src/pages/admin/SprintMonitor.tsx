@@ -262,19 +262,82 @@ export default function SprintMonitor() {
     }
   };
 
-  // Fetch all sprints
+  // Auto-transition sprints based on current time
+  const autoTransitionSprints = async () => {
+    const now = new Date();
+    
+    // Fetch all sprints to check for transitions
+    const { data: allSprints, error } = await supabase
+      .from('sprints')
+      .select('*')
+      .order('season_number', { ascending: false })
+      .order('sprint_number', { ascending: true });
+    
+    if (error || !allSprints) return allSprints || [];
+    
+    let needsRefresh = false;
+    
+    for (const sprint of allSprints) {
+      const startDate = new Date(sprint.start_date);
+      const endDate = new Date(sprint.end_date);
+      
+      // If sprint is active but has ended, deactivate it
+      if (sprint.is_active && now >= endDate) {
+        console.log(`Auto-deactivating ended sprint: Season ${sprint.season_number}, Sprint ${sprint.sprint_number}`);
+        await supabase
+          .from('sprints')
+          .update({ is_active: false })
+          .eq('id', sprint.id);
+        sprint.is_active = false;
+        needsRefresh = true;
+        
+        // Trigger finalization for this sprint
+        try {
+          await supabase.functions.invoke('finalize-sprint', {
+            body: { sprintId: sprint.id }
+          });
+          toast({
+            title: 'Sprint Finalized',
+            description: `Season ${sprint.season_number} Sprint ${sprint.sprint_number} has been automatically finalized.`
+          });
+        } catch (err) {
+          console.error('Failed to auto-finalize sprint:', err);
+        }
+      }
+      
+      // If sprint should be active (within date range) but isn't, activate it
+      if (!sprint.is_active && now >= startDate && now < endDate) {
+        // First check if another sprint is still active
+        const otherActiveSprint = allSprints.find(s => s.is_active && s.id !== sprint.id);
+        if (!otherActiveSprint) {
+          console.log(`Auto-activating sprint: Season ${sprint.season_number}, Sprint ${sprint.sprint_number}`);
+          await supabase
+            .from('sprints')
+            .update({ is_active: true })
+            .eq('id', sprint.id);
+          sprint.is_active = true;
+          needsRefresh = true;
+          
+          toast({
+            title: 'New Sprint Started!',
+            description: `Season ${sprint.season_number} Sprint ${sprint.sprint_number} is now active.`
+          });
+        }
+      }
+    }
+    
+    if (needsRefresh) {
+      queryClient.invalidateQueries({ queryKey: ['admin-sprint-rankings'] });
+      queryClient.invalidateQueries({ queryKey: ['active-sprint'] });
+    }
+    
+    return allSprints as Sprint[];
+  };
+
+  // Fetch all sprints with auto-transition check
   const { data: sprints, isLoading: sprintsLoading } = useQuery({
     queryKey: ['admin-sprints'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sprints')
-        .select('*')
-        .order('season_number', { ascending: false })
-        .order('sprint_number', { ascending: true });
-      
-      if (error) throw error;
-      return data as Sprint[];
-    },
+    queryFn: autoTransitionSprints,
   });
 
   // Get unique seasons
