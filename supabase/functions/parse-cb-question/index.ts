@@ -136,7 +136,29 @@ CRITICAL INSTRUCTIONS:
       const jsonStart = cleaned.indexOf("{");
       const jsonEnd = cleaned.lastIndexOf("}");
       
+      // Check if this page doesn't contain a complete question (continuation page, rationale-only, etc.)
       if (jsonStart === -1 || jsonEnd === -1) {
+        // Check if the AI indicated it couldn't find a question
+        const lowerContent = content.toLowerCase();
+        const isIncomplete = lowerContent.includes('cannot extract') || 
+                            lowerContent.includes('not a complete question') ||
+                            lowerContent.includes('no actual question') ||
+                            lowerContent.includes("i'm sorry") ||
+                            lowerContent.includes('only contains');
+        
+        if (isIncomplete) {
+          console.log(`Page ${pageNumber} skipped - no complete question found`);
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              skipped: true,
+              reason: 'Page does not contain a complete question',
+              pageNumber 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
         throw new Error('No JSON object found in response');
       }
       
