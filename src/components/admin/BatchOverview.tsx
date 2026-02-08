@@ -60,9 +60,12 @@ export function BatchOverview() {
     return Array.from(teacherSet).sort();
   }, [batches]);
 
-  // Filter batches
+  // Filter batches (exclude classes with 0% progress - not yet started)
   const filteredBatches = useMemo(() => {
     return batches.filter(b => {
+      // Skip batches with no progress (class hasn't started)
+      if (b.attendanceRate === 0) return false;
+      
       const matchesCourse = courseFilter === 'all' || b.course_type === courseFilter;
       const matchesTeacher = teacherFilter === 'all' || 
         (b.teacher && b.teacher.toLowerCase().includes(teacherFilter.toLowerCase()));
