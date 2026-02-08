@@ -127,14 +127,9 @@ CRITICAL INSTRUCTIONS:
     // Parse the JSON from the response
     let parsedQuestion;
     try {
-      // Try to extract JSON from the response (it might be wrapped in markdown code blocks)
-      let cleaned = content
-        .replace(/```json\s*/gi, "")
-        .replace(/```\s*/g, "")
-        .trim();
-      
-      const jsonStart = cleaned.indexOf("{");
-      const jsonEnd = cleaned.lastIndexOf("}");
+      // Find JSON directly by locating { and } - more reliable than regex replacement
+      const jsonStart = content.indexOf("{");
+      const jsonEnd = content.lastIndexOf("}");
       
       // Check if this page doesn't contain a complete question (continuation page, rationale-only, etc.)
       if (jsonStart === -1 || jsonEnd === -1) {
@@ -162,7 +157,8 @@ CRITICAL INSTRUCTIONS:
         throw new Error('No JSON object found in response');
       }
       
-      cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      // Extract just the JSON object
+      let cleaned = content.substring(jsonStart, jsonEnd + 1);
       
       try {
         parsedQuestion = JSON.parse(cleaned);
