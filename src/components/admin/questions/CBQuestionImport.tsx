@@ -350,7 +350,7 @@ export function CBQuestionImport() {
         return {
           question_id: `CB${String(nextNumber + idx).padStart(4, '0')}`,
           question_text: q.question_text,
-          question_type: isMultipleChoice ? 'multiple_choice' : 'fill_in_blank',
+          question_type: isMultipleChoice ? 'multiple_choice' : 'fill_blank',
           multiple_choice_options: isMultipleChoice ? {
             A: q.option_a || '',
             B: q.option_b || '',
