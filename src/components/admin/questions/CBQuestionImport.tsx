@@ -345,9 +345,10 @@ export function CBQuestionImport() {
               <Input
                 id="pdf-upload"
                 type="file"
-                accept=".pdf"
+                accept="application/pdf,.pdf"
                 onChange={handleFileChange}
                 disabled={isParsing}
+                className="cursor-pointer file:cursor-pointer"
               />
             </div>
             <Button 
