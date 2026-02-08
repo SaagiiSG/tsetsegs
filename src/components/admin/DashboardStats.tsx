@@ -1,277 +1,68 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
-import { Users, GraduationCap, Calendar, TrendingUp } from 'lucide-react';
+import { useAdminDashboard } from '@/hooks/useAdminDashboard';
+import {
+  HeroStatsRow,
+  ActivityHeatmap,
+  TopicWeakSpots,
+  SprintPreview,
+  RecentClasses,
+  AtRiskQuickView,
+  QuickActionsBar
+} from './dashboard';
+import { Radio } from 'lucide-react';
 
 export function DashboardStats() {
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    totalBatches: 0,
-    satStudents: 0,
-    ieltsStudents: 0,
-  });
-  const [intakeData, setIntakeData] = useState<any[]>([]);
-  const [teacherData, setTeacherData] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    // Fetch batches with students
-    const { data: batches } = await supabase
-      .from('batches')
-      .select('*, students(*)');
-
-    if (batches) {
-      const totalStudents = batches.reduce((sum, batch) => sum + (batch.students?.length || 0), 0);
-      const satStudents = batches
-        .filter(b => b.course_type === 'SAT')
-        .reduce((sum, batch) => sum + (batch.students?.length || 0), 0);
-      const ieltsStudents = batches
-        .filter(b => b.course_type === 'IELTS')
-        .reduce((sum, batch) => sum + (batch.students?.length || 0), 0);
-
-      setStats({
-        totalStudents,
-        totalBatches: batches.length,
-        satStudents,
-        ieltsStudents,
-      });
-
-      // Prepare intake data (last 6 months)
-      const intakeMap = new Map<string, { SAT: number; IELTS: number }>();
-      batches.forEach(batch => {
-        const date = new Date(batch.start_date);
-        const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const current = intakeMap.get(monthYear) || { SAT: 0, IELTS: 0 };
-        current[batch.course_type as 'SAT' | 'IELTS'] += batch.students?.length || 0;
-        intakeMap.set(monthYear, current);
-      });
-
-      const intakeArray = Array.from(intakeMap.entries())
-        .map(([month, data]) => ({ month, ...data }))
-        .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
-        .slice(-6);
-
-      setIntakeData(intakeArray);
-
-      // Prepare teacher distribution data
-      const teacherMap = new Map<string, number>();
-      batches.forEach(batch => {
-        const teachers = batch.teacher?.split(',').map((t: string) => t.trim()) || [];
-        teachers.forEach(teacher => {
-          if (teacher) {
-            teacherMap.set(teacher, (teacherMap.get(teacher) || 0) + (batch.students?.length || 0));
-          }
-        });
-      });
-
-      const teacherArray = Array.from(teacherMap.entries())
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
-
-      setTeacherData(teacherArray);
-    }
-  };
-
-  const chartConfig = {
-    SAT: {
-      label: 'SAT Students',
-      color: 'hsl(217, 91%, 60%)',
-    },
-    IELTS: {
-      label: 'IELTS Students',
-      color: 'hsl(271, 81%, 56%)',
-    },
-    value: {
-      label: 'Students',
-      color: 'hsl(var(--primary))',
-    },
-  };
+  const {
+    stats,
+    sparklineData,
+    heatmapData,
+    topicData,
+    sprintLeaders,
+    recentBatches,
+    atRiskStudents,
+    isLoading
+  } = useAdminDashboard();
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">Across all batches</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Batches</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBatches}</div>
-            <p className="text-xs text-muted-foreground">Active and upcoming</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SAT Students</CardTitle>
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.satStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalStudents > 0 ? Math.round((stats.satStudents / stats.totalStudents) * 100) : 0}% of total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">IELTS Students</CardTitle>
-            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.ieltsStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalStudents > 0 ? Math.round((stats.ieltsStudents / stats.totalStudents) * 100) : 0}% of total
-            </p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6 dashboard-grid-bg min-h-[calc(100vh-8rem)] -mx-4 px-4 -my-8 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Command Center
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Real-time platform insights at a glance
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+          <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Live</span>
+        </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Student Enrollment by Intake */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Enrollment Trends</CardTitle>
-            <CardDescription>Last 6 months by course type</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={intakeData}>
-                  <defs>
-                    <linearGradient id="satGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="ieltsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="month" 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="SAT" 
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    fill="url(#satGradient)"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="IELTS" 
-                    stroke="#a855f7" 
-                    strokeWidth={2}
-                    fill="url(#ieltsGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      {/* Hero Stats Row */}
+      <HeroStatsRow 
+        stats={stats} 
+        sparklineData={sparklineData} 
+        isLoading={isLoading} 
+      />
 
-        {/* Course Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Course Distribution</CardTitle>
-            <CardDescription>SAT vs IELTS student breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: 'SAT', value: stats.satStudents, fill: '#3b82f6' },
-                  { name: 'IELTS', value: stats.ieltsStudents, fill: '#a855f7' }
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="name"
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="value" 
-                    radius={[8, 8, 0, 0]}
-                    fillOpacity={0.2}
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      {/* Quick Actions */}
+      <QuickActionsBar />
 
-        {/* Teacher Distribution */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Students by Teacher</CardTitle>
-            <CardDescription>Total student distribution across teachers</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={teacherData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    type="number"
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={120}
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="value" 
-                    fill="hsl(var(--primary))" 
-                    fillOpacity={0.2}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    radius={[0, 8, 8, 0]} 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      {/* Two-Column Grid: Heatmap & Topics */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ActivityHeatmap data={heatmapData} />
+        <TopicWeakSpots data={topicData} />
+      </div>
+
+      {/* Sprint Leaderboard Preview */}
+      <SprintPreview leaders={sprintLeaders} />
+
+      {/* Two-Column Grid: Recent Classes & At-Risk */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <RecentClasses batches={recentBatches} />
+        <AtRiskQuickView students={atRiskStudents} />
       </div>
     </div>
   );
