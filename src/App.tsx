@@ -46,6 +46,8 @@ import StudentBluebookTest from "./pages/student/StudentBluebookTest";
 import NewYearCard from "./pages/NewYearCard";
 import StudentBadges from "./pages/student/StudentBadges";
 import StudentProfile from "./pages/student/StudentProfile";
+import StudentSmartPractice from "./pages/student/StudentSmartPractice";
+import StudentReadingModule from "./pages/student/StudentReadingModule";
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
@@ -152,6 +154,8 @@ const App = () => (
                     <Route path="profile" element={<StudentProfile />} />
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="vocabulary" element={<StudentVocabulary />} />
+                    <Route path="smart" element={<StudentSmartPractice />} />
+                    <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
