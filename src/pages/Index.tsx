@@ -87,16 +87,14 @@ const teamMembers = [
   { name: "Khulan", role: "SAT Math", image: "/newyear/khulan.svg" },
 ];
 
-// Gallery items for student scores (placeholder for now)
-const galleryItems = [
-  { id: "1", image: "", title: "1500+", subtitle: "SAT Score" },
-  { id: "2", image: "", title: "1480", subtitle: "SAT Score" },
-  { id: "3", image: "", title: "1520", subtitle: "SAT Score" },
-  { id: "4", image: "", title: "1450", subtitle: "SAT Score" },
-  { id: "5", image: "", title: "1490", subtitle: "SAT Score" },
-  { id: "6", image: "", title: "1510", subtitle: "SAT Score" },
-  { id: "7", image: "", title: "1470", subtitle: "SAT Score" },
-  { id: "8", image: "", title: "1540", subtitle: "SAT Score" },
+// Gallery images for student achievements
+const galleryImages = [
+  { src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop", alt: "Student studying" },
+  { src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop", alt: "Books and learning" },
+  { src: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop", alt: "Study session" },
+  { src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop", alt: "Education" },
+  { src: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=800&auto=format&fit=crop", alt: "Graduation" },
+  { src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop", alt: "Classroom" },
 ];
 
 const Index = () => {
@@ -127,12 +125,20 @@ const Index = () => {
         color: `hsl(${GOLD.text})`,
       }}
     >
-      {/* Floating Lines Background */}
-      <FloatingLines 
-        color={`hsl(${GOLD.primary})`}
-        lineCount={25}
-        opacity={0.12}
-      />
+      {/* Floating Lines Background - Fixed across all sections */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <FloatingLines 
+          linesGradient={["#D4A853", "#B8902D", "#E6C570"]}
+          enabledWaves={['top', 'middle', 'bottom']}
+          lineCount={[8, 10, 6]}
+          lineDistance={[4, 5, 3]}
+          animationSpeed={0.8}
+          interactive={true}
+          parallax={true}
+          parallaxStrength={0.15}
+          mixBlendMode="screen"
+        />
+      </div>
 
       {/* Hero Section - LaserFlow contained here, ends below stats */}
       <section className="relative min-h-screen">
@@ -426,7 +432,16 @@ const Index = () => {
           </div>
 
           {/* Dome Gallery for student scores */}
-          <DomeGallery items={galleryItems} radius={300} />
+          <div className="w-full h-[500px]">
+            <DomeGallery 
+              images={galleryImages}
+              overlayBlurColor={`hsl(${GOLD.bg})`}
+              imageBorderRadius="16px"
+              openedImageBorderRadius="20px"
+              grayscale={false}
+              segments={25}
+            />
+          </div>
 
           {/* Also show the real scores below if available */}
           {successScores && successScores.length > 0 && (
