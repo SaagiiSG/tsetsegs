@@ -1282,6 +1282,48 @@ export type Database = {
         }
         Relationships: []
       }
+      seasonal_events: {
+        Row: {
+          badge_id: string
+          created_at: string
+          description: string | null
+          end_date: string
+          event_type: string
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          name: string
+          start_date: string
+          theme_color: string | null
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          event_type?: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          start_date: string
+          theme_color?: string | null
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          event_type?: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_date?: string
+          theme_color?: string | null
+        }
+        Relationships: []
+      }
       security_alerts: {
         Row: {
           alert_type: string
@@ -1892,6 +1934,59 @@ export type Database = {
             foreignKeyName: "student_sprint_rankings_student_account_id_fkey"
             columns: ["student_account_id"]
             isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          streak_100_achieved: boolean
+          streak_30_achieved: boolean
+          streak_7_achieved: boolean
+          streak_start_date: string | null
+          student_account_id: string
+          total_practice_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_100_achieved?: boolean
+          streak_30_achieved?: boolean
+          streak_7_achieved?: boolean
+          streak_start_date?: string | null
+          student_account_id: string
+          total_practice_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_100_achieved?: boolean
+          streak_30_achieved?: boolean
+          streak_7_achieved?: boolean
+          streak_start_date?: string | null
+          student_account_id?: string
+          total_practice_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_streaks_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: true
             referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },

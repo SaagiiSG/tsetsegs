@@ -12,8 +12,8 @@
 //   - Students in Bronze/Unranked stay at their tier
 // - New students always start as "Unranked"
 //
-export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type BadgeCategory = 'speed' | 'discipline' | 'championship' | 'legendary';
+export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'seasonal';
+export type BadgeCategory = 'speed' | 'discipline' | 'championship' | 'legendary' | 'streak' | 'seasonal';
 export type TierType = 'unranked' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'ruby';
 
 export interface BadgeRequirement {
@@ -68,6 +68,13 @@ export const RARITY_COLORS: Record<BadgeRarity, { border: string; glow: string; 
     text: 'text-amber-500',
     primary: '#D97706',
     secondary: '#F59E0B'
+  },
+  seasonal: {
+    border: 'border-pink-500',
+    glow: '#EC4899',
+    text: 'text-pink-500',
+    primary: '#DB2777',
+    secondary: '#EC4899'
   }
 };
 
@@ -513,6 +520,106 @@ export const badgeDefinitions: BadgeDefinition[] = [
     requirements: [
       { type: 'ruby_weeks', target: 4, label: 'Ruby rank for 4 consecutive weeks' }
     ]
+  },
+  
+  // Streak Badges - Motivate daily practice
+  {
+    id: 'week-warrior',
+    name: 'Week Warrior',
+    description: 'Maintain a 7-day study streak',
+    rarity: 'uncommon',
+    pointValue: 500,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [
+      { type: 'streak_days', target: 7, label: '7-day streak' }
+    ]
+  },
+  {
+    id: 'month-master',
+    name: 'Month Master',
+    description: 'Maintain a 30-day study streak',
+    rarity: 'rare',
+    pointValue: 1500,
+    iconName: 'Calendar',
+    category: 'streak',
+    requirements: [
+      { type: 'streak_days', target: 30, label: '30-day streak' }
+    ]
+  },
+  {
+    id: 'century-scholar',
+    name: 'Century Scholar',
+    description: 'Maintain a 100-day study streak',
+    rarity: 'epic',
+    pointValue: 5000,
+    iconName: 'Trophy',
+    category: 'streak',
+    requirements: [
+      { type: 'streak_days', target: 100, label: '100-day streak' }
+    ]
+  },
+  
+  // Seasonal Badges - Limited-time during SAT months
+  {
+    id: 'march-madness',
+    name: 'March Madness',
+    description: 'Complete 200+ questions during March SAT month',
+    rarity: 'seasonal',
+    pointValue: 1000,
+    iconName: 'Sparkles',
+    category: 'seasonal',
+    requirements: [
+      { type: 'seasonal_questions', target: 200, label: '200 questions in March' }
+    ]
+  },
+  {
+    id: 'may-momentum',
+    name: 'May Momentum',
+    description: 'Achieve 85%+ accuracy during May SAT month',
+    rarity: 'seasonal',
+    pointValue: 1000,
+    iconName: 'TrendingUp',
+    category: 'seasonal',
+    requirements: [
+      { type: 'seasonal_accuracy', target: 85, label: '85%+ accuracy in May' }
+    ]
+  },
+  {
+    id: 'august-ascent',
+    name: 'August Ascent',
+    description: 'Improve by 50+ points during August prep month',
+    rarity: 'seasonal',
+    pointValue: 1500,
+    iconName: 'Mountain',
+    category: 'seasonal',
+    requirements: [
+      { type: 'seasonal_improvement', target: 50, label: '+50 point improvement in August' }
+    ]
+  },
+  {
+    id: 'october-olympian',
+    name: 'October Olympian',
+    description: 'Complete 5 full practice tests during October',
+    rarity: 'seasonal',
+    pointValue: 1500,
+    iconName: 'Medal',
+    category: 'seasonal',
+    requirements: [
+      { type: 'seasonal_tests', target: 5, label: '5 practice tests in October' }
+    ]
+  },
+  {
+    id: 'december-dedication',
+    name: 'December Dedication',
+    description: 'Practice every day during December holiday break',
+    rarity: 'seasonal',
+    pointValue: 2000,
+    iconName: 'Snowflake',
+    category: 'seasonal',
+    requirements: [
+      { type: 'seasonal_streak', target: 31, label: 'Daily practice in December' }
+    ]
   }
 ];
 
@@ -537,7 +644,8 @@ export const RARITY_POINTS: Record<BadgeRarity, number> = {
   uncommon: 500,
   rare: 1000,
   epic: 2000,
-  legendary: 30000
+  legendary: 30000,
+  seasonal: 1000
 };
 
 // Level calculation formula: Level = floor(log2((totalPoints - 200) / 50) + 1)
