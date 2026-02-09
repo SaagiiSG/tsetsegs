@@ -14,3 +14,4 @@ export { default as DomeGallery } from "./DomeGallery";
 export { default as ProfileCard } from "./ProfileCard";
 export { default as Counter } from "./Counter";
 export { default as FloatingLines } from "./FloatingLines";
+export { default as PixelCard } from "./PixelCard";
