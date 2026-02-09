@@ -83,18 +83,19 @@ const FloatingLines: React.FC<FloatingLinesProps> = ({
         {lines.slice(0, 8).map((line, i) => (
           <motion.circle
             key={`node-${line.id}`}
-            r="2"
+            r={2}
             fill={color}
             initial={{ 
               cx: `${line.x1}%`, 
               cy: `${line.y1}%`,
               opacity: 0.3,
+              scale: 1,
             }}
             animate={{
               cx: [`${line.x1}%`, `${(line.x1 + 30) % 100}%`, `${line.x1}%`],
               cy: [`${line.y1}%`, `${(line.y1 + 20) % 100}%`, `${line.y1}%`],
               opacity: [0.3, 0.8, 0.3],
-              r: [2, 4, 2],
+              scale: [1, 2, 1],
             }}
             transition={{
               duration: line.duration,
@@ -104,6 +105,7 @@ const FloatingLines: React.FC<FloatingLinesProps> = ({
             }}
             style={{
               filter: `drop-shadow(0 0 6px ${color})`,
+              transformOrigin: 'center',
             }}
           />
         ))}
