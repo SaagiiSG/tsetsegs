@@ -14,6 +14,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "three"],
+  },
+  optimizeDeps: {
+    include: ["@tanstack/react-query", "three"],
   },
   define: {
     // Polyfill for Node.js global object (needed by react-mathquill)
