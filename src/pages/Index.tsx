@@ -182,7 +182,23 @@ const Index = () => {
         {/* Hero Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
           <div className="w-full max-w-6xl mx-auto text-center space-y-8">
-            {/* Frosted Glass Container - Only wraps text content */}
+            {/* Top Badge - Outside frosted glass */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
+              style={{
+                background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
+                border: `1px solid hsl(${GOLD.primary} / 0.4)`,
+                color: `hsl(${GOLD.light})`,
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Mongolia's Best SAT Math Center</span>
+            </motion.div>
+
+            {/* Frosted Glass Container - Only wraps headline and subtitle */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -194,22 +210,6 @@ const Index = () => {
                 boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5), inset 0 1px 0 hsl(${GOLD.light} / 0.1)`,
               }}
             >
-              {/* Top Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium mb-6"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
-                  border: `1px solid hsl(${GOLD.primary} / 0.4)`,
-                  color: `hsl(${GOLD.light})`,
-                }}
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Mongolia's Best SAT Math Center</span>
-              </motion.div>
-
               {/* Main headline with animated text */}
               <div className="space-y-4">
                 <h1 
@@ -415,14 +415,14 @@ const Index = () => {
       </section>
 
       {/* Student Success Section with DomeGallery - AFTER FEATURES */}
-      <section className="relative py-24 px-4">
+      <section className="relative py-24">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
         />
         
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center space-y-4 mb-16">
+        <div className="relative">
+          <div className="text-center space-y-4 mb-16 px-4">
             <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -448,11 +448,11 @@ const Index = () => {
             </motion.h2>
           </div>
 
-          {/* Dome Gallery for student scores */}
-          <div className="w-full h-[500px]">
+          {/* Dome Gallery for student scores - Full width */}
+          <div className="w-full h-[600px]">
             <DomeGallery 
               images={galleryImages}
-              overlayBlurColor={`hsl(${GOLD.bg})`}
+              overlayBlurColor={`hsl(${GOLD.dark})`}
               imageBorderRadius="16px"
               openedImageBorderRadius="20px"
               grayscale={false}
@@ -462,7 +462,7 @@ const Index = () => {
 
           {/* Also show the real scores below if available */}
           {successScores && successScores.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16 px-4 max-w-6xl mx-auto">
               {successScores.map((score, index) => (
                 <motion.div
                   key={index}
