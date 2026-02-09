@@ -270,7 +270,7 @@ const Index = () => {
                       color: "hsl(0 0% 5%)",
                       boxShadow: `0 0 40px hsl(${GOLD.primary} / 0.4)`,
                     }}
-                    onClick={() => navigate("/student-portal")}
+                    onClick={() => navigate("/practice")}
                   >
                     <GraduationCap className="mr-2 h-5 w-5" />
                     Student Portal
@@ -775,7 +775,7 @@ const Index = () => {
                             background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
                             color: "hsl(0 0% 5%)",
                           }}
-                          onClick={() => navigate("/student-portal")}
+                          onClick={() => navigate("/practice")}
                         >
                           Get Started
                           <ChevronRight className="ml-2 h-4 w-4" />
