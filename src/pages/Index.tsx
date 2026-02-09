@@ -321,19 +321,22 @@ const Index = () => {
         />
         
         <div className="relative max-w-6xl mx-auto">
-          {/* LaserFlow background effect */}
-          <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+          {/* LaserFlow background effect - positioned to be visible */}
+          <div className="absolute inset-0 overflow-hidden rounded-3xl" style={{ minHeight: '600px' }}>
             <LaserFlow 
               color="#D4A853"
-              verticalSizing={1.5}
-              horizontalSizing={0.8}
-              fogIntensity={0.3}
-              wispIntensity={3}
+              verticalSizing={2.0}
+              horizontalSizing={0.6}
+              fogIntensity={0.5}
+              wispIntensity={4}
+              flowSpeed={0.4}
+              wispSpeed={12}
               className="w-full h-full"
             />
           </div>
           
-          <div className="relative rounded-3xl p-8 md:p-12" style={{ background: `hsl(${GOLD.bg} / 0.8)` }}>
+          {/* Content overlay with semi-transparent background */}
+          <div className="relative rounded-3xl p-8 md:p-12 backdrop-blur-sm" style={{ background: `hsl(${GOLD.bg} / 0.6)` }}>
             <div className="text-center space-y-4 mb-16">
               <motion.span
                 initial={{ opacity: 0 }}
