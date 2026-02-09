@@ -293,8 +293,10 @@ export default function PixelCard({
       onBlur={finalNoFocus ? undefined : onBlur}
       tabIndex={finalNoFocus ? -1 : 0}
     >
-      <canvas className="absolute inset-0 w-full h-full block" ref={canvasRef} />
-      {children}
+      <canvas className="absolute inset-0 w-full h-full block pointer-events-none" ref={canvasRef} />
+      <div className="relative z-10 w-full h-full pointer-events-none">
+        {children}
+      </div>
     </div>
   );
 }
