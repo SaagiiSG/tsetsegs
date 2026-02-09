@@ -26,10 +26,10 @@ import {
   Magnet, 
   ClickSpark,
   DomeGallery,
-  ProfileCard,
   Counter,
   FloatingLines,
   GradualBlur,
+  PixelCard,
 } from "@/components/reactbits";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -415,14 +415,14 @@ const Index = () => {
       </section>
 
       {/* Student Success Section with DomeGallery - AFTER FEATURES */}
-      <section className="relative py-24">
+      <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
         />
         
-        <div className="relative">
-          <div className="text-center space-y-4 mb-16 px-4">
+        <div className="relative max-w-6xl mx-auto">
+          <div className="text-center space-y-4 mb-16">
             <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -448,21 +448,33 @@ const Index = () => {
             </motion.h2>
           </div>
 
-          {/* Dome Gallery for student scores - Full width */}
-          <div className="w-full h-[600px]">
-            <DomeGallery 
-              images={galleryImages}
-              overlayBlurColor={`hsl(${GOLD.dark})`}
-              imageBorderRadius="16px"
-              openedImageBorderRadius="20px"
-              grayscale={false}
-              segments={25}
-            />
-          </div>
+          {/* Dome Gallery for student scores - Frosted glass container */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="backdrop-blur-xl rounded-3xl overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.6), hsl(${GOLD.cardBg} / 0.4))`,
+              border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+              boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5)`,
+            }}
+          >
+            <div className="w-full h-[550px]">
+              <DomeGallery 
+                images={galleryImages}
+                overlayBlurColor="transparent"
+                imageBorderRadius="16px"
+                openedImageBorderRadius="20px"
+                grayscale={false}
+                segments={25}
+              />
+            </div>
+          </motion.div>
 
           {/* Also show the real scores below if available */}
           {successScores && successScores.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16 px-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16">
               {successScores.map((score, index) => (
                 <motion.div
                   key={index}
@@ -503,7 +515,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Team Section with ProfileCard - AFTER STUDENT WINS */}
+      {/* Team Section with PixelCard - AFTER STUDENT WINS */}
       <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
@@ -537,23 +549,57 @@ const Index = () => {
             </motion.h2>
           </div>
 
-          {/* ProfileCards for team members */}
+          {/* PixelCards for team members */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {teamMembers.map((member, index) => {
               const iconMap = {
-                crown: <Crown className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
-                briefcase: <Briefcase className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
-                book: <Book className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
-                calculator: <Calculator className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
+                crown: <Crown className="w-8 h-8" style={{ color: `hsl(${GOLD.light})` }} />,
+                briefcase: <Briefcase className="w-8 h-8" style={{ color: `hsl(${GOLD.light})` }} />,
+                book: <Book className="w-8 h-8" style={{ color: `hsl(${GOLD.light})` }} />,
+                calculator: <Calculator className="w-8 h-8" style={{ color: `hsl(${GOLD.light})` }} />,
               };
               return (
-                <ProfileCard
+                <motion.div
                   key={member.name}
-                  name={member.name}
-                  role={member.role}
-                  icon={iconMap[member.iconType]}
-                  delay={index * 0.08}
-                />
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.08, duration: 0.5 }}
+                >
+                  <PixelCard
+                    variant="gold"
+                    className="w-full aspect-[3/4] border-[hsl(43_88%_50%_/_0.3)]"
+                    style={{
+                      background: `linear-gradient(135deg, hsl(${GOLD.bg}), hsl(${GOLD.cardBg}))`,
+                    }}
+                  >
+                    <div className="relative z-10 flex flex-col items-center justify-center gap-4 p-6 text-center">
+                      {/* Icon circle */}
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center"
+                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                      >
+                        {iconMap[member.iconType]}
+                      </div>
+                      
+                      {/* Name */}
+                      <h3 
+                        className="text-lg font-bold"
+                        style={{ color: `hsl(${GOLD.text})` }}
+                      >
+                        {member.name}
+                      </h3>
+                      
+                      {/* Role */}
+                      <p 
+                        className="text-sm"
+                        style={{ color: `hsl(${GOLD.muted})` }}
+                      >
+                        {member.role}
+                      </p>
+                    </div>
+                  </PixelCard>
+                </motion.div>
               );
             })}
           </div>
