@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PracticeTestScoreDrawer } from '@/components/student/PracticeTestScoreDrawer';
+import { ScorePathwayCard } from '@/components/student/ScorePathwayCard';
+import { useScoreTarget } from '@/hooks/useScoreTarget';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -68,6 +70,9 @@ export default function StudentDashboardHome() {
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
   const [radarSubject, setRadarSubject] = useState<'math' | 'english'>('math');
   const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
+  
+  // Score target hook
+  const { targetScore, currentScore: targetCurrentScore, weakestTopic, updateTargetScore, isLoading: scoreTargetLoading } = useScoreTarget();
   
   // Badge progress sync
   const { syncBadgeProgress } = useSyncBadgeProgress();
@@ -684,6 +689,21 @@ export default function StudentDashboardHome() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Track your SAT prep progress</p>
       </div>
+
+      {/* Score Pathway Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <ScorePathwayCard
+          currentScore={targetCurrentScore || stats?.realTestScore || null}
+          targetScore={targetScore}
+          onTargetScoreChange={updateTargetScore}
+          weakestTopic={weakestTopic || undefined}
+          isLoading={scoreTargetLoading}
+        />
+      </motion.div>
 
       {/* Top 4 Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

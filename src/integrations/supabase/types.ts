@@ -1415,6 +1415,7 @@ export type Database = {
           registered_device_id: string | null
           share_token: string | null
           share_token_created_at: string | null
+          target_score: number | null
         }
         Insert: {
           blocked_at?: string | null
@@ -1433,6 +1434,7 @@ export type Database = {
           registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
+          target_score?: number | null
         }
         Update: {
           blocked_at?: string | null
@@ -1451,6 +1453,7 @@ export type Database = {
           registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
+          target_score?: number | null
         }
         Relationships: [
           {
@@ -1647,6 +1650,58 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_nudges: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          message: string | null
+          nudge_type: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          nudge_type: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          nudge_type?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_nudges_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_nudges_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_nudges_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]

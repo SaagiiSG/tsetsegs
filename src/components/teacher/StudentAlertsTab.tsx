@@ -69,9 +69,10 @@ interface StudentAlert {
 
 interface StudentAlertsTabProps {
   teacherName: string;
+  teacherId?: string;
 }
 
-export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
+export function StudentAlertsTab({ teacherName, teacherId }: StudentAlertsTabProps) {
   const [alerts, setAlerts] = useState<StudentAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -499,6 +500,7 @@ export function StudentAlertsTab({ teacherName }: StudentAlertsTabProps) {
                 courseType={alert.batch.course_type}
                 batchId={alert.batch.id}
                 teacherName={teacherName}
+                teacherId={teacherId}
                 onUpdateStudent={(updates) => handleUpdateStudent(alert.student.id, updates)}
                 onAttendanceChange={(session, status) => handleAttendanceChange(alert.student.id, alert.batch.id, session, status)}
                 onHomeworkChange={(session, status) => handleHomeworkChange(alert.student.id, alert.batch.id, session, status)}
