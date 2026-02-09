@@ -321,15 +321,19 @@ const Index = () => {
         />
         
         <div className="relative max-w-6xl mx-auto">
-          {/* LaserFlow wrapped section */}
-          <LaserFlow 
-            beamColor="#D4A853"
-            beamWidth={3}
-            speed={3}
-            glowIntensity={1.5}
-            fogOpacity={0.1}
-            className="rounded-3xl p-8 md:p-12"
-          >
+          {/* LaserFlow background effect */}
+          <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+            <LaserFlow 
+              color="#D4A853"
+              verticalSizing={1.5}
+              horizontalSizing={0.8}
+              fogIntensity={0.3}
+              wispIntensity={3}
+              className="w-full h-full"
+            />
+          </div>
+          
+          <div className="relative rounded-3xl p-8 md:p-12" style={{ background: `hsl(${GOLD.bg} / 0.8)` }}>
             <div className="text-center space-y-4 mb-16">
               <motion.span
                 initial={{ opacity: 0 }}
@@ -357,7 +361,7 @@ const Index = () => {
               </motion.h2>
             </div>
 
-            {/* Feature cards in scroll-triggered stack layout */}
+            {/* Feature cards */}
             <div className="grid md:grid-cols-2 gap-6">
               {features.map((feature, index) => (
                 <motion.div
@@ -412,7 +416,7 @@ const Index = () => {
                 </motion.div>
               ))}
             </div>
-          </LaserFlow>
+          </div>
         </div>
       </section>
 
