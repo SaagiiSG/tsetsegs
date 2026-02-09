@@ -123,12 +123,32 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen overflow-hidden relative"
+      className="min-h-screen relative"
       style={{
         background: `hsl(${GOLD.bg})`,
         color: `hsl(${GOLD.text})`,
       }}
     >
+      {/* LaserFlow - positioned to bleed from hero into features section */}
+      <div 
+        className="fixed inset-x-0 pointer-events-none z-10"
+        style={{ 
+          top: '50vh',
+          height: '100vh',
+        }}
+      >
+        <LaserFlow 
+          color="#D4A853"
+          verticalSizing={3.0}
+          horizontalSizing={0.8}
+          fogIntensity={0.6}
+          wispIntensity={5}
+          flowSpeed={0.3}
+          wispSpeed={8}
+          verticalBeamOffset={-0.3}
+          className="w-full h-full"
+        />
+      </div>
       {/* Floating Lines Background */}
       <FloatingLines 
         color={`hsl(${GOLD.primary})`}
@@ -315,25 +335,8 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Features Section with LaserFlow - RIGHT AFTER HERO */}
-      <section className="relative py-24 px-4 min-h-screen">
-        {/* LaserFlow background - full height, extends above */}
-        <div 
-          className="absolute inset-0 -top-60 pointer-events-none z-0"
-          style={{ height: 'calc(100% + 15rem)' }}
-        >
-          <LaserFlow 
-            color="#D4A853"
-            verticalSizing={2.5}
-            horizontalSizing={0.7}
-            fogIntensity={0.6}
-            wispIntensity={5}
-            flowSpeed={0.35}
-            wispSpeed={10}
-            className="w-full h-full"
-          />
-        </div>
-        
+      {/* Features Section - ScrollStack uses window scroll */}
+      <section className="relative py-24 px-4">
         <div className="relative z-10 max-w-6xl mx-auto">
           {/* Text header */}
           <div className="text-center space-y-4 mb-12">
@@ -363,21 +366,21 @@ const Index = () => {
             </motion.h2>
           </div>
 
-          {/* Feature cards with ScrollStack - 80% width */}
+          {/* Feature cards with ScrollStack - uses window scroll, no scrollbar */}
           <div className="flex justify-center">
-            <div className="w-[80%] h-[700px]">
+            <div className="w-[80%]">
               <ScrollStack
-                itemDistance={50}
+                itemDistance={80}
                 itemScale={0.03}
-                itemStackDistance={20}
-                stackPosition="20%"
-                baseScale={0.95}
-                useWindowScroll={false}
+                itemStackDistance={25}
+                stackPosition="30%"
+                baseScale={0.92}
+                useWindowScroll={true}
               >
                 {features.map((feature) => (
                   <ScrollStackItem 
                     key={feature.title}
-                    itemClassName="!my-2 !h-auto !rounded-2xl"
+                    itemClassName="!my-4 !h-auto !rounded-2xl !shadow-none"
                   >
                     <Card 
                       className="relative p-8 backdrop-blur-md"
