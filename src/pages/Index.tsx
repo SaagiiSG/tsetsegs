@@ -366,16 +366,16 @@ const Index = () => {
               </motion.h2>
             </div>
 
-            {/* Feature cards with ScrollStack */}
-            <div className="h-[120vh]">
+            {/* Feature cards with ScrollStack - contained scroll */}
+            <div className="h-[600px] overflow-hidden rounded-2xl" style={{ background: `hsl(${GOLD.bg} / 0.5)` }}>
               <ScrollStack
-                itemDistance={60}
-                itemScale={0.04}
-                itemStackDistance={20}
-                stackPosition="30%"
-                baseScale={0.9}
-                useWindowScroll={true}
-                className="!pt-0 !pb-0"
+                itemDistance={40}
+                itemScale={0.03}
+                itemStackDistance={15}
+                stackPosition="25%"
+                baseScale={0.92}
+                useWindowScroll={false}
+                className="!pt-8 !pb-8"
               >
                 {features.map((feature) => (
                   <ScrollStackItem 
