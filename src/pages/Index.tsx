@@ -168,141 +168,160 @@ const Index = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
-          <div className="max-w-6xl mx-auto text-center space-y-8">
-            {/* Top Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
-              style={{
-                background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
-                border: `1px solid hsl(${GOLD.primary} / 0.4)`,
-                color: `hsl(${GOLD.light})`,
-              }}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Mongolia's Best SAT Math Center</span>
-            </motion.div>
-
-            {/* Main headline with animated text */}
-            <div className="space-y-4">
-              <h1 
-                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
-                style={{ color: `hsl(${GOLD.text})` }}
-              >
-                <SplitText
-                  text="Master the SAT"
-                  className="block"
-                  delay={30}
-                  duration={0.5}
-                  splitType="chars"
-                />
-              </h1>
-              <div className="text-5xl md:text-7xl lg:text-8xl font-bold">
-                <GradientText
-                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
-                  animationSpeed={6}
-                  className="font-bold"
-                >
-                  Score Higher
-                </GradientText>
-              </div>
-            </div>
-
-            {/* Subtitle */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.5 }}
-              style={{ color: `hsl(${GOLD.muted})` }}
-            >
-              <BlurText
-                text="Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance."
-                className="text-lg md:text-xl max-w-3xl mx-auto"
-                delay={20}
-                animateBy="words"
-              />
-            </motion.div>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
-            >
-              <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
-                <Magnet strength={0.3}>
-                  <Button
-                    size="lg"
-                    className="text-lg px-8 py-6 rounded-full transition-all hover:scale-105"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
-                      color: "hsl(0 0% 5%)",
-                      boxShadow: `0 0 40px hsl(${GOLD.primary} / 0.4)`,
-                    }}
-                    onClick={() => navigate("/student-portal")}
-                  >
-                    <GraduationCap className="mr-2 h-5 w-5" />
-                    Student Portal
-                    <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Magnet>
-              </ClickSpark>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg px-8 py-6 rounded-full border-2"
+          {/* Frosted Glass Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="backdrop-blur-xl rounded-3xl px-8 py-12 md:px-16 md:py-16 max-w-5xl mx-auto"
+            style={{
+              background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.7), hsl(${GOLD.cardBg} / 0.5))`,
+              border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+              boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5), inset 0 1px 0 hsl(${GOLD.light} / 0.1)`,
+            }}
+          >
+            <div className="text-center space-y-8">
+              {/* Top Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
                 style={{
-                  borderColor: `hsl(${GOLD.primary} / 0.5)`,
+                  background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
+                  border: `1px solid hsl(${GOLD.primary} / 0.4)`,
                   color: `hsl(${GOLD.light})`,
-                  background: "transparent",
                 }}
-                onClick={() => navigate("/login")}
               >
-                <Users className="mr-2 h-5 w-5" />
-                Staff Login
-              </Button>
-            </motion.div>
+                <Sparkles className="w-4 h-4" />
+                <span>Mongolia's Best SAT Math Center</span>
+              </motion.div>
 
-            {/* Stats with Counter animation - LaserFlow ends after this */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5, duration: 0.5 }}
-              className="grid grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto"
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.5 + index * 0.1, duration: 0.4 }}
-                  className="text-center"
+              {/* Main headline with animated text */}
+              <div className="space-y-4">
+                <h1 
+                  className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
+                  style={{ color: `hsl(${GOLD.text})` }}
                 >
-                  <div 
-                    className="text-3xl md:text-5xl font-bold"
-                    style={{ color: `hsl(${GOLD.light})` }}
+                  <SplitText
+                    text="Master the SAT"
+                    className="block"
+                    delay={30}
+                    duration={0.5}
+                    splitType="chars"
+                  />
+                </h1>
+                <div className="text-5xl md:text-7xl lg:text-8xl font-bold">
+                  <GradientText
+                    colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
+                    animationSpeed={6}
+                    className="font-bold"
                   >
-                    <Counter 
-                      value={stat.value} 
-                      suffix={stat.suffix}
-                      duration={2.5}
-                    />
-                  </div>
-                  <div 
-                    className="text-sm mt-1 flex items-center justify-center gap-1"
-                    style={{ color: `hsl(${GOLD.muted})` }}
+                    Score Higher
+                  </GradientText>
+                </div>
+              </div>
+
+              {/* Subtitle */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+                style={{ color: `hsl(${GOLD.muted})` }}
+              >
+                <BlurText
+                  text="Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance."
+                  className="text-lg md:text-xl max-w-3xl mx-auto"
+                  delay={20}
+                  animateBy="words"
+                />
+              </motion.div>
+
+              {/* CTA Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 0.5 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
+              >
+                <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
+                  <Magnet strength={0.3}>
+                    <Button
+                      size="lg"
+                      className="text-lg px-8 py-6 rounded-full transition-all hover:scale-105"
+                      style={{
+                        background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
+                        color: "hsl(0 0% 5%)",
+                        boxShadow: `0 0 40px hsl(${GOLD.primary} / 0.4)`,
+                      }}
+                      onClick={() => navigate("/student-portal")}
+                    >
+                      <GraduationCap className="mr-2 h-5 w-5" />
+                      Student Portal
+                      <ChevronRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Magnet>
+                </ClickSpark>
+                
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8 py-6 rounded-full border-2"
+                  style={{
+                    borderColor: `hsl(${GOLD.primary} / 0.5)`,
+                    color: `hsl(${GOLD.light})`,
+                    background: "transparent",
+                  }}
+                  onClick={() => navigate("/login")}
+                >
+                  <Users className="mr-2 h-5 w-5" />
+                  Staff Login
+                </Button>
+              </motion.div>
+
+              {/* Divider */}
+              <div 
+                className="w-full h-px my-4"
+                style={{ background: `linear-gradient(90deg, transparent, hsl(${GOLD.primary} / 0.3), transparent)` }}
+              />
+
+              {/* Stats with Counter animation */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5, duration: 0.5 }}
+                className="grid grid-cols-3 gap-8 pt-4"
+              >
+                {stats.map((stat, index) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.5 + index * 0.1, duration: 0.4 }}
+                    className="text-center"
                   >
-                    <stat.icon className="w-3 h-3" />
-                    {stat.label}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
+                    <div 
+                      className="text-3xl md:text-5xl font-bold"
+                      style={{ color: `hsl(${GOLD.light})` }}
+                    >
+                      <Counter 
+                        value={stat.value} 
+                        suffix={stat.suffix}
+                        duration={2.5}
+                      />
+                    </div>
+                    <div 
+                      className="text-sm mt-1 flex items-center justify-center gap-1"
+                      style={{ color: `hsl(${GOLD.muted})` }}
+                    >
+                      <stat.icon className="w-3 h-3" />
+                      {stat.label}
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
