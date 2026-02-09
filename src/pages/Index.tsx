@@ -22,6 +22,8 @@ import {
   Magnet, 
   ClickSpark,
   LaserFlow,
+  ScrollStack,
+  ScrollStackItem,
   DomeGallery,
   ProfileCard,
   Counter,
@@ -314,22 +316,25 @@ const Index = () => {
       </section>
 
       {/* Features Section with LaserFlow - RIGHT AFTER HERO */}
-      <section className="relative py-24 px-4">
-        {/* LaserFlow background - extends above section to not get cut off */}
-        <div className="absolute inset-x-0 -top-40 bottom-0 overflow-visible pointer-events-none">
+      <section className="relative py-24 px-4 min-h-screen">
+        {/* LaserFlow background - full height, extends above */}
+        <div 
+          className="absolute inset-0 -top-60 pointer-events-none z-0"
+          style={{ height: 'calc(100% + 15rem)' }}
+        >
           <LaserFlow 
             color="#D4A853"
             verticalSizing={2.5}
-            horizontalSizing={0.6}
-            fogIntensity={0.5}
-            wispIntensity={4}
-            flowSpeed={0.4}
-            wispSpeed={12}
+            horizontalSizing={0.7}
+            fogIntensity={0.6}
+            wispIntensity={5}
+            flowSpeed={0.35}
+            wispSpeed={10}
             className="w-full h-full"
           />
         </div>
         
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative z-10 max-w-6xl mx-auto">
           {/* Text header */}
           <div className="text-center space-y-4 mb-12">
             <motion.span
@@ -358,57 +363,59 @@ const Index = () => {
             </motion.h2>
           </div>
 
-          {/* Feature cards - 80% width, stacked vertically */}
-          <div className="flex flex-col items-center gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="w-[80%]"
+          {/* Feature cards with ScrollStack - 80% width */}
+          <div className="flex justify-center">
+            <div className="w-[80%] h-[700px]">
+              <ScrollStack
+                itemDistance={50}
+                itemScale={0.03}
+                itemStackDistance={20}
+                stackPosition="20%"
+                baseScale={0.95}
+                useWindowScroll={false}
               >
-                <Spotlight 
-                  spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
-                  className="h-full"
-                >
-                  <Card 
-                    className="relative h-full p-8 backdrop-blur-sm transition-all hover:-translate-y-1"
-                    style={{
-                      background: `hsl(${GOLD.cardBg})`,
-                      border: `1px solid hsl(${GOLD.primary} / 0.15)`,
-                    }}
+                {features.map((feature) => (
+                  <ScrollStackItem 
+                    key={feature.title}
+                    itemClassName="!my-2 !h-auto !rounded-2xl"
                   >
-                    <div className="flex items-start gap-6">
-                      <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                      >
-                        <feature.icon 
-                          className="w-7 h-7"
-                          style={{ color: `hsl(${GOLD.light})` }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 
-                          className="text-2xl font-semibold"
-                          style={{ color: `hsl(${GOLD.text})` }}
+                    <Card 
+                      className="relative p-8 backdrop-blur-md"
+                      style={{
+                        background: `hsl(${GOLD.cardBg} / 0.95)`,
+                        border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+                      }}
+                    >
+                      <div className="flex items-start gap-6">
+                        <div 
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                         >
-                          {feature.title}
-                        </h3>
-                        <p 
-                          className="text-base leading-relaxed"
-                          style={{ color: `hsl(${GOLD.muted})` }}
-                        >
-                          {feature.description}
-                        </p>
+                          <feature.icon 
+                            className="w-7 h-7"
+                            style={{ color: `hsl(${GOLD.light})` }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 
+                            className="text-2xl font-semibold"
+                            style={{ color: `hsl(${GOLD.text})` }}
+                          >
+                            {feature.title}
+                          </h3>
+                          <p 
+                            className="text-base leading-relaxed"
+                            style={{ color: `hsl(${GOLD.muted})` }}
+                          >
+                            {feature.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                </Spotlight>
-              </motion.div>
-            ))}
+                    </Card>
+                  </ScrollStackItem>
+                ))}
+              </ScrollStack>
+            </div>
           </div>
         </div>
       </section>
