@@ -334,24 +334,35 @@ const Index = () => {
       </section>
 
       {/* Features Section - Starts right after Hero/LaserFlow ends */}
-      <section className="relative py-24 px-4">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-24 px-4 overflow-hidden">
+        <motion.div 
+          className="max-w-6xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } }
+          }}
+        >
           {/* Text header */}
           <div className="text-center space-y-4 mb-12">
             <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="font-medium"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
               Why Choose Us
             </motion.span>
             
             <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              variants={{
+                hidden: { opacity: 0, y: 40, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
+              }}
               className="text-3xl md:text-5xl font-bold"
             >
               Everything You Need to{" "}
@@ -369,29 +380,34 @@ const Index = () => {
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
+                variants={{
+                  hidden: { opacity: 0, x: index % 2 === 0 ? -60 : 60, y: 20 },
+                  visible: { 
+                    opacity: 1, 
+                    x: 0, 
+                    y: 0, 
+                    transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } 
+                  }
+                }}
                 className="w-[80%]"
               >
                 <Card 
-                  className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-1"
+                  className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
                   style={{
                     background: `hsl(${GOLD.cardBg} / 0.95)`,
                     border: `1px solid hsl(${GOLD.primary} / 0.2)`,
                   }}
                 >
                   <div className="flex items-start gap-6">
-                    <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    <motion.div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
                       style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                     >
                       <feature.icon 
                         className="w-7 h-7"
                         style={{ color: `hsl(${GOLD.light})` }}
                       />
-                    </div>
+                    </motion.div>
                     <div className="space-y-2">
                       <h3 
                         className="text-2xl font-semibold"
@@ -411,31 +427,42 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Student Success Section with DomeGallery - AFTER FEATURES */}
-      <section className="relative py-24 px-4">
+      <section className="relative py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
         />
         
-        <div className="relative max-w-6xl mx-auto">
+        <motion.div 
+          className="relative max-w-6xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.2 } }
+          }}
+        >
           <div className="text-center space-y-4 mb-16">
             <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="font-medium"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
               Student Achievements
             </motion.span>
             <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              variants={{
+                hidden: { opacity: 0, y: 40, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
+              }}
               className="text-3xl md:text-5xl font-bold"
             >
               Our Students{" "}
@@ -450,9 +477,10 @@ const Index = () => {
 
           {/* Dome Gallery for student scores - Frosted glass container */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={{
+              hidden: { opacity: 0, y: 60, scale: 0.9 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] } }
+            }}
             className="backdrop-blur-xl rounded-3xl overflow-hidden"
             style={{
               background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.6), hsl(${GOLD.cardBg} / 0.4))`,
@@ -474,15 +502,31 @@ const Index = () => {
 
           {/* Also show the real scores below if available */}
           {successScores && successScores.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16">
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.08 } }
+              }}
+            >
               {successScores.map((score, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                  className="p-4 rounded-2xl text-center"
+                  variants={{
+                    hidden: { opacity: 0, y: 30, scale: 0.85, rotateX: -15 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1, 
+                      rotateX: 0,
+                      transition: { duration: 0.5, ease: "easeOut" } 
+                    }
+                  }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="p-4 rounded-2xl text-center cursor-default"
                   style={{
                     background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
                     border: `1px solid hsl(${GOLD.primary} / 0.2)`,
@@ -510,33 +554,44 @@ const Index = () => {
                   )}
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </section>
 
       {/* Team Section with PixelCard - AFTER STUDENT WINS */}
-      <section className="relative py-24 px-4">
+      <section className="relative py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
         />
         
-        <div className="relative max-w-7xl mx-auto">
+        <motion.div 
+          className="relative max-w-7xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } }
+          }}
+        >
           <div className="text-center space-y-4 mb-16">
             <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="font-medium"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
               Meet the Team
             </motion.span>
             <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              variants={{
+                hidden: { opacity: 0, y: 40, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
+              }}
               className="text-3xl md:text-5xl font-bold"
             >
               Our{" "}
@@ -550,7 +605,16 @@ const Index = () => {
           </div>
 
           {/* PixelCards for team members */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+            }}
+          >
             {teamMembers.map((member, index) => {
               const iconMap = {
                 crown: <Crown className="w-8 h-8" style={{ color: `hsl(${GOLD.light})` }} />,
@@ -561,10 +625,18 @@ const Index = () => {
               return (
                 <motion.div
                   key={member.name}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.08, duration: 0.5 }}
+                  variants={{
+                    hidden: { opacity: 0, y: 50, scale: 0.8, rotateY: -20 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1, 
+                      rotateY: 0,
+                      transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } 
+                    }
+                  }}
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  className="cursor-default"
                 >
                   <PixelCard
                     variant="gold"
@@ -575,12 +647,14 @@ const Index = () => {
                   >
                     <div className="relative z-10 flex flex-col items-center justify-center gap-4 p-6 text-center">
                       {/* Icon circle */}
-                      <div 
+                      <motion.div 
                         className="w-16 h-16 rounded-full flex items-center justify-center"
                         style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
                       >
                         {iconMap[member.iconType]}
-                      </div>
+                      </motion.div>
                       
                       {/* Name */}
                       <h3 
@@ -602,113 +676,154 @@ const Index = () => {
                 </motion.div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-24 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Spotlight 
-            spotlightColor={`hsl(${GOLD.primary} / 0.2)`}
-            className="rounded-3xl"
+      <section className="relative py-24 px-4 overflow-hidden">
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } }
+          }}
+        >
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 60, scale: 0.9 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] } }
+            }}
           >
-            <Card 
-              className="relative overflow-hidden p-8 md:p-12"
-              style={{
-                background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
-                border: `1px solid hsl(${GOLD.primary} / 0.2)`,
-              }}
+            <Spotlight 
+              spotlightColor={`hsl(${GOLD.primary} / 0.2)`}
+              className="rounded-3xl"
             >
-              {/* Background decoration */}
-              <div 
-                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
-                style={{ background: `hsl(${GOLD.primary} / 0.1)` }}
-              />
-              
-              <div className="relative z-10 text-center space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl"
-                  style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                >
-                  <Zap 
-                    className="w-8 h-8"
-                    style={{ color: `hsl(${GOLD.light})` }}
-                  />
-                </motion.div>
+              <Card 
+                className="relative overflow-hidden p-8 md:p-12"
+                style={{
+                  background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
+                  border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+                }}
+              >
+                {/* Background decoration */}
+                <div 
+                  className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
+                  style={{ background: `hsl(${GOLD.primary} / 0.1)` }}
+                />
                 
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                <motion.div 
+                  className="relative z-10 text-center space-y-6"
+                  initial="hidden"
+                  whileInView="visible"
                   viewport={{ once: true }}
-                  className="text-3xl md:text-4xl font-bold"
-                  style={{ color: `hsl(${GOLD.text})` }}
+                  variants={{
+                    hidden: {},
+                    visible: { transition: { staggerChildren: 0.12, delayChildren: 0.3 } }
+                  }}
                 >
-                  Ready to Start Your SAT Journey?
-                </motion.h2>
-                
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 }}
-                  className="max-w-xl mx-auto"
-                  style={{ color: `hsl(${GOLD.muted})` }}
-                >
-                  Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.
-                </motion.p>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-                >
-                  <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
-                    <Button
-                      size="lg"
-                      className="rounded-full px-8"
-                      style={{
-                        background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
-                        color: "hsl(0 0% 5%)",
-                      }}
-                      onClick={() => navigate("/student-portal")}
-                    >
-                      Get Started
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </ClickSpark>
-                  <Button
-                    size="lg"
-                    variant="ghost"
-                    className="rounded-full px-8"
-                    style={{ color: `hsl(${GOLD.light})` }}
-                    onClick={() => window.open("https://www.facebook.com/tsetsegs.agency", "_blank")}
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.5, rotate: -20 },
+                      visible: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 0.6, ease: "backOut" } }
+                    }}
+                    className="inline-flex items-center justify-center w-16 h-16 rounded-2xl"
+                    style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                   >
-                    Follow Us on Facebook
-                  </Button>
+                    <Zap 
+                      className="w-8 h-8"
+                      style={{ color: `hsl(${GOLD.light})` }}
+                    />
+                  </motion.div>
+                  
+                  <motion.h2
+                    variants={{
+                      hidden: { opacity: 0, y: 30 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                    }}
+                    className="text-3xl md:text-4xl font-bold"
+                    style={{ color: `hsl(${GOLD.text})` }}
+                  >
+                    Ready to Start Your SAT Journey?
+                  </motion.h2>
+                  
+                  <motion.p
+                    variants={{
+                      hidden: { opacity: 0, y: 30 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                    }}
+                    className="max-w-xl mx-auto"
+                    style={{ color: `hsl(${GOLD.muted})` }}
+                  >
+                    Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.
+                  </motion.p>
+                  
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, y: 30 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                    }}
+                    className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
+                  >
+                    <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          size="lg"
+                          className="rounded-full px-8"
+                          style={{
+                            background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
+                            color: "hsl(0 0% 5%)",
+                          }}
+                          onClick={() => navigate("/student-portal")}
+                        >
+                          Get Started
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    </ClickSpark>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        size="lg"
+                        variant="ghost"
+                        className="rounded-full px-8"
+                        style={{ color: `hsl(${GOLD.light})` }}
+                        onClick={() => window.open("https://www.facebook.com/tsetsegs.agency", "_blank")}
+                      >
+                        Follow Us on Facebook
+                      </Button>
+                    </motion.div>
+                  </motion.div>
                 </motion.div>
-              </div>
-            </Card>
-          </Spotlight>
-        </div>
+              </Card>
+            </Spotlight>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* TsetsegsOS Footer */}
       <footer 
-        className="relative py-16 px-4 pb-40"
+        className="relative py-16 px-4 pb-40 overflow-hidden"
         style={{ borderTop: `1px solid hsl(${GOLD.primary} / 0.1)` }}
       >
-        <div className="max-w-[95vw] mx-auto">
+        <motion.div 
+          className="max-w-[95vw] mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.2 } }
+          }}
+        >
           {/* Giant TsetsegsOS text */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={{
+              hidden: { opacity: 0, y: 80, scale: 0.8 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 1, ease: [0.25, 0.46, 0.45, 0.94] } }
+            }}
             className="mb-12"
           >
             <h2 
@@ -726,7 +841,13 @@ const Index = () => {
           </motion.div>
 
           {/* Footer info */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <motion.div 
+            className="flex flex-col md:flex-row justify-between items-center gap-6"
+            variants={{
+              hidden: { opacity: 0, y: 30 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+            }}
+          >
             <div className="text-center md:text-left">
               <p 
                 className="text-sm"
@@ -742,18 +863,22 @@ const Index = () => {
             >
               <span>11th floor (1105) & 9th floor (905)</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div 
+          <motion.div 
             className="mt-8 pt-8 text-center text-sm"
             style={{ 
               borderTop: `1px solid hsl(${GOLD.primary} / 0.1)`,
               color: `hsl(${GOLD.muted})`,
             }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { duration: 0.6, delay: 0.2 } }
+            }}
           >
             © {new Date().getFullYear()} Tsetsegs Talent Agency. All rights reserved.
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </footer>
 
       {/* GradualBlur at bottom - backdrop blur effect */}
