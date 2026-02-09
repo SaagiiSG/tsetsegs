@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy, ArrowRightLeft } from "lucide-react";
+import { NudgeButton } from './NudgeButton';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorToast } from "@/lib/errorUtils";
@@ -78,6 +79,7 @@ interface StudentCardProps {
   courseType: 'SAT' | 'IELTS';
   batchId: string;
   teacherName: string;
+  teacherId?: string;
   switchedInfo?: {
     otherBatchName: string;
     otherAttendance: number;
@@ -103,6 +105,7 @@ export function StudentCard({
   courseType,
   batchId,
   teacherName,
+  teacherId,
   switchedInfo,
   onUpdateStudent,
   onAttendanceChange,
@@ -360,6 +363,20 @@ export function StudentCard({
           
           {/* Right side: actions + compact trackers and alerts */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Nudge Button - shows when student has alerts */}
+            {teacherId && hasAlert && (
+              <NudgeButton
+                studentId={student.id}
+                studentName={`${student.first_name} ${student.last_name || ''}`.trim()}
+                teacherId={teacherId}
+                batchId={batchId}
+                parentPhone={student.parent_phone}
+                missedClasses={missedClasses}
+                missedHomework={missedHomework}
+                variant="compact"
+              />
+            )}
+
             {onRemoveFromClass && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>

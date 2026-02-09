@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { FileText, ChevronDown, ChevronRight, Trash2, CheckCircle, XCircle, AlertTriangle, SkipForward, Loader2 } from 'lucide-react';
+import { FileText, ChevronDown, ChevronRight, Trash2, CheckCircle, XCircle, AlertTriangle, SkipForward, Loader2, RefreshCw, CheckCheck, Eye, Image } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ImportSession {
@@ -30,6 +31,7 @@ interface ImportIssue {
   error_message: string | null;
   skip_reason: string | null;
   raw_data: Record<string, any> | null;
+  page_image_url: string | null;
   resolved: boolean;
   created_at: string;
 }
@@ -37,6 +39,9 @@ interface ImportIssue {
 export function CBImportReviewSessions() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<ImportIssue | null>(null);
+  const [selectedIssueIds, setSelectedIssueIds] = useState<Set<string>>(new Set());
+  const [reparseLoading, setReparseLoading] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: sessions, isLoading } = useQuery({
@@ -52,7 +57,7 @@ export function CBImportReviewSessions() {
     }
   });
 
-  const { data: issues } = useQuery({
+  const { data: issues, refetch: refetchIssues } = useQuery({
     queryKey: ['cb-import-issues', expandedSession],
     queryFn: async () => {
       if (!expandedSession) return [];
@@ -95,6 +100,73 @@ export function CBImportReviewSessions() {
     }
   });
 
+  const bulkResolveMutation = useMutation({
+    mutationFn: async (issueIds: string[]) => {
+      const { error } = await supabase
+        .from('cb_import_issues')
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
+        .in('id', issueIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`${selectedIssueIds.size} issues marked as resolved`);
+      setSelectedIssueIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['cb-import-issues', expandedSession] });
+    }
+  });
+
+  // Re-parse functionality - calls edge function with alternative prompt
+  const handleReparse = async (issue: ImportIssue) => {
+    if (!issue.page_image_url) {
+      toast.error('No image available for re-parsing');
+      return;
+    }
+
+    setReparseLoading(issue.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('parse-cb-question', {
+        body: {
+          imageUrl: issue.page_image_url,
+          pageNumber: issue.page_number,
+          retryMode: true // Signal to use alternative parsing strategy
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.skipped) {
+        toast.info(`Page ${issue.page_number}: Still skipped - ${data.skipReason}`);
+      } else if (data.error) {
+        toast.error(`Page ${issue.page_number}: ${data.error}`);
+      } else {
+        // Successfully parsed - show the result for review
+        setSelectedIssue({ ...issue, raw_data: data });
+        toast.success(`Page ${issue.page_number} re-parsed successfully! Review the data.`);
+      }
+    } catch (error: any) {
+      console.error('Re-parse error:', error);
+      toast.error(`Failed to re-parse: ${error.message}`);
+    } finally {
+      setReparseLoading(null);
+    }
+  };
+
+  const toggleIssueSelection = (issueId: string) => {
+    const newSet = new Set(selectedIssueIds);
+    if (newSet.has(issueId)) {
+      newSet.delete(issueId);
+    } else {
+      newSet.add(issueId);
+    }
+    setSelectedIssueIds(newSet);
+  };
+
+  const selectAllUnresolved = () => {
+    if (!issues) return;
+    const unresolvedIds = issues.filter(i => !i.resolved).map(i => i.id);
+    setSelectedIssueIds(new Set(unresolvedIds));
+  };
+
   const getIssueIcon = (type: string) => {
     switch (type) {
       case 'error': return <XCircle className="h-4 w-4 text-destructive" />;
@@ -112,6 +184,8 @@ export function CBImportReviewSessions() {
       default: return null;
     }
   };
+
+  const unresolvedCount = issues?.filter(i => !i.resolved).length || 0;
 
   if (isLoading) {
     return (
@@ -144,7 +218,21 @@ export function CBImportReviewSessions() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Import Review Sessions</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Import Review Sessions</span>
+            {expandedSession && selectedIssueIds.size > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => bulkResolveMutation.mutate(Array.from(selectedIssueIds))}
+                disabled={bulkResolveMutation.isPending}
+              >
+                <CheckCheck className="h-4 w-4" />
+                Resolve Selected ({selectedIssueIds.size})
+              </Button>
+            )}
+          </CardTitle>
           <CardDescription>
             Review errors and skipped pages from previous CollegeBoard imports
           </CardDescription>
@@ -156,7 +244,10 @@ export function CBImportReviewSessions() {
                 <Collapsible
                   key={session.id}
                   open={expandedSession === session.id}
-                  onOpenChange={(open) => setExpandedSession(open ? session.id : null)}
+                  onOpenChange={(open) => {
+                    setExpandedSession(open ? session.id : null);
+                    setSelectedIssueIds(new Set());
+                  }}
                 >
                   <div className="border rounded-lg">
                     <CollapsibleTrigger asChild>
@@ -207,14 +298,31 @@ export function CBImportReviewSessions() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <div className="border-t p-4">
+                        {/* Bulk actions toolbar */}
+                        {unresolvedCount > 0 && (
+                          <div className="flex items-center justify-between mb-4 p-2 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{unresolvedCount} unresolved issue{unresolvedCount !== 1 ? 's' : ''}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={selectAllUnresolved}
+                            >
+                              Select All Unresolved
+                            </Button>
+                          </div>
+                        )}
+
                         {issues && issues.length > 0 ? (
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead className="w-10"></TableHead>
                                 <TableHead className="w-16">Page</TableHead>
                                 <TableHead className="w-28">Type</TableHead>
                                 <TableHead>Details</TableHead>
-                                <TableHead className="w-24">Actions</TableHead>
+                                <TableHead className="w-32">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -223,34 +331,74 @@ export function CBImportReviewSessions() {
                                   key={issue.id}
                                   className={issue.resolved ? 'opacity-50' : ''}
                                 >
+                                  <TableCell>
+                                    {!issue.resolved && (
+                                      <Checkbox
+                                        checked={selectedIssueIds.has(issue.id)}
+                                        onCheckedChange={() => toggleIssueSelection(issue.id)}
+                                      />
+                                    )}
+                                  </TableCell>
                                   <TableCell className="font-mono">{issue.page_number}</TableCell>
                                   <TableCell>{getIssueBadge(issue.issue_type)}</TableCell>
                                   <TableCell>
                                     <p className="text-sm line-clamp-2">
                                       {issue.error_message || issue.skip_reason || '-'}
                                     </p>
-                                    {issue.raw_data && (
-                                      <Button
-                                        variant="link"
-                                        size="sm"
-                                        className="p-0 h-auto text-xs"
-                                        onClick={() => setSelectedIssue(issue)}
-                                      >
-                                        View raw data
-                                      </Button>
-                                    )}
+                                    <div className="flex gap-2 mt-1">
+                                      {issue.raw_data && (
+                                        <Button
+                                          variant="link"
+                                          size="sm"
+                                          className="p-0 h-auto text-xs"
+                                          onClick={() => setSelectedIssue(issue)}
+                                        >
+                                          <Eye className="h-3 w-3 mr-1" />
+                                          View data
+                                        </Button>
+                                      )}
+                                      {issue.page_image_url && (
+                                        <Button
+                                          variant="link"
+                                          size="sm"
+                                          className="p-0 h-auto text-xs"
+                                          onClick={() => setPreviewImageUrl(issue.page_image_url)}
+                                        >
+                                          <Image className="h-3 w-3 mr-1" />
+                                          View image
+                                        </Button>
+                                      )}
+                                    </div>
                                   </TableCell>
                                   <TableCell>
-                                    {!issue.resolved && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => resolveIssueMutation.mutate(issue.id)}
-                                      >
-                                        <CheckCircle className="h-3 w-3 mr-1" />
-                                        Resolve
-                                      </Button>
-                                    )}
+                                    <div className="flex items-center gap-1">
+                                      {/* Re-parse button */}
+                                      {!issue.resolved && issue.page_image_url && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => handleReparse(issue)}
+                                          disabled={reparseLoading === issue.id}
+                                          title="Re-parse with alternative strategy"
+                                        >
+                                          {reparseLoading === issue.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <RefreshCw className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      )}
+                                      {!issue.resolved && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => resolveIssueMutation.mutate(issue.id)}
+                                        >
+                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          Resolve
+                                        </Button>
+                                      )}
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -284,6 +432,34 @@ export function CBImportReviewSessions() {
               {JSON.stringify(selectedIssue?.raw_data, null, 2)}
             </pre>
           </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedIssue(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Page Image Preview</DialogTitle>
+          </DialogHeader>
+          {previewImageUrl && (
+            <div className="flex justify-center">
+              <img 
+                src={previewImageUrl} 
+                alt="Page preview" 
+                className="max-h-[70vh] object-contain rounded-lg border"
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewImageUrl(null)}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
