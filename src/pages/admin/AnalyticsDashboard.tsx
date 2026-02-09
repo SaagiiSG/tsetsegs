@@ -5,7 +5,8 @@ import { OverviewTab } from '@/components/admin/analytics/OverviewTab';
 import { QuestionPerformanceTab } from '@/components/admin/analytics/QuestionPerformanceTab';
 import { StudentDeepDiveTab } from '@/components/admin/analytics/StudentDeepDiveTab';
 import { ClassComparisonTab } from '@/components/admin/analytics/ClassComparisonTab';
-import { BarChart3, FileQuestion, Users, GitCompare } from 'lucide-react';
+import { QuestionHealthTab } from '@/components/admin/analytics/QuestionHealthTab';
+import { BarChart3, FileQuestion, Users, GitCompare, Stethoscope } from 'lucide-react';
 
 const AnalyticsDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,7 +26,7 @@ const AnalyticsDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -33,6 +34,10 @@ const AnalyticsDashboard = () => {
           <TabsTrigger value="questions" className="flex items-center gap-2">
             <FileQuestion className="h-4 w-4" />
             <span className="hidden sm:inline">Questions</span>
+          </TabsTrigger>
+          <TabsTrigger value="health" className="flex items-center gap-2">
+            <Stethoscope className="h-4 w-4" />
+            <span className="hidden sm:inline">Health</span>
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -50,6 +55,10 @@ const AnalyticsDashboard = () => {
 
         <TabsContent value="questions" className="mt-6">
           <QuestionPerformanceTab />
+        </TabsContent>
+
+        <TabsContent value="health" className="mt-6">
+          <QuestionHealthTab />
         </TabsContent>
 
         <TabsContent value="students" className="mt-6">

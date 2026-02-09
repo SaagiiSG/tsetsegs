@@ -10,17 +10,31 @@ import {
   Sparkles,
   BookOpen,
   BarChart3,
-  Zap
+  Zap,
+  Star
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { SplitText, BlurText, GradientText, Spotlight, Magnet, ClickSpark } from "@/components/reactbits";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+// Golden color palette - independent of app themes
+const GOLD = {
+  primary: "43 88% 50%",
+  light: "45 90% 65%",
+  dark: "40 85% 40%",
+  glow: "43 95% 70%",
+  bg: "45 30% 6%",
+  cardBg: "42 25% 10%",
+  text: "45 20% 95%",
+  muted: "43 15% 60%",
+};
 
 // Statistics for social proof
 const stats = [
-  { value: "1500+", label: "Average Score" },
-  { value: "200+", label: "Students Trained" },
-  { value: "98%", label: "Success Rate" },
-  { value: "3+", label: "Years Experience" },
+  { value: "700+", label: "Avg Math Score", icon: Target },
+  { value: "1000+", label: "Students Trained", icon: Users },
+  { value: "3+", label: "Years Experience", icon: Star },
 ];
 
 // Features cards
@@ -47,38 +61,95 @@ const features = [
   },
 ];
 
+// Team members
+const teamMembers = [
+  { name: "Misheel", role: "CEO", image: "/newyear/misheel.svg" },
+  { name: "Brody", role: "Manager | English Teacher (IELTS, SAT)", image: "/newyear/brody.svg" },
+  { name: "Dulguun", role: "IELTS", image: "/newyear/dulguun.svg" },
+  { name: "Udval", role: "IELTS", image: "/newyear/udval.svg" },
+  { name: "Saran-Ochir", role: "SAT Math", image: "/newyear/saran.svg" },
+  { name: "Manlai", role: "SAT Math", image: "/newyear/manlai.svg" },
+  { name: "Tuguldur", role: "SAT Math", image: "/newyear/tuguldur.png" },
+  { name: "Enguun", role: "SAT Math", image: "/newyear/enguun.svg" },
+  { name: "Khulan", role: "SAT Math", image: "/newyear/khulan.svg" },
+];
+
 const Index = () => {
   const navigate = useNavigate();
 
+  // Fetch student success scores from bluebook_attempts
+  const { data: successScores } = useQuery({
+    queryKey: ["landing-success-scores"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bluebook_attempts")
+        .select("total_score, math_scaled_score, completed_at")
+        .not("total_score", "is", null)
+        .gte("total_score", 1400)
+        .order("total_score", { ascending: false })
+        .limit(12);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div 
+      className="min-h-screen overflow-hidden"
+      style={{
+        background: `hsl(${GOLD.bg})`,
+        color: `hsl(${GOLD.text})`,
+      }}
+    >
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
-        {/* Animated grid background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
+        {/* Animated grid background with golden tint */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `linear-gradient(to right, hsl(${GOLD.primary} / 0.3) 1px, transparent 1px), linear-gradient(to bottom, hsl(${GOLD.primary} / 0.3) 1px, transparent 1px)`,
+            backgroundSize: "4rem 4rem",
+            maskImage: "radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%)",
+          }}
+        />
         
-        {/* Gradient orbs */}
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        {/* Golden gradient orbs */}
+        <div 
+          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse"
+          style={{ background: `hsl(${GOLD.primary} / 0.2)` }}
+        />
+        <div 
+          className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse"
+          style={{ background: `hsl(${GOLD.light} / 0.15)`, animationDelay: "1s" }}
+        />
         
         <div className="relative z-10 max-w-6xl mx-auto text-center space-y-8">
-          {/* Badge */}
+          {/* Top Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm text-primary"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
+            style={{
+              background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
+              border: `1px solid hsl(${GOLD.primary} / 0.4)`,
+              color: `hsl(${GOLD.light})`,
+            }}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Mongolia's Premier SAT Prep</span>
+            <span>Mongolia's Best SAT Math Center</span>
           </motion.div>
 
           {/* Main headline with animated text */}
           <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+            <h1 
+              className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
+              style={{ color: `hsl(${GOLD.text})` }}
+            >
               <SplitText
                 text="Master the SAT"
-                className="block text-foreground"
+                className="block"
                 delay={30}
                 duration={0.5}
                 splitType="chars"
@@ -86,7 +157,7 @@ const Index = () => {
             </h1>
             <div className="text-5xl md:text-7xl lg:text-8xl font-bold">
               <GradientText
-                colors={["hsl(345, 75%, 65%)", "hsl(25, 85%, 70%)", "hsl(270, 50%, 75%)", "hsl(345, 75%, 65%)"]}
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
                 animationSpeed={6}
                 className="font-bold"
               >
@@ -100,10 +171,11 @@ const Index = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
+            style={{ color: `hsl(${GOLD.muted})` }}
           >
             <BlurText
               text="Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance."
-              className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto"
+              className="text-lg md:text-xl max-w-3xl mx-auto"
               delay={20}
               animateBy="words"
             />
@@ -116,11 +188,16 @@ const Index = () => {
             transition={{ delay: 1.2, duration: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
           >
-            <ClickSpark sparkColor="hsl(345 75% 65%)">
+            <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
               <Magnet strength={0.3}>
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 rounded-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+                  className="text-lg px-8 py-6 rounded-full transition-all hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
+                    color: "hsl(0 0% 5%)",
+                    boxShadow: `0 0 40px hsl(${GOLD.primary} / 0.4)`,
+                  }}
                   onClick={() => navigate("/student-portal")}
                 >
                   <GraduationCap className="mr-2 h-5 w-5" />
@@ -134,6 +211,11 @@ const Index = () => {
               size="lg"
               variant="outline"
               className="text-lg px-8 py-6 rounded-full border-2"
+              style={{
+                borderColor: `hsl(${GOLD.primary} / 0.5)`,
+                color: `hsl(${GOLD.light})`,
+                background: "transparent",
+              }}
               onClick={() => navigate("/login")}
             >
               <Users className="mr-2 h-5 w-5" />
@@ -146,7 +228,7 @@ const Index = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5, duration: 0.5 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-16 max-w-4xl mx-auto"
+            className="grid grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -156,8 +238,19 @@ const Index = () => {
                 transition={{ delay: 1.5 + index * 0.1, duration: 0.4 }}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                <div 
+                  className="text-3xl md:text-5xl font-bold"
+                  style={{ color: `hsl(${GOLD.light})` }}
+                >
+                  {stat.value}
+                </div>
+                <div 
+                  className="text-sm mt-1 flex items-center justify-center gap-1"
+                  style={{ color: `hsl(${GOLD.muted})` }}
+                >
+                  <stat.icon className="w-3 h-3" />
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -173,16 +266,99 @@ const Index = () => {
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2"
+            className="w-6 h-10 rounded-full flex justify-center pt-2"
+            style={{ border: `2px solid hsl(${GOLD.primary} / 0.3)` }}
           >
-            <div className="w-1 h-2 bg-muted-foreground/50 rounded-full" />
+            <div 
+              className="w-1 h-2 rounded-full"
+              style={{ background: `hsl(${GOLD.primary} / 0.5)` }}
+            />
           </motion.div>
         </motion.div>
       </section>
 
+      {/* Student Success Section */}
+      {successScores && successScores.length > 0 && (
+        <section className="relative py-24 px-4">
+          <div 
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
+          />
+          
+          <div className="relative max-w-6xl mx-auto">
+            <div className="text-center space-y-4 mb-16">
+              <motion.span
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="font-medium"
+                style={{ color: `hsl(${GOLD.light})` }}
+              >
+                Student Achievements
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl md:text-5xl font-bold"
+              >
+                Our Students{" "}
+                <GradientText
+                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                  animationSpeed={4}
+                >
+                  Excel
+                </GradientText>
+              </motion.h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {successScores.map((score, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                  className="p-4 rounded-2xl text-center"
+                  style={{
+                    background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
+                    border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+                  }}
+                >
+                  <div 
+                    className="text-2xl md:text-3xl font-bold"
+                    style={{ color: `hsl(${GOLD.light})` }}
+                  >
+                    {score.total_score}
+                  </div>
+                  <div 
+                    className="text-xs mt-1"
+                    style={{ color: `hsl(${GOLD.muted})` }}
+                  >
+                    Total Score
+                  </div>
+                  {score.math_scaled_score && (
+                    <div 
+                      className="text-sm mt-2 font-medium"
+                      style={{ color: `hsl(${GOLD.primary})` }}
+                    >
+                      Math: {score.math_scaled_score}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Features Section */}
       <section className="relative py-24 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.03), transparent)` }}
+        />
         
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center space-y-4 mb-16">
@@ -190,7 +366,8 @@ const Index = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-primary font-medium"
+              className="font-medium"
+              style={{ color: `hsl(${GOLD.light})` }}
             >
               Why Choose Us
             </motion.span>
@@ -202,7 +379,7 @@ const Index = () => {
             >
               Everything You Need to{" "}
               <GradientText
-                colors={["hsl(345, 75%, 65%)", "hsl(25, 85%, 70%)"]}
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
                 animationSpeed={4}
               >
                 Succeed
@@ -220,13 +397,33 @@ const Index = () => {
                 transition={{ delay: index * 0.1, duration: 0.5 }}
               >
                 <Spotlight className="h-full">
-                  <Card className="relative h-full p-6 bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-colors group">
+                  <Card 
+                    className="relative h-full p-6 backdrop-blur-sm transition-colors group"
+                    style={{
+                      background: `hsl(${GOLD.cardBg})`,
+                      border: `1px solid hsl(${GOLD.primary} / 0.15)`,
+                    }}
+                  >
                     <div className="space-y-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <feature.icon className="w-6 h-6 text-primary" />
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
+                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                      >
+                        <feature.icon 
+                          className="w-6 h-6"
+                          style={{ color: `hsl(${GOLD.light})` }}
+                        />
                       </div>
-                      <h3 className="text-xl font-semibold">{feature.title}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
+                      <h3 
+                        className="text-xl font-semibold"
+                        style={{ color: `hsl(${GOLD.text})` }}
+                      >
+                        {feature.title}
+                      </h3>
+                      <p 
+                        className="text-sm leading-relaxed"
+                        style={{ color: `hsl(${GOLD.muted})` }}
+                      >
                         {feature.description}
                       </p>
                     </div>
@@ -238,22 +435,110 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Team Section */}
+      <section className="relative py-24 px-4">
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
+        />
+        
+        <div className="relative max-w-6xl mx-auto">
+          <div className="text-center space-y-4 mb-16">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-medium"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              Meet the Team
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-bold"
+            >
+              Our{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
+              >
+                Teachers
+              </GradientText>
+            </motion.h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {teamMembers.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+                className="text-center group"
+              >
+                <div 
+                  className="relative w-24 h-24 md:w-28 md:h-28 mx-auto mb-4 rounded-full overflow-hidden transition-transform group-hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
+                    border: `2px solid hsl(${GOLD.primary} / 0.3)`,
+                  }}
+                >
+                  <img 
+                    src={member.image} 
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 
+                  className="font-semibold text-lg"
+                  style={{ color: `hsl(${GOLD.text})` }}
+                >
+                  {member.name}
+                </h3>
+                <p 
+                  className="text-xs mt-1"
+                  style={{ color: `hsl(${GOLD.muted})` }}
+                >
+                  {member.role}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative py-24 px-4">
         <div className="max-w-4xl mx-auto">
           <Spotlight className="rounded-3xl">
-            <Card className="relative overflow-hidden bg-gradient-to-br from-card via-card to-primary/10 border-border/50 p-8 md:p-12">
+            <Card 
+              className="relative overflow-hidden p-8 md:p-12"
+              style={{
+                background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
+                border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+              }}
+            >
               {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div 
+                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
+                style={{ background: `hsl(${GOLD.primary} / 0.1)` }}
+              />
               
               <div className="relative z-10 text-center space-y-6">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10"
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl"
+                  style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                 >
-                  <Zap className="w-8 h-8 text-primary" />
+                  <Zap 
+                    className="w-8 h-8"
+                    style={{ color: `hsl(${GOLD.light})` }}
+                  />
                 </motion.div>
                 
                 <motion.h2
@@ -261,6 +546,7 @@ const Index = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="text-3xl md:text-4xl font-bold"
+                  style={{ color: `hsl(${GOLD.text})` }}
                 >
                   Ready to Start Your SAT Journey?
                 </motion.h2>
@@ -270,7 +556,8 @@ const Index = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.1 }}
-                  className="text-muted-foreground max-w-xl mx-auto"
+                  className="max-w-xl mx-auto"
+                  style={{ color: `hsl(${GOLD.muted})` }}
                 >
                   Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.
                 </motion.p>
@@ -282,10 +569,14 @@ const Index = () => {
                   transition={{ delay: 0.2 }}
                   className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
                 >
-                  <ClickSpark sparkColor="hsl(345 75% 65%)">
+                  <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
                     <Button
                       size="lg"
                       className="rounded-full px-8"
+                      style={{
+                        background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
+                        color: "hsl(0 0% 5%)",
+                      }}
                       onClick={() => navigate("/student-portal")}
                     >
                       Get Started
@@ -296,6 +587,7 @@ const Index = () => {
                     size="lg"
                     variant="ghost"
                     className="rounded-full px-8"
+                    style={{ color: `hsl(${GOLD.light})` }}
                     onClick={() => window.open("https://www.facebook.com/tsetsegs.agency", "_blank")}
                   >
                     Follow Us on Facebook
@@ -307,32 +599,59 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
+      {/* TsetsegsOS Footer */}
+      <footer 
+        className="relative py-16 px-4"
+        style={{ borderTop: `1px solid hsl(${GOLD.primary} / 0.1)` }}
+      >
+        <div className="max-w-[95vw] mx-auto">
+          {/* Giant TsetsegsOS text */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <h2 
+              className="font-bold uppercase tracking-tight leading-none"
+              style={{
+                fontSize: "clamp(4rem, 18vw, 20rem)",
+                background: `linear-gradient(135deg, hsl(${GOLD.light}), hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              TSETSEGS<span style={{ opacity: 0.7 }}>OS</span>
+            </h2>
+          </motion.div>
+
+          {/* Footer info */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
-              <h3 className="text-xl font-bold">
-                <GradientText
-                  colors={["hsl(345, 75%, 65%)", "hsl(25, 85%, 70%)"]}
-                  animationSpeed={8}
-                >
-                  Tsetsegs Agency
-                </GradientText>
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                SAT Prep Excellence in Mongolia
+              <p 
+                className="text-sm"
+                style={{ color: `hsl(${GOLD.muted})` }}
+              >
+                SAT & IELTS Prep Excellence in Mongolia
               </p>
             </div>
             
-            <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
-              <span>Our teachers: Saran-Ochir, Altan-Erdene, Manlai</span>
-              <span className="hidden md:inline">•</span>
+            <div 
+              className="flex flex-col md:flex-row items-center gap-4 text-sm"
+              style={{ color: `hsl(${GOLD.muted})` }}
+            >
               <span>11th floor (1105) & 9th floor (905)</span>
             </div>
           </div>
           
-          <div className="mt-8 pt-8 border-t border-border/50 text-center text-sm text-muted-foreground">
+          <div 
+            className="mt-8 pt-8 text-center text-sm"
+            style={{ 
+              borderTop: `1px solid hsl(${GOLD.primary} / 0.1)`,
+              color: `hsl(${GOLD.muted})`,
+            }}
+          >
             © {new Date().getFullYear()} Tsetsegs Talent Agency. All rights reserved.
           </div>
         </div>
