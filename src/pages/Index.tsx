@@ -21,7 +21,6 @@ import {
   Spotlight,
   Magnet, 
   ClickSpark,
-  LaserFlow,
   DomeGallery,
   ProfileCard,
   Counter,
@@ -140,21 +139,8 @@ const Index = () => {
         />
       </div>
 
-      {/* Hero Section - LaserFlow contained here, ends below stats */}
+      {/* Hero Section */}
       <section className="relative min-h-screen">
-        {/* LaserFlow - contained within hero only */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <LaserFlow 
-            color="#D4A853"
-            verticalSizing={2.5}
-            horizontalSizing={0.7}
-            fogIntensity={0.6}
-            wispIntensity={5}
-            flowSpeed={0.3}
-            wispSpeed={10}
-            className="w-full h-full"
-          />
-        </div>
 
         {/* Animated grid background with golden tint */}
         <div 
