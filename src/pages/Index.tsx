@@ -126,6 +126,7 @@ const Index = () => {
       style={{
         background: `hsl(${GOLD.bg})`,
         color: `hsl(${GOLD.text})`,
+        fontFamily: "'Chillax', sans-serif",
       }}
     >
       {/* Floating Lines Background - Fixed across all sections */}
