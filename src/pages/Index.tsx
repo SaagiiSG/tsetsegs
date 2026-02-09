@@ -313,7 +313,110 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Student Success Section with DomeGallery */}
+      {/* Features Section with LaserFlow wrapper - RIGHT AFTER HERO */}
+      <section className="relative py-24 px-4">
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.03), transparent)` }}
+        />
+        
+        <div className="relative max-w-6xl mx-auto">
+          {/* LaserFlow wrapped section */}
+          <LaserFlow 
+            beamColor="#D4A853"
+            beamWidth={3}
+            speed={3}
+            glowIntensity={1.5}
+            fogOpacity={0.1}
+            className="rounded-3xl p-8 md:p-12"
+          >
+            <div className="text-center space-y-4 mb-16">
+              <motion.span
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="font-medium"
+                style={{ color: `hsl(${GOLD.light})` }}
+              >
+                Why Choose Us
+              </motion.span>
+              
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl md:text-5xl font-bold"
+              >
+                Everything You Need to{" "}
+                <GradientText
+                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                  animationSpeed={4}
+                >
+                  Succeed
+                </GradientText>
+              </motion.h2>
+            </div>
+
+            {/* Feature cards in scroll-triggered stack layout */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 50, rotateX: -15 }}
+                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ 
+                    delay: index * 0.15, 
+                    duration: 0.6,
+                    type: "spring",
+                    stiffness: 100,
+                  }}
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <Spotlight 
+                    spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
+                    className="h-full"
+                  >
+                    <Card 
+                      className="relative h-full p-8 backdrop-blur-sm transition-all group hover:-translate-y-2"
+                      style={{
+                        background: `hsl(${GOLD.cardBg})`,
+                        border: `1px solid hsl(${GOLD.primary} / 0.15)`,
+                      }}
+                    >
+                      <div className="space-y-4">
+                        <div 
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
+                          style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                        >
+                          <feature.icon 
+                            className="w-7 h-7"
+                            style={{ color: `hsl(${GOLD.light})` }}
+                          />
+                        </div>
+                        <h3 
+                          className="text-2xl font-semibold"
+                          style={{ color: `hsl(${GOLD.text})` }}
+                        >
+                          {feature.title}
+                        </h3>
+                        <p 
+                          className="text-base leading-relaxed"
+                          style={{ color: `hsl(${GOLD.muted})` }}
+                        >
+                          {feature.description}
+                        </p>
+                      </div>
+                    </Card>
+                  </Spotlight>
+                </motion.div>
+              ))}
+            </div>
+          </LaserFlow>
+        </div>
+      </section>
+
+      {/* Student Success Section with DomeGallery - AFTER FEATURES */}
       <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
@@ -393,108 +496,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section with LaserFlow wrapper */}
-      <section className="relative py-24 px-4">
-        <div 
-          className="absolute inset-0"
-          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.03), transparent)` }}
-        />
-        
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center space-y-4 mb-16">
-            <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="font-medium"
-              style={{ color: `hsl(${GOLD.light})` }}
-            >
-              Why Choose Us
-            </motion.span>
-            
-            {/* LaserFlow wrapped heading */}
-            <LaserFlow 
-              color={`hsl(${GOLD.primary})`}
-              strokeWidth={2}
-              speed={4}
-              className="inline-block p-6 rounded-2xl"
-            >
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-3xl md:text-5xl font-bold"
-              >
-                Everything You Need to{" "}
-                <GradientText
-                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
-                  animationSpeed={4}
-                >
-                  Succeed
-                </GradientText>
-              </motion.h2>
-            </LaserFlow>
-          </div>
-
-          {/* Feature cards in scroll-triggered stack layout */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50, rotateX: -15 }}
-                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ 
-                  delay: index * 0.15, 
-                  duration: 0.6,
-                  type: "spring",
-                  stiffness: 100,
-                }}
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <Spotlight 
-                  spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
-                  className="h-full"
-                >
-                  <Card 
-                    className="relative h-full p-8 backdrop-blur-sm transition-all group hover:-translate-y-2"
-                    style={{
-                      background: `hsl(${GOLD.cardBg})`,
-                      border: `1px solid hsl(${GOLD.primary} / 0.15)`,
-                    }}
-                  >
-                    <div className="space-y-4">
-                      <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
-                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                      >
-                        <feature.icon 
-                          className="w-7 h-7"
-                          style={{ color: `hsl(${GOLD.light})` }}
-                        />
-                      </div>
-                      <h3 
-                        className="text-2xl font-semibold"
-                        style={{ color: `hsl(${GOLD.text})` }}
-                      >
-                        {feature.title}
-                      </h3>
-                      <p 
-                        className="text-base leading-relaxed"
-                        style={{ color: `hsl(${GOLD.muted})` }}
-                      >
-                        {feature.description}
-                      </p>
-                    </div>
-                  </Card>
-                </Spotlight>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section with ProfileCard */}
+      {/* Team Section with ProfileCard - AFTER STUDENT WINS */}
       <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
@@ -693,7 +695,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Gradual glow at bottom */}
+      {/* Gradual glow at bottom - ALWAYS VISIBLE */}
       <Gradual color={`hsl(${GOLD.primary})`} height="100px">
         <div />
       </Gradual>
