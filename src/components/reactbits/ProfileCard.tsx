@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import React from "react";
 
 interface ProfileCardProps {
   name: string;
@@ -7,6 +8,7 @@ interface ProfileCardProps {
   image?: string;
   className?: string;
   delay?: number;
+  icon?: React.ReactNode;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -15,6 +17,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   image,
   className = "",
   delay = 0,
+  icon,
 }) => {
   return (
     <motion.div
@@ -42,26 +45,28 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           }}
         />
         
-        {/* Image container */}
-        <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[hsl(45_30%_15%)]">
-          {image ? (
+        {/* Icon/Image container */}
+        <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[hsl(45_30%_15%)] flex items-center justify-center">
+          {icon ? (
+            <div className="w-20 h-20 rounded-full bg-[hsl(43_88%_50%_/_0.15)] flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+              {icon}
+            </div>
+          ) : image ? (
             <img
               src={image}
               alt={name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[hsl(43_88%_50%_/_0.1)] to-transparent">
-              <div className="w-20 h-20 rounded-full bg-[hsl(43_88%_50%_/_0.2)] flex items-center justify-center">
-                <span className="text-3xl font-bold text-[hsl(43_88%_70%)]">
-                  {name.charAt(0)}
-                </span>
-              </div>
+            <div className="w-20 h-20 rounded-full bg-[hsl(43_88%_50%_/_0.2)] flex items-center justify-center">
+              <span className="text-3xl font-bold text-[hsl(43_88%_70%)]">
+                {name.charAt(0)}
+              </span>
             </div>
           )}
           
           {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[hsl(45_30%_6%)] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[hsl(45_30%_6%)] via-transparent to-transparent pointer-events-none" />
         </div>
 
         {/* Text content */}
