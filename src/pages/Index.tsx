@@ -636,31 +636,28 @@ const Index = () => {
                       transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } 
                     }
                   }}
-                  whileHover={{ y: -10, scale: 1.02 }}
                   className="cursor-default"
                 >
                   <PixelCard
                     variant="gold"
-                    className="w-full aspect-[3/4] border-[hsl(43_88%_50%_/_0.3)]"
+                    className="w-full aspect-[3/4] border border-[hsl(43_88%_50%_/_0.3)] hover:border-[hsl(43_88%_50%_/_0.5)] transition-all duration-300 hover:shadow-[0_0_30px_hsl(43_88%_50%_/_0.2)]"
                     style={{
                       background: `linear-gradient(135deg, hsl(${GOLD.bg}), hsl(${GOLD.cardBg}))`,
                     }}
                   >
                     <div className="relative z-10 flex flex-col items-center justify-center gap-4 p-6 text-center">
                       {/* Icon circle */}
-                      <motion.div 
-                        className="w-16 h-16 rounded-full flex items-center justify-center"
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
                         style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                        whileHover={{ scale: 1.15, rotate: 5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
                       >
                         {iconMap[member.iconType]}
-                      </motion.div>
+                      </div>
                       
                       {/* Name */}
                       <h3 
                         className="text-lg font-bold"
-                        style={{ color: `hsl(${GOLD.text})` }}
+                        style={{ color: `hsl(${GOLD.text})`, fontFamily: "'Outfit', sans-serif" }}
                       >
                         {member.name}
                       </h3>
