@@ -126,7 +126,7 @@ const Index = () => {
       style={{
         background: `hsl(${GOLD.bg})`,
         color: `hsl(${GOLD.text})`,
-        fontFamily: "'Chillax', sans-serif",
+        fontFamily: "'Nunito', sans-serif",
       }}
     >
       {/* Floating Lines Background - Fixed across all sections */}
@@ -212,7 +212,7 @@ const Index = () => {
               }}
             >
               {/* Main headline with animated text */}
-              <div className="space-y-4">
+              <div className="space-y-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
                 <h1 
                   className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
                   style={{ color: `hsl(${GOLD.text})` }}
@@ -364,7 +364,7 @@ const Index = () => {
                 hidden: { opacity: 0, y: 40, scale: 0.95 },
                 visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
               }}
-              className="text-3xl md:text-5xl font-bold"
+              className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               Everything You Need to{" "}
               <GradientText
@@ -464,7 +464,7 @@ const Index = () => {
                 hidden: { opacity: 0, y: 40, scale: 0.95 },
                 visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
               }}
-              className="text-3xl md:text-5xl font-bold"
+              className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               Our Students{" "}
               <GradientText
@@ -593,7 +593,7 @@ const Index = () => {
                 hidden: { opacity: 0, y: 40, scale: 0.95 },
                 visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
               }}
-              className="text-3xl md:text-5xl font-bold"
+              className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               Our{" "}
               <GradientText
@@ -746,7 +746,7 @@ const Index = () => {
                       visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
                     }}
                     className="text-3xl md:text-4xl font-bold"
-                    style={{ color: `hsl(${GOLD.text})` }}
+                    style={{ color: `hsl(${GOLD.text})`, fontFamily: "'Outfit', sans-serif" }}
                   >
                     Ready to Start Your SAT Journey?
                   </motion.h2>
@@ -831,6 +831,7 @@ const Index = () => {
               className="font-bold uppercase tracking-tight leading-none"
               style={{
                 fontSize: "clamp(4rem, 18vw, 20rem)",
+                fontFamily: "'Outfit', sans-serif",
                 background: `linear-gradient(135deg, hsl(${GOLD.light}), hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
