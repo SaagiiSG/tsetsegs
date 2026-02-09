@@ -337,11 +337,11 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
 
   const containerClassName = useWindowScroll
     ? `relative w-full ${className}`.trim()
-    : `relative w-full h-full overflow-y-auto overflow-x-visible ${className}`.trim();
+    : `relative w-full h-full overflow-y-auto overflow-x-visible scrollbar-hide ${className}`.trim();
 
   return (
     <div className={containerClassName} ref={scrollerRef} style={containerStyles}>
-      <div className="scroll-stack-inner pt-[20vh] px-20 pb-[50rem] min-h-screen">
+      <div className={`scroll-stack-inner ${useWindowScroll ? 'pt-0 px-0 pb-[30rem]' : 'pt-[20vh] px-20 pb-[50rem]'} min-h-screen`}>
         {children}
         <div className="scroll-stack-end w-full h-px" />
       </div>
