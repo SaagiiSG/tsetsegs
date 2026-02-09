@@ -134,10 +134,10 @@ const Index = () => {
         opacity={0.12}
       />
 
-      {/* COMBINED Hero + Features Section - LaserFlow starts from top */}
-      <section className="relative min-h-[200vh]">
-        {/* LaserFlow - starts from very top of this combined section */}
-        <div className="absolute inset-x-0 top-0 h-screen pointer-events-none z-0">
+      {/* Hero Section - LaserFlow contained here, ends below stats */}
+      <section className="relative min-h-screen">
+        {/* LaserFlow - contained within hero only */}
+        <div className="absolute inset-0 pointer-events-none z-0">
           <LaserFlow 
             color="#D4A853"
             verticalSizing={2.5}
@@ -170,8 +170,8 @@ const Index = () => {
           style={{ background: `hsl(${GOLD.light} / 0.15)`, animationDelay: "1s" }}
         />
 
-        {/* Hero Content - first viewport */}
-        <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
+        {/* Hero Content */}
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
           <div className="max-w-6xl mx-auto text-center space-y-8">
             {/* Top Badge */}
             <motion.div
@@ -271,7 +271,7 @@ const Index = () => {
               </Button>
             </motion.div>
 
-            {/* Stats with Counter animation */}
+            {/* Stats with Counter animation - LaserFlow ends after this */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -307,106 +307,86 @@ const Index = () => {
               ))}
             </motion.div>
           </div>
-
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 0.5 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          >
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-6 h-10 rounded-full flex justify-center pt-2"
-              style={{ border: `2px solid hsl(${GOLD.primary} / 0.3)` }}
-            >
-              <div 
-                className="w-1 h-2 rounded-full"
-                style={{ background: `hsl(${GOLD.primary} / 0.5)` }}
-              />
-            </motion.div>
-          </motion.div>
         </div>
+      </section>
 
-        {/* Features Content - appears after scrolling past LaserFlow */}
-        <div className="relative z-10 py-24 px-4">
-          <div className="max-w-6xl mx-auto">
-            {/* Text header */}
-            <div className="text-center space-y-4 mb-12">
-              <motion.span
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className="font-medium"
-                style={{ color: `hsl(${GOLD.light})` }}
+      {/* Features Section - Starts right after Hero/LaserFlow ends */}
+      <section className="relative py-24 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Text header */}
+          <div className="text-center space-y-4 mb-12">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-medium"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              Why Choose Us
+            </motion.span>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-bold"
+            >
+              Everything You Need to{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
               >
-                Why Choose Us
-              </motion.span>
-              
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
+                Succeed
+              </GradientText>
+            </motion.h2>
+          </div>
+
+          {/* Feature cards - 80% width, simple vertical stack */}
+          <div className="flex flex-col items-center gap-6">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-3xl md:text-5xl font-bold"
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="w-[80%]"
               >
-                Everything You Need to{" "}
-                <GradientText
-                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
-                  animationSpeed={4}
+                <Card 
+                  className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-1"
+                  style={{
+                    background: `hsl(${GOLD.cardBg} / 0.95)`,
+                    border: `1px solid hsl(${GOLD.primary} / 0.2)`,
+                  }}
                 >
-                  Succeed
-                </GradientText>
-              </motion.h2>
-            </div>
-
-            {/* Feature cards - 80% width, simple vertical stack */}
-            <div className="flex flex-col items-center gap-6">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                  className="w-[80%]"
-                >
-                  <Card 
-                    className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-1"
-                    style={{
-                      background: `hsl(${GOLD.cardBg} / 0.95)`,
-                      border: `1px solid hsl(${GOLD.primary} / 0.2)`,
-                    }}
-                  >
-                    <div className="flex items-start gap-6">
-                      <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                      >
-                        <feature.icon 
-                          className="w-7 h-7"
-                          style={{ color: `hsl(${GOLD.light})` }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 
-                          className="text-2xl font-semibold"
-                          style={{ color: `hsl(${GOLD.text})` }}
-                        >
-                          {feature.title}
-                        </h3>
-                        <p 
-                          className="text-base leading-relaxed"
-                          style={{ color: `hsl(${GOLD.muted})` }}
-                        >
-                          {feature.description}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-6">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                    >
+                      <feature.icon 
+                        className="w-7 h-7"
+                        style={{ color: `hsl(${GOLD.light})` }}
+                      />
                     </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="space-y-2">
+                      <h3 
+                        className="text-2xl font-semibold"
+                        style={{ color: `hsl(${GOLD.text})` }}
+                      >
+                        {feature.title}
+                      </h3>
+                      <p 
+                        className="text-base leading-relaxed"
+                        style={{ color: `hsl(${GOLD.muted})` }}
+                      >
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
