@@ -22,11 +22,13 @@ import {
   Magnet, 
   ClickSpark,
   LaserFlow,
+  ScrollStack,
+  ScrollStackItem,
   DomeGallery,
   ProfileCard,
   Counter,
   FloatingLines,
-  Gradual,
+  GradualBlur,
 } from "@/components/reactbits";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -364,60 +366,63 @@ const Index = () => {
               </motion.h2>
             </div>
 
-            {/* Feature cards */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 50, rotateX: -15 }}
-                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ 
-                    delay: index * 0.15, 
-                    duration: 0.6,
-                    type: "spring",
-                    stiffness: 100,
-                  }}
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  <Spotlight 
-                    spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
-                    className="h-full"
+            {/* Feature cards with ScrollStack */}
+            <div className="h-[120vh]">
+              <ScrollStack
+                itemDistance={60}
+                itemScale={0.04}
+                itemStackDistance={20}
+                stackPosition="30%"
+                baseScale={0.9}
+                useWindowScroll={true}
+                className="!pt-0 !pb-0"
+              >
+                {features.map((feature) => (
+                  <ScrollStackItem 
+                    key={feature.title}
+                    itemClassName="!my-4"
                   >
-                    <Card 
-                      className="relative h-full p-8 backdrop-blur-sm transition-all group hover:-translate-y-2"
-                      style={{
-                        background: `hsl(${GOLD.cardBg})`,
-                        border: `1px solid hsl(${GOLD.primary} / 0.15)`,
-                      }}
+                    <Spotlight 
+                      spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
+                      className="h-full"
                     >
-                      <div className="space-y-4">
-                        <div 
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
-                          style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                        >
-                          <feature.icon 
-                            className="w-7 h-7"
-                            style={{ color: `hsl(${GOLD.light})` }}
-                          />
+                      <Card 
+                        className="relative h-full p-8 backdrop-blur-sm transition-all"
+                        style={{
+                          background: `hsl(${GOLD.cardBg})`,
+                          border: `1px solid hsl(${GOLD.primary} / 0.15)`,
+                        }}
+                      >
+                        <div className="flex items-start gap-6">
+                          <div 
+                            className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
+                          >
+                            <feature.icon 
+                              className="w-7 h-7"
+                              style={{ color: `hsl(${GOLD.light})` }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 
+                              className="text-2xl font-semibold"
+                              style={{ color: `hsl(${GOLD.text})` }}
+                            >
+                              {feature.title}
+                            </h3>
+                            <p 
+                              className="text-base leading-relaxed"
+                              style={{ color: `hsl(${GOLD.muted})` }}
+                            >
+                              {feature.description}
+                            </p>
+                          </div>
                         </div>
-                        <h3 
-                          className="text-2xl font-semibold"
-                          style={{ color: `hsl(${GOLD.text})` }}
-                        >
-                          {feature.title}
-                        </h3>
-                        <p 
-                          className="text-base leading-relaxed"
-                          style={{ color: `hsl(${GOLD.muted})` }}
-                        >
-                          {feature.description}
-                        </p>
-                      </div>
-                    </Card>
-                  </Spotlight>
-                </motion.div>
-              ))}
+                      </Card>
+                    </Spotlight>
+                  </ScrollStackItem>
+                ))}
+              </ScrollStack>
             </div>
           </div>
         </div>
@@ -702,10 +707,16 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Gradual glow at bottom - ALWAYS VISIBLE */}
-      <Gradual color={`hsl(${GOLD.primary})`} height="100px">
-        <div />
-      </Gradual>
+      {/* GradualBlur at bottom - backdrop blur effect */}
+      <GradualBlur 
+        position="bottom"
+        height="10rem"
+        strength={3}
+        divCount={6}
+        curve="ease-out"
+        target="page"
+        zIndex={50}
+      />
     </div>
   );
 };
