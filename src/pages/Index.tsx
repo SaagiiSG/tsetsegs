@@ -22,8 +22,6 @@ import {
   Magnet, 
   ClickSpark,
   LaserFlow,
-  ScrollStack,
-  ScrollStackItem,
   DomeGallery,
   ProfileCard,
   Counter,
@@ -315,115 +313,102 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Features Section with LaserFlow wrapper - RIGHT AFTER HERO */}
+      {/* Features Section with LaserFlow - RIGHT AFTER HERO */}
       <section className="relative py-24 px-4">
-        <div 
-          className="absolute inset-0"
-          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.03), transparent)` }}
-        />
+        {/* LaserFlow background - extends above section to not get cut off */}
+        <div className="absolute inset-x-0 -top-40 bottom-0 overflow-visible pointer-events-none">
+          <LaserFlow 
+            color="#D4A853"
+            verticalSizing={2.5}
+            horizontalSizing={0.6}
+            fogIntensity={0.5}
+            wispIntensity={4}
+            flowSpeed={0.4}
+            wispSpeed={12}
+            className="w-full h-full"
+          />
+        </div>
         
         <div className="relative max-w-6xl mx-auto">
-          {/* LaserFlow background effect - positioned to be visible */}
-          <div className="absolute inset-0 overflow-hidden rounded-3xl" style={{ minHeight: '600px' }}>
-            <LaserFlow 
-              color="#D4A853"
-              verticalSizing={2.0}
-              horizontalSizing={0.6}
-              fogIntensity={0.5}
-              wispIntensity={4}
-              flowSpeed={0.4}
-              wispSpeed={12}
-              className="w-full h-full"
-            />
+          {/* Text header */}
+          <div className="text-center space-y-4 mb-12">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-medium"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              Why Choose Us
+            </motion.span>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-bold"
+            >
+              Everything You Need to{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
+              >
+                Succeed
+              </GradientText>
+            </motion.h2>
           </div>
-          
-          {/* Content overlay with semi-transparent background */}
-          <div className="relative rounded-3xl p-8 md:p-12 backdrop-blur-sm" style={{ background: `hsl(${GOLD.bg} / 0.6)` }}>
-            <div className="text-center space-y-4 mb-16">
-              <motion.span
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className="font-medium"
-                style={{ color: `hsl(${GOLD.light})` }}
-              >
-                Why Choose Us
-              </motion.span>
-              
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-3xl md:text-5xl font-bold"
-              >
-                Everything You Need to{" "}
-                <GradientText
-                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
-                  animationSpeed={4}
-                >
-                  Succeed
-                </GradientText>
-              </motion.h2>
-            </div>
 
-            {/* Feature cards with ScrollStack - contained scroll */}
-            <div className="h-[600px] overflow-hidden rounded-2xl" style={{ background: `hsl(${GOLD.bg} / 0.5)` }}>
-              <ScrollStack
-                itemDistance={40}
-                itemScale={0.03}
-                itemStackDistance={15}
-                stackPosition="25%"
-                baseScale={0.92}
-                useWindowScroll={false}
-                className="!pt-8 !pb-8"
+          {/* Feature cards - 80% width, stacked vertically */}
+          <div className="flex flex-col items-center gap-6">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="w-[80%]"
               >
-                {features.map((feature) => (
-                  <ScrollStackItem 
-                    key={feature.title}
-                    itemClassName="!my-4"
+                <Spotlight 
+                  spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
+                  className="h-full"
+                >
+                  <Card 
+                    className="relative h-full p-8 backdrop-blur-sm transition-all hover:-translate-y-1"
+                    style={{
+                      background: `hsl(${GOLD.cardBg})`,
+                      border: `1px solid hsl(${GOLD.primary} / 0.15)`,
+                    }}
                   >
-                    <Spotlight 
-                      spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
-                      className="h-full"
-                    >
-                      <Card 
-                        className="relative h-full p-8 backdrop-blur-sm transition-all"
-                        style={{
-                          background: `hsl(${GOLD.cardBg})`,
-                          border: `1px solid hsl(${GOLD.primary} / 0.15)`,
-                        }}
+                    <div className="flex items-start gap-6">
+                      <div 
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                       >
-                        <div className="flex items-start gap-6">
-                          <div 
-                            className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
-                          >
-                            <feature.icon 
-                              className="w-7 h-7"
-                              style={{ color: `hsl(${GOLD.light})` }}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <h3 
-                              className="text-2xl font-semibold"
-                              style={{ color: `hsl(${GOLD.text})` }}
-                            >
-                              {feature.title}
-                            </h3>
-                            <p 
-                              className="text-base leading-relaxed"
-                              style={{ color: `hsl(${GOLD.muted})` }}
-                            >
-                              {feature.description}
-                            </p>
-                          </div>
-                        </div>
-                      </Card>
-                    </Spotlight>
-                  </ScrollStackItem>
-                ))}
-              </ScrollStack>
-            </div>
+                        <feature.icon 
+                          className="w-7 h-7"
+                          style={{ color: `hsl(${GOLD.light})` }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 
+                          className="text-2xl font-semibold"
+                          style={{ color: `hsl(${GOLD.text})` }}
+                        >
+                          {feature.title}
+                        </h3>
+                        <p 
+                          className="text-base leading-relaxed"
+                          style={{ color: `hsl(${GOLD.muted})` }}
+                        >
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Spotlight>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
