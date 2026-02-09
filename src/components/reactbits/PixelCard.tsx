@@ -142,7 +142,7 @@ const VARIANTS = {
   gold: {
     activeColor: '#D4A853',
     gap: 4,
-    speed: 25,
+    speed: 50,
     colors: '#D4A853,#B8902D,#E6C570',
     noFocus: false
   },
