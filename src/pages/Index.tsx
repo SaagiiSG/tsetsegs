@@ -14,7 +14,20 @@ import {
   Star
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { SplitText, BlurText, GradientText, Spotlight, Magnet, ClickSpark } from "@/components/reactbits";
+import { 
+  SplitText, 
+  BlurText, 
+  GradientText, 
+  Spotlight, 
+  Magnet, 
+  ClickSpark,
+  LaserFlow,
+  DomeGallery,
+  ProfileCard,
+  Counter,
+  FloatingLines,
+  Gradual,
+} from "@/components/reactbits";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,9 +45,9 @@ const GOLD = {
 
 // Statistics for social proof
 const stats = [
-  { value: "700+", label: "Avg Math Score", icon: Target },
-  { value: "1000+", label: "Students Trained", icon: Users },
-  { value: "3+", label: "Years Experience", icon: Star },
+  { value: 700, suffix: "+", label: "Avg Math Score", icon: Target },
+  { value: 1000, suffix: "+", label: "Students Trained", icon: Users },
+  { value: 3, suffix: "+", label: "Years Experience", icon: Star },
 ];
 
 // Features cards
@@ -74,6 +87,18 @@ const teamMembers = [
   { name: "Khulan", role: "SAT Math", image: "/newyear/khulan.svg" },
 ];
 
+// Gallery items for student scores (placeholder for now)
+const galleryItems = [
+  { id: "1", image: "", title: "1500+", subtitle: "SAT Score" },
+  { id: "2", image: "", title: "1480", subtitle: "SAT Score" },
+  { id: "3", image: "", title: "1520", subtitle: "SAT Score" },
+  { id: "4", image: "", title: "1450", subtitle: "SAT Score" },
+  { id: "5", image: "", title: "1490", subtitle: "SAT Score" },
+  { id: "6", image: "", title: "1510", subtitle: "SAT Score" },
+  { id: "7", image: "", title: "1470", subtitle: "SAT Score" },
+  { id: "8", image: "", title: "1540", subtitle: "SAT Score" },
+];
+
 const Index = () => {
   const navigate = useNavigate();
 
@@ -96,12 +121,19 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen overflow-hidden"
+      className="min-h-screen overflow-hidden relative"
       style={{
         background: `hsl(${GOLD.bg})`,
         color: `hsl(${GOLD.text})`,
       }}
     >
+      {/* Floating Lines Background */}
+      <FloatingLines 
+        color={`hsl(${GOLD.primary})`}
+        lineCount={25}
+        opacity={0.12}
+      />
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
         {/* Animated grid background with golden tint */}
@@ -223,7 +255,7 @@ const Index = () => {
             </Button>
           </motion.div>
 
-          {/* Stats */}
+          {/* Stats with Counter animation */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -242,7 +274,11 @@ const Index = () => {
                   className="text-3xl md:text-5xl font-bold"
                   style={{ color: `hsl(${GOLD.light})` }}
                 >
-                  {stat.value}
+                  <Counter 
+                    value={stat.value} 
+                    suffix={stat.suffix}
+                    duration={2.5}
+                  />
                 </div>
                 <div 
                   className="text-sm mt-1 flex items-center justify-center gap-1"
@@ -277,42 +313,46 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Student Success Section */}
-      {successScores && successScores.length > 0 && (
-        <section className="relative py-24 px-4">
-          <div 
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
-          />
-          
-          <div className="relative max-w-6xl mx-auto">
-            <div className="text-center space-y-4 mb-16">
-              <motion.span
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className="font-medium"
-                style={{ color: `hsl(${GOLD.light})` }}
+      {/* Student Success Section with DomeGallery */}
+      <section className="relative py-24 px-4">
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
+        />
+        
+        <div className="relative max-w-6xl mx-auto">
+          <div className="text-center space-y-4 mb-16">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-medium"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              Student Achievements
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-bold"
+            >
+              Our Students{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
               >
-                Student Achievements
-              </motion.span>
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-3xl md:text-5xl font-bold"
-              >
-                Our Students{" "}
-                <GradientText
-                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
-                  animationSpeed={4}
-                >
-                  Excel
-                </GradientText>
-              </motion.h2>
-            </div>
+                Excel
+              </GradientText>
+            </motion.h2>
+          </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {/* Dome Gallery for student scores */}
+          <DomeGallery items={galleryItems} radius={300} />
+
+          {/* Also show the real scores below if available */}
+          {successScores && successScores.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16">
               {successScores.map((score, index) => (
                 <motion.div
                   key={index}
@@ -349,11 +389,11 @@ const Index = () => {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
-      {/* Features Section */}
+      {/* Features Section with LaserFlow wrapper */}
       <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
@@ -371,34 +411,53 @@ const Index = () => {
             >
               Why Choose Us
             </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl md:text-5xl font-bold"
+            
+            {/* LaserFlow wrapped heading */}
+            <LaserFlow 
+              color={`hsl(${GOLD.primary})`}
+              strokeWidth={2}
+              speed={4}
+              className="inline-block p-6 rounded-2xl"
             >
-              Everything You Need to{" "}
-              <GradientText
-                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
-                animationSpeed={4}
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl md:text-5xl font-bold"
               >
-                Succeed
-              </GradientText>
-            </motion.h2>
+                Everything You Need to{" "}
+                <GradientText
+                  colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                  animationSpeed={4}
+                >
+                  Succeed
+                </GradientText>
+              </motion.h2>
+            </LaserFlow>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Feature cards in scroll-triggered stack layout */}
+          <div className="grid md:grid-cols-2 gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
+                initial={{ opacity: 0, y: 50, rotateX: -15 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  delay: index * 0.15, 
+                  duration: 0.6,
+                  type: "spring",
+                  stiffness: 100,
+                }}
+                style={{ transformStyle: "preserve-3d" }}
               >
-                <Spotlight className="h-full">
+                <Spotlight 
+                  spotlightColor={`hsl(${GOLD.primary} / 0.15)`}
+                  className="h-full"
+                >
                   <Card 
-                    className="relative h-full p-6 backdrop-blur-sm transition-colors group"
+                    className="relative h-full p-8 backdrop-blur-sm transition-all group hover:-translate-y-2"
                     style={{
                       background: `hsl(${GOLD.cardBg})`,
                       border: `1px solid hsl(${GOLD.primary} / 0.15)`,
@@ -406,22 +465,22 @@ const Index = () => {
                   >
                     <div className="space-y-4">
                       <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
                         style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                       >
                         <feature.icon 
-                          className="w-6 h-6"
+                          className="w-7 h-7"
                           style={{ color: `hsl(${GOLD.light})` }}
                         />
                       </div>
                       <h3 
-                        className="text-xl font-semibold"
+                        className="text-2xl font-semibold"
                         style={{ color: `hsl(${GOLD.text})` }}
                       >
                         {feature.title}
                       </h3>
                       <p 
-                        className="text-sm leading-relaxed"
+                        className="text-base leading-relaxed"
                         style={{ color: `hsl(${GOLD.muted})` }}
                       >
                         {feature.description}
@@ -435,14 +494,14 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Team Section */}
+      {/* Team Section with ProfileCard */}
       <section className="relative py-24 px-4">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
         />
         
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-16">
             <motion.span
               initial={{ opacity: 0 }}
@@ -469,42 +528,16 @@ const Index = () => {
             </motion.h2>
           </div>
 
+          {/* ProfileCards for team members */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {teamMembers.map((member, index) => (
-              <motion.div
+              <ProfileCard
                 key={member.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05, duration: 0.4 }}
-                className="text-center group"
-              >
-                <div 
-                  className="relative w-24 h-24 md:w-28 md:h-28 mx-auto mb-4 rounded-full overflow-hidden transition-transform group-hover:scale-105"
-                  style={{
-                    background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
-                    border: `2px solid hsl(${GOLD.primary} / 0.3)`,
-                  }}
-                >
-                  <img 
-                    src={member.image} 
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 
-                  className="font-semibold text-lg"
-                  style={{ color: `hsl(${GOLD.text})` }}
-                >
-                  {member.name}
-                </h3>
-                <p 
-                  className="text-xs mt-1"
-                  style={{ color: `hsl(${GOLD.muted})` }}
-                >
-                  {member.role}
-                </p>
-              </motion.div>
+                name={member.name}
+                role={member.role}
+                image={member.image}
+                delay={index * 0.08}
+              />
             ))}
           </div>
         </div>
@@ -513,7 +546,10 @@ const Index = () => {
       {/* CTA Section */}
       <section className="relative py-24 px-4">
         <div className="max-w-4xl mx-auto">
-          <Spotlight className="rounded-3xl">
+          <Spotlight 
+            spotlightColor={`hsl(${GOLD.primary} / 0.2)`}
+            className="rounded-3xl"
+          >
             <Card 
               className="relative overflow-hidden p-8 md:p-12"
               style={{
@@ -601,7 +637,7 @@ const Index = () => {
 
       {/* TsetsegsOS Footer */}
       <footer 
-        className="relative py-16 px-4"
+        className="relative py-16 px-4 pb-40"
         style={{ borderTop: `1px solid hsl(${GOLD.primary} / 0.1)` }}
       >
         <div className="max-w-[95vw] mx-auto">
@@ -656,6 +692,11 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Gradual glow at bottom */}
+      <Gradual color={`hsl(${GOLD.primary})`} height="100px">
+        <div />
+      </Gradual>
     </div>
   );
 };
