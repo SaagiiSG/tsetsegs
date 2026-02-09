@@ -11,7 +11,11 @@ import {
   BookOpen,
   BarChart3,
   Zap,
-  Star
+  Star,
+  Crown,
+  Briefcase,
+  Book,
+  Calculator
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { 
@@ -73,17 +77,17 @@ const features = [
   },
 ];
 
-// Team members
+// Team members with icon types
 const teamMembers = [
-  { name: "Misheel", role: "CEO", image: "/newyear/misheel.svg" },
-  { name: "Brody", role: "Manager | English Teacher (IELTS, SAT)", image: "/newyear/brody.svg" },
-  { name: "Dulguun", role: "IELTS", image: "/newyear/dulguun.svg" },
-  { name: "Udval", role: "IELTS", image: "/newyear/udval.svg" },
-  { name: "Saran-Ochir", role: "SAT Math", image: "/newyear/saran.svg" },
-  { name: "Manlai", role: "SAT Math", image: "/newyear/manlai.svg" },
-  { name: "Tuguldur", role: "SAT Math", image: "/newyear/tuguldur.png" },
-  { name: "Enguun", role: "SAT Math", image: "/newyear/enguun.svg" },
-  { name: "Khulan", role: "SAT Math", image: "/newyear/khulan.svg" },
+  { name: "Misheel", role: "CEO", iconType: "crown" as const },
+  { name: "Brody", role: "Manager | English", iconType: "briefcase" as const },
+  { name: "Dulguun", role: "IELTS", iconType: "book" as const },
+  { name: "Udval", role: "IELTS", iconType: "book" as const },
+  { name: "Saran-Ochir", role: "SAT Math", iconType: "calculator" as const },
+  { name: "Manlai", role: "SAT Math", iconType: "calculator" as const },
+  { name: "Tuguldur", role: "SAT Math", iconType: "calculator" as const },
+  { name: "Enguun", role: "SAT Math", iconType: "calculator" as const },
+  { name: "Khulan", role: "SAT Math", iconType: "calculator" as const },
 ];
 
 // Gallery images for student achievements
@@ -508,15 +512,23 @@ const Index = () => {
 
           {/* ProfileCards for team members */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {teamMembers.map((member, index) => (
-              <ProfileCard
-                key={member.name}
-                name={member.name}
-                role={member.role}
-                image={member.image}
-                delay={index * 0.08}
-              />
-            ))}
+            {teamMembers.map((member, index) => {
+              const iconMap = {
+                crown: <Crown className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
+                briefcase: <Briefcase className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
+                book: <Book className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
+                calculator: <Calculator className="w-10 h-10" style={{ color: `hsl(${GOLD.light})` }} />,
+              };
+              return (
+                <ProfileCard
+                  key={member.name}
+                  name={member.name}
+                  role={member.role}
+                  icon={iconMap[member.iconType]}
+                  delay={index * 0.08}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
