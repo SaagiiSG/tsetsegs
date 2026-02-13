@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { FullProfileDialog } from '@/components/student/leaderboard/FullProfileDialog';
 
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
@@ -105,6 +105,9 @@ export default function SprintMonitor() {
   const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentName, setSelectedStudentName] = useState<string>('');
 
   const SPRINT_DURATION_DAYS = 14;
   const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
@@ -795,24 +798,31 @@ export default function SprintMonitor() {
                                   </div>
                                 )}
 
-                                <Collapsible defaultOpen={false}>
-                                  <div className="max-h-[400px] overflow-y-auto">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead className="w-14">Rank</TableHead>
-                                          <TableHead>Student</TableHead>
-                                          <TableHead className="text-right">Points</TableHead>
-                                          <TableHead className="w-16 text-center">P1</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {group.rankings.slice(0, 10).map((ranking, idx) => (
-                                          <TableRow key={ranking.id}>
+                                <div className="max-h-[420px] overflow-y-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="w-14">Rank</TableHead>
+                                        <TableHead>Student</TableHead>
+                                        <TableHead className="text-right">Points</TableHead>
+                                        <TableHead className="w-16 text-center">P1</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {group.rankings.map((ranking, idx) => {
+                                        const studentName = ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown';
+                                        return (
+                                          <TableRow 
+                                            key={ranking.id} 
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => {
+                                              setSelectedStudentId(ranking.student_account_id);
+                                              setSelectedStudentName(studentName);
+                                              setProfileDialogOpen(true);
+                                            }}
+                                          >
                                             <TableCell className="font-medium">#{idx + 1}</TableCell>
-                                            <TableCell>
-                                              {ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown'}
-                                            </TableCell>
+                                            <TableCell>{studentName}</TableCell>
                                             <TableCell className="text-right font-mono">
                                               {ranking.total_points.toLocaleString()}
                                             </TableCell>
@@ -822,45 +832,11 @@ export default function SprintMonitor() {
                                               )}
                                             </TableCell>
                                           </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                  {group.rankings.length > 10 && (
-                                    <>
-                                      <CollapsibleTrigger asChild>
-                                        <button className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 w-full border-t">
-                                          <ChevronDown className="h-3.5 w-3.5" />
-                                          <span>Show all {group.studentCount} students</span>
-                                        </button>
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent>
-                                        <div className="max-h-[400px] overflow-y-auto border-t">
-                                          <Table>
-                                            <TableBody>
-                                              {group.rankings.slice(10).map((ranking, idx) => (
-                                                <TableRow key={ranking.id}>
-                                                  <TableCell className="font-medium w-14">#{idx + 11}</TableCell>
-                                                  <TableCell>
-                                                    {ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown'}
-                                                  </TableCell>
-                                                  <TableCell className="text-right font-mono">
-                                                    {ranking.total_points.toLocaleString()}
-                                                  </TableCell>
-                                                  <TableCell className="w-16 text-center">
-                                                    {ranking.is_top_1 && (
-                                                      <Crown className="h-4 w-4 text-amber-500 mx-auto" />
-                                                    )}
-                                                  </TableCell>
-                                                </TableRow>
-                                              ))}
-                                            </TableBody>
-                                          </Table>
-                                        </div>
-                                      </CollapsibleContent>
-                                    </>
-                                  )}
-                                </Collapsible>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
                               </TabsContent>
                             ))}
                           </Tabs>
@@ -919,6 +895,14 @@ export default function SprintMonitor() {
           </CardContent>
         </Card>
       )}
+
+      {/* Student Profile Dialog */}
+      <FullProfileDialog
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+        userId={selectedStudentId}
+        username={selectedStudentName}
+      />
     </div>
   );
 }
