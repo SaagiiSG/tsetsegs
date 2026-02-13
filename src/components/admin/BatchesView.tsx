@@ -3,8 +3,21 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BatchGridCard } from './BatchGridCard';
+import { BatchListRow } from './BatchListRow';
 import { BatchDetailsDialog } from './BatchDetailsDialog';
+import { useToast } from '@/hooks/use-toast';
+import { isOnlineClass } from '@/lib/classUtils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { format, parseISO } from 'date-fns';
 
 export function BatchesView() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,8 +28,9 @@ export function BatchesView() {
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deletingBatch, setDeletingBatch] = useState<any>(null);
+  const { toast } = useToast();
 
-  // Check for batch query param to auto-open dialog
   const batchIdFromUrl = searchParams.get('batch');
 
   useEffect(() => {
@@ -26,30 +40,23 @@ export function BatchesView() {
   useEffect(() => {
     if (batches.length > 0) {
       fetchStudentCounts();
-      
-      // Auto-open batch dialog if batch ID is in URL
       if (batchIdFromUrl) {
         const batchToOpen = batches.find(b => b.id === batchIdFromUrl);
         if (batchToOpen) {
           setSelectedBatch(batchToOpen);
           setDialogOpen(true);
         }
-        // Clear the query param after opening
         setSearchParams({}, { replace: true });
       }
     }
   }, [batches, batchIdFromUrl]);
 
   const fetchBatches = async () => {
-    // Fetch ALL batches regardless of date - filters handle display
     const { data } = await supabase
       .from('batches')
       .select('*')
       .order('start_date', { ascending: false });
-
-    if (data) {
-      setBatches(data);
-    }
+    if (data) setBatches(data);
   };
 
   const fetchStudentCounts = async () => {
@@ -82,9 +89,7 @@ export function BatchesView() {
   const teachers = useMemo(() => {
     const teacherSet = new Set<string>();
     batches.forEach((batch) => {
-      if (batch.teacher) {
-        teacherSet.add(batch.teacher);
-      }
+      if (batch.teacher) teacherSet.add(batch.teacher);
     });
     return Array.from(teacherSet).sort();
   }, [batches]);
@@ -96,22 +101,82 @@ export function BatchesView() {
         const batchIntake = batchDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (batchIntake !== selectedIntake) return false;
       }
-
-      if (selectedTeacher !== 'all' && batch.teacher !== selectedTeacher) {
-        return false;
-      }
-
-      if (selectedCourse !== 'all' && batch.course_type !== selectedCourse) {
-        return false;
-      }
-
+      if (selectedTeacher !== 'all' && batch.teacher !== selectedTeacher) return false;
+      if (selectedCourse !== 'all' && batch.course_type !== selectedCourse) return false;
       return true;
     });
   }, [batches, selectedIntake, selectedTeacher, selectedCourse]);
 
-  const handleBatchClick = (batch: any) => {
+  // Group filtered batches by month (MMM yyyy), sorted descending
+  const groupedBatches = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    filteredBatches.forEach((batch) => {
+      const key = format(parseISO(batch.start_date), 'MMM yyyy');
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(batch);
+    });
+    // Sort keys descending by date
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      return new Date(b).getTime() - new Date(a).getTime();
+    });
+    return sortedKeys.map((key) => ({ month: key, batches: groups[key] }));
+  }, [filteredBatches]);
+
+  const handleEdit = (batch: any) => {
     setSelectedBatch(batch);
     setDialogOpen(true);
+  };
+
+  const handleCopyLink = (batch: any) => {
+    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    navigator.clipboard.writeText(batchLink);
+    toast({ title: "Link Copied", description: "Batch link copied to clipboard" });
+  };
+
+  const handleOpenLink = (batch: any) => {
+    window.open(`/batch/${batch.unique_link_id}`, '_blank');
+  };
+
+  const handleRegenerateLink = async (batch: any) => {
+    const newLinkId = Math.random().toString(36).substring(2, 15);
+    const { error } = await supabase
+      .from('batches')
+      .update({ unique_link_id: newLinkId })
+      .eq('id', batch.id);
+    if (error) {
+      toast({ title: "Error", description: "Failed to regenerate link", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Batch link regenerated" });
+      fetchBatches();
+    }
+  };
+
+  const getSmsTemplate = (batch: any) => {
+    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    if (batch.course_type === 'IELTS') {
+      return `Сайн байна уу? \n\nTsetsegs IELTS сургалтаас холбогдож байна. \n\nАнгийн мэдээлэл: ${batchLink}\n\nТус групт\n1. Бидний хэрэглэх ном (Google drive дотор)\n2. Цээжлэх үгс (Google drive дотор)\n3. ЭЕШ-д бэлдэх Англи хэл, Нийгмийн 700+ материал\n4. Сургалтын төлөвлөгөө зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.\n\nБаярлалаа.`;
+    }
+    if (isOnlineClass(batch.schedule)) {
+      return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.\n\n🌐 ONLINE CLASS\n\nClass Info: ${batchLink}\n\nХичээлийн хуваарь:\nMath (Online): Даваа/Лхагва/Баасан 18:40-20:30\nEnglish (үнэгүй): Бямба 18:30-20:00\n\nPlatform: Discord\n\nТус групт 1. Бидний хэрэглэх ном 2. Цээжлэх үгс 3. Шалгалтад бүртгүүлэх заавар 4. 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.\n\nТанилцах уулзалтанд тавтай морилно уу!\n\nБаярлалаа.\nУтас: 80660314, 88559876`;
+    }
+    return `Сайн байна уу? Таныг бүртгэж авлаа. SAT Math сургалтаас холбогдож байна.\n\nClass Info: ${batchLink}\n\nТус групт 1. Бидний хэрэглэх ном 2. Цээжлэх үгс 3. Шалгалтад бүртгүүлэх заавар 4. 1074 бодлогын сан зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.\n\nТанилцах уулзалтанд тавтай морилно уу!\n\nБаярлалаа.\nХаяг: Их Наяд Зүүн Өндөр 1114, ${batch.room} тоот\nУтас: 80660314, 88559876`;
+  };
+
+  const handleCopySms = (batch: any) => {
+    navigator.clipboard.writeText(getSmsTemplate(batch));
+    toast({ title: "Message Copied", description: "SMS template copied to clipboard" });
+  };
+
+  const handleDeleteBatch = async () => {
+    if (!deletingBatch) return;
+    const { error } = await supabase.from('batches').delete().eq('id', deletingBatch.id);
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete batch", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Batch deleted successfully" });
+      fetchBatches();
+    }
+    setDeletingBatch(null);
   };
 
   const handleUpdate = () => {
@@ -183,7 +248,7 @@ export function BatchesView() {
         </CardContent>
       </Card>
 
-      {/* Batch Grid */}
+      {/* Batch List grouped by month */}
       <Card>
         <CardHeader>
           <CardTitle>All Batches</CardTitle>
@@ -199,21 +264,35 @@ export function BatchesView() {
                 : 'No batches match your filters.'}
             </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredBatches.map((batch) => (
-                <BatchGridCard
-                  key={batch.id}
-                  batch={batch}
-                  studentCount={studentCounts[batch.id] || 0}
-                  onClick={() => handleBatchClick(batch)}
-                />
+            <div className="space-y-6">
+              {groupedBatches.map((group) => (
+                <div key={group.month}>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-4">
+                    {group.month}
+                  </h3>
+                  <div className="divide-y divide-border rounded-lg border">
+                    {group.batches.map((batch) => (
+                      <BatchListRow
+                        key={batch.id}
+                        batch={batch}
+                        studentCount={studentCounts[batch.id] || 0}
+                        onEdit={() => handleEdit(batch)}
+                        onCopyLink={() => handleCopyLink(batch)}
+                        onOpenLink={() => handleOpenLink(batch)}
+                        onRegenerateLink={() => handleRegenerateLink(batch)}
+                        onCopySms={() => handleCopySms(batch)}
+                        onDelete={() => setDeletingBatch(batch)}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Batch Details Dialog */}
+      {/* Edit Dialog (split pane) */}
       <BatchDetailsDialog
         batch={selectedBatch}
         studentCount={selectedBatch ? studentCounts[selectedBatch.id] || 0 : 0}
@@ -221,6 +300,24 @@ export function BatchesView() {
         onOpenChange={setDialogOpen}
         onUpdate={handleUpdate}
       />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingBatch} onOpenChange={(open) => !open && setDeletingBatch(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Batch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this batch and all associated students. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteBatch} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
