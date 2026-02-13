@@ -114,21 +114,8 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 overflow-hidden">
         <div className="flex h-full">
-          {/* Left Side - Students List */}
-          <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden border-r">
-            <div className="p-4 border-b bg-background flex-shrink-0">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Students ({studentCount})
-              </h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 min-h-0">
-              <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
-            </div>
-          </div>
-
-          {/* Right Side - Batch Editor */}
-          <div className="w-1/2 p-6 overflow-y-auto">
+          {/* Left Side - Batch Editor */}
+          <div className="w-1/2 p-6 overflow-y-auto border-r">
             <DialogHeader className="mb-6">
               <div className="flex items-center gap-3">
                 <Badge
@@ -147,7 +134,6 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Teacher */}
               <div className="space-y-2">
                 <Label>Teacher{batch.course_type === 'IELTS' ? 's' : ''}</Label>
                 {batch.course_type === 'IELTS' ? (
@@ -172,79 +158,67 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
                   </div>
                 ) : (
                   <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {teachers.map((teacher) => (
-                        <SelectItem key={teacher.name} value={teacher.name}>
-                          {teacher.name}
-                        </SelectItem>
+                        <SelectItem key={teacher.name} value={teacher.name}>{teacher.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               </div>
 
-              {/* Schedule */}
               <div className="space-y-2">
                 <Label>Schedule</Label>
                 <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SCHEDULES.map((schedule, idx) => (
-                      <SelectItem key={idx} value={schedule}>
-                        {schedule}
-                      </SelectItem>
+                      <SelectItem key={idx} value={schedule}>{schedule}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Room */}
               <div className="space-y-2">
                 <Label>Room</Label>
                 <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ROOMS.map((room) => (
-                      <SelectItem key={room} value={room}>
-                        {room}
-                      </SelectItem>
+                      <SelectItem key={room} value={room}>{room}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Start Date */}
               <div className="space-y-2">
                 <Label>Start Date</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </div>
 
-              {/* FB Group Link */}
               <div className="space-y-2">
                 <Label>Facebook Group Link</Label>
-                <Input
-                  value={fbGroupLink}
-                  onChange={(e) => setFbGroupLink(e.target.value)}
-                  placeholder="https://facebook.com/groups/..."
-                />
+                <Input value={fbGroupLink} onChange={(e) => setFbGroupLink(e.target.value)} placeholder="https://facebook.com/groups/..." />
               </div>
 
-              {/* Save Button */}
               <Button onClick={handleSave} disabled={isSaving} className="w-full">
                 <Save className="w-4 h-4 mr-2" />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
+            </div>
+          </div>
+
+          {/* Right Side - Students */}
+          <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden">
+            <div className="p-4 border-b bg-background flex-shrink-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Students ({studentCount})
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 min-h-0">
+              <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
             </div>
           </div>
         </div>
