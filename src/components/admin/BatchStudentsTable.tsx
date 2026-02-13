@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, Trash2, ArrowRight } from 'lucide-react';
+import { Pencil, Trash2, ArrowRight, Plus, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +36,11 @@ export function BatchStudentsTable({ students: propStudents, batchId, onUpdate }
   const [destinationBatchId, setDestinationBatchId] = useState('');
   const [batches, setBatches] = useState<any[]>([]);
   const [showConfirmTransfer, setShowConfirmTransfer] = useState(false);
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [bulkInput, setBulkInput] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -200,13 +207,113 @@ export function BatchStudentsTable({ students: propStudents, batchId, onUpdate }
     return batches.find(b => b.id === destinationBatchId)?.batch_name || '';
   };
 
+  const handleAddStudent = async () => {
+    const validation = studentSchema.safeParse({ name: newName, phone: newPhone });
+    if (!validation.success) {
+      toast({ title: 'Validation Error', description: validation.error.errors[0].message, variant: 'destructive' });
+      return;
+    }
+    const nameParts = validation.data.name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const { error } = await supabase.from('students').insert({
+      batch_id: batchId,
+      name: validation.data.name,
+      first_name: firstName,
+      last_name: lastName,
+      phone: validation.data.phone,
+      unique_link_id: crypto.randomUUID(),
+    });
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to add student', variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Student added' });
+      setNewName(''); setNewPhone(''); setIsAddingStudent(false);
+      fetchStudents(); onUpdate();
+    }
+  };
+
+  const parseBulkInput = (input: string) => {
+    const lines = input.split('\n').filter(line => line.trim());
+    const results: { student: any; error?: string }[] = [];
+    lines.forEach((line, index) => {
+      const cleanedLine = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
+      const patterns = [/^(.+?)\s*[-–—]\s*(\d{8,})$/, /^(.+?)\s+(\d{8,})$/];
+      let match = null;
+      for (const pattern of patterns) { match = cleanedLine.match(pattern); if (match) break; }
+      if (!match) { results.push({ student: null, error: `Line ${index + 1}: Could not parse "${line}"` }); return; }
+      const [, name, phone] = match;
+      const validation = studentSchema.safeParse({ name: name.trim(), phone: phone.trim() });
+      if (!validation.success) { results.push({ student: null, error: `Line ${index + 1}: ${validation.error.errors[0].message}` }); return; }
+      const nameParts = validation.data.name.split(/\s+/);
+      results.push({ student: { name: validation.data.name, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', phone: validation.data.phone, unique_link_id: crypto.randomUUID(), batch_id: batchId } });
+    });
+    return results;
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkInput.trim()) { toast({ title: 'Error', description: 'Please enter student information', variant: 'destructive' }); return; }
+    const results = parseBulkInput(bulkInput);
+    const validStudents = results.filter(r => r.student).map(r => r.student);
+    const errors = results.filter(r => r.error);
+    if (validStudents.length === 0) { toast({ title: 'Error', description: 'No valid students found', variant: 'destructive' }); return; }
+    const { error } = await supabase.from('students').insert(validStudents);
+    if (error) { toast({ title: 'Error', description: 'Failed to import students', variant: 'destructive' }); return; }
+    toast({ title: 'Import Complete', description: `Added ${validStudents.length} student(s)${errors.length > 0 ? `, ${errors.length} failed` : ''}` });
+    if (errors.length > 0) { toast({ title: 'Some entries failed', description: errors.slice(0, 3).map(e => e.error).join('\n'), variant: 'destructive' }); }
+    setBulkInput(''); setIsBulkImportOpen(false); fetchStudents(); onUpdate();
+  };
+
   return (
     <>
       <div className="space-y-3">
-        <Button variant="outline" size="sm" onClick={handleOpenMoveDialog}>
-          <ArrowRight className="w-4 h-4 mr-2" />
-          Move Students
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" onClick={() => setIsAddingStudent(true)} disabled={isAddingStudent}>
+            <Plus className="w-4 h-4 mr-1" /> Add
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setIsBulkImportOpen(!isBulkImportOpen)}>
+            <Upload className="w-4 h-4 mr-1" /> Bulk Import
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleOpenMoveDialog}>
+            <ArrowRight className="w-4 h-4 mr-1" /> Move
+          </Button>
+        </div>
+
+        {/* Add Single Student */}
+        {isAddingStudent && (
+          <div className="border rounded-lg p-3 bg-muted/50 space-y-2">
+            <h4 className="font-semibold text-sm">Add New Student</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label className="text-xs">Name</Label><Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Student name" className="h-8 text-sm" /></div>
+              <div><Label className="text-xs">Phone</Label><Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone number" className="h-8 text-sm" /></div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleAddStudent}>Add</Button>
+              <Button size="sm" variant="outline" onClick={() => { setIsAddingStudent(false); setNewName(''); setNewPhone(''); }}>Cancel</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Import */}
+        <Collapsible open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
+          <CollapsibleContent>
+            <div className="border rounded-lg p-3 bg-muted/50 space-y-2">
+              <h4 className="font-semibold text-sm">Bulk Import Students</h4>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p className="font-medium">Format (one per line):</p>
+                <div className="bg-background/50 rounded p-1.5 font-mono">
+                  <div>1. Saruul - 60281897</div>
+                  <div>2. Anudari - 95208802</div>
+                </div>
+              </div>
+              <Textarea value={bulkInput} onChange={(e) => setBulkInput(e.target.value)} placeholder={"1. Saruul - 60281897\n2. Anudari - 95208802"} rows={6} className="font-mono text-sm" />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleBulkImport}><Upload className="w-4 h-4 mr-1" /> Import</Button>
+                <Button size="sm" variant="outline" onClick={() => { setIsBulkImportOpen(false); setBulkInput(''); }}>Cancel</Button>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="rounded-md border overflow-auto max-h-[calc(100vh-300px)]">
           <Table>
