@@ -1,55 +1,63 @@
 
-# Tier Breakdown Redesign: Horizontal Carousel with Tabbed Groups
 
-## Overview
-Replace the current vertical stacked tier list with a horizontal carousel of large tier cards. Each card shows one tier's details with tabbed group switching inside.
+## Batches UI Redo
 
-## Layout
+### Current State
+The "All Batches" section uses a grid of cards (`BatchGridCard`). Clicking a card opens `BatchDetailsDialog` (split-pane: left = batch info/SMS template, right = student list). Editing requires clicking "Edit Batch" button inside that dialog, which opens a separate `EditBatchDialog` with tabs (Details / Students).
+
+### New Design
+
+**1. List View Grouped by Month**
+
+Replace the grid with a flat list, grouped under month headers (e.g., "Feb 2026", "Jan 2026"). Each row is a single horizontal line:
 
 ```text
-  Tier Breakdown
-  Student distribution across tiers (40+-15 per group)
+--- Feb 2026 ---
+SAT  |  Saran-Ochir  |  16:40 MWF+Sat  |  Feb 3  |  12 students  |  ...
+SAT  |  Manlai       |  18:40 MWF+Sat  |  Feb 3  |  8 students   |  ...
 
-  [<]  [ ===== SILVER CARD ===== ]  [>]
-       Top-left: 🥈 Silver | 60 students
-       Top-right: 2 groups
-       ─────────────────────────────
-       [Group 1] [Group 2]   <-- tabs
-       ─────────────────────────────
-       Collapsible student list:
-         #1  Student Name   1,200 pts  👑
-         #2  Student Name     980 pts
-         ...
+--- Jan 2026 ---
+IELTS |  Dulguun, Udval  |  16:30 TT+Sat  |  Jan 6  |  15 students  |  ...
 ```
 
-## Changes (single file: `src/pages/admin/SprintMonitor.tsx`)
+- Course type badge (color-coded SAT blue / IELTS purple)
+- Teacher name
+- Compact schedule (reuse existing `formatShortSchedule` logic from `BatchGridCard`)
+- Start date (short: "Feb 3")
+- Student count
+- 3-dot menu (MoreHorizontal icon) with context menu actions: Edit, Copy Link, Open Link, Regenerate Link, SMS Template, Delete
 
-### 1. Add state for active tier index
-- Replace `expandedTier` state with `activeTierIndex` (number) to track which tier card is visible.
-- Add `activeGroupTab` state (Record or simple number) to track which group tab is selected within the current card.
+**2. Context Menu on 3-Dots**
 
-### 2. Navigation controls
-- Left/right arrow buttons flanking the card.
-- Disable left on first tier, disable right on last tier.
-- Optional: dot indicators below showing which tier is active.
+Using `DropdownMenu` from shadcn. Menu items:
+- Edit Batch -- opens the new edit dialog
+- Copy Link
+- Open Link
+- Regenerate Link
+- Copy SMS Template
+- Delete Batch (destructive, with confirmation)
 
-### 3. Tier card design
-- Significantly taller card (min-height ~400px).
-- Header section:
-  - Top-left: Tier icon + tier name (capitalized) + "X students" badge.
-  - Top-right: "X groups" badge.
-- Body section:
-  - Tabs component (one tab per group: "Group 1", "Group 2", etc.).
-  - Active tab shows the student rankings table for that group.
-  - Each group's student list is inside a Collapsible so it can be expanded/collapsed.
-  - P1 winner highlighted at top of each group with crown icon.
+**3. Redesigned Edit Dialog (Split Pane)**
 
-### 4. Imports
-- Add `Tabs, TabsList, TabsTrigger, TabsContent` from UI components.
-- Add `ChevronLeft, ChevronRight` from lucide-react (replace or add to existing chevrons).
+When "Edit" is clicked, open a dialog similar to current `BatchDetailsDialog` layout (full-width split pane):
+- **Left side**: Batch editor form directly (teacher, schedule, room, start date, FB group link, save button) -- no tabs, straight-up editing
+- **Right side**: Students list with add/bulk import/edit/remove (same as current `EditBatchDialog` students tab)
 
-### Technical Details
-- No new files needed -- all changes within `SprintMonitor.tsx`.
-- Reuse existing `tierBreakdown` data and `TIER_STYLES` config.
-- The student table inside each group tab remains the same structure (rank, name, points, P1 crown).
-- Show all students per group (remove the "show top 10 + X more" truncation) since each group maxes at 55.
+This merges `BatchDetailsDialog` and `EditBatchDialog` into one unified component.
+
+### Technical Changes
+
+| File | Action |
+|------|--------|
+| `src/components/admin/BatchesView.tsx` | Rewrite "All Batches" section: replace grid with month-grouped list rows |
+| `src/components/admin/BatchListRow.tsx` | **New** -- single batch row component with 3-dot dropdown menu |
+| `src/components/admin/BatchDetailsDialog.tsx` | Refactor: left side becomes the batch editor form, right side stays as students list. Merge edit functionality from `EditBatchDialog` directly into this dialog |
+| `src/components/admin/BatchGridCard.tsx` | No longer used by BatchesView (keep for BatchOverview if still used there) |
+
+### Key Details
+
+- Month grouping: derive from `start_date`, format as "MMM YYYY", sort descending (newest first)
+- Filters (course, intake, teacher) remain at the top unchanged
+- The edit dialog opens directly from the 3-dot menu -- no intermediate "details" view
+- All existing functionality (copy link, regenerate, delete, SMS template, student management) is preserved, just reorganized
+
