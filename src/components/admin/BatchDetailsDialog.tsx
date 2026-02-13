@@ -114,8 +114,21 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 overflow-hidden">
         <div className="flex h-full">
-          {/* Left Side - Batch Editor */}
-          <div className="w-1/2 p-6 overflow-y-auto border-r">
+          {/* Left Side - Students List */}
+          <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden border-r">
+            <div className="p-4 border-b bg-background flex-shrink-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Students ({studentCount})
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 min-h-0">
+              <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
+            </div>
+          </div>
+
+          {/* Right Side - Batch Editor */}
+          <div className="w-1/2 p-6 overflow-y-auto">
             <DialogHeader className="mb-6">
               <div className="flex items-center gap-3">
                 <Badge
@@ -232,19 +245,6 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
                 <Save className="w-4 h-4 mr-2" />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
-            </div>
-          </div>
-
-          {/* Right Side - Students List */}
-          <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden">
-            <div className="p-4 border-b bg-background flex-shrink-0">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Students ({studentCount})
-              </h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 min-h-0">
-              <BatchStudentsTable batchId={batch.id} onUpdate={onUpdate} />
             </div>
           </div>
         </div>
