@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
       const cutoff = TIER_PROMOTION_CUTOFFS[tier] || 30
       const currentTierIndex = TIER_ORDER.indexOf(tier)
       const nextTier = currentTierIndex < TIER_ORDER.length - 1 ? TIER_ORDER[currentTierIndex + 1] : tier
+      const prevTier = currentTierIndex > 0 ? TIER_ORDER[currentTierIndex - 1] : tier
 
       // Sort by points within group (should already be sorted, but ensure it)
       groupRankings.sort((a, b) => b.total_points - a.total_points)
@@ -161,7 +162,8 @@ Deno.serve(async (req) => {
           reservedNextTier = rank === 1 ? 'ruby' : 'diamond'
         } else {
           const isAdvancing = rank <= cutoff && currentTierIndex < TIER_ORDER.length - 1
-          reservedNextTier = isAdvancing ? nextTier : tier
+          // Move up or move down — no staying in place
+          reservedNextTier = isAdvancing ? nextTier : prevTier
         }
 
         updates.push({
