@@ -21,6 +21,16 @@ const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond
 const MAX_GROUP_SIZE = 55; // 40 ± 15 margin, effective range 25-55
 const TARGET_GROUP_SIZE = 40;
 
+const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
+  unranked: 30,
+  bronze: 20,
+  silver: 15,
+  gold: 10,
+  platinum: 5,
+  diamond: 1,
+  ruby: 1,
+};
+
 // Calculate optimal group assignment: minimize groups, each between 25-55 students
 function calculateGroupNumber(index: number, totalInTier: number): number {
   const numGroups = Math.ceil(totalInTier / MAX_GROUP_SIZE);
@@ -806,32 +816,64 @@ export default function SprintMonitor() {
                                         <TableHead>Student</TableHead>
                                         <TableHead className="text-right">Points</TableHead>
                                         <TableHead className="w-16 text-center">P1</TableHead>
+                                        <TableHead className="w-8"></TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                       {group.rankings.map((ranking, idx) => {
                                         const studentName = ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown';
+                                        const rank = idx + 1;
+                                        const cutoff = TIER_PROMOTION_CUTOFFS[tier] || 30;
+                                        const isPromoting = rank <= cutoff && tier !== 'ruby';
+                                        const isDemoting = rank > cutoff;
+                                        // Show separator between promotion and demotion zone
+                                        const isCutoffBoundary = idx === cutoff && cutoff < group.rankings.length;
+                                        
                                         return (
-                                          <TableRow 
-                                            key={ranking.id} 
-                                            className="cursor-pointer hover:bg-muted/50"
-                                            onClick={() => {
-                                              setSelectedStudentId(ranking.student_account_id);
-                                              setSelectedStudentName(studentName);
-                                              setProfileDialogOpen(true);
-                                            }}
-                                          >
-                                            <TableCell className="font-medium">#{idx + 1}</TableCell>
-                                            <TableCell>{studentName}</TableCell>
-                                            <TableCell className="text-right font-mono">
-                                              {ranking.total_points.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                              {(ranking.is_top_1 || idx === 0) && (
-                                                <Crown className="h-4 w-4 text-amber-500 mx-auto" />
+                                          <>
+                                            {isCutoffBoundary && (
+                                              <TableRow key={`separator-${idx}`} className="pointer-events-none">
+                                                <TableCell colSpan={5} className="py-1 px-0">
+                                                  <div className="flex items-center gap-2 text-xs text-destructive/70">
+                                                    <div className="flex-1 border-t border-dashed border-destructive/30" />
+                                                    <span className="font-medium">▼ Demotion Zone</span>
+                                                    <div className="flex-1 border-t border-dashed border-destructive/30" />
+                                                  </div>
+                                                </TableCell>
+                                              </TableRow>
+                                            )}
+                                            <TableRow 
+                                              key={ranking.id} 
+                                              className={cn(
+                                                "cursor-pointer hover:bg-muted/50",
+                                                isPromoting && "bg-green-500/5",
+                                                isDemoting && "bg-destructive/5"
                                               )}
-                                            </TableCell>
-                                          </TableRow>
+                                              onClick={() => {
+                                                setSelectedStudentId(ranking.student_account_id);
+                                                setSelectedStudentName(studentName);
+                                                setProfileDialogOpen(true);
+                                              }}
+                                            >
+                                              <TableCell className="font-medium">#{rank}</TableCell>
+                                              <TableCell>{studentName}</TableCell>
+                                              <TableCell className="text-right font-mono">
+                                                {ranking.total_points.toLocaleString()}
+                                              </TableCell>
+                                              <TableCell className="text-center">
+                                                {(ranking.is_top_1 || idx === 0) && (
+                                                  <Crown className="h-4 w-4 text-amber-500 mx-auto" />
+                                                )}
+                                              </TableCell>
+                                              <TableCell className="w-8 text-center">
+                                                {isPromoting ? (
+                                                  <TrendingUp className="h-3.5 w-3.5 text-green-500 mx-auto" />
+                                                ) : isDemoting ? (
+                                                  <ChevronDown className="h-3.5 w-3.5 text-destructive mx-auto" />
+                                                ) : null}
+                                              </TableCell>
+                                            </TableRow>
+                                          </>
                                         );
                                       })}
                                     </TableBody>
