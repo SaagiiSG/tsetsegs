@@ -16,7 +16,15 @@ import { format, differenceInSeconds, differenceInDays, differenceInHours, diffe
 import { cn } from '@/lib/utils';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
-const MAX_GROUP_SIZE = 40;
+const MAX_GROUP_SIZE = 55; // 40 ± 15 margin, effective range 25-55
+const TARGET_GROUP_SIZE = 40;
+
+// Calculate optimal group assignment: minimize groups, each between 25-55 students
+function calculateGroupNumber(index: number, totalInTier: number): number {
+  const numGroups = Math.ceil(totalInTier / MAX_GROUP_SIZE);
+  const groupSize = Math.ceil(totalInTier / numGroups);
+  return Math.floor(index / groupSize) + 1;
+}
 
 const TIER_STYLES: Record<string, { bg: string; text: string; border: string; icon: string }> = {
   unranked: { bg: 'bg-muted/50', text: 'text-muted-foreground', border: 'border-muted', icon: '⚪' },
@@ -223,7 +231,7 @@ export default function SprintMonitor() {
                 student_account_id: studentId,
                 sprint_id: sprint1Id,
                 current_tier: tier,
-                group_number: Math.floor(index / MAX_GROUP_SIZE) + 1,
+                group_number: calculateGroupNumber(index, studentIds.length),
                 total_points: 0,
               });
             });
@@ -718,7 +726,7 @@ export default function SprintMonitor() {
               Tier Breakdown
             </CardTitle>
             <CardDescription>
-              Student distribution across tiers (max {MAX_GROUP_SIZE} per group)
+              Student distribution across tiers ({TARGET_GROUP_SIZE}±15 per group)
             </CardDescription>
           </CardHeader>
           <CardContent>
