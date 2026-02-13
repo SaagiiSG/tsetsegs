@@ -9,9 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
+import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -100,7 +102,7 @@ export default function SprintMonitor() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  const [expandedTier, setExpandedTier] = useState<string | null>(null);
+  const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -717,7 +719,7 @@ export default function SprintMonitor() {
         </div>
       )}
 
-      {/* Tier Breakdown */}
+      {/* Tier Breakdown - Horizontal Carousel */}
       {activeSprint && (
         <Card>
           <CardHeader>
@@ -735,125 +737,137 @@ export default function SprintMonitor() {
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-12" />)}
               </div>
             ) : tierBreakdown.length > 0 ? (
-              <div className="space-y-2">
-                {tierBreakdown.map(({ tier, studentCount, groupCount, groups, p1Winners }) => {
-                  const style = TIER_STYLES[tier];
-                  const isExpanded = expandedTier === tier;
-                  
-                  return (
-                    <div key={tier} className="border rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setExpandedTier(isExpanded ? null : tier)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-4 transition-colors",
-                          style.bg,
-                          "hover:opacity-80"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{style.icon}</span>
-                          <span className={cn("font-medium capitalize", style.text)}>
-                            {tier}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-sm font-medium">{studentCount} students</p>
-                            <p className="text-xs text-muted-foreground">
-                              {groupCount} group{groupCount !== 1 ? 's' : ''} • {p1Winners.length} P1{p1Winners.length !== 1 ? 's' : ''}
-                            </p>
+              <div className="space-y-4">
+                {/* Carousel Navigation */}
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    disabled={activeTierIndex === 0}
+                    onClick={() => setActiveTierIndex(i => Math.max(0, i - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {/* Tier Card */}
+                  {(() => {
+                    const { tier, studentCount, groupCount, groups } = tierBreakdown[activeTierIndex] || tierBreakdown[0];
+                    const style = TIER_STYLES[tier];
+                    
+                    return (
+                      <div className={cn("flex-1 border rounded-xl overflow-hidden min-h-[420px]", style.border)}>
+                        {/* Card Header */}
+                        <div className={cn("flex items-center justify-between p-5", style.bg)}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{style.icon}</span>
+                            <span className={cn("text-lg font-semibold capitalize", style.text)}>{tier}</span>
+                            <Badge variant="secondary" className="ml-1">{studentCount} students</Badge>
                           </div>
-                          
-                          {p1Winners.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Crown className="h-4 w-4 text-amber-500" />
-                              <span className="text-sm font-medium">{p1Winners.length}</span>
-                            </div>
-                          )}
-                          
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          )}
+                          <Badge variant="outline">{groupCount} group{groupCount !== 1 ? 's' : ''}</Badge>
                         </div>
-                      </button>
-                      
-                      {isExpanded && groups.length > 0 && (
-                        <div className="border-t divide-y">
-                          {groups.map((group) => (
-                            <div key={group.groupNumber} className="p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="font-mono">
-                                    Group {group.groupNumber}
-                                  </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    {group.studentCount} student{group.studentCount !== 1 ? 's' : ''}
-                                  </span>
-                                </div>
+
+                        {/* Groups via Tabs */}
+                        {groups.length > 0 ? (
+                          <Tabs defaultValue={`group-${groups[0].groupNumber}`} className="p-4">
+                            {groups.length > 1 && (
+                              <TabsList className="mb-4">
+                                {groups.map(g => (
+                                  <TabsTrigger key={g.groupNumber} value={`group-${g.groupNumber}`}>
+                                    Group {g.groupNumber} ({g.studentCount})
+                                  </TabsTrigger>
+                                ))}
+                              </TabsList>
+                            )}
+
+                            {groups.map((group) => (
+                              <TabsContent key={group.groupNumber} value={`group-${group.groupNumber}`}>
+                                {/* P1 Winner highlight */}
                                 {group.p1Winner && (
-                                  <div className="flex items-center gap-2 text-sm">
+                                  <div className="flex items-center gap-2 mb-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
                                     <Crown className="h-4 w-4 text-amber-500" />
-                                    <span className="font-medium">
-                                      {group.p1Winner.student_accounts?.students?.name || 
-                                       group.p1Winner.student_accounts?.phone_number || 
-                                       'Unknown'}
+                                    <span className="text-sm font-semibold">
+                                      {group.p1Winner.student_accounts?.students?.name || group.p1Winner.student_accounts?.phone_number || 'Unknown'}
                                     </span>
-                                    <span className="text-muted-foreground">
-                                      ({group.p1Winner.total_points.toLocaleString()} pts)
+                                    <span className="text-xs text-muted-foreground ml-auto font-mono">
+                                      {group.p1Winner.total_points.toLocaleString()} pts
                                     </span>
                                   </div>
                                 )}
-                              </div>
-                              
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="w-16">Rank</TableHead>
-                                    <TableHead>Student</TableHead>
-                                    <TableHead className="text-right">Points</TableHead>
-                                    <TableHead className="w-20 text-center">P1</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {group.rankings.slice(0, 10).map((ranking, idx) => (
-                                    <TableRow key={ranking.id}>
-                                      <TableCell className="font-medium">
-                                        #{idx + 1}
-                                      </TableCell>
-                                      <TableCell>
-                                        {ranking.student_accounts?.students?.name || 
-                                         ranking.student_accounts?.phone_number || 
-                                         'Unknown'}
-                                      </TableCell>
-                                      <TableCell className="text-right font-mono">
-                                        {ranking.total_points.toLocaleString()}
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        {(ranking.is_top_1 || idx === 0) && (
-                                          <Crown className="h-4 w-4 text-amber-500 mx-auto" />
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                  {group.rankings.length > 10 && (
-                                    <TableRow>
-                                      <TableCell colSpan={4} className="text-center text-muted-foreground text-sm">
-                                        + {group.rankings.length - 10} more students
-                                      </TableCell>
-                                    </TableRow>
-                                  )}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          ))}
-                        </div>
+
+                                <Collapsible defaultOpen>
+                                  <CollapsibleTrigger asChild>
+                                    <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2 w-full">
+                                      <ChevronDown className="h-3.5 w-3.5" />
+                                      <span>Student Rankings ({group.studentCount})</span>
+                                    </button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead className="w-14">Rank</TableHead>
+                                          <TableHead>Student</TableHead>
+                                          <TableHead className="text-right">Points</TableHead>
+                                          <TableHead className="w-16 text-center">P1</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {group.rankings.map((ranking, idx) => (
+                                          <TableRow key={ranking.id}>
+                                            <TableCell className="font-medium">#{idx + 1}</TableCell>
+                                            <TableCell>
+                                              {ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown'}
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono">
+                                              {ranking.total_points.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                              {(ranking.is_top_1 || idx === 0) && (
+                                                <Crown className="h-4 w-4 text-amber-500 mx-auto" />
+                                              )}
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              </TabsContent>
+                            ))}
+                          </Tabs>
+                        ) : (
+                          <div className="p-8 text-center text-muted-foreground text-sm">No students in this tier</div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    disabled={activeTierIndex >= tierBreakdown.length - 1}
+                    onClick={() => setActiveTierIndex(i => Math.min(tierBreakdown.length - 1, i + 1))}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Dot indicators */}
+                <div className="flex items-center justify-center gap-2">
+                  {tierBreakdown.map((t, idx) => (
+                    <button
+                      key={t.tier}
+                      onClick={() => setActiveTierIndex(idx)}
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full transition-all",
+                        idx === activeTierIndex ? "bg-primary scale-125" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                       )}
-                    </div>
-                  );
-                })}
+                      title={`${t.tier} (${t.studentCount})`}
+                    />
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
