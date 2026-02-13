@@ -795,14 +795,8 @@ export default function SprintMonitor() {
                                   </div>
                                 )}
 
-                                <Collapsible defaultOpen>
-                                  <CollapsibleTrigger asChild>
-                                    <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2 w-full">
-                                      <ChevronDown className="h-3.5 w-3.5" />
-                                      <span>Student Rankings ({group.studentCount})</span>
-                                    </button>
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent>
+                                <Collapsible defaultOpen={false}>
+                                  <div className="max-h-[400px] overflow-y-auto">
                                     <Table>
                                       <TableHeader>
                                         <TableRow>
@@ -813,7 +807,7 @@ export default function SprintMonitor() {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {group.rankings.map((ranking, idx) => (
+                                        {group.rankings.slice(0, 10).map((ranking, idx) => (
                                           <TableRow key={ranking.id}>
                                             <TableCell className="font-medium">#{idx + 1}</TableCell>
                                             <TableCell>
@@ -831,7 +825,41 @@ export default function SprintMonitor() {
                                         ))}
                                       </TableBody>
                                     </Table>
-                                  </CollapsibleContent>
+                                  </div>
+                                  {group.rankings.length > 10 && (
+                                    <>
+                                      <CollapsibleTrigger asChild>
+                                        <button className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 w-full border-t">
+                                          <ChevronDown className="h-3.5 w-3.5" />
+                                          <span>Show all {group.studentCount} students</span>
+                                        </button>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent>
+                                        <div className="max-h-[400px] overflow-y-auto border-t">
+                                          <Table>
+                                            <TableBody>
+                                              {group.rankings.slice(10).map((ranking, idx) => (
+                                                <TableRow key={ranking.id}>
+                                                  <TableCell className="font-medium w-14">#{idx + 11}</TableCell>
+                                                  <TableCell>
+                                                    {ranking.student_accounts?.students?.name || ranking.student_accounts?.phone_number || 'Unknown'}
+                                                  </TableCell>
+                                                  <TableCell className="text-right font-mono">
+                                                    {ranking.total_points.toLocaleString()}
+                                                  </TableCell>
+                                                  <TableCell className="w-16 text-center">
+                                                    {ranking.is_top_1 && (
+                                                      <Crown className="h-4 w-4 text-amber-500 mx-auto" />
+                                                    )}
+                                                  </TableCell>
+                                                </TableRow>
+                                              ))}
+                                            </TableBody>
+                                          </Table>
+                                        </div>
+                                      </CollapsibleContent>
+                                    </>
+                                  )}
                                 </Collapsible>
                               </TabsContent>
                             ))}
