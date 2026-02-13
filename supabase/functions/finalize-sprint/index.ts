@@ -6,6 +6,7 @@ const corsHeaders = {
 }
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby']
+const MAX_GROUP_SIZE = 55 // 40 ± 15 margin, effective range 25-55
 const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
   unranked: 30,
   bronze: 20,
@@ -428,25 +429,25 @@ Deno.serve(async (req) => {
         }
 
         // Get current group counts for this tier to assign appropriate group
-        const { data: groupCounts } = await supabase
+        const { data: tierMembers } = await supabase
           .from('student_sprint_rankings')
           .select('group_number')
           .eq('sprint_id', nextSprint.id)
           .eq('current_tier', tier)
 
-        // Calculate which group to assign
         let assignedGroup = 1
-        if (groupCounts && groupCounts.length > 0) {
+        if (tierMembers && tierMembers.length > 0) {
           const groupMap: Record<number, number> = {}
-          groupCounts.forEach(r => {
+          tierMembers.forEach(r => {
             const g = r.group_number || 1
             groupMap[g] = (groupMap[g] || 0) + 1
           })
 
+          // Find a group that hasn't hit the max (55)
           const maxGroup = Math.max(...Object.keys(groupMap).map(Number), 1)
           let foundGroup = false
           for (let i = 1; i <= maxGroup; i++) {
-            if ((groupMap[i] || 0) < 40) { // MAX_GROUP_SIZE = 40
+            if ((groupMap[i] || 0) < MAX_GROUP_SIZE) {
               assignedGroup = i
               foundGroup = true
               break
