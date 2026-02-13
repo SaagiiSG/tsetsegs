@@ -365,10 +365,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // AUTO-ENROLL: Enroll all participants in the next active sprint
+    // AUTO-ENROLL: Enroll all participants in the next sprint (active OR upcoming)
     let autoEnrolledCount = 0
     
-    // Find the next active sprint
+    // Find the next sprint - first check active, then check upcoming (scheduled but not yet active)
+    let nextSprintData = null
+    
     const { data: nextActiveSprint } = await supabase
       .from('sprints')
       .select('id, season_number, sprint_number')
@@ -376,10 +378,30 @@ Deno.serve(async (req) => {
       .neq('id', sprintId)
       .order('start_date', { ascending: true })
       .limit(1)
-      .single()
-
+      .maybeSingle()
+    
     if (nextActiveSprint) {
-      console.log(`Found next active sprint: Season ${nextActiveSprint.season_number}, Sprint ${nextActiveSprint.sprint_number}`)
+      nextSprintData = nextActiveSprint
+    } else {
+      // No active sprint found - look for the next upcoming sprint in the same season
+      const { data: nextUpcomingSprint } = await supabase
+        .from('sprints')
+        .select('id, season_number, sprint_number, start_date')
+        .eq('season_number', seasonNumber)
+        .gt('sprint_number', sprintNumber)
+        .order('sprint_number', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      
+      if (nextUpcomingSprint) {
+        nextSprintData = nextUpcomingSprint
+      }
+    }
+    
+    const nextSprint = nextSprintData
+
+    if (nextSprint) {
+      console.log(`Found next sprint: Season ${nextSprint.season_number}, Sprint ${nextSprint.sprint_number}`)
       
       // Get all unique students from the finalized sprint
       const studentsToEnroll = new Map<string, { tier: string }>()
@@ -395,7 +417,7 @@ Deno.serve(async (req) => {
       const { data: existingEnrollments } = await supabase
         .from('student_sprint_rankings')
         .select('student_account_id')
-        .eq('sprint_id', nextActiveSprint.id)
+        .eq('sprint_id', nextSprint.id)
 
       const alreadyEnrolled = new Set(existingEnrollments?.map(e => e.student_account_id) || [])
 
@@ -409,7 +431,7 @@ Deno.serve(async (req) => {
         const { data: groupCounts } = await supabase
           .from('student_sprint_rankings')
           .select('group_number')
-          .eq('sprint_id', nextActiveSprint.id)
+          .eq('sprint_id', nextSprint.id)
           .eq('current_tier', tier)
 
         // Calculate which group to assign
@@ -439,7 +461,7 @@ Deno.serve(async (req) => {
         const { error: enrollError } = await supabase
           .from('student_sprint_rankings')
           .insert({
-            sprint_id: nextActiveSprint.id,
+            sprint_id: nextSprint.id,
             student_account_id: studentId,
             current_tier: tier,
             total_points: 0,
