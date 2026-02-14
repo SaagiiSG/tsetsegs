@@ -750,26 +750,12 @@ export default function SprintMonitor() {
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-12" />)}
               </div>
             ) : tierBreakdown.length > 0 ? (
-              <div className="space-y-4">
-                {/* Carousel Navigation */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0"
-                    disabled={activeTierIndex === 0}
-                    onClick={() => setActiveTierIndex(i => Math.max(0, i - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-
-                  {/* Tier Card */}
-                  {(() => {
-                    const { tier, studentCount, groupCount, groups } = tierBreakdown[activeTierIndex] || tierBreakdown[0];
+              <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                <div className="flex gap-4" style={{ minWidth: `${tierBreakdown.length * 400}px` }}>
+                  {tierBreakdown.map(({ tier, studentCount, groupCount, groups }) => {
                     const style = TIER_STYLES[tier];
-                    
                     return (
-                      <div className={cn("flex-1 border rounded-xl overflow-hidden min-h-[420px]", style.border)}>
+                      <div key={tier} className={cn("border rounded-xl overflow-hidden min-h-[420px] w-[400px] shrink-0", style.border)}>
                         {/* Card Header */}
                         <div className={cn("flex items-center justify-between p-5", style.bg)}>
                           <div className="flex items-center gap-3">
@@ -826,7 +812,6 @@ export default function SprintMonitor() {
                                         const cutoff = TIER_PROMOTION_CUTOFFS[tier] || 30;
                                         const isPromoting = rank <= cutoff && tier !== 'ruby';
                                         const isDemoting = rank > cutoff;
-                                        // Show separator between promotion and demotion zone
                                         const isCutoffBoundary = idx === cutoff && cutoff < group.rankings.length;
                                         
                                         return (
@@ -887,32 +872,7 @@ export default function SprintMonitor() {
                         )}
                       </div>
                     );
-                  })()}
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0"
-                    disabled={activeTierIndex >= tierBreakdown.length - 1}
-                    onClick={() => setActiveTierIndex(i => Math.min(tierBreakdown.length - 1, i + 1))}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Dot indicators */}
-                <div className="flex items-center justify-center gap-2">
-                  {tierBreakdown.map((t, idx) => (
-                    <button
-                      key={t.tier}
-                      onClick={() => setActiveTierIndex(idx)}
-                      className={cn(
-                        "w-2.5 h-2.5 rounded-full transition-all",
-                        idx === activeTierIndex ? "bg-primary scale-125" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                      )}
-                      title={`${t.tier} (${t.studentCount})`}
-                    />
-                  ))}
+                  })}
                 </div>
               </div>
             ) : (
