@@ -471,12 +471,24 @@ export function useLeaderboard(selectedTier?: TierType) {
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
     queryKey: ['all-time-leaderboard'],
     queryFn: async (): Promise<AllTimeEntry[]> => {
-      // Get total points from all point transactions
-      const { data: transactions, error } = await supabase
-        .from('point_transactions')
-        .select('student_account_id, points');
+      // Get total points from all point transactions (paginate to avoid 1000-row limit)
+      let allTransactions: { student_account_id: string; points: number }[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data: batch, error: batchError } = await supabase
+          .from('point_transactions')
+          .select('student_account_id, points')
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (batchError) throw batchError;
+        if (!batch || batch.length === 0) break;
+        allTransactions = allTransactions.concat(batch);
+        if (batch.length < pageSize) break;
+        page++;
+      }
+      const transactions = allTransactions;
 
-      if (error) throw error;
+      if (!transactions.length) return [];
 
       // Aggregate points per student
       const totalsByStudent: Record<string, number> = {};
