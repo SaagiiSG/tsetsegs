@@ -19,6 +19,7 @@ import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
+import { updateStudentStreak } from '@/hooks/useStudentStreak';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -389,6 +390,9 @@ export default function StudentQuestion() {
           is_correct: correct,
           time_spent_seconds: timeSpent,
         });
+
+      // Update study streak (fire-and-forget)
+      updateStudentStreak(student.id).catch(() => {});
 
       // Log activity
       logActivity('question_attempt', {

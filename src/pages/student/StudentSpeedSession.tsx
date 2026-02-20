@@ -16,6 +16,7 @@ import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/compone
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { checkSpeedBadgeProgress } from '@/hooks/useSpeedBadgeProgress';
 import { syncBadgeProgressForStudent } from '@/hooks/useSyncBadgeProgress';
+import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { toast } from 'sonner';
 
 interface Question {
@@ -244,6 +245,9 @@ export default function StudentSpeedSession() {
 
     // Record a session-level summary transaction for badge tracking
     if (student?.id) {
+      // Update study streak
+      updateStudentStreak(student.id).catch(() => {});
+
       try {
         const { data: activeSprint } = await supabase
           .from('sprints')
