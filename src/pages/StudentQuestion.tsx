@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark, BookOpen, StickyNote } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark, BookOpen, StickyNote, Pen, Type } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { DrawingCanvas } from '@/components/student/DrawingCanvas';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
@@ -59,6 +60,8 @@ export default function StudentQuestion() {
   const [flagReason, setFlagReason] = useState('');
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [noteContent, setNoteContent] = useState('');
+  const [noteTab, setNoteTab] = useState<'text' | 'draw'>('text');
+  const [drawingData, setDrawingData] = useState<string | null>(null);
 
   // Security: Prevent screenshots
   useEffect(() => {
@@ -224,7 +227,7 @@ export default function StudentQuestion() {
       if (!student || !questionId) return null;
       const { data } = await supabase
         .from('student_question_notes')
-        .select('content')
+        .select('content, drawing_data')
         .eq('student_account_id', student.id)
         .eq('question_id', questionId)
         .maybeSingle();
@@ -236,6 +239,7 @@ export default function StudentQuestion() {
   // Sync note content when data loads or question changes
   useEffect(() => {
     setNoteContent(existingNote?.content || '');
+    setDrawingData((existingNote as any)?.drawing_data || null);
     setNoteExpanded(false);
   }, [existingNote, questionId]);
 
@@ -248,7 +252,22 @@ export default function StudentQuestion() {
         question_id: questionId,
         content: noteContent,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'student_account_id,question_id' });
+      } as any, { onConflict: 'student_account_id,question_id' });
+    queryClient.invalidateQueries({ queryKey: ['question-note', questionId, student.id] });
+  };
+
+  const handleDrawingSave = async (dataUrl: string) => {
+    if (!student || !questionId) return;
+    setDrawingData(dataUrl);
+    await supabase
+      .from('student_question_notes')
+      .upsert({
+        student_account_id: student.id,
+        question_id: questionId,
+        content: noteContent,
+        drawing_data: dataUrl,
+        updated_at: new Date().toISOString()
+      } as any, { onConflict: 'student_account_id,question_id' });
     queryClient.invalidateQueries({ queryKey: ['question-note', questionId, student.id] });
   };
 
@@ -890,25 +909,57 @@ export default function StudentQuestion() {
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg border bg-card hover:bg-accent"
                   >
                     <div className="flex items-center gap-2">
-                      <StickyNote className={`h-4 w-4 ${existingNote?.content ? 'text-primary fill-primary/20' : 'text-muted-foreground'}`} />
+                      <StickyNote className={`h-4 w-4 ${(existingNote?.content || (existingNote as any)?.drawing_data) ? 'text-primary fill-primary/20' : 'text-muted-foreground'}`} />
                       <span className="text-sm font-medium">My Notes</span>
-                      {existingNote?.content && (
+                      {(existingNote?.content || (existingNote as any)?.drawing_data) && (
                         <span className="h-2 w-2 rounded-full bg-primary" />
                       )}
                     </div>
                     <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${noteExpanded ? 'rotate-90' : ''}`} />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2">
-                  <Textarea
-                    value={noteContent}
-                    onChange={(e) => setNoteContent(e.target.value)}
-                    onBlur={handleNoteSave}
-                    placeholder="Jot down your thoughts, strategies, or things to remember..."
-                    rows={4}
-                    className="bg-card"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Auto-saves when you click away</p>
+                <CollapsibleContent className="mt-2 space-y-2">
+                  {/* Tab switcher */}
+                  <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+                    <button
+                      onClick={() => setNoteTab('text')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        noteTab === 'text' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Type className="h-3.5 w-3.5" />
+                      Type
+                    </button>
+                    <button
+                      onClick={() => setNoteTab('draw')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        noteTab === 'draw' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Pen className="h-3.5 w-3.5" />
+                      Draw
+                    </button>
+                  </div>
+
+                  {noteTab === 'text' ? (
+                    <div>
+                      <Textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        onBlur={handleNoteSave}
+                        placeholder="Jot down your thoughts, strategies, or things to remember..."
+                        rows={4}
+                        className="bg-card"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Auto-saves when you click away</p>
+                    </div>
+                  ) : (
+                    <DrawingCanvas
+                      initialData={drawingData}
+                      onSave={handleDrawingSave}
+                      height={300}
+                    />
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             </>
