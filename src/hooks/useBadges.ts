@@ -190,7 +190,9 @@ export function useBadges(filter?: {
 
   // Count totals per rarity from all badge definitions
   badgeDefinitions.forEach(badge => {
-    byRarity[badge.rarity].total++;
+    if (byRarity[badge.rarity]) {
+      byRarity[badge.rarity].total++;
+    }
   });
 
   // Count earned per rarity
