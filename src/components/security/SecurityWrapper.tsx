@@ -43,8 +43,8 @@ export function SecurityWrapper({ children }: SecurityWrapperProps) {
     const activeElement = document.activeElement;
     const tagName = activeElement?.tagName?.toLowerCase();
     
-    // Allow focus on input/textarea elements (for mobile keyboard)
-    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    // Allow focus on input/textarea/canvas elements (for mobile keyboard & drawing)
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || tagName === 'canvas') {
       return true;
     }
     
