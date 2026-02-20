@@ -15,6 +15,7 @@ import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { checkSpeedBadgeProgress } from '@/hooks/useSpeedBadgeProgress';
+import { syncBadgeProgressForStudent } from '@/hooks/useSyncBadgeProgress';
 import { toast } from 'sonner';
 
 interface Question {
@@ -241,8 +242,36 @@ export default function StudentSpeedSession() {
       avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10
     });
 
-    // Check badge progress after session completes
+    // Record a session-level summary transaction for badge tracking
     if (student?.id) {
+      try {
+        const { data: activeSprint } = await supabase
+          .from('sprints')
+          .select('id')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        await supabase
+          .from('point_transactions')
+          .insert({
+            student_account_id: student.id,
+            sprint_id: activeSprint?.id || null,
+            points: 0, // Summary record, points already awarded per-question
+            category: 'speed',
+            metadata: {
+              session_summary: true,
+              total_questions: results.length,
+              correct_count: correctCount,
+              accuracy,
+              total_time_seconds: totalTimeSeconds,
+              avg_time_per_question: Math.round(avgTimePerQuestion * 10) / 10
+            }
+          });
+      } catch (err) {
+        console.error('Failed to record speed session summary:', err);
+      }
+
+      // Check speed-specific badges (Lightning Strike, Speedster)
       try {
         const { badgesUnlocked } = await checkSpeedBadgeProgress(student.id, {
           totalQuestions: results.length,
@@ -251,7 +280,6 @@ export default function StudentSpeedSession() {
           accuracy
         });
 
-        // Show toast for each badge unlocked
         badgesUnlocked.forEach(badgeName => {
           toast.success(`🏆 Badge Unlocked: ${badgeName}!`, {
             description: 'Check your badges page to see your achievement!',
@@ -259,12 +287,32 @@ export default function StudentSpeedSession() {
           });
         });
 
-        // Invalidate badge cache if any were unlocked
         if (badgesUnlocked.length > 0) {
           queryClient.invalidateQueries({ queryKey: ['student-badges'] });
         }
       } catch (error) {
-        console.error('Failed to check badge progress:', error);
+        console.error('Failed to check speed badge progress:', error);
+      }
+
+      // Sync all badge progress (Chain Lightning, Hot Streak, Peak of Speed, etc.)
+      try {
+        const newBadges = await syncBadgeProgressForStudent(
+          student.id,
+          student.linked_student_id || undefined
+        );
+        
+        newBadges.forEach(badgeName => {
+          toast.success(`🏆 Badge Unlocked: ${badgeName}!`, {
+            description: 'Check your badges page to see your achievement!',
+            duration: 5000
+          });
+        });
+
+        if (newBadges.length > 0) {
+          queryClient.invalidateQueries({ queryKey: ['student-badges'] });
+        }
+      } catch (error) {
+        console.error('Failed to sync badge progress:', error);
       }
     }
 
