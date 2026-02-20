@@ -236,12 +236,19 @@ export default function StudentQuestion() {
     enabled: !!questionId && !!student
   });
 
-  // Sync note content when data loads or question changes
+  // Sync note content when question changes (initial load only)
   useEffect(() => {
-    setNoteContent(existingNote?.content || '');
-    setDrawingData((existingNote as any)?.drawing_data || null);
     setNoteExpanded(false);
-  }, [existingNote, questionId]);
+    setNoteTab('text');
+  }, [questionId]);
+
+  // Sync note content from fetched data (don't close the panel)
+  useEffect(() => {
+    if (existingNote !== undefined) {
+      setNoteContent(existingNote?.content || '');
+      setDrawingData((existingNote as any)?.drawing_data || null);
+    }
+  }, [existingNote]);
 
   const handleNoteSave = async () => {
     if (!student || !questionId) return;
@@ -268,7 +275,7 @@ export default function StudentQuestion() {
         drawing_data: dataUrl,
         updated_at: new Date().toISOString()
       } as any, { onConflict: 'student_account_id,question_id' });
-    queryClient.invalidateQueries({ queryKey: ['question-note', questionId, student.id] });
+    // Don't invalidate query here to avoid re-render closing the notes panel
   };
 
   // Fetch existing attempts for all variations
