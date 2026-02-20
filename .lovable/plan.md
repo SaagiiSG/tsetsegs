@@ -1,63 +1,73 @@
 
 
-## Batches UI Redo
+# Plan: Fix Bottom Bar Layout + Add Note-Taking on Review Page
 
-### Current State
-The "All Batches" section uses a grid of cards (`BatchGridCard`). Clicking a card opens `BatchDetailsDialog` (split-pane: left = batch info/SMS template, right = student list). Editing requires clicking "Edit Batch" button inside that dialog, which opens a separate `EditBatchDialog` with tabs (Details / Students).
+## Task 1: Fix the Bottom Bar Layout (StudentQuestion.tsx)
 
-### New Design
-
-**1. List View Grouped by Month**
-
-Replace the grid with a flat list, grouped under month headers (e.g., "Feb 2026", "Jan 2026"). Each row is a single horizontal line:
+The current bottom bar wraps content inside a `container mx-auto max-w-3xl` which constrains the width. Per the requested layout:
 
 ```text
---- Feb 2026 ---
-SAT  |  Saran-Ochir  |  16:40 MWF+Sat  |  Feb 3  |  12 students  |  ...
-SAT  |  Manlai       |  18:40 MWF+Sat  |  Feb 3  |  8 students   |  ...
-
---- Jan 2026 ---
-IELTS |  Dulguun, Udval  |  16:30 TT+Sat  |  Jan 6  |  15 students  |  ...
+[ [x of xxx]                                                                    [check][< previous] [next >] ]
 ```
 
-- Course type badge (color-coded SAT blue / IELTS purple)
-- Teacher name
-- Compact schedule (reuse existing `formatShortSchedule` logic from `BatchGridCard`)
-- Start date (short: "Feb 3")
-- Student count
-- 3-dot menu (MoreHorizontal icon) with context menu actions: Edit, Copy Link, Open Link, Regenerate Link, SMS Template, Delete
+**Changes:**
+- Remove the inner `container mx-auto max-w-3xl` wrapper so the bar content stretches the full width of the bottom bar
+- Use `justify-between` directly on the bar's inner padding area
+- Left side: question counter ("x of xxx") with navigator
+- Right side: Check button, then Previous and Next buttons grouped together
+- Keep the calculator-snap margin logic as-is
 
-**2. Context Menu on 3-Dots**
+**File:** `src/pages/StudentQuestion.tsx` (lines 635-702)
 
-Using `DropdownMenu` from shadcn. Menu items:
-- Edit Batch -- opens the new edit dialog
-- Copy Link
-- Open Link
-- Regenerate Link
-- Copy SMS Template
-- Delete Batch (destructive, with confirmation)
+## Task 2: Add Note-Taking Feature on Review Page
 
-**3. Redesigned Edit Dialog (Split Pane)**
+Students should be able to write personal notes on wrong questions from the Review page, to help them revisit and study.
 
-When "Edit" is clicked, open a dialog similar to current `BatchDetailsDialog` layout (full-width split pane):
-- **Left side**: Batch editor form directly (teacher, schedule, room, start date, FB group link, save button) -- no tabs, straight-up editing
-- **Right side**: Students list with add/bulk import/edit/remove (same as current `EditBatchDialog` students tab)
+### 2a. New Database Table: `student_question_notes`
 
-This merges `BatchDetailsDialog` and `EditBatchDialog` into one unified component.
+```sql
+CREATE TABLE public.student_question_notes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_account_id uuid NOT NULL,
+  question_id uuid NOT NULL,
+  content text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(student_account_id, question_id)
+);
 
-### Technical Changes
+ALTER TABLE public.student_question_notes ENABLE ROW LEVEL SECURITY;
 
-| File | Action |
-|------|--------|
-| `src/components/admin/BatchesView.tsx` | Rewrite "All Batches" section: replace grid with month-grouped list rows |
-| `src/components/admin/BatchListRow.tsx` | **New** -- single batch row component with 3-dot dropdown menu |
-| `src/components/admin/BatchDetailsDialog.tsx` | Refactor: left side becomes the batch editor form, right side stays as students list. Merge edit functionality from `EditBatchDialog` directly into this dialog |
-| `src/components/admin/BatchGridCard.tsx` | No longer used by BatchesView (keep for BatchOverview if still used there) |
+-- Public insert/update/select (matches existing student_progress pattern)
+CREATE POLICY "Public can insert notes" ON public.student_question_notes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can update notes" ON public.student_question_notes FOR UPDATE USING (true);
+CREATE POLICY "Public can read notes" ON public.student_question_notes FOR SELECT USING (true);
+CREATE POLICY "Admins can manage notes" ON public.student_question_notes FOR ALL USING (has_role(auth.uid(), 'admin'::app_role)) WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+```
 
-### Key Details
+### 2b. UI on Review Page (StudentReview.tsx)
 
-- Month grouping: derive from `start_date`, format as "MMM YYYY", sort descending (newest first)
-- Filters (course, intake, teacher) remain at the top unchanged
-- The edit dialog opens directly from the 3-dot menu -- no intermediate "details" view
-- All existing functionality (copy link, regenerate, delete, SMS template, student management) is preserved, just reorganized
+Add a note icon on each wrong question card. When clicked, it expands an inline textarea below the card (or opens a small dialog) where the student can type and save a note.
+
+**Behavior:**
+- Each wrong question card gets a small "note" icon button
+- Clicking it expands a textarea inline below the card
+- Auto-saves on blur or after a short debounce
+- Shows a small indicator (filled note icon) if a note already exists
+- Notes are fetched alongside wrong questions using the student's account ID
+
+**File:** `src/pages/student/StudentReview.tsx`
+
+### Technical Details
+
+**StudentQuestion.tsx bottom bar changes (lines 636-701):**
+- Remove the `<div className="container mx-auto max-w-3xl ...">` wrapper
+- Replace with direct `flex items-center justify-between` on the outer fixed div's inner content using just padding (`px-6`)
+
+**StudentReview.tsx note-taking additions:**
+- Add a new query to fetch `student_question_notes` for the current student
+- Add state for `expandedNoteId` and `noteContent`
+- On each wrong question card, add a `StickyNote` icon button
+- When expanded, show a `Textarea` below the card with save-on-blur
+- Use upsert (on conflict `student_account_id, question_id`) for saving
 
