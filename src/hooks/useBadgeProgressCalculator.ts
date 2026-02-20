@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { badgeDefinitions, BadgeDefinition, BadgeRequirement } from '@/data/badgeDefinitions';
-import { differenceInCalendarDays, parseISO, subDays, format } from 'date-fns';
+import { differenceInCalendarDays, parseISO, format } from 'date-fns';
 
 export interface BadgeProgressResult {
   badgeId: string;
@@ -16,19 +16,34 @@ export interface BadgeProgressResult {
 }
 
 /**
+ * Helper: Get seasonal event date range by badge_id
+ */
+async function getSeasonalEventDates(badgeId: string): Promise<{ start: string; end: string } | null> {
+  const { data } = await supabase
+    .from('seasonal_events')
+    .select('start_date, end_date')
+    .eq('badge_id', badgeId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!data) return null;
+  return { start: data.start_date, end: data.end_date };
+}
+
+/**
  * Calculate progress for a single requirement type
  */
 async function calculateRequirementProgress(
   studentAccountId: string,
   req: BadgeRequirement,
-  studentId?: string
+  studentId?: string,
+  badgeName?: string
 ): Promise<{ current: number; target: number; percentage: number }> {
   const target = req.target;
   let current = 0;
 
   switch (req.type) {
     case 'first_try_correct': {
-      // Count questions answered correctly on first attempt
       const { count } = await supabase
         .from('student_attempts')
         .select('id', { count: 'exact', head: true })
@@ -40,7 +55,6 @@ async function calculateRequirementProgress(
     }
 
     case 'consecutive_days_speed': {
-      // Find longest streak of consecutive days with speed sessions
       const { data: speedTransactions } = await supabase
         .from('point_transactions')
         .select('created_at')
@@ -53,7 +67,6 @@ async function calculateRequirementProgress(
     }
 
     case 'consecutive_days_both': {
-      // Days with both speed AND practice activity
       const { data: allTransactions } = await supabase
         .from('point_transactions')
         .select('created_at, category')
@@ -66,7 +79,6 @@ async function calculateRequirementProgress(
     }
 
     case 'all_68_questions': {
-      // Count of unique 68 questions answered correctly
       const { data: questions68 } = await supabase
         .from('questions')
         .select('id')
@@ -88,7 +100,6 @@ async function calculateRequirementProgress(
     }
 
     case 'all_cb_problems': {
-      // Count of unique CollegeBoard questions answered correctly
       const { data: cbQuestions } = await supabase
         .from('questions')
         .select('id')
@@ -110,7 +121,6 @@ async function calculateRequirementProgress(
     }
 
     case 'vocabulary_completion': {
-      // Percentage of vocabulary words mastered
       const { count: totalWords } = await supabase
         .from('vocabulary_words')
         .select('id', { count: 'exact', head: true })
@@ -129,9 +139,6 @@ async function calculateRequirementProgress(
     }
 
     case 'practice_test_avg': {
-      // Average score from bluebook tests
-      if (!studentId) break;
-
       const { data: completedTests } = await supabase
         .from('bluebook_attempts')
         .select('total_score')
@@ -148,7 +155,6 @@ async function calculateRequirementProgress(
     }
 
     case 'speed_sessions_high_accuracy': {
-      // Count speed sessions with 95%+ accuracy
       const { data: speedTransactions } = await supabase
         .from('point_transactions')
         .select('metadata')
@@ -163,7 +169,6 @@ async function calculateRequirementProgress(
     }
 
     case 'consecutive_perfect_drills': {
-      // Find max consecutive perfect (100%) speed drills
       const { data: speedTransactions } = await supabase
         .from('point_transactions')
         .select('metadata, created_at')
@@ -176,10 +181,10 @@ async function calculateRequirementProgress(
 
       speedTransactions?.forEach(t => {
         const metadata = t.metadata as any;
-        if (metadata?.accuracy === 100) {
+        if (metadata?.session_summary && metadata?.accuracy === 100) {
           currentStreak++;
           maxStreak = Math.max(maxStreak, currentStreak);
-        } else {
+        } else if (metadata?.session_summary) {
           currentStreak = 0;
         }
       });
@@ -189,29 +194,57 @@ async function calculateRequirementProgress(
     }
 
     case 'speed_session_combo': {
-      // Check if any session meets the combo requirements (handled by useSpeedBadgeProgress)
-      // This is validated at session completion, just check if badge is unlocked
-      const { data: badges } = await supabase
-        .from('badges')
-        .select('id, name')
-        .in('name', ['Lightning Strike', 'Speedster']);
+      // FIX: Distinguish between Lightning Strike and Speedster by badge name
+      const targetBadgeName = badgeName || '';
+      let matchBadgeName = '';
+      
+      if (targetBadgeName.includes('Lightning') || targetBadgeName === 'Lightning Strike') {
+        matchBadgeName = 'Lightning Strike';
+      } else if (targetBadgeName.includes('Speedster') || targetBadgeName === 'Speedster') {
+        matchBadgeName = 'Speedster';
+      }
 
-      if (badges && badges.length > 0) {
-        const { data: studentBadge } = await supabase
-          .from('student_badges')
-          .select('is_unlocked')
-          .eq('student_account_id', studentAccountId)
-          .in('badge_id', badges.map(b => b.id))
-          .eq('is_unlocked', true)
-          .limit(1);
+      if (matchBadgeName) {
+        const { data: badge } = await supabase
+          .from('badges')
+          .select('id')
+          .eq('name', matchBadgeName)
+          .maybeSingle();
 
-        current = studentBadge && studentBadge.length > 0 ? 1 : 0;
+        if (badge) {
+          const { data: studentBadge } = await supabase
+            .from('student_badges')
+            .select('is_unlocked')
+            .eq('student_account_id', studentAccountId)
+            .eq('badge_id', badge.id)
+            .eq('is_unlocked', true)
+            .maybeSingle();
+
+          current = studentBadge ? 1 : 0;
+        }
+      } else {
+        // Fallback: check if any speed combo badge is unlocked
+        const { data: badges } = await supabase
+          .from('badges')
+          .select('id')
+          .in('name', ['Lightning Strike', 'Speedster']);
+
+        if (badges && badges.length > 0) {
+          const { data: studentBadge } = await supabase
+            .from('student_badges')
+            .select('is_unlocked')
+            .eq('student_account_id', studentAccountId)
+            .in('badge_id', badges.map(b => b.id))
+            .eq('is_unlocked', true)
+            .limit(1);
+
+          current = studentBadge && studentBadge.length > 0 ? 1 : 0;
+        }
       }
       break;
     }
 
     case 'all_english_questions': {
-      // Count of unique English questions answered correctly
       const { data: englishQuestions } = await supabase
         .from('questions')
         .select('id')
@@ -232,40 +265,93 @@ async function calculateRequirementProgress(
       break;
     }
 
-    // Sprint/Championship badges - these are awarded automatically by finalize-sprint
-    case 'sprint_top_1':
+    case 'sprint_top_1': {
+      // Check if the specific sprint championship badge is unlocked
+      // The badge name tells us which tier (e.g., "Bronze Novice", "Silver Challenger")
+      if (badgeName) {
+        const { data: badge } = await supabase
+          .from('badges')
+          .select('id')
+          .eq('name', badgeName)
+          .maybeSingle();
+
+        if (badge) {
+          const { data: studentBadge } = await supabase
+            .from('student_badges')
+            .select('is_unlocked')
+            .eq('student_account_id', studentAccountId)
+            .eq('badge_id', badge.id)
+            .eq('is_unlocked', true)
+            .maybeSingle();
+
+          current = studentBadge ? 1 : 0;
+        }
+      }
+      break;
+    }
+
     case 'top_1_weeks': {
-      current = 0; // Will be set by sprint finalization
+      // Count max consecutive sprints where student held Top 1
+      const { data: rankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('is_top_1, sprint_id, created_at')
+        .eq('student_account_id', studentAccountId)
+        .order('created_at', { ascending: true });
+
+      if (rankings && rankings.length > 0) {
+        let maxConsecutive = 0;
+        let currentConsecutive = 0;
+
+        for (const r of rankings) {
+          if (r.is_top_1) {
+            currentConsecutive++;
+            maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
+          } else {
+            currentConsecutive = 0;
+          }
+        }
+        current = maxConsecutive;
+      }
       break;
     }
 
     case 'streak_days': {
-      // Get streak from student_streaks table
       const { data: streakData } = await supabase
         .from('student_streaks')
         .select('current_streak, longest_streak')
         .eq('student_account_id', studentAccountId)
         .maybeSingle();
 
-      current = streakData?.longest_streak || streakData?.current_streak || 0;
+      current = Math.max(streakData?.longest_streak || 0, streakData?.current_streak || 0);
       break;
     }
 
     case 'ruby_weeks': {
-      // Count consecutive weeks at Ruby rank
+      // FIX: Count CONSECUTIVE sprints at Ruby tier (ordered by time)
       const { data: rankings } = await supabase
         .from('student_sprint_rankings')
         .select('current_tier, created_at')
         .eq('student_account_id', studentAccountId)
-        .eq('current_tier', 'ruby')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
-      current = rankings?.length || 0;
+      if (rankings && rankings.length > 0) {
+        let maxConsecutive = 0;
+        let currentConsecutive = 0;
+
+        for (const r of rankings) {
+          if (r.current_tier === 'ruby') {
+            currentConsecutive++;
+            maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
+          } else {
+            currentConsecutive = 0;
+          }
+        }
+        current = maxConsecutive;
+      }
       break;
     }
 
     case 'penguin_badge': {
-      // Check if The Penguin badge is unlocked
       const { data: penguinBadge } = await supabase
         .from('badges')
         .select('id')
@@ -286,41 +372,287 @@ async function calculateRequirementProgress(
     }
 
     case 'all_english_bank': {
-      // Check if all English questions are completed
-      const { count: totalEnglish } = await supabase
+      // FIX: Filter attempts by English subject via question join
+      const { data: englishQuestions } = await supabase
         .from('questions')
-        .select('id', { count: 'exact', head: true })
+        .select('id')
         .ilike('subject', 'english')
         .eq('is_active', true);
 
-      const { data: englishAttempts } = await supabase
+      const englishIds = englishQuestions?.map(q => q.id) || [];
+      if (englishIds.length === 0) break;
+
+      const { data: correctAttempts } = await supabase
         .from('student_attempts')
         .select('question_id')
         .eq('student_account_id', studentAccountId)
-        .eq('is_correct', true);
+        .eq('is_correct', true)
+        .in('question_id', englishIds);
 
-      const uniqueCorrect = new Set(englishAttempts?.map(a => a.question_id) || []).size;
-      current = totalEnglish && uniqueCorrect >= totalEnglish ? 1 : 0;
+      const uniqueCorrect = new Set(correctAttempts?.map(a => a.question_id) || []).size;
+      current = uniqueCorrect >= englishIds.length ? 1 : 0;
       break;
     }
 
-    // Time-based achievements
-    case 'module_under_time':
-    case 'consecutive_correct_under_time':
-    case 'questions_under_time_high_accuracy':
+    case 'module_under_time': {
+      // Blitz: Complete a bluebook module in under target minutes with all correct
+      const { data: modules } = await supabase
+        .from('bluebook_modules')
+        .select('id, section, module_number');
+
+      if (!modules || modules.length === 0) break;
+
+      // Check each module the student attempted
+      for (const mod of modules) {
+        const { data: answers } = await supabase
+          .from('bluebook_answers')
+          .select('is_correct, time_spent_seconds')
+          .eq('module_id', mod.id)
+          .eq('attempt_id', studentAccountId); // attempt_id links to the student's attempt
+
+        // Actually, we need to find attempts by this student for any module
+        // bluebook_answers -> attempt_id -> bluebook_attempts -> student_account_id
+        break; // We'll use a different approach below
+      }
+
+      // Better approach: get all student's bluebook attempts, then check module answers
+      const { data: attempts } = await supabase
+        .from('bluebook_attempts')
+        .select('id')
+        .eq('student_account_id', studentAccountId)
+        .eq('status', 'completed');
+
+      if (!attempts || attempts.length === 0) break;
+
+      for (const attempt of attempts) {
+        // Get answers grouped by module for this attempt
+        const { data: answers } = await supabase
+          .from('bluebook_answers')
+          .select('module_id, is_correct, time_spent_seconds')
+          .eq('attempt_id', attempt.id);
+
+        if (!answers || answers.length === 0) continue;
+
+        // Group by module
+        const moduleAnswers: Record<string, typeof answers> = {};
+        answers.forEach(a => {
+          if (!a.module_id) return;
+          if (!moduleAnswers[a.module_id]) moduleAnswers[a.module_id] = [];
+          moduleAnswers[a.module_id].push(a);
+        });
+
+        // Check if any module was completed under target minutes with all correct
+        for (const [, modAnswers] of Object.entries(moduleAnswers)) {
+          const totalSeconds = modAnswers.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0);
+          const allCorrect = modAnswers.every(a => a.is_correct === true);
+          const totalMinutes = totalSeconds / 60;
+
+          if (allCorrect && totalMinutes < target) {
+            current = 1;
+            break;
+          }
+        }
+        if (current > 0) break;
+      }
+      break;
+    }
+
+    case 'consecutive_correct_under_time': {
+      // Sniper (target=10, 8min) / Rush Delivery (target=20, 12min)
+      // Parse time limit from the label
+      const timeLimitMinutes = target === 10 ? 8 : target === 20 ? 12 : 10;
+      const timeLimitSeconds = timeLimitMinutes * 60;
+
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select('is_correct, time_spent_seconds, attempted_at')
+        .eq('student_account_id', studentAccountId)
+        .order('attempted_at', { ascending: true });
+
+      if (!attempts || attempts.length === 0) break;
+
+      // Sliding window: find longest consecutive correct run where cumulative time < limit
+      let bestRun = 0;
+
+      for (let i = 0; i < attempts.length; i++) {
+        if (!attempts[i].is_correct) continue;
+
+        let runLength = 0;
+        let cumulativeTime = 0;
+
+        for (let j = i; j < attempts.length; j++) {
+          if (!attempts[j].is_correct) break;
+          cumulativeTime += attempts[j].time_spent_seconds || 0;
+          if (cumulativeTime > timeLimitSeconds) break;
+          runLength++;
+        }
+
+        bestRun = Math.max(bestRun, runLength);
+      }
+
+      current = bestRun;
+      break;
+    }
+
+    case 'questions_under_time_high_accuracy': {
+      // Time Lord: 50 questions in under 17 min with 90%+ accuracy (from speed sessions)
+      const { data: speedSessions } = await supabase
+        .from('point_transactions')
+        .select('metadata')
+        .eq('student_account_id', studentAccountId)
+        .eq('category', 'speed');
+
+      if (speedSessions) {
+        for (const session of speedSessions) {
+          const metadata = session.metadata as any;
+          if (!metadata?.session_summary) continue;
+
+          const totalQuestions = metadata.total_questions || 0;
+          const accuracy = metadata.accuracy || 0;
+          const totalTimeSeconds = metadata.total_time_seconds || metadata.time_seconds || 0;
+          const totalTimeMinutes = totalTimeSeconds / 60;
+
+          if (totalQuestions >= 50 && totalTimeMinutes < 17 && accuracy >= 90) {
+            current = 1;
+            break;
+          }
+        }
+      }
+      break;
+    }
+
     case 'perfect_test_under_time': {
-      // These require session-specific tracking
-      current = 0;
+      // Flawless Execution: Perfect bluebook test under target minutes
+      const { data: attempts } = await supabase
+        .from('bluebook_attempts')
+        .select('id')
+        .eq('student_account_id', studentAccountId)
+        .eq('status', 'completed');
+
+      if (!attempts || attempts.length === 0) break;
+
+      for (const attempt of attempts) {
+        const { data: answers } = await supabase
+          .from('bluebook_answers')
+          .select('is_correct, time_spent_seconds')
+          .eq('attempt_id', attempt.id);
+
+        if (!answers || answers.length === 0) continue;
+
+        const allCorrect = answers.every(a => a.is_correct === true);
+        const totalSeconds = answers.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0);
+        const totalMinutes = totalSeconds / 60;
+
+        if (allCorrect && totalMinutes < target) {
+          current = 1;
+          break;
+        }
+      }
       break;
     }
 
-    // Seasonal badges - check attempts during event period
-    case 'seasonal_questions':
-    case 'seasonal_accuracy':
-    case 'seasonal_improvement':
-    case 'seasonal_tests':
+    // Seasonal badges
+    case 'seasonal_questions': {
+      // Count student_attempts during the seasonal event period
+      const badgeDef = badgeDefinitions.find(b => b.name === badgeName);
+      const dates = badgeDef ? await getSeasonalEventDates(badgeDef.id) : null;
+      if (!dates) break;
+
+      const { count } = await supabase
+        .from('student_attempts')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_account_id', studentAccountId)
+        .gte('attempted_at', dates.start)
+        .lte('attempted_at', dates.end);
+
+      current = count || 0;
+      break;
+    }
+
+    case 'seasonal_accuracy': {
+      const badgeDef = badgeDefinitions.find(b => b.name === badgeName);
+      const dates = badgeDef ? await getSeasonalEventDates(badgeDef.id) : null;
+      if (!dates) break;
+
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select('is_correct')
+        .eq('student_account_id', studentAccountId)
+        .gte('attempted_at', dates.start)
+        .lte('attempted_at', dates.end);
+
+      if (attempts && attempts.length > 0) {
+        const correctCount = attempts.filter(a => a.is_correct).length;
+        current = Math.round((correctCount / attempts.length) * 100);
+      }
+      break;
+    }
+
+    case 'seasonal_improvement': {
+      const badgeDef = badgeDefinitions.find(b => b.name === badgeName);
+      const dates = badgeDef ? await getSeasonalEventDates(badgeDef.id) : null;
+      if (!dates) break;
+
+      const { data: tests } = await supabase
+        .from('bluebook_attempts')
+        .select('total_score, completed_at')
+        .eq('student_account_id', studentAccountId)
+        .eq('status', 'completed')
+        .not('total_score', 'is', null)
+        .gte('completed_at', dates.start)
+        .lte('completed_at', dates.end)
+        .order('completed_at', { ascending: true });
+
+      if (tests && tests.length >= 2) {
+        const firstScore = tests[0].total_score || 0;
+        const lastScore = tests[tests.length - 1].total_score || 0;
+        current = Math.max(0, lastScore - firstScore);
+      }
+      break;
+    }
+
+    case 'seasonal_tests': {
+      const badgeDef = badgeDefinitions.find(b => b.name === badgeName);
+      const dates = badgeDef ? await getSeasonalEventDates(badgeDef.id) : null;
+      if (!dates) break;
+
+      const { count } = await supabase
+        .from('bluebook_attempts')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_account_id', studentAccountId)
+        .eq('status', 'completed')
+        .gte('completed_at', dates.start)
+        .lte('completed_at', dates.end);
+
+      current = count || 0;
+      break;
+    }
+
     case 'seasonal_streak': {
-      current = 0; // Seasonal events tracked separately
+      const badgeDef = badgeDefinitions.find(b => b.name === badgeName);
+      const dates = badgeDef ? await getSeasonalEventDates(badgeDef.id) : null;
+      if (!dates) break;
+
+      // Count distinct practice days from attempts + transactions during the period
+      const { data: attempts } = await supabase
+        .from('student_attempts')
+        .select('attempted_at')
+        .eq('student_account_id', studentAccountId)
+        .gte('attempted_at', dates.start)
+        .lte('attempted_at', dates.end);
+
+      const { data: transactions } = await supabase
+        .from('point_transactions')
+        .select('created_at')
+        .eq('student_account_id', studentAccountId)
+        .gte('created_at', dates.start)
+        .lte('created_at', dates.end);
+
+      const allDates = new Set<string>();
+      attempts?.forEach(a => allDates.add(format(parseISO(a.attempted_at), 'yyyy-MM-dd')));
+      transactions?.forEach(t => allDates.add(format(parseISO(t.created_at), 'yyyy-MM-dd')));
+
+      current = allDates.size;
       break;
     }
 
@@ -369,7 +701,6 @@ function calculateConsecutiveDaysBoth(
 ): number {
   if (transactions.length === 0) return 0;
 
-  // Group by date
   const dateActivities: Record<string, Set<string>> = {};
   transactions.forEach(t => {
     const date = format(parseISO(t.created_at), 'yyyy-MM-dd');
@@ -377,7 +708,6 @@ function calculateConsecutiveDaysBoth(
     dateActivities[date].add(t.category);
   });
 
-  // Find days with both activities
   const daysWithBoth = Object.entries(dateActivities)
     .filter(([_, activities]) => activities.has('speed') && activities.has('practice'))
     .map(([date]) => date)
@@ -385,7 +715,6 @@ function calculateConsecutiveDaysBoth(
 
   if (daysWithBoth.length === 0) return 0;
 
-  // Calculate streak
   let maxStreak = 1;
   let currentStreak = 1;
 
@@ -417,7 +746,7 @@ export async function calculateAllBadgeProgress(
   for (const badge of badgeDefinitions) {
     const requirementsProgress = await Promise.all(
       badge.requirements.map(async req => {
-        const progress = await calculateRequirementProgress(studentAccountId, req, studentId);
+        const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name);
         return {
           type: req.type,
           ...progress
@@ -425,7 +754,6 @@ export async function calculateAllBadgeProgress(
       })
     );
 
-    // Overall progress is average of all requirements
     const overallProgress = requirementsProgress.length > 0
       ? Math.round(
           requirementsProgress.reduce((sum, r) => sum + r.percentage, 0) / requirementsProgress.length
@@ -456,7 +784,7 @@ export async function calculateBadgeProgress(
 ): Promise<BadgeProgressResult> {
   const requirementsProgress = await Promise.all(
     badge.requirements.map(async req => {
-      const progress = await calculateRequirementProgress(studentAccountId, req, studentId);
+      const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name);
       return {
         type: req.type,
         ...progress
