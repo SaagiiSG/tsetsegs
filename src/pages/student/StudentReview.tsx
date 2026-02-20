@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import {
   ChartContainer,
   ChartTooltip,
@@ -21,7 +22,7 @@ import {
 } from 'recharts';
 import { 
   Brain, Target, FileText, Calendar, AlertCircle,
-  CheckCircle2, XCircle, History, Loader2
+  CheckCircle2, XCircle, History, Loader2, StickyNote
 } from 'lucide-react';
 import { formatDistanceToNow, subWeeks } from 'date-fns';
 
@@ -35,8 +36,11 @@ const chartConfig = {
 export default function StudentReview() {
   const { student } = useStudentAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const [subject, setSubject] = useState<'math' | 'english'>('math');
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [noteContent, setNoteContent] = useState<string>('');
 
   // Fetch review queue with category data
   const { data: reviewQueue, isLoading } = useQuery({
@@ -359,6 +363,72 @@ export default function StudentReview() {
     enabled: !!student
   });
 
+  // Fetch student notes for wrong questions
+  const { data: questionNotes } = useQuery({
+    queryKey: ['student-question-notes', student?.id],
+    queryFn: async () => {
+      if (!student) return {};
+      
+      const { data, error } = await supabase
+        .from('student_question_notes' as any)
+        .select('*')
+        .eq('student_account_id', student.id);
+      
+      if (error) throw error;
+      
+      const notesMap: Record<string, string> = {};
+      (data as any[])?.forEach((note: any) => {
+        notesMap[note.question_id] = note.content;
+      });
+      return notesMap;
+    },
+    enabled: !!student
+  });
+
+  // Save note mutation
+  const saveNoteMutation = useMutation({
+    mutationFn: async ({ questionId, content }: { questionId: string; content: string }) => {
+      if (!student) throw new Error('No student');
+      
+      const { error } = await supabase
+        .from('student_question_notes' as any)
+        .upsert(
+          {
+            student_account_id: student.id,
+            question_id: questionId,
+            content,
+            updated_at: new Date().toISOString(),
+          } as any,
+          { onConflict: 'student_account_id,question_id' }
+        );
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-question-notes', student?.id] });
+    }
+  });
+
+  const handleNoteToggle = useCallback((questionId: string) => {
+    if (expandedNoteId === questionId) {
+      // Save on close
+      if (noteContent.trim()) {
+        saveNoteMutation.mutate({ questionId, content: noteContent });
+      }
+      setExpandedNoteId(null);
+      setNoteContent('');
+    } else {
+      setExpandedNoteId(questionId);
+      setNoteContent(questionNotes?.[questionId] || '');
+    }
+  }, [expandedNoteId, noteContent, questionNotes, saveNoteMutation]);
+
+  const handleNoteBlur = useCallback((questionId: string) => {
+    if (noteContent.trim()) {
+      saveNoteMutation.mutate({ questionId, content: noteContent });
+    }
+  }, [noteContent, saveNoteMutation]);
+
   if (isLoading) {
     return (
       <div className="p-4 md:p-6 flex items-center justify-center min-h-[50vh]">
@@ -472,30 +542,59 @@ export default function StudentReview() {
                     const isCB = q.questionSet === 'CB' || q.displayId.startsWith('CB') || q.displayId.startsWith('ENG');
                     const plainText = q.questionText.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
                     const preview = plainText.length > 40 ? plainText.slice(0, 40) + '...' : plainText;
+                    const hasNote = !!(questionNotes?.[q.questionId]);
+                    const isExpanded = expandedNoteId === q.questionId;
                     
                     return (
-                      <div
-                        key={q.questionId}
-                        className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/practice/question/${q.questionId}`)}
-                      >
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                          {is68 && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-orange-100 text-orange-700 border-orange-200">
-                              68
-                            </Badge>
-                          )}
-                          {isCB && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
-                              CB
-                            </Badge>
-                          )}
+                      <div key={q.questionId} className="space-y-0">
+                        <div
+                          className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition-colors cursor-pointer relative"
+                          onClick={() => navigate(`/practice/question/${q.questionId}`)}
+                        >
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            {is68 && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-orange-100 text-orange-700 border-orange-200">
+                                68
+                              </Badge>
+                            )}
+                            {isCB && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
+                                CB
+                              </Badge>
+                            )}
+                            <button
+                              className="ml-auto p-0.5 rounded hover:bg-muted/80 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleNoteToggle(q.questionId);
+                              }}
+                              title={hasNote ? "Edit note" : "Add note"}
+                            >
+                              <StickyNote className={`h-3.5 w-3.5 ${hasNote ? 'text-amber-500 fill-amber-200' : 'text-muted-foreground'}`} />
+                            </button>
+                          </div>
+                          <p className="text-xs font-medium truncate">{q.category}</p>
+                          <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1">
+                            {preview || q.subtopic || 'No preview'}
+                          </p>
                         </div>
-                        <p className="text-xs font-medium truncate">{q.category}</p>
-                        <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1">
-                          {preview || q.subtopic || 'No preview'}
-                        </p>
+                        {isExpanded && (
+                          <div className="px-1 pt-1">
+                            <Textarea
+                              value={noteContent}
+                              onChange={(e) => setNoteContent(e.target.value)}
+                              onBlur={() => handleNoteBlur(q.questionId)}
+                              placeholder="Write your note here..."
+                              className="text-xs min-h-[60px] resize-none bg-amber-50 border-amber-200 focus-visible:ring-amber-400"
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {saveNoteMutation.isPending ? 'Saving...' : 'Auto-saves on close'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

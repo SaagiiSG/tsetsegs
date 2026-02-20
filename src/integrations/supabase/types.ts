@@ -1793,6 +1793,33 @@ export type Database = {
           },
         ]
       }
+      student_question_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          question_id: string
+          student_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          question_id: string
+          student_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          student_account_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_review_queue: {
         Row: {
           created_at: string
