@@ -235,8 +235,72 @@ async function calculateRequirementProgress(
     // Sprint/Championship badges - these are awarded automatically by finalize-sprint
     case 'sprint_top_1':
     case 'top_1_weeks': {
-      // Check if already awarded
       current = 0; // Will be set by sprint finalization
+      break;
+    }
+
+    case 'streak_days': {
+      // Get streak from student_streaks table
+      const { data: streakData } = await supabase
+        .from('student_streaks')
+        .select('current_streak, longest_streak')
+        .eq('student_account_id', studentAccountId)
+        .maybeSingle();
+
+      current = streakData?.longest_streak || streakData?.current_streak || 0;
+      break;
+    }
+
+    case 'ruby_weeks': {
+      // Count consecutive weeks at Ruby rank
+      const { data: rankings } = await supabase
+        .from('student_sprint_rankings')
+        .select('current_tier, created_at')
+        .eq('student_account_id', studentAccountId)
+        .eq('current_tier', 'ruby')
+        .order('created_at', { ascending: false });
+
+      current = rankings?.length || 0;
+      break;
+    }
+
+    case 'penguin_badge': {
+      // Check if The Penguin badge is unlocked
+      const { data: penguinBadge } = await supabase
+        .from('badges')
+        .select('id')
+        .eq('name', 'The Penguin')
+        .maybeSingle();
+
+      if (penguinBadge) {
+        const { data: studentPenguin } = await supabase
+          .from('student_badges')
+          .select('is_unlocked')
+          .eq('student_account_id', studentAccountId)
+          .eq('badge_id', penguinBadge.id)
+          .maybeSingle();
+
+        current = studentPenguin?.is_unlocked ? 1 : 0;
+      }
+      break;
+    }
+
+    case 'all_english_bank': {
+      // Check if all English questions are completed
+      const { count: totalEnglish } = await supabase
+        .from('questions')
+        .select('id', { count: 'exact', head: true })
+        .ilike('subject', 'english')
+        .eq('is_active', true);
+
+      const { data: englishAttempts } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', studentAccountId)
+        .eq('is_correct', true);
+
+      const uniqueCorrect = new Set(englishAttempts?.map(a => a.question_id) || []).size;
+      current = totalEnglish && uniqueCorrect >= totalEnglish ? 1 : 0;
       break;
     }
 
@@ -246,8 +310,17 @@ async function calculateRequirementProgress(
     case 'questions_under_time_high_accuracy':
     case 'perfect_test_under_time': {
       // These require session-specific tracking
-      // Check if badge is already unlocked
       current = 0;
+      break;
+    }
+
+    // Seasonal badges - check attempts during event period
+    case 'seasonal_questions':
+    case 'seasonal_accuracy':
+    case 'seasonal_improvement':
+    case 'seasonal_tests':
+    case 'seasonal_streak': {
+      current = 0; // Seasonal events tracked separately
       break;
     }
 
