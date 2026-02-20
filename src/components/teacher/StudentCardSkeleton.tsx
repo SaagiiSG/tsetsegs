@@ -47,7 +47,7 @@ export function StudentCardSkeleton() {
         <div className="space-y-3">
           <Skeleton className="h-5 w-32" />
           <div className="grid grid-cols-4 gap-2">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 9 }).map((_, i) => (
               <div key={i} className="space-y-1">
                 <Skeleton className="h-3 w-12" />
                 <Skeleton className="h-9 w-full" />

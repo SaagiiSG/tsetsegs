@@ -195,7 +195,7 @@ export default function TeacherStudentCards() {
   const fetchStudentData = async (studentId: string) => {
     try {
       const maxSessions = batch?.course_type === 'IELTS' ? 24 : 15;
-      const maxTests = batch?.course_type === 'IELTS' ? 8 : 8;
+      const maxTests = batch?.course_type === 'IELTS' ? 8 : 9;
 
       // Fetch attendance
       const { data: attendanceData } = await supabase

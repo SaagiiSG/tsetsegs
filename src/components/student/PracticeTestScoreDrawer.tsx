@@ -52,7 +52,7 @@ export function PracticeTestScoreDrawer({ trigger }: PracticeTestScoreDrawerProp
         .from('practice_tests')
         .select('id, test_number, score')
         .eq('student_id', student.linked_student_id)
-        .in('test_number', [1, 2, 3, 4, 5, 6, 7])
+        .in('test_number', [1, 2, 3, 4, 5, 6, 7, 8])
         .order('test_number');
 
       if (error) throw error;
@@ -114,7 +114,7 @@ export function PracticeTestScoreDrawer({ trigger }: PracticeTestScoreDrawerProp
   };
 
   const getTestLabel = (testNumber: number) => {
-    return `Practice Test ${testNumber + 3}`; // Tests 4-10 in display
+    return `Practice Test ${testNumber + 3}`; // Tests 4-11 in display
   };
 
   return (
@@ -142,7 +142,7 @@ export function PracticeTestScoreDrawer({ trigger }: PracticeTestScoreDrawerProp
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {[1, 2, 3, 4, 5, 6, 7].map(testNumber => (
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(testNumber => (
                   <div key={testNumber} className="space-y-1.5">
                     <Label htmlFor={`test-${testNumber}`} className="text-xs">
                       {getTestLabel(testNumber)}

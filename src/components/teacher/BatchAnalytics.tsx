@@ -267,13 +267,13 @@ export function BatchAnalytics({ batchId, courseType = "SAT" }: BatchAnalyticsPr
                 <XAxis 
                   dataKey="testNumber" 
                   tick={{ fontSize: 10 }} 
-                  tickFormatter={(v) => `T${v}`}
+                  tickFormatter={(v) => v === 9 ? 'Mock' : `T${v + 3}`}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip 
                   formatter={(value: number) => [value, "Avg Score"]}
-                  labelFormatter={(label) => `Test ${label}`}
+                  labelFormatter={(label) => label === 9 ? 'SAT Mock' : `Test ${label + 3}`}
                   contentStyle={{ 
                     fontSize: 12,
                     background: "hsl(var(--popover))",

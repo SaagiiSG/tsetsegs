@@ -60,7 +60,7 @@ interface GroupDetails {
 }
 
 // Practice test numbers
-const TEST_NUMBERS = [4, 5, 6, 7, 8, 9, 10];
+const TEST_NUMBERS = [4, 5, 6, 7, 8, 9, 10, 11];
 
 export function IntensePrepGroupDetail({ groupId, onBack }: Props) {
   const [group, setGroup] = useState<GroupDetails | null>(null);

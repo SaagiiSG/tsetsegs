@@ -639,7 +639,7 @@ export function StudentCard({
                 <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto">
                   {courseType === 'SAT' ? (
                     practiceTests.map((test) => {
-                      const getTestLabel = (testNum: number) => testNum === 8 ? "SAT Mock" : `Test ${testNum + 3}`;
+                  const getTestLabel = (testNum: number) => testNum === 9 ? "SAT Mock" : `Test ${testNum + 3}`;
                       return (
                         <div key={test.test_number} className="space-y-1">
                           <Label className="text-[10px]">{getTestLabel(test.test_number)}</Label>
@@ -744,7 +744,7 @@ export function StudentCard({
             <div className="grid grid-cols-2 gap-3 max-h-[350px] overflow-y-auto">
               {courseType === 'SAT' ? (
                 practiceTests.map((test) => {
-                  const getTestLabel = (testNum: number) => testNum === 8 ? "SAT Mock" : `Test ${testNum + 3}`;
+                  const getTestLabel = (testNum: number) => testNum === 9 ? "SAT Mock" : `Test ${testNum + 3}`;
                   return (
                     <div key={test.test_number} className="space-y-1">
                       <Label className="text-xs">{getTestLabel(test.test_number)}</Label>
