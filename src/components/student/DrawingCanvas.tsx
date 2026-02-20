@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eraser, Undo2, Trash2, Pen } from 'lucide-react';
+import { Eraser, Undo2, Trash2, Pen, GripHorizontal } from 'lucide-react';
 
 interface DrawingCanvasProps {
   initialData?: string | null;
@@ -14,13 +14,16 @@ interface Point {
   y: number;
 }
 
-export function DrawingCanvas({ initialData, onSave, width = 600, height = 300 }: DrawingCanvasProps) {
+export function DrawingCanvas({ initialData, onSave, width = 600, height: initialHeight = 300 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
   const [strokeHistory, setStrokeHistory] = useState<ImageData[]>([]);
   const [canvasWidth, setCanvasWidth] = useState(width);
+  const [canvasHeight, setCanvasHeight] = useState(initialHeight);
+  const isResizingRef = useRef(false);
+  const resizeStartRef = useRef({ y: 0, height: 0 });
 
   // Resize canvas to container width
   useEffect(() => {
@@ -35,6 +38,61 @@ export function DrawingCanvas({ initialData, onSave, width = 600, height = 300 }
     }
     return () => resizeObserver.disconnect();
   }, []);
+
+  // Preserve drawing when resizing
+  const resizeCanvas = useCallback((newHeight: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Save current drawing
+    const imageData = canvas.toDataURL('image/png');
+    
+    setCanvasHeight(newHeight);
+    
+    // Restore after state update
+    requestAnimationFrame(() => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const cx = c.getContext('2d');
+      if (!cx) return;
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, c.width, c.height);
+      const img = new Image();
+      img.onload = () => { cx.drawImage(img, 0, 0); };
+      img.src = imageData;
+    });
+  }, []);
+
+  // Resize drag handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    resizeStartRef.current = { y: clientY, height: canvasHeight };
+
+    const handleMove = (ev: MouseEvent | TouchEvent) => {
+      if (!isResizingRef.current) return;
+      const currentY = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+      const delta = currentY - resizeStartRef.current.y;
+      const newHeight = Math.max(150, Math.min(800, resizeStartRef.current.height + delta));
+      resizeCanvas(newHeight);
+    };
+
+    const handleEnd = () => {
+      isResizingRef.current = false;
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+  }, [canvasHeight, resizeCanvas]);
 
   // Load initial drawing data
   useEffect(() => {
@@ -54,7 +112,7 @@ export function DrawingCanvas({ initialData, onSave, width = 600, height = 300 }
       };
       img.src = initialData;
     }
-  }, [initialData, canvasWidth]);
+  }, [initialData, canvasWidth, canvasHeight]);
 
   const getPos = useCallback((e: React.TouchEvent | React.MouseEvent): Point => {
     const canvas = canvasRef.current;
@@ -181,7 +239,7 @@ export function DrawingCanvas({ initialData, onSave, width = 600, height = 300 }
       <canvas
         ref={canvasRef}
         width={canvasWidth}
-        height={height}
+        height={canvasHeight}
         className="w-full border rounded-lg bg-white cursor-crosshair touch-none"
         onMouseDown={startDrawing}
         onMouseMove={draw}
@@ -191,7 +249,15 @@ export function DrawingCanvas({ initialData, onSave, width = 600, height = 300 }
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
       />
-      <p className="text-xs text-muted-foreground">Auto-saves after each stroke • Works with Apple Pencil</p>
+      {/* Resize handle */}
+      <div
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleResizeStart}
+        className="flex items-center justify-center py-1 cursor-ns-resize hover:bg-muted rounded-b-lg border border-t-0 touch-none select-none"
+      >
+        <GripHorizontal className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <p className="text-xs text-muted-foreground">Drag handle to resize • Auto-saves after each stroke • Works with Apple Pencil</p>
     </div>
   );
 }
