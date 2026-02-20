@@ -1,110 +1,70 @@
 
 
-# Implement Missing Badge Tracking Logic
+# Add Practice Test 11 Slot
 
 ## Overview
-10 badges currently return `current = 0` as stubs. This plan implements real tracking logic for all of them in `src/hooks/useBadgeProgressCalculator.ts`, plus fixes existing bugs in `speed_session_combo`, `ruby_weeks`, and `all_english_bank`.
+Add a 9th practice test slot displayed as "Test 11" to all pages that show SAT practice test scores. The SAT Mock label shifts from test_number 8 to test_number 9.
 
----
+## Current State
+- 8 practice test records per student (test_number 1-8)
+- Labels: Test 4-10 (test_number 1-7 via `testNum + 3`), SAT Mock (test_number 8)
+- `maxTests = 8` in TeacherStudentCards
 
-## Badges to Implement
+## Changes
 
-### Group 1: Time-Based Badges (5 badges)
+### Label Logic Update (all files)
+- test_number 1-8 map to "Test 4" through "Test 11" (formula `testNum + 3` still works)
+- test_number 9 becomes "SAT Mock" (was test_number 8)
 
-**1. Blitz** (`module_under_time`, target: 15)
-- "Complete Module 1 in under 15 minutes"
-- Query `bluebook_answers` grouped by `module_id` for a module with section = "math" and module_number = 1. Sum `time_spent_seconds` for that module. If total < 15 min and all correct, `current = 1`.
+### Files to Update
 
-**2. Sniper** (`consecutive_correct_under_time`, target: 10)
-- "10 consecutive correct answers in under 8 minutes total"
-- Query `student_attempts` ordered by `attempted_at`. Find the longest run of consecutive `is_correct = true` rows, then check if their cumulative `time_spent_seconds` is under 480s (8 min). If found, `current = 10`.
+**1. `src/pages/TeacherStudentCards.tsx`**
+- Change `maxTests` from 8 to 9 (line 198)
+- Existing students who already have test_number 8 as SAT Mock won't be affected since the data stays; only the label changes
 
-**3. Rush Delivery** (`consecutive_correct_under_time`, target: 20)
-- "20 consecutive correct answers in under 12 minutes total"
-- Same logic as Sniper but checks for 20 consecutive correct in under 720s (12 min). The badge definition distinguishes them by different `target` values (10 vs 20), and the label contains the time limit.
+**2. `src/components/teacher/StudentCard.tsx`**
+- Update `getTestLabel` function (appears twice, lines 642 and 747): change `testNum === 8` to `testNum === 9` for "SAT Mock"
 
-**4. Time Lord** (`questions_under_time_high_accuracy`, target: 50)
-- "50 questions in under 17 minutes with 90%+ accuracy"
-- Query speed session summary transactions (`category = 'speed'` with `session_summary = true` in metadata). Check if any session had 50+ questions, time under 17 min, and 90%+ accuracy. `current = 1` if found, else `0`.
+**3. `src/pages/TeacherStudentProfile.tsx`**
+- Update label logic (line 763): change `test.test_number === 7` to `test.test_number === 9` for "Real SAT Mock" (note: this file uses test_number 7 instead of 8, which appears to be a bug -- will fix to 9)
+- Update chart label (line 366): same formula works, but need to handle SAT Mock label for test_number 9
 
-**5. Flawless Execution** (`perfect_test_under_time`, target: 30)
-- "Zero mistakes in practice test, completed in under 30 minutes"
-- Query `bluebook_attempts` for completed tests. For each test, sum `time_spent_seconds` from `bluebook_answers` and check if all answers are correct. If total time < 30 min and 100% accuracy, `current = 1`.
+**4. `src/components/student/PracticeTestScoreDrawer.tsx`**
+- Change `.in('test_number', [1, 2, 3, 4, 5, 6, 7])` to `[1, 2, 3, 4, 5, 6, 7, 8]` (line 55)
+- Update the loop from `[1, 2, 3, 4, 5, 6, 7]` to `[1, 2, 3, 4, 5, 6, 7, 8]` (line 145)
+- Add SAT Mock label handling for test_number 9 (if the drawer is for test scores the student inputs, we may keep it at 8 editable tests and exclude SAT Mock)
 
-### Group 2: Sprint Championship Badges (5 badges + 1 fix)
+**5. `src/pages/student/StudentDashboardHome.tsx`**
+- Update filter range from `test_number <= 7` to `test_number <= 8` for average calculation (line 170)
 
-**6-10. Sprint Top 1 badges** (`sprint_top_1`)
-- Bronze Novice, Silver Challenger, Gold Scholar, Platinum Legend, Diamond Apex
-- These are already awarded by the `finalize-sprint` edge function. The calculator just needs to reflect whether the badge is unlocked.
-- Query `student_badges` joined with `badges` to check if the specific tier badge (matched by badge name from the badge definition) is unlocked.
+**6. `src/pages/student/StudentShareProfile.tsx`**
+- Label logic at line 383: formula `test.test_number + 3` already works for test 8 = "Test 11"; add SAT Mock label for test_number 9
 
-**11. God Amongst Human** (`top_1_weeks`, target: 3)
-- "Hold Top 1 position all-time leaderboard for 3 consecutive weeks"
-- Query `student_sprint_rankings` where `is_top_1 = true` for this student. Count consecutive sprints (each sprint ~ 2 weeks) where they held P1. `current = max consecutive P1 count`.
+**7. `src/components/teacher/intense-prep/IntensePrepGroupDetail.tsx`**
+- Update `TEST_NUMBERS` from `[4, 5, 6, 7, 8, 9, 10]` to `[4, 5, 6, 7, 8, 9, 10, 11]` (line 63)
 
-### Group 3: Seasonal Badges (5 badges)
+**8. `src/components/teacher/intense-prep/IntensePrepStudentRow.tsx`**
+- Update hardcoded arrays `[4, 5, 6, 7, 8, 9, 10]` to `[4, 5, 6, 7, 8, 9, 10, 11]` (lines 160 and 177)
+- Update test count display from `/7 tests` to `/8 tests` (line 157)
 
-**12. March Madness** (`seasonal_questions`, target: 200)
-- Query `seasonal_events` matching the badge_id "march-madness". Get the event's date range. Count `student_attempts` within that period. `current = count`.
+**9. `src/components/teacher/BatchAnalytics.tsx`**
+- Review and update any hardcoded test number ranges
 
-**13. May Momentum** (`seasonal_accuracy`, target: 85)
-- Get May event date range. Calculate accuracy percentage from `student_attempts` during that period. `current = accuracy %`.
+**10. `src/pages/admin/AdminBatchAnalytics.tsx`**
+- Review and update any hardcoded test number ranges
 
-**14. August Ascent** (`seasonal_improvement`, target: 50)
-- Get August event date range. Compare first and last `bluebook_attempts` scores during that period. `current = score_diff`.
+**11. `src/components/teacher/StudentAlertsTab.tsx`**
+- No hardcoded ranges found; fetches all practice tests dynamically -- no changes needed
 
-**15. October Olympian** (`seasonal_tests`, target: 5)
-- Get October event date range. Count completed `bluebook_attempts` during that period. `current = count`.
+**12. `src/components/teacher/StudentCardSkeleton.tsx`**
+- Update skeleton `length: 8` to `length: 9` for the test grid (line 50)
 
-**16. December Dedication** (`seasonal_streak`, target: 31)
-- Get December event date range. Count distinct practice days from `student_attempts` + `point_transactions` during that period. `current = distinct_days`.
+## Data Considerations
+- Existing students won't have a test_number 9 record yet. The TeacherStudentCards page creates empty slots dynamically via `Array.from({ length: maxTests })`, so the new slot will appear as empty automatically.
+- The upsert logic in `handleTestScoreChange` creates records on demand, so no migration is needed for data.
+- No database schema changes required -- `test_number` is an integer column with no constraints limiting it to 8.
 
----
-
-## Bugs to Fix
-
-### Fix 1: `speed_session_combo` (Lightning Strike vs Speedster)
-Currently both badges use the same type and the calculator returns 1 if either is unlocked. Fix: look up the specific badge by name matching the parent badge definition being calculated (pass the badge name context through).
-
-### Fix 2: `ruby_weeks` - should count consecutive weeks
-Currently counts total ruby rankings. Fix: order by `created_at`, iterate to find max consecutive sprints at ruby tier.
-
-### Fix 3: `all_english_bank` - filter by English subject
-Currently counts all correct attempts. Fix: join with `questions` table filtered by English subject to only count English questions.
-
----
-
-## Technical Approach
-
-### File Changes
-
-**`src/hooks/useBadgeProgressCalculator.ts`** (primary file)
-- Add `badgeName` parameter to `calculateRequirementProgress` so `speed_session_combo` can distinguish Lightning Strike from Speedster
-- Replace all stub `case` blocks with real query logic
-- Add a helper function `getSeasonalEventDates(badgeId)` to look up seasonal event date ranges
-- Update `consecutive_correct_under_time` to parse the time limit from the requirement label (8 min for target=10, 12 min for target=20)
-
-**`src/hooks/useBadgeProgressCalculator.ts` function signature change:**
-```text
-calculateRequirementProgress(studentAccountId, req, studentId)
-  becomes
-calculateRequirementProgress(studentAccountId, req, studentId, badgeName)
-```
-
-This is a backward-compatible change since `badgeName` is optional and only used by `speed_session_combo`.
-
-### Data Sources Summary
-
-| Requirement | Primary Table(s) |
-|---|---|
-| `module_under_time` | `bluebook_answers`, `bluebook_modules` |
-| `consecutive_correct_under_time` | `student_attempts` |
-| `questions_under_time_high_accuracy` | `point_transactions` (speed summaries) |
-| `perfect_test_under_time` | `bluebook_attempts`, `bluebook_answers` |
-| `sprint_top_1` | `student_badges`, `badges` |
-| `top_1_weeks` | `student_sprint_rankings` |
-| `seasonal_*` | `seasonal_events`, `student_attempts`, `bluebook_attempts`, `point_transactions` |
-
-### No database schema changes required
-All needed data already exists in current tables.
+## Impact on SAT Mock Data
+- Students who currently have a score in test_number 8 labeled "SAT Mock" will now see it labeled "Test 11". Their SAT Mock slot (test_number 9) will be empty.
+- If there's existing SAT Mock data that needs to be preserved under the correct label, a data migration (UPDATE practice_tests SET test_number = 9 WHERE test_number = 8) could be run. This depends on whether existing test_number 8 data is truly "SAT Mock" or "Test 11" practice scores.
 
