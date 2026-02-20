@@ -194,51 +194,36 @@ async function calculateRequirementProgress(
     }
 
     case 'speed_session_combo': {
-      // FIX: Distinguish between Lightning Strike and Speedster by badge name
-      const targetBadgeName = badgeName || '';
-      let matchBadgeName = '';
-      
-      if (targetBadgeName.includes('Lightning') || targetBadgeName === 'Lightning Strike') {
-        matchBadgeName = 'Lightning Strike';
-      } else if (targetBadgeName.includes('Speedster') || targetBadgeName === 'Speedster') {
-        matchBadgeName = 'Speedster';
-      }
+      // Distinguish Lightning Strike vs Speedster by badge name context
+      const isLightning = badgeName?.includes('Lightning');
+      const isSpeedster = badgeName?.includes('Speedster');
 
-      if (matchBadgeName) {
-        const { data: badge } = await supabase
-          .from('badges')
-          .select('id')
-          .eq('name', matchBadgeName)
-          .maybeSingle();
+      // Thresholds per badge
+      const minQuestions = isSpeedster ? 20 : 10;
+      const minAccuracy = isSpeedster ? 90 : 80;
+      const maxTimeSeconds = 300; // 5 minutes for both
 
-        if (badge) {
-          const { data: studentBadge } = await supabase
-            .from('student_badges')
-            .select('is_unlocked')
-            .eq('student_account_id', studentAccountId)
-            .eq('badge_id', badge.id)
-            .eq('is_unlocked', true)
-            .maybeSingle();
+      // Query speed session summary transactions
+      const { data: speedSummaries } = await supabase
+        .from('point_transactions')
+        .select('metadata')
+        .eq('student_account_id', studentAccountId)
+        .eq('category', 'speed')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-          current = studentBadge ? 1 : 0;
-        }
-      } else {
-        // Fallback: check if any speed combo badge is unlocked
-        const { data: badges } = await supabase
-          .from('badges')
-          .select('id')
-          .in('name', ['Lightning Strike', 'Speedster']);
+      if (speedSummaries && speedSummaries.length > 0) {
+        for (const tx of speedSummaries) {
+          const meta = tx.metadata as Record<string, any> | null;
+          if (!meta?.session_summary) continue;
+          const q = meta.totalQuestions || 0;
+          const acc = meta.accuracy || 0;
+          const time = meta.totalTimeSeconds || meta.time_seconds || 0;
 
-        if (badges && badges.length > 0) {
-          const { data: studentBadge } = await supabase
-            .from('student_badges')
-            .select('is_unlocked')
-            .eq('student_account_id', studentAccountId)
-            .in('badge_id', badges.map(b => b.id))
-            .eq('is_unlocked', true)
-            .limit(1);
-
-          current = studentBadge && studentBadge.length > 0 ? 1 : 0;
+          if (q >= minQuestions && acc >= minAccuracy && time < maxTimeSeconds) {
+            current = 1;
+            break;
+          }
         }
       }
       break;
