@@ -334,8 +334,8 @@ export default function StudentQuestion() {
         time_spent: timeSpent
       });
 
-      // Award points for correct answers (first attempt = 10 pts, second = 5 pts, third = 2 pts)
-      if (correct) {
+      // Award points for correct answers (first 3 attempts only: 1st = 10 pts, 2nd = 5 pts, 3rd = 2 pts)
+      if (correct && attemptNumber <= 3) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         
         // Get active sprint (optional - points are awarded regardless)
@@ -505,15 +505,6 @@ export default function StudentQuestion() {
   });
 
   const handleSubmit = () => {
-    if (currentAttempts.length >= 3) {
-      toast({
-        title: 'Maximum attempts reached',
-        description: 'You have used all 3 attempts for this variation',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     const answer = currentQuestion?.question_type === 'multiple_choice' 
       ? selectedAnswer 
       : fillAnswer;
@@ -641,41 +632,76 @@ export default function StudentQuestion() {
           </div>
         </header>
 
-        {/* Question Navigator - positioned at bottom left */}
-        <div className="fixed bottom-6 left-4 z-20">
-          <QuestionNavigatorDialog 
-            currentQuestionId={questionId || ''} 
-            questionSet={question?.question_set}
-            subject={question?.subject || 'math'}
-          />
+        {/* Fixed Bottom Bar */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+          style={{ 
+            marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
+            marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
+            width: calculatorSnapSide ? '60vw' : '100%'
+          }}
+        >
+          <div className="container mx-auto max-w-3xl flex items-center justify-between gap-3">
+            {/* Left: Question counter + Navigator */}
+            <div className="flex items-center gap-2">
+              <QuestionNavigatorDialog 
+                currentQuestionId={questionId || ''} 
+                questionSet={question?.question_set}
+                subject={question?.subject || 'math'}
+              />
+              {allQuestions && (
+                <span className="text-sm font-medium text-muted-foreground">
+                  {currentQuestionIndex + 1} of {allQuestions.length}
+                </span>
+              )}
+            </div>
+
+            {/* Right: Check / Try Again / Next */}
+            <div className="flex items-center gap-2">
+              {(videoWatched || !videoId) && currentQuestion && (
+                <>
+                  {!submitted ? (
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
+                    >
+                      {submitAnswerMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Check {attemptCount > 0 && `(${attemptCount})`}
+                    </Button>
+                  ) : !isCorrect ? (
+                    <Button onClick={handleTryAgain} variant="secondary">
+                      Try Again {attemptCount <= 3 && `(${attemptCount}/3 pts)`}
+                    </Button>
+                  ) : currentVariationIndex < practiceQuestions.length - 1 ? (
+                    <Button onClick={handleNextVariation}>
+                      Next Variation
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  ) : null}
+                </>
+              )}
+
+              {/* Prev/Next question */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrevQuestion}
+                disabled={!prevQuestion}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleNextQuestion}
+                disabled={!nextQuestion}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Prev/Next Navigation - centered */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-background/90 backdrop-blur-sm p-2 rounded-full shadow-lg border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevQuestion}
-            disabled={!prevQuestion}
-            className="rounded-full"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Prev
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextQuestion}
-            disabled={!nextQuestion}
-            className="rounded-full"
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-
-        <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
+        <main className="container mx-auto px-4 py-6 pb-24 max-w-3xl space-y-6">
           {/* Video Section */}
           {videoId && !videoWatched && (
             <Card>
@@ -806,9 +832,8 @@ export default function StudentQuestion() {
                           </>
                         ) : (
                           <>
-                            <XCircle className="h-6 w-6 text-red-500" />
                             <span className="text-red-500 font-medium">
-                              Incorrect. {attemptCount < 3 ? 'Try again!' : 'Review the video for help.'}
+                              Incorrect. Try again!
                             </span>
                           </>
                         )}
@@ -816,37 +841,6 @@ export default function StudentQuestion() {
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    {!submitted ? (
-                      <Button 
-                        className="flex-1" 
-                        onClick={handleSubmit}
-                        disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
-                      >
-                        {submitAnswerMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : null}
-                        Submit Answer ({attemptCount}/3 attempts)
-                      </Button>
-                    ) : !isCorrect && attemptCount < 3 ? (
-                      <Button className="flex-1" onClick={handleTryAgain}>
-                        Try Again ({attemptCount}/3 attempts)
-                      </Button>
-                    ) : currentVariationIndex < practiceQuestions.length - 1 ? (
-                      <Button className="flex-1" onClick={handleNextVariation}>
-                        Next Variation
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    ) : (
-                      <Button 
-                        className="flex-1" 
-                        onClick={() => navigate('/practice/dashboard')}
-                      >
-                        Back to Questions
-                      </Button>
-                    )}
-                  </div>
                 </CardContent>
               </Card>
             </>
