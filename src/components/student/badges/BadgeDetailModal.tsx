@@ -121,9 +121,14 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
           <div className="space-y-3">
             <h3 className="font-semibold text-sm">Requirements</h3>
             {badgeDef.requirements.map((req, index) => {
-              const currentValue = requirementsProgress[req.type] || 0;
-              const isComplete = currentValue >= req.target;
-              const reqProgress = Math.min(100, (currentValue / req.target) * 100);
+              const rawValue = requirementsProgress[req.type];
+              // Handle both number and object ({target, current, percentage}) formats
+              const currentValue = typeof rawValue === 'object' && rawValue !== null 
+                ? (rawValue as any).current ?? 0 
+                : (rawValue || 0);
+              const numericValue = typeof currentValue === 'number' ? currentValue : Number(currentValue) || 0;
+              const isComplete = numericValue >= req.target;
+              const reqProgress = Math.min(100, (numericValue / req.target) * 100);
 
               return (
                 <div 
@@ -143,7 +148,7 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
                       <span className="text-sm">{req.label}</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {currentValue}/{req.target}
+                      {numericValue}/{req.target}
                     </span>
                   </div>
                   <Progress value={reqProgress} className="h-1.5" />

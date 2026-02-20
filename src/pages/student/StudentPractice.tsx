@@ -225,7 +225,7 @@ export default function StudentPractice() {
     enabled: !!student
   });
 
-  const notesSet = new Set(questionNotes?.map(n => n.question_id) || []);
+  const notesSet = new Set(Array.isArray(questionNotes) ? questionNotes.map(n => n.question_id) : []);
 
   const progressMap = new Map(progress?.map(p => [p.question_id, p]) || []);
   const attemptsMap = new Map<string, { correct: boolean; attempts: number }>();
