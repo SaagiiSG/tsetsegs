@@ -1797,6 +1797,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          drawing_data: string | null
           id: string
           question_id: string
           student_account_id: string
@@ -1805,6 +1806,7 @@ export type Database = {
         Insert: {
           content?: string
           created_at?: string
+          drawing_data?: string | null
           id?: string
           question_id: string
           student_account_id: string
@@ -1813,6 +1815,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          drawing_data?: string | null
           id?: string
           question_id?: string
           student_account_id?: string
