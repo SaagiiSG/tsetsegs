@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   CheckCircle2, PlayCircle, Loader2, 
-  Target, RotateCcw, BookOpen, FileText, ChevronDown, ChevronRight
+  Target, RotateCcw, BookOpen, FileText, ChevronDown, ChevronRight, StickyNote
 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
@@ -209,6 +209,23 @@ export default function StudentPractice() {
     },
     enabled: !!student
   });
+
+  // Fetch which questions have notes
+  const { data: questionNotes } = useQuery({
+    queryKey: ['student-question-notes', student?.id],
+    queryFn: async () => {
+      if (!student) return [];
+      const { data, error } = await supabase
+        .from('student_question_notes')
+        .select('question_id')
+        .eq('student_account_id', student.id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!student
+  });
+
+  const notesSet = new Set(questionNotes?.map(n => n.question_id) || []);
 
   const progressMap = new Map(progress?.map(p => [p.question_id, p]) || []);
   const attemptsMap = new Map<string, { correct: boolean; attempts: number }>();
@@ -593,15 +610,20 @@ export default function StudentPractice() {
                           <CardContent className="p-2 space-y-1">
                             <div className="flex items-center justify-between">
                               <span className="font-mono font-bold text-xs">{simpleId}</span>
-                              {status === 'completed' && (
-                                <CheckCircle2 className="h-3 w-3 text-green-500" />
-                              )}
-                              {(status === 'needs_review' || inReview) && (
-                                <RotateCcw className="h-3 w-3 text-orange-500" />
-                              )}
-                              {status === 'video_watched' && !inReview && (
-                                <PlayCircle className="h-3 w-3 text-yellow-500" />
-                              )}
+                              <div className="flex items-center gap-0.5">
+                                {notesSet.has(question.id) && (
+                                  <StickyNote className="h-3 w-3 text-amber-500" />
+                                )}
+                                {status === 'completed' && (
+                                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                )}
+                                {(status === 'needs_review' || inReview) && (
+                                  <RotateCcw className="h-3 w-3 text-orange-500" />
+                                )}
+                                {status === 'video_watched' && !inReview && (
+                                  <PlayCircle className="h-3 w-3 text-yellow-500" />
+                                )}
+                              </div>
                             </div>
                             <Badge 
                               variant="outline" 
