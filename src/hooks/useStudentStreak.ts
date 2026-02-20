@@ -3,6 +3,95 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
 import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 
+/**
+ * Standalone function to update streak for a student (usable outside React components).
+ * Call this after any practice activity (question attempt, speed session, etc.)
+ */
+export async function updateStudentStreak(studentAccountId: string): Promise<void> {
+  try {
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    // Get or create streak record
+    let { data: streak, error } = await supabase
+      .from("student_streaks")
+      .select("*")
+      .eq("student_account_id", studentAccountId)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") return;
+
+    if (!streak) {
+      const { data: newStreak, error: createError } = await supabase
+        .from("student_streaks")
+        .insert({
+          student_account_id: studentAccountId,
+          current_streak: 1,
+          longest_streak: 1,
+          last_activity_date: today,
+          streak_start_date: today,
+          total_practice_days: 1,
+        })
+        .select()
+        .single();
+
+      if (createError) console.error("Failed to create streak:", createError);
+      return;
+    }
+
+    // Already practiced today
+    if (streak.last_activity_date === today) return;
+
+    let newCurrentStreak = streak.current_streak;
+    let newLongestStreak = streak.longest_streak;
+    let newStreakStartDate = streak.streak_start_date;
+    let newTotalDays = streak.total_practice_days + 1;
+    let streak7 = streak.streak_7_achieved;
+    let streak30 = streak.streak_30_achieved;
+    let streak100 = streak.streak_100_achieved;
+
+    if (streak.last_activity_date) {
+      const daysSince = differenceInDays(
+        startOfDay(new Date()),
+        startOfDay(parseISO(streak.last_activity_date))
+      );
+
+      if (daysSince === 1) {
+        newCurrentStreak += 1;
+      } else if (daysSince > 1) {
+        newCurrentStreak = 1;
+        newStreakStartDate = today;
+      }
+    } else {
+      newCurrentStreak = 1;
+      newStreakStartDate = today;
+    }
+
+    if (newCurrentStreak > newLongestStreak) {
+      newLongestStreak = newCurrentStreak;
+    }
+
+    if (newCurrentStreak >= 7) streak7 = true;
+    if (newCurrentStreak >= 30) streak30 = true;
+    if (newCurrentStreak >= 100) streak100 = true;
+
+    await supabase
+      .from("student_streaks")
+      .update({
+        current_streak: newCurrentStreak,
+        longest_streak: newLongestStreak,
+        last_activity_date: today,
+        streak_start_date: newStreakStartDate,
+        total_practice_days: newTotalDays,
+        streak_7_achieved: streak7,
+        streak_30_achieved: streak30,
+        streak_100_achieved: streak100,
+      })
+      .eq("student_account_id", studentAccountId);
+  } catch (err) {
+    console.error("Failed to update student streak:", err);
+  }
+}
+
 interface StudentStreak {
   id: string;
   student_account_id: string;

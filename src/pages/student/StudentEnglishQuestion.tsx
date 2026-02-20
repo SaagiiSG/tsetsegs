@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark } from 'lucide-react';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
+import { updateStudentStreak } from '@/hooks/useStudentStreak';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -250,6 +251,9 @@ export default function StudentEnglishQuestion() {
           }
         }
       }
+
+      // Update study streak (fire-and-forget)
+      updateStudentStreak(student.id).catch(() => {});
       
       return { correct };
     },
