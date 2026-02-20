@@ -167,7 +167,7 @@ export default function StudentDashboardHome() {
           .eq('student_id', student.linked_student_id)
           .order('test_number');
 
-        const tests1to7 = practiceTests?.filter(t => t.test_number >= 1 && t.test_number <= 7 && t.score) || [];
+        const tests1to7 = practiceTests?.filter(t => t.test_number >= 1 && t.test_number <= 8 && t.score) || [];
         if (tests1to7.length > 0) {
           practiceTestAvg = Math.round(tests1to7.reduce((sum, t) => sum + (t.score || 0), 0) / tests1to7.length);
         }

@@ -197,7 +197,7 @@ export default function AdminBatchAnalytics() {
     });
     return Object.entries(testGroups)
       .map(([num, data]) => ({
-        test: `Test ${num}`,
+        test: parseInt(num) === 9 ? 'SAT Mock' : `Test ${parseInt(num) + 3}`,
         testNumber: parseInt(num),
         avg: Math.round(data.total / data.count),
         min: Math.min(...data.scores),

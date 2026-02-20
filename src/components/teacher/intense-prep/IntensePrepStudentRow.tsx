@@ -154,10 +154,10 @@ export function IntensePrepStudentRow({ member, onRemove, onUpdateTracking }: Pr
         <PopoverTrigger asChild>
           <button className="flex flex-col items-center gap-1 cursor-pointer hover:bg-muted/50 rounded p-1 transition-colors w-full">
             <div className="text-xs">
-              {Object.keys(testScores).length}/7 tests
+              {Object.keys(testScores).length}/8 tests
             </div>
             <div className="flex gap-1">
-              {[4, 5, 6, 7, 8, 9, 10].map(num => (
+              {[4, 5, 6, 7, 8, 9, 10, 11].map(num => (
                 <div
                   key={num}
                   className={`w-3 h-3 rounded-sm text-[8px] flex items-center justify-center ${
@@ -174,7 +174,7 @@ export function IntensePrepStudentRow({ member, onRemove, onUpdateTracking }: Pr
           <div className="space-y-3">
             <h4 className="font-semibold text-sm">Practice Test Scores</h4>
             <div className="grid grid-cols-2 gap-2">
-              {[4, 5, 6, 7, 8, 9, 10].map(num => (
+              {[4, 5, 6, 7, 8, 9, 10, 11].map(num => (
                 <div key={num} className="flex items-center gap-2">
                   <span className="text-xs w-6">PT{num}</span>
                   <Input

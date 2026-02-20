@@ -380,7 +380,7 @@ export default function StudentShareProfile() {
                         className="px-3 py-2 rounded-lg bg-muted text-center min-w-[70px]"
                       >
                         <p className="text-xs text-muted-foreground">
-                          {courseType === 'IELTS' ? `Mock ${test.test_number}` : `Test ${test.test_number + 3}`}
+                          {courseType === 'IELTS' ? `Mock ${test.test_number}` : (test.test_number === 9 ? 'SAT Mock' : `Test ${test.test_number + 3}`)}
                         </p>
                         <p className="font-semibold">
                           {test.score ?? '-'}

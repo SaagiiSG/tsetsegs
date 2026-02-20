@@ -363,7 +363,7 @@ export default function TeacherStudentProfile() {
     return practiceTests
       .filter(t => t.score !== null)
       .map(t => ({
-        test: batch?.course_type === 'IELTS' ? `Mock ${t.test_number}` : `Test ${t.test_number + 3}`,
+        test: batch?.course_type === 'IELTS' ? `Mock ${t.test_number}` : (t.test_number === 9 ? 'SAT Mock' : `Test ${t.test_number + 3}`),
         score: t.score,
         target: batch?.course_type === 'IELTS' ? 7 : 1400,
       }));
@@ -760,7 +760,7 @@ export default function TeacherStudentProfile() {
                           <p className="font-medium">
                             {batch.course_type === 'IELTS' 
                               ? `Mock Test ${test.test_number}` 
-                              : test.test_number === 7 
+                              : test.test_number === 9 
                                 ? 'Real SAT Mock' 
                                 : `Test ${test.test_number + 3}`}
                           </p>
