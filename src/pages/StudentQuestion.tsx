@@ -640,7 +640,7 @@ export default function StudentQuestion() {
             width: calculatorSnapSide ? '60vw' : '100%'
           }}
         >
-          <div className="container mx-auto max-w-3xl flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between w-full gap-3">
             {/* Left: Question counter + Navigator */}
             <div className="flex items-center gap-2">
               <QuestionNavigatorDialog 
