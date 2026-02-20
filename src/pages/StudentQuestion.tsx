@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, ChevronLeft, Calculator, Bookmark, BookOpen, StickyNote } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
@@ -56,6 +57,8 @@ export default function StudentQuestion() {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
+  const [noteExpanded, setNoteExpanded] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
 
   // Security: Prevent screenshots
   useEffect(() => {
@@ -213,6 +216,41 @@ export default function StudentQuestion() {
     },
     enabled: !!questionId && !!student
   });
+
+  // Fetch existing note for this question
+  const { data: existingNote } = useQuery({
+    queryKey: ['question-note', questionId, student?.id],
+    queryFn: async () => {
+      if (!student || !questionId) return null;
+      const { data } = await supabase
+        .from('student_question_notes')
+        .select('content')
+        .eq('student_account_id', student.id)
+        .eq('question_id', questionId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!questionId && !!student
+  });
+
+  // Sync note content when data loads or question changes
+  useEffect(() => {
+    setNoteContent(existingNote?.content || '');
+    setNoteExpanded(false);
+  }, [existingNote, questionId]);
+
+  const handleNoteSave = async () => {
+    if (!student || !questionId) return;
+    await supabase
+      .from('student_question_notes')
+      .upsert({
+        student_account_id: student.id,
+        question_id: questionId,
+        content: noteContent,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'student_account_id,question_id' });
+    queryClient.invalidateQueries({ queryKey: ['question-note', questionId, student.id] });
+  };
 
   // Fetch existing attempts for all variations
   const { data: existingAttempts } = useQuery({
@@ -843,6 +881,36 @@ export default function StudentQuestion() {
 
                 </CardContent>
               </Card>
+
+              {/* My Notes Section */}
+              <Collapsible open={noteExpanded} onOpenChange={setNoteExpanded}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg border bg-card hover:bg-accent"
+                  >
+                    <div className="flex items-center gap-2">
+                      <StickyNote className={`h-4 w-4 ${existingNote?.content ? 'text-primary fill-primary/20' : 'text-muted-foreground'}`} />
+                      <span className="text-sm font-medium">My Notes</span>
+                      {existingNote?.content && (
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${noteExpanded ? 'rotate-90' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  <Textarea
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    onBlur={handleNoteSave}
+                    placeholder="Jot down your thoughts, strategies, or things to remember..."
+                    rows={4}
+                    className="bg-card"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Auto-saves when you click away</p>
+                </CollapsibleContent>
+              </Collapsible>
             </>
           )}
         </main>
