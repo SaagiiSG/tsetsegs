@@ -149,7 +149,7 @@ export function IntensePrepStudentRow({ member, onRemove, onUpdateTracking }: Pr
         </PopoverContent>
       </Popover>
 
-      {/* Practice Tests (4-10) */}
+      {/* Practice Tests (4-11) */}
       <Popover>
         <PopoverTrigger asChild>
           <button className="flex flex-col items-center gap-1 cursor-pointer hover:bg-muted/50 rounded p-1 transition-colors w-full">
