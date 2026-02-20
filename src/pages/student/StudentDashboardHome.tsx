@@ -167,9 +167,9 @@ export default function StudentDashboardHome() {
           .eq('student_id', student.linked_student_id)
           .order('test_number');
 
-        const tests1to7 = practiceTests?.filter(t => t.test_number >= 1 && t.test_number <= 8 && t.score) || [];
-        if (tests1to7.length > 0) {
-          practiceTestAvg = Math.round(tests1to7.reduce((sum, t) => sum + (t.score || 0), 0) / tests1to7.length);
+        const tests1to8 = practiceTests?.filter(t => t.test_number >= 1 && t.test_number <= 8 && t.score) || [];
+        if (tests1to8.length > 0) {
+          practiceTestAvg = Math.round(tests1to8.reduce((sum, t) => sum + (t.score || 0), 0) / tests1to8.length);
         }
       }
 
@@ -751,7 +751,7 @@ export default function StudentDashboardHome() {
                 {stats?.practiceTestAvg || '—'}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Tests 4-10 average
+                Tests 4-11 average
               </p>
             </CardContent>
           </Card>
