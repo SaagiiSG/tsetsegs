@@ -1123,6 +1123,7 @@ export type Database = {
           alternate_answers: string[] | null
           answer: string
           category_id: string | null
+          choice_images: Json | null
           created_at: string
           difficulty_level: string | null
           id: string
@@ -1147,6 +1148,7 @@ export type Database = {
           alternate_answers?: string[] | null
           answer: string
           category_id?: string | null
+          choice_images?: Json | null
           created_at?: string
           difficulty_level?: string | null
           id?: string
@@ -1171,6 +1173,7 @@ export type Database = {
           alternate_answers?: string[] | null
           answer?: string
           category_id?: string | null
+          choice_images?: Json | null
           created_at?: string
           difficulty_level?: string | null
           id?: string
