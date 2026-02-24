@@ -1,0 +1,2 @@
+ALTER TABLE questions ADD COLUMN choice_images JSONB DEFAULT NULL;
+COMMENT ON COLUMN questions.choice_images IS 'Optional image URLs for answer choices. Format: {"A": "url", "B": "url", "C": "url", "D": "url"}';

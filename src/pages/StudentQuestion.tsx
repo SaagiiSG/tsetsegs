@@ -854,25 +854,32 @@ export default function StudentQuestion() {
                   {/* Multiple Choice Options */}
                   {currentQuestion.question_type === 'multiple_choice' && options && (
                     <div className="space-y-3">
-                      {['A', 'B', 'C', 'D'].map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => !submitted && setSelectedAnswer(opt)}
-                          disabled={submitted}
-                          className={`w-full p-4 rounded-lg border text-left transition-all ${
-                            submitted && opt === selectedAnswer && isCorrect
-                              ? 'border-green-500 bg-green-500/10'
-                              : submitted && opt === selectedAnswer && !isCorrect
-                              ? 'border-red-500 bg-red-500/10'
-                              : selectedAnswer === opt
-                              ? 'border-primary bg-primary/10'
-                              : 'hover:border-primary/50'
-                          }`}
-                        >
-                          <span className="font-medium mr-3">{opt}.</span>
-                          <MathText text={options[opt]} />
-                        </button>
-                      ))}
+                      {['A', 'B', 'C', 'D'].map((opt) => {
+                        const choiceImages = (currentQuestion as any).choice_images as Record<string, string> | null;
+                        const choiceImg = choiceImages?.[opt];
+                        return (
+                          <button
+                            key={opt}
+                            onClick={() => !submitted && setSelectedAnswer(opt)}
+                            disabled={submitted}
+                            className={`w-full p-4 rounded-lg border text-left transition-all ${
+                              submitted && opt === selectedAnswer && isCorrect
+                                ? 'border-green-500 bg-green-500/10'
+                                : submitted && opt === selectedAnswer && !isCorrect
+                                ? 'border-red-500 bg-red-500/10'
+                                : selectedAnswer === opt
+                                ? 'border-primary bg-primary/10'
+                                : 'hover:border-primary/50'
+                            }`}
+                          >
+                            <span className="font-medium mr-3">{opt}.</span>
+                            {choiceImg && (
+                              <img src={choiceImg} alt={`Choice ${opt}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
+                            )}
+                            <MathText text={options[opt]} />
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
 

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Youtube, Plus, Trash2 } from 'lucide-react';
+import { Loader2, X, Youtube, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
@@ -54,6 +54,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
+  const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -149,6 +151,11 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
       }
+      // Load existing choice images
+      const ci = editingQuestion.choice_images as Record<string, string> | null;
+      if (ci) {
+        setChoiceImagePreviews({ A: ci.A || null, B: ci.B || null, C: ci.C || null, D: ci.D || null });
+      }
     } else if (nextQuestionId) {
       form.setValue('question_id', nextQuestionId);
     }
@@ -173,6 +180,16 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     return data.publicUrl;
   };
 
+  const uploadChoiceImage = async (file: File, letter: string): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `choice-${letter}-${Date.now()}.${fileExt}`;
+    const filePath = `choices/${fileName}`;
+    const { error: uploadError } = await supabase.storage.from('question-images').upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage.from('question-images').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   // Save question mutation
   const saveMutation = useMutation({
     mutationFn: async (data: QuestionFormData) => {
@@ -189,7 +206,20 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         .map(a => a.value.trim())
         .filter(v => v.length > 0);
 
-      const questionData = {
+      // Upload choice images
+      const choiceImages: Record<string, string | null> = { A: null, B: null, C: null, D: null };
+      let hasAnyChoiceImage = false;
+      for (const letter of ['A', 'B', 'C', 'D']) {
+        if (choiceImageFiles[letter]) {
+          choiceImages[letter] = await uploadChoiceImage(choiceImageFiles[letter]!, letter);
+          hasAnyChoiceImage = true;
+        } else if (choiceImagePreviews[letter]) {
+          choiceImages[letter] = choiceImagePreviews[letter];
+          hasAnyChoiceImage = true;
+        }
+      }
+
+      const questionData: any = {
         question_id: data.question_id,
         question_text: data.question_text,
         category_id: data.category_id,
@@ -205,6 +235,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           : null,
         is_original: true,
         is_active: true,
+        choice_images: hasAnyChoiceImage ? choiceImages : null,
       };
 
       if (editingQuestion) {
@@ -338,6 +369,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     });
     setImageFile(null);
     setImagePreview(null);
+    setChoiceImageFiles({ A: null, B: null, C: null, D: null });
+    setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     onOpenChange(false);
   };
 
@@ -367,6 +400,23 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+  };
+
+  const handleChoiceImageChange = (letter: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setChoiceImageFiles(prev => ({ ...prev, [letter]: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeChoiceImage = (letter: string) => {
+    setChoiceImageFiles(prev => ({ ...prev, [letter]: null }));
+    setChoiceImagePreviews(prev => ({ ...prev, [letter]: null }));
   };
 
   const watchedValues = form.watch();
@@ -532,91 +582,67 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 <p className="text-xs text-muted-foreground hidden sm:block">
                   Use $math$ for LaTeX notation (e.g., $x^2 + 1$)
                 </p>
-                <div className="grid grid-cols-1 gap-2 md:gap-3">
-                  <FormField
-                    control={form.control}
-                    name="option_a"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start gap-2">
-                          <span className="font-medium w-6 mt-2">A:</span>
-                          <div className="flex-1">
-                            <FormControl>
-                              <RichTextEditor
-                                value={field.value || ''}
-                                onChange={field.onChange}
-                                placeholder="Option A"
-                                minHeight="60px"
-                              />
-                            </FormControl>
-                          </div>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="option_b"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start gap-2">
-                          <span className="font-medium w-6 mt-2">B:</span>
-                          <div className="flex-1">
-                            <FormControl>
-                              <RichTextEditor
-                                value={field.value || ''}
-                                onChange={field.onChange}
-                                placeholder="Option B"
-                                minHeight="60px"
-                              />
-                            </FormControl>
-                          </div>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="option_c"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start gap-2">
-                          <span className="font-medium w-6 mt-2">C:</span>
-                          <div className="flex-1">
-                            <FormControl>
-                              <RichTextEditor
-                                value={field.value || ''}
-                                onChange={field.onChange}
-                                placeholder="Option C"
-                                minHeight="60px"
-                              />
-                            </FormControl>
-                          </div>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="option_d"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start gap-2">
-                          <span className="font-medium w-6 mt-2">D:</span>
-                          <div className="flex-1">
-                            <FormControl>
-                              <RichTextEditor
-                                value={field.value || ''}
-                                onChange={field.onChange}
-                                placeholder="Option D"
-                                minHeight="60px"
-                              />
-                            </FormControl>
-                          </div>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+              <div className="grid grid-cols-1 gap-2 md:gap-3">
+                  {['option_a', 'option_b', 'option_c', 'option_d'].map((optionName, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    return (
+                      <FormField
+                        key={optionName}
+                        control={form.control}
+                        name={optionName as any}
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-start gap-2">
+                              <span className="font-medium w-6 mt-2">{letter}:</span>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center justify-end">
+                                  <label htmlFor={`qf-choice-img-${letter}`} className="cursor-pointer">
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                                      <ImagePlus className="h-3.5 w-3.5" />
+                                      <span>{choiceImagePreviews[letter] ? 'Change' : 'Image'}</span>
+                                    </div>
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => handleChoiceImageChange(letter, e)}
+                                      className="hidden"
+                                      id={`qf-choice-img-${letter}`}
+                                    />
+                                  </label>
+                                </div>
+                                {choiceImagePreviews[letter] && (
+                                  <div className="relative">
+                                    <img
+                                      src={choiceImagePreviews[letter]!}
+                                      alt={`Choice ${letter}`}
+                                      className="rounded border w-full max-h-24 object-contain bg-white"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="icon"
+                                      className="absolute top-1 right-1 h-6 w-6"
+                                      onClick={() => removeChoiceImage(letter)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                                <FormControl>
+                                  <RichTextEditor
+                                    value={field.value || ''}
+                                    onChange={field.onChange}
+                                    placeholder={`Option ${letter}`}
+                                    minHeight="60px"
+                                  />
+                                </FormControl>
+                              </div>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -987,6 +1013,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                       const optionKey = `option_${letter.toLowerCase()}` as keyof typeof watchedValues;
                       const optionValue = watchedValues[optionKey] as string;
                       const isCorrect = watchedValues.answer === letter;
+                      const choiceImg = choiceImagePreviews[letter];
                       
                       return (
                         <div 
@@ -1001,14 +1028,19 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                             <span className={`font-medium text-sm ${isCorrect ? 'text-green-600' : ''}`}>
                               {letter}.
                             </span>
-                            {optionValue ? (
-                              <MathText 
-                                text={optionValue}
-                                className="flex-1 text-sm"
-                              />
-                            ) : (
-                              <span className="text-muted-foreground italic text-sm">Option {letter}...</span>
-                            )}
+                            <div className="flex-1">
+                              {choiceImg && (
+                                <img src={choiceImg} alt={`Choice ${letter}`} className="rounded border max-h-20 object-contain bg-white mb-1" />
+                              )}
+                              {optionValue ? (
+                                <MathText 
+                                  text={optionValue}
+                                  className="text-sm"
+                                />
+                              ) : (
+                                <span className="text-muted-foreground italic text-sm">Option {letter}...</span>
+                              )}
+                            </div>
                             {isCorrect && (
                               <span className="text-xs text-green-600 font-medium">✓ Correct</span>
                             )}

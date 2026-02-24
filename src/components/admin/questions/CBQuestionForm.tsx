@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Plus, Trash2 } from 'lucide-react';
+import { Loader2, X, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
@@ -48,6 +48,8 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
+  const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -61,7 +63,6 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         .select('*')
         .order('name');
       if (error) throw error;
-      // Filter out English categories
       return data?.filter(cat => !englishCategories.includes(cat.name)) || [];
     }
   });
@@ -84,7 +85,6 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         return 'CB0001';
       }
       
-      // Extract number from last ID (e.g., CB0042 -> 42)
       const lastId = data[0].question_id;
       const numMatch = lastId.match(/\d+$/);
       const lastNum = numMatch ? parseInt(numMatch[0]) : 0;
@@ -147,6 +147,11 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
       }
+      // Load existing choice images
+      const ci = editingQuestion.choice_images as Record<string, string> | null;
+      if (ci) {
+        setChoiceImagePreviews({ A: ci.A || null, B: ci.B || null, C: ci.C || null, D: ci.D || null });
+      }
     } else if (nextQuestionId) {
       form.setValue('question_id', nextQuestionId);
     }
@@ -157,6 +162,24 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
     const fileExt = file.name.split('.').pop();
     const fileName = `cb-${Date.now()}.${fileExt}`;
     const filePath = `questions/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('question-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('question-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const uploadChoiceImage = async (file: File, letter: string): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `choice-${letter}-${Date.now()}.${fileExt}`;
+    const filePath = `choices/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('question-images')
@@ -182,12 +205,25 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         imageUrl = await uploadImage(imageFile);
       }
 
+      // Upload choice images
+      const choiceImages: Record<string, string | null> = { A: null, B: null, C: null, D: null };
+      let hasAnyChoiceImage = false;
+      for (const letter of ['A', 'B', 'C', 'D']) {
+        if (choiceImageFiles[letter]) {
+          choiceImages[letter] = await uploadChoiceImage(choiceImageFiles[letter]!, letter);
+          hasAnyChoiceImage = true;
+        } else if (choiceImagePreviews[letter]) {
+          choiceImages[letter] = choiceImagePreviews[letter];
+          hasAnyChoiceImage = true;
+        }
+      }
+
       // Filter out empty alternate answers
       const alternateAnswers = data.alternate_answers
         .map(a => a.value.trim())
         .filter(v => v.length > 0);
 
-      const questionData = {
+      const questionData: any = {
         question_id: data.question_id,
         original_cb_id: data.original_cb_id || null,
         question_text: data.question_text,
@@ -208,6 +244,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         is_original: true,
         is_active: true,
         question_set: 'CollegeBoard',
+        choice_images: hasAnyChoiceImage ? choiceImages : null,
       };
 
       if (editingQuestion) {
@@ -265,6 +302,8 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
     });
     setImageFile(null);
     setImagePreview(null);
+    setChoiceImageFiles({ A: null, B: null, C: null, D: null });
+    setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     onOpenChange(false);
   };
 
@@ -283,6 +322,23 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+  };
+
+  const handleChoiceImageChange = (letter: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setChoiceImageFiles(prev => ({ ...prev, [letter]: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeChoiceImage = (letter: string) => {
+    setChoiceImageFiles(prev => ({ ...prev, [letter]: null }));
+    setChoiceImagePreviews(prev => ({ ...prev, [letter]: null }));
   };
 
   const watchedValues = form.watch();
@@ -496,21 +552,58 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                 {/* Multiple Choice Options */}
                 {questionType === 'multiple_choice' && (
                   <div className="grid grid-cols-2 gap-3">
-                    {['option_a', 'option_b', 'option_c', 'option_d'].map((option, idx) => (
-                      <FormField
-                        key={option}
-                        control={form.control}
-                        name={option as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Option {String.fromCharCode(65 + idx)}</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder={`Option ${String.fromCharCode(65 + idx)}`} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
+                    {['option_a', 'option_b', 'option_c', 'option_d'].map((option, idx) => {
+                      const letter = String.fromCharCode(65 + idx);
+                      return (
+                        <FormField
+                          key={option}
+                          control={form.control}
+                          name={option as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center justify-between">
+                                <span>Option {letter}</span>
+                                {/* Choice image upload button */}
+                                <label htmlFor={`cb-choice-img-${letter}`} className="cursor-pointer">
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                                    <ImagePlus className="h-3.5 w-3.5" />
+                                    <span>{choiceImagePreviews[letter] ? 'Change' : 'Image'}</span>
+                                  </div>
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleChoiceImageChange(letter, e)}
+                                    className="hidden"
+                                    id={`cb-choice-img-${letter}`}
+                                  />
+                                </label>
+                              </FormLabel>
+                              {choiceImagePreviews[letter] && (
+                                <div className="relative mb-1">
+                                  <img
+                                    src={choiceImagePreviews[letter]!}
+                                    alt={`Choice ${letter}`}
+                                    className="rounded border w-full max-h-24 object-contain bg-white"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6"
+                                    onClick={() => removeChoiceImage(letter)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              <FormControl>
+                                <Input {...field} placeholder={`Option ${letter}`} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      );
+                    })}
                   </div>
                 )}
 
@@ -703,12 +796,13 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                   )}
                 </div>
 
-                {/* Options */}
+                {/* Options with choice images */}
                 {questionType === 'multiple_choice' && (
                   <div className="space-y-2">
                     {['A', 'B', 'C', 'D'].map((letter) => {
                       const optionValue = watchedValues[`option_${letter.toLowerCase()}` as keyof typeof watchedValues] as string;
                       const isCorrect = watchedValues.answer === letter;
+                      const choiceImg = choiceImagePreviews[letter];
                       return (
                         <div 
                           key={letter}
@@ -719,6 +813,9 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                           }`}
                         >
                           <span className="font-medium mr-2">{letter}.</span>
+                          {choiceImg && (
+                            <img src={choiceImg} alt={`Choice ${letter}`} className="rounded border max-h-20 object-contain bg-white my-1" />
+                          )}
                           {optionValue || <span className="text-muted-foreground italic">Option {letter}</span>}
                           {isCorrect && <span className="ml-2 text-xs">(Correct)</span>}
                         </div>
