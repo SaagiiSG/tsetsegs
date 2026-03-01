@@ -660,6 +660,76 @@ export default function StudentQuestion() {
   ).length;
 
   return (
+    <>
+    {/* Fixed Bottom Bar - outside SecurityWrapper to avoid stacking context issues */}
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[45] bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+      style={{ 
+        marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
+        marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
+        width: calculatorSnapSide ? '60vw' : '100%'
+      }}
+    >
+      <div className="flex items-center justify-between w-full gap-3">
+        {/* Left: Question counter + Navigator */}
+        <div className="flex items-center gap-2">
+          <QuestionNavigatorDialog 
+            currentQuestionId={questionId || ''} 
+            questionSet={question?.question_set}
+            subject={question?.subject || 'math'}
+          />
+          {allQuestions && (
+            <span className="text-sm font-medium text-muted-foreground">
+              {currentQuestionIndex + 1} of {allQuestions.length}
+            </span>
+          )}
+        </div>
+
+        {/* Right: Check / Try Again / Next */}
+        <div className="flex items-center gap-2">
+          {(videoWatched || !videoId) && currentQuestion && (
+            <>
+              {!submitted ? (
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
+                >
+                  {submitAnswerMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Check {attemptCount > 0 && `(${attemptCount})`}
+                </Button>
+              ) : !isCorrect ? (
+                <Button onClick={handleTryAgain} variant="secondary">
+                  Try Again {attemptCount <= 3 && `(${attemptCount}/3 pts)`}
+                </Button>
+              ) : currentVariationIndex < practiceQuestions.length - 1 ? (
+                <Button onClick={handleNextVariation}>
+                  Next Variation
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : null}
+            </>
+          )}
+
+          {/* Prev/Next question */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePrevQuestion}
+            disabled={!prevQuestion}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNextQuestion}
+            disabled={!nextQuestion}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+
     <SecurityWrapper>
       <DesmosCalculator />
       <ReferenceSheet />
@@ -700,74 +770,6 @@ export default function StudentQuestion() {
           </div>
         </header>
 
-        {/* Fixed Bottom Bar */}
-        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t px-4 py-3"
-          style={{ 
-            marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
-            marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
-            width: calculatorSnapSide ? '60vw' : '100%'
-          }}
-        >
-          <div className="flex items-center justify-between w-full gap-3">
-            {/* Left: Question counter + Navigator */}
-            <div className="flex items-center gap-2">
-              <QuestionNavigatorDialog 
-                currentQuestionId={questionId || ''} 
-                questionSet={question?.question_set}
-                subject={question?.subject || 'math'}
-              />
-              {allQuestions && (
-                <span className="text-sm font-medium text-muted-foreground">
-                  {currentQuestionIndex + 1} of {allQuestions.length}
-                </span>
-              )}
-            </div>
-
-            {/* Right: Check / Try Again / Next */}
-            <div className="flex items-center gap-2">
-              {(videoWatched || !videoId) && currentQuestion && (
-                <>
-                  {!submitted ? (
-                    <Button 
-                      onClick={handleSubmit}
-                      disabled={submitAnswerMutation.isPending || (!selectedAnswer && !fillAnswer)}
-                    >
-                      {submitAnswerMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                      Check {attemptCount > 0 && `(${attemptCount})`}
-                    </Button>
-                  ) : !isCorrect ? (
-                    <Button onClick={handleTryAgain} variant="secondary">
-                      Try Again {attemptCount <= 3 && `(${attemptCount}/3 pts)`}
-                    </Button>
-                  ) : currentVariationIndex < practiceQuestions.length - 1 ? (
-                    <Button onClick={handleNextVariation}>
-                      Next Variation
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  ) : null}
-                </>
-              )}
-
-              {/* Prev/Next question */}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePrevQuestion}
-                disabled={!prevQuestion}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNextQuestion}
-                disabled={!nextQuestion}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
 
         <main className="container mx-auto px-4 py-6 pb-24 max-w-3xl space-y-6">
           {/* Video Section */}
@@ -1014,5 +1016,6 @@ export default function StudentQuestion() {
         </Dialog>
       </div>
     </SecurityWrapper>
+    </>
   );
 }
