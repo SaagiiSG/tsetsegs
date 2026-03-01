@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -661,8 +662,9 @@ export default function StudentQuestion() {
 
   return (
     <>
-    {/* Fixed Bottom Bar - outside SecurityWrapper to avoid stacking context issues */}
-    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[45] bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+    {/* Fixed Bottom Bar - portaled to body to escape stacking contexts */}
+    {createPortal(
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[55] bg-background/95 backdrop-blur-sm border-t px-4 py-3"
       style={{ 
         marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
         marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
@@ -728,7 +730,7 @@ export default function StudentQuestion() {
           </Button>
         </div>
       </div>
-    </div>
+    </div>, document.body)}
 
     <SecurityWrapper>
       <DesmosCalculator />
