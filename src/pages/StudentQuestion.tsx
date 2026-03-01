@@ -701,7 +701,7 @@ export default function StudentQuestion() {
         </header>
 
         {/* Fixed Bottom Bar */}
-        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t px-4 py-3"
           style={{ 
             marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
             marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
