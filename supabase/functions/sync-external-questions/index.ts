@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,10 +27,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -42,72 +39,69 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { subject, since_date, dry_run = false } = body;
 
-    // Connect to external DB
-    const externalDbUrl = Deno.env.get("EXTERNAL_DB_URL");
-    if (!externalDbUrl) {
+    // Connect to external Supabase project via REST API
+    const externalUrl = Deno.env.get("EXTERNAL_DB_URL");
+    const externalKey = Deno.env.get("EXTERNAL_SUPABASE_KEY");
+    if (!externalUrl || !externalKey) {
       return new Response(
-        JSON.stringify({ error: "EXTERNAL_DB_URL secret not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "External DB credentials not configured. Need EXTERNAL_DB_URL and EXTERNAL_SUPABASE_KEY." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const externalClient = new Client(externalDbUrl);
-    await externalClient.connect();
+    const externalClient = createClient(externalUrl, externalKey);
 
-    // Build query with optional filters
-    let whereClause = "WHERE is_active = true AND is_original = true";
-    const params: unknown[] = [];
-    let paramIdx = 1;
+    // Build query with filters
+    let query = externalClient
+      .from("questions")
+      .select("question_id, question_text, answer, multiple_choice_options, difficulty_level, subject, question_type, rationale, passage_text, original_cb_id, question_set, subtopic, alternate_answers, question_image_url, choice_images, video_url, skill, has_figure, figure_type, figure_description, figure_svg")
+      .eq("is_active", true)
+      .eq("is_original", true)
+      .order("created_at", { ascending: true })
+      .limit(1000);
 
     if (subject) {
-      whereClause += ` AND subject = $${paramIdx}`;
-      params.push(subject);
-      paramIdx++;
+      query = query.eq("subject", subject);
     }
     if (since_date) {
-      whereClause += ` AND created_at > $${paramIdx}`;
-      params.push(since_date);
-      paramIdx++;
+      query = query.gt("created_at", since_date);
     }
 
-    const query = `
-      SELECT 
-        question_id, question_text, answer, multiple_choice_options, 
-        difficulty_level, subject, question_type, rationale, passage_text,
-        original_cb_id, question_set, subtopic, alternate_answers,
-        question_image_url, choice_images, video_url, category_id
-      FROM questions 
-      ${whereClause}
-      ORDER BY created_at ASC
-    `;
+    const { data: externalQuestions, error: extError } = await query;
 
-    const result = await externalClient.queryObject(query, params);
-    const externalQuestions = result.rows as Record<string, unknown>[];
+    if (extError) {
+      return new Response(
+        JSON.stringify({ error: `External DB query failed: ${extError.message}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    await externalClient.end();
+    if (!externalQuestions || externalQuestions.length === 0) {
+      return new Response(
+        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found in external database." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (dry_run) {
       return new Response(
         JSON.stringify({
           preview: true,
           total_found: externalQuestions.length,
-          sample: externalQuestions.slice(0, 5).map((q) => ({
+          sample: externalQuestions.slice(0, 10).map((q) => ({
             question_id: q.question_id,
             subject: q.subject,
-            question_text:
-              String(q.question_text || "").substring(0, 100) + "...",
+            difficulty_level: q.difficulty_level,
+            question_type: q.question_type,
+            skill: q.skill,
+            question_text: String(q.question_text || "").substring(0, 120) + "...",
           })),
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Use service role client for inserts
+    // Use service role client for inserts into local DB
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -118,16 +112,12 @@ Deno.serve(async (req) => {
       .from("questions")
       .select("question_id, original_cb_id");
 
-    const existingQIds = new Set(
-      (existingQuestions || []).map((q) => q.question_id)
-    );
+    const existingQIds = new Set((existingQuestions || []).map((q) => q.question_id));
     const existingCbIds = new Set(
-      (existingQuestions || [])
-        .map((q) => q.original_cb_id)
-        .filter(Boolean)
+      (existingQuestions || []).map((q) => q.original_cb_id).filter(Boolean)
     );
 
-    // Find the highest EXT number for sequential IDs
+    // Find the highest EXT number
     const extIds = (existingQuestions || [])
       .map((q) => q.question_id)
       .filter((id: string) => id.startsWith("EXT"))
@@ -141,20 +131,12 @@ Deno.serve(async (req) => {
     const errorDetails: string[] = [];
 
     for (const q of externalQuestions) {
-      // Skip if we already have this question
       const cbId = q.original_cb_id as string | null;
       const qId = q.question_id as string;
 
-      if (cbId && existingCbIds.has(cbId)) {
-        skipped++;
-        continue;
-      }
-      if (existingQIds.has(qId)) {
-        skipped++;
-        continue;
-      }
+      if (cbId && existingCbIds.has(cbId)) { skipped++; continue; }
+      if (existingQIds.has(qId)) { skipped++; continue; }
 
-      // Generate new question_id
       const newQuestionId = `EXT${String(nextExtNum).padStart(4, "0")}`;
       nextExtNum++;
 
@@ -175,19 +157,20 @@ Deno.serve(async (req) => {
         question_image_url: q.question_image_url,
         choice_images: q.choice_images,
         video_url: q.video_url,
+        skill: q.skill,
+        has_figure: q.has_figure,
+        figure_type: q.figure_type,
+        figure_description: q.figure_description,
+        figure_svg: q.figure_svg,
         is_original: true,
         is_active: true,
       };
 
-      const { error: insertError } = await adminClient
-        .from("questions")
-        .insert(insertData);
+      const { error: insertError } = await adminClient.from("questions").insert(insertData);
 
       if (insertError) {
         errors++;
-        errorDetails.push(
-          `${qId}: ${insertError.message}`
-        );
+        errorDetails.push(`${qId}: ${insertError.message}`);
       } else {
         imported++;
         existingQIds.add(newQuestionId);
@@ -196,28 +179,14 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        total_found: externalQuestions.length,
-        imported,
-        skipped,
-        errors,
-        error_details: errorDetails.slice(0, 10),
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, total_found: externalQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Sync error:", error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
