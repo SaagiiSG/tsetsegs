@@ -225,7 +225,81 @@ export default function QuestionBank() {
         )}
       </div>
 
-      {/* Stats Cards - Scrollable on mobile */}
+      {/* Sync External DB Dialog */}
+      <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Sync External Questions
+            </DialogTitle>
+            <DialogDescription>
+              Fetch questions from the external database and import them into your question bank.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Subject Filter</label>
+              <Select value={syncSubject} onValueChange={setSyncSubject}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  <SelectItem value="math">Math Only</SelectItem>
+                  <SelectItem value="english">English Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {syncResult && (
+              <Card>
+                <CardContent className="pt-4 space-y-2 text-sm">
+                  {syncResult.preview ? (
+                    <>
+                      <p className="font-medium">Preview: {syncResult.total_found} questions found</p>
+                      {syncResult.sample?.map((s: any, i: number) => (
+                        <div key={i} className="text-muted-foreground text-xs border-l-2 border-primary pl-2">
+                          <span className="font-mono">{s.question_id}</span> ({s.subject}) — {s.question_text}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium text-green-600">✓ Sync Complete</p>
+                      <p>Found: {syncResult.total_found}</p>
+                      <p>Imported: {syncResult.imported}</p>
+                      <p>Skipped (duplicates): {syncResult.skipped}</p>
+                      {syncResult.errors > 0 && (
+                        <p className="text-destructive">Errors: {syncResult.errors}</p>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => handleSync(true)}
+              disabled={syncing}
+            >
+              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+              Preview
+            </Button>
+            <Button
+              onClick={() => handleSync(false)}
+              disabled={syncing}
+            >
+              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
+              Import Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
