@@ -1,46 +1,88 @@
 
+# Clean Up Defective Questions + Add Image-Based Answer Choices
 
-## Plan: External Database Sync for Question Bank
+## Part 1: Database Cleanup
 
-### Overview
-Build an edge function that connects to an external Supabase/Postgres database, fetches questions (both Math and English), and inserts them into your local `questions` table. An admin UI button in the Question Bank page will trigger the sync.
+### Remove Defective Questions
+There are **4 defective CollegeBoard questions** that have placeholder/broken answer choices:
 
-### How It Works
+| Question ID | Issue |
+|---|---|
+| CB0351 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. (no actual content) |
+| CB0370 | Choices C and D are `[UNCLEAR]` |
+| CB0389 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. |
+| CB0431 | Choices A and B are `[UNCLEAR]` |
 
-1. **Store the external database connection string** as a secret (`EXTERNAL_DB_URL`) so the edge function can connect securely.
+Additionally, **CB0002** was flagged by a student as defective.
 
-2. **Create an edge function** (`sync-external-questions`) that:
-   - Connects to the external Postgres DB using Deno's `postgres` driver
-   - Runs a SELECT query to fetch new questions (filtered by a timestamp or ID to avoid duplicates)
-   - Maps the external schema fields to your local `questions` table columns (`question_text`, `answer`, `multiple_choice_options`, `difficulty_level`, `subject`, `question_type`, `rationale`, `passage_text`, etc.)
-   - Inserts them into your local `questions` table via the Supabase service role client
-   - Returns a summary (imported count, skipped duplicates, errors)
+**Action:** Set `is_active = false` on all 5 questions to remove them from student practice while preserving attempt history.
 
-3. **Add a "Sync External Questions" button** in the admin Question Bank page that calls the edge function and shows a toast with results.
+---
 
-### Technical Details
+## Part 2: Add Image Support for Answer Choices
 
-**Edge Function: `supabase/functions/sync-external-questions/index.ts`**
-- Uses `https://deno.land/x/postgres/mod.ts` to connect to external DB
-- Accepts optional filters via POST body (subject, since_date)
-- Deduplicates by checking `original_cb_id` or a composite key before inserting
-- Auto-generates sequential `question_id` values (e.g., `EXT0001`, `EXT0002`) for imported questions
-- Protected: requires admin auth via `getClaims()`
+Some questions have graphs, tables, or figures as answer options (not just the question itself). The current system only supports text-based answer choices. We need to support image URLs per choice.
 
-**Admin UI Changes: Question Bank page**
-- Add a "Sync from External DB" button in the toolbar
-- Shows a dialog with sync options (subject filter, preview count)
-- Displays results after sync completes
+### Database Schema Change
+Add a new column to the `questions` table:
 
-### Before We Start
+```text
+choice_images JSONB (nullable, default null)
+```
 
-I need to understand the external database's schema to map fields correctly. Could you share:
-- The table name and column names of the questions in the external database
-- The external database's connection URL (I'll store it securely as a secret)
+Structure: `{"A": "https://...image_url", "B": "https://...image_url", "C": null, "D": null}`
 
-### Steps
-1. Add `EXTERNAL_DB_URL` secret
-2. Create the `sync-external-questions` edge function
-3. Add the sync button and dialog to the admin Question Bank UI
-4. Test end-to-end
+This keeps it flexible -- any combination of text + image per choice is supported. If a choice has an image, it renders the image; if it also has text, both show.
 
+### Admin Form Updates (CBQuestionForm.tsx + QuestionForm.tsx)
+
+For each answer option (A, B, C, D), add an optional image upload button next to the text editor:
+
+- Each choice gets an "Upload Image" icon button beside the text input
+- When an image is uploaded, it shows a thumbnail preview with a remove button
+- Images are uploaded to the existing `question-images` storage bucket under `choices/` subfolder
+- On save, the `choice_images` JSON object is constructed from any uploaded images
+
+**Changes to forms:**
+1. Add state for 4 choice image files + 4 choice image previews
+2. Add image upload UI inline with each A/B/C/D option
+3. On form load (edit mode), populate previews from existing `choice_images`
+4. On save, upload any new choice images, then save the `choice_images` JSON
+
+### Student Question Rendering (StudentQuestion.tsx)
+
+Update the multiple choice rendering (lines 854-876) to:
+
+1. Check if `choice_images` exists for the current question
+2. If a choice has an image URL in `choice_images`, render an `<img>` tag inside the choice button
+3. The image appears above the text (if text exists), or alone if text is just a placeholder
+4. Images get the same styling as the question image (rounded, bordered, contained)
+
+### Live Preview in Admin Form
+
+The right-side preview panel in both forms also needs to render choice images so admins can see what students will see.
+
+---
+
+## Technical Details
+
+### Migration SQL
+```text
+ALTER TABLE questions ADD COLUMN choice_images JSONB DEFAULT NULL;
+COMMENT ON COLUMN questions.choice_images IS 
+  'Optional image URLs for answer choices. Format: {"A": "url", "B": "url", "C": "url", "D": "url"}';
+```
+
+### Files to Modify
+1. **Database migration** -- add `choice_images` column
+2. **src/components/admin/questions/CBQuestionForm.tsx** -- add per-choice image upload UI + save logic
+3. **src/components/admin/questions/QuestionForm.tsx** -- same per-choice image upload UI
+4. **src/pages/StudentQuestion.tsx** -- render choice images in the answer buttons
+5. **src/pages/student/StudentEnglishQuestion.tsx** -- render choice images there too (if applicable)
+
+### Execution Order
+1. Deactivate the 5 defective questions (data update)
+2. Run the schema migration to add `choice_images`
+3. Update CBQuestionForm with per-choice image uploads
+4. Update QuestionForm with per-choice image uploads
+5. Update StudentQuestion to render choice images

@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 import { QuestionList } from '@/components/admin/questions/QuestionList';
@@ -17,6 +19,7 @@ import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
 import { CBImportReviewSessions } from '@/components/admin/questions/CBImportReviewSessions';
 import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuestionImport';
+import { toast } from '@/hooks/use-toast';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions-68');
@@ -24,6 +27,10 @@ export default function QuestionBank() {
   const [cbFormOpen, setCbFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [syncSubject, setSyncSubject] = useState<string>('all');
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<any>(null);
 
   // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
@@ -150,6 +157,35 @@ export default function QuestionBank() {
     return null;
   };
 
+  const handleSync = async (dryRun = false) => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+        body: {
+          subject: syncSubject === 'all' ? undefined : syncSubject,
+          dry_run: dryRun,
+        },
+      });
+      if (error) throw error;
+      setSyncResult(data);
+      if (!dryRun && data?.success) {
+        toast({
+          title: 'Sync Complete',
+          description: `Imported ${data.imported} questions, skipped ${data.skipped} duplicates.`,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Sync Failed',
+        description: err.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
@@ -158,18 +194,103 @@ export default function QuestionBank() {
           <h1 className="text-2xl md:text-3xl font-bold">Question Bank</h1>
           <p className="text-sm text-muted-foreground">Manage SAT practice questions</p>
         </div>
-        {getAddButtonText() && (
-          <Button 
-            className={`gap-2 w-full sm:w-auto ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-            onClick={handleAddQuestion}
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => { setSyncResult(null); setSyncDialogOpen(true); }}
           >
-            <Plus className="h-4 w-4" />
-            {getAddButtonText()}
+            <Database className="h-4 w-4" />
+            <span className="hidden sm:inline">Sync External</span>
+            <span className="sm:hidden">Sync</span>
           </Button>
-        )}
+          {getAddButtonText() && (
+            <Button 
+              className={`gap-2 flex-1 sm:flex-initial ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+              onClick={handleAddQuestion}
+            >
+              <Plus className="h-4 w-4" />
+              {getAddButtonText()}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Stats Cards - Scrollable on mobile */}
+      {/* Sync External DB Dialog */}
+      <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Sync External Questions
+            </DialogTitle>
+            <DialogDescription>
+              Fetch questions from the external database and import them into your question bank.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Subject Filter</label>
+              <Select value={syncSubject} onValueChange={setSyncSubject}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  <SelectItem value="math">Math Only</SelectItem>
+                  <SelectItem value="english">English Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {syncResult && (
+              <Card>
+                <CardContent className="pt-4 space-y-2 text-sm">
+                  {syncResult.preview ? (
+                    <>
+                      <p className="font-medium">Preview: {syncResult.total_found} questions found</p>
+                      {syncResult.sample?.map((s: any, i: number) => (
+                        <div key={i} className="text-muted-foreground text-xs border-l-2 border-primary pl-2">
+                          <span className="font-mono">{s.question_id}</span> ({s.subject}) — {s.question_text}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium text-green-600">✓ Sync Complete</p>
+                      <p>Found: {syncResult.total_found}</p>
+                      <p>Imported: {syncResult.imported}</p>
+                      <p>Skipped (duplicates): {syncResult.skipped}</p>
+                      {syncResult.errors > 0 && (
+                        <p className="text-destructive">Errors: {syncResult.errors}</p>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => handleSync(true)}
+              disabled={syncing}
+            >
+              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+              Preview
+            </Button>
+            <Button
+              onClick={() => handleSync(false)}
+              disabled={syncing}
+            >
+              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
+              Import Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
