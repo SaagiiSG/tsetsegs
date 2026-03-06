@@ -401,15 +401,34 @@ export default function QuestionBank() {
                   {/* Multiple Choice Options */}
                   {previewQuestion.multiple_choice_options && (
                     <div className="space-y-3">
-                      {Object.entries(previewQuestion.multiple_choice_options).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="w-full p-4 rounded-lg border text-left hover:border-primary/50 transition-all cursor-default"
-                        >
-                          <span className="font-medium mr-3">{key}.</span>
-                          <MathText text={String(value)} />
-                        </div>
-                      ))}
+                      {Object.entries(previewQuestion.multiple_choice_options).map(([key, value]) => {
+                        const isCorrect = previewQuestion.answer?.toUpperCase() === key.toUpperCase();
+                        const choiceImages = previewQuestion.choice_images as Record<string, string> | null;
+                        const choiceImg = choiceImages?.[key];
+                        return (
+                          <div
+                            key={key}
+                            className={`w-full p-4 rounded-lg border text-left transition-all cursor-default ${
+                              isCorrect 
+                                ? 'border-green-500 bg-green-500/10 ring-1 ring-green-500/30' 
+                                : ''
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="font-medium">{key}.</span>
+                              <div className="flex-1">
+                                {choiceImg && (
+                                  <img src={choiceImg} alt={`Choice ${key}`} className="rounded border max-w-full max-h-32 object-contain bg-white mb-2" />
+                                )}
+                                <MathText text={String(value)} />
+                              </div>
+                              {isCorrect && (
+                                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
