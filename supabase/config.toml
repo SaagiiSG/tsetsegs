@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.parse-english-question]
 verify_jwt = false
+
+[functions.sync-external-questions]
+verify_jwt = false
