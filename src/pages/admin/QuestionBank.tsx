@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database, Eye, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { MathText } from '@/components/MathText';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +33,7 @@ export default function QuestionBank() {
   const [syncSubject, setSyncSubject] = useState<string>('all');
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
+  const [previewQuestion, setPreviewQuestion] = useState<any>(null);
 
   // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
@@ -271,7 +274,11 @@ export default function QuestionBank() {
                     <p className="font-medium text-sm">Preview: {syncResult.total_found} questions found</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {syncResult.sample?.map((s: any, i: number) => (
-                        <Card key={i} className="overflow-hidden">
+                        <Card 
+                          key={i} 
+                          className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                          onClick={() => setPreviewQuestion(s)}
+                        >
                           <CardHeader className="p-4 pb-2">
                             <div className="flex items-center justify-between">
                               <span className="font-mono text-xs text-muted-foreground">{s.question_id}</span>
@@ -292,6 +299,10 @@ export default function QuestionBank() {
                             {s.skill && (
                               <p className="text-xs text-muted-foreground mt-2">Skill: {s.skill}</p>
                             )}
+                            <div className="flex items-center gap-1 mt-3 text-xs text-primary">
+                              <Eye className="h-3 w-3" />
+                              <span>Click to preview</span>
+                            </div>
                           </CardContent>
                         </Card>
                       ))}
@@ -321,6 +332,116 @@ export default function QuestionBank() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Student-View Preview Dialog */}
+      <Dialog open={!!previewQuestion} onOpenChange={(open) => !open && setPreviewQuestion(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Student View Preview
+            </DialogTitle>
+            <DialogDescription>
+              This is how the question will appear to students during practice.
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewQuestion && (
+            <div className="space-y-6">
+              {/* Mock student header */}
+              <div className="flex items-center justify-between border-b pb-3">
+                <Button variant="ghost" size="sm" disabled>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono">{previewQuestion.question_id}</Badge>
+                  {previewQuestion.subject && <Badge variant="secondary">{previewQuestion.subject}</Badge>}
+                </div>
+              </div>
+
+              {/* Question card (mimicking StudentQuestion layout) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Question {previewQuestion.question_id}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Passage */}
+                  {previewQuestion.passage_text && (
+                    <div className="bg-muted/50 p-4 rounded-lg border text-sm leading-relaxed">
+                      <MathText text={previewQuestion.passage_text} />
+                    </div>
+                  )}
+
+                  {/* Question Text */}
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-lg">
+                      <MathText text={previewQuestion.question_text} />
+                    </p>
+                  </div>
+
+                  {/* Question Image */}
+                  {previewQuestion.question_image_url && (
+                    <img 
+                      src={previewQuestion.question_image_url} 
+                      alt="Question" 
+                      className="max-w-full rounded-lg border"
+                    />
+                  )}
+
+                  {/* Multiple Choice Options */}
+                  {previewQuestion.multiple_choice_options && (
+                    <div className="space-y-3">
+                      {Object.entries(previewQuestion.multiple_choice_options).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="w-full p-4 rounded-lg border text-left hover:border-primary/50 transition-all cursor-default"
+                        >
+                          <span className="font-medium mr-3">{key}.</span>
+                          <MathText text={String(value)} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Fill in blank */}
+                  {previewQuestion.question_type === 'fill_in_blank' && (
+                    <Input
+                      placeholder="Type your answer..."
+                      disabled
+                      className="text-lg"
+                    />
+                  )}
+
+                  {/* Answer reveal (admin only) */}
+                  <div className="border-t pt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Admin Info (not visible to students):</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="bg-primary/20 text-primary">Answer: {previewQuestion.answer}</Badge>
+                      {previewQuestion.difficulty_level && (
+                        <Badge variant="outline">{previewQuestion.difficulty_level}</Badge>
+                      )}
+                      {previewQuestion.skill && (
+                        <Badge variant="outline">Skill: {previewQuestion.skill}</Badge>
+                      )}
+                      {previewQuestion.subtopic && (
+                        <Badge variant="outline">{previewQuestion.subtopic}</Badge>
+                      )}
+                    </div>
+                    {previewQuestion.rationale && (
+                      <div className="bg-muted/50 p-3 rounded text-sm mt-2">
+                        <p className="font-medium mb-1">Rationale:</p>
+                        <MathText text={previewQuestion.rationale} />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
