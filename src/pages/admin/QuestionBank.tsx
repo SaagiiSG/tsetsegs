@@ -214,15 +214,6 @@ export default function QuestionBank() {
             </Button>
           )}
         </div>
-        {getAddButtonText() && (
-          <Button 
-            className={`gap-2 w-full sm:w-auto ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-            onClick={handleAddQuestion}
-          >
-            <Plus className="h-4 w-4" />
-            {getAddButtonText()}
-          </Button>
-        )}
       </div>
 
       {/* Sync External DB Dialog */}
