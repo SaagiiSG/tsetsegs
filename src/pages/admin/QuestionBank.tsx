@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database, Eye, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database, Eye, CheckCircle2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -326,10 +326,19 @@ export default function QuestionBank() {
                       <p>Found: {syncResult.total_found}</p>
                       <p>Imported: {syncResult.imported}</p>
                       <p>Skipped (duplicates): {syncResult.skipped}</p>
-                      {syncResult.errors > 0 && (
-                        <p className="text-destructive">Errors: {syncResult.errors}</p>
-                      )}
-                    </CardContent>
+                       {syncResult.errors > 0 && (
+                        <>
+                          <p className="text-destructive">Errors: {syncResult.errors}</p>
+                          {syncResult.error_details?.length > 0 && (
+                            <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                              <p className="text-xs font-medium text-muted-foreground">Error details:</p>
+                              {syncResult.error_details.map((err: string, i: number) => (
+                                <p key={i} className="text-xs text-destructive/80 font-mono">{err}</p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                       )}
                   </Card>
                 )}
               </>
