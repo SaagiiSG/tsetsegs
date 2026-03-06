@@ -152,12 +152,16 @@ Deno.serve(async (req) => {
       const newQuestionId = `EXT${String(nextExtNum).padStart(4, "0")}`;
       nextExtNum++;
 
+      // Normalize difficulty_level to match check constraint (easy, medium, hard)
+      const rawDifficulty = (q.difficulty_level || '').toString().toLowerCase().trim();
+      const normalizedDifficulty = ['easy', 'medium', 'hard'].includes(rawDifficulty) ? rawDifficulty : null;
+
       const insertData: Record<string, unknown> = {
         question_id: newQuestionId,
         question_text: q.question_text,
         answer: q.answer,
         multiple_choice_options: q.multiple_choice_options,
-        difficulty_level: q.difficulty_level,
+        difficulty_level: normalizedDifficulty,
         subject: q.subject || "math",
         question_type: q.question_type || "multiple_choice",
         rationale: q.rationale,
