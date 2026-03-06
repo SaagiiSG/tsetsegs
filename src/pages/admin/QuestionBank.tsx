@@ -174,6 +174,7 @@ export default function QuestionBank() {
       });
       if (error) throw error;
       setSyncResult(data);
+      setPreviewPage(0);
       if (!dryRun && data?.success) {
         toast({
           title: 'Sync Complete',
