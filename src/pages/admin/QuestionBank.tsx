@@ -216,10 +216,10 @@ export default function QuestionBank() {
         </div>
       </div>
 
-      {/* Sync External DB Dialog */}
+      {/* Sync External DB Dialog - Full Screen */}
       <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Database className="h-5 w-5" />
               Sync External Questions
@@ -229,8 +229,8 @@ export default function QuestionBank() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
+          <div className="flex flex-col sm:flex-row gap-4 items-end flex-shrink-0">
+            <div className="flex-1">
               <label className="text-sm font-medium">Subject Filter</label>
               <Select value={syncSubject} onValueChange={setSyncSubject}>
                 <SelectTrigger className="mt-1">
@@ -243,21 +243,63 @@ export default function QuestionBank() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleSync(true)}
+                disabled={syncing}
+              >
+                {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+                Preview
+              </Button>
+              <Button
+                onClick={() => handleSync(false)}
+                disabled={syncing}
+              >
+                {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
+                Import Now
+              </Button>
+            </div>
+          </div>
 
+          {/* Results Area */}
+          <div className="flex-1 overflow-y-auto min-h-0 mt-4">
             {syncResult && (
-              <Card>
-                <CardContent className="pt-4 space-y-2 text-sm">
-                  {syncResult.preview ? (
-                    <>
-                      <p className="font-medium">Preview: {syncResult.total_found} questions found</p>
+              <>
+                {syncResult.preview ? (
+                  <div className="space-y-4">
+                    <p className="font-medium text-sm">Preview: {syncResult.total_found} questions found</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {syncResult.sample?.map((s: any, i: number) => (
-                        <div key={i} className="text-muted-foreground text-xs border-l-2 border-primary pl-2">
-                          <span className="font-mono">{s.question_id}</span> ({s.subject}) — {s.question_text}
-                        </div>
+                        <Card key={i} className="overflow-hidden">
+                          <CardHeader className="p-4 pb-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs text-muted-foreground">{s.question_id}</span>
+                              <div className="flex gap-1">
+                                {s.subject && (
+                                  <Badge variant="secondary" className="text-[10px]">{s.subject}</Badge>
+                                )}
+                                {s.difficulty_level && (
+                                  <Badge variant={s.difficulty_level === 'Hard' ? 'destructive' : s.difficulty_level === 'Medium' ? 'default' : 'secondary'} className="text-[10px]">
+                                    {s.difficulty_level}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <p className="text-sm line-clamp-3">{s.question_text}</p>
+                            {s.skill && (
+                              <p className="text-xs text-muted-foreground mt-2">Skill: {s.skill}</p>
+                            )}
+                          </CardContent>
+                        </Card>
                       ))}
-                    </>
-                  ) : (
-                    <>
+                    </div>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6 space-y-2 text-sm">
                       <p className="font-medium text-green-600">✓ Sync Complete</p>
                       <p>Found: {syncResult.total_found}</p>
                       <p>Imported: {syncResult.imported}</p>
@@ -265,30 +307,18 @@ export default function QuestionBank() {
                       {syncResult.errors > 0 && (
                         <p className="text-destructive">Errors: {syncResult.errors}</p>
                       )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {!syncResult && (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                Click "Preview" to see available questions from the external database.
+              </div>
             )}
           </div>
-
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => handleSync(true)}
-              disabled={syncing}
-            >
-              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
-              Preview
-            </Button>
-            <Button
-              onClick={() => handleSync(false)}
-              disabled={syncing}
-            >
-              {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
-              Import Now
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
       <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
