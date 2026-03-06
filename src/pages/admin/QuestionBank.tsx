@@ -274,7 +274,11 @@ export default function QuestionBank() {
                     <p className="font-medium text-sm">Preview: {syncResult.total_found} questions found</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {syncResult.sample?.map((s: any, i: number) => (
-                        <Card key={i} className="overflow-hidden">
+                        <Card 
+                          key={i} 
+                          className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                          onClick={() => setPreviewQuestion(s)}
+                        >
                           <CardHeader className="p-4 pb-2">
                             <div className="flex items-center justify-between">
                               <span className="font-mono text-xs text-muted-foreground">{s.question_id}</span>
@@ -295,6 +299,10 @@ export default function QuestionBank() {
                             {s.skill && (
                               <p className="text-xs text-muted-foreground mt-2">Skill: {s.skill}</p>
                             )}
+                            <div className="flex items-center gap-1 mt-3 text-xs text-primary">
+                              <Eye className="h-3 w-3" />
+                              <span>Click to preview</span>
+                            </div>
                           </CardContent>
                         </Card>
                       ))}
