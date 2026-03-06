@@ -299,7 +299,16 @@ export default function QuestionBank() {
                             {s.skill && (
                               <p className="text-xs text-muted-foreground mt-2">Skill: {s.skill}</p>
                             )}
-                            <div className="flex items-center gap-1 mt-3 text-xs text-primary">
+                            <div className="flex items-center gap-2 mt-3 pt-2 border-t">
+                              <Badge className="bg-primary/20 text-primary text-[10px]">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                {s.answer}
+                              </Badge>
+                              {s.question_type && (
+                                <Badge variant="outline" className="text-[10px]">{s.question_type}</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 mt-2 text-xs text-primary">
                               <Eye className="h-3 w-3" />
                               <span>Click to preview</span>
                             </div>
