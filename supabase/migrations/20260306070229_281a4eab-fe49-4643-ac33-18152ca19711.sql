@@ -1,0 +1,2 @@
+ALTER TABLE public.questions DROP CONSTRAINT questions_question_set_check;
+ALTER TABLE public.questions ADD CONSTRAINT questions_question_set_check CHECK (question_set = ANY (ARRAY['68'::text, 'CollegeBoard'::text, 'English'::text, 'External'::text]));
