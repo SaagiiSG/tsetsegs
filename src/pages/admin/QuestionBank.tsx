@@ -369,16 +369,41 @@ export default function QuestionBank() {
 
           {previewQuestion && (
             <div className="space-y-6">
-              {/* Mock student header */}
+              {/* Navigation between questions */}
               <div className="flex items-center justify-between border-b pb-3">
-                <Button variant="ghost" size="sm" disabled>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  disabled={!syncResult?.sample || syncResult.sample.indexOf(previewQuestion) <= 0}
+                  onClick={() => {
+                    const idx = syncResult?.sample?.indexOf(previewQuestion);
+                    if (idx > 0) setPreviewQuestion(syncResult.sample[idx - 1]);
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Prev
                 </Button>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="font-mono">{previewQuestion.question_id}</Badge>
                   {previewQuestion.subject && <Badge variant="secondary">{previewQuestion.subject}</Badge>}
+                  {syncResult?.sample && (
+                    <span className="text-xs text-muted-foreground">
+                      {syncResult.sample.indexOf(previewQuestion) + 1} / {syncResult.sample.length}
+                    </span>
+                  )}
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  disabled={!syncResult?.sample || syncResult.sample.indexOf(previewQuestion) >= syncResult.sample.length - 1}
+                  onClick={() => {
+                    const idx = syncResult?.sample?.indexOf(previewQuestion);
+                    if (idx < syncResult.sample.length - 1) setPreviewQuestion(syncResult.sample[idx + 1]);
+                  }}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
               </div>
 
               {/* Question card (mimicking StudentQuestion layout) */}
