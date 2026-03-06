@@ -332,6 +332,116 @@ export default function QuestionBank() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Student-View Preview Dialog */}
+      <Dialog open={!!previewQuestion} onOpenChange={(open) => !open && setPreviewQuestion(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Student View Preview
+            </DialogTitle>
+            <DialogDescription>
+              This is how the question will appear to students during practice.
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewQuestion && (
+            <div className="space-y-6">
+              {/* Mock student header */}
+              <div className="flex items-center justify-between border-b pb-3">
+                <Button variant="ghost" size="sm" disabled>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono">{previewQuestion.question_id}</Badge>
+                  {previewQuestion.subject && <Badge variant="secondary">{previewQuestion.subject}</Badge>}
+                </div>
+              </div>
+
+              {/* Question card (mimicking StudentQuestion layout) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Question {previewQuestion.question_id}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Passage */}
+                  {previewQuestion.passage_text && (
+                    <div className="bg-muted/50 p-4 rounded-lg border text-sm leading-relaxed">
+                      <MathText text={previewQuestion.passage_text} />
+                    </div>
+                  )}
+
+                  {/* Question Text */}
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-lg">
+                      <MathText text={previewQuestion.question_text} />
+                    </p>
+                  </div>
+
+                  {/* Question Image */}
+                  {previewQuestion.question_image_url && (
+                    <img 
+                      src={previewQuestion.question_image_url} 
+                      alt="Question" 
+                      className="max-w-full rounded-lg border"
+                    />
+                  )}
+
+                  {/* Multiple Choice Options */}
+                  {previewQuestion.multiple_choice_options && (
+                    <div className="space-y-3">
+                      {Object.entries(previewQuestion.multiple_choice_options).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="w-full p-4 rounded-lg border text-left hover:border-primary/50 transition-all cursor-default"
+                        >
+                          <span className="font-medium mr-3">{key}.</span>
+                          <MathText text={String(value)} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Fill in blank */}
+                  {previewQuestion.question_type === 'fill_in_blank' && (
+                    <Input
+                      placeholder="Type your answer..."
+                      disabled
+                      className="text-lg"
+                    />
+                  )}
+
+                  {/* Answer reveal (admin only) */}
+                  <div className="border-t pt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Admin Info (not visible to students):</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="bg-primary/20 text-primary">Answer: {previewQuestion.answer}</Badge>
+                      {previewQuestion.difficulty_level && (
+                        <Badge variant="outline">{previewQuestion.difficulty_level}</Badge>
+                      )}
+                      {previewQuestion.skill && (
+                        <Badge variant="outline">Skill: {previewQuestion.skill}</Badge>
+                      )}
+                      {previewQuestion.subtopic && (
+                        <Badge variant="outline">{previewQuestion.subtopic}</Badge>
+                      )}
+                    </div>
+                    {previewQuestion.rationale && (
+                      <div className="bg-muted/50 p-3 rounded text-sm mt-2">
+                        <p className="font-medium mb-1">Rationale:</p>
+                        <MathText text={previewQuestion.rationale} />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
