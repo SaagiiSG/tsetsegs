@@ -157,6 +157,35 @@ export default function QuestionBank() {
     return null;
   };
 
+  const handleSync = async (dryRun = false) => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+        body: {
+          subject: syncSubject === 'all' ? undefined : syncSubject,
+          dry_run: dryRun,
+        },
+      });
+      if (error) throw error;
+      setSyncResult(data);
+      if (!dryRun && data?.success) {
+        toast({
+          title: 'Sync Complete',
+          description: `Imported ${data.imported} questions, skipped ${data.skipped} duplicates.`,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Sync Failed',
+        description: err.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
@@ -164,6 +193,26 @@ export default function QuestionBank() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Question Bank</h1>
           <p className="text-sm text-muted-foreground">Manage SAT practice questions</p>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => { setSyncResult(null); setSyncDialogOpen(true); }}
+          >
+            <Database className="h-4 w-4" />
+            <span className="hidden sm:inline">Sync External</span>
+            <span className="sm:hidden">Sync</span>
+          </Button>
+          {getAddButtonText() && (
+            <Button 
+              className={`gap-2 flex-1 sm:flex-initial ${activeTab === 'questions-cb' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+              onClick={handleAddQuestion}
+            >
+              <Plus className="h-4 w-4" />
+              {getAddButtonText()}
+            </Button>
+          )}
         </div>
         {getAddButtonText() && (
           <Button 
