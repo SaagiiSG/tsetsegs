@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 import { QuestionList } from '@/components/admin/questions/QuestionList';
@@ -17,6 +19,7 @@ import { CategoryManager } from '@/components/admin/questions/CategoryManager';
 import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport';
 import { CBImportReviewSessions } from '@/components/admin/questions/CBImportReviewSessions';
 import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuestionImport';
+import { toast } from '@/hooks/use-toast';
 
 export default function QuestionBank() {
   const [activeTab, setActiveTab] = useState('questions-68');
