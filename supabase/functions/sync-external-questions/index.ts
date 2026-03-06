@@ -88,13 +88,24 @@ Deno.serve(async (req) => {
         JSON.stringify({
           preview: true,
           total_found: externalQuestions.length,
-          sample: externalQuestions.slice(0, 10).map((q) => ({
+          sample: externalQuestions.slice(0, 20).map((q) => ({
             question_id: q.question_id,
             subject: q.subject,
             difficulty_level: q.difficulty_level,
             question_type: q.question_type,
             skill: q.skill,
-            question_text: String(q.question_text || "").substring(0, 120) + "...",
+            question_text: q.question_text,
+            answer: q.answer,
+            multiple_choice_options: q.multiple_choice_options,
+            choice_images: q.choice_images,
+            passage_text: q.passage_text,
+            question_image_url: q.question_image_url,
+            rationale: q.rationale,
+            subtopic: q.subtopic,
+            alternate_answers: q.alternate_answers,
+            has_figure: q.has_figure,
+            figure_type: q.figure_type,
+            figure_description: q.figure_description,
           })),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
