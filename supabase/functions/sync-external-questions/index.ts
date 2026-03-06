@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           preview: true,
           total_found: externalQuestions.length,
-          sample: externalQuestions.slice(0, 20).map((q) => ({
+          sample: externalQuestions.map((q) => ({
             question_id: q.question_id,
             subject: q.subject,
             difficulty_level: q.difficulty_level,
@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
             has_figure: q.has_figure,
             figure_type: q.figure_type,
             figure_description: q.figure_description,
+            original_cb_id: q.original_cb_id,
           })),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

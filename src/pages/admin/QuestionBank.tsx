@@ -34,6 +34,8 @@ export default function QuestionBank() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [previewQuestion, setPreviewQuestion] = useState<any>(null);
+  const [previewPage, setPreviewPage] = useState(0);
+  const PREVIEW_PAGE_SIZE = 12;
 
   // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
