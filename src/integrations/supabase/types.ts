@@ -1126,6 +1126,10 @@ export type Database = {
           choice_images: Json | null
           created_at: string
           difficulty_level: string | null
+          figure_description: string | null
+          figure_svg: string | null
+          figure_type: string | null
+          has_figure: boolean | null
           id: string
           is_active: boolean
           is_original: boolean
@@ -1139,6 +1143,7 @@ export type Database = {
           question_text: string
           question_type: string
           rationale: string | null
+          skill: string | null
           subject: string | null
           subtopic: string | null
           updated_at: string
@@ -1151,6 +1156,10 @@ export type Database = {
           choice_images?: Json | null
           created_at?: string
           difficulty_level?: string | null
+          figure_description?: string | null
+          figure_svg?: string | null
+          figure_type?: string | null
+          has_figure?: boolean | null
           id?: string
           is_active?: boolean
           is_original?: boolean
@@ -1164,6 +1173,7 @@ export type Database = {
           question_text: string
           question_type: string
           rationale?: string | null
+          skill?: string | null
           subject?: string | null
           subtopic?: string | null
           updated_at?: string
@@ -1176,6 +1186,10 @@ export type Database = {
           choice_images?: Json | null
           created_at?: string
           difficulty_level?: string | null
+          figure_description?: string | null
+          figure_svg?: string | null
+          figure_type?: string | null
+          has_figure?: boolean | null
           id?: string
           is_active?: boolean
           is_original?: boolean
@@ -1189,6 +1203,7 @@ export type Database = {
           question_text?: string
           question_type?: string
           rationale?: string | null
+          skill?: string | null
           subject?: string | null
           subtopic?: string | null
           updated_at?: string
