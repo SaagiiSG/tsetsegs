@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database, Eye, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Plus, FileQuestion, Users, Flag, Brain, Settings, Upload, RefreshCw, Database, Eye, CheckCircle2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -34,6 +34,8 @@ export default function QuestionBank() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [previewQuestion, setPreviewQuestion] = useState<any>(null);
+  const [previewPage, setPreviewPage] = useState(0);
+  const PREVIEW_PAGE_SIZE = 12;
 
   // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
@@ -172,6 +174,7 @@ export default function QuestionBank() {
       });
       if (error) throw error;
       setSyncResult(data);
+      setPreviewPage(0);
       if (!dryRun && data?.success) {
         toast({
           title: 'Sync Complete',
@@ -324,9 +327,19 @@ export default function QuestionBank() {
                       <p>Found: {syncResult.total_found}</p>
                       <p>Imported: {syncResult.imported}</p>
                       <p>Skipped (duplicates): {syncResult.skipped}</p>
-                      {syncResult.errors > 0 && (
-                        <p className="text-destructive">Errors: {syncResult.errors}</p>
-                      )}
+                       {syncResult.errors > 0 && (
+                        <>
+                          <p className="text-destructive">Errors: {syncResult.errors}</p>
+                          {syncResult.error_details?.length > 0 && (
+                            <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                              <p className="text-xs font-medium text-muted-foreground">Error details:</p>
+                              {syncResult.error_details.map((err: string, i: number) => (
+                                <p key={i} className="text-xs text-destructive/80 font-mono">{err}</p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                       )}
                     </CardContent>
                   </Card>
                 )}
@@ -357,16 +370,41 @@ export default function QuestionBank() {
 
           {previewQuestion && (
             <div className="space-y-6">
-              {/* Mock student header */}
+              {/* Navigation between questions */}
               <div className="flex items-center justify-between border-b pb-3">
-                <Button variant="ghost" size="sm" disabled>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  disabled={!syncResult?.sample || syncResult.sample.indexOf(previewQuestion) <= 0}
+                  onClick={() => {
+                    const idx = syncResult?.sample?.indexOf(previewQuestion);
+                    if (idx > 0) setPreviewQuestion(syncResult.sample[idx - 1]);
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Prev
                 </Button>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="font-mono">{previewQuestion.question_id}</Badge>
                   {previewQuestion.subject && <Badge variant="secondary">{previewQuestion.subject}</Badge>}
+                  {syncResult?.sample && (
+                    <span className="text-xs text-muted-foreground">
+                      {syncResult.sample.indexOf(previewQuestion) + 1} / {syncResult.sample.length}
+                    </span>
+                  )}
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  disabled={!syncResult?.sample || syncResult.sample.indexOf(previewQuestion) >= syncResult.sample.length - 1}
+                  onClick={() => {
+                    const idx = syncResult?.sample?.indexOf(previewQuestion);
+                    if (idx < syncResult.sample.length - 1) setPreviewQuestion(syncResult.sample[idx + 1]);
+                  }}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
               </div>
 
               {/* Question card (mimicking StudentQuestion layout) */}
