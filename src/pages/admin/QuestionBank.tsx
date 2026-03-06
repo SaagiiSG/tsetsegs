@@ -27,6 +27,10 @@ export default function QuestionBank() {
   const [cbFormOpen, setCbFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [syncSubject, setSyncSubject] = useState<string>('all');
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<any>(null);
 
   // Fetch 68 questions count (excluding bluebook questions)
   const { data: questions68Count } = useQuery({
