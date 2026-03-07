@@ -1,0 +1,1 @@
+ALTER TABLE public.questions DROP CONSTRAINT questions_question_set_check;
