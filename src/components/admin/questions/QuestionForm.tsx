@@ -57,6 +57,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const [isUploading, setIsUploading] = useState(false);
   const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
   const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperTarget, setCropperTarget] = useState<'main' | string>('main');
+  const [pendingOriginalFile, setPendingOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
