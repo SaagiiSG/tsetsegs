@@ -420,16 +420,24 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     }
   };
 
-  const handleCropperSkipClose = (open: boolean) => {
-    if (!open && pendingOriginalFile && cropperTarget === 'main' && !imageFile) {
-      // User clicked "Use Original" — use the pending file as-is
-      setImageFile(pendingOriginalFile);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(pendingOriginalFile);
+  const handleCropperClose = (open: boolean) => {
+    if (!open && pendingOriginalFile) {
+      // "Use Original" was clicked — use the file as-is
+      if (cropperTarget === 'main') {
+        setImageFile(pendingOriginalFile);
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(pendingOriginalFile);
+      } else {
+        const letter = cropperTarget;
+        setChoiceImageFiles(prev => ({ ...prev, [letter]: pendingOriginalFile }));
+        const reader = new FileReader();
+        reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        reader.readAsDataURL(pendingOriginalFile);
+      }
+      setPendingOriginalFile(null);
     }
     setCropperOpen(open);
-    if (!open) setPendingOriginalFile(null);
   };
 
   const removeImage = () => {
