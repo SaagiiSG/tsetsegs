@@ -406,6 +406,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   };
 
   const handleCropComplete = (croppedFile: File) => {
+    setPendingOriginalFile(null); // Clear pending so "Use Original" doesn't also fire
     if (cropperTarget === 'main') {
       setImageFile(croppedFile);
       const reader = new FileReader();

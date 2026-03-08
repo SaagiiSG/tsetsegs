@@ -93,6 +93,8 @@ export function ImageCropper({ open, onOpenChange, imageSrc, onCropComplete, fil
       const blob = await getCroppedBlob(imgRef.current, completedCrop);
       const file = new File([blob], fileName, { type: 'image/png' });
       onCropComplete(file);
+      // Don't call onOpenChange here — let the parent's onCropComplete handler manage state
+      // The parent will close via its own logic
       onOpenChange(false);
     } catch (err) {
       console.error('Crop failed:', err);
