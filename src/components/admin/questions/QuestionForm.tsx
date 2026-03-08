@@ -440,13 +440,16 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const handleChoiceImageChange = (letter: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setChoiceImageFiles(prev => ({ ...prev, [letter]: file }));
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        setCropperSrc(reader.result as string);
+        setCropperTarget(letter);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const removeChoiceImage = (letter: string) => {
