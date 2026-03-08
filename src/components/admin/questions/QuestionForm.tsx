@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, X, Youtube, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
 
@@ -56,6 +57,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const [isUploading, setIsUploading] = useState(false);
   const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
   const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperTarget, setCropperTarget] = useState<'main' | string>('main');
+  const [pendingOriginalFile, setPendingOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -388,13 +393,52 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setCropperSrc(reader.result as string);
+        setCropperTarget('main');
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setPendingOriginalFile(null); // Clear pending so "Use Original" doesn't also fire
+    if (cropperTarget === 'main') {
+      setImageFile(croppedFile);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(croppedFile);
+    } else {
+      const letter = cropperTarget;
+      setChoiceImageFiles(prev => ({ ...prev, [letter]: croppedFile }));
+      const reader = new FileReader();
+      reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+      reader.readAsDataURL(croppedFile);
+    }
+  };
+
+  const handleCropperClose = (open: boolean) => {
+    if (!open && pendingOriginalFile) {
+      // "Use Original" was clicked — use the file as-is
+      if (cropperTarget === 'main') {
+        setImageFile(pendingOriginalFile);
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(pendingOriginalFile);
+      } else {
+        const letter = cropperTarget;
+        setChoiceImageFiles(prev => ({ ...prev, [letter]: pendingOriginalFile }));
+        const reader = new FileReader();
+        reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        reader.readAsDataURL(pendingOriginalFile);
+      }
+      setPendingOriginalFile(null);
+    }
+    setCropperOpen(open);
   };
 
   const removeImage = () => {
@@ -405,13 +449,16 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const handleChoiceImageChange = (letter: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setChoiceImageFiles(prev => ({ ...prev, [letter]: file }));
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        setCropperSrc(reader.result as string);
+        setCropperTarget(letter);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const removeChoiceImage = (letter: string) => {
@@ -422,6 +469,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const watchedValues = form.watch();
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] md:h-[95vh] p-0 flex flex-col">
         <DialogHeader className="px-4 md:px-6 py-3 md:py-4 border-b shrink-0">
@@ -1091,5 +1139,14 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropper
+      open={cropperOpen}
+      onOpenChange={handleCropperClose}
+      imageSrc={cropperSrc}
+      onCropComplete={handleCropComplete}
+      fileName={cropperTarget === 'main' ? 'question-image.png' : `choice-${cropperTarget}.png`}
+    />
+    </>
   );
 }
