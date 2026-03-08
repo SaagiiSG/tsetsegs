@@ -1129,5 +1129,14 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropper
+      open={cropperOpen}
+      onOpenChange={handleCropperSkipClose}
+      imageSrc={cropperSrc}
+      onCropComplete={handleCropComplete}
+      fileName={cropperTarget === 'main' ? 'question-image.png' : `choice-${cropperTarget}.png`}
+    />
+    </>
   );
 }
