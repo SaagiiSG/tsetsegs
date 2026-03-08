@@ -883,5 +883,14 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropper
+      open={cropperOpen}
+      onOpenChange={handleCropperClose}
+      imageSrc={cropperSrc}
+      onCropComplete={handleCropComplete}
+      fileName={cropperTarget === 'main' ? 'cb-question-image.png' : `choice-${cropperTarget}.png`}
+    />
+    </>
   );
 }
