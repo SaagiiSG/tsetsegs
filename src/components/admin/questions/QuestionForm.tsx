@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, X, Youtube, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
 
