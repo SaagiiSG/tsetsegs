@@ -393,13 +393,43 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setCropperSrc(reader.result as string);
+        setCropperTarget('main');
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    if (cropperTarget === 'main') {
+      setImageFile(croppedFile);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(croppedFile);
+    } else {
+      const letter = cropperTarget;
+      setChoiceImageFiles(prev => ({ ...prev, [letter]: croppedFile }));
+      const reader = new FileReader();
+      reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+      reader.readAsDataURL(croppedFile);
+    }
+  };
+
+  const handleCropperSkipClose = (open: boolean) => {
+    if (!open && pendingOriginalFile && cropperTarget === 'main' && !imageFile) {
+      // User clicked "Use Original" — use the pending file as-is
+      setImageFile(pendingOriginalFile);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(pendingOriginalFile);
+    }
+    setCropperOpen(open);
+    if (!open) setPendingOriginalFile(null);
   };
 
   const removeImage = () => {
