@@ -1141,7 +1141,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
     <ImageCropper
       open={cropperOpen}
-      onOpenChange={handleCropperSkipClose}
+      onOpenChange={handleCropperClose}
       imageSrc={cropperSrc}
       onCropComplete={handleCropComplete}
       fileName={cropperTarget === 'main' ? 'question-image.png' : `choice-${cropperTarget}.png`}
