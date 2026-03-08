@@ -315,13 +315,16 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setCropperSrc(reader.result as string);
+        setCropperTarget('main');
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const removeImage = () => {
@@ -332,18 +335,56 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   const handleChoiceImageChange = (letter: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setChoiceImageFiles(prev => ({ ...prev, [letter]: file }));
+      setPendingOriginalFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        setCropperSrc(reader.result as string);
+        setCropperTarget(letter);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const removeChoiceImage = (letter: string) => {
     setChoiceImageFiles(prev => ({ ...prev, [letter]: null }));
     setChoiceImagePreviews(prev => ({ ...prev, [letter]: null }));
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setPendingOriginalFile(null);
+    if (cropperTarget === 'main') {
+      setImageFile(croppedFile);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(croppedFile);
+    } else {
+      const letter = cropperTarget;
+      setChoiceImageFiles(prev => ({ ...prev, [letter]: croppedFile }));
+      const reader = new FileReader();
+      reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+      reader.readAsDataURL(croppedFile);
+    }
+  };
+
+  const handleCropperClose = (open: boolean) => {
+    if (!open && pendingOriginalFile) {
+      if (cropperTarget === 'main') {
+        setImageFile(pendingOriginalFile);
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(pendingOriginalFile);
+      } else {
+        const letter = cropperTarget;
+        setChoiceImageFiles(prev => ({ ...prev, [letter]: pendingOriginalFile }));
+        const reader = new FileReader();
+        reader.onloadend = () => setChoiceImagePreviews(prev => ({ ...prev, [letter]: reader.result as string }));
+        reader.readAsDataURL(pendingOriginalFile);
+      }
+      setPendingOriginalFile(null);
+    }
+    setCropperOpen(open);
   };
 
   const watchedValues = form.watch();
