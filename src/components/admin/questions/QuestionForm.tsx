@@ -460,6 +460,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
   const watchedValues = form.watch();
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] md:h-[95vh] p-0 flex flex-col">
         <DialogHeader className="px-4 md:px-6 py-3 md:py-4 border-b shrink-0">
