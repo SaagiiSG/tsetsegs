@@ -399,6 +399,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-[95vh] p-0 flex flex-col">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
