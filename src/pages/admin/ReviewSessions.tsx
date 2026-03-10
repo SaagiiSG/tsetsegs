@@ -386,7 +386,7 @@ function SessionsTab() {
                       <div>
                         <div className="font-medium">{s.title}</div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span><Clock className="h-3 w-3 inline mr-0.5" />{format(new Date(s.session_date), 'HH:mm')}</span>
+                          <span><Clock className="h-3 w-3 inline mr-0.5" />{format(new Date(s.session_date), 'HH:mm')}{s.session_end_date ? ` – ${format(new Date(s.session_end_date), 'HH:mm')}` : ''}</span>
                           {s.room && <span><MapPin className="h-3 w-3 inline mr-0.5" />{s.room}</span>}
                           <span><Armchair className="h-3 w-3 inline mr-0.5" />{booked}/{s.total_seats}</span>
                         </div>
