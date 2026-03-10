@@ -349,9 +349,10 @@ function SessionsTab() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div><Label>Date</Label><Input type="date" value={formData.session_date} onChange={e => setFormData(p => ({ ...p, session_date: e.target.value }))} /></div>
               <div><Label>Time</Label><Input type="time" value={formData.session_time} onChange={e => setFormData(p => ({ ...p, session_time: e.target.value }))} /></div>
+              <div><Label>Duration (min)</Label><Input type="number" value={formData.duration_minutes} onChange={e => setFormData(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 60 }))} /></div>
               <div><Label>Seats</Label><Input type="number" value={formData.total_seats} onChange={e => setFormData(p => ({ ...p, total_seats: parseInt(e.target.value) || 0 }))} /></div>
             </div>
             <div><Label>Room</Label><Input value={formData.room} onChange={e => setFormData(p => ({ ...p, room: e.target.value }))} placeholder="Optional" /></div>
