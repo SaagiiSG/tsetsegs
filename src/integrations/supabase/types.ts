@@ -506,6 +506,38 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_bans: {
+        Row: {
+          banned_until: string
+          created_at: string
+          id: string
+          reason: string | null
+          student_account_id: string
+        }
+        Insert: {
+          banned_until: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          student_account_id: string
+        }
+        Update: {
+          banned_until?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_bans_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cb_import_issues: {
         Row: {
           created_at: string
@@ -1267,6 +1299,89 @@ export type Database = {
           },
         ]
       }
+      review_session_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          room: string | null
+          session_times: Json
+          subject: string
+          total_seats: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          room?: string | null
+          session_times?: Json
+          subject?: string
+          total_seats?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          room?: string | null
+          session_times?: Json
+          subject?: string
+          total_seats?: number
+        }
+        Relationships: []
+      }
+      review_sessions: {
+        Row: {
+          booking_closes_at: string
+          created_at: string
+          id: string
+          is_active: boolean
+          room: string | null
+          session_date: string
+          subject: string
+          template_id: string | null
+          title: string
+          total_seats: number
+        }
+        Insert: {
+          booking_closes_at: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          room?: string | null
+          session_date: string
+          subject?: string
+          template_id?: string | null
+          title: string
+          total_seats?: number
+        }
+        Update: {
+          booking_closes_at?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          room?: string | null
+          session_date?: string
+          subject?: string
+          template_id?: string | null
+          title?: string
+          total_seats?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_sessions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "review_session_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_templates: {
         Row: {
           created_at: string
@@ -1341,6 +1456,51 @@ export type Database = {
           theme_color?: string | null
         }
         Relationships: []
+      }
+      seat_bookings: {
+        Row: {
+          attended: boolean | null
+          booked_at: string
+          cancelled_at: string | null
+          id: string
+          review_session_id: string
+          seat_number: number
+          student_account_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          booked_at?: string
+          cancelled_at?: string | null
+          id?: string
+          review_session_id: string
+          seat_number: number
+          student_account_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          booked_at?: string
+          cancelled_at?: string | null
+          id?: string
+          review_session_id?: string
+          seat_number?: number
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seat_bookings_review_session_id_fkey"
+            columns: ["review_session_id"]
+            isOneToOne: false
+            referencedRelation: "review_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seat_bookings_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_alerts: {
         Row: {
