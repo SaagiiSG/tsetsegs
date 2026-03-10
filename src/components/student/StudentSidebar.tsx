@@ -1,7 +1,7 @@
 import { NavLink } from '@/components/NavLink';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { 
-  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked
+  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked, Armchair
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
