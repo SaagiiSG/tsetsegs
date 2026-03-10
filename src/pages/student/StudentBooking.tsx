@@ -177,7 +177,7 @@ export default function StudentBooking() {
                       <div>
                         <div className="font-medium text-sm">{session?.title}</div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{format(new Date(session?.session_date), 'MMM d, HH:mm')}</span>
+                          <span>{format(new Date(session?.session_date), 'MMM d, HH:mm')}{session?.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
                           <span>•</span>
                           <span>Seat #{b.seat_number}</span>
                           {session?.room && <><span>•</span><span>{session.room}</span></>}
