@@ -292,9 +292,11 @@ function SessionsTab() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const sessionDate = new Date(`${data.session_date}T${data.session_time}`);
+      const sessionEndDate = new Date(sessionDate.getTime() + data.duration_minutes * 60 * 1000);
       const bookingCloses = new Date(sessionDate.getTime() - 60 * 60 * 1000);
       const { error } = await supabase.from('review_sessions').insert({
         title: data.title, subject: data.subject, session_date: sessionDate.toISOString(),
+        session_end_date: sessionEndDate.toISOString(),
         total_seats: data.total_seats, room: data.room || null, booking_closes_at: bookingCloses.toISOString(),
       });
       if (error) throw error;
