@@ -132,7 +132,7 @@ function TemplatesTab() {
 
   const handleEdit = (t: any) => {
     setEditingTemplate(t);
-    setFormData({ name: t.name, subject: t.subject, total_seats: t.total_seats, room: t.room || '', session_times: t.session_times as any[] });
+    setFormData({ name: t.name, subject: t.subject, total_seats: t.total_seats, room: t.room || '', duration_minutes: t.duration_minutes || 120, session_times: t.session_times as any[] });
     setShowForm(true);
   };
 
