@@ -267,7 +267,7 @@ function TemplatesTab() {
 function SessionsTab() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', subject: 'SAT', session_date: '', session_time: '14:00', total_seats: 20, room: '' });
+  const [formData, setFormData] = useState({ title: '', subject: 'SAT', session_date: '', session_time: '14:00', duration_minutes: 120, total_seats: 20, room: '' });
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['review-sessions'],
