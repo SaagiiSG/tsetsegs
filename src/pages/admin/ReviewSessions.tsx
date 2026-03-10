@@ -21,7 +21,7 @@ function TemplatesTab() {
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [formData, setFormData] = useState({
-    name: '', subject: 'SAT', total_seats: 20, room: '',
+    name: '', subject: 'SAT', total_seats: 20, room: '', duration_minutes: 120,
     session_times: [{ day: 'Saturday', time: '14:00' }],
   });
   const [generateRange, setGenerateRange] = useState({ templateId: '', startDate: '', endDate: '' });
@@ -76,18 +76,23 @@ function TemplatesTab() {
       let current = startOfDay(parseISO(startDate));
       const end = startOfDay(parseISO(endDate));
 
+      const now = new Date();
       while (!isAfter(current, end)) {
         for (const st of times) {
           if (current.getDay() === dayMap[st.day]) {
             const [h, m] = st.time.split(':').map(Number);
             const sessionDate = new Date(current);
             sessionDate.setHours(h, m, 0, 0);
+            // Only generate future sessions
+            if (isBefore(sessionDate, now)) continue;
+            const sessionEndDate = new Date(sessionDate.getTime() + template.duration_minutes * 60 * 1000);
             const bookingCloses = new Date(sessionDate.getTime() - 60 * 60 * 1000);
             sessions.push({
               template_id: templateId,
               title: `${template.name} - ${format(sessionDate, 'MMM d')}`,
               subject: template.subject,
               session_date: sessionDate.toISOString(),
+              session_end_date: sessionEndDate.toISOString(),
               total_seats: template.total_seats,
               room: template.room,
               booking_closes_at: bookingCloses.toISOString(),
@@ -113,7 +118,7 @@ function TemplatesTab() {
   const resetForm = () => {
     setShowForm(false);
     setEditingTemplate(null);
-    setFormData({ name: '', subject: 'SAT', total_seats: 20, room: '', session_times: [{ day: 'Saturday', time: '14:00' }] });
+    setFormData({ name: '', subject: 'SAT', total_seats: 20, room: '', duration_minutes: 120, session_times: [{ day: 'Saturday', time: '14:00' }] });
   };
 
   const addTimeSlot = () => setFormData(prev => ({ ...prev, session_times: [...prev.session_times, { day: 'Saturday', time: '14:00' }] }));
@@ -127,7 +132,7 @@ function TemplatesTab() {
 
   const handleEdit = (t: any) => {
     setEditingTemplate(t);
-    setFormData({ name: t.name, subject: t.subject, total_seats: t.total_seats, room: t.room || '', session_times: t.session_times as any[] });
+    setFormData({ name: t.name, subject: t.subject, total_seats: t.total_seats, room: t.room || '', duration_minutes: t.duration_minutes || 120, session_times: t.session_times as any[] });
     setShowForm(true);
   };
 
@@ -190,8 +195,9 @@ function TemplatesTab() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div><Label>Total Seats</Label><Input type="number" value={formData.total_seats} onChange={e => setFormData(p => ({ ...p, total_seats: parseInt(e.target.value) || 0 }))} /></div>
+              <div><Label>Duration (min)</Label><Input type="number" value={formData.duration_minutes} onChange={e => setFormData(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 60 }))} placeholder="120" /></div>
               <div><Label>Room</Label><Input value={formData.room} onChange={e => setFormData(p => ({ ...p, room: e.target.value }))} placeholder="e.g. Room 201" /></div>
             </div>
             <div>
@@ -236,8 +242,9 @@ function TemplatesTab() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><Armchair className="h-3.5 w-3.5" />{t.total_seats} seats</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t.duration_minutes || 120}min</span>
                     {t.room && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{t.room}</span>}
-                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />
+                    <span className="text-xs">
                       {(t.session_times as any[]).map((s: any) => `${s.day} ${s.time}`).join(', ')}
                     </span>
                   </div>
@@ -260,7 +267,7 @@ function TemplatesTab() {
 function SessionsTab() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', subject: 'SAT', session_date: '', session_time: '14:00', total_seats: 20, room: '' });
+  const [formData, setFormData] = useState({ title: '', subject: 'SAT', session_date: '', session_time: '14:00', duration_minutes: 120, total_seats: 20, room: '' });
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['review-sessions'],
@@ -285,9 +292,11 @@ function SessionsTab() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const sessionDate = new Date(`${data.session_date}T${data.session_time}`);
+      const sessionEndDate = new Date(sessionDate.getTime() + data.duration_minutes * 60 * 1000);
       const bookingCloses = new Date(sessionDate.getTime() - 60 * 60 * 1000);
       const { error } = await supabase.from('review_sessions').insert({
         title: data.title, subject: data.subject, session_date: sessionDate.toISOString(),
+        session_end_date: sessionEndDate.toISOString(),
         total_seats: data.total_seats, room: data.room || null, booking_closes_at: bookingCloses.toISOString(),
       });
       if (error) throw error;
@@ -340,9 +349,10 @@ function SessionsTab() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div><Label>Date</Label><Input type="date" value={formData.session_date} onChange={e => setFormData(p => ({ ...p, session_date: e.target.value }))} /></div>
               <div><Label>Time</Label><Input type="time" value={formData.session_time} onChange={e => setFormData(p => ({ ...p, session_time: e.target.value }))} /></div>
+              <div><Label>Duration (min)</Label><Input type="number" value={formData.duration_minutes} onChange={e => setFormData(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 60 }))} /></div>
               <div><Label>Seats</Label><Input type="number" value={formData.total_seats} onChange={e => setFormData(p => ({ ...p, total_seats: parseInt(e.target.value) || 0 }))} /></div>
             </div>
             <div><Label>Room</Label><Input value={formData.room} onChange={e => setFormData(p => ({ ...p, room: e.target.value }))} placeholder="Optional" /></div>
@@ -376,7 +386,7 @@ function SessionsTab() {
                       <div>
                         <div className="font-medium">{s.title}</div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span><Clock className="h-3 w-3 inline mr-0.5" />{format(new Date(s.session_date), 'HH:mm')}</span>
+                          <span><Clock className="h-3 w-3 inline mr-0.5" />{format(new Date(s.session_date), 'HH:mm')}{s.session_end_date ? ` – ${format(new Date(s.session_end_date), 'HH:mm')}` : ''}</span>
                           {s.room && <span><MapPin className="h-3 w-3 inline mr-0.5" />{s.room}</span>}
                           <span><Armchair className="h-3 w-3 inline mr-0.5" />{booked}/{s.total_seats}</span>
                         </div>

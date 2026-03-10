@@ -177,7 +177,7 @@ export default function StudentBooking() {
                       <div>
                         <div className="font-medium text-sm">{session?.title}</div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{format(new Date(session?.session_date), 'MMM d, HH:mm')}</span>
+                          <span>{format(new Date(session?.session_date), 'MMM d, HH:mm')}{session?.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
                           <span>•</span>
                           <span>Seat #{b.seat_number}</span>
                           {session?.room && <><span>•</span><span>{session.room}</span></>}
@@ -226,7 +226,7 @@ export default function StudentBooking() {
                       <div>
                         <div className="font-semibold">{session.title}</div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(session.session_date), 'HH:mm')}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(session.session_date), 'HH:mm')}{session.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
                           {session.room && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{session.room}</span>}
                           <span className="flex items-center gap-1"><Armchair className="h-3 w-3" />{available} left</span>
                         </div>
@@ -257,7 +257,7 @@ export default function StudentBooking() {
           <DialogHeader>
             <DialogTitle>{selectedSession?.title}</DialogTitle>
             <DialogDescription>
-              {selectedSession && format(new Date(selectedSession.session_date), 'EEEE, MMMM d • HH:mm')}
+              {selectedSession && format(new Date(selectedSession.session_date), 'EEEE, MMMM d • HH:mm')}{selectedSession?.session_end_date ? ` – ${format(new Date(selectedSession.session_end_date), 'HH:mm')}` : ''}
               {selectedSession?.room && ` • ${selectedSession.room}`}
             </DialogDescription>
           </DialogHeader>
