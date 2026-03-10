@@ -1303,6 +1303,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          duration_minutes: number
           id: string
           is_active: boolean
           name: string
@@ -1314,6 +1315,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          duration_minutes?: number
           id?: string
           is_active?: boolean
           name: string
@@ -1325,6 +1327,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          duration_minutes?: number
           id?: string
           is_active?: boolean
           name?: string
@@ -1343,6 +1346,7 @@ export type Database = {
           is_active: boolean
           room: string | null
           session_date: string
+          session_end_date: string | null
           subject: string
           template_id: string | null
           title: string
@@ -1355,6 +1359,7 @@ export type Database = {
           is_active?: boolean
           room?: string | null
           session_date: string
+          session_end_date?: string | null
           subject?: string
           template_id?: string | null
           title: string
@@ -1367,6 +1372,7 @@ export type Database = {
           is_active?: boolean
           room?: string | null
           session_date?: string
+          session_end_date?: string | null
           subject?: string
           template_id?: string | null
           title?: string
