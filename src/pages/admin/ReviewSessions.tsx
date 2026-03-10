@@ -76,18 +76,23 @@ function TemplatesTab() {
       let current = startOfDay(parseISO(startDate));
       const end = startOfDay(parseISO(endDate));
 
+      const now = new Date();
       while (!isAfter(current, end)) {
         for (const st of times) {
           if (current.getDay() === dayMap[st.day]) {
             const [h, m] = st.time.split(':').map(Number);
             const sessionDate = new Date(current);
             sessionDate.setHours(h, m, 0, 0);
+            // Only generate future sessions
+            if (isBefore(sessionDate, now)) continue;
+            const sessionEndDate = new Date(sessionDate.getTime() + template.duration_minutes * 60 * 1000);
             const bookingCloses = new Date(sessionDate.getTime() - 60 * 60 * 1000);
             sessions.push({
               template_id: templateId,
               title: `${template.name} - ${format(sessionDate, 'MMM d')}`,
               subject: template.subject,
               session_date: sessionDate.toISOString(),
+              session_end_date: sessionEndDate.toISOString(),
               total_seats: template.total_seats,
               room: template.room,
               booking_closes_at: bookingCloses.toISOString(),
