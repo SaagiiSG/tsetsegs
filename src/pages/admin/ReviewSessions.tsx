@@ -195,8 +195,9 @@ function TemplatesTab() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div><Label>Total Seats</Label><Input type="number" value={formData.total_seats} onChange={e => setFormData(p => ({ ...p, total_seats: parseInt(e.target.value) || 0 }))} /></div>
+              <div><Label>Duration (min)</Label><Input type="number" value={formData.duration_minutes} onChange={e => setFormData(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 60 }))} placeholder="120" /></div>
               <div><Label>Room</Label><Input value={formData.room} onChange={e => setFormData(p => ({ ...p, room: e.target.value }))} placeholder="e.g. Room 201" /></div>
             </div>
             <div>
