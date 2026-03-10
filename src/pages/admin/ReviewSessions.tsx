@@ -118,7 +118,7 @@ function TemplatesTab() {
   const resetForm = () => {
     setShowForm(false);
     setEditingTemplate(null);
-    setFormData({ name: '', subject: 'SAT', total_seats: 20, room: '', session_times: [{ day: 'Saturday', time: '14:00' }] });
+    setFormData({ name: '', subject: 'SAT', total_seats: 20, room: '', duration_minutes: 120, session_times: [{ day: 'Saturday', time: '14:00' }] });
   };
 
   const addTimeSlot = () => setFormData(prev => ({ ...prev, session_times: [...prev.session_times, { day: 'Saturday', time: '14:00' }] }));
