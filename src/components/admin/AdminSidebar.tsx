@@ -73,6 +73,7 @@ const menuSections: MenuSection[] = [
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
+      { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
     ],
     defaultOpen: false,
   },

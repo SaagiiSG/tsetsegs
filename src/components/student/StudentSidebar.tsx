@@ -15,6 +15,7 @@ const navItems = [
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
 ];
 

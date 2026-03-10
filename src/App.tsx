@@ -157,6 +157,7 @@ const App = () => (
                     <Route path="vocabulary" element={<StudentVocabulary />} />
                     <Route path="smart" element={<StudentSmartPractice />} />
                     <Route path="reading" element={<StudentReadingModule />} />
+                    <Route path="booking" element={<StudentBooking />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
