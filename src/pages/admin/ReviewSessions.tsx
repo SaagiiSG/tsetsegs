@@ -242,8 +242,9 @@ function TemplatesTab() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><Armchair className="h-3.5 w-3.5" />{t.total_seats} seats</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t.duration_minutes || 120}min</span>
                     {t.room && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{t.room}</span>}
-                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />
+                    <span className="text-xs">
                       {(t.session_times as any[]).map((s: any) => `${s.day} ${s.time}`).join(', ')}
                     </span>
                   </div>
