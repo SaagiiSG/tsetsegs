@@ -47,6 +47,7 @@ import NewYearCard from "./pages/NewYearCard";
 import StudentBadges from "./pages/student/StudentBadges";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSmartPractice from "./pages/student/StudentSmartPractice";
+import StudentBooking from "./pages/student/StudentBooking";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
 
 // Registration Pages
