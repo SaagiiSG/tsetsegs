@@ -226,7 +226,7 @@ export default function StudentBooking() {
                       <div>
                         <div className="font-semibold">{session.title}</div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(session.session_date), 'HH:mm')}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(session.session_date), 'HH:mm')}{session.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
                           {session.room && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{session.room}</span>}
                           <span className="flex items-center gap-1"><Armchair className="h-3 w-3" />{available} left</span>
                         </div>
