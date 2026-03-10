@@ -21,7 +21,7 @@ function TemplatesTab() {
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [formData, setFormData] = useState({
-    name: '', subject: 'SAT', total_seats: 20, room: '',
+    name: '', subject: 'SAT', total_seats: 20, room: '', duration_minutes: 120,
     session_times: [{ day: 'Saturday', time: '14:00' }],
   });
   const [generateRange, setGenerateRange] = useState({ templateId: '', startDate: '', endDate: '' });
