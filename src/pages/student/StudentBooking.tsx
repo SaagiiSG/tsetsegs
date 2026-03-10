@@ -257,7 +257,7 @@ export default function StudentBooking() {
           <DialogHeader>
             <DialogTitle>{selectedSession?.title}</DialogTitle>
             <DialogDescription>
-              {selectedSession && format(new Date(selectedSession.session_date), 'EEEE, MMMM d • HH:mm')}
+              {selectedSession && format(new Date(selectedSession.session_date), 'EEEE, MMMM d • HH:mm')}{selectedSession?.session_end_date ? ` – ${format(new Date(selectedSession.session_end_date), 'HH:mm')}` : ''}
               {selectedSession?.room && ` • ${selectedSession.room}`}
             </DialogDescription>
           </DialogHeader>
