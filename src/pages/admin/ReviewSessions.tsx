@@ -320,19 +320,49 @@ function SessionsTab() {
     },
   });
 
-  const generateCodeMutation = useMutation({
-    mutationFn: async (sessionId: string) => {
-      const code = Array.from(crypto.getRandomValues(new Uint8Array(3)))
-        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-      const { error } = await supabase.from('review_sessions')
-        .update({ check_in_code: code })
-        .eq('id', sessionId);
+  const [verifyCode, setVerifyCode] = useState('');
+  
+  const verifyStudentMutation = useMutation({
+    mutationFn: async (code: string) => {
+      // Look up booking by check-in code
+      const { data, error } = await supabase
+        .from('seat_bookings')
+        .select('*, student_account:student_accounts(id, phone_number, linked_student_id)')
+        .eq('check_in_code', code.toUpperCase())
+        .is('cancelled_at', null)
+        .is('checked_in_at', null)
+        .limit(1);
       if (error) throw error;
-      return code;
+      if (!data || data.length === 0) throw new Error('Invalid code or already checked in');
+      
+      const booking = data[0];
+      // Check if this booking is for an upcoming session
+      const sessionId = booking.review_session_id;
+      const matchingSession = sessions?.find(s => s.id === sessionId);
+      if (!matchingSession) throw new Error('Session not found for this code');
+
+      // Mark as checked in
+      const { error: updateError } = await supabase
+        .from('seat_bookings')
+        .update({ checked_in_at: new Date().toISOString(), attended: true })
+        .eq('id', booking.id);
+      if (updateError) throw updateError;
+
+      // Get student name
+      const linkedId = (booking.student_account as any)?.linked_student_id;
+      let studentName = (booking.student_account as any)?.phone_number || 'Unknown';
+      if (linkedId) {
+        const { data: studentData } = await supabase.from('students').select('first_name, last_name').eq('id', linkedId).single();
+        if (studentData) studentName = `${studentData.first_name} ${studentData.last_name || ''}`.trim();
+      }
+
+      return { studentName, seatNumber: booking.seat_number, sessionTitle: matchingSession.title };
     },
-    onSuccess: (code) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['review-sessions'] });
-      toast.success(`Check-in code generated: ${code}`);
+      queryClient.invalidateQueries({ queryKey: ['session-bookings'] });
+      toast.success(`✅ ${result.studentName} checked in — Seat #${result.seatNumber} (${result.sessionTitle})`);
+      setVerifyCode('');
     },
     onError: (e: any) => toast.error(e.message),
   });

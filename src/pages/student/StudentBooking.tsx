@@ -102,10 +102,13 @@ export default function StudentBooking() {
   const bookMutation = useMutation({
     mutationFn: async () => {
       if (!confirmSessionData || !student) throw new Error('Missing data');
+      const checkInCode = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
       const { error } = await supabase.from('seat_bookings').insert({
         review_session_id: confirmSessionData.session.id,
         student_account_id: student.id,
         seat_number: confirmSessionData.seat,
+        check_in_code: checkInCode,
       });
       if (error) {
         if (error.message.includes('idx_unique_seat_per_session')) throw new Error('This seat was just taken! Pick another.');
