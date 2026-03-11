@@ -89,7 +89,7 @@ export function RankAdvancementCelebration({
   useEffect(() => {
     if (!isOpen) return;
 
-    const timers: NodeJS.Timeout[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     if (phase === 'darkening') {
       timers.push(setTimeout(() => setPhase('rank-reveal'), 600));
