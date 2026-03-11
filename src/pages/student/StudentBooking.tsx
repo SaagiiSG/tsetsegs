@@ -22,7 +22,21 @@ export default function StudentBooking() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [confirmSessionData, setConfirmSessionData] = useState<{ session: any; seat: number } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showSessionDropdown, setShowSessionDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const now = new Date();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowSessionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Check if student is banned
   const { data: activeBan } = useQuery({
