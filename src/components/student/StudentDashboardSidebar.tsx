@@ -4,7 +4,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText
+  ChevronDown, ChevronRight, FileText, Armchair
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
