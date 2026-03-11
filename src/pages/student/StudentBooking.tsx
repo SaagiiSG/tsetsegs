@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -22,7 +22,21 @@ export default function StudentBooking() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [confirmSessionData, setConfirmSessionData] = useState<{ session: any; seat: number } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showSessionDropdown, setShowSessionDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const now = new Date();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowSessionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Check if student is banned
   const { data: activeBan } = useQuery({
@@ -215,88 +229,162 @@ export default function StudentBooking() {
         </div>
       )}
 
-      {/* Upcoming Sessions - Horizontal Scroll */}
+      {/* Upcoming Sessions - Full Width Primary + Dropdown */}
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-3">Upcoming Sessions</h2>
         {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
         {sessions?.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No upcoming review sessions</p>}
-        <div className="overflow-x-auto pb-4 -mx-4 px-4 md:-mx-6 md:px-6">
-          <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-            {sessions?.map(session => {
-              const takenSeats = getSessionBookings(session.id);
-              const myBooking = getMyBookingForSession(session.id);
-              const isClosed = isBefore(new Date(session.booking_closes_at), now);
-              const available = session.total_seats - takenSeats.length;
+        
+        {sessions && sessions.length > 0 && (() => {
+          const activeSession = selectedSessionId 
+            ? sessions.find(s => s.id === selectedSessionId) || sessions[0]
+            : sessions[0];
+          const otherSessions = sessions.filter(s => s.id !== activeSession.id).slice(0, 10);
+          const takenSeats = getSessionBookings(activeSession.id);
+          const myBooking = getMyBookingForSession(activeSession.id);
+          const isClosed = isBefore(new Date(activeSession.booking_closes_at), now);
+          const available = activeSession.total_seats - takenSeats.length;
 
-              return (
-                <Card key={session.id} className={cn(
-                  "flex-shrink-0 w-[340px] sm:w-[380px] transition-all",
-                  myBooking && "border-primary/20 bg-primary/5"
-                )}>
-                  <CardContent className="p-4 flex flex-col h-full">
-                    {/* Session Header */}
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="text-center min-w-[48px] bg-primary/5 rounded-xl p-2">
-                        <div className="text-xl font-bold text-primary">{format(new Date(session.session_date), 'd')}</div>
-                        <div className="text-[10px] font-medium text-primary/70 uppercase">{format(new Date(session.session_date), 'MMM')}</div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm truncate">{session.title}</div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <span>{format(new Date(session.session_date), 'HH:mm')}{session.session_end_date ? `–${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
-                          {session.room && (
-                            <>
-                              <MapPin className="h-3 w-3 flex-shrink-0" />
-                              <span>{session.room}</span>
-                            </>
-                          )}
+          return (
+            <div className="space-y-3">
+              {/* Session Selector Dropdown */}
+              {otherSessions.length > 0 && (
+                <div className="relative" ref={dropdownRef}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setShowSessionDropdown(!showSessionDropdown)}
+                  >
+                    <span className="truncate">{activeSession.title} — {format(new Date(activeSession.session_date), 'MMM d, HH:mm')}</span>
+                    <ChevronDown className={cn("h-4 w-4 ml-2 transition-transform", showSessionDropdown && "rotate-180")} />
+                  </Button>
+                  {showSessionDropdown && (
+                    <div className="absolute z-50 w-full mt-1 rounded-lg border bg-popover shadow-lg overflow-hidden">
+                      {/* Current session */}
+                      <button
+                        className="w-full px-4 py-3 text-left hover:bg-accent/50 flex items-center gap-3 bg-primary/5 border-l-2 border-primary"
+                        onClick={() => setShowSessionDropdown(false)}
+                      >
+                        <div className="text-center min-w-[36px]">
+                          <div className="text-sm font-bold text-primary">{format(new Date(activeSession.session_date), 'd')}</div>
+                          <div className="text-[9px] font-medium text-primary/70 uppercase">{format(new Date(activeSession.session_date), 'MMM')}</div>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            <Armchair className="h-2.5 w-2.5 mr-0.5" />{available}/{session.total_seats}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{activeSession.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(activeSession.session_date), 'HH:mm')}{activeSession.session_end_date ? `–${format(new Date(activeSession.session_end_date), 'HH:mm')}` : ''}
+                            {activeSession.room ? ` • ${activeSession.room}` : ''}
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">Current</Badge>
+                      </button>
+                      {/* Other sessions */}
+                      {otherSessions.map(s => {
+                        const sTaken = getSessionBookings(s.id);
+                        const sMyBooking = getMyBookingForSession(s.id);
+                        const sAvailable = s.total_seats - sTaken.length;
+                        return (
+                          <button
+                            key={s.id}
+                            className="w-full px-4 py-3 text-left hover:bg-accent/50 flex items-center gap-3 border-t border-border/50"
+                            onClick={() => {
+                              setSelectedSessionId(s.id);
+                              setShowSessionDropdown(false);
+                              setSelectedSeat(null);
+                              setExpandedSession(null);
+                            }}
+                          >
+                            <div className="text-center min-w-[36px]">
+                              <div className="text-sm font-bold text-primary">{format(new Date(s.session_date), 'd')}</div>
+                              <div className="text-[9px] font-medium text-primary/70 uppercase">{format(new Date(s.session_date), 'MMM')}</div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{s.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {format(new Date(s.session_date), 'HH:mm')}{s.session_end_date ? `–${format(new Date(s.session_end_date), 'HH:mm')}` : ''}
+                                {s.room ? ` • ${s.room}` : ''}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                <Armchair className="h-2.5 w-2.5 mr-0.5" />{sAvailable}/{s.total_seats}
+                              </Badge>
+                              {sMyBooking && (
+                                <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">
+                                  <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />#{sMyBooking.seat_number}
+                                </Badge>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Full-width Session Card */}
+              <Card className={cn(
+                "w-full transition-all",
+                myBooking && "border-primary/20 bg-primary/5"
+              )}>
+                <CardContent className="p-5 md:p-6">
+                  {/* Session Header */}
+                  <div className="flex items-start gap-4 mb-5">
+                    <div className="text-center min-w-[56px] bg-primary/5 rounded-xl p-3">
+                      <div className="text-2xl font-bold text-primary">{format(new Date(activeSession.session_date), 'd')}</div>
+                      <div className="text-xs font-medium text-primary/70 uppercase">{format(new Date(activeSession.session_date), 'MMM')}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-lg">{activeSession.title}</div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{format(new Date(activeSession.session_date), 'HH:mm')}{activeSession.session_end_date ? `–${format(new Date(activeSession.session_end_date), 'HH:mm')}` : ''}</span>
+                        {activeSession.room && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{activeSession.room}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                          <Armchair className="h-3 w-3 mr-1" />{available}/{activeSession.total_seats}
+                        </Badge>
+                        {activeSession.subject && <Badge variant="outline" className="text-xs px-2 py-0.5">{activeSession.subject}</Badge>}
+                        {myBooking && (
+                          <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-2 py-0.5">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />Seat #{myBooking.seat_number}
                           </Badge>
-                          {session.subject && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{session.subject}</Badge>}
-                          {myBooking && (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">
-                              <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />Seat #{myBooking.seat_number}
-                            </Badge>
-                          )}
-                          {isClosed && !myBooking && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300 text-[10px] px-1.5 py-0">Closed</Badge>
-                          )}
-                        </div>
+                        )}
+                        {isClosed && !myBooking && (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs px-2 py-0.5">Closed</Badge>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Seat Grid - Always visible */}
-                    <div className="flex-1 overflow-y-auto max-h-[280px] rounded-lg border bg-muted/10 p-3">
-                      <SeatGrid
-                        totalSeats={session.total_seats}
-                        takenSeats={takenSeats}
-                        selectedSeat={expandedSession === session.id ? selectedSeat : null}
-                        onSelectSeat={(seat) => {
-                          if (myBooking || isClosed || available === 0) return;
-                          setExpandedSession(session.id);
-                          setSelectedSeat(seat);
-                        }}
-                        disabled={!!myBooking || isClosed || available === 0}
-                        myBookedSeat={myBooking?.seat_number}
-                      />
-                    </div>
+                  {/* Full Seat Grid */}
+                  <div className="rounded-lg border bg-muted/10 p-4">
+                    <SeatGrid
+                      totalSeats={activeSession.total_seats}
+                      takenSeats={takenSeats}
+                      selectedSeat={selectedSeat}
+                      onSelectSeat={(seat) => {
+                        if (myBooking || isClosed || available === 0) return;
+                        setExpandedSession(activeSession.id);
+                        setSelectedSeat(seat);
+                      }}
+                      disabled={!!myBooking || isClosed || available === 0}
+                      myBookedSeat={myBooking?.seat_number}
+                    />
+                  </div>
 
-                    {/* Book button */}
-                    {expandedSession === session.id && selectedSeat && !myBooking && !isClosed && available > 0 && (
-                      <Button className="mt-3 w-full" onClick={() => handleBookSeat(session, selectedSeat)}>
-                        <Armchair className="h-4 w-4 mr-2" />Book Seat #{selectedSeat}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
+                  {/* Book button */}
+                  {selectedSeat && !myBooking && !isClosed && available > 0 && expandedSession === activeSession.id && (
+                    <Button className="mt-4 w-full" size="lg" onClick={() => handleBookSeat(activeSession, selectedSeat)}>
+                      <Armchair className="h-4 w-4 mr-2" />Book Seat #{selectedSeat}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Typed Confirmation Dialog */}
