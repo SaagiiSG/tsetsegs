@@ -1,6 +1,7 @@
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
