@@ -20,16 +20,12 @@ export function CheckInWidget({ variant }: CheckInWidgetProps) {
   const [code, setCode] = useState('');
   const [dismissed, setDismissed] = useState(false);
 
-  // Find today's booked sessions that haven't been checked in
+  // Find upcoming booked sessions that haven't been checked in
   const { data: todayBooking } = useQuery({
     queryKey: ['today-checkin-booking', student?.id],
     enabled: !!student?.id,
-    refetchInterval: 60000, // refresh every minute
+    refetchInterval: 60000,
     queryFn: async () => {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
-
       const { data, error } = await supabase
         .from('seat_bookings')
         .select('*, review_session:review_sessions(*)')
@@ -38,13 +34,22 @@ export function CheckInWidget({ variant }: CheckInWidgetProps) {
         .is('checked_in_at', null);
       if (error) throw error;
 
-      // Filter to today's sessions only
-      const todayBookings = data?.filter(b => {
-        const sessionDate = new Date((b.review_session as any)?.session_date);
-        return isToday(sessionDate);
+      // Filter to sessions that are today or in the future (not past)
+      const now = new Date();
+      const upcomingBookings = data?.filter(b => {
+        const session = b.review_session as any;
+        if (!session) return false;
+        const sessionEnd = session.session_end_date 
+          ? new Date(session.session_end_date) 
+          : new Date(new Date(session.session_date).getTime() + 2 * 60 * 60 * 1000);
+        return isAfter(sessionEnd, now);
       });
 
-      return todayBookings?.[0] || null;
+      // Return the closest one
+      return upcomingBookings?.sort((a, b) => 
+        new Date((a.review_session as any).session_date).getTime() - 
+        new Date((b.review_session as any).session_date).getTime()
+      )[0] || null;
     },
   });
 
