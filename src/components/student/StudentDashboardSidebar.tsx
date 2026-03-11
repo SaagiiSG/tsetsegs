@@ -230,6 +230,14 @@ export function StudentDashboardSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* Check-in Widget */}
+        {open && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <CheckInWidget variant="sidebar" />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t p-2">
