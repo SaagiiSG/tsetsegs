@@ -47,7 +47,7 @@ const isZoomed = () => {
 
 export function useDevToolsDetection({ onDetected, enabled = true }: UseDevToolsDetectionProps) {
   const hasDetectedRef = useRef(false);
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const checkIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consecutiveDetectionsRef = useRef(0);
 
   // Disable in development/preview environments to avoid false positives
