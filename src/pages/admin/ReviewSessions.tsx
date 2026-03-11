@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { format, addDays, parseISO, isBefore, isAfter, startOfDay } from 'date-fns';
-import { Plus, Calendar, Users, Clock, MapPin, Trash2, Copy, Play, CheckCircle2, XCircle, AlertTriangle, Armchair } from 'lucide-react';
+import { Plus, Calendar, Users, Clock, MapPin, Trash2, Copy, Play, CheckCircle2, XCircle, AlertTriangle, Armchair, KeyRound } from 'lucide-react';
 
 // ============ TEMPLATES TAB ============
 
