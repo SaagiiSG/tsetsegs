@@ -595,7 +595,12 @@ function AttendanceTab() {
                         <div className="text-xs text-muted-foreground">Seat #{b.seat_number}</div>
                       </div>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
+                      {(b as any).checked_in_at && (
+                        <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">
+                          <KeyRound className="h-3 w-3 mr-1" />Checked In
+                        </Badge>
+                      )}
                       {b.attended === true && <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200"><CheckCircle2 className="h-3 w-3 mr-1" />Attended</Badge>}
                       {b.attended === false && <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />No-Show</Badge>}
                     </div>
