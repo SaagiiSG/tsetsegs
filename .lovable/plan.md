@@ -1,88 +1,102 @@
 
-# Clean Up Defective Questions + Add Image-Based Answer Choices
 
-## Part 1: Database Cleanup
+# Plan: Enhanced Session Booking with Verification Code System
 
-### Remove Defective Questions
-There are **4 defective CollegeBoard questions** that have placeholder/broken answer choices:
+## Overview
 
-| Question ID | Issue |
-|---|---|
-| CB0351 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. (no actual content) |
-| CB0370 | Choices C and D are `[UNCLEAR]` |
-| CB0389 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. |
-| CB0431 | Choices A and B are `[UNCLEAR]` |
-
-Additionally, **CB0002** was flagged by a student as defective.
-
-**Action:** Set `is_active = false` on all 5 questions to remove them from student practice while preserving attempt history.
+Four main changes: (1) bigger session cards with inline seat grids, (2) typed confirmation sentence before booking, (3) 6-digit hex check-in code system for attendance verification, and (4) booking close enforcement (already exists at 1 hour).
 
 ---
 
-## Part 2: Add Image Support for Answer Choices
+## 1. Bigger Session Cards with Inline Seat Grids (Scrollable)
 
-Some questions have graphs, tables, or figures as answer options (not just the question itself). The current system only supports text-based answer choices. We need to support image URLs per choice.
+**File:** `src/pages/student/StudentBooking.tsx`
 
-### Database Schema Change
-Add a new column to the `questions` table:
+- Replace the compact session cards with larger cards that show the seat grid directly inline (no dialog needed to see seats).
+- Each session card becomes a full-width expandable/accordion-style card showing: title, date/time, room, available count, and the `SeatGrid` component embedded below.
+- Wrap the sessions list in a `ScrollArea` for vertical scrolling.
+- Clicking a seat in the inline grid selects it and shows the "Book Seat #X" button directly on the card.
+- Remove or simplify the separate seat selection dialog since seats are now visible on the card itself.
 
-```text
-choice_images JSONB (nullable, default null)
-```
+## 2. Typed Confirmation Sentence
 
-Structure: `{"A": "https://...image_url", "B": "https://...image_url", "C": null, "D": null}`
+**File:** `src/pages/student/StudentBooking.tsx`
 
-This keeps it flexible -- any combination of text + image per choice is supported. If a choice has an image, it renders the image; if it also has text, both show.
+- In the confirmation dialog, replace the simple warning with a text input where the student must type exactly:
+  > "I understand that I am booking #X on DD MMM and not showing to the session will result in 2 week ban from booking review session"
+- The "Confirm Booking" button stays disabled until the typed text matches exactly.
+- `X` = seat number, `DD MMM` = formatted date (e.g., "15 Mar").
 
-### Admin Form Updates (CBQuestionForm.tsx + QuestionForm.tsx)
+## 3. Check-in Code System (Attendance Verification)
 
-For each answer option (A, B, C, D), add an optional image upload button next to the text editor:
+### Database Migration
 
-- Each choice gets an "Upload Image" icon button beside the text input
-- When an image is uploaded, it shows a thumbnail preview with a remove button
-- Images are uploaded to the existing `question-images` storage bucket under `choices/` subfolder
-- On save, the `choice_images` JSON object is constructed from any uploaded images
+- Add `check_in_code` column (text, nullable) to `review_sessions` table.
+- Add `checked_in_at` column (timestamptz, nullable) to `seat_bookings` table.
 
-**Changes to forms:**
-1. Add state for 4 choice image files + 4 choice image previews
-2. Add image upload UI inline with each A/B/C/D option
-3. On form load (edit mode), populate previews from existing `choice_images`
-4. On save, upload any new choice images, then save the `choice_images` JSON
+### Admin Side
 
-### Student Question Rendering (StudentQuestion.tsx)
+**File:** `src/pages/admin/ReviewSessions.tsx`
 
-Update the multiple choice rendering (lines 854-876) to:
+- In the Sessions tab, for sessions happening today or are upcoming within the next few hours, show a "Generate Check-in Code" button.
+- Generate a random 6-character hex code (e.g., `A3F7B2`), save it to `review_sessions.check_in_code`.
+- Display the code prominently so admin can share it with students in the room.
 
-1. Check if `choice_images` exists for the current question
-2. If a choice has an image URL in `choice_images`, render an `<img>` tag inside the choice button
-3. The image appears above the text (if text exists), or alone if text is just a placeholder
-4. Images get the same styling as the question image (rounded, bordered, contained)
+### Student Side - Check-in Widget
 
-### Live Preview in Admin Form
+**New component:** `src/components/student/CheckInWidget.tsx`
 
-The right-side preview panel in both forms also needs to render choice images so admins can see what students will see.
+- Query for sessions the student has booked today that haven't been checked in yet.
+- If such a session exists, show a widget:
+  - **Desktop (sidebar):** A small card at the bottom of `StudentDashboardSidebar` with a hex code input field.
+  - **Mobile (top banner):** An announcement-style banner at the top of the screen in `StudentLayout`.
+- Student enters the 6-digit hex code. If it matches the session's `check_in_code`, update `seat_bookings.checked_in_at = now()`.
+- Success: show a checkmark and "Checked in!" state.
+
+**Files modified:**
+- `src/components/student/StudentDashboardSidebar.tsx` - Add widget at bottom of sidebar.
+- `src/components/student/StudentLayout.tsx` - Add mobile banner at top.
+
+### Attendance Tab Update
+
+**File:** `src/pages/admin/ReviewSessions.tsx`
+
+- In the attendance tab, show check-in status alongside the manual checkbox. Students who checked in with the code are auto-marked as attended.
+
+## 4. Booking Close (Already Implemented)
+
+The `booking_closes_at` is already set to 1 hour before session start. The UI already checks `isBefore(new Date(session.booking_closes_at), now)` and shows "Closed". No changes needed.
 
 ---
 
 ## Technical Details
 
 ### Migration SQL
-```text
-ALTER TABLE questions ADD COLUMN choice_images JSONB DEFAULT NULL;
-COMMENT ON COLUMN questions.choice_images IS 
-  'Optional image URLs for answer choices. Format: {"A": "url", "B": "url", "C": "url", "D": "url"}';
+```sql
+ALTER TABLE public.review_sessions ADD COLUMN check_in_code text;
+ALTER TABLE public.seat_bookings ADD COLUMN checked_in_at timestamptz;
 ```
 
-### Files to Modify
-1. **Database migration** -- add `choice_images` column
-2. **src/components/admin/questions/CBQuestionForm.tsx** -- add per-choice image upload UI + save logic
-3. **src/components/admin/questions/QuestionForm.tsx** -- same per-choice image upload UI
-4. **src/pages/StudentQuestion.tsx** -- render choice images in the answer buttons
-5. **src/pages/student/StudentEnglishQuestion.tsx** -- render choice images there too (if applicable)
+### Check-in Code Generation
+```typescript
+const code = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+  .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+// e.g., "A3F7B2"
+```
 
-### Execution Order
-1. Deactivate the 5 defective questions (data update)
-2. Run the schema migration to add `choice_images`
-3. Update CBQuestionForm with per-choice image uploads
-4. Update QuestionForm with per-choice image uploads
-5. Update StudentQuestion to render choice images
+### Confirmation Text Match
+```typescript
+const expectedText = `I understand that I am booking #${selectedSeat} on ${format(new Date(selectedSession.session_date), 'd MMM')} and not showing to the session will result in 2 week ban from booking review session`;
+const isMatch = confirmText === expectedText;
+```
+
+### Files Changed Summary
+| File | Change |
+|------|--------|
+| `src/pages/student/StudentBooking.tsx` | Bigger cards with inline seat grids, typed confirmation |
+| `src/components/student/CheckInWidget.tsx` | New - check-in code input widget |
+| `src/components/student/StudentDashboardSidebar.tsx` | Add check-in widget at sidebar bottom |
+| `src/components/student/StudentLayout.tsx` | Add mobile check-in banner |
+| `src/pages/admin/ReviewSessions.tsx` | Add code generation, show check-in status in attendance |
+| Migration SQL | Add `check_in_code` and `checked_in_at` columns |
+
