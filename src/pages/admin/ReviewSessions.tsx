@@ -320,19 +320,49 @@ function SessionsTab() {
     },
   });
 
-  const generateCodeMutation = useMutation({
-    mutationFn: async (sessionId: string) => {
-      const code = Array.from(crypto.getRandomValues(new Uint8Array(3)))
-        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-      const { error } = await supabase.from('review_sessions')
-        .update({ check_in_code: code })
-        .eq('id', sessionId);
+  const [verifyCode, setVerifyCode] = useState('');
+  
+  const verifyStudentMutation = useMutation({
+    mutationFn: async (code: string) => {
+      // Look up booking by check-in code
+      const { data, error } = await supabase
+        .from('seat_bookings')
+        .select('*, student_account:student_accounts(id, phone_number, linked_student_id)')
+        .eq('check_in_code', code.toUpperCase())
+        .is('cancelled_at', null)
+        .is('checked_in_at', null)
+        .limit(1);
       if (error) throw error;
-      return code;
+      if (!data || data.length === 0) throw new Error('Invalid code or already checked in');
+      
+      const booking = data[0];
+      // Check if this booking is for an upcoming session
+      const sessionId = booking.review_session_id;
+      const matchingSession = sessions?.find(s => s.id === sessionId);
+      if (!matchingSession) throw new Error('Session not found for this code');
+
+      // Mark as checked in
+      const { error: updateError } = await supabase
+        .from('seat_bookings')
+        .update({ checked_in_at: new Date().toISOString(), attended: true })
+        .eq('id', booking.id);
+      if (updateError) throw updateError;
+
+      // Get student name
+      const linkedId = (booking.student_account as any)?.linked_student_id;
+      let studentName = (booking.student_account as any)?.phone_number || 'Unknown';
+      if (linkedId) {
+        const { data: studentData } = await supabase.from('students').select('first_name, last_name').eq('id', linkedId).single();
+        if (studentData) studentName = `${studentData.first_name} ${studentData.last_name || ''}`.trim();
+      }
+
+      return { studentName, seatNumber: booking.seat_number, sessionTitle: matchingSession.title };
     },
-    onSuccess: (code) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['review-sessions'] });
-      toast.success(`Check-in code generated: ${code}`);
+      queryClient.invalidateQueries({ queryKey: ['session-bookings'] });
+      toast.success(`✅ ${result.studentName} checked in — Seat #${result.seatNumber} (${result.sessionTitle})`);
+      setVerifyCode('');
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -383,7 +413,34 @@ function SessionsTab() {
         </Card>
       )}
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+      {/* Verify Student Code */}
+      <Card className="border-primary/20">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-3">
+            <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
+            <div className="flex-1">
+              <Label className="text-sm font-medium">Verify Student Check-in Code</Label>
+              <p className="text-xs text-muted-foreground">Enter the 6-digit code shown by the student to confirm their attendance</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value.toUpperCase())}
+                placeholder="e.g. A3F7B2"
+                className="h-9 w-32 font-mono uppercase tracking-widest text-center"
+                maxLength={6}
+              />
+              <Button
+                size="sm"
+                onClick={() => verifyStudentMutation.mutate(verifyCode)}
+                disabled={verifyCode.length !== 6 || verifyStudentMutation.isPending}
+              >
+                {verifyStudentMutation.isPending ? 'Verifying...' : 'Verify'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {upcoming.length > 0 && (
         <div>
@@ -392,7 +449,6 @@ function SessionsTab() {
             {upcoming.map(s => {
               const booked = bookingCounts?.[s.id] || 0;
               const isClosed = isBefore(new Date(s.booking_closes_at), now);
-              const checkInCode = (s as any).check_in_code;
               return (
                 <Card key={s.id}>
                   <CardContent className="py-3 flex items-center justify-between">
@@ -411,21 +467,6 @@ function SessionsTab() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {checkInCode ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 font-mono text-sm tracking-widest">
-                          {checkInCode}
-                        </Badge>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => generateCodeMutation.mutate(s.id)}
-                          disabled={generateCodeMutation.isPending}
-                        >
-                          <KeyRound className="h-3.5 w-3.5 mr-1" />
-                          Generate Code
-                        </Button>
-                      )}
                       {isClosed && <Badge variant="outline" className="text-amber-600 border-amber-300">Booking Closed</Badge>}
                       <Badge variant="secondary">{s.subject}</Badge>
                       <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
