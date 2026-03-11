@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
+import { CheckInWidget } from './CheckInWidget';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
