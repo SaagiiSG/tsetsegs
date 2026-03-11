@@ -1341,6 +1341,7 @@ export type Database = {
       review_sessions: {
         Row: {
           booking_closes_at: string
+          check_in_code: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -1354,6 +1355,7 @@ export type Database = {
         }
         Insert: {
           booking_closes_at: string
+          check_in_code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1367,6 +1369,7 @@ export type Database = {
         }
         Update: {
           booking_closes_at?: string
+          check_in_code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1468,6 +1471,7 @@ export type Database = {
           attended: boolean | null
           booked_at: string
           cancelled_at: string | null
+          checked_in_at: string | null
           id: string
           review_session_id: string
           seat_number: number
@@ -1477,6 +1481,7 @@ export type Database = {
           attended?: boolean | null
           booked_at?: string
           cancelled_at?: string | null
+          checked_in_at?: string | null
           id?: string
           review_session_id: string
           seat_number: number
@@ -1486,6 +1491,7 @@ export type Database = {
           attended?: boolean | null
           booked_at?: string
           cancelled_at?: string | null
+          checked_in_at?: string | null
           id?: string
           review_session_id?: string
           seat_number?: number
