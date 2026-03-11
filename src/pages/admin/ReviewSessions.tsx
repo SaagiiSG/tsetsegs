@@ -503,9 +503,11 @@ function AttendanceTab() {
         students?.forEach(s => { studentNames[s.id] = `${s.first_name} ${s.last_name || ''}`; });
       }
 
-      // Initialize attendedMap from existing data
+      // Initialize attendedMap from existing data - auto-mark checked-in students
       const map: Record<string, boolean> = {};
-      data?.forEach(b => { map[b.id] = b.attended === true; });
+      data?.forEach(b => { 
+        map[b.id] = b.attended === true || !!(b as any).checked_in_at; 
+      });
       setAttendedMap(map);
 
       return data?.map(b => ({
