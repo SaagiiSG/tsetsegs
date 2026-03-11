@@ -1,6 +1,7 @@
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
@@ -68,6 +69,10 @@ function StudentLayoutContent() {
       <StudentDashboardSidebar />
       
       <main className="flex-1 pb-20 md:pb-0 overflow-auto">
+        {/* Mobile check-in banner */}
+        <div className="md:hidden sticky top-0 z-40">
+          <CheckInWidget variant="banner" />
+        </div>
         {/* Header with sidebar trigger and tier badge */}
         <div className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-2">

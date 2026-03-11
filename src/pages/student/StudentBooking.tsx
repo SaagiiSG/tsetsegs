@@ -2,21 +2,26 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { SeatGrid } from '@/components/student/SeatGrid';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { format, isBefore, isAfter, formatDistanceToNow } from 'date-fns';
-import { Calendar, Clock, MapPin, Armchair, Ban, AlertTriangle, CheckCircle2, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Armchair, Ban, AlertTriangle, CheckCircle2, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function StudentBooking() {
   const { student } = useStudentAuth();
   const queryClient = useQueryClient();
-  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [confirmSessionData, setConfirmSessionData] = useState<{ session: any; seat: number } | null>(null);
   const now = new Date();
 
   // Check if student is banned
@@ -82,11 +87,11 @@ export default function StudentBooking() {
 
   const bookMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedSession || !selectedSeat || !student) throw new Error('Missing data');
+      if (!confirmSessionData || !student) throw new Error('Missing data');
       const { error } = await supabase.from('seat_bookings').insert({
-        review_session_id: selectedSession.id,
+        review_session_id: confirmSessionData.session.id,
         student_account_id: student.id,
-        seat_number: selectedSeat,
+        seat_number: confirmSessionData.seat,
       });
       if (error) {
         if (error.message.includes('idx_unique_seat_per_session')) throw new Error('This seat was just taken! Pick another.');
@@ -97,9 +102,11 @@ export default function StudentBooking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-session-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
-      toast.success(`Seat #${selectedSeat} booked!`);
+      toast.success(`Seat #${confirmSessionData?.seat} booked!`);
       setShowConfirm(false);
-      setSelectedSession(null);
+      setConfirmSessionData(null);
+      setConfirmText('');
+      setExpandedSession(null);
       setSelectedSeat(null);
     },
     onError: (e: any) => toast.error(e.message),
@@ -127,10 +134,21 @@ export default function StudentBooking() {
     return myBookings?.find(b => (b.review_session as any)?.id === sessionId);
   };
 
+  const handleBookSeat = (session: any, seat: number) => {
+    setConfirmSessionData({ session, seat });
+    setConfirmText('');
+    setShowConfirm(true);
+  };
+
+  const getExpectedConfirmText = () => {
+    if (!confirmSessionData) return '';
+    return `I understand that I am booking #${confirmSessionData.seat} on ${format(new Date(confirmSessionData.session.session_date), 'd MMM')} and not showing to the session will result in 2 week ban from booking review session`;
+  };
+
   // Ban banner
   if (activeBan) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 md:p-6">
         <h1 className="text-2xl font-bold">Book a Seat</h1>
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="pt-6">
@@ -156,7 +174,7 @@ export default function StudentBooking() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <h1 className="text-2xl font-bold">Book a Seat</h1>
 
       {/* My Upcoming Bookings */}
@@ -197,110 +215,123 @@ export default function StudentBooking() {
         </div>
       )}
 
-      {/* Upcoming Sessions */}
+      {/* Upcoming Sessions with inline seat grids */}
       <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-2">Upcoming Sessions</h2>
+        <h2 className="text-sm font-medium text-muted-foreground mb-3">Upcoming Sessions</h2>
         {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
         {sessions?.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No upcoming review sessions</p>}
-        <div className="grid gap-3">
-          {sessions?.map(session => {
-            const takenSeats = getSessionBookings(session.id);
-            const myBooking = getMyBookingForSession(session.id);
-            const isClosed = isBefore(new Date(session.booking_closes_at), now);
-            const available = session.total_seats - takenSeats.length;
+        <ScrollArea className="max-h-[calc(100vh-280px)]">
+          <div className="grid gap-4">
+            {sessions?.map(session => {
+              const takenSeats = getSessionBookings(session.id);
+              const myBooking = getMyBookingForSession(session.id);
+              const isClosed = isBefore(new Date(session.booking_closes_at), now);
+              const available = session.total_seats - takenSeats.length;
+              const isExpanded = expandedSession === session.id;
 
-            return (
-              <Card key={session.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-                if (!myBooking) {
-                  setSelectedSession(session);
-                  setSelectedSeat(null);
-                }
-              }}>
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="text-center min-w-[50px]">
-                        <div className="text-2xl font-bold">{format(new Date(session.session_date), 'd')}</div>
-                        <div className="text-xs text-muted-foreground">{format(new Date(session.session_date), 'MMM')}</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold">{session.title}</div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(session.session_date), 'HH:mm')}{session.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}</span>
-                          {session.room && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{session.room}</span>}
-                          <span className="flex items-center gap-1"><Armchair className="h-3 w-3" />{available} left</span>
+              return (
+                <Card key={session.id} className={cn(
+                  "transition-all duration-300",
+                  isExpanded && "ring-1 ring-primary/20 shadow-lg",
+                  myBooking && "border-primary/20"
+                )}>
+                  <CardContent className="p-0">
+                    {/* Session Header */}
+                    <button
+                      className="w-full p-5 text-left flex items-center justify-between hover:bg-muted/30 transition-colors rounded-t-lg"
+                      onClick={() => {
+                        if (!myBooking) {
+                          setExpandedSession(isExpanded ? null : session.id);
+                          setSelectedSeat(null);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="text-center min-w-[56px] bg-primary/5 rounded-xl p-2">
+                          <div className="text-2xl font-bold text-primary">{format(new Date(session.session_date), 'd')}</div>
+                          <div className="text-xs font-medium text-primary/70">{format(new Date(session.session_date), 'MMM')}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-base">{session.title}</div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {format(new Date(session.session_date), 'HH:mm')}
+                              {session.session_end_date ? ` – ${format(new Date(session.session_end_date), 'HH:mm')}` : ''}
+                            </span>
+                            {session.room && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3.5 w-3.5" />{session.room}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              <Armchair className="h-3 w-3 mr-1" />{available}/{session.total_seats} seats
+                            </Badge>
+                            {session.subject && <Badge variant="outline" className="text-xs">{session.subject}</Badge>}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {myBooking ? (
-                        <Badge className="bg-primary/10 text-primary border-primary/20">Booked • Seat #{myBooking.seat_number}</Badge>
-                      ) : isClosed ? (
-                        <Badge variant="outline" className="text-amber-600 border-amber-300"><AlertTriangle className="h-3 w-3 mr-1" />Closed</Badge>
-                      ) : available === 0 ? (
-                        <Badge variant="destructive">Full</Badge>
-                      ) : (
-                        <Badge variant="secondary">Book Now</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                      <div className="flex items-center gap-2">
+                        {myBooking ? (
+                          <Badge className="bg-primary/10 text-primary border-primary/20 text-sm px-3 py-1">
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Booked • Seat #{myBooking.seat_number}
+                          </Badge>
+                        ) : isClosed ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            <AlertTriangle className="h-3 w-3 mr-1" />Closed
+                          </Badge>
+                        ) : available === 0 ? (
+                          <Badge variant="destructive">Full</Badge>
+                        ) : (
+                          <>
+                            <Badge className="bg-primary text-primary-foreground">Book Now</Badge>
+                            {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                          </>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Expanded Seat Grid */}
+                    {isExpanded && !myBooking && !isClosed && available > 0 && (
+                      <div className="border-t px-5 py-5 bg-muted/10">
+                        <p className="text-sm text-muted-foreground mb-4 text-center">Select your seat</p>
+                        <SeatGrid
+                          totalSeats={session.total_seats}
+                          takenSeats={takenSeats}
+                          selectedSeat={selectedSeat}
+                          onSelectSeat={setSelectedSeat}
+                        />
+                        {selectedSeat && (
+                          <div className="mt-5 flex justify-center">
+                            <Button size="lg" className="px-8" onClick={() => handleBookSeat(session, selectedSeat)}>
+                              <Armchair className="h-4 w-4 mr-2" />
+                              Book Seat #{selectedSeat}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Seat Selection Dialog */}
-      <Dialog open={!!selectedSession} onOpenChange={(open) => { if (!open) { setSelectedSession(null); setSelectedSeat(null); } }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{selectedSession?.title}</DialogTitle>
-            <DialogDescription>
-              {selectedSession && format(new Date(selectedSession.session_date), 'EEEE, MMMM d • HH:mm')}{selectedSession?.session_end_date ? ` – ${format(new Date(selectedSession.session_end_date), 'HH:mm')}` : ''}
-              {selectedSession?.room && ` • ${selectedSession.room}`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedSession && (
-            <>
-              {isBefore(new Date(selectedSession.booking_closes_at), now) ? (
-                <div className="py-6 text-center">
-                  <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Booking has closed for this session</p>
-                </div>
-              ) : (
-                <SeatGrid
-                  totalSeats={selectedSession.total_seats}
-                  takenSeats={getSessionBookings(selectedSession.id)}
-                  selectedSeat={selectedSeat}
-                  onSelectSeat={setSelectedSeat}
-                />
-              )}
-            </>
-          )}
-
-          {selectedSeat && !isBefore(new Date(selectedSession?.booking_closes_at), now) && (
-            <DialogFooter>
-              <Button className="w-full" onClick={() => setShowConfirm(true)}>
-                <Armchair className="h-4 w-4 mr-2" />
-                Book Seat #{selectedSeat}
-              </Button>
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="sm:max-w-sm">
+      {/* Typed Confirmation Dialog */}
+      <Dialog open={showConfirm} onOpenChange={(open) => { if (!open) { setShowConfirm(false); setConfirmText(''); } }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Booking</DialogTitle>
             <DialogDescription>
-              You're booking <span className="font-semibold">Seat #{selectedSeat}</span> for{' '}
-              <span className="font-semibold">{selectedSession?.title}</span>.
+              You're booking <span className="font-semibold">Seat #{confirmSessionData?.seat}</span> for{' '}
+              <span className="font-semibold">{confirmSessionData?.session?.title}</span>.
             </DialogDescription>
           </DialogHeader>
+          
           <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
             <div className="flex gap-2 text-sm">
               <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -309,9 +340,28 @@ export default function StudentBooking() {
               </p>
             </div>
           </div>
+
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              To confirm, type the following sentence exactly:
+            </p>
+            <div className="rounded-md bg-muted/50 border p-3 text-sm font-medium select-all">
+              {getExpectedConfirmText()}
+            </div>
+            <Textarea
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Type the sentence above..."
+              className="min-h-[80px] text-sm"
+            />
+          </div>
+
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setShowConfirm(false)}>Cancel</Button>
-            <Button onClick={() => bookMutation.mutate()} disabled={bookMutation.isPending}>
+            <Button variant="ghost" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>Cancel</Button>
+            <Button 
+              onClick={() => bookMutation.mutate()} 
+              disabled={bookMutation.isPending || confirmText !== getExpectedConfirmText()}
+            >
               {bookMutation.isPending ? 'Booking...' : 'Confirm Booking'}
             </Button>
           </DialogFooter>

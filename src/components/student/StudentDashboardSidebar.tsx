@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
+import { CheckInWidget } from './CheckInWidget';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
@@ -229,6 +230,14 @@ export function StudentDashboardSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* Check-in Widget */}
+        {open && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <CheckInWidget variant="sidebar" />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t p-2">
