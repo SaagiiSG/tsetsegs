@@ -24,6 +24,7 @@ interface StudentAccount {
   blocked_reason: string | null;
   linked_student_id: string | null;
   linked_student?: LinkedStudent | null;
+  linked_students?: LinkedStudent[];
   registered_device_id: string | null;
   device_registered_at: string | null;
   password_hash: string | null;
