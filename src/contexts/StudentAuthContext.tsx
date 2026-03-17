@@ -280,7 +280,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       if (updateError) throw updateError;
 
       // Now complete the login
-      return await completeLogin(pendingStudentAccount);
+      return await completeLogin(pendingStudentAccount, true);
 
     } catch (err: any) {
       console.error('Set password error:', err);
