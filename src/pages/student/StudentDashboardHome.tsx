@@ -584,7 +584,9 @@ export default function StudentDashboardHome() {
   // Mutation to update SAT test date
   const updateSatDate = useMutation({
     mutationFn: async (date: Date) => {
-      if (!student?.linked_student_id) {
+      const allStudentIds = student?.linked_students?.map(s => s.id) || 
+        (student?.linked_student_id ? [student.linked_student_id] : []);
+      if (allStudentIds.length === 0) {
         throw new Error('No linked student found');
       }
       
@@ -593,7 +595,7 @@ export default function StudentDashboardHome() {
       const { error } = await supabase
         .from('students')
         .update({ sat_test_month: dateStr })
-        .eq('id', student.linked_student_id);
+        .in('id', allStudentIds);
       
       if (error) throw error;
       return date;
