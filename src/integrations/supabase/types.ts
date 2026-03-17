@@ -538,6 +538,47 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          screenshot_url: string | null
+          status: string
+          student_account_id: string
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          student_account_id: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          student_account_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_reports_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cb_import_issues: {
         Row: {
           created_at: string
