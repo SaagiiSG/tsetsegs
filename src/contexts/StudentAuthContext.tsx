@@ -308,7 +308,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Password is correct, complete login
-      return await completeLogin(pendingStudentAccount);
+      return await completeLogin(pendingStudentAccount, true);
 
     } catch (err: any) {
       console.error('Login with password error:', err);
