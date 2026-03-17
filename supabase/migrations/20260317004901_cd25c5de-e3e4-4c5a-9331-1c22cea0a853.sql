@@ -1,0 +1,2 @@
+ALTER TABLE public.student_accounts ADD COLUMN device_fingerprint text DEFAULT NULL;
+COMMENT ON COLUMN public.student_accounts.device_fingerprint IS 'Browser fingerprint hash for device recognition fallback when localStorage is cleared';

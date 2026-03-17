@@ -1634,6 +1634,7 @@ export type Database = {
           blocked_at: string | null
           blocked_reason: string | null
           created_at: string
+          device_fingerprint: string | null
           device_registered_at: string | null
           id: string
           is_active: boolean
@@ -1653,6 +1654,7 @@ export type Database = {
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           device_registered_at?: string | null
           id?: string
           is_active?: boolean
@@ -1672,6 +1674,7 @@ export type Database = {
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           device_registered_at?: string | null
           id?: string
           is_active?: boolean
