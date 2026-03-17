@@ -184,12 +184,14 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean }> => {
     try {
-      // First check if phone exists in students table
-      const { data: studentRecord, error: studentError } = await supabase
+      // First check if phone exists in students table (may have multiple records for multi-course students)
+      const { data: studentRecords, error: studentError } = await supabase
         .from('students')
         .select('id, first_name, phone')
         .eq('phone', phoneNumber)
-        .maybeSingle();
+        .limit(1);
+
+      const studentRecord = studentRecords?.[0] || null;
 
       if (studentError && studentError.code !== 'PGRST116') {
         throw studentError;
