@@ -49,14 +49,129 @@ interface StudentAuthContextType {
 
 const StudentAuthContext = createContext<StudentAuthContextType | undefined>(undefined);
 
-// Generate or retrieve device ID
+// ---- IndexedDB helpers for redundant device ID storage ----
+const IDB_NAME = 'student_device_store';
+const IDB_STORE = 'device';
+const IDB_KEY = 'device_id';
+
+const openIDB = (): Promise<IDBDatabase | null> => {
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(IDB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+};
+
+const readIDB = async (): Promise<string | null> => {
+  const db = await openIDB();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.get(IDB_KEY);
+      req.onsuccess = () => resolve(req.result as string | null);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+};
+
+const writeIDB = async (value: string): Promise<void> => {
+  const db = await openIDB();
+  if (!db) return;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      store.put(value, IDB_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+};
+
+// ---- Browser fingerprint (lightweight, not for tracking) ----
+const generateFingerprint = (): string => {
+  const raw = [
+    navigator.userAgent,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    navigator.language,
+    navigator.hardwareConcurrency || '',
+  ].join('|');
+  // Simple hash (djb2)
+  let hash = 5381;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) + hash + raw.charCodeAt(i)) & 0xffffffff;
+  }
+  return 'fp_' + (hash >>> 0).toString(36);
+};
+
+// Generate or retrieve device ID (with IndexedDB fallback)
 const getDeviceId = (): string => {
   let deviceId = localStorage.getItem('student_device_id');
   if (!deviceId) {
     deviceId = uuidv4();
     localStorage.setItem('student_device_id', deviceId);
   }
+  // Async sync with IndexedDB (fire-and-forget)
+  (async () => {
+    const idbId = await readIDB();
+    const lsId = localStorage.getItem('student_device_id');
+    if (idbId && !lsId) {
+      localStorage.setItem('student_device_id', idbId);
+    } else if (lsId && !idbId) {
+      await writeIDB(lsId);
+    } else if (lsId && idbId && lsId !== idbId) {
+      // localStorage wins if both exist but differ (most recent)
+      await writeIDB(lsId);
+    }
+  })();
   return deviceId;
+};
+
+// Async version that checks IndexedDB first (for session restore)
+const getDeviceIdAsync = async (): Promise<string> => {
+  let lsId = localStorage.getItem('student_device_id');
+  const idbId = await readIDB();
+  
+  if (lsId && idbId && lsId !== idbId) {
+    // localStorage takes priority, sync to IDB
+    await writeIDB(lsId);
+    return lsId;
+  }
+  if (!lsId && idbId) {
+    // Restore from IndexedDB
+    localStorage.setItem('student_device_id', idbId);
+    return idbId;
+  }
+  if (lsId && !idbId) {
+    await writeIDB(lsId);
+    return lsId;
+  }
+  if (!lsId && !idbId) {
+    const newId = uuidv4();
+    localStorage.setItem('student_device_id', newId);
+    await writeIDB(newId);
+    return newId;
+  }
+  return lsId!;
 };
 
 // Device lock duration in days
