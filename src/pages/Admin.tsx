@@ -86,6 +86,7 @@ const Admin = () => {
               <Route path="sat-schedule" element={<SATSchedule />} />
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="review-sessions" element={<ReviewSessions />} />
+              <Route path="bug-reports" element={<BugReports />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </main>
