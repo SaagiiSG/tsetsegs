@@ -16,6 +16,7 @@ const navItems = [
   { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
+  { to: '/practice/bug-report', icon: Bug, label: 'Report Bug' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
 ];
 
