@@ -316,14 +316,14 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const completeLogin = async (studentAccount: StudentAccount): Promise<{ error: string | null }> => {
+  const completeLogin = async (studentAccount: StudentAccount, bypassDeviceLock = false): Promise<{ error: string | null }> => {
     try {
       const deviceId = getDeviceId();
 
-      // Check device registration lock (90-day lock) - skip for dev accounts
+      // Check device registration lock (90-day lock) - skip for dev accounts and password-authenticated logins
       const isDevAccount = (studentAccount as any).is_dev_account === true;
       
-      if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
+      if (!isDevAccount && !bypassDeviceLock && studentAccount.registered_device_id && studentAccount.device_registered_at) {
         const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
         
         if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
@@ -355,6 +355,15 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
             })
             .eq('id', studentAccount.id);
         }
+      } else if (bypassDeviceLock && studentAccount.registered_device_id !== deviceId) {
+        // Password-authenticated login from new device ID (e.g. cleared browser data) — re-register device
+        await supabase
+          .from('student_accounts')
+          .update({
+            registered_device_id: deviceId,
+            device_registered_at: new Date().toISOString()
+          })
+          .eq('id', studentAccount.id);
       } else if (!studentAccount.registered_device_id) {
         // First time device registration
         await supabase
