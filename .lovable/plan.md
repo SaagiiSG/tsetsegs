@@ -1,36 +1,88 @@
 
+# Clean Up Defective Questions + Add Image-Based Answer Choices
 
-## Analysis
+## Part 1: Database Cleanup
 
-The current device lock system already stores a UUID in `localStorage` (`student_device_id`). localStorage **does** persist across tab closes — it only gets cleared if the student manually clears browser data, uses incognito mode, or a browser cleanup tool runs.
+### Remove Defective Questions
+There are **4 defective CollegeBoard questions** that have placeholder/broken answer choices:
 
-The previous fix added `bypassDeviceLock` so password-authenticated logins re-register the device automatically. This means even if localStorage gets cleared, the student can still log in with their password and the device gets re-registered.
+| Question ID | Issue |
+|---|---|
+| CB0351 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. (no actual content) |
+| CB0370 | Choices C and D are `[UNCLEAR]` |
+| CB0389 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. |
+| CB0431 | Choices A and B are `[UNCLEAR]` |
 
-### What's actually happening when "closing a tab locks them out"
+Additionally, **CB0002** was flagged by a student as defective.
 
-Looking at `checkExistingSession()` (line 84-108): when a student reopens the site, it checks `student_session_id` and `student_id` from localStorage, then verifies the session in the `student_sessions` table. If the session expired or was deactivated (due to single-session enforcement), the student lands on the login screen. From there, they enter their phone → password → `bypassDeviceLock=true` re-registers the device. **This should already work.**
+**Action:** Set `is_active = false` on all 5 questions to remove them from student practice while preserving attempt history.
 
-### Proposed improvements to make it more robust
+---
 
-1. **Add a browser fingerprint fallback** — combine multiple browser signals (screen resolution, timezone, language, platform) into a secondary identifier stored alongside the UUID. If localStorage is cleared but the fingerprint matches, recognize the device without triggering a lock.
+## Part 2: Add Image Support for Answer Choices
 
-2. **Store device ID redundantly** — use both `localStorage` and `IndexedDB` so clearing one doesn't lose the ID. On `getDeviceId()`, check both and restore whichever is missing.
+Some questions have graphs, tables, or figures as answer options (not just the question itself). The current system only supports text-based answer choices. We need to support image URLs per choice.
 
-3. **Soften the lock on session restore failure** — when `checkExistingSession` fails but the device ID still matches the registered one, skip straight to the password step instead of showing "device locked" error.
+### Database Schema Change
+Add a new column to the `questions` table:
 
-### Files to modify
+```text
+choice_images JSONB (nullable, default null)
+```
 
-- **`src/contexts/StudentAuthContext.tsx`**:
-  - Update `getDeviceId()` to read/write from both `localStorage` and `IndexedDB`
-  - Add a lightweight browser fingerprint (hash of navigator properties) as a secondary match
-  - On `completeLogin`, store fingerprint in `student_accounts` alongside `registered_device_id`
-  - When device ID doesn't match but fingerprint does, treat it as same device and re-register the UUID
+Structure: `{"A": "https://...image_url", "B": "https://...image_url", "C": null, "D": null}`
 
-### Database change
+This keeps it flexible -- any combination of text + image per choice is supported. If a choice has an image, it renders the image; if it also has text, both show.
 
-- Migration to add `device_fingerprint` column (nullable text) to `student_accounts`
+### Admin Form Updates (CBQuestionForm.tsx + QuestionForm.tsx)
 
-### Technical detail
+For each answer option (A, B, C, D), add an optional image upload button next to the text editor:
 
-The fingerprint would be a simple hash of: `navigator.userAgent + screen.width + screen.height + Intl.DateTimeFormat().resolvedOptions().timeZone + navigator.language`. This isn't meant to be a tracking fingerprint — just enough to recognize "same browser on same computer" when localStorage gets wiped.
+- Each choice gets an "Upload Image" icon button beside the text input
+- When an image is uploaded, it shows a thumbnail preview with a remove button
+- Images are uploaded to the existing `question-images` storage bucket under `choices/` subfolder
+- On save, the `choice_images` JSON object is constructed from any uploaded images
 
+**Changes to forms:**
+1. Add state for 4 choice image files + 4 choice image previews
+2. Add image upload UI inline with each A/B/C/D option
+3. On form load (edit mode), populate previews from existing `choice_images`
+4. On save, upload any new choice images, then save the `choice_images` JSON
+
+### Student Question Rendering (StudentQuestion.tsx)
+
+Update the multiple choice rendering (lines 854-876) to:
+
+1. Check if `choice_images` exists for the current question
+2. If a choice has an image URL in `choice_images`, render an `<img>` tag inside the choice button
+3. The image appears above the text (if text exists), or alone if text is just a placeholder
+4. Images get the same styling as the question image (rounded, bordered, contained)
+
+### Live Preview in Admin Form
+
+The right-side preview panel in both forms also needs to render choice images so admins can see what students will see.
+
+---
+
+## Technical Details
+
+### Migration SQL
+```text
+ALTER TABLE questions ADD COLUMN choice_images JSONB DEFAULT NULL;
+COMMENT ON COLUMN questions.choice_images IS 
+  'Optional image URLs for answer choices. Format: {"A": "url", "B": "url", "C": "url", "D": "url"}';
+```
+
+### Files to Modify
+1. **Database migration** -- add `choice_images` column
+2. **src/components/admin/questions/CBQuestionForm.tsx** -- add per-choice image upload UI + save logic
+3. **src/components/admin/questions/QuestionForm.tsx** -- same per-choice image upload UI
+4. **src/pages/StudentQuestion.tsx** -- render choice images in the answer buttons
+5. **src/pages/student/StudentEnglishQuestion.tsx** -- render choice images there too (if applicable)
+
+### Execution Order
+1. Deactivate the 5 defective questions (data update)
+2. Run the schema migration to add `choice_images`
+3. Update CBQuestionForm with per-choice image uploads
+4. Update QuestionForm with per-choice image uploads
+5. Update StudentQuestion to render choice images
