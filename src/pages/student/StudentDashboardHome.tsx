@@ -158,13 +158,15 @@ export default function StudentDashboardHome() {
         ? Math.round((completedCBCount / totalCBCount) * 100) 
         : 0;
 
-      // Fetch practice tests for linked student
+      // Fetch practice tests for all linked students (handles multi-batch enrollment)
       let practiceTestAvg = 0;
-      if (student.linked_student_id) {
+      const allStudentIds = student.linked_students?.map(s => s.id) || 
+        (student.linked_student_id ? [student.linked_student_id] : []);
+      if (allStudentIds.length > 0) {
         const { data: practiceTests } = await supabase
           .from('practice_tests')
           .select('test_number, score')
-          .eq('student_id', student.linked_student_id)
+          .in('student_id', allStudentIds)
           .order('test_number');
 
         const tests1to8 = practiceTests?.filter(t => t.test_number >= 1 && t.test_number <= 8 && t.score) || [];
