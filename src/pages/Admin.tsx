@@ -21,6 +21,7 @@ import BluebookManager from '@/pages/admin/BluebookManager';
 import SprintMonitor from '@/pages/admin/SprintMonitor';
 import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
+import BugReports from '@/pages/admin/BugReports';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
@@ -85,6 +86,7 @@ const Admin = () => {
               <Route path="sat-schedule" element={<SATSchedule />} />
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="review-sessions" element={<ReviewSessions />} />
+              <Route path="bug-reports" element={<BugReports />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </main>

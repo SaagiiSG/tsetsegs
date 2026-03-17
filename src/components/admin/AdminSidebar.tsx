@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy, LineChart, Armchair } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,6 +74,7 @@ const menuSections: MenuSection[] = [
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
+      { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
     ],
     defaultOpen: false,
   },

@@ -48,6 +48,7 @@ import StudentBadges from "./pages/student/StudentBadges";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSmartPractice from "./pages/student/StudentSmartPractice";
 import StudentBooking from "./pages/student/StudentBooking";
+import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
 
 // Registration Pages
@@ -158,6 +159,7 @@ const App = () => (
                     <Route path="smart" element={<StudentSmartPractice />} />
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="booking" element={<StudentBooking />} />
+                    <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
