@@ -329,6 +329,9 @@ export default function StudentSpeedMode() {
         </p>
       </div>
 
+      {/* SAT Countdown Widget */}
+      <SATCountdown />
+
       {/* Top Row - Chart + Last Session */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Area Chart (70%) */}
