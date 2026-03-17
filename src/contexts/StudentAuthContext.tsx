@@ -24,6 +24,7 @@ interface StudentAccount {
   blocked_reason: string | null;
   linked_student_id: string | null;
   linked_student?: LinkedStudent | null;
+  linked_students?: LinkedStudent[];
   registered_device_id: string | null;
   device_registered_at: string | null;
   password_hash: string | null;
@@ -130,6 +131,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
       // Fetch linked student profile if exists
       let linkedStudent: LinkedStudent | null = null;
+      let linkedStudents: LinkedStudent[] = [];
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
@@ -138,10 +140,17 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         linkedStudent = linkedData;
       }
+      // Fetch ALL student records matching this phone (for multi-batch students)
+      const { data: allLinked } = await supabase
+        .from('students')
+        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
+        .or(`phone.eq.${studentAccount.phone_number},phone.eq.${studentAccount.phone_number.replace(/-/g, '')}`);
+      linkedStudents = allLinked || [];
 
       setStudent({
         ...studentAccount,
-        linked_student: linkedStudent
+        linked_student: linkedStudent,
+        linked_students: linkedStudents
       } as StudentAccount);
     } catch (err) {
       console.error('Session check error:', err);
@@ -391,6 +400,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
       // Fetch linked student profile if exists
       let linkedStudent: LinkedStudent | null = null;
+      let linkedStudents: LinkedStudent[] = [];
       if (studentAccount.linked_student_id) {
         const { data: linkedData } = await supabase
           .from('students')
@@ -399,6 +409,12 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         linkedStudent = linkedData;
       }
+      // Fetch ALL student records matching this phone (for multi-batch students)
+      const { data: allLinked } = await supabase
+        .from('students')
+        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
+        .or(`phone.eq.${studentAccount.phone_number},phone.eq.${studentAccount.phone_number.replace(/-/g, '')}`);
+      linkedStudents = allLinked || [];
 
       // Store session info
       localStorage.setItem('student_session_id', session.id);
@@ -406,7 +422,8 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       
       const fullStudent = {
         ...studentAccount,
-        linked_student: linkedStudent
+        linked_student: linkedStudent,
+        linked_students: linkedStudents
       } as StudentAccount;
       
       setStudent(fullStudent);
