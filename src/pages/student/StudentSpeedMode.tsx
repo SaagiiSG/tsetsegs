@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
-  Zap, Play, Trophy, Award, Lock, History, Clock, Target, ChevronRight
+  Zap, Play, Trophy, Award, Lock, History, Clock, Target, ChevronRight, CalendarClock
 } from 'lucide-react';
 import { useBadges } from '@/hooks/useBadges';
 import { Progress } from '@/components/ui/progress';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, parseISO, differenceInDays, differenceInHours } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
