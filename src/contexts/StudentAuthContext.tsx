@@ -433,16 +433,19 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const completeLogin = async (studentAccount: StudentAccount, bypassDeviceLock = false): Promise<{ error: string | null }> => {
     try {
-      const deviceId = getDeviceId();
+      const deviceId = await getDeviceIdAsync();
+      const fingerprint = generateFingerprint();
 
       // Check device registration lock (90-day lock) - skip for dev accounts and password-authenticated logins
       const isDevAccount = (studentAccount as any).is_dev_account === true;
+      const storedFingerprint = (studentAccount as any).device_fingerprint as string | null;
+      const fingerprintMatches = storedFingerprint && storedFingerprint === fingerprint;
       
       if (!isDevAccount && !bypassDeviceLock && studentAccount.registered_device_id && studentAccount.device_registered_at) {
         const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
+        const deviceIdMatches = studentAccount.registered_device_id === deviceId;
         
-        if (studentAccount.registered_device_id !== deviceId && daysRemaining > 0) {
-          // Log the attempt
+        if (!deviceIdMatches && !fingerprintMatches && daysRemaining > 0) {
           await supabase.from('security_alerts').insert({
             student_account_id: studentAccount.id,
             alert_type: 'unauthorized_device_attempt',
@@ -451,6 +454,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
               attempted_device_id: deviceId,
               registered_device_id: studentAccount.registered_device_id,
               days_remaining: daysRemaining,
+              fingerprint_match: false,
               user_agent: navigator.userAgent
             }
           });
@@ -460,23 +464,41 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           };
         }
         
-        // If 90 days have passed, allow new device registration
-        if (studentAccount.registered_device_id !== deviceId && daysRemaining <= 0) {
+        // Fingerprint matches but device ID changed (cleared localStorage) — re-register silently
+        if (!deviceIdMatches && fingerprintMatches) {
+          await supabase
+            .from('student_accounts')
+            .update({ registered_device_id: deviceId })
+            .eq('id', studentAccount.id);
+        }
+        
+        // 90 days passed, allow new device
+        if (!deviceIdMatches && !fingerprintMatches && daysRemaining <= 0) {
           await supabase
             .from('student_accounts')
             .update({
               registered_device_id: deviceId,
-              device_registered_at: new Date().toISOString()
+              device_registered_at: new Date().toISOString(),
+              device_fingerprint: fingerprint
             })
             .eq('id', studentAccount.id);
         }
+        
+        // Same device, backfill fingerprint if missing
+        if (deviceIdMatches && !storedFingerprint) {
+          await supabase
+            .from('student_accounts')
+            .update({ device_fingerprint: fingerprint })
+            .eq('id', studentAccount.id);
+        }
       } else if (bypassDeviceLock && studentAccount.registered_device_id !== deviceId) {
-        // Password-authenticated login from new device ID (e.g. cleared browser data) — re-register device
+        // Password-authenticated login from changed device ID — re-register
         await supabase
           .from('student_accounts')
           .update({
             registered_device_id: deviceId,
-            device_registered_at: new Date().toISOString()
+            device_registered_at: new Date().toISOString(),
+            device_fingerprint: fingerprint
           })
           .eq('id', studentAccount.id);
       } else if (!studentAccount.registered_device_id) {
@@ -485,8 +507,15 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           .from('student_accounts')
           .update({
             registered_device_id: deviceId,
-            device_registered_at: new Date().toISOString()
+            device_registered_at: new Date().toISOString(),
+            device_fingerprint: fingerprint
           })
+          .eq('id', studentAccount.id);
+      } else if (!storedFingerprint) {
+        // Existing device, just backfill fingerprint
+        await supabase
+          .from('student_accounts')
+          .update({ device_fingerprint: fingerprint })
           .eq('id', studentAccount.id);
       }
 
