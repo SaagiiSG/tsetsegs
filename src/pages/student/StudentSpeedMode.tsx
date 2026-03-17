@@ -144,6 +144,37 @@ const chartConfig = {
   accuracy: { label: "Accuracy (%)", color: "hsl(var(--chart-2))" }
 };
 
+// Upcoming SAT dates (update periodically)
+const SAT_DATES = [
+  new Date('2026-03-28'), // March 2026
+  new Date('2026-05-02'), // May 2026
+  new Date('2026-06-06'), // June 2026
+  new Date('2026-08-29'), // August 2026
+  new Date('2026-10-03'), // October 2026
+  new Date('2026-11-07'), // November 2026
+  new Date('2026-12-05'), // December 2026
+];
+
+function SATCountdown() {
+  const now = new Date();
+  const nextSAT = SAT_DATES.find(d => d > now);
+  if (!nextSAT) return null;
+
+  const days = differenceInDays(nextSAT, now);
+  const hours = differenceInHours(nextSAT, now) % 24;
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/5 border border-primary/10">
+      <CalendarClock className="h-5 w-5 text-primary flex-shrink-0" />
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Next SAT:</span>
+        <span className="font-bold text-foreground">{days}d {hours}h</span>
+        <span className="text-muted-foreground hidden sm:inline">({format(nextSAT, 'MMMM d')})</span>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentSpeedMode() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
