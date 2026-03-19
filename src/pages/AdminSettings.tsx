@@ -108,6 +108,12 @@ export default function AdminSettings() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <FeatureFlagsManager />
+        </CardContent>
+      </Card>
     </div>
   );
 }
