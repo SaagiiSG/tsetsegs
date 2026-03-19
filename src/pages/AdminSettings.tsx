@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Palette, Moon, Sun, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
 
 const colorThemes = [
   { id: "rose", name: "Rose", color: "hsl(345 75% 65%)" },
@@ -105,6 +106,12 @@ export default function AdminSettings() {
               ))}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <FeatureFlagsManager />
         </CardContent>
       </Card>
     </div>
