@@ -232,22 +232,45 @@ export default function ReviewRegistration() {
     setSubmitCooldown(true);
 
     try {
-      // Check if phone number already exists
-      const { data: existingStudent } = await supabase
-        .from("students")
-        .select("id, name")
-        .eq("phone", data.phone)
-        .single();
+      // Determine batch_id: from QR param or null
+      const assignedBatchId = batchParam || null;
 
-      if (existingStudent) {
-        toast.warning("Already Registered! 🎉", {
-          description: "You're already in our system! Go to the practice portal and log in with your phone number.",
-          duration: 6000,
-        });
-        setIsSubmitting(false);
-        // Keep cooldown for 3 seconds to prevent spam
-        setTimeout(() => setSubmitCooldown(false), 3000);
-        return;
+      // Check if phone number already exists (in the same batch for QR, or globally for code-based)
+      if (assignedBatchId) {
+        // QR flow: only block if already in THIS batch
+        const { data: existingInBatch } = await supabase
+          .from("students")
+          .select("id")
+          .eq("phone", data.phone)
+          .eq("batch_id", assignedBatchId)
+          .single();
+
+        if (existingInBatch) {
+          toast.warning("Already Registered! 🎉", {
+            description: "You're already registered in this class! Log in with your phone number.",
+            duration: 6000,
+          });
+          setIsSubmitting(false);
+          setTimeout(() => setSubmitCooldown(false), 3000);
+          return;
+        }
+      } else {
+        // Code-based flow: block if phone exists anywhere
+        const { data: existingStudent } = await supabase
+          .from("students")
+          .select("id, name")
+          .eq("phone", data.phone)
+          .single();
+
+        if (existingStudent) {
+          toast.warning("Already Registered! 🎉", {
+            description: "You're already in our system! Go to the practice portal and log in with your phone number.",
+            duration: 6000,
+          });
+          setIsSubmitting(false);
+          setTimeout(() => setSubmitCooldown(false), 3000);
+          return;
+        }
       }
 
       // Generate unique link ID
