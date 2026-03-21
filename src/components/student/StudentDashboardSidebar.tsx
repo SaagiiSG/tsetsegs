@@ -113,6 +113,12 @@ export function StudentDashboardSidebar() {
             </motion.div>
           )}
         </div>
+        {/* SAT Countdown */}
+        {open && (
+          <div className="px-2 pb-2">
+            <SATCountdownWidget variant="sidebar" />
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
