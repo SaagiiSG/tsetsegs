@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { 
-  Zap, Play, Trophy, Award, Lock, History, Clock, Target, ChevronRight, CalendarClock
+  Zap, Play, Trophy, Award, Lock, History, Clock, Target, ChevronRight
 } from 'lucide-react';
 import { useBadges } from '@/hooks/useBadges';
 import { Progress } from '@/components/ui/progress';
