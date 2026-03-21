@@ -50,10 +50,14 @@ import StudentSmartPractice from "./pages/student/StudentSmartPractice";
 import StudentBooking from "./pages/student/StudentBooking";
 import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
+import StudentClosingReport from "./pages/student/StudentClosingReport";
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
 import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
+
+// Public Pages
+import PublicClosingReport from "./pages/PublicClosingReport";
 
 const queryClient = new QueryClient();
 
