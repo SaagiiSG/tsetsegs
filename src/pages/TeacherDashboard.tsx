@@ -374,6 +374,9 @@ export default function TeacherDashboard() {
                 <Users className="h-3.5 w-3.5 mr-1.5" />
                 Students
               </Button>
+              <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => setQrBatch(batch)}>
+                <QrCode className="h-3.5 w-3.5" />
+              </Button>
               <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
                 <BarChart3 className="h-3.5 w-3.5" />
               </Button>
