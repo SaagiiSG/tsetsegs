@@ -177,6 +177,9 @@ const App = () => (
                   <Route path="/batch/:id" element={<StudentReveal />} />
                   <Route path="/teacher/newyear/:teachername" element={<NewYearCard />} />
                   
+                  {/* Public Closing Report */}
+                  <Route path="/report/:token" element={<PublicClosingReport />} />
+
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />
                   <Route 
