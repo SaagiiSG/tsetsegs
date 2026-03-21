@@ -108,12 +108,14 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 export default function ReviewRegistration() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<"code" | "form" | "success">("code");
+  const batchParam = searchParams.get('batch');
+  const [step, setStep] = useState<"code" | "form" | "success">(batchParam ? "form" : "code");
   const [validatedCode, setValidatedCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitCooldown, setSubmitCooldown] = useState(false);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
+  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
 
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
