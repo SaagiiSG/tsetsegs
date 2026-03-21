@@ -276,8 +276,7 @@ export default function ReviewRegistration() {
       // Generate unique link ID
       const uniqueLinkId = crypto.randomUUID().split("-")[0];
 
-      // Determine batch_id: from QR param or null
-      const assignedBatchId = batchParam || null;
+      // Use assignedBatchId from above
 
       // Create student record
       const { data: newStudent, error: insertError } = await supabase.from("students").insert({
