@@ -159,6 +159,28 @@ export default function ReviewRegistration() {
     fetchTeachers();
   }, []);
 
+  // Fetch batch info if batch param is present
+  useEffect(() => {
+    if (!batchParam) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("batches")
+        .select("id, batch_name, teacher")
+        .eq("id", batchParam)
+        .single();
+      if (error || !data) {
+        toast.error("Invalid batch link");
+        setStep("code"); // Fall back to code flow
+        return;
+      }
+      setBatchInfo(data);
+      // Pre-fill teacher if batch has one
+      if (data.teacher) {
+        registrationForm.setValue("teacher", data.teacher);
+      }
+    })();
+  }, [batchParam]);
+
 
   const handleCodeSubmit = async (data: CodeFormData) => {
     setIsValidating(true);
