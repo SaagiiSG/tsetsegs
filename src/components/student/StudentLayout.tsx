@@ -19,6 +19,18 @@ function StudentLayoutContent() {
   const { isAdmin, isLoading: adminLoading } = useAuth();
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding if student has no SAT date set and hasn't completed onboarding
+  useEffect(() => {
+    if (student && !student.linked_student?.sat_test_month && !(student as any).onboarding_completed) {
+      // Only show for actual students, not teachers/admins viewing
+      const isTeacherOrAdminViewing = (teacherUser && teacherName) || isAdmin;
+      if (!isTeacherOrAdminViewing) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [student, teacherUser, teacherName, isAdmin]);
 
   // Allow access if user is a student, teacher, or admin
   const isTeacherOrAdmin = (teacherUser && teacherName) || isAdmin;
