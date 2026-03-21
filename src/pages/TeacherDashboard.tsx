@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X } from "lucide-react";
+import QRCodeComponent from "react-qr-code";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IntensePrepContent } from "@/components/teacher/intense-prep";
 import { useToast } from "@/hooks/use-toast";
 import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
@@ -299,6 +301,8 @@ export default function TeacherDashboard() {
     mass: 1.2
   };
 
+  const [qrBatch, setQrBatch] = useState<Batch | null>(null);
+
   // Batch card component with animation
   const BatchCard = ({ batch, index = 0 }: { batch: Batch; index?: number }) => {
     const switchedCount = getSwitchedCount(batch.id);
@@ -371,6 +375,9 @@ export default function TeacherDashboard() {
               <Button className="flex-1 h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate(`/teacher/students/${batch.id}`)}>
                 <Users className="h-3.5 w-3.5 mr-1.5" />
                 Students
+              </Button>
+              <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => setQrBatch(batch)}>
+                <QrCode className="h-3.5 w-3.5" />
               </Button>
               <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
                 <BarChart3 className="h-3.5 w-3.5" />
@@ -626,6 +633,28 @@ export default function TeacherDashboard() {
           </motion.div>
         </div>
       </div>
+
+      {/* QR Code Dialog */}
+      <Dialog open={!!qrBatch} onOpenChange={(open) => !open && setQrBatch(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-sm">Student Onboarding QR</DialogTitle>
+            <p className="text-xs text-muted-foreground text-center">{qrBatch?.batch_name}</p>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="bg-white p-4 rounded-xl">
+              <QRCodeComponent
+                value={`https://tsetsegs.lovable.app/register?batch=${qrBatch?.id}`}
+                size={220}
+                level="H"
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center max-w-[250px]">
+              Students scan this QR to register and get auto-assigned to this class
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
