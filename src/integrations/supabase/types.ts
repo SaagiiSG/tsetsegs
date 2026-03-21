@@ -659,6 +659,48 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_report_tokens: {
+        Row: {
+          batch_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          student_id: string
+          token: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          student_id: string
+          token?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          student_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closing_report_tokens_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closing_report_tokens_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curriculum_sessions: {
         Row: {
           created_at: string
@@ -1710,6 +1752,7 @@ export type Database = {
           is_dev_account: boolean | null
           last_login: string | null
           linked_student_id: string | null
+          onboarding_completed: boolean | null
           password_hash: string | null
           password_set_at: string | null
           phone_number: string
@@ -1730,6 +1773,7 @@ export type Database = {
           is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
+          onboarding_completed?: boolean | null
           password_hash?: string | null
           password_set_at?: string | null
           phone_number: string
@@ -1750,6 +1794,7 @@ export type Database = {
           is_dev_account?: boolean | null
           last_login?: string | null
           linked_student_id?: string | null
+          onboarding_completed?: boolean | null
           password_hash?: string | null
           password_set_at?: string | null
           phone_number?: string
