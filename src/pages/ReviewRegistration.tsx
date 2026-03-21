@@ -253,8 +253,11 @@ export default function ReviewRegistration() {
       // Generate unique link ID
       const uniqueLinkId = crypto.randomUUID().split("-")[0];
 
+      // Determine batch_id: from QR param or null
+      const assignedBatchId = batchParam || null;
+
       // Create student record
-      const { error: insertError } = await supabase.from("students").insert({
+      const { data: newStudent, error: insertError } = await supabase.from("students").insert({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
         name: `${data.firstName.trim()} ${data.lastName.trim()}`,
@@ -266,12 +269,12 @@ export default function ReviewRegistration() {
         sat_test_month: data.plannedSatDate || null,
         has_taken_sat: data.hasTakenSat,
         previous_sat_score: data.hasTakenSat ? data.previousSatScore : null,
-        is_review_student: true,
+        is_review_student: !assignedBatchId, // Not a review student if assigned to batch
         unique_link_id: uniqueLinkId,
         first_session_completed: true,
         accessed: false,
-        batch_id: null,
-      });
+        batch_id: assignedBatchId,
+      }).select('id').single();
 
       if (insertError) {
         console.error("Error creating student:", insertError);
