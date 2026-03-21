@@ -360,11 +360,15 @@ export default function ReviewRegistration() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">SAT Review Registration</CardTitle>
+          <CardTitle className="text-2xl">
+            {batchInfo ? `Join ${batchInfo.batch_name || 'SAT Class'}` : 'SAT Review Registration'}
+          </CardTitle>
           <CardDescription>
             {step === "code"
               ? "Enter the code shown by your teacher to continue"
-              : "Complete your registration to access the practice portal"}
+              : batchInfo
+                ? "Fill out your info to join the class"
+                : "Complete your registration to access the practice portal"}
           </CardDescription>
         </CardHeader>
         <CardContent>
