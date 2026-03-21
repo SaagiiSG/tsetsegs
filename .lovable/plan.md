@@ -1,88 +1,97 @@
 
-# Clean Up Defective Questions + Add Image-Based Answer Choices
 
-## Part 1: Database Cleanup
+## Plan: QR Onboarding + SAT Countdown Widget + Session Closing Sequence
 
-### Remove Defective Questions
-There are **4 defective CollegeBoard questions** that have placeholder/broken answer choices:
+### Current State
 
-| Question ID | Issue |
-|---|---|
-| CB0351 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. (no actual content) |
-| CB0370 | Choices C and D are `[UNCLEAR]` |
-| CB0389 | All 4 choices are `[Graph A]`, `[Graph B]`, etc. |
-| CB0431 | Choices A and B are `[UNCLEAR]` |
-
-Additionally, **CB0002** was flagged by a student as defective.
-
-**Action:** Set `is_active = false` on all 5 questions to remove them from student practice while preserving attempt history.
+- `/register` page already exists with code validation + form collecting: first/last name, phone, parent phone, math/english level, SAT date, previous SAT history. It inserts into `students` table with `batch_id: null` and `is_review_student: true`.
+- `students` table already has `sat_test_month`, `parent_phone`, `math_level`, `english_level` columns.
+- SAT countdown on speed mode page uses hardcoded dates, not student's booked SAT.
+- `practice_tests` table stores mock scores per student (test_number, score).
+- `attendance` table has session_1 through session_24 columns.
+- `homework` table tracks completion per session.
 
 ---
 
-## Part 2: Add Image Support for Answer Choices
+### 1. QR Onboarding Flow (Batch-Specific Registration)
 
-Some questions have graphs, tables, or figures as answer options (not just the question itself). The current system only supports text-based answer choices. We need to support image URLs per choice.
+**Concept**: Teachers generate a QR code link like `/register?batch=<batch_id>` (or use existing registration code system). Students scan, fill out their info, and get auto-assigned to that batch. No more manual teacher data entry.
 
-### Database Schema Change
-Add a new column to the `questions` table:
+**Changes to `/register` (ReviewRegistration.tsx)**:
+- Accept optional `?batch=<batch_id>` query param alongside the existing code system
+- When batch ID is present, skip the code step and go straight to the form
+- Auto-set `batch_id` on the student record instead of `null`
+- Auto-create a `student_account` record so the student can immediately log in
+- Keep existing code-based flow as fallback
 
-```text
-choice_images JSONB (nullable, default null)
-```
+**Database migration**:
+- Add `onboarding_completed` boolean to `student_accounts` (default false)
+- This flags whether the student has gone through first-login onboarding
 
-Structure: `{"A": "https://...image_url", "B": "https://...image_url", "C": null, "D": null}`
+**New: First-login onboarding modal** (in StudentLayout or practice pages):
+- When `student.linked_student?.sat_test_month` is null, show a quick onboarding overlay
+- Ask: "When is your SAT?" with date picker from known SAT dates
+- Updates the `students.sat_test_month` field
+- Only shown once, then marks onboarding complete
 
-This keeps it flexible -- any combination of text + image per choice is supported. If a choice has an image, it renders the image; if it also has text, both show.
+### 2. SAT Countdown Widget in Sidebar
 
-### Admin Form Updates (CBQuestionForm.tsx + QuestionForm.tsx)
+**Modify `StudentSidebar.tsx`**:
+- Add a compact SAT countdown card below the user info header
+- Read `student.linked_student.sat_test_month` from auth context
+- Parse the `YYYY-MM` format to calculate days/hours until that SAT date
+- Display: "Next SAT: XXd XXh" with a calendar icon
+- If no SAT date set, show "Set your SAT date" link that triggers the onboarding question
+- Also add it to the practice page layout for mobile (bottom nav area or top banner)
 
-For each answer option (A, B, C, D), add an optional image upload button next to the text editor:
+**Remove** the hardcoded `SATCountdown` from `StudentSpeedMode.tsx` (or keep it as secondary).
 
-- Each choice gets an "Upload Image" icon button beside the text input
-- When an image is uploaded, it shows a thumbnail preview with a remove button
-- Images are uploaded to the existing `question-images` storage bucket under `choices/` subfolder
-- On save, the `choice_images` JSON object is constructed from any uploaded images
+### 3. Session Closing Sequence (Shareable Report)
 
-**Changes to forms:**
-1. Add state for 4 choice image files + 4 choice image previews
-2. Add image upload UI inline with each A/B/C/D option
-3. On form load (edit mode), populate previews from existing `choice_images`
-4. On save, upload any new choice images, then save the `choice_images` JSON
+**New page**: `src/pages/student/StudentClosingReport.tsx` at `/practice/closing-report/:studentId`
 
-### Student Question Rendering (StudentQuestion.tsx)
+**Also accessible via**: `/closing-report/:token` (public shareable link for parents)
 
-Update the multiple choice rendering (lines 854-876) to:
+**5-page animated sequence** (SAT students only, skip for IELTS):
 
-1. Check if `choice_images` exists for the current question
-2. If a choice has an image URL in `choice_images`, render an `<img>` tag inside the choice button
-3. The image appears above the text (if text exists), or alone if text is just a placeholder
-4. Images get the same styling as the question image (rounded, bordered, contained)
+1. **Class Stats** - Attendance rate (from `attendance` table), homework completion (from `homework` table), total sessions attended
+2. **First Mock Score** - First `practice_tests` entry (test_number = 1, i.e. Practice Test 4)
+3. **Highest Score** - Max score from `practice_tests`
+4. **Math Improvement** - Delta between first and last math-section scores (needs reading/writing vs math breakdown — the `practice_tests` table doesn't have section breakdown for SAT, only IELTS has listening/reading/writing/speaking. Will use `bluebook_answers` or overall score delta instead)
+5. **Thank You** - Branded closing message with share button
 
-### Live Preview in Admin Form
+**Database migration**:
+- Create `closing_report_tokens` table: `id`, `student_id`, `batch_id`, `token` (unique), `created_at`, `expires_at`
+- RLS: public SELECT by token, admin/teacher can INSERT
 
-The right-side preview panel in both forms also needs to render choice images so admins can see what students will see.
+**Shareable**: Generate a unique token, create a public route `/report/:token` that renders the same 5-page sequence without requiring login.
+
+**Route additions in App.tsx**:
+- `/practice/closing-report` (inside StudentLayout, authenticated)
+- `/report/:token` (public, outside StudentLayout)
+
+**Trigger**: Admin can trigger closing reports for a batch (batch end date or manual). A banner appears on the student's `/practice` page when available.
 
 ---
 
-## Technical Details
+### Technical Details
 
-### Migration SQL
-```text
-ALTER TABLE questions ADD COLUMN choice_images JSONB DEFAULT NULL;
-COMMENT ON COLUMN questions.choice_images IS 
-  'Optional image URLs for answer choices. Format: {"A": "url", "B": "url", "C": "url", "D": "url"}';
-```
+**Database migrations**:
+1. `ALTER TABLE student_accounts ADD COLUMN onboarding_completed boolean DEFAULT false`
+2. `CREATE TABLE closing_report_tokens (id uuid PK, student_id uuid REFERENCES students, batch_id uuid REFERENCES batches, token text UNIQUE, created_at timestamptz DEFAULT now(), expires_at timestamptz)`
+3. RLS on `closing_report_tokens`: public SELECT where token matches, admin/teacher ALL
 
-### Files to Modify
-1. **Database migration** -- add `choice_images` column
-2. **src/components/admin/questions/CBQuestionForm.tsx** -- add per-choice image upload UI + save logic
-3. **src/components/admin/questions/QuestionForm.tsx** -- same per-choice image upload UI
-4. **src/pages/StudentQuestion.tsx** -- render choice images in the answer buttons
-5. **src/pages/student/StudentEnglishQuestion.tsx** -- render choice images there too (if applicable)
+**Files to create**:
+- `src/pages/student/StudentClosingReport.tsx` — 5-page swipeable/clickable sequence
+- `src/pages/PublicClosingReport.tsx` — public wrapper that fetches by token
 
-### Execution Order
-1. Deactivate the 5 defective questions (data update)
-2. Run the schema migration to add `choice_images`
-3. Update CBQuestionForm with per-choice image uploads
-4. Update QuestionForm with per-choice image uploads
-5. Update StudentQuestion to render choice images
+**Files to modify**:
+- `src/pages/ReviewRegistration.tsx` — batch-specific QR flow, auto-create student_account
+- `src/components/student/StudentSidebar.tsx` — SAT countdown widget
+- `src/components/student/StudentBottomNav.tsx` — SAT countdown for mobile
+- `src/components/student/StudentLayout.tsx` — onboarding check modal
+- `src/pages/student/StudentSpeedMode.tsx` — remove/replace hardcoded countdown
+- `src/App.tsx` — new routes
+
+**Feature flags**: Add `closing_reports` and `qr_onboarding` to feature_flags table.
+
