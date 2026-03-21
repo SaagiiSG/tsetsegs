@@ -23,8 +23,7 @@ function StudentLayoutContent() {
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
-    if (student && !student.linked_student?.sat_test_month && !(student as any).onboarding_completed) {
-      // Only show for actual students, not teachers/admins viewing
+    if (student && !student.linked_student?.sat_test_month && !student.onboarding_completed) {
       const isTeacherOrAdminViewing = (teacherUser && teacherName) || isAdmin;
       if (!isTeacherOrAdminViewing) {
         setShowOnboarding(true);
