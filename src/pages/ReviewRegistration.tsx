@@ -284,11 +284,22 @@ export default function ReviewRegistration() {
         return;
       }
 
-      // Update code usage count
-      await supabase
-        .from("registration_codes")
-        .update({ used_count: supabase.rpc ? 1 : 1 })
-        .eq("code", validatedCode);
+      // Auto-create student_account if batch QR flow (so they can login immediately)
+      if (assignedBatchId && newStudent) {
+        await supabase.from("student_accounts").insert({
+          phone_number: data.phone,
+          is_active: true,
+          onboarding_completed: !!data.plannedSatDate, // Mark complete if they already set SAT date
+        });
+      }
+
+      // Update code usage count (only for code-based flow)
+      if (validatedCode) {
+        await supabase
+          .from("registration_codes")
+          .update({ used_count: supabase.rpc ? 1 : 1 })
+          .eq("code", validatedCode);
+      }
 
       setStep("success");
       toast.success("Registration complete!", {
