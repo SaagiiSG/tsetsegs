@@ -299,6 +299,8 @@ export default function TeacherDashboard() {
     mass: 1.2
   };
 
+  const [qrBatch, setQrBatch] = useState<Batch | null>(null);
+
   // Batch card component with animation
   const BatchCard = ({ batch, index = 0 }: { batch: Batch; index?: number }) => {
     const switchedCount = getSwitchedCount(batch.id);
