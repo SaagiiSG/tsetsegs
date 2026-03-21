@@ -633,6 +633,28 @@ export default function TeacherDashboard() {
           </motion.div>
         </div>
       </div>
+
+      {/* QR Code Dialog */}
+      <Dialog open={!!qrBatch} onOpenChange={(open) => !open && setQrBatch(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-sm">Student Onboarding QR</DialogTitle>
+            <p className="text-xs text-muted-foreground text-center">{qrBatch?.batch_name}</p>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="bg-white p-4 rounded-xl">
+              <QRCodeComponent
+                value={`https://tsetsegs.lovable.app/register?batch=${qrBatch?.id}`}
+                size={220}
+                level="H"
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center max-w-[250px]">
+              Students scan this QR to register and get auto-assigned to this class
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
