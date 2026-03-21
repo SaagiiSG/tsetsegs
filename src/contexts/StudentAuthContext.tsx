@@ -29,6 +29,7 @@ interface StudentAccount {
   device_registered_at: string | null;
   password_hash: string | null;
   password_set_at: string | null;
+  onboarding_completed: boolean;
 }
 
 export type AuthStep = 'phone' | 'password' | 'set_password';

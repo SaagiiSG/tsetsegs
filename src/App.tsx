@@ -50,10 +50,14 @@ import StudentSmartPractice from "./pages/student/StudentSmartPractice";
 import StudentBooking from "./pages/student/StudentBooking";
 import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
+import StudentClosingReport from "./pages/student/StudentClosingReport";
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
 import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
+
+// Public Pages
+import PublicClosingReport from "./pages/PublicClosingReport";
 
 const queryClient = new QueryClient();
 
@@ -163,6 +167,7 @@ const App = () => (
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
+                    <Route path="closing-report" element={<StudentClosingReport />} />
                   </Route>
                   {/* Bluebook test-taking - outside StudentLayout for full screen */}
                   <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
@@ -172,6 +177,9 @@ const App = () => (
                   <Route path="/batch/:id" element={<StudentReveal />} />
                   <Route path="/teacher/newyear/:teachername" element={<NewYearCard />} />
                   
+                  {/* Public Closing Report */}
+                  <Route path="/report/:token" element={<PublicClosingReport />} />
+
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />
                   <Route 

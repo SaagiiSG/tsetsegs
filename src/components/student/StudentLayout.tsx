@@ -6,7 +6,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
-import { useEffect } from 'react';
+import { OnboardingSATModal } from './OnboardingSATModal';
+import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
@@ -18,6 +19,17 @@ function StudentLayoutContent() {
   const { isAdmin, isLoading: adminLoading } = useAuth();
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding if student has no SAT date set and hasn't completed onboarding
+  useEffect(() => {
+    if (student && !student.linked_student?.sat_test_month && !student.onboarding_completed) {
+      const isTeacherOrAdminViewing = (teacherUser && teacherName) || isAdmin;
+      if (!isTeacherOrAdminViewing) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [student, teacherUser, teacherName, isAdmin]);
 
   // Allow access if user is a student, teacher, or admin
   const isTeacherOrAdmin = (teacherUser && teacherName) || isAdmin;
@@ -97,6 +109,9 @@ function StudentLayoutContent() {
         
         <Outlet />
       </main>
+
+      {/* SAT Date Onboarding Modal */}
+      <OnboardingSATModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       
       <StudentBottomNav />
       

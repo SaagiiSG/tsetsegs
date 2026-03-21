@@ -108,12 +108,14 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 export default function ReviewRegistration() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<"code" | "form" | "success">("code");
+  const batchParam = searchParams.get('batch');
+  const [step, setStep] = useState<"code" | "form" | "success">(batchParam ? "form" : "code");
   const [validatedCode, setValidatedCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitCooldown, setSubmitCooldown] = useState(false);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
+  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
 
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
@@ -156,6 +158,28 @@ export default function ReviewRegistration() {
 
     fetchTeachers();
   }, []);
+
+  // Fetch batch info if batch param is present
+  useEffect(() => {
+    if (!batchParam) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("batches")
+        .select("id, batch_name, teacher")
+        .eq("id", batchParam)
+        .single();
+      if (error || !data) {
+        toast.error("Invalid batch link");
+        setStep("code"); // Fall back to code flow
+        return;
+      }
+      setBatchInfo(data);
+      // Pre-fill teacher if batch has one
+      if (data.teacher) {
+        registrationForm.setValue("teacher", data.teacher);
+      }
+    })();
+  }, [batchParam]);
 
 
   const handleCodeSubmit = async (data: CodeFormData) => {
@@ -229,8 +253,11 @@ export default function ReviewRegistration() {
       // Generate unique link ID
       const uniqueLinkId = crypto.randomUUID().split("-")[0];
 
+      // Determine batch_id: from QR param or null
+      const assignedBatchId = batchParam || null;
+
       // Create student record
-      const { error: insertError } = await supabase.from("students").insert({
+      const { data: newStudent, error: insertError } = await supabase.from("students").insert({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
         name: `${data.firstName.trim()} ${data.lastName.trim()}`,
@@ -242,12 +269,12 @@ export default function ReviewRegistration() {
         sat_test_month: data.plannedSatDate || null,
         has_taken_sat: data.hasTakenSat,
         previous_sat_score: data.hasTakenSat ? data.previousSatScore : null,
-        is_review_student: true,
+        is_review_student: !assignedBatchId, // Not a review student if assigned to batch
         unique_link_id: uniqueLinkId,
         first_session_completed: true,
         accessed: false,
-        batch_id: null,
-      });
+        batch_id: assignedBatchId,
+      }).select('id').single();
 
       if (insertError) {
         console.error("Error creating student:", insertError);
@@ -257,11 +284,22 @@ export default function ReviewRegistration() {
         return;
       }
 
-      // Update code usage count
-      await supabase
-        .from("registration_codes")
-        .update({ used_count: supabase.rpc ? 1 : 1 })
-        .eq("code", validatedCode);
+      // Auto-create student_account if batch QR flow (so they can login immediately)
+      if (assignedBatchId && newStudent) {
+        await supabase.from("student_accounts").insert({
+          phone_number: data.phone,
+          is_active: true,
+          onboarding_completed: !!data.plannedSatDate, // Mark complete if they already set SAT date
+        });
+      }
+
+      // Update code usage count (only for code-based flow)
+      if (validatedCode) {
+        await supabase
+          .from("registration_codes")
+          .update({ used_count: supabase.rpc ? 1 : 1 })
+          .eq("code", validatedCode);
+      }
 
       setStep("success");
       toast.success("Registration complete!", {
@@ -322,11 +360,15 @@ export default function ReviewRegistration() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">SAT Review Registration</CardTitle>
+          <CardTitle className="text-2xl">
+            {batchInfo ? `Join ${batchInfo.batch_name || 'SAT Class'}` : 'SAT Review Registration'}
+          </CardTitle>
           <CardDescription>
             {step === "code"
               ? "Enter the code shown by your teacher to continue"
-              : "Complete your registration to access the practice portal"}
+              : batchInfo
+                ? "Fill out your info to join the class"
+                : "Complete your registration to access the practice portal"}
           </CardDescription>
         </CardHeader>
         <CardContent>
