@@ -144,8 +144,7 @@ const chartConfig = {
   accuracy: { label: "Accuracy (%)", color: "hsl(var(--chart-2))" }
 };
 
-// Use the shared SAT countdown widget instead of hardcoded dates
-import { SATCountdownWidget } from '@/components/student/SATCountdownWidget';
+// SAT countdown now uses shared widget (imported at top)
 
 export default function StudentSpeedMode() {
   const { student, logActivity } = useStudentAuth();
