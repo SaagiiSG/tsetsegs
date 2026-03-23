@@ -378,30 +378,12 @@ export function StudentCard({
             )}
 
             {onRemoveFromClass && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2"
-                    title="Remove from class"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remove student from this class?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will unassign the student from this class (it won’t delete their profile).
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={onRemoveFromClass}>Remove</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <RemoveStudentDialog
+                studentId={student.id}
+                studentName={`${student.first_name} ${student.last_name}`}
+                batchId={batchId}
+                onRemoveFromClass={onRemoveFromClass}
+              />
             )}
 
             {/* Square trackers - split into rows based on course type */}
