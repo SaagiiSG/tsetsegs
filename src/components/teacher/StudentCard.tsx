@@ -89,7 +89,7 @@ interface StudentCardProps {
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
   onTestScoreChange: (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => void;
-  onRemoveFromClass?: () => void;
+  onRemoveFromClass?: (permanentDelete: boolean) => void;
 }
 
 export function StudentCard({
@@ -378,30 +378,12 @@ export function StudentCard({
             )}
 
             {onRemoveFromClass && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2"
-                    title="Remove from class"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remove student from this class?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will unassign the student from this class (it won’t delete their profile).
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={onRemoveFromClass}>Remove</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <RemoveStudentDialog
+                studentId={student.id}
+                studentName={`${student.first_name} ${student.last_name}`}
+                batchId={batchId}
+                onRemoveFromClass={onRemoveFromClass}
+              />
             )}
 
             {/* Square trackers - split into rows based on course type */}
@@ -873,5 +855,114 @@ export function StudentCard({
       </CardContent>
     </Card>
     </TooltipProvider>
+  );
+}
+
+function RemoveStudentDialog({
+  studentId,
+  studentName,
+  batchId,
+  onRemoveFromClass,
+}: {
+  studentId: string;
+  studentName: string;
+  batchId: string;
+  onRemoveFromClass: (permanentDelete: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [otherClassCount, setOtherClassCount] = useState<number | null>(null);
+
+  const handleOpenChange = async (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      setChecking(true);
+      try {
+        const { count } = await supabase
+          .from("students")
+          .select("id", { count: "exact", head: true })
+          .eq("phone", "")
+          .neq("batch_id", batchId);
+
+        // Actually we need the student's phone to check other enrollments
+        const { data: student } = await supabase
+          .from("students")
+          .select("phone")
+          .eq("id", studentId)
+          .single();
+
+        if (student?.phone) {
+          const { count: otherCount } = await supabase
+            .from("students")
+            .select("id", { count: "exact", head: true })
+            .eq("phone", student.phone)
+            .neq("id", studentId)
+            .not("batch_id", "is", null);
+
+          setOtherClassCount(otherCount ?? 0);
+        } else {
+          setOtherClassCount(0);
+        }
+      } catch {
+        setOtherClassCount(0);
+      } finally {
+        setChecking(false);
+      }
+    }
+  };
+
+  const isPermanent = otherClassCount === 0;
+
+  return (
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2"
+          title="Remove from class"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {checking
+              ? "Checking..."
+              : isPermanent
+              ? "Permanently delete this student?"
+              : "Remove student from this class?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {checking ? (
+              "Checking if the student is enrolled in other classes..."
+            ) : isPermanent ? (
+              <>
+                <strong>{studentName}</strong> is not enrolled in any other classes.
+                This will <strong>permanently delete</strong> the student and all their data from the system.
+                This action cannot be undone.
+              </>
+            ) : (
+              <>
+                This will remove <strong>{studentName}</strong> from this class.
+                They are still enrolled in {otherClassCount} other class{otherClassCount !== 1 ? "es" : ""}.
+              </>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          {!checking && (
+            <AlertDialogAction
+              onClick={() => onRemoveFromClass(isPermanent)}
+              className={isPermanent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              {isPermanent ? "Delete permanently" : "Remove from class"}
+            </AlertDialogAction>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

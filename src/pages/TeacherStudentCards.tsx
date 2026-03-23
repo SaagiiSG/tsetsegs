@@ -463,19 +463,26 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handleRemoveFromClass = async (studentId: string) => {
+  const handleRemoveFromClass = async (studentId: string, permanentDelete: boolean) => {
     try {
-      const { error } = await supabase
-        .from("students")
-        .update({ batch_id: null })
-        .eq("id", studentId)
-        .eq("batch_id", batchId);
-
-      if (error) throw error;
+      if (permanentDelete) {
+        // Use edge function with service role to cascade delete
+        const { data, error } = await supabase.functions.invoke('delete-student', {
+          body: { studentId, batchId },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      } else {
+        const { error } = await supabase
+          .from("students")
+          .update({ batch_id: null })
+          .eq("id", studentId)
+          .eq("batch_id", batchId);
+        if (error) throw error;
+      }
 
       setStudents((prev) => {
         const next = prev.filter((s) => s.id !== studentId);
-        // Keep currentIndex in range
         const nextIndex = Math.min(currentIndex, Math.max(0, next.length - 1));
         if (nextIndex !== currentIndex) {
           setCurrentIndex(nextIndex);
@@ -491,11 +498,13 @@ export default function TeacherStudentCards() {
       });
 
       toast({
-        title: "Removed",
-        description: "Student was removed from this class.",
+        title: permanentDelete ? "Deleted" : "Removed",
+        description: permanentDelete
+          ? "Student was permanently deleted from the system."
+          : "Student was removed from this class.",
       });
     } catch (error: any) {
-      const errorToast = getErrorToast(error, "remove student from class");
+      const errorToast = getErrorToast(error, permanentDelete ? "delete student" : "remove student from class");
       toast({
         variant: "destructive",
         ...errorToast,
@@ -970,7 +979,7 @@ export default function TeacherStudentCards() {
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
                           onTestScoreChange={handleTestScoreChange}
-                          onRemoveFromClass={() => handleRemoveFromClass(student.id)}
+                          onRemoveFromClass={(permanentDelete) => handleRemoveFromClass(student.id, permanentDelete)}
                         />
                       </Card>
                     </div>
