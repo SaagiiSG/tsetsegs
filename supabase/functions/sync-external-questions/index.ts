@@ -119,6 +119,78 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Fetch category IDs for mapping skills to categories
+    const { data: categories } = await adminClient
+      .from("question_categories")
+      .select("id, name");
+
+    const categoryMap: Record<string, string> = {};
+    for (const cat of categories || []) {
+      categoryMap[cat.name.toLowerCase()] = cat.id;
+    }
+
+    // SAT Math skill -> category mapping
+    const skillToCategoryMap: Record<string, string> = {
+      // Algebra
+      "linear equations in one variable": "algebra",
+      "linear equations in two variables": "algebra",
+      "linear functions": "algebra",
+      "linear inequalities in one or two variables": "algebra",
+      "linear inequalities": "algebra",
+      "systems of two linear equations in two variables": "algebra",
+      "systems of linear equations": "algebra",
+      // Advanced Math
+      "equivalent expressions": "advanced math",
+      "nonlinear equations in one variable and systems of equations in two variables": "advanced math",
+      "nonlinear functions": "advanced math",
+      "nonlinear equations": "advanced math",
+      "quadratic equations": "advanced math",
+      "polynomial factors and graphs": "advanced math",
+      "quadratic and exponential word problems": "advanced math",
+      "solving quadratic equations": "advanced math",
+      "functions": "advanced math",
+      "parabolas and vertex form": "advanced math",
+      // Geometry and Trigonometry
+      "area and volume": "geometry and trigonometry",
+      "lines, angles, and triangles": "geometry and trigonometry",
+      "right triangles and trigonometry": "geometry and trigonometry",
+      "circles": "geometry and trigonometry",
+      // Data Analysis and Problem Solving
+      "ratios, rates, proportional relationships, and units": "data analysis and problem solving",
+      "percentages": "data analysis and problem solving",
+      "one-variable data: distributions and measures of center and spread": "data analysis and problem solving",
+      "two-variable data: models and scatterplots": "data analysis and problem solving",
+      "probability and conditional probability": "data analysis and problem solving",
+      "inference from sample statistics and margin of error": "data analysis and problem solving",
+      "evaluating statistical claims: observational studies and experiments": "data analysis and problem solving",
+      "interpreting data": "data analysis and problem solving",
+      "interpreting relationships in tables and graphs": "data analysis and problem solving",
+      "interpreting relationships shown by data": "data analysis and problem solving",
+      // English categories
+      "central ideas and details": "information and ideas",
+      "inferences": "information and ideas",
+      "command of evidence": "information and ideas",
+      "words in context": "craft and structure",
+      "text structure and purpose": "craft and structure",
+      "cross-text connections": "craft and structure",
+      "rhetorical synthesis": "expression of ideas",
+      "transitions": "expression of ideas",
+      "boundaries": "standard english conventions",
+      "form, structure, and sense": "standard english conventions",
+    };
+
+    function getCategoryId(skill: string | null, subtopic: string | null): string | null {
+      const lookups = [skill, subtopic].filter(Boolean) as string[];
+      for (const val of lookups) {
+        const lower = val.toLowerCase().trim();
+        const catName = skillToCategoryMap[lower];
+        if (catName && categoryMap[catName]) {
+          return categoryMap[catName];
+        }
+      }
+      return null;
+    }
+
     // Get existing question IDs and original_cb_ids to skip duplicates
     const { data: existingQuestions } = await adminClient
       .from("questions")
@@ -156,6 +228,9 @@ Deno.serve(async (req) => {
       const rawDifficulty = (q.difficulty_level || '').toString().toLowerCase().trim();
       const normalizedDifficulty = ['easy', 'medium', 'hard'].includes(rawDifficulty) ? rawDifficulty : null;
 
+      // Map skill/subtopic to category
+      const categoryId = getCategoryId(q.skill as string | null, q.subtopic as string | null);
+
       const insertData: Record<string, unknown> = {
         question_id: newQuestionId,
         question_text: q.question_text,
@@ -180,6 +255,7 @@ Deno.serve(async (req) => {
         figure_svg: q.figure_svg,
         is_original: true,
         is_active: true,
+        category_id: categoryId,
       };
 
       const { error: insertError } = await adminClient.from("questions").insert(insertData);
