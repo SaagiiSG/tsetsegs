@@ -1015,7 +1015,7 @@ export default function TeacherStudentCards() {
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
                           onTestScoreChange={handleTestScoreChange}
-                          onRemoveFromClass={() => handleRemoveFromClass(student.id)}
+                          onRemoveFromClass={(permanentDelete) => handleRemoveFromClass(student.id, permanentDelete)}
                         />
                       </Card>
                     </div>
