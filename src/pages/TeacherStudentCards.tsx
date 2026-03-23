@@ -466,48 +466,12 @@ export default function TeacherStudentCards() {
   const handleRemoveFromClass = async (studentId: string, permanentDelete: boolean) => {
     try {
       if (permanentDelete) {
-        // Delete related records first, then the student
-        // Delete attendance
-        await supabase.from("attendance").delete().eq("student_id", studentId).eq("batch_id", batchId!);
-        // Delete homework
-        await supabase.from("homework").delete().eq("student_id", studentId).eq("batch_id", batchId!);
-        // Delete practice tests
-        await supabase.from("practice_tests").delete().eq("student_id", studentId).eq("batch_id", batchId!);
-        // Delete student notes
-        await supabase.from("student_notes").delete().eq("student_id", studentId).eq("batch_id", batchId!);
-        // Delete student account if linked
-        const { data: account } = await supabase
-          .from("student_accounts")
-          .select("id")
-          .eq("linked_student_id", studentId)
-          .maybeSingle();
-        if (account) {
-          await supabase.from("student_attempts").delete().eq("student_account_id", account.id);
-          await supabase.from("student_progress").delete().eq("student_account_id", account.id);
-          await supabase.from("student_badges").delete().eq("student_account_id", account.id);
-          await supabase.from("student_sessions").delete().eq("student_account_id", account.id);
-          await supabase.from("student_activity_logs").delete().eq("student_account_id", account.id);
-          await supabase.from("point_transactions").delete().eq("student_account_id", account.id);
-          await supabase.from("featured_badges").delete().eq("student_account_id", account.id);
-          await supabase.from("question_flags").delete().eq("student_account_id", account.id);
-          await supabase.from("student_question_notes").delete().eq("student_account_id", account.id);
-          await supabase.from("security_alerts").delete().eq("student_account_id", account.id);
-          await supabase.from("bug_reports").delete().eq("student_account_id", account.id);
-          await supabase.from("seat_bookings").delete().eq("student_account_id", account.id);
-          await supabase.from("bluebook_answers").delete().eq("attempt_id", account.id);
-          // Delete bluebook attempts
-          await supabase.from("bluebook_attempts").delete().eq("student_account_id", account.id);
-          await supabase.from("student_sprint_rankings").delete().eq("student_account_id", account.id);
-          // Finally delete the account
-          await supabase.from("student_accounts").delete().eq("id", account.id);
-        }
-        // Delete closing report tokens
-        await supabase.from("closing_report_tokens").delete().eq("student_id", studentId);
-        // Delete student nudges
-        await supabase.from("student_nudges").delete().eq("student_id", studentId);
-        // Delete the student record
-        const { error } = await supabase.from("students").delete().eq("id", studentId);
+        // Use edge function with service role to cascade delete
+        const { data, error } = await supabase.functions.invoke('delete-student', {
+          body: { studentId, batchId },
+        });
         if (error) throw error;
+        if (data?.error) throw new Error(data.error);
       } else {
         const { error } = await supabase
           .from("students")
