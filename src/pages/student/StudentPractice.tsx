@@ -114,7 +114,7 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult] = await Promise.all([
+      const [set68Result, cbResult, englishResult, extResult] = await Promise.all([
         // For 68 set: count ALL questions (including variations)
         supabase
           .from('questions')
@@ -136,7 +136,15 @@ export default function StudentPractice() {
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english')
+          .eq('subject', 'english'),
+        // For External: count EXT questions
+        supabase
+          .from('questions')
+          .select('id')
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .eq('subject', 'math')
+          .like('question_id', 'EXT%')
       ]);
       
       // Filter out bluebook questions from counts
@@ -148,7 +156,8 @@ export default function StudentPractice() {
       return {
         set68: filterBluebook(set68Result.data),
         cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data)
+        english: filterBluebook(englishResult.data),
+        ext: filterBluebook(extResult.data)
       };
     },
     enabled: !!student && bluebookLoaded
