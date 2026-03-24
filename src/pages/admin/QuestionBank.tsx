@@ -31,6 +31,7 @@ export default function QuestionBank() {
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [syncSubject, setSyncSubject] = useState<string>('all');
+  const [syncCategory, setSyncCategory] = useState<string>('all');
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [previewQuestion, setPreviewQuestion] = useState<any>(null);
