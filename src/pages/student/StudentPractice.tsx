@@ -16,7 +16,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
 
-type QuestionSet = '68' | 'CB' | 'EXT';
+type QuestionSet = '68' | 'CB';
 type Subject = 'math' | 'english';
 
 const MATH_CATEGORIES = [
@@ -86,12 +86,9 @@ export default function StudentPractice() {
         if (questionSet === '68') {
           // For 68 set: include ALL questions (original + variations as separate)
           query = query.eq('question_set', '68');
-        } else if (questionSet === 'CB') {
-          // For CB set: only originals (no variations)
-          query = query.eq('question_set', 'CollegeBoard').eq('is_original', true);
-        } else if (questionSet === 'EXT') {
-          // For External set: questions imported from external DB
-          query = query.like('question_id', 'EXT%').eq('is_original', true);
+        } else {
+          // For CB set: CollegeBoard + External imported questions, only originals
+          query = query.neq('question_set', '68').eq('is_original', true);
         }
       } else {
         // For English: only originals
@@ -114,7 +111,7 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult, extResult] = await Promise.all([
+      const [set68Result, cbResult, englishResult] = await Promise.all([
         // For 68 set: count ALL questions (including variations)
         supabase
           .from('questions')
@@ -122,13 +119,13 @@ export default function StudentPractice() {
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
-        // For CB: only count originals
+        // For CB: all non-68 math originals (CollegeBoard + External)
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('question_set', 'CollegeBoard')
+          .neq('question_set', '68')
           .eq('subject', 'math'),
         // For English: only count originals
         supabase
@@ -136,15 +133,7 @@ export default function StudentPractice() {
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english'),
-        // For External: count EXT questions
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_original', true)
-          .eq('is_active', true)
-          .eq('subject', 'math')
-          .like('question_id', 'EXT%')
+          .eq('subject', 'english')
       ]);
       
       // Filter out bluebook questions from counts
@@ -156,8 +145,7 @@ export default function StudentPractice() {
       return {
         set68: filterBluebook(set68Result.data),
         cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data),
-        ext: filterBluebook(extResult.data)
+        english: filterBluebook(englishResult.data)
       };
     },
     enabled: !!student && bluebookLoaded
@@ -432,21 +420,6 @@ export default function StudentPractice() {
                   <Target className="h-4 w-4" />
                   CB ({questionCounts?.cb || 0})
                 </Button>
-                {(questionCounts?.ext || 0) > 0 && (
-                  <Button
-                    variant={questionSet === 'EXT' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => {
-                      setQuestionSet('EXT');
-                      setSelectedCategory(null);
-                      setSelectedSubtopic(null);
-                    }}
-                    className="gap-2"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    Extra ({questionCounts?.ext || 0})
-                  </Button>
-                )}
               </div>
             )}
 
