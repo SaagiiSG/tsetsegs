@@ -16,7 +16,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
 
-type QuestionSet = '68' | 'CB' | 'EXT';
+type QuestionSet = '68' | 'CB';
 type Subject = 'math' | 'english';
 
 const MATH_CATEGORIES = [
