@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     // Parse body
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false } = body;
+    const { subject, since_date, dry_run = false, category } = body;
 
     // Connect to external Supabase project via REST API
     const externalUrl = Deno.env.get("EXTERNAL_DB_URL");
