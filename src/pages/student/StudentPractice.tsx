@@ -432,6 +432,21 @@ export default function StudentPractice() {
                   <Target className="h-4 w-4" />
                   CB ({questionCounts?.cb || 0})
                 </Button>
+                {(questionCounts?.ext || 0) > 0 && (
+                  <Button
+                    variant={questionSet === 'EXT' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => {
+                      setQuestionSet('EXT');
+                      setSelectedCategory(null);
+                      setSelectedSubtopic(null);
+                    }}
+                    className="gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Extra ({questionCounts?.ext || 0})
+                  </Button>
+                )}
               </div>
             )}
 
