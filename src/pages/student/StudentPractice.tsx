@@ -86,9 +86,12 @@ export default function StudentPractice() {
         if (questionSet === '68') {
           // For 68 set: include ALL questions (original + variations as separate)
           query = query.eq('question_set', '68');
-        } else {
+        } else if (questionSet === 'CB') {
           // For CB set: only originals (no variations)
           query = query.eq('question_set', 'CollegeBoard').eq('is_original', true);
+        } else if (questionSet === 'EXT') {
+          // For External set: questions imported from external DB
+          query = query.like('question_id', 'EXT%').eq('is_original', true);
         }
       } else {
         // For English: only originals
