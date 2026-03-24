@@ -31,6 +31,7 @@ export default function QuestionBank() {
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [syncSubject, setSyncSubject] = useState<string>('all');
+  const [syncCategory, setSyncCategory] = useState<string>('all');
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [previewQuestion, setPreviewQuestion] = useState<any>(null);
@@ -169,6 +170,7 @@ export default function QuestionBank() {
       const { data, error } = await supabase.functions.invoke('sync-external-questions', {
         body: {
           subject: syncSubject === 'all' ? undefined : syncSubject,
+          category: syncSubject === 'math' && syncCategory !== 'all' ? syncCategory : undefined,
           dry_run: dryRun,
         },
       });
@@ -238,7 +240,7 @@ export default function QuestionBank() {
           <div className="flex flex-col sm:flex-row gap-4 items-end flex-shrink-0">
             <div className="flex-1">
               <label className="text-sm font-medium">Subject Filter</label>
-              <Select value={syncSubject} onValueChange={setSyncSubject}>
+              <Select value={syncSubject} onValueChange={(v) => { setSyncSubject(v); setSyncCategory('all'); }}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -249,6 +251,23 @@ export default function QuestionBank() {
                 </SelectContent>
               </Select>
             </div>
+            {syncSubject === 'math' && (
+              <div className="flex-1">
+                <label className="text-sm font-medium">Math Category</label>
+                <Select value={syncCategory} onValueChange={setSyncCategory}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="algebra">Algebra</SelectItem>
+                    <SelectItem value="advanced_math">Advanced Math</SelectItem>
+                    <SelectItem value="problem_solving">Problem Solving & Data Analysis</SelectItem>
+                    <SelectItem value="geometry">Geometry & Trigonometry</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"

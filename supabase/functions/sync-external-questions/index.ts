@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     // Parse body
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false } = body;
+    const { subject, since_date, dry_run = false, category } = body;
 
     // Connect to external Supabase project via REST API
     const externalUrl = Deno.env.get("EXTERNAL_DB_URL");
@@ -76,9 +76,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!externalQuestions || externalQuestions.length === 0) {
+    // Filter by math category if specified
+    const categorySkillMap: Record<string, string[]> = {
+      algebra: [
+        "linear equations in one variable", "linear equations in two variables",
+        "linear functions", "systems of two linear equations in two variables",
+        "linear inequalities in one or two variables",
+      ],
+      advanced_math: [
+        "equivalent expressions", "nonlinear equations in one variable and systems of equations in two variables",
+        "nonlinear functions",
+      ],
+      problem_solving: [
+        "ratios, rates, proportional relationships, and units",
+        "percentages", "one-variable data: distributions and measures of center and spread",
+        "two-variable data: models and scatterplots", "probability and conditional probability",
+        "inference from sample statistics and margin of error",
+        "evaluating statistical claims: observational studies and experiments",
+      ],
+      geometry: [
+        "area and volume", "lines, angles, and triangles",
+        "right triangles and trigonometry", "circles",
+      ],
+    };
+
+    let filteredQuestions = externalQuestions || [];
+    if (category && categorySkillMap[category]) {
+      const allowedSkills = categorySkillMap[category];
+      filteredQuestions = filteredQuestions.filter((q: any) =>
+        q.skill && allowedSkills.includes(q.skill.toLowerCase())
+      );
+    }
+
+    if (filteredQuestions.length === 0) {
       return new Response(
-        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found in external database." }),
+        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found matching filters." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -87,8 +119,8 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           preview: true,
-          total_found: externalQuestions.length,
-          sample: externalQuestions.map((q) => ({
+          total_found: filteredQuestions.length,
+          sample: filteredQuestions.map((q) => ({
             question_id: q.question_id,
             subject: q.subject,
             difficulty_level: q.difficulty_level,
@@ -214,7 +246,7 @@ Deno.serve(async (req) => {
     let errors = 0;
     const errorDetails: string[] = [];
 
-    for (const q of externalQuestions) {
+    for (const q of filteredQuestions) {
       const cbId = q.original_cb_id as string | null;
       const qId = q.question_id as string;
 
@@ -271,7 +303,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, total_found: externalQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
+      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
