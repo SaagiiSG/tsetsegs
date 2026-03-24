@@ -76,9 +76,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!externalQuestions || externalQuestions.length === 0) {
+    // Filter by math category if specified
+    const categorySkillMap: Record<string, string[]> = {
+      algebra: [
+        "linear equations in one variable", "linear equations in two variables",
+        "linear functions", "systems of two linear equations in two variables",
+        "linear inequalities in one or two variables",
+      ],
+      advanced_math: [
+        "equivalent expressions", "nonlinear equations in one variable and systems of equations in two variables",
+        "nonlinear functions",
+      ],
+      problem_solving: [
+        "ratios, rates, proportional relationships, and units",
+        "percentages", "one-variable data: distributions and measures of center and spread",
+        "two-variable data: models and scatterplots", "probability and conditional probability",
+        "inference from sample statistics and margin of error",
+        "evaluating statistical claims: observational studies and experiments",
+      ],
+      geometry: [
+        "area and volume", "lines, angles, and triangles",
+        "right triangles and trigonometry", "circles",
+      ],
+    };
+
+    let filteredQuestions = externalQuestions || [];
+    if (category && categorySkillMap[category]) {
+      const allowedSkills = categorySkillMap[category];
+      filteredQuestions = filteredQuestions.filter((q: any) =>
+        q.skill && allowedSkills.includes(q.skill.toLowerCase())
+      );
+    }
+
+    if (filteredQuestions.length === 0) {
       return new Response(
-        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found in external database." }),
+        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found matching filters." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
