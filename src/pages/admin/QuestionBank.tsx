@@ -170,6 +170,7 @@ export default function QuestionBank() {
       const { data, error } = await supabase.functions.invoke('sync-external-questions', {
         body: {
           subject: syncSubject === 'all' ? undefined : syncSubject,
+          category: syncSubject === 'math' && syncCategory !== 'all' ? syncCategory : undefined,
           dry_run: dryRun,
         },
       });
