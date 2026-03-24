@@ -111,7 +111,7 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult, extResult] = await Promise.all([
+      const [set68Result, cbResult, englishResult] = await Promise.all([
         // For 68 set: count ALL questions (including variations)
         supabase
           .from('questions')
@@ -119,13 +119,13 @@ export default function StudentPractice() {
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
-        // For CB: only count originals
+        // For CB: all non-68 math originals (CollegeBoard + External)
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('question_set', 'CollegeBoard')
+          .neq('question_set', '68')
           .eq('subject', 'math'),
         // For English: only count originals
         supabase
@@ -133,15 +133,7 @@ export default function StudentPractice() {
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english'),
-        // For External: count EXT questions
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_original', true)
-          .eq('is_active', true)
-          .eq('subject', 'math')
-          .like('question_id', 'EXT%')
+          .eq('subject', 'english')
       ]);
       
       // Filter out bluebook questions from counts
@@ -153,8 +145,7 @@ export default function StudentPractice() {
       return {
         set68: filterBluebook(set68Result.data),
         cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data),
-        ext: filterBluebook(extResult.data)
+        english: filterBluebook(englishResult.data)
       };
     },
     enabled: !!student && bluebookLoaded
