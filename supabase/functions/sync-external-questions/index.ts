@@ -119,8 +119,8 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           preview: true,
-          total_found: externalQuestions.length,
-          sample: externalQuestions.map((q) => ({
+          total_found: filteredQuestions.length,
+          sample: filteredQuestions.map((q) => ({
             question_id: q.question_id,
             subject: q.subject,
             difficulty_level: q.difficulty_level,
@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
     let errors = 0;
     const errorDetails: string[] = [];
 
-    for (const q of externalQuestions) {
+    for (const q of filteredQuestions) {
       const cbId = q.original_cb_id as string | null;
       const qId = q.question_id as string;
 
@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, total_found: externalQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
+      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
