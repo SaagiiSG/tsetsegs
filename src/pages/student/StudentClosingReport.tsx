@@ -196,17 +196,29 @@ function ReportSlide({ children, className }: { children: React.ReactNode; class
   );
 }
 
+interface ClosingReportSettings {
+  heading: string;
+  body: string;
+  sign_off: string;
+}
+
 interface ClosingReportContentProps {
   data: ReportData;
   shareToken?: string;
+  settings?: ClosingReportSettings | null;
 }
 
-export function ClosingReportContent({ data, shareToken }: ClosingReportContentProps) {
+export function ClosingReportContent({ data, shareToken, settings }: ClosingReportContentProps) {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const totalPages = 5;
   const { playing, toggle, start } = useAmbientMusic();
   const musicStarted = useRef(false);
+
+  const firstName = data.studentName.split(' ')[0] || 'Student';
+  const finalHeading = (settings?.heading || 'Thank You, {name}!').replace(/{name}/g, firstName);
+  const finalBody = (settings?.body || 'Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!').replace(/{name}/g, firstName);
+  const finalSignOff = (settings?.sign_off || 'See you on the review session! 🚀').replace(/{name}/g, firstName);
 
   const goNext = () => {
     if (!musicStarted.current) { start(); musicStarted.current = true; }
