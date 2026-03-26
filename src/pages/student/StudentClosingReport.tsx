@@ -437,6 +437,18 @@ export default function StudentClosingReport() {
 
   const { data, isLoading } = useClosingReportData(studentId, batchId);
 
+  const { data: settings } = useQuery({
+    queryKey: ['closing-report-settings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      return data as ClosingReportSettings | null;
+    },
+  });
+
   // Generate share token
   const [shareToken, setShareToken] = useState<string | null>(null);
   useEffect(() => {
@@ -470,7 +482,7 @@ export default function StudentClosingReport() {
     );
   }
 
-  return <ClosingReportContent data={data} shareToken={shareToken || undefined} />;
+  return <ClosingReportContent data={data} shareToken={shareToken || undefined} settings={settings} />;
 }
 
 export { useClosingReportData };
