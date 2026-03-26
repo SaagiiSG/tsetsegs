@@ -20,8 +20,6 @@ import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgres
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar, Area, AreaChart
