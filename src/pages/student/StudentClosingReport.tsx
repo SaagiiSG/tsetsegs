@@ -1,12 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, Share2, BookOpen, Trophy, TrendingUp, ArrowUp, Heart } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Share2, BookOpen, Trophy, TrendingUp, ArrowUp, Heart, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+function useAmbientMusic() {
+  const ctxRef = useRef<AudioContext | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const start = useCallback(() => {
+    if (ctxRef.current) return;
+    const ctx = new AudioContext();
+    const master = ctx.createGain();
+    master.gain.value = 0.08;
+    master.connect(ctx.destination);
+    gainRef.current = master;
+
+    // Soft ambient pad with gentle chords
+    const notes = [261.63, 329.63, 392.0, 523.25]; // C4, E4, G4, C5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.value = 0.25 - i * 0.04;
+      // Gentle LFO for shimmer
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.3 + i * 0.1;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.015;
+      lfo.connect(lfoGain);
+      lfoGain.connect(g.gain);
+      lfo.start();
+      osc.connect(g);
+      g.connect(master);
+      osc.start();
+    });
+
+    ctxRef.current = ctx;
+    setPlaying(true);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (ctxRef.current) {
+      if (ctxRef.current.state === 'running') {
+        ctxRef.current.suspend();
+        setPlaying(false);
+      } else {
+        ctxRef.current.resume();
+        setPlaying(true);
+      }
+    } else {
+      start();
+    }
+  }, [start]);
+
+  useEffect(() => {
+    return () => {
+      ctxRef.current?.close();
+      ctxRef.current = null;
+    };
+  }, []);
+
+  return { playing, toggle, start };
+}
 
 interface ReportData {
   studentName: string;
@@ -143,8 +205,11 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const totalPages = 5;
+  const { playing, toggle, start } = useAmbientMusic();
+  const musicStarted = useRef(false);
 
   const goNext = () => {
+    if (!musicStarted.current) { start(); musicStarted.current = true; }
     if (page < totalPages - 1) { setDirection(1); setPage(p => p + 1); }
   };
   const goPrev = () => {
@@ -279,6 +344,7 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
       <p className="text-muted-foreground max-w-sm">
         Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!
       </p>
+      <p className="text-lg font-semibold text-primary mt-2">See you on the review session! 🚀</p>
       {shareToken && (
         <Button onClick={handleShare} variant="outline" className="gap-2">
           <Share2 className="h-4 w-4" />
@@ -290,8 +356,16 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Progress dots */}
-      <div className="flex justify-center gap-2 pt-6">
+      {/* Music toggle + Progress dots */}
+      <div className="flex justify-center gap-2 pt-6 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className="absolute right-4 top-4 opacity-60 hover:opacity-100"
+        >
+          {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        </Button>
         {Array.from({ length: totalPages }).map((_, i) => (
           <div
             key={i}
