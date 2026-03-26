@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
         multiple_choice_options: q.multiple_choice_options,
         difficulty_level: normalizedDifficulty,
         subject: q.subject || "math",
-        question_type: q.question_type || "multiple_choice",
+        question_type: normalizedType,
         rationale: q.rationale,
         passage_text: q.passage_text,
         original_cb_id: cbId || `ext_${qId}`,
