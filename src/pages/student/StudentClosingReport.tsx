@@ -344,6 +344,7 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
       <p className="text-muted-foreground max-w-sm">
         Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!
       </p>
+      <p className="text-lg font-semibold text-primary mt-2">See you on the review session! 🚀</p>
       {shareToken && (
         <Button onClick={handleShare} variant="outline" className="gap-2">
           <Share2 className="h-4 w-4" />
