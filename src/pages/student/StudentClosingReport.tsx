@@ -1,12 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, Share2, BookOpen, Trophy, TrendingUp, ArrowUp, Heart } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Share2, BookOpen, Trophy, TrendingUp, ArrowUp, Heart, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+function useAmbientMusic() {
+  const ctxRef = useRef<AudioContext | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const start = useCallback(() => {
+    if (ctxRef.current) return;
+    const ctx = new AudioContext();
+    const master = ctx.createGain();
+    master.gain.value = 0.08;
+    master.connect(ctx.destination);
+    gainRef.current = master;
+
+    // Soft ambient pad with gentle chords
+    const notes = [261.63, 329.63, 392.0, 523.25]; // C4, E4, G4, C5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.value = 0.25 - i * 0.04;
+      // Gentle LFO for shimmer
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.3 + i * 0.1;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.015;
+      lfo.connect(lfoGain);
+      lfoGain.connect(g.gain);
+      lfo.start();
+      osc.connect(g);
+      g.connect(master);
+      osc.start();
+    });
+
+    ctxRef.current = ctx;
+    setPlaying(true);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (ctxRef.current) {
+      if (ctxRef.current.state === 'running') {
+        ctxRef.current.suspend();
+        setPlaying(false);
+      } else {
+        ctxRef.current.resume();
+        setPlaying(true);
+      }
+    } else {
+      start();
+    }
+  }, [start]);
+
+  useEffect(() => {
+    return () => {
+      ctxRef.current?.close();
+      ctxRef.current = null;
+    };
+  }, []);
+
+  return { playing, toggle, start };
+}
 
 interface ReportData {
   studentName: string;
