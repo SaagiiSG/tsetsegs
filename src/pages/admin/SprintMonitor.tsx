@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FullProfileDialog } from '@/components/student/leaderboard/FullProfileDialog';
 
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
-import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2, CalendarIcon, X, Rocket } from 'lucide-react';
+import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
