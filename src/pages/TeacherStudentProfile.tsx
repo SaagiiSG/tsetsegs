@@ -167,6 +167,64 @@ export default function TeacherStudentProfile() {
     }
   };
 
+  // Closing Report token query
+  const { data: closingReportToken } = useQuery({
+    queryKey: ['closing-report-token', studentId, student?.batch_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId!)
+        .eq('batch_id', student!.batch_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.token || null;
+    },
+    enabled: !!studentId && !!student?.batch_id && showClosingReport,
+  });
+
+  // Generate closing report token mutation
+  const generateReportToken = useMutation({
+    mutationFn: async () => {
+      if (!studentId || !student?.batch_id) throw new Error('Missing student data');
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+      
+      const { error } = await supabase
+        .from('closing_report_tokens')
+        .upsert({
+          student_id: studentId,
+          batch_id: student.batch_id,
+          token,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        }, { onConflict: 'student_id,batch_id' });
+      
+      if (error) throw error;
+      return token;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['closing-report-token'] });
+      toast({ title: 'Closing report link generated!' });
+    },
+    onError: () => {
+      toast({ variant: 'destructive', title: 'Failed to generate report link' });
+    }
+  });
+
+  const reportUrl = closingReportToken
+    ? `${window.location.origin}/report/${closingReportToken}`
+    : null;
+
+  const copyReportLink = async () => {
+    if (reportUrl) {
+      await navigator.clipboard.writeText(reportUrl);
+      setReportLinkCopied(true);
+      toast({ title: 'Closing report link copied!' });
+      setTimeout(() => setReportLinkCopied(false), 2000);
+    }
+  };
+
   useEffect(() => {
     if (studentId) {
       fetchStudentData();
