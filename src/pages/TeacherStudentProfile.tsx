@@ -106,7 +106,10 @@ export default function TeacherStudentProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [reportLinkCopied, setReportLinkCopied] = useState(false);
   const queryClient = useQueryClient();
+  const { isEnabled } = useFeatureFlags();
+  const showClosingReport = isEnabled('closing_reports') && batch?.course_type === 'SAT';
 
   // Fetch student account and share token
   const { data: studentAccount, isLoading: loadingShareToken } = useQuery({
