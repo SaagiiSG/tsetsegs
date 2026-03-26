@@ -352,11 +352,9 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
       >
         <Heart className="h-10 w-10 text-pink-500" />
       </motion.div>
-      <h2 className="text-3xl font-bold">Thank You, {data.studentName.split(' ')[0]}!</h2>
-      <p className="text-muted-foreground max-w-sm">
-        Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!
-      </p>
-      <p className="text-lg font-semibold text-primary mt-2">See you on the review session! 🚀</p>
+      <h2 className="text-3xl font-bold">{finalHeading}</h2>
+      <p className="text-muted-foreground max-w-sm">{finalBody}</p>
+      <p className="text-lg font-semibold text-primary mt-2">{finalSignOff}</p>
       {shareToken && (
         <Button onClick={handleShare} variant="outline" className="gap-2">
           <Share2 className="h-4 w-4" />

@@ -114,11 +114,99 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
+      <ClosingReportSettingsEditor />
+
       <Card className="mt-6">
         <CardContent className="pt-6">
           <FeatureFlagsManager />
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ClosingReportSettingsEditor() {
+  const [heading, setHeading] = useState("Thank You, {name}!");
+  const [body, setBody] = useState("Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!");
+  const [signOff, setSignOff] = useState("See you on the review session! 🚀");
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setHeading((data as any).heading || heading);
+        setBody((data as any).body || body);
+        setSignOff((data as any).sign_off || signOff);
+      }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Check if row exists
+      const { data: existing } = await supabase
+        .from('closing_report_settings')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('closing_report_settings')
+          .update({ heading, body, sign_off: signOff, updated_at: new Date().toISOString() } as any)
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('closing_report_settings')
+          .insert({ heading, body, sign_off: signOff } as any);
+      }
+      toast.success('Closing report message saved!');
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <FileText className="h-5 w-5" />
+          Closing Report Message
+        </CardTitle>
+        <CardDescription>
+          Customize the final slide of student closing reports. Use <code className="bg-muted px-1 rounded text-xs">{'{name}'}</code> as a placeholder for the student's first name.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Heading</Label>
+          <Input value={heading} onChange={e => setHeading(e.target.value)} placeholder="Thank You, {name}!" />
+        </div>
+        <div className="space-y-2">
+          <Label>Body Message</Label>
+          <Textarea value={body} onChange={e => setBody(e.target.value)} rows={3} placeholder="Your hard work..." />
+        </div>
+        <div className="space-y-2">
+          <Label>Sign-off Line</Label>
+          <Input value={signOff} onChange={e => setSignOff(e.target.value)} placeholder="See you on the review session! 🚀" />
+        </div>
+        <Button onClick={handleSave} disabled={saving} className="gap-2">
+          <Save className="h-4 w-4" />
+          {saving ? 'Saving...' : 'Save Message'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
