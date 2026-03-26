@@ -356,8 +356,16 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Progress dots */}
-      <div className="flex justify-center gap-2 pt-6">
+      {/* Music toggle + Progress dots */}
+      <div className="flex justify-center gap-2 pt-6 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className="absolute right-4 top-4 opacity-60 hover:opacity-100"
+        >
+          {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        </Button>
         {Array.from({ length: totalPages }).map((_, i) => (
           <div
             key={i}
