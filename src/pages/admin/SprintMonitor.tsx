@@ -131,8 +131,7 @@ export default function SprintMonitor() {
   const [builderSprintDays, setBuilderSprintDays] = useState(14);
 
   const SPRINT_DURATION_DAYS = builderSprintDays;
-  const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
-  const FIRST_SPRINT_DELAY_DAYS = 5; // First sprint of new season starts 5 days from now
+  const SEASON_GAP_DAYS = 1;
 
   // Create new season handler - creates all 3 back-to-back sprints and seeds students
   const handleCreateSeason = async () => {
