@@ -115,13 +115,22 @@ export default function SprintMonitor() {
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [activeTierIndex, setActiveTierIndex] = useState(0);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [showSeasonBuilder, setShowSeasonBuilder] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
+  
+  // Season builder state
+  const [builderStartDate, setBuilderStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 5);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [builderSprintDays, setBuilderSprintDays] = useState(14);
 
-  const SPRINT_DURATION_DAYS = 14;
+  const SPRINT_DURATION_DAYS = builderSprintDays;
   const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
   const FIRST_SPRINT_DELAY_DAYS = 5; // First sprint of new season starts 5 days from now
 
