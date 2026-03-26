@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Palette, Moon, Sun, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Palette, Moon, Sun, Check, FileText, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const colorThemes = [
   { id: "rose", name: "Rose", color: "hsl(345 75% 65%)" },
