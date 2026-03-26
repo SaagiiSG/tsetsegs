@@ -14,10 +14,11 @@ import {
   ChevronLeft, User, Phone, School, BookOpen, TrendingUp, 
   Calendar, Clock, AlertTriangle, Award, Target, BarChart3,
   CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send, Brain,
-  Share2, Copy, Link2, Loader2
+  Share2, Copy, Link2, Loader2, FileText
 } from "lucide-react";
 import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -105,7 +106,10 @@ export default function TeacherStudentProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [reportLinkCopied, setReportLinkCopied] = useState(false);
   const queryClient = useQueryClient();
+  const { isEnabled } = useFeatureFlags();
+  const showClosingReport = isEnabled('closing_reports') && batch?.course_type === 'SAT';
 
   // Fetch student account and share token
   const { data: studentAccount, isLoading: loadingShareToken } = useQuery({
@@ -160,6 +164,75 @@ export default function TeacherStudentProfile() {
       setShareLinkCopied(true);
       toast({ title: 'Share link copied!' });
       setTimeout(() => setShareLinkCopied(false), 2000);
+    }
+  };
+
+  // Closing Report token query
+  const { data: closingReportToken } = useQuery({
+    queryKey: ['closing-report-token', studentId, student?.batch_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId!)
+        .eq('batch_id', student!.batch_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.token || null;
+    },
+    enabled: !!studentId && !!student?.batch_id && showClosingReport,
+  });
+
+  // Generate closing report token mutation
+  const generateReportToken = useMutation({
+    mutationFn: async () => {
+      if (!studentId || !student?.batch_id) throw new Error('Missing student data');
+      
+      // Check if token already exists
+      const { data: existing } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId)
+        .eq('batch_id', student.batch_id)
+        .maybeSingle();
+      
+      if (existing?.token) return existing.token;
+      
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+      
+      const { error } = await supabase
+        .from('closing_report_tokens')
+        .insert({
+          student_id: studentId,
+          batch_id: student.batch_id,
+          token,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+      
+      if (error) throw error;
+      return token;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['closing-report-token'] });
+      toast({ title: 'Closing report link generated!' });
+    },
+    onError: () => {
+      toast({ variant: 'destructive', title: 'Failed to generate report link' });
+    }
+  });
+
+  const reportUrl = closingReportToken
+    ? `${window.location.origin}/report/${closingReportToken}`
+    : null;
+
+  const copyReportLink = async () => {
+    if (reportUrl) {
+      await navigator.clipboard.writeText(reportUrl);
+      setReportLinkCopied(true);
+      toast({ title: 'Closing report link copied!' });
+      setTimeout(() => setReportLinkCopied(false), 2000);
     }
   };
 
@@ -455,47 +528,92 @@ export default function TeacherStudentProfile() {
           </div>
           
           {/* Share Link Button */}
-          {studentAccount ? (
-            shareUrl ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={copyShareLink}
-                    className="gap-2"
-                  >
-                    {shareLinkCopied ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                    <span className="hidden sm:inline">
-                      {shareLinkCopied ? 'Copied!' : 'Share Link'}
-                    </span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copy parent share link</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => generateShareToken.mutate()}
-                disabled={generateShareToken.isPending}
-                className="gap-2"
-              >
-                {generateShareToken.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Link2 className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">Generate Link</span>
-              </Button>
-            )
-          ) : null}
+          <div className="flex items-center gap-2">
+            {studentAccount ? (
+              shareUrl ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={copyShareLink}
+                      className="gap-2"
+                    >
+                      {shareLinkCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {shareLinkCopied ? 'Copied!' : 'Share Link'}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy parent share link</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => generateShareToken.mutate()}
+                  disabled={generateShareToken.isPending}
+                  className="gap-2"
+                >
+                  {generateShareToken.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Link2 className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">Generate Link</span>
+                </Button>
+              )
+            ) : null}
+
+            {/* Closing Report Button */}
+            {showClosingReport && (
+              reportUrl ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={copyReportLink}
+                      className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                    >
+                      {reportLinkCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {reportLinkCopied ? 'Copied!' : 'Closing Report'}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy closing report link for parents</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => generateReportToken.mutate()}
+                  disabled={generateReportToken.isPending}
+                  className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  {generateReportToken.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">Closing Report</span>
+                </Button>
+              )
+            )}
+          </div>
         </div>
 
         {/* Quick Stats Cards */}
