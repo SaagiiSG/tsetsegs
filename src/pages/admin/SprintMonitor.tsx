@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FullProfileDialog } from '@/components/student/leaderboard/FullProfileDialog';
 
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2 } from 'lucide-react';
-import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2, CalendarIcon, X, Rocket } from 'lucide-react';
+import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
@@ -113,15 +115,23 @@ export default function SprintMonitor() {
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [activeTierIndex, setActiveTierIndex] = useState(0);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [showSeasonBuilder, setShowSeasonBuilder] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
+  
+  // Season builder state
+  const [builderStartDate, setBuilderStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 5);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [builderSprintDays, setBuilderSprintDays] = useState(14);
 
-  const SPRINT_DURATION_DAYS = 14;
-  const SEASON_GAP_DAYS = 1; // 1-day gap between seasons
-  const FIRST_SPRINT_DELAY_DAYS = 5; // First sprint of new season starts 5 days from now
+  const SPRINT_DURATION_DAYS = builderSprintDays;
+  const SEASON_GAP_DAYS = 1;
 
   // Create new season handler - creates all 3 back-to-back sprints and seeds students
   const handleCreateSeason = async () => {
@@ -144,23 +154,17 @@ export default function SprintMonitor() {
           .eq('id', activeSprint.id);
       }
       
-      // Calculate sprint dates - first sprint starts 5 days from now
-      const sprint1Start = new Date();
-      sprint1Start.setDate(sprint1Start.getDate() + FIRST_SPRINT_DELAY_DAYS);
-      sprint1Start.setHours(0, 0, 0, 0); // Start at midnight
+      // Use builder state for start date and duration
+      const sprint1Start = new Date(builderStartDate);
+      sprint1Start.setHours(0, 0, 0, 0);
       
-      const sprint1End = new Date(sprint1Start);
-      sprint1End.setDate(sprint1End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint1End = addDays(sprint1Start, builderSprintDays);
       
-      // Sprint 2 starts immediately after Sprint 1 ends (back-to-back)
       const sprint2Start = new Date(sprint1End);
-      const sprint2End = new Date(sprint2Start);
-      sprint2End.setDate(sprint2End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint2End = addDays(sprint2Start, builderSprintDays);
       
-      // Sprint 3 starts immediately after Sprint 2 ends (back-to-back)
       const sprint3Start = new Date(sprint2End);
-      const sprint3End = new Date(sprint3Start);
-      sprint3End.setDate(sprint3End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint3End = addDays(sprint3Start, builderSprintDays);
       
       // Create all 3 sprints for the season
       const sprintsToCreate = [
@@ -272,7 +276,7 @@ export default function SprintMonitor() {
         description: `Season ${nextSeasonNumber} scheduled with all students enrolled! Sprint 1 starts on ${format(sprint1Start, 'MMM d, yyyy')}`
       });
       
-      setIsCreateDialogOpen(false);
+      setShowSeasonBuilder(false);
     } catch (err: any) {
       console.error('Failed to create season:', err);
       toast({
@@ -484,95 +488,155 @@ export default function SprintMonitor() {
         </div>
         
         {/* Start New Season Button */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
+        <Button 
+          onClick={() => setShowSeasonBuilder(!showSeasonBuilder)} 
+          variant={showSeasonBuilder ? "outline" : "default"}
+          className="gap-2"
+        >
+          {showSeasonBuilder ? (
+            <>
+              <X className="h-4 w-4" />
+              Cancel
+            </>
+          ) : (
+            <>
               <Plus className="h-4 w-4" />
-              Start New Season
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Start New Season</DialogTitle>
-              <DialogDescription>
-                This will create a new season with 3 back-to-back sprints, each lasting 14 days.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              {(() => {
-                const nextSeasonNumber = sprints && sprints.length > 0 
-                  ? Math.max(...sprints.map(s => s.season_number)) + 1 
-                  : 1;
-                
-                const sprint1Start = new Date();
-                sprint1Start.setDate(sprint1Start.getDate() + 5);
-                sprint1Start.setHours(0, 0, 0, 0);
-                
-                const sprint1End = new Date(sprint1Start);
-                sprint1End.setDate(sprint1End.getDate() + 14);
-                
-                const sprint2End = new Date(sprint1End);
-                sprint2End.setDate(sprint2End.getDate() + 14);
-                
-                const sprint3End = new Date(sprint2End);
-                sprint3End.setDate(sprint3End.getDate() + 14);
-                
-                return (
-                  <>
-                    <div className="rounded-lg border p-4 bg-muted/50 space-y-3">
-                      <p className="font-semibold text-lg">Season {nextSeasonNumber}</p>
-                      
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Sprint 1:</span>
-                          <span className="text-muted-foreground">
-                            {format(sprint1Start, 'MMM d')} - {format(sprint1End, 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Sprint 2:</span>
-                          <span className="text-muted-foreground">
-                            {format(sprint1End, 'MMM d')} - {format(sprint2End, 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Sprint 3:</span>
-                          <span className="text-muted-foreground">
-                            {format(sprint2End, 'MMM d')} - {format(sprint3End, 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2 border-t text-xs text-muted-foreground">
-                        <p>• First sprint starts in 5 days</p>
-                        <p>• Sprints run back-to-back (no gaps)</p>
-                        <p>• 1-day break after season ends before next season</p>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateSeason} disabled={isCreating}>
-                {isCreating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Season'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              New Season
+            </>
+          )}
+        </Button>
       </div>
+
+      {/* Inline Season Builder */}
+      {showSeasonBuilder && (() => {
+        const nextSeasonNumber = sprints && sprints.length > 0 
+          ? Math.max(...sprints.map(s => s.season_number)) + 1 
+          : 1;
+        
+        const s1Start = new Date(builderStartDate);
+        const s1End = addDays(s1Start, builderSprintDays);
+        const s2Start = new Date(s1End);
+        const s2End = addDays(s2Start, builderSprintDays);
+        const s3Start = new Date(s2End);
+        const s3End = addDays(s3Start, builderSprintDays);
+        const totalDays = builderSprintDays * 3;
+        
+        return (
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 overflow-hidden animate-fade-in">
+            <CardContent className="p-6 space-y-6">
+              {/* Builder Header */}
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Rocket className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Design Season {nextSeasonNumber}</h3>
+                  <p className="text-sm text-muted-foreground">Customize your sprint schedule</p>
+                </div>
+              </div>
+
+              {/* Controls Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Start Date Picker */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(builderStartDate, 'PPP')}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={builderStartDate}
+                        onSelect={(d) => d && setBuilderStartDate(d)}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Sprint Duration Slider */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">Sprint Duration</label>
+                    <span className="text-sm font-mono font-bold text-primary">{builderSprintDays} days</span>
+                  </div>
+                  <Slider
+                    value={[builderSprintDays]}
+                    onValueChange={([v]) => setBuilderSprintDays(v)}
+                    min={7}
+                    max={28}
+                    step={1}
+                    className="py-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>7 days</span>
+                    <span>28 days</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visual Timeline */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">Timeline Preview</label>
+                  <Badge variant="secondary" className="font-mono text-xs">{totalDays} days total</Badge>
+                </div>
+                
+                <div className="flex gap-1 h-16 rounded-xl overflow-hidden border border-border/50">
+                  {/* Sprint 1 */}
+                  <div className="flex-1 bg-primary/15 relative group transition-colors hover:bg-primary/25 flex flex-col items-center justify-center">
+                    <span className="text-xs font-bold text-primary">Sprint 1</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(s1Start, 'MMM d')} – {format(s1End, 'MMM d')}
+                    </span>
+                  </div>
+                  {/* Sprint 2 */}
+                  <div className="flex-1 bg-accent/20 relative group transition-colors hover:bg-accent/30 flex flex-col items-center justify-center">
+                    <span className="text-xs font-bold text-accent-foreground">Sprint 2</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(s2Start, 'MMM d')} – {format(s2End, 'MMM d')}
+                    </span>
+                  </div>
+                  {/* Sprint 3 */}
+                  <div className="flex-1 bg-secondary/40 relative group transition-colors hover:bg-secondary/60 flex flex-col items-center justify-center">
+                    <span className="text-xs font-bold text-secondary-foreground">Sprint 3</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(s3Start, 'MMM d')} – {format(s3End, 'MMM d')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info + Action */}
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <p>• Sprints run back-to-back (no gaps)</p>
+                  <p>• All active students auto-enrolled</p>
+                </div>
+                <Button onClick={handleCreateSeason} disabled={isCreating} size="lg" className="gap-2 px-8">
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-4 w-4" />
+                      Launch Season
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
