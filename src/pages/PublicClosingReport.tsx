@@ -6,11 +6,22 @@ import { ClosingReportContent } from './student/StudentClosingReport';
 export default function PublicClosingReport() {
   const { token } = useParams<{ token: string }>();
 
+  const { data: settings } = useQuery({
+    queryKey: ['closing-report-settings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      return data as { heading: string; body: string; sign_off: string } | null;
+    },
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['public-closing-report', token],
     enabled: !!token,
     queryFn: async () => {
-      // Fetch token record
       const { data: tokenData, error: tokenError } = await supabase
         .from('closing_report_tokens')
         .select('student_id, batch_id, expires_at')
@@ -23,14 +34,12 @@ export default function PublicClosingReport() {
       const studentId = tokenData.student_id;
       const batchId = tokenData.batch_id;
 
-      // Fetch student
       const { data: student } = await supabase
         .from('students')
         .select('first_name, last_name')
         .eq('id', studentId)
         .single();
 
-      // Fetch batch
       const { data: batch } = await supabase
         .from('batches')
         .select('batch_name, course_type')
@@ -39,7 +48,6 @@ export default function PublicClosingReport() {
 
       if (batch?.course_type === 'IELTS') throw new Error('Report not available for IELTS');
 
-      // Attendance
       const { data: attendance } = await supabase
         .from('attendance')
         .select('*')
@@ -60,7 +68,6 @@ export default function PublicClosingReport() {
         attendanceRate = total > 0 ? Math.round((attended / total) * 100) : 0;
       }
 
-      // Homework
       const { data: homework } = await supabase
         .from('homework')
         .select('completed')
@@ -71,7 +78,6 @@ export default function PublicClosingReport() {
       const hwDone = homework?.filter(h => h.completed).length || 0;
       const homeworkCompletion = hwTotal > 0 ? Math.round((hwDone / hwTotal) * 100) : 0;
 
-      // Mock scores
       const { data: mockTests } = await supabase
         .from('practice_tests')
         .select('test_number, score')
@@ -84,7 +90,6 @@ export default function PublicClosingReport() {
       const lastMock = mockTests?.length ? mockTests[mockTests.length - 1]?.score : null;
       const scoreImprovement = firstMock && lastMock ? lastMock - firstMock : null;
 
-      // Total questions
       const { data: studentAccount } = await supabase
         .from('student_accounts')
         .select('id')
@@ -130,5 +135,5 @@ export default function PublicClosingReport() {
     );
   }
 
-  return <ClosingReportContent data={data} />;
+  return <ClosingReportContent data={data} settings={settings} />;
 }

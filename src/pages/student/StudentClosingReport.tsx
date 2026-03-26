@@ -196,17 +196,29 @@ function ReportSlide({ children, className }: { children: React.ReactNode; class
   );
 }
 
+interface ClosingReportSettings {
+  heading: string;
+  body: string;
+  sign_off: string;
+}
+
 interface ClosingReportContentProps {
   data: ReportData;
   shareToken?: string;
+  settings?: ClosingReportSettings | null;
 }
 
-export function ClosingReportContent({ data, shareToken }: ClosingReportContentProps) {
+export function ClosingReportContent({ data, shareToken, settings }: ClosingReportContentProps) {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const totalPages = 5;
   const { playing, toggle, start } = useAmbientMusic();
   const musicStarted = useRef(false);
+
+  const firstName = data.studentName.split(' ')[0] || 'Student';
+  const finalHeading = (settings?.heading || 'Thank You, {name}!').replace(/{name}/g, firstName);
+  const finalBody = (settings?.body || 'Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!').replace(/{name}/g, firstName);
+  const finalSignOff = (settings?.sign_off || 'See you on the review session! 🚀').replace(/{name}/g, firstName);
 
   const goNext = () => {
     if (!musicStarted.current) { start(); musicStarted.current = true; }
@@ -340,11 +352,9 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
       >
         <Heart className="h-10 w-10 text-pink-500" />
       </motion.div>
-      <h2 className="text-3xl font-bold">Thank You, {data.studentName.split(' ')[0]}!</h2>
-      <p className="text-muted-foreground max-w-sm">
-        Your hard work and dedication throughout this program have been incredible. Keep pushing toward your goals — we believe in you!
-      </p>
-      <p className="text-lg font-semibold text-primary mt-2">See you on the review session! 🚀</p>
+      <h2 className="text-3xl font-bold">{finalHeading}</h2>
+      <p className="text-muted-foreground max-w-sm">{finalBody}</p>
+      <p className="text-lg font-semibold text-primary mt-2">{finalSignOff}</p>
       {shareToken && (
         <Button onClick={handleShare} variant="outline" className="gap-2">
           <Share2 className="h-4 w-4" />
@@ -427,6 +437,18 @@ export default function StudentClosingReport() {
 
   const { data, isLoading } = useClosingReportData(studentId, batchId);
 
+  const { data: settings } = useQuery({
+    queryKey: ['closing-report-settings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      return data as ClosingReportSettings | null;
+    },
+  });
+
   // Generate share token
   const [shareToken, setShareToken] = useState<string | null>(null);
   useEffect(() => {
@@ -460,7 +482,7 @@ export default function StudentClosingReport() {
     );
   }
 
-  return <ClosingReportContent data={data} shareToken={shareToken || undefined} />;
+  return <ClosingReportContent data={data} shareToken={shareToken || undefined} settings={settings} />;
 }
 
 export { useClosingReportData };
