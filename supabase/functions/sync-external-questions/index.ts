@@ -260,6 +260,13 @@ Deno.serve(async (req) => {
       const rawDifficulty = (q.difficulty_level || '').toString().toLowerCase().trim();
       const normalizedDifficulty = ['easy', 'medium', 'hard'].includes(rawDifficulty) ? rawDifficulty : null;
 
+      // Normalize question_type to match check constraint (multiple_choice, fill_blank)
+      const rawType = (q.question_type || '').toString().toLowerCase().trim();
+      const normalizedType = rawType === 'multiple_choice' ? 'multiple_choice'
+        : ['fill_blank', 'fill_in_blank', 'grid_in', 'free_response', 'student_produced', 'numeric', 'spr'].includes(rawType) ? 'fill_blank'
+        : rawType.includes('choice') ? 'multiple_choice'
+        : 'multiple_choice';
+
       // Map skill/subtopic to category
       const categoryId = getCategoryId(q.skill as string | null, q.subtopic as string | null);
 
