@@ -14,9 +14,12 @@ import {
   ChevronLeft, User, Phone, School, BookOpen, TrendingUp, 
   Calendar, Clock, AlertTriangle, Award, Target, BarChart3,
   CheckCircle2, XCircle, Clock3, StickyNote, Plus, Trash2, Send, Brain,
-  Share2, Copy, Link2, Loader2
+  Share2, Copy, Link2, Loader2, FileText
 } from "lucide-react";
 import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
+import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
