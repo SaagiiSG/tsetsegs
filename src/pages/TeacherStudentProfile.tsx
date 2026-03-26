@@ -187,18 +187,29 @@ export default function TeacherStudentProfile() {
   const generateReportToken = useMutation({
     mutationFn: async () => {
       if (!studentId || !student?.batch_id) throw new Error('Missing student data');
+      
+      // Check if token already exists
+      const { data: existing } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId)
+        .eq('batch_id', student.batch_id)
+        .maybeSingle();
+      
+      if (existing?.token) return existing.token;
+      
       const array = new Uint8Array(16);
       crypto.getRandomValues(array);
       const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
       
       const { error } = await supabase
         .from('closing_report_tokens')
-        .upsert({
+        .insert({
           student_id: studentId,
           batch_id: student.batch_id,
           token,
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-        }, { onConflict: 'student_id,batch_id' });
+        });
       
       if (error) throw error;
       return token;
