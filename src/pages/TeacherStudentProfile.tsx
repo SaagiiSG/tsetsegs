@@ -517,47 +517,92 @@ export default function TeacherStudentProfile() {
           </div>
           
           {/* Share Link Button */}
-          {studentAccount ? (
-            shareUrl ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={copyShareLink}
-                    className="gap-2"
-                  >
-                    {shareLinkCopied ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                    <span className="hidden sm:inline">
-                      {shareLinkCopied ? 'Copied!' : 'Share Link'}
-                    </span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copy parent share link</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => generateShareToken.mutate()}
-                disabled={generateShareToken.isPending}
-                className="gap-2"
-              >
-                {generateShareToken.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Link2 className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">Generate Link</span>
-              </Button>
-            )
-          ) : null}
+          <div className="flex items-center gap-2">
+            {studentAccount ? (
+              shareUrl ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={copyShareLink}
+                      className="gap-2"
+                    >
+                      {shareLinkCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {shareLinkCopied ? 'Copied!' : 'Share Link'}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy parent share link</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => generateShareToken.mutate()}
+                  disabled={generateShareToken.isPending}
+                  className="gap-2"
+                >
+                  {generateShareToken.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Link2 className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">Generate Link</span>
+                </Button>
+              )
+            ) : null}
+
+            {/* Closing Report Button */}
+            {showClosingReport && (
+              reportUrl ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={copyReportLink}
+                      className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                    >
+                      {reportLinkCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {reportLinkCopied ? 'Copied!' : 'Closing Report'}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy closing report link for parents</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => generateReportToken.mutate()}
+                  disabled={generateReportToken.isPending}
+                  className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  {generateReportToken.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">Closing Report</span>
+                </Button>
+              )
+            )}
+          </div>
         </div>
 
         {/* Quick Stats Cards */}
