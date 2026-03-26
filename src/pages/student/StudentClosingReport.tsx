@@ -205,8 +205,11 @@ export function ClosingReportContent({ data, shareToken }: ClosingReportContentP
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const totalPages = 5;
+  const { playing, toggle, start } = useAmbientMusic();
+  const musicStarted = useRef(false);
 
   const goNext = () => {
+    if (!musicStarted.current) { start(); musicStarted.current = true; }
     if (page < totalPages - 1) { setDirection(1); setPage(p => p + 1); }
   };
   const goPrev = () => {
