@@ -155,23 +155,17 @@ export default function SprintMonitor() {
           .eq('id', activeSprint.id);
       }
       
-      // Calculate sprint dates - first sprint starts 5 days from now
-      const sprint1Start = new Date();
-      sprint1Start.setDate(sprint1Start.getDate() + FIRST_SPRINT_DELAY_DAYS);
-      sprint1Start.setHours(0, 0, 0, 0); // Start at midnight
+      // Use builder state for start date and duration
+      const sprint1Start = new Date(builderStartDate);
+      sprint1Start.setHours(0, 0, 0, 0);
       
-      const sprint1End = new Date(sprint1Start);
-      sprint1End.setDate(sprint1End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint1End = addDays(sprint1Start, builderSprintDays);
       
-      // Sprint 2 starts immediately after Sprint 1 ends (back-to-back)
       const sprint2Start = new Date(sprint1End);
-      const sprint2End = new Date(sprint2Start);
-      sprint2End.setDate(sprint2End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint2End = addDays(sprint2Start, builderSprintDays);
       
-      // Sprint 3 starts immediately after Sprint 2 ends (back-to-back)
       const sprint3Start = new Date(sprint2End);
-      const sprint3End = new Date(sprint3Start);
-      sprint3End.setDate(sprint3End.getDate() + SPRINT_DURATION_DAYS);
+      const sprint3End = addDays(sprint3Start, builderSprintDays);
       
       // Create all 3 sprints for the season
       const sprintsToCreate = [
