@@ -277,7 +277,7 @@ export default function SprintMonitor() {
         description: `Season ${nextSeasonNumber} scheduled with all students enrolled! Sprint 1 starts on ${format(sprint1Start, 'MMM d, yyyy')}`
       });
       
-      setIsCreateDialogOpen(false);
+      setShowSeasonBuilder(false);
     } catch (err: any) {
       console.error('Failed to create season:', err);
       toast({
