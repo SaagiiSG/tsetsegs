@@ -659,6 +659,30 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_report_settings: {
+        Row: {
+          body: string
+          heading: string
+          id: string
+          sign_off: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          heading?: string
+          id?: string
+          sign_off?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          heading?: string
+          id?: string
+          sign_off?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       closing_report_tokens: {
         Row: {
           batch_id: string
