@@ -753,6 +753,51 @@ export default function StudentDashboardHome() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Closing Report Auto-Popup Dialog */}
+      <Dialog open={showClosingReport} onOpenChange={setShowClosingReport}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh]">
+          <div className="relative">
+            <button
+              onClick={() => setShowClosingReport(false)}
+              className="absolute right-3 top-3 z-50 rounded-full bg-background/80 p-1.5 backdrop-blur-sm hover:bg-background transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {closingReportData && (
+              <ClosingReportContent
+                data={closingReportData}
+                shareToken={closingShareToken || undefined}
+                settings={closingReportSettings}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Closing Report Banner - shown when batch is completed */}
+      {batchCompleted && closingReportData && isEnabled('closing_reports') && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card 
+            className="cursor-pointer border-primary/20 bg-gradient-to-r from-primary/5 to-pink-500/5 hover:border-primary/40 transition-colors"
+            onClick={() => setShowClosingReport(true)}
+          >
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Your Closing Report is ready! 🎉</p>
+                <p className="text-xs text-muted-foreground">Tap to view your journey summary and share with parents</p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground rotate-[-90deg] shrink-0" />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
