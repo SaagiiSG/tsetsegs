@@ -293,6 +293,60 @@ export default function SprintMonitor() {
     }
   };
 
+  // Edit upcoming season handler
+  const handleStartEditSeason = (seasonNumber: number) => {
+    const seasonSprintsForEdit = sprints?.filter(s => s.season_number === seasonNumber) || [];
+    const sprint1 = seasonSprintsForEdit.find(s => s.sprint_number === 1);
+    if (sprint1) {
+      setEditStartDate(new Date(sprint1.start_date));
+      const durationDays = differenceInDays(new Date(sprint1.end_date), new Date(sprint1.start_date));
+      setEditSprintDays(durationDays);
+    }
+    setEditingSeason(seasonNumber);
+  };
+
+  const handleSaveSeasonEdit = async () => {
+    if (!editingSeason) return;
+    setIsSavingEdit(true);
+    
+    try {
+      const seasonSprintsToEdit = sprints?.filter(s => s.season_number === editingSeason) || [];
+      
+      const s1Start = new Date(editStartDate);
+      s1Start.setHours(0, 0, 0, 0);
+      const s1End = addDays(s1Start, editSprintDays);
+      const s2Start = new Date(s1End);
+      const s2End = addDays(s2Start, editSprintDays);
+      const s3Start = new Date(s2End);
+      const s3End = addDays(s3Start, editSprintDays);
+      
+      const updates = [
+        { sprint_number: 1, start_date: s1Start.toISOString(), end_date: s1End.toISOString() },
+        { sprint_number: 2, start_date: s2Start.toISOString(), end_date: s2End.toISOString() },
+        { sprint_number: 3, start_date: s3Start.toISOString(), end_date: s3End.toISOString() },
+      ];
+      
+      for (const update of updates) {
+        const sprint = seasonSprintsToEdit.find(s => s.sprint_number === update.sprint_number);
+        if (sprint) {
+          const { error } = await supabase
+            .from('sprints')
+            .update({ start_date: update.start_date, end_date: update.end_date })
+            .eq('id', sprint.id);
+          if (error) throw error;
+        }
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
+      toast({ title: 'Season Updated', description: `Season ${editingSeason} schedule has been updated.` });
+      setEditingSeason(null);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update season', variant: 'destructive' });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   // Auto-transition sprints based on current time
   const autoTransitionSprints = async () => {
     const now = new Date();
