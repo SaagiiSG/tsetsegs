@@ -1,45 +1,33 @@
 
 
-# Flowers Wrapped — Class Closing Presentation
+# Add Language Toggle (MON/ENG) to Landing Page
 
-A Spotify Wrapped-style fullscreen presentation that teachers launch from their dashboard to wrap up a batch. It aggregates **class-level** stats (not per-student) and presents them across 6-7 animated slides.
+## Overview
+Add a language switcher to the landing page header area, defaulting to Mongolian. All visible text strings will be translated.
 
-## Slides (7 pages)
+## Approach
 
-1. **Intro** — "That's a wrap, [Batch Name]!" with animated flower/bloom motif
-2. **The Class** — Total students, total sessions held, class attendance rate
-3. **By The Numbers** — Total questions attempted across all students, total homework completion rate
-4. **Mock Test Journey** — Class average first mock → class average highest mock, with animated line/growth visual
-5. **Class MVPs** — Top 3 students by score improvement (anonymized to first names only), top attender
-6. **Most Improved** — Biggest single score jump in the class, celebrated with confetti-style animation
-7. **Thank You / Goodbye** — Warm closing message, batch name, teacher name, FlowersOS branding
+### 1. Translation dictionary
+Define a `translations` object at the top of `Index.tsx` with keys for every text string on the page, mapped to `mon` and `eng` values. Covers: badge text, headline, subtitle, feature titles/descriptions, section headers, CTA text, stats labels, team roles, footer text.
 
-## Data Fetching
+### 2. Language state
+Add `useState<'mon' | 'eng'>('mon')` inside the `Index` component. Create a helper `t(key)` that returns the correct string.
 
-Query all students in the selected batch and aggregate:
-- Attendance records → class average attendance rate, total sessions
-- Homework → class completion rate
-- Practice tests → class avg first/highest mock, top improvers
-- Student attempts → total questions across class
-- Student count
+### 3. Language toggle UI
+Place a small pill-style toggle in the top-right corner of the hero section (fixed or absolute, z-50). Two segments: **МОН** / **ENG**, styled with the gold theme. Active segment gets a filled gold background.
 
-## Implementation
+### 4. Replace all hardcoded strings
+Swap every hardcoded English string in the JSX with `t('keyName')` calls.
 
-### New Files
-- `src/pages/teacher/TeacherClassWrapped.tsx` — Full-screen Wrapped presentation page with all 7 slides, framer-motion animations, navigation dots, keyboard arrow support
-- Route: `/teacher/wrapped/:batchId`
+## Files Modified
+- `src/pages/Index.tsx` — Add translations dict, language state, toggle UI, replace all strings
 
-### Modified Files
-- `src/App.tsx` — Add the new route under `TeacherProtectedRoute`
-- `src/pages/TeacherDashboard.tsx` — Add a "Flowers Wrapped" button on completed batch cards that navigates to `/teacher/wrapped/:batchId`
-
-### Design Direction
-- Dark gradient background (deep indigo → electric cyan, matching FlowersOS brand)
-- Large bold typography (Chillax-style), counter animations for numbers
-- Each slide uses framer-motion enter/exit with spring physics (reusing the pattern from `StudentClosingReport`)
-- Fullscreen mode with ESC to exit back to dashboard
-- Progress dots + arrow key navigation + swipe on mobile
-
-### No Database Changes
-All data already exists in `students`, `attendance`, `homework`, `practice_tests`, `student_attempts`, `student_accounts`, and `batches` tables.
+## Mongolian Translations (key examples)
+- "Mongolia's Best SAT Math Center" → "Монголын шилдэг SAT математикийн төв"
+- "Master the SAT" → "SAT-ыг эзэмш"
+- "Score Higher" → "Өндөр оноо ав"
+- "Why Choose Us" → "Яагаад биднийг сонгох вэ"
+- "Smart Practice" → "Ухаалаг дасгал"
+- "Ready to Start Your SAT Journey?" → "SAT-ын аялалаа эхлэхэд бэлэн үү?"
+- etc.
 
