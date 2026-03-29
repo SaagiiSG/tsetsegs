@@ -95,7 +95,67 @@ export default function StudentDashboardHome() {
     }
   }, [student?.id, syncBadgeProgress]);
 
-  // Initialize selectedSatDate from student data
+  // Check if batch is completed (session_15 marked) for closing report
+  const studentId = student?.linked_student?.id;
+  const batchId = student?.linked_student?.batch_id;
+
+  const { data: batchCompleted } = useQuery({
+    queryKey: ['batch-completed-check', studentId, batchId],
+    enabled: !!studentId && !!batchId && isEnabled('closing_reports'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('attendance')
+        .select('session_15')
+        .eq('student_id', studentId!)
+        .eq('batch_id', batchId!)
+        .maybeSingle();
+      return data?.session_15 != null;
+    },
+  });
+
+  const { data: closingReportData, isLoading: closingReportLoading } = useClosingReportData(
+    batchCompleted ? studentId : undefined,
+    batchCompleted ? batchId : undefined
+  );
+
+  const { data: closingReportSettings } = useQuery({
+    queryKey: ['closing-report-settings'],
+    enabled: !!batchCompleted,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const [closingShareToken, setClosingShareToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!studentId || !batchId || !batchCompleted) return;
+    (async () => {
+      const { data: existing } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId)
+        .eq('batch_id', batchId)
+        .maybeSingle();
+      if (existing) setClosingShareToken(existing.token);
+    })();
+  }, [studentId, batchId, batchCompleted]);
+
+  // Auto-show closing report once
+  useEffect(() => {
+    if (batchCompleted && closingReportData && isEnabled('closing_reports')) {
+      const dismissKey = `closing_report_dismissed_${student?.id}`;
+      if (!localStorage.getItem(dismissKey)) {
+        setShowClosingReport(true);
+        localStorage.setItem(dismissKey, 'true');
+      }
+    }
+  }, [batchCompleted, closingReportData, student?.id, isEnabled]);
+
   useEffect(() => {
     const storedDate = student?.linked_student?.sat_test_month;
     if (storedDate) {
