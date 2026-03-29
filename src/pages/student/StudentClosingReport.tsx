@@ -157,7 +157,6 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
   const finalSignOff = (settings?.sign_off || 'See you on the review session! 🚀').replace(/{name}/g, firstName);
 
   const goNext = () => {
-    if (!musicStarted.current) { start(); musicStarted.current = true; }
     if (page < totalPages - 1) { setDirection(1); setPage(p => p + 1); }
   };
   const goPrev = () => {
