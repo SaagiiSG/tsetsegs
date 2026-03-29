@@ -26,6 +26,7 @@ import TeacherChangePassword from "./pages/TeacherChangePassword";
 import TeacherClassAttendance from "./pages/TeacherClassAttendance";
 import TeacherStudentCards from "./pages/TeacherStudentCards";
 import TeacherSettings from "./pages/TeacherSettings";
+import TeacherClassWrapped from "./pages/teacher/TeacherClassWrapped";
 
 // Student Practice Portal Pages
 import { StudentLayout } from "./components/student/StudentLayout";
