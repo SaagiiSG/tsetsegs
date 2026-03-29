@@ -7,9 +7,12 @@ import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO, a
 import { motion } from 'framer-motion';
 import {
   CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, CalendarIcon,
-  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown, Trophy
+  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown, Trophy, FileText, X
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
