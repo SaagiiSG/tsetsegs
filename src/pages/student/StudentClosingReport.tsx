@@ -211,7 +211,7 @@ interface ClosingReportContentProps {
 export function ClosingReportContent({ data, shareToken, settings }: ClosingReportContentProps) {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
-  const totalPages = 5;
+  const totalPages = 6;
   const { playing, toggle, start } = useAmbientMusic();
   const musicStarted = useRef(false);
 
