@@ -120,6 +120,10 @@ export default function SprintMonitor() {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
+  const [editingSeason, setEditingSeason] = useState<number | null>(null);
+  const [editStartDate, setEditStartDate] = useState<Date>(new Date());
+  const [editSprintDays, setEditSprintDays] = useState(14);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   
   // Season builder state
   const [builderStartDate, setBuilderStartDate] = useState<Date>(() => {
