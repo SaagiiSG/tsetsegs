@@ -1,33 +1,44 @@
 
 
-## Make the Last Page of Closing Report Admin-Editable
+## Insert 316 Math Vocabulary Words + Add Reference Images Section
 
-### What Changes
-The thank-you slide (slide 5) currently has hardcoded text. We'll store the closing message in the database so admins can edit it from Admin Settings.
+### What's Wrong
+The `vocabulary_words` table has 325 English words but **0 math words**. The math tab shows empty because there's nothing in the database with `subject = 'math'`.
 
 ### Plan
 
-**1. Database Migration — Create `closing_report_settings` table**
-- Columns: `id`, `heading` (text, default "Thank You, {name}!"), `body` (text, default the current paragraph), `sign_off` (text, default "See you on the review session! 🚀"), `updated_at`
-- Single-row config table (use upsert pattern)
-- RLS: authenticated users can read; admin role can update
+**Step 1: Insert all 316 math words into the database**
 
-**2. Admin UI — Add editor in Admin Settings page**
-- Add a "Closing Report Message" card/section in AdminSettings
-- Three editable fields: Heading, Body message, Sign-off line
-- Mention `{name}` as a placeholder that gets replaced with the student's first name
-- Save button that upserts the single row
+Use a script to batch-insert all 316 entries parsed from the PDF into `vocabulary_words` with `subject = 'math'`. Key data cleaning:
+- Remove "Tsetsegs SAT сургалт" artifacts (entries #6, #45, #90, #124)
+- Entry #116: "Which of the following statements best describes" (full phrase)
+- Entry #221/223 (Domain/Range): condense multi-line definitions
+- Entry #233: "Roots, zeros, solutions" combined
+- Entry #236/237: "Function transformations" combined
+- Entry #241: add "Units / Нэгж" as sub-entry #241
+- Entry #254 "Quotient": add Mongolian "Ноогдвор"
+- Entry #258: "Absolute Value" combined from split lines
+- Entry #270: "Regular polygon" (clean formatting)
+- Entry #294: "Figure not drawn to scale" (clean formatting)
+- Entry #310: "The margin of error" (clean multi-line definition)
+- Entry #311: "Confidence interval" (clean OCR artifacts)
 
-**3. Update `ClosingReportContent` component**
-- Fetch `closing_report_settings` (fallback to current hardcoded defaults if no row exists)
-- Replace hardcoded text on slide 5 with the fetched values
-- Replace `{name}` placeholder with `data.studentName.split(' ')[0]`
+**Step 2: Add a "Reference Images" section to the Math vocabulary tab**
 
-**4. Update `PublicClosingReport` to also pass/fetch the settings** so the public shared link shows the same custom message.
+The PDF contains 3 reference diagrams (slope formula, quotient/divisor/dividend layout, confidence interval formula). These will be:
+- Copied to the `question-images` storage bucket as reference images
+- Displayed in a collapsible "Reference Diagrams" section at the top of the math vocabulary tab
+- Shown as thumbnail cards that expand on tap
+
+### Technical Details
+
+- **Database**: ~316 INSERT statements into `vocabulary_words` via a migration or exec script
+- **Storage**: Upload 3 images to `question-images` bucket under a `math-reference/` prefix
+- **UI change**: Add a collapsible reference images section in `StudentVocabulary.tsx` that only appears when `vocabType === 'math'`
+- No schema changes needed — the `vocabulary_words` table already supports `subject = 'math'`
 
 ### Files to Modify
-- **New migration** — `closing_report_settings` table
-- `src/pages/AdminSettings.tsx` — Add message editor section
-- `src/pages/student/StudentClosingReport.tsx` — Fetch settings, use dynamic text on slide 5
-- `src/pages/PublicClosingReport.tsx` — Pass settings through to `ClosingReportContent`
+- **Script**: Insert 316 math words into database
+- **Upload**: 3 reference images to storage
+- `src/pages/student/StudentVocabulary.tsx` — Add reference images section for math tab
 
