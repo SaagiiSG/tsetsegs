@@ -211,7 +211,7 @@ interface ClosingReportContentProps {
 export function ClosingReportContent({ data, shareToken, settings }: ClosingReportContentProps) {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
-  const totalPages = 5;
+  const totalPages = 6;
   const { playing, toggle, start } = useAmbientMusic();
   const musicStarted = useRef(false);
 
@@ -237,6 +237,39 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
   };
 
   const slides = [
+    // Slide 0: Congrats Intro
+    <ReportSlide key="congrats">
+      <motion.div
+        initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+        className="text-6xl"
+      >
+        🎉
+      </motion.div>
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="text-3xl font-black"
+      >
+        Congrats, {firstName}!
+      </motion.h1>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="text-muted-foreground max-w-xs text-base"
+      >
+        You've finished the course! Let's take a look at how you did.
+      </motion.p>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <Button onClick={goNext} size="lg" className="gap-2 mt-4">
+          Let's Go <ChevronRight className="h-4 w-4" />
+        </Button>
+      </motion.div>
+    </ReportSlide>,
+
     // Slide 1: Class Stats
     <ReportSlide key="stats">
       <motion.div
@@ -366,25 +399,16 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Music toggle + Progress dots */}
-      <div className="flex justify-center gap-2 pt-6 relative">
+      {/* Music toggle */}
+      <div className="flex justify-end pt-4 px-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className="absolute right-4 top-4 opacity-60 hover:opacity-100"
+          className="opacity-60 hover:opacity-100"
         >
           {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </Button>
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              "w-2 h-2 rounded-full transition-all duration-300",
-              i === page ? "bg-primary w-6" : "bg-muted-foreground/20"
-            )}
-          />
-        ))}
       </div>
 
       {/* Content */}
@@ -405,25 +429,36 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center p-6">
+      <div className="flex justify-between items-center p-6 pb-8">
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={goPrev}
           disabled={page === 0}
-          className="opacity-50 disabled:opacity-20"
+          className="gap-1 disabled:opacity-20"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" /> Back
         </Button>
-        <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all duration-300 cursor-pointer",
+                i === page ? "bg-primary w-5" : "bg-muted-foreground/20 hover:bg-muted-foreground/40"
+              )}
+              onClick={() => { setDirection(i > page ? 1 : -1); setPage(i); }}
+            />
+          ))}
+        </div>
         <Button
-          variant="ghost"
-          size="icon"
+          variant={page === totalPages - 1 ? "ghost" : "default"}
+          size="sm"
           onClick={goNext}
           disabled={page === totalPages - 1}
-          className="opacity-50 disabled:opacity-20"
+          className="gap-1 disabled:opacity-20"
         >
-          <ChevronRight className="h-5 w-5" />
+          Next <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     </div>
