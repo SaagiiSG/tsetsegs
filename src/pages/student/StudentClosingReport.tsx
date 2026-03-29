@@ -126,7 +126,7 @@ const slideVariants = {
 function ReportSlide({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn(
-      "flex flex-col items-center justify-center min-h-[60vh] text-center px-6 py-8 space-y-6",
+      "flex flex-col items-center justify-center h-full text-center px-6 py-4 space-y-4",
       className
     )}>
       {children}
