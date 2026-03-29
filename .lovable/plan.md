@@ -1,44 +1,34 @@
 
 
-## Insert 316 Math Vocabulary Words + Add Reference Images Section
+## Auto-Show Closing Report Popup on Student Login
 
-### What's Wrong
-The `vocabulary_words` table has 325 English words but **0 math words**. The math tab shows empty because there's nothing in the database with `subject = 'math'`.
+### Problem
+Students currently have to navigate to `/practice/closing-report` manually. The closing report should automatically pop up as a dialog when a student logs in after their 5-week SAT class ends.
 
-### Plan
+### How It Works
 
-**Step 1: Insert all 316 math words into the database**
+**Trigger Logic**: When a student lands on their dashboard, check if their batch's final session (session_15 for SAT) is marked in the attendance table. If yes, and the `closing_reports` feature flag is enabled, show the closing report as a full-screen dialog automatically.
 
-Use a script to batch-insert all 316 entries parsed from the PDF into `vocabulary_words` with `subject = 'math'`. Key data cleaning:
-- Remove "Tsetsegs SAT сургалт" artifacts (entries #6, #45, #90, #124)
-- Entry #116: "Which of the following statements best describes" (full phrase)
-- Entry #221/223 (Domain/Range): condense multi-line definitions
-- Entry #233: "Roots, zeros, solutions" combined
-- Entry #236/237: "Function transformations" combined
-- Entry #241: add "Units / Нэгж" as sub-entry #241
-- Entry #254 "Quotient": add Mongolian "Ноогдвор"
-- Entry #258: "Absolute Value" combined from split lines
-- Entry #270: "Regular polygon" (clean formatting)
-- Entry #294: "Figure not drawn to scale" (clean formatting)
-- Entry #310: "The margin of error" (clean multi-line definition)
-- Entry #311: "Confidence interval" (clean OCR artifacts)
+**Dismiss Logic**: Store a `closing_report_dismissed` flag in localStorage (keyed by student ID) so it only auto-shows once. Students can re-access it from a banner/button on their dashboard afterward.
 
-**Step 2: Add a "Reference Images" section to the Math vocabulary tab**
+### Implementation
 
-The PDF contains 3 reference diagrams (slope formula, quotient/divisor/dividend layout, confidence interval formula). These will be:
-- Copied to the `question-images` storage bucket as reference images
-- Displayed in a collapsible "Reference Diagrams" section at the top of the math vocabulary tab
-- Shown as thumbnail cards that expand on tap
+**Step 1: Add auto-popup logic to `StudentDashboardHome.tsx`**
+- On mount, query the student's attendance record to check if `session_15` is not null (batch completed)
+- Check the `closing_reports` feature flag
+- Check localStorage for dismissal
+- If all conditions met, show a full-screen `Dialog` containing the existing `ClosingReportContent` component
 
-### Technical Details
+**Step 2: Add a "View Your Report" banner**
+- When the batch is completed and the report is available, show a small persistent card/banner on the dashboard that lets students re-open the report anytime
+- Only visible for SAT students with completed batches
 
-- **Database**: ~316 INSERT statements into `vocabulary_words` via a migration or exec script
-- **Storage**: Upload 3 images to `question-images` bucket under a `math-reference/` prefix
-- **UI change**: Add a collapsible reference images section in `StudentVocabulary.tsx` that only appears when `vocabType === 'math'`
-- No schema changes needed — the `vocabulary_words` table already supports `subject = 'math'`
+**Step 3: Reuse existing components**
+- Import `ClosingReportContent` and `useClosingReportData` from `StudentClosingReport.tsx` (already exported)
+- Fetch `closing_report_settings` for the customized text
+- Generate/fetch share token same as the standalone page does
 
 ### Files to Modify
-- **Script**: Insert 316 math words into database
-- **Upload**: 3 reference images to storage
-- `src/pages/student/StudentVocabulary.tsx` — Add reference images section for math tab
+- `src/pages/student/StudentDashboardHome.tsx` — Add dialog with closing report auto-popup + re-open banner
+- No database changes needed — all data (attendance, tokens, settings) already exists
 
