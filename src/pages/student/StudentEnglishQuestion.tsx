@@ -484,6 +484,12 @@ export default function StudentEnglishQuestion() {
                         Try Again ({3 - attemptCount} left)
                       </Button>
                     )}
+                    {isCorrect && (
+                      <Button onClick={() => { setSubmitted(false); setIsCorrect(false); setSelectedAnswer(null); }} variant="outline" className="flex-1 gap-1.5">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Practice Again
+                      </Button>
+                    )}
                     <Button 
                       onClick={() => nextQuestion && navigate(`/practice/english/question/${nextQuestion.id}`)}
                       disabled={!nextQuestion}
