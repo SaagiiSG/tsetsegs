@@ -800,6 +800,12 @@ export default function SprintMonitor() {
             ))}
           </SelectContent>
         </Select>
+        {selectedSeason && seasonSprints.every(s => getSprintStatus(s) === 'upcoming') && editingSeason !== selectedSeason && (
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleStartEditSeason(selectedSeason)}>
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Season
+          </Button>
+        )}
       </div>
 
       {/* Sprint Cards for Selected Season */}
