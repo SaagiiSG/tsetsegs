@@ -525,3 +525,13 @@ All colors MUST be HSL.
 .dashboard-rose {
   color: hsl(343 90% 55%);
 }
+
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes scroll-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
