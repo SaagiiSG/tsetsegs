@@ -702,11 +702,19 @@ export default function StudentQuestion() {
                 <Button onClick={handleTryAgain} variant="secondary">
                   Try Again {attemptCount <= 3 && `(${attemptCount}/3 pts)`}
                 </Button>
-              ) : currentVariationIndex < practiceQuestions.length - 1 ? (
-                <Button onClick={handleNextVariation}>
-                  Next Variation
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+              ) : isCorrect ? (
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => { setSubmitted(false); setIsCorrect(false); setSelectedAnswer(null); setFillAnswer(''); }} variant="outline" className="gap-1.5">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Practice Again
+                  </Button>
+                  {currentVariationIndex < practiceQuestions.length - 1 && (
+                    <Button onClick={handleNextVariation}>
+                      Next Variation
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
               ) : null}
             </>
           )}
