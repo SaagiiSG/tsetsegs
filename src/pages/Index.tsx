@@ -35,6 +35,36 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// IELTS achievement images
+import ielts801 from "@/assets/ielts-8-0-1.jpg";
+import ielts802 from "@/assets/ielts-8-0-2.jpg";
+import ielts751 from "@/assets/ielts-7-5-1.jpg";
+import ielts80new1 from "@/assets/ielts-8-0-new1.jpg";
+import ielts80new2 from "@/assets/ielts-8-0-new2.jpg";
+import ielts80new3 from "@/assets/ielts-8-0-new3.jpg";
+import ielts80new4 from "@/assets/ielts-8-0-new4.jpg";
+import ielts80new5 from "@/assets/ielts-8-0-new5.jpg";
+import ielts75new1 from "@/assets/ielts-7-5-new1.jpg";
+import ielts75new2 from "@/assets/ielts-7-5-new2.jpg";
+import ielts70new1 from "@/assets/ielts-7-0-new1.jpg";
+import ielts70new2 from "@/assets/ielts-7-0-new2.jpg";
+import ielts70new3 from "@/assets/ielts-7-0-new3.jpg";
+import ieltsA1 from "@/assets/ielts-achievement-1.jpg";
+import ieltsA2 from "@/assets/ielts-achievement-2.jpg";
+import ieltsA3 from "@/assets/ielts-achievement-3.jpg";
+import ieltsA4 from "@/assets/ielts-achievement-4.jpg";
+import ieltsA5 from "@/assets/ielts-achievement-5.jpg";
+import ieltsA6 from "@/assets/ielts-achievement-6.jpg";
+import ieltsA7 from "@/assets/ielts-achievement-7.jpg";
+import ieltsA8 from "@/assets/ielts-achievement-8.jpg";
+import ieltsA9 from "@/assets/ielts-achievement-9.jpg";
+import ieltsA10 from "@/assets/ielts-achievement-10.jpg";
+import ieltsA11 from "@/assets/ielts-achievement-11.jpg";
+import ieltsA12 from "@/assets/ielts-achievement-12.jpg";
+import ieltsA13 from "@/assets/ielts-achievement-13.jpg";
+import ieltsA14 from "@/assets/ielts-achievement-14.jpg";
+import ieltsA15 from "@/assets/ielts-achievement-15.jpg";
+
 // Golden color palette - independent of app themes
 const GOLD = {
   primary: "43 88% 50%",
