@@ -1,34 +1,45 @@
 
 
-## Auto-Show Closing Report Popup on Student Login
+# Flowers Wrapped — Class Closing Presentation
 
-### Problem
-Students currently have to navigate to `/practice/closing-report` manually. The closing report should automatically pop up as a dialog when a student logs in after their 5-week SAT class ends.
+A Spotify Wrapped-style fullscreen presentation that teachers launch from their dashboard to wrap up a batch. It aggregates **class-level** stats (not per-student) and presents them across 6-7 animated slides.
 
-### How It Works
+## Slides (7 pages)
 
-**Trigger Logic**: When a student lands on their dashboard, check if their batch's final session (session_15 for SAT) is marked in the attendance table. If yes, and the `closing_reports` feature flag is enabled, show the closing report as a full-screen dialog automatically.
+1. **Intro** — "That's a wrap, [Batch Name]!" with animated flower/bloom motif
+2. **The Class** — Total students, total sessions held, class attendance rate
+3. **By The Numbers** — Total questions attempted across all students, total homework completion rate
+4. **Mock Test Journey** — Class average first mock → class average highest mock, with animated line/growth visual
+5. **Class MVPs** — Top 3 students by score improvement (anonymized to first names only), top attender
+6. **Most Improved** — Biggest single score jump in the class, celebrated with confetti-style animation
+7. **Thank You / Goodbye** — Warm closing message, batch name, teacher name, FlowersOS branding
 
-**Dismiss Logic**: Store a `closing_report_dismissed` flag in localStorage (keyed by student ID) so it only auto-shows once. Students can re-access it from a banner/button on their dashboard afterward.
+## Data Fetching
 
-### Implementation
+Query all students in the selected batch and aggregate:
+- Attendance records → class average attendance rate, total sessions
+- Homework → class completion rate
+- Practice tests → class avg first/highest mock, top improvers
+- Student attempts → total questions across class
+- Student count
 
-**Step 1: Add auto-popup logic to `StudentDashboardHome.tsx`**
-- On mount, query the student's attendance record to check if `session_15` is not null (batch completed)
-- Check the `closing_reports` feature flag
-- Check localStorage for dismissal
-- If all conditions met, show a full-screen `Dialog` containing the existing `ClosingReportContent` component
+## Implementation
 
-**Step 2: Add a "View Your Report" banner**
-- When the batch is completed and the report is available, show a small persistent card/banner on the dashboard that lets students re-open the report anytime
-- Only visible for SAT students with completed batches
+### New Files
+- `src/pages/teacher/TeacherClassWrapped.tsx` — Full-screen Wrapped presentation page with all 7 slides, framer-motion animations, navigation dots, keyboard arrow support
+- Route: `/teacher/wrapped/:batchId`
 
-**Step 3: Reuse existing components**
-- Import `ClosingReportContent` and `useClosingReportData` from `StudentClosingReport.tsx` (already exported)
-- Fetch `closing_report_settings` for the customized text
-- Generate/fetch share token same as the standalone page does
+### Modified Files
+- `src/App.tsx` — Add the new route under `TeacherProtectedRoute`
+- `src/pages/TeacherDashboard.tsx` — Add a "Flowers Wrapped" button on completed batch cards that navigates to `/teacher/wrapped/:batchId`
 
-### Files to Modify
-- `src/pages/student/StudentDashboardHome.tsx` — Add dialog with closing report auto-popup + re-open banner
-- No database changes needed — all data (attendance, tokens, settings) already exists
+### Design Direction
+- Dark gradient background (deep indigo → electric cyan, matching FlowersOS brand)
+- Large bold typography (Chillax-style), counter animations for numbers
+- Each slide uses framer-motion enter/exit with spring physics (reusing the pattern from `StudentClosingReport`)
+- Fullscreen mode with ESC to exit back to dashboard
+- Progress dots + arrow key navigation + swipe on mobile
+
+### No Database Changes
+All data already exists in `students`, `attendance`, `homework`, `practice_tests`, `student_attempts`, `student_accounts`, and `batches` tables.
 
