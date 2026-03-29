@@ -13,7 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark, RotateCcw } from 'lucide-react';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
@@ -482,6 +482,12 @@ export default function StudentEnglishQuestion() {
                     {!isCorrect && attemptCount < 3 && (
                       <Button onClick={handleTryAgain} variant="outline" className="flex-1">
                         Try Again ({3 - attemptCount} left)
+                      </Button>
+                    )}
+                    {isCorrect && (
+                      <Button onClick={() => { setSubmitted(false); setIsCorrect(false); setSelectedAnswer(null); }} variant="outline" className="flex-1 gap-1.5">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Practice Again
                       </Button>
                     )}
                     <Button 
