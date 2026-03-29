@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2 } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IntensePrepContent } from "@/components/teacher/intense-prep";
@@ -382,6 +382,11 @@ export default function TeacherDashboard() {
               <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
                 <BarChart3 className="h-3.5 w-3.5" />
               </Button>
+              {selectedIntake === "previous" && (
+                <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}>
+                  <Flower2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </Card>
