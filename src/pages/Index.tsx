@@ -35,6 +35,36 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// IELTS achievement images
+import ielts801 from "@/assets/ielts-8-0-1.jpg";
+import ielts802 from "@/assets/ielts-8-0-2.jpg";
+import ielts751 from "@/assets/ielts-7-5-1.jpg";
+import ielts80new1 from "@/assets/ielts-8-0-new1.jpg";
+import ielts80new2 from "@/assets/ielts-8-0-new2.jpg";
+import ielts80new3 from "@/assets/ielts-8-0-new3.jpg";
+import ielts80new4 from "@/assets/ielts-8-0-new4.jpg";
+import ielts80new5 from "@/assets/ielts-8-0-new5.jpg";
+import ielts75new1 from "@/assets/ielts-7-5-new1.jpg";
+import ielts75new2 from "@/assets/ielts-7-5-new2.jpg";
+import ielts70new1 from "@/assets/ielts-7-0-new1.jpg";
+import ielts70new2 from "@/assets/ielts-7-0-new2.jpg";
+import ielts70new3 from "@/assets/ielts-7-0-new3.jpg";
+import ieltsA1 from "@/assets/ielts-achievement-1.jpg";
+import ieltsA2 from "@/assets/ielts-achievement-2.jpg";
+import ieltsA3 from "@/assets/ielts-achievement-3.jpg";
+import ieltsA4 from "@/assets/ielts-achievement-4.jpg";
+import ieltsA5 from "@/assets/ielts-achievement-5.jpg";
+import ieltsA6 from "@/assets/ielts-achievement-6.jpg";
+import ieltsA7 from "@/assets/ielts-achievement-7.jpg";
+import ieltsA8 from "@/assets/ielts-achievement-8.jpg";
+import ieltsA9 from "@/assets/ielts-achievement-9.jpg";
+import ieltsA10 from "@/assets/ielts-achievement-10.jpg";
+import ieltsA11 from "@/assets/ielts-achievement-11.jpg";
+import ieltsA12 from "@/assets/ielts-achievement-12.jpg";
+import ieltsA13 from "@/assets/ielts-achievement-13.jpg";
+import ieltsA14 from "@/assets/ielts-achievement-14.jpg";
+import ieltsA15 from "@/assets/ielts-achievement-15.jpg";
+
 // Golden color palette - independent of app themes
 const GOLD = {
   primary: "43 88% 50%",
@@ -81,6 +111,9 @@ const translations: Record<string, Record<string, string>> = {
     roleManager: "Менежер | Англи хэл",
     roleIELTS: "IELTS",
     roleSATMath: "SAT Математик",
+    ieltsAchievements: "IELTS-ийн амжилтууд",
+    ourIELTS: "Манай IELTS",
+    results: "Үр дүн",
     readyToStart: "SAT-ын аялалаа эхлэхэд бэлэн үү?",
     ctaDescription: "Манай туршлагатай багш нар болон батлагдсан аргачлалаар олон зуун сурагчид оноогоо ахиулсан.",
     getStarted: "Эхлэх",
@@ -120,6 +153,9 @@ const translations: Record<string, Record<string, string>> = {
     roleManager: "Manager | English",
     roleIELTS: "IELTS",
     roleSATMath: "SAT Math",
+    ieltsAchievements: "IELTS Achievements",
+    ourIELTS: "Our IELTS",
+    results: "Results",
     readyToStart: "Ready to Start Your SAT Journey?",
     ctaDescription: "Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.",
     getStarted: "Get Started",
@@ -669,6 +705,104 @@ const Index = () => {
               ))}
             </motion.div>
           )}
+        </motion.div>
+      </section>
+
+      {/* IELTS Achievements Section */}
+      <section className="relative py-24 px-4 overflow-hidden">
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
+        />
+        
+        <motion.div 
+          className="relative max-w-7xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } }
+          }}
+        >
+          <div className="text-center space-y-4 mb-16">
+            <motion.span
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="font-medium inline-block"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              {t('ieltsAchievements')}
+            </motion.span>
+            <motion.h2
+              variants={{
+                hidden: { opacity: 0, y: 40, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
+              }}
+              className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              {t('ourIELTS')}{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
+              >
+                {t('results')}
+              </GradientText>
+            </motion.h2>
+          </div>
+
+          {/* Scrolling rows of IELTS achievement images */}
+          <div className="space-y-6 overflow-hidden">
+            {/* Row 1 - scrolls left */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { duration: 0.8 } }
+              }}
+            >
+              <div className="flex gap-4 animate-[scroll-left_40s_linear_infinite]">
+                {[ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5,
+                  ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5].map((img, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                    style={{
+                      border: `2px solid hsl(${GOLD.primary} / 0.3)`,
+                      boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
+                    }}
+                  >
+                    <img src={img} alt={`IELTS Achievement ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Row 2 - scrolls right */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { duration: 0.8, delay: 0.2 } }
+              }}
+            >
+              <div className="flex gap-4 animate-[scroll-right_45s_linear_infinite]">
+                {[ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15,
+                  ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15].map((img, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                    style={{
+                      border: `2px solid hsl(${GOLD.primary} / 0.3)`,
+                      boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
+                    }}
+                  >
+                    <img src={img} alt={`IELTS Achievement ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
