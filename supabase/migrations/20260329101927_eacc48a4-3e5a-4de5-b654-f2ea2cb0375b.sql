@@ -1,0 +1,2 @@
+ALTER TABLE public.vocabulary_words DROP CONSTRAINT vocabulary_words_word_number_key;
+ALTER TABLE public.vocabulary_words ADD CONSTRAINT vocabulary_words_word_number_subject_key UNIQUE (word_number, subject);
