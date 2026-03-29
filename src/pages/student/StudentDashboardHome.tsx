@@ -7,9 +7,12 @@ import { format, subWeeks, startOfWeek, endOfWeek, differenceInDays, parseISO, a
 import { motion } from 'framer-motion';
 import {
   CheckCircle2, Target, BookOpen, Award, Pencil, RotateCcw, CalendarIcon,
-  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown, Trophy
+  TrendingUp, Clock, Brain, Loader2, Zap, Timer, ChevronDown, Trophy, FileText, X
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +71,8 @@ export default function StudentDashboardHome() {
   const { student } = useStudentAuth();
   const navigate = useNavigate();
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
+  const [showClosingReport, setShowClosingReport] = useState(false);
+  const { isEnabled } = useFeatureFlags();
   const [radarSubject, setRadarSubject] = useState<'math' | 'english'>('math');
   const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
   
@@ -90,7 +95,67 @@ export default function StudentDashboardHome() {
     }
   }, [student?.id, syncBadgeProgress]);
 
-  // Initialize selectedSatDate from student data
+  // Check if batch is completed (session_15 marked) for closing report
+  const studentId = student?.linked_student?.id;
+  const batchId = student?.linked_student?.batch_id;
+
+  const { data: batchCompleted } = useQuery({
+    queryKey: ['batch-completed-check', studentId, batchId],
+    enabled: !!studentId && !!batchId && isEnabled('closing_reports'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('attendance')
+        .select('session_15')
+        .eq('student_id', studentId!)
+        .eq('batch_id', batchId!)
+        .maybeSingle();
+      return data?.session_15 != null;
+    },
+  });
+
+  const { data: closingReportData, isLoading: closingReportLoading } = useClosingReportData(
+    batchCompleted ? studentId : undefined,
+    batchCompleted ? batchId : undefined
+  );
+
+  const { data: closingReportSettings } = useQuery({
+    queryKey: ['closing-report-settings'],
+    enabled: !!batchCompleted,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('closing_report_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const [closingShareToken, setClosingShareToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!studentId || !batchId || !batchCompleted) return;
+    (async () => {
+      const { data: existing } = await supabase
+        .from('closing_report_tokens')
+        .select('token')
+        .eq('student_id', studentId)
+        .eq('batch_id', batchId)
+        .maybeSingle();
+      if (existing) setClosingShareToken(existing.token);
+    })();
+  }, [studentId, batchId, batchCompleted]);
+
+  // Auto-show closing report once
+  useEffect(() => {
+    if (batchCompleted && closingReportData && isEnabled('closing_reports')) {
+      const dismissKey = `closing_report_dismissed_${student?.id}`;
+      if (!localStorage.getItem(dismissKey)) {
+        setShowClosingReport(true);
+        localStorage.setItem(dismissKey, 'true');
+      }
+    }
+  }, [batchCompleted, closingReportData, student?.id, isEnabled]);
+
   useEffect(() => {
     const storedDate = student?.linked_student?.sat_test_month;
     if (storedDate) {
@@ -688,6 +753,51 @@ export default function StudentDashboardHome() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Closing Report Auto-Popup Dialog */}
+      <Dialog open={showClosingReport} onOpenChange={setShowClosingReport}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh]">
+          <div className="relative">
+            <button
+              onClick={() => setShowClosingReport(false)}
+              className="absolute right-3 top-3 z-50 rounded-full bg-background/80 p-1.5 backdrop-blur-sm hover:bg-background transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {closingReportData && (
+              <ClosingReportContent
+                data={closingReportData}
+                shareToken={closingShareToken || undefined}
+                settings={closingReportSettings}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Closing Report Banner - shown when batch is completed */}
+      {batchCompleted && closingReportData && isEnabled('closing_reports') && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card 
+            className="cursor-pointer border-primary/20 bg-gradient-to-r from-primary/5 to-pink-500/5 hover:border-primary/40 transition-colors"
+            onClick={() => setShowClosingReport(true)}
+          >
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Your Closing Report is ready! 🎉</p>
+                <p className="text-xs text-muted-foreground">Tap to view your journey summary and share with parents</p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground rotate-[-90deg] shrink-0" />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
