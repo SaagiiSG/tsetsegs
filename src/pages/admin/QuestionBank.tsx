@@ -345,7 +345,7 @@ export default function QuestionBank() {
                       <p className="font-medium text-green-600">✓ Sync Complete</p>
                       <p>Found: {syncResult.total_found}</p>
                       <p>Imported: {syncResult.imported}</p>
-                      <p>Skipped (duplicates): {syncResult.skipped}</p>
+                      <p>Updated (duplicates): {syncResult.updated || 0}</p>
                        {syncResult.errors > 0 && (
                         <>
                           <p className="text-destructive">Errors: {syncResult.errors}</p>
