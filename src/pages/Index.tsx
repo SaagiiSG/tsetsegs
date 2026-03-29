@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -46,49 +47,87 @@ const GOLD = {
   muted: "43 15% 60%",
 };
 
-// Statistics for social proof
-const stats = [
-  { value: 700, suffix: "+", label: "Avg Math Score", icon: Target },
-  { value: 1000, suffix: "+", label: "Students Trained", icon: Users },
-  { value: 3, suffix: "+", label: "Years Experience", icon: Star },
-];
-
-// Features cards
-const features = [
-  {
-    icon: BookOpen,
-    title: "Smart Practice",
-    description: "AI-powered question bank with 68+ unique problems and CollegeBoard imports",
+// Translation dictionary
+const translations: Record<string, Record<string, string>> = {
+  mon: {
+    badge: "Монголын шилдэг SAT математикийн төв",
+    heroTitle: "SAT-ыг эзэмш",
+    heroGradient: "Өндөр оноо ав",
+    heroSubtitle: "Цэцэгсийн гэр бүлд нэгдэж, хувийн сургалт, тоглоомжуулсан дасгал, мэргэжилтнүүдийн удирдлагаар чадавхиа нээгээрэй.",
+    studentPortal: "Сурагчийн портал",
+    staffLogin: "Ажилтны нэвтрэх",
+    statAvgScore: "Дундаж математикийн оноо",
+    statStudents: "Бэлтгэгдсэн сурагчид",
+    statExperience: "Жилийн туршлага",
+    whyChooseUs: "Яагаад биднийг сонгох вэ",
+    everythingYouNeed: "Амжилтанд хүрэхэд хэрэгтэй бүх зүйл",
+    succeed: "Амжилт",
+    featureSmartTitle: "Ухаалаг дасгал",
+    featureSmartDesc: "AI-д суурилсан 68+ өвөрмөц бодлого бүхий асуултын сан болон CollegeBoard импорт",
+    featureScoreTitle: "Оноо хянах",
+    featureScoreDesc: "Зорилтот оноогоо тавьж, хувийн ахицаа хянаарай",
+    featureGameTitle: "Тоглоомжуулсан сургалт",
+    featureGameDesc: "Badge цуглуулж, түвшин ахиж, найзуудтайгаа өрсөлдөөрэй",
+    featureAnalyticsTitle: "Гүнзгий аналитик",
+    featureAnalyticsDesc: "Давуу болон сул талуудаа дэлгэрэнгүй гүйцэтгэлийн тайлангаар ойлгоорой",
+    studentAchievements: "Сурагчдын амжилт",
+    ourStudents: "Манай сурагчид",
+    excel: "Тэргүүлдэг",
+    totalScore: "Нийт оноо",
+    meetTheTeam: "Багтай танилцах",
+    our: "Манай",
+    teachers: "Багш нар",
+    roleCEO: "Захирал",
+    roleManager: "Менежер | Англи хэл",
+    roleIELTS: "IELTS",
+    roleSATMath: "SAT Математик",
+    readyToStart: "SAT-ын аялалаа эхлэхэд бэлэн үү?",
+    ctaDescription: "Манай туршлагатай багш нар болон батлагдсан аргачлалаар олон зуун сурагчид оноогоо ахиулсан.",
+    getStarted: "Эхлэх",
+    followFacebook: "Facebook-ээр дагах",
+    footerTagline: "Монголын SAT & IELTS бэлтгэлийн шилдэг төв",
+    footerCopyright: "Цэцэгс Талент Агентлаг. Бүх эрх хуулиар хамгаалагдсан.",
   },
-  {
-    icon: Target,
-    title: "Score Tracking",
-    description: "Set your target score and track your progress with personalized milestones",
+  eng: {
+    badge: "Mongolia's Best SAT Math Center",
+    heroTitle: "Master the SAT",
+    heroGradient: "Score Higher",
+    heroSubtitle: "Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance.",
+    studentPortal: "Student Portal",
+    staffLogin: "Staff Login",
+    statAvgScore: "Avg Math Score",
+    statStudents: "Students Trained",
+    statExperience: "Years Experience",
+    whyChooseUs: "Why Choose Us",
+    everythingYouNeed: "Everything You Need to",
+    succeed: "Succeed",
+    featureSmartTitle: "Smart Practice",
+    featureSmartDesc: "AI-powered question bank with 68+ unique problems and CollegeBoard imports",
+    featureScoreTitle: "Score Tracking",
+    featureScoreDesc: "Set your target score and track your progress with personalized milestones",
+    featureGameTitle: "Gamified Learning",
+    featureGameDesc: "Earn badges, climb tiers, and compete on leaderboards with your peers",
+    featureAnalyticsTitle: "Deep Analytics",
+    featureAnalyticsDesc: "Understand your strengths and weaknesses with detailed performance insights",
+    studentAchievements: "Student Achievements",
+    ourStudents: "Our Students",
+    excel: "Excel",
+    totalScore: "Total Score",
+    meetTheTeam: "Meet the Team",
+    our: "Our",
+    teachers: "Teachers",
+    roleCEO: "CEO",
+    roleManager: "Manager | English",
+    roleIELTS: "IELTS",
+    roleSATMath: "SAT Math",
+    readyToStart: "Ready to Start Your SAT Journey?",
+    ctaDescription: "Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.",
+    getStarted: "Get Started",
+    followFacebook: "Follow Us on Facebook",
+    footerTagline: "SAT & IELTS Prep Excellence in Mongolia",
+    footerCopyright: "Tsetsegs Talent Agency. All rights reserved.",
   },
-  {
-    icon: Trophy,
-    title: "Gamified Learning",
-    description: "Earn badges, climb tiers, and compete on leaderboards with your peers",
-  },
-  {
-    icon: BarChart3,
-    title: "Deep Analytics",
-    description: "Understand your strengths and weaknesses with detailed performance insights",
-  },
-];
-
-// Team members with icon types
-const teamMembers = [
-  { name: "Misheel", role: "CEO", iconType: "crown" as const },
-  { name: "Brody", role: "Manager | English", iconType: "briefcase" as const },
-  { name: "Dulguun", role: "IELTS", iconType: "book" as const },
-  { name: "Udval", role: "IELTS", iconType: "book" as const },
-  { name: "Saran-Ochir", role: "SAT Math", iconType: "calculator" as const },
-  { name: "Manlai", role: "SAT Math", iconType: "calculator" as const },
-  { name: "Tuguldur", role: "SAT Math", iconType: "calculator" as const },
-  { name: "Enguun", role: "SAT Math", iconType: "calculator" as const },
-  { name: "Khulan", role: "SAT Math", iconType: "calculator" as const },
-];
+};
 
 // Gallery images for student achievements
 const galleryImages = [
@@ -102,6 +141,47 @@ const galleryImages = [
 
 const Index = () => {
   const navigate = useNavigate();
+  const [lang, setLang] = useState<'mon' | 'eng'>('mon');
+  const t = (key: string) => translations[lang][key] || key;
+
+  // Role translation helper
+  const translateRole = (role: string) => {
+    const roleMap: Record<string, string> = {
+      "CEO": t('roleCEO'),
+      "Manager | English": t('roleManager'),
+      "IELTS": t('roleIELTS'),
+      "SAT Math": t('roleSATMath'),
+    };
+    return roleMap[role] || role;
+  };
+
+  // Stats with translated labels
+  const stats = [
+    { value: 700, suffix: "+", labelKey: "statAvgScore", icon: Target },
+    { value: 1000, suffix: "+", labelKey: "statStudents", icon: Users },
+    { value: 3, suffix: "+", labelKey: "statExperience", icon: Star },
+  ];
+
+  // Features with translated content
+  const features = [
+    { icon: BookOpen, titleKey: "featureSmartTitle", descKey: "featureSmartDesc" },
+    { icon: Target, titleKey: "featureScoreTitle", descKey: "featureScoreDesc" },
+    { icon: Trophy, titleKey: "featureGameTitle", descKey: "featureGameDesc" },
+    { icon: BarChart3, titleKey: "featureAnalyticsTitle", descKey: "featureAnalyticsDesc" },
+  ];
+
+  // Team members
+  const teamMembers = [
+    { name: "Misheel", role: "CEO", iconType: "crown" as const },
+    { name: "Brody", role: "Manager | English", iconType: "briefcase" as const },
+    { name: "Dulguun", role: "IELTS", iconType: "book" as const },
+    { name: "Udval", role: "IELTS", iconType: "book" as const },
+    { name: "Saran-Ochir", role: "SAT Math", iconType: "calculator" as const },
+    { name: "Manlai", role: "SAT Math", iconType: "calculator" as const },
+    { name: "Tuguldur", role: "SAT Math", iconType: "calculator" as const },
+    { name: "Enguun", role: "SAT Math", iconType: "calculator" as const },
+    { name: "Khulan", role: "SAT Math", iconType: "calculator" as const },
+  ];
 
   // Fetch student success scores from bluebook_attempts
   const { data: successScores } = useQuery({
@@ -129,6 +209,38 @@ const Index = () => {
         fontFamily: "'Nunito', sans-serif",
       }}
     >
+      {/* Language Toggle - Fixed top-right */}
+      <div className="fixed top-4 right-4 z-50">
+        <div 
+          className="flex rounded-full p-1 backdrop-blur-md"
+          style={{
+            background: `hsl(${GOLD.cardBg} / 0.9)`,
+            border: `1px solid hsl(${GOLD.primary} / 0.3)`,
+          }}
+        >
+          <button
+            onClick={() => setLang('mon')}
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+            style={{
+              background: lang === 'mon' ? `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))` : 'transparent',
+              color: lang === 'mon' ? 'hsl(0 0% 5%)' : `hsl(${GOLD.muted})`,
+            }}
+          >
+            МОН
+          </button>
+          <button
+            onClick={() => setLang('eng')}
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+            style={{
+              background: lang === 'eng' ? `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))` : 'transparent',
+              color: lang === 'eng' ? 'hsl(0 0% 5%)' : `hsl(${GOLD.muted})`,
+            }}
+          >
+            ENG
+          </button>
+        </div>
+      </div>
+
       {/* Floating Lines Background - Fixed across all sections */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <FloatingLines 
@@ -196,7 +308,7 @@ const Index = () => {
               }}
             >
               <Sparkles className="w-4 h-4" />
-              <span>Mongolia's Best SAT Math Center</span>
+              <span>{t('badge')}</span>
             </motion.div>
 
             {/* Frosted Glass Container - Only wraps headline and subtitle */}
@@ -218,7 +330,7 @@ const Index = () => {
                   style={{ color: `hsl(${GOLD.text})` }}
                 >
                   <SplitText
-                    text="Master the SAT"
+                    text={t('heroTitle')}
                     className="block"
                     delay={30}
                     duration={0.5}
@@ -231,7 +343,7 @@ const Index = () => {
                     animationSpeed={6}
                     className="font-bold"
                   >
-                    Score Higher
+                    {t('heroGradient')}
                   </GradientText>
                 </div>
               </div>
@@ -245,7 +357,7 @@ const Index = () => {
                 style={{ color: `hsl(${GOLD.muted})` }}
               >
                 <BlurText
-                  text="Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance."
+                  text={t('heroSubtitle')}
                   className="text-lg md:text-xl max-w-3xl mx-auto"
                   delay={20}
                   animateBy="words"
@@ -273,7 +385,7 @@ const Index = () => {
                     onClick={() => navigate("/practice")}
                   >
                     <GraduationCap className="mr-2 h-5 w-5" />
-                    Student Portal
+                    {t('studentPortal')}
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Magnet>
@@ -291,7 +403,7 @@ const Index = () => {
                 onClick={() => navigate("/login")}
               >
                 <Users className="mr-2 h-5 w-5" />
-                Staff Login
+                {t('staffLogin')}
               </Button>
             </motion.div>
 
@@ -304,7 +416,7 @@ const Index = () => {
             >
               {stats.map((stat, index) => (
                 <motion.div
-                  key={stat.label}
+                  key={stat.labelKey}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.5 + index * 0.1, duration: 0.4 }}
@@ -325,7 +437,7 @@ const Index = () => {
                     style={{ color: `hsl(${GOLD.muted})` }}
                   >
                     <stat.icon className="w-3 h-3" />
-                    {stat.label}
+                    {t(stat.labelKey)}
                   </div>
                 </motion.div>
               ))}
@@ -334,7 +446,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section - Starts right after Hero/LaserFlow ends */}
+      {/* Features Section */}
       <section className="relative py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-6xl mx-auto"
@@ -356,7 +468,7 @@ const Index = () => {
               className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
-              Why Choose Us
+              {t('whyChooseUs')}
             </motion.span>
             
             <motion.h2
@@ -366,21 +478,21 @@ const Index = () => {
               }}
               className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
-              Everything You Need to{" "}
+              {t('everythingYouNeed')}{" "}
               <GradientText
                 colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
                 animationSpeed={4}
               >
-                Succeed
+                {t('succeed')}
               </GradientText>
             </motion.h2>
           </div>
 
-          {/* Feature cards - 80% width, simple vertical stack */}
+          {/* Feature cards */}
           <div className="flex flex-col items-center gap-6">
             {features.map((feature, index) => (
               <motion.div
-                key={feature.title}
+                key={feature.titleKey}
                 variants={{
                   hidden: { opacity: 0, x: index % 2 === 0 ? -60 : 60, y: 20 },
                   visible: { 
@@ -414,13 +526,13 @@ const Index = () => {
                         className="text-2xl font-semibold"
                         style={{ color: `hsl(${GOLD.text})` }}
                       >
-                        {feature.title}
+                        {t(feature.titleKey)}
                       </h3>
                       <p 
                         className="text-base leading-relaxed"
                         style={{ color: `hsl(${GOLD.muted})` }}
                       >
-                        {feature.description}
+                        {t(feature.descKey)}
                       </p>
                     </div>
                   </div>
@@ -431,7 +543,7 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Student Success Section with DomeGallery - AFTER FEATURES */}
+      {/* Student Success Section with DomeGallery */}
       <section className="relative py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
@@ -457,7 +569,7 @@ const Index = () => {
               className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
-              Student Achievements
+              {t('studentAchievements')}
             </motion.span>
             <motion.h2
               variants={{
@@ -466,17 +578,17 @@ const Index = () => {
               }}
               className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
-              Our Students{" "}
+              {t('ourStudents')}{" "}
               <GradientText
                 colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
                 animationSpeed={4}
               >
-                Excel
+                {t('excel')}
               </GradientText>
             </motion.h2>
           </div>
 
-          {/* Dome Gallery for student scores - Frosted glass container */}
+          {/* Dome Gallery */}
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 60, scale: 0.9 },
@@ -501,7 +613,7 @@ const Index = () => {
             </div>
           </motion.div>
 
-          {/* Also show the real scores below if available */}
+          {/* Real scores */}
           {successScores && successScores.length > 0 && (
             <motion.div 
               className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16"
@@ -543,7 +655,7 @@ const Index = () => {
                     className="text-xs mt-1"
                     style={{ color: `hsl(${GOLD.muted})` }}
                   >
-                    Total Score
+                    {t('totalScore')}
                   </div>
                   {score.math_scaled_score && (
                     <div 
@@ -560,7 +672,7 @@ const Index = () => {
         </motion.div>
       </section>
 
-      {/* Team Section with PixelCard - AFTER STUDENT WINS */}
+      {/* Team Section with PixelCard */}
       <section className="relative py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
@@ -586,7 +698,7 @@ const Index = () => {
               className="font-medium inline-block"
               style={{ color: `hsl(${GOLD.light})` }}
             >
-              Meet the Team
+              {t('meetTheTeam')}
             </motion.span>
             <motion.h2
               variants={{
@@ -595,12 +707,12 @@ const Index = () => {
               }}
               className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
             >
-              Our{" "}
+              {t('our')}{" "}
               <GradientText
                 colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
                 animationSpeed={4}
               >
-                Teachers
+                {t('teachers')}
               </GradientText>
             </motion.h2>
           </div>
@@ -667,7 +779,7 @@ const Index = () => {
                         className="text-sm"
                         style={{ color: `hsl(${GOLD.muted})` }}
                       >
-                        {member.role}
+                        {translateRole(member.role)}
                       </p>
                     </div>
                   </PixelCard>
@@ -745,7 +857,7 @@ const Index = () => {
                     className="text-3xl md:text-4xl font-bold"
                     style={{ color: `hsl(${GOLD.text})`, fontFamily: "'Outfit', sans-serif" }}
                   >
-                    Ready to Start Your SAT Journey?
+                    {t('readyToStart')}
                   </motion.h2>
                   
                   <motion.p
@@ -756,7 +868,7 @@ const Index = () => {
                     className="max-w-xl mx-auto"
                     style={{ color: `hsl(${GOLD.muted})` }}
                   >
-                    Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.
+                    {t('ctaDescription')}
                   </motion.p>
                   
                   <motion.div
@@ -777,7 +889,7 @@ const Index = () => {
                           }}
                           onClick={() => navigate("/practice")}
                         >
-                          Get Started
+                          {t('getStarted')}
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                       </motion.div>
@@ -790,7 +902,7 @@ const Index = () => {
                         style={{ color: `hsl(${GOLD.light})` }}
                         onClick={() => window.open("https://www.facebook.com/tsetsegs.agency", "_blank")}
                       >
-                        Follow Us on Facebook
+                        {t('followFacebook')}
                       </Button>
                     </motion.div>
                   </motion.div>
@@ -852,7 +964,7 @@ const Index = () => {
                 className="text-sm"
                 style={{ color: `hsl(${GOLD.muted})` }}
               >
-                SAT & IELTS Prep Excellence in Mongolia
+                {t('footerTagline')}
               </p>
             </div>
             
@@ -875,12 +987,12 @@ const Index = () => {
               visible: { opacity: 1, transition: { duration: 0.6, delay: 0.2 } }
             }}
           >
-            © {new Date().getFullYear()} Tsetsegs Talent Agency. All rights reserved.
+            © {new Date().getFullYear()} {t('footerCopyright')}
           </motion.div>
         </motion.div>
       </footer>
 
-      {/* GradualBlur at bottom - backdrop blur effect */}
+      {/* GradualBlur at bottom */}
       <GradualBlur 
         position="bottom"
         height="10rem"
