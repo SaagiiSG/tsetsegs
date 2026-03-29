@@ -438,25 +438,36 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center p-6">
+      <div className="flex justify-between items-center p-6 pb-8">
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={goPrev}
           disabled={page === 0}
-          className="opacity-50 disabled:opacity-20"
+          className="gap-1 disabled:opacity-20"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" /> Back
         </Button>
-        <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all duration-300 cursor-pointer",
+                i === page ? "bg-primary w-5" : "bg-muted-foreground/20 hover:bg-muted-foreground/40"
+              )}
+              onClick={() => { setDirection(i > page ? 1 : -1); setPage(i); }}
+            />
+          ))}
+        </div>
         <Button
-          variant="ghost"
-          size="icon"
+          variant={page === totalPages - 1 ? "ghost" : "default"}
+          size="sm"
           onClick={goNext}
           disabled={page === totalPages - 1}
-          className="opacity-50 disabled:opacity-20"
+          className="gap-1 disabled:opacity-20"
         >
-          <ChevronRight className="h-5 w-5" />
+          Next <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     </div>
