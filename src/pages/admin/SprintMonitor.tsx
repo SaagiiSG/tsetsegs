@@ -909,15 +909,8 @@ export default function SprintMonitor() {
               </Card>
             )}
 
-            <div className="flex items-center justify-between">
-              <div />
-              {allUpcoming && !isEditing && (
-                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleStartEditSeason(selectedSeason!)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit Season
-                </Button>
-              )}
-            </div>
+
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[1, 2, 3].map(sprintNum => {
