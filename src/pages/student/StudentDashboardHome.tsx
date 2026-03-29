@@ -71,6 +71,8 @@ export default function StudentDashboardHome() {
   const { student } = useStudentAuth();
   const navigate = useNavigate();
   const [categoryTab, setCategoryTab] = useState<'math' | 'english'>('math');
+  const [showClosingReport, setShowClosingReport] = useState(false);
+  const { isEnabled } = useFeatureFlags();
   const [radarSubject, setRadarSubject] = useState<'math' | 'english'>('math');
   const [selectedSatDate, setSelectedSatDate] = useState<Date | null>(null);
   
