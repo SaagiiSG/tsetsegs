@@ -209,10 +209,36 @@ function ClosingReportSettingsEditor() {
           <Label>Sign-off Line</Label>
           <Input value={signOff} onChange={e => setSignOff(e.target.value)} placeholder="See you on the review session! 🚀" />
         </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Message'}
-        </Button>
+        <div className="flex gap-2">
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Eye className="h-4 w-4" />
+                Preview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Closing Report Preview</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center text-center gap-4 py-8 px-4 rounded-lg bg-gradient-to-b from-background to-muted/30">
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  <Heart className="h-10 w-10 text-pink-500" />
+                </motion.div>
+                <h2 className="text-2xl font-bold">{previewHeading}</h2>
+                <p className="text-muted-foreground max-w-sm text-sm">{previewBody}</p>
+                <p className="text-base font-semibold text-primary mt-1">{previewSignOff}</p>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            <Save className="h-4 w-4" />
+            {saving ? 'Saving...' : 'Save Message'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
