@@ -333,9 +333,9 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       {/* Content */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={page}
@@ -345,6 +345,7 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
             animate="center"
             exit="exit"
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="h-full"
           >
             {slides[page]}
           </motion.div>
@@ -352,13 +353,13 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center p-6 pb-8">
+      <div className="flex justify-between items-center px-4 py-3 border-t border-border shrink-0">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={goPrev}
           disabled={page === 0}
-          className="gap-1 disabled:opacity-20"
+          className="gap-1 disabled:opacity-0"
         >
           <ChevronLeft className="h-4 w-4" /> Back
         </Button>
@@ -379,7 +380,7 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
           size="sm"
           onClick={goNext}
           disabled={page === totalPages - 1}
-          className="gap-1 disabled:opacity-20"
+          className="gap-1 disabled:opacity-0"
         >
           Next <ChevronRight className="h-4 w-4" />
         </Button>
