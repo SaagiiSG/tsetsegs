@@ -334,18 +334,6 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Music toggle */}
-      <div className="flex justify-end pt-4 px-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggle}
-          className="opacity-60 hover:opacity-100"
-        >
-          {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </Button>
-      </div>
-
       {/* Content */}
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence initial={false} custom={direction} mode="wait">
