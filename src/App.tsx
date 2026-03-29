@@ -145,6 +145,14 @@ const App = () => (
                       </TeacherProtectedRoute>
                     } 
                   />
+                  <Route 
+                    path="/teacher/wrapped/:batchId" 
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherClassWrapped />
+                      </TeacherProtectedRoute>
+                    } 
+                  />
                   
                   {/* Student Practice Portal */}
                   <Route path="/practice" element={<StudentPortal />} />
