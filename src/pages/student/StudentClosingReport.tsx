@@ -150,8 +150,6 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const totalPages = 6;
-  const { playing, toggle, start } = useAmbientMusic();
-  const musicStarted = useRef(false);
 
   const firstName = data.studentName.split(' ')[0] || 'Student';
   const finalHeading = (settings?.heading || 'Thank You, {name}!').replace(/{name}/g, firstName);
