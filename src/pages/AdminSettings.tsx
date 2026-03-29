@@ -133,6 +133,11 @@ function ClosingReportSettingsEditor() {
   const [signOff, setSignOff] = useState("See you on the review session! 🚀");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const previewHeading = heading.replace(/{name}/g, "Dulguun");
+  const previewBody = body.replace(/{name}/g, "Dulguun");
+  const previewSignOff = signOff.replace(/{name}/g, "Dulguun");
 
   useEffect(() => {
     (async () => {
