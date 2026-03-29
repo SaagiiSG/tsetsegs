@@ -382,6 +382,11 @@ export default function TeacherDashboard() {
               <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
                 <BarChart3 className="h-3.5 w-3.5" />
               </Button>
+              {selectedIntake === "previous" && (
+                <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}>
+                  <Flower2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </Card>
