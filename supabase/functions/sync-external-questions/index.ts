@@ -276,8 +276,7 @@ Deno.serve(async (req) => {
       // Map skill/subtopic to category
       const categoryId = getCategoryId(q.skill as string | null, q.subtopic as string | null);
 
-      const insertData: Record<string, unknown> = {
-        question_id: newQuestionId,
+      const questionData: Record<string, unknown> = {
         question_text: q.question_text,
         answer: q.answer,
         multiple_choice_options: q.multiple_choice_options,
@@ -303,20 +302,38 @@ Deno.serve(async (req) => {
         category_id: categoryId,
       };
 
-      const { error: insertError } = await adminClient.from("questions").insert(insertData);
+      if (existingId) {
+        // Update existing duplicate with new data
+        const { error: updateError } = await adminClient
+          .from("questions")
+          .update(questionData)
+          .eq("id", existingId);
 
-      if (insertError) {
-        errors++;
-        errorDetails.push(`${qId}: ${insertError.message}`);
+        if (updateError) {
+          errors++;
+          errorDetails.push(`${qId} (update): ${updateError.message}`);
+        } else {
+          updated++;
+        }
       } else {
-        imported++;
-        existingQIds.add(newQuestionId);
-        if (cbId) existingCbIds.add(cbId);
+        // Insert new question
+        const { error: insertError } = await adminClient
+          .from("questions")
+          .insert({ ...questionData, question_id: newQuestionId! });
+
+        if (insertError) {
+          errors++;
+          errorDetails.push(`${qId}: ${insertError.message}`);
+        } else {
+          imported++;
+          existingQIds.set(newQuestionId!, "new");
+          if (cbId) existingCbIds.set(cbId, "new");
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
+      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, updated, errors, error_details: errorDetails.slice(0, 10) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
