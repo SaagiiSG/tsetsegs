@@ -399,25 +399,16 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Music toggle + Progress dots */}
-      <div className="flex justify-center gap-2 pt-6 relative">
+      {/* Music toggle */}
+      <div className="flex justify-end pt-4 px-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className="absolute right-4 top-4 opacity-60 hover:opacity-100"
+          className="opacity-60 hover:opacity-100"
         >
           {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </Button>
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              "w-2 h-2 rounded-full transition-all duration-300",
-              i === page ? "bg-primary w-6" : "bg-muted-foreground/20"
-            )}
-          />
-        ))}
       </div>
 
       {/* Content */}
