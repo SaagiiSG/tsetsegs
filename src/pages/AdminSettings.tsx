@@ -6,11 +6,13 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Palette, Moon, Sun, Check, FileText, Save } from "lucide-react";
+import { Palette, Moon, Sun, Check, FileText, Save, Eye, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
 
 const colorThemes = [
   { id: "rose", name: "Rose", color: "hsl(345 75% 65%)" },
