@@ -708,6 +708,104 @@ const Index = () => {
         </motion.div>
       </section>
 
+      {/* IELTS Achievements Section */}
+      <section className="relative py-24 px-4 overflow-hidden">
+        <div 
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
+        />
+        
+        <motion.div 
+          className="relative max-w-7xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } }
+          }}
+        >
+          <div className="text-center space-y-4 mb-16">
+            <motion.span
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="font-medium inline-block"
+              style={{ color: `hsl(${GOLD.light})` }}
+            >
+              {t('ieltsAchievements')}
+            </motion.span>
+            <motion.h2
+              variants={{
+                hidden: { opacity: 0, y: 40, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } }
+              }}
+              className="text-3xl md:text-5xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              {t('ourIELTS')}{" "}
+              <GradientText
+                colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`]}
+                animationSpeed={4}
+              >
+                {t('results')}
+              </GradientText>
+            </motion.h2>
+          </div>
+
+          {/* Scrolling rows of IELTS achievement images */}
+          <div className="space-y-6 overflow-hidden">
+            {/* Row 1 - scrolls left */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { duration: 0.8 } }
+              }}
+            >
+              <div className="flex gap-4 animate-[scroll-left_40s_linear_infinite]">
+                {[ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5,
+                  ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5].map((img, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                    style={{
+                      border: `2px solid hsl(${GOLD.primary} / 0.3)`,
+                      boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
+                    }}
+                  >
+                    <img src={img} alt={`IELTS Achievement ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Row 2 - scrolls right */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { duration: 0.8, delay: 0.2 } }
+              }}
+            >
+              <div className="flex gap-4 animate-[scroll-right_45s_linear_infinite]">
+                {[ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15,
+                  ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15].map((img, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                    style={{
+                      border: `2px solid hsl(${GOLD.primary} / 0.3)`,
+                      boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
+                    }}
+                  >
+                    <img src={img} alt={`IELTS Achievement ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
       {/* Team Section with PixelCard */}
       <section className="relative py-24 px-4 overflow-hidden">
         <div 
