@@ -180,7 +180,7 @@ export default function QuestionBank() {
       if (!dryRun && data?.success) {
         toast({
           title: 'Sync Complete',
-          description: `Imported ${data.imported} questions, skipped ${data.skipped} duplicates.`,
+          description: `Imported ${data.imported} new, updated ${data.updated || 0} existing questions.`,
         });
       }
     } catch (err: any) {
