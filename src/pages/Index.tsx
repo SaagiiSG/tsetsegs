@@ -65,6 +65,15 @@ import ieltsA13 from "@/assets/ielts-achievement-13.jpg";
 import ieltsA14 from "@/assets/ielts-achievement-14.jpg";
 import ieltsA15 from "@/assets/ielts-achievement-15.jpg";
 
+// SAT score achievement images
+import sat1470 from "@/assets/sat-1470.jpg";
+import sat1500 from "@/assets/sat-1500.jpg";
+import sat1500_1 from "@/assets/sat-1500-1.jpg";
+import sat1480 from "@/assets/sat-1480.jpg";
+import sat1500_2 from "@/assets/sat-1500-2.jpg";
+import sat1480_2 from "@/assets/sat-1480-2.jpg";
+import sat1430 from "@/assets/sat-1430.jpg";
+
 // Golden color palette - independent of app themes
 const GOLD = {
   primary: "43 88% 50%",
@@ -165,14 +174,15 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-// Gallery images for student achievements
+// Gallery images for student achievements - SAT scores
 const galleryImages = [
-  { src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop", alt: "Student studying" },
-  { src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop", alt: "Books and learning" },
-  { src: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop", alt: "Study session" },
-  { src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop", alt: "Education" },
-  { src: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=800&auto=format&fit=crop", alt: "Graduation" },
-  { src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop", alt: "Classroom" },
+  { src: sat1500_1, alt: "SAT 1500 - Б. Оюу-Ундрам" },
+  { src: sat1500, alt: "SAT 1500 - Г. Тэмүүлэн" },
+  { src: sat1500_2, alt: "SAT 1500 - Е. Ескендир" },
+  { src: sat1480, alt: "SAT 1480 - Б. Булгамаа" },
+  { src: sat1480_2, alt: "SAT 1480 - Г. Тэнгис" },
+  { src: sat1470, alt: "SAT 1470 - Билэгбаяр" },
+  { src: sat1430, alt: "SAT 1430 - Б. Аманда" },
 ];
 
 const Index = () => {
