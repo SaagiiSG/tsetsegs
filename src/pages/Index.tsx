@@ -65,6 +65,15 @@ import ieltsA13 from "@/assets/ielts-achievement-13.jpg";
 import ieltsA14 from "@/assets/ielts-achievement-14.jpg";
 import ieltsA15 from "@/assets/ielts-achievement-15.jpg";
 
+// SAT score achievement images
+import sat1470 from "@/assets/sat-1470.jpg";
+import sat1500 from "@/assets/sat-1500.jpg";
+import sat1500_1 from "@/assets/sat-1500-1.jpg";
+import sat1480 from "@/assets/sat-1480.jpg";
+import sat1500_2 from "@/assets/sat-1500-2.jpg";
+import sat1480_2 from "@/assets/sat-1480-2.jpg";
+import sat1430 from "@/assets/sat-1430.jpg";
+
 // Golden color palette - independent of app themes
 const GOLD = {
   primary: "43 88% 50%",
