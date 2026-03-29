@@ -223,14 +223,16 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    // Get existing question IDs and original_cb_ids to skip duplicates
+    // Get existing question IDs and original_cb_ids to detect duplicates
     const { data: existingQuestions } = await adminClient
       .from("questions")
-      .select("question_id, original_cb_id");
+      .select("id, question_id, original_cb_id");
 
-    const existingQIds = new Set((existingQuestions || []).map((q) => q.question_id));
-    const existingCbIds = new Set(
-      (existingQuestions || []).map((q) => q.original_cb_id).filter(Boolean)
+    const existingQIds = new Map((existingQuestions || []).map((q) => [q.question_id, q.id]));
+    const existingCbIds = new Map(
+      (existingQuestions || [])
+        .filter((q) => q.original_cb_id)
+        .map((q) => [q.original_cb_id!, q.id])
     );
 
     // Find the highest EXT number
@@ -242,7 +244,7 @@ Deno.serve(async (req) => {
     let nextExtNum = extIds.length > 0 ? Math.max(...extIds) + 1 : 1;
 
     let imported = 0;
-    let skipped = 0;
+    let updated = 0;
     let errors = 0;
     const errorDetails: string[] = [];
 
@@ -250,11 +252,15 @@ Deno.serve(async (req) => {
       const cbId = q.original_cb_id as string | null;
       const qId = q.question_id as string;
 
-      if (cbId && existingCbIds.has(cbId)) { skipped++; continue; }
-      if (existingQIds.has(qId)) { skipped++; continue; }
+      // Check if this is a duplicate — if so, we'll update instead of skip
+      const existingId = (cbId && existingCbIds.has(cbId))
+        ? existingCbIds.get(cbId)!
+        : existingQIds.has(qId)
+          ? existingQIds.get(qId)!
+          : null;
 
-      const newQuestionId = `EXT${String(nextExtNum).padStart(4, "0")}`;
-      nextExtNum++;
+      const newQuestionId = existingId ? null : `EXT${String(nextExtNum).padStart(4, "0")}`;
+      if (!existingId) nextExtNum++;
 
       // Normalize difficulty_level to match check constraint (easy, medium, hard)
       const rawDifficulty = (q.difficulty_level || '').toString().toLowerCase().trim();
@@ -270,8 +276,7 @@ Deno.serve(async (req) => {
       // Map skill/subtopic to category
       const categoryId = getCategoryId(q.skill as string | null, q.subtopic as string | null);
 
-      const insertData: Record<string, unknown> = {
-        question_id: newQuestionId,
+      const questionData: Record<string, unknown> = {
         question_text: q.question_text,
         answer: q.answer,
         multiple_choice_options: q.multiple_choice_options,
@@ -297,20 +302,38 @@ Deno.serve(async (req) => {
         category_id: categoryId,
       };
 
-      const { error: insertError } = await adminClient.from("questions").insert(insertData);
+      if (existingId) {
+        // Update existing duplicate with new data
+        const { error: updateError } = await adminClient
+          .from("questions")
+          .update(questionData)
+          .eq("id", existingId);
 
-      if (insertError) {
-        errors++;
-        errorDetails.push(`${qId}: ${insertError.message}`);
+        if (updateError) {
+          errors++;
+          errorDetails.push(`${qId} (update): ${updateError.message}`);
+        } else {
+          updated++;
+        }
       } else {
-        imported++;
-        existingQIds.add(newQuestionId);
-        if (cbId) existingCbIds.add(cbId);
+        // Insert new question
+        const { error: insertError } = await adminClient
+          .from("questions")
+          .insert({ ...questionData, question_id: newQuestionId! });
+
+        if (insertError) {
+          errors++;
+          errorDetails.push(`${qId}: ${insertError.message}`);
+        } else {
+          imported++;
+          existingQIds.set(newQuestionId!, "new");
+          if (cbId) existingCbIds.set(cbId, "new");
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, skipped, errors, error_details: errorDetails.slice(0, 10) }),
+      JSON.stringify({ success: true, total_found: filteredQuestions.length, imported, updated, errors, error_details: errorDetails.slice(0, 10) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
