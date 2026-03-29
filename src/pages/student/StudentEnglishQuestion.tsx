@@ -13,7 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Bookmark, RotateCcw } from 'lucide-react';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
