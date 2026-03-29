@@ -237,6 +237,39 @@ export function ClosingReportContent({ data, shareToken, settings }: ClosingRepo
   };
 
   const slides = [
+    // Slide 0: Congrats Intro
+    <ReportSlide key="congrats">
+      <motion.div
+        initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+        className="text-6xl"
+      >
+        🎉
+      </motion.div>
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="text-3xl font-black"
+      >
+        Congrats, {firstName}!
+      </motion.h1>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="text-muted-foreground max-w-xs text-base"
+      >
+        You've finished the course! Let's take a look at how you did.
+      </motion.p>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <Button onClick={goNext} size="lg" className="gap-2 mt-4">
+          Let's Go <ChevronRight className="h-4 w-4" />
+        </Button>
+      </motion.div>
+    </ReportSlide>,
+
     // Slide 1: Class Stats
     <ReportSlide key="stats">
       <motion.div
