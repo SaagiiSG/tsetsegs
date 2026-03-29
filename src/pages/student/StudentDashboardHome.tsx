@@ -755,7 +755,7 @@ export default function StudentDashboardHome() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Closing Report Auto-Popup Dialog */}
       <Dialog open={showClosingReport} onOpenChange={setShowClosingReport}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-4xl h-[calc(100vh-1rem)] md:h-[min(92vh,900px)] p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-md w-[95vw] h-[80vh] max-h-[600px] p-0 gap-0 overflow-hidden">
           <div className="relative h-full overflow-hidden rounded-[inherit]">
             <button
               onClick={() => setShowClosingReport(false)}
