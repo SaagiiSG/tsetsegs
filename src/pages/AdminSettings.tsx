@@ -6,11 +6,13 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Palette, Moon, Sun, Check, FileText, Save } from "lucide-react";
+import { Palette, Moon, Sun, Check, FileText, Save, Eye, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
 
 const colorThemes = [
   { id: "rose", name: "Rose", color: "hsl(345 75% 65%)" },
@@ -131,6 +133,11 @@ function ClosingReportSettingsEditor() {
   const [signOff, setSignOff] = useState("See you on the review session! 🚀");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const previewHeading = heading.replace(/{name}/g, "Dulguun");
+  const previewBody = body.replace(/{name}/g, "Dulguun");
+  const previewSignOff = signOff.replace(/{name}/g, "Dulguun");
 
   useEffect(() => {
     (async () => {
@@ -202,10 +209,36 @@ function ClosingReportSettingsEditor() {
           <Label>Sign-off Line</Label>
           <Input value={signOff} onChange={e => setSignOff(e.target.value)} placeholder="See you on the review session! 🚀" />
         </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Message'}
-        </Button>
+        <div className="flex gap-2">
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Eye className="h-4 w-4" />
+                Preview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Closing Report Preview</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center text-center gap-4 py-8 px-4 rounded-lg bg-gradient-to-b from-background to-muted/30">
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  <Heart className="h-10 w-10 text-pink-500" />
+                </motion.div>
+                <h2 className="text-2xl font-bold">{previewHeading}</h2>
+                <p className="text-muted-foreground max-w-sm text-sm">{previewBody}</p>
+                <p className="text-base font-semibold text-primary mt-1">{previewSignOff}</p>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            <Save className="h-4 w-4" />
+            {saving ? 'Saving...' : 'Save Message'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
