@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { FullProfileDialog } from '@/components/student/leaderboard/FullProfileDialog';
 
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2, CalendarIcon, X, Rocket } from 'lucide-react';
+import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2, CalendarIcon, X, Rocket, Pencil, Save } from 'lucide-react';
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -120,6 +120,10 @@ export default function SprintMonitor() {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
+  const [editingSeason, setEditingSeason] = useState<number | null>(null);
+  const [editStartDate, setEditStartDate] = useState<Date>(new Date());
+  const [editSprintDays, setEditSprintDays] = useState(14);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   
   // Season builder state
   const [builderStartDate, setBuilderStartDate] = useState<Date>(() => {
@@ -286,6 +290,60 @@ export default function SprintMonitor() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // Edit upcoming season handler
+  const handleStartEditSeason = (seasonNumber: number) => {
+    const seasonSprintsForEdit = sprints?.filter(s => s.season_number === seasonNumber) || [];
+    const sprint1 = seasonSprintsForEdit.find(s => s.sprint_number === 1);
+    if (sprint1) {
+      setEditStartDate(new Date(sprint1.start_date));
+      const durationDays = differenceInDays(new Date(sprint1.end_date), new Date(sprint1.start_date));
+      setEditSprintDays(durationDays);
+    }
+    setEditingSeason(seasonNumber);
+  };
+
+  const handleSaveSeasonEdit = async () => {
+    if (!editingSeason) return;
+    setIsSavingEdit(true);
+    
+    try {
+      const seasonSprintsToEdit = sprints?.filter(s => s.season_number === editingSeason) || [];
+      
+      const s1Start = new Date(editStartDate);
+      s1Start.setHours(0, 0, 0, 0);
+      const s1End = addDays(s1Start, editSprintDays);
+      const s2Start = new Date(s1End);
+      const s2End = addDays(s2Start, editSprintDays);
+      const s3Start = new Date(s2End);
+      const s3End = addDays(s3Start, editSprintDays);
+      
+      const updates = [
+        { sprint_number: 1, start_date: s1Start.toISOString(), end_date: s1End.toISOString() },
+        { sprint_number: 2, start_date: s2Start.toISOString(), end_date: s2End.toISOString() },
+        { sprint_number: 3, start_date: s3Start.toISOString(), end_date: s3End.toISOString() },
+      ];
+      
+      for (const update of updates) {
+        const sprint = seasonSprintsToEdit.find(s => s.sprint_number === update.sprint_number);
+        if (sprint) {
+          const { error } = await supabase
+            .from('sprints')
+            .update({ start_date: update.start_date, end_date: update.end_date })
+            .eq('id', sprint.id);
+          if (error) throw error;
+        }
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
+      toast({ title: 'Season Updated', description: `Season ${editingSeason} schedule has been updated.` });
+      setEditingSeason(null);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update season', variant: 'destructive' });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -745,56 +803,167 @@ export default function SprintMonitor() {
       </div>
 
       {/* Sprint Cards for Selected Season */}
-      {seasonSprints.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(sprintNum => {
-            const sprint = seasonSprints.find(s => s.sprint_number === sprintNum);
-            const status = sprint ? getSprintStatus(sprint) : 'upcoming';
-            
-            return (
-              <Card 
-                key={sprintNum} 
-                className={cn(
-                  "transition-all",
-                  status === 'active' && "ring-2 ring-primary border-primary",
-                  !sprint && "opacity-50"
-                )}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Sprint {sprintNum}</CardTitle>
-                    <Badge 
-                      variant={status === 'active' ? 'default' : status === 'completed' ? 'secondary' : 'outline'}
-                      className={cn(
-                        status === 'active' && "bg-green-500",
-                        status === 'completed' && "bg-muted"
-                      )}
-                    >
-                      {status === 'active' ? 'Active' : status === 'completed' ? 'Completed' : 'Upcoming'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {sprint ? (
-                    <div className="space-y-2 text-sm">
-                      <p className="text-muted-foreground">
-                        {format(new Date(sprint.start_date), 'MMM d')} - {format(new Date(sprint.end_date), 'MMM d')}
-                      </p>
-                      {status === 'active' && (
-                        <p className="font-medium text-primary">
-                          {totalParticipants} participants
-                        </p>
-                      )}
+      {seasonSprints.length > 0 && (() => {
+        const allUpcoming = seasonSprints.every(s => getSprintStatus(s) === 'upcoming');
+        const isEditing = editingSeason === selectedSeason;
+
+        return (
+          <div className="space-y-4">
+            {/* Edit controls for upcoming seasons */}
+            {allUpcoming && isEditing && (
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 animate-fade-in">
+                <CardContent className="p-6 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Pencil className="h-5 w-5 text-primary" />
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Not scheduled</p>
-                  )}
+                    <div>
+                      <h3 className="text-lg font-bold">Edit Season {selectedSeason}</h3>
+                      <p className="text-sm text-muted-foreground">Adjust schedule before the season starts</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Start Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(editStartDate, 'PPP')}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={editStartDate}
+                            onSelect={(d) => d && setEditStartDate(d)}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">Sprint Duration</label>
+                        <span className="text-sm font-mono font-bold text-primary">{editSprintDays} days</span>
+                      </div>
+                      <Slider
+                        value={[editSprintDays]}
+                        onValueChange={([v]) => setEditSprintDays(v)}
+                        min={7}
+                        max={28}
+                        step={1}
+                        className="py-2"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>7 days</span>
+                        <span>28 days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview timeline */}
+                  {(() => {
+                    const s1S = new Date(editStartDate);
+                    const s1E = addDays(s1S, editSprintDays);
+                    const s2S = new Date(s1E);
+                    const s2E = addDays(s2S, editSprintDays);
+                    const s3S = new Date(s2E);
+                    const s3E = addDays(s3S, editSprintDays);
+                    return (
+                      <div className="flex gap-1 h-14 rounded-xl overflow-hidden border border-border/50">
+                        <div className="flex-1 bg-primary/15 flex flex-col items-center justify-center">
+                          <span className="text-xs font-bold text-primary">Sprint 1</span>
+                          <span className="text-[10px] text-muted-foreground">{format(s1S, 'MMM d')} – {format(s1E, 'MMM d')}</span>
+                        </div>
+                        <div className="flex-1 bg-accent/20 flex flex-col items-center justify-center">
+                          <span className="text-xs font-bold text-accent-foreground">Sprint 2</span>
+                          <span className="text-[10px] text-muted-foreground">{format(s2S, 'MMM d')} – {format(s2E, 'MMM d')}</span>
+                        </div>
+                        <div className="flex-1 bg-secondary/40 flex flex-col items-center justify-center">
+                          <span className="text-xs font-bold text-secondary-foreground">Sprint 3</span>
+                          <span className="text-[10px] text-muted-foreground">{format(s3S, 'MMM d')} – {format(s3E, 'MMM d')}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
+                    <Button variant="outline" onClick={() => setEditingSeason(null)}>Cancel</Button>
+                    <Button onClick={handleSaveSeasonEdit} disabled={isSavingEdit} className="gap-2">
+                      {isSavingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-      )}
+            )}
+
+            <div className="flex items-center justify-between">
+              <div />
+              {allUpcoming && !isEditing && (
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleStartEditSeason(selectedSeason!)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit Season
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map(sprintNum => {
+                const sprint = seasonSprints.find(s => s.sprint_number === sprintNum);
+                const status = sprint ? getSprintStatus(sprint) : 'upcoming';
+                
+                return (
+                  <Card 
+                    key={sprintNum} 
+                    className={cn(
+                      "transition-all",
+                      status === 'active' && "ring-2 ring-primary border-primary",
+                      !sprint && "opacity-50"
+                    )}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Sprint {sprintNum}</CardTitle>
+                        <Badge 
+                          variant={status === 'active' ? 'default' : status === 'completed' ? 'secondary' : 'outline'}
+                          className={cn(
+                            status === 'active' && "bg-green-500",
+                            status === 'completed' && "bg-muted"
+                          )}
+                        >
+                          {status === 'active' ? 'Active' : status === 'completed' ? 'Completed' : 'Upcoming'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {sprint ? (
+                        <div className="space-y-2 text-sm">
+                          <p className="text-muted-foreground">
+                            {format(new Date(sprint.start_date), 'MMM d')} - {format(new Date(sprint.end_date), 'MMM d')}
+                          </p>
+                          {status === 'active' && (
+                            <p className="font-medium text-primary">
+                              {totalParticipants} participants
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Not scheduled</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Tier Breakdown - Horizontal Carousel */}
       {activeSprint && (
