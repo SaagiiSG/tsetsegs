@@ -90,6 +90,14 @@ const registrationSchema = z.object({
   parentPhone: z
     .string()
     .regex(/^\d{8}$/, "Parent's phone number must be exactly 8 digits"),
+  grade: z
+    .string()
+    .min(1, "Please select your grade"),
+  schoolName: z
+    .string()
+    .trim()
+    .min(1, "Please enter your school name")
+    .max(200, "School name is too long"),
   mathLevel: z.enum(["bad", "average", "good"], {
     required_error: "Please select your math level",
   }),
