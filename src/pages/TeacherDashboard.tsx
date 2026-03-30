@@ -67,6 +67,31 @@ export default function TeacherDashboard() {
     }
   }, [teacherName, authLoading, selectedIntake]);
 
+  // Real-time subscription for new student registrations
+  useEffect(() => {
+    if (!teacherName) return;
+
+    const channel = supabase
+      .channel('teacher-student-registrations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'students',
+        },
+        () => {
+          console.log('New student registered, refreshing counts...');
+          fetchBatches();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [teacherName]);
+
   const fetchBatches = async () => {
     console.log("fetchBatches called, teacherName:", teacherName);
     if (!teacherName) {
