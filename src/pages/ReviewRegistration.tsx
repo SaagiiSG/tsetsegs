@@ -532,6 +532,56 @@ export default function ReviewRegistration() {
                 )}
               </div>
 
+              {/* Grade */}
+              <div className="space-y-2">
+                <Label>Grade</Label>
+                <Select
+                  onValueChange={(value) => registrationForm.setValue("grade", value)}
+                >
+                  <SelectTrigger
+                    className={
+                      registrationForm.formState.errors.grade
+                        ? "border-destructive"
+                        : ""
+                    }
+                  >
+                    <SelectValue placeholder="Select your grade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["8", "9", "10", "11", "12"].map((g) => (
+                      <SelectItem key={g} value={g}>
+                        Grade {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {registrationForm.formState.errors.grade && (
+                  <p className="text-sm text-destructive">
+                    {registrationForm.formState.errors.grade.message}
+                  </p>
+                )}
+              </div>
+
+              {/* School Name */}
+              <div className="space-y-2">
+                <Label htmlFor="schoolName">School Name</Label>
+                <Input
+                  id="schoolName"
+                  placeholder="Enter your school name"
+                  className={
+                    registrationForm.formState.errors.schoolName
+                      ? "border-destructive"
+                      : ""
+                  }
+                  {...registrationForm.register("schoolName")}
+                />
+                {registrationForm.formState.errors.schoolName && (
+                  <p className="text-sm text-destructive">
+                    {registrationForm.formState.errors.schoolName.message}
+                  </p>
+                )}
+              </div>
+
               {/* Math Level */}
               <div className="space-y-2">
                 <Label>Math Level</Label>
