@@ -122,6 +122,7 @@ export default function ReviewRegistration() {
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitCooldown, setSubmitCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
 
