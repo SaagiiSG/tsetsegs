@@ -79,7 +79,9 @@ export default function QuestionBank() {
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('is_original', true)
-        .eq('question_set', 'CollegeBoard');
+        .eq('is_active', true)
+        .neq('question_set', '68')
+        .eq('subject', 'math');
       
       if (excludeIds.length > 0) {
         query = query.not('id', 'in', `(${excludeIds.join(',')})`);
