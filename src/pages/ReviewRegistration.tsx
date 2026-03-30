@@ -761,7 +761,7 @@ export default function ReviewRegistration() {
                     Registering...
                   </>
                 ) : submitCooldown ? (
-                  "Please wait..."
+                  `Please wait... (${cooldownSeconds}s)`
                 ) : (
                   "Register"
                 )}
