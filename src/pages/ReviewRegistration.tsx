@@ -151,6 +151,21 @@ export default function ReviewRegistration() {
 
   const hasTakenSat = registrationForm.watch("hasTakenSat");
 
+  const startCooldown = (seconds: number) => {
+    setSubmitCooldown(true);
+    setCooldownSeconds(seconds);
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setSubmitCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   // Fetch teachers list
   useEffect(() => {
     const fetchTeachers = async () => {
