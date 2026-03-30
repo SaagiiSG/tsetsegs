@@ -137,6 +137,8 @@ export default function ReviewRegistration() {
       lastName: "",
       phone: "",
       parentPhone: "",
+      grade: "",
+      schoolName: "",
       mathLevel: undefined,
       englishLevel: undefined,
       teacher: "",
