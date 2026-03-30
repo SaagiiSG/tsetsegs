@@ -90,6 +90,14 @@ const registrationSchema = z.object({
   parentPhone: z
     .string()
     .regex(/^\d{8}$/, "Parent's phone number must be exactly 8 digits"),
+  grade: z
+    .string()
+    .min(1, "Please select your grade"),
+  schoolName: z
+    .string()
+    .trim()
+    .min(1, "Please enter your school name")
+    .max(200, "School name is too long"),
   mathLevel: z.enum(["bad", "average", "good"], {
     required_error: "Please select your math level",
   }),
@@ -129,6 +137,8 @@ export default function ReviewRegistration() {
       lastName: "",
       phone: "",
       parentPhone: "",
+      grade: "",
+      schoolName: "",
       mathLevel: undefined,
       englishLevel: undefined,
       teacher: "",
@@ -285,13 +295,15 @@ export default function ReviewRegistration() {
         name: `${data.firstName.trim()} ${data.lastName.trim()}`,
         phone: data.phone,
         parent_phone: data.parentPhone,
+        grade: data.grade,
+        school_name: data.schoolName.trim(),
         math_level: data.mathLevel,
         english_level: data.englishLevel,
         review_teacher: data.teacher,
         sat_test_month: data.plannedSatDate || null,
         has_taken_sat: data.hasTakenSat,
         previous_sat_score: data.hasTakenSat ? data.previousSatScore : null,
-        is_review_student: !assignedBatchId, // Not a review student if assigned to batch
+        is_review_student: !assignedBatchId,
         unique_link_id: uniqueLinkId,
         first_session_completed: true,
         accessed: false,
@@ -516,6 +528,56 @@ export default function ReviewRegistration() {
                 {registrationForm.formState.errors.parentPhone && (
                   <p className="text-sm text-destructive">
                     {registrationForm.formState.errors.parentPhone.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Grade */}
+              <div className="space-y-2">
+                <Label>Grade</Label>
+                <Select
+                  onValueChange={(value) => registrationForm.setValue("grade", value)}
+                >
+                  <SelectTrigger
+                    className={
+                      registrationForm.formState.errors.grade
+                        ? "border-destructive"
+                        : ""
+                    }
+                  >
+                    <SelectValue placeholder="Select your grade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["8", "9", "10", "11", "12"].map((g) => (
+                      <SelectItem key={g} value={g}>
+                        Grade {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {registrationForm.formState.errors.grade && (
+                  <p className="text-sm text-destructive">
+                    {registrationForm.formState.errors.grade.message}
+                  </p>
+                )}
+              </div>
+
+              {/* School Name */}
+              <div className="space-y-2">
+                <Label htmlFor="schoolName">School Name</Label>
+                <Input
+                  id="schoolName"
+                  placeholder="Enter your school name"
+                  className={
+                    registrationForm.formState.errors.schoolName
+                      ? "border-destructive"
+                      : ""
+                  }
+                  {...registrationForm.register("schoolName")}
+                />
+                {registrationForm.formState.errors.schoolName && (
+                  <p className="text-sm text-destructive">
+                    {registrationForm.formState.errors.schoolName.message}
                   </p>
                 )}
               </div>
