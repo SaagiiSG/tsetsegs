@@ -365,8 +365,8 @@ export default function ReviewRegistration() {
       toast.error("Something went wrong", {
         description: "Please try again.",
       });
-      // Reset cooldown on error so they can retry
-      setTimeout(() => setSubmitCooldown(false), 2000);
+      // Reset cooldown on error so they can retry after a short wait
+      startCooldown(5);
     } finally {
       setIsSubmitting(false);
     }
