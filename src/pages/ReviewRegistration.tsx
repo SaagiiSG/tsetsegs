@@ -294,7 +294,7 @@ export default function ReviewRegistration() {
             duration: 6000,
           });
           setIsSubmitting(false);
-          setTimeout(() => setSubmitCooldown(false), 3000);
+          startCooldown(5);
           return;
         }
       }
