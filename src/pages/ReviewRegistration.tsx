@@ -122,6 +122,7 @@ export default function ReviewRegistration() {
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitCooldown, setSubmitCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
 
@@ -149,6 +150,21 @@ export default function ReviewRegistration() {
   });
 
   const hasTakenSat = registrationForm.watch("hasTakenSat");
+
+  const startCooldown = (seconds: number) => {
+    setSubmitCooldown(true);
+    setCooldownSeconds(seconds);
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setSubmitCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   // Fetch teachers list
   useEffect(() => {
@@ -261,7 +277,7 @@ export default function ReviewRegistration() {
             duration: 6000,
           });
           setIsSubmitting(false);
-          setTimeout(() => setSubmitCooldown(false), 3000);
+          startCooldown(5);
           return;
         }
       } else {
@@ -278,7 +294,7 @@ export default function ReviewRegistration() {
             duration: 6000,
           });
           setIsSubmitting(false);
-          setTimeout(() => setSubmitCooldown(false), 3000);
+          startCooldown(5);
           return;
         }
       }
@@ -349,8 +365,8 @@ export default function ReviewRegistration() {
       toast.error("Something went wrong", {
         description: "Please try again.",
       });
-      // Reset cooldown on error so they can retry
-      setTimeout(() => setSubmitCooldown(false), 2000);
+      // Reset cooldown on error so they can retry after a short wait
+      startCooldown(5);
     } finally {
       setIsSubmitting(false);
     }
@@ -745,7 +761,7 @@ export default function ReviewRegistration() {
                     Registering...
                   </>
                 ) : submitCooldown ? (
-                  "Please wait..."
+                  `Please wait... (${cooldownSeconds}s)`
                 ) : (
                   "Register"
                 )}
