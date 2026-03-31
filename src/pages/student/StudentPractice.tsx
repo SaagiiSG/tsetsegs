@@ -460,7 +460,7 @@ export default function StudentPractice() {
 
       {/* Layout: 150 tab = full width grid, others = two column */}
       {questionSet === '150' && subject === 'math' ? (
-        <div className="flex flex-col flex-1 gap-4" style={{ minHeight: 0 }}>
+        <div className="flex flex-col flex-1 gap-4 mb-4" style={{ minHeight: 0 }}>
           {/* Selected Area Header & Progress */}
           <Card className="shrink-0">
             <CardHeader className="pb-2">
