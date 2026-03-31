@@ -484,34 +484,36 @@ export default function StudentPractice() {
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 </div>
               ) : filteredQuestions.length > 0 ? (
-                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-15 gap-2">
-                  {filteredQuestions.map((question, index) => {
-                    const status = getQuestionStatus(question.id);
-                    const inReview = reviewQueueSet.has(question.id);
-                    const displayNum = index + 1;
+                <ScrollArea className="h-[240px]">
+                  <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-15 gap-2 pr-4">
+                    {filteredQuestions.map((question, index) => {
+                      const status = getQuestionStatus(question.id);
+                      const inReview = reviewQueueSet.has(question.id);
+                      const displayNum = index + 1;
 
-                    return (
-                      <button
-                        key={question.id}
-                        className={cn(
-                          "aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition-all hover:scale-105 hover:shadow-md cursor-pointer",
-                          status === 'completed' && 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400',
-                          (status === 'needs_review' || inReview) && 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400',
-                          status === 'video_watched' && !inReview && 'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
-                          status === 'not_started' && 'border-border bg-card text-muted-foreground hover:border-primary/50'
-                        )}
-                        onClick={() => {
-                          logActivity('question_click', { question_id: question.id });
-                          navigate(`/practice/question/${question.id}`);
-                        }}
-                      >
-                        <span className="text-sm font-bold">{displayNum}</span>
-                        {status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
-                        {(status === 'needs_review' || inReview) && <RotateCcw className="h-3 w-3" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                      return (
+                        <button
+                          key={question.id}
+                          className={cn(
+                            "aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition-all hover:scale-105 hover:shadow-md cursor-pointer",
+                            status === 'completed' && 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400',
+                            (status === 'needs_review' || inReview) && 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400',
+                            status === 'video_watched' && !inReview && 'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+                            status === 'not_started' && 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                          )}
+                          onClick={() => {
+                            logActivity('question_click', { question_id: question.id });
+                            navigate(`/practice/question/${question.id}`);
+                          }}
+                        >
+                          <span className="text-sm font-bold">{displayNum}</span>
+                          {status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
+                          {(status === 'needs_review' || inReview) && <RotateCcw className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
