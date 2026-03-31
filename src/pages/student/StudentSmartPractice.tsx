@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 
 type Subject = 'math' | 'english';
-type QuestionSet = '68' | 'CB';
+type QuestionSet = '68' | 'CB' | '150';
 
 export default function StudentSmartPractice() {
   const navigate = useNavigate();
