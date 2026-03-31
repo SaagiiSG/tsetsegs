@@ -856,7 +856,7 @@ export default function StudentDashboardHome() {
           </Card>
         </motion.div>
 
-        {/* Practice Test Average */}
+        {/* 150 Hard Questions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -864,20 +864,16 @@ export default function StudentDashboardHome() {
         >
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Practice Avg
-                </span>
-                <PracticeTestScoreDrawer />
+              <CardDescription className="flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                150 Hard
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.practiceTestAvg || '—'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Tests 4-11 average
+              <div className="text-2xl font-bold">{stats?.hard150Completion || 0}%</div>
+              <Progress value={stats?.hard150Completion || 0} className="mt-2 h-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats?.completedHard150 || 0} / {stats?.totalHard150 || 150} mastered
               </p>
             </CardContent>
           </Card>
@@ -906,7 +902,7 @@ export default function StudentDashboardHome() {
           </Card>
         </motion.div>
 
-        {/* 150 Hard Questions */}
+        {/* Practice Test Average */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -914,16 +910,20 @@ export default function StudentDashboardHome() {
         >
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                150 Hard
+              <CardDescription className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Practice Avg
+                </span>
+                <PracticeTestScoreDrawer />
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.hard150Completion || 0}%</div>
-              <Progress value={stats?.hard150Completion || 0} className="mt-2 h-2" />
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats?.completedHard150 || 0} / {stats?.totalHard150 || 150} mastered
+              <div className="text-2xl font-bold">
+                {stats?.practiceTestAvg || '—'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Tests 4-11 average
               </p>
             </CardContent>
           </Card>
