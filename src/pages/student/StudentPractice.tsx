@@ -458,118 +458,14 @@ export default function StudentPractice() {
         </CardContent>
       </Card>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[calc(100vh-320px)]">
-        {/* Left Panel - Categories & Subtopics */}
-        <Card className="h-fit lg:h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              {subject === 'math' ? 'Math Areas' : 'English Skills'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <ScrollArea className="h-[300px] lg:h-[calc(100vh-450px)]">
-              <div className="space-y-1 pr-4">
-                {/* All Questions option */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-between text-left h-auto py-2 px-3",
-                    !selectedCategory && "bg-primary/10 text-primary"
-                  )}
-                  onClick={clearSelection}
-                >
-                  <span className="font-medium">All Questions</span>
-                  <span className="text-xs text-muted-foreground">{questions?.length || 0}</span>
-                </Button>
-
-                {categoryTree.map(cat => (
-                  <Collapsible 
-                    key={cat.id} 
-                    open={expandedCategories.has(cat.id)}
-                    onOpenChange={() => toggleCategory(cat.id)}
-                  >
-                    <div className="flex items-center">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-1 hover:bg-transparent"
-                        >
-                          {expandedCategories.has(cat.id) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "flex-1 justify-between text-left h-auto py-2 px-2",
-                          selectedCategory === cat.id && !selectedSubtopic && "bg-primary/10 text-primary"
-                        )}
-                        onClick={() => handleCategoryClick(cat.id)}
-                      >
-                        <span className="font-medium text-sm truncate">{cat.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{cat.completed}/{cat.total}</span>
-                          <Progress value={cat.percent} className="w-12 h-1.5" />
-                        </div>
-                      </Button>
-                    </div>
-                    <CollapsibleContent className="pl-7 space-y-0.5">
-                      {cat.subtopics.length > 0 ? (
-                        cat.subtopics.map(subtopic => {
-                          const subtopicQuestions = questions?.filter(
-                            q => q.category_id === cat.id && q.subtopic === subtopic
-                          ) || [];
-                          const subtopicCompleted = subtopicQuestions.filter(
-                            q => getQuestionStatus(q.id) === 'completed'
-                          ).length;
-                          
-                          return (
-                            <Button
-                              key={subtopic}
-                              variant="ghost"
-                              size="sm"
-                              className={cn(
-                                "w-full justify-between text-left h-auto py-1.5 px-2 text-xs",
-                                selectedSubtopic === subtopic && selectedCategory === cat.id && "bg-primary/10 text-primary"
-                              )}
-                              onClick={() => handleSubtopicClick(cat.id, subtopic)}
-                            >
-                              <span className="truncate">{subtopic}</span>
-                              <span className="text-muted-foreground">{subtopicCompleted}/{subtopicQuestions.length}</span>
-                            </Button>
-                          );
-                        })
-                      ) : (
-                        <p className="text-xs text-muted-foreground py-2 px-2">No subtopics available</p>
-                      )}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Right Panel - Questions Display */}
-        <div className="space-y-4">
+      {/* Layout: 150 tab = full width grid, others = two column */}
+      {questionSet === '150' && subject === 'math' ? (
+        <div className="space-y-4 min-h-[calc(100vh-320px)]">
           {/* Selected Area Header & Progress */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                {selectedSubtopic || selectedCategoryName || 'All Questions'}
-                {selectedCategory && (
-                  <Button variant="ghost" size="sm" onClick={clearSelection} className="ml-auto text-xs h-6">
-                    Clear
-                  </Button>
-                )}
+                150 Hard Questions
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -580,93 +476,259 @@ export default function StudentPractice() {
             </CardContent>
           </Card>
 
-          {/* Question Grid */}
-          <Card className="flex-1">
-            <CardContent className="p-3">
-              <ScrollArea className="h-[300px] lg:h-[calc(100vh-520px)]">
-                {questionsLoading ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                  </div>
-                ) : filteredQuestions.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-4">
-                    {filteredQuestions.map((question, index) => {
-                      const status = getQuestionStatus(question.id);
-                      const inReview = reviewQueueSet.has(question.id);
-                      
-                      // Convert question_id to simpler display format
-                      const displayId = question.question_id;
-                      let simpleId = displayId;
-                      
-                      // For CB questions, extract just the number
-                      if (displayId.startsWith('CB')) {
-                        const num = parseInt(displayId.replace('CB', ''), 10);
-                        simpleId = isNaN(num) ? displayId : String(num);
-                      } else if (displayId.startsWith('ENG')) {
-                        const num = parseInt(displayId.replace('ENG', ''), 10);
-                        simpleId = isNaN(num) ? displayId : String(num);
-                      }
-                      
-                      return (
-                        <Card 
-                          key={question.id}
-                          className={cn(
-                            "cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]",
-                            status === 'completed' && 'border-green-500/50 bg-green-500/5',
-                            (status === 'needs_review' || inReview) && 'border-orange-500/50 bg-orange-500/5',
-                            status === 'video_watched' && !inReview && 'border-yellow-500/50 bg-yellow-500/5'
-                          )}
-                          onClick={() => {
-                            logActivity('question_click', { question_id: question.id });
-                            navigate(subject === 'english' 
-                              ? `/practice/english/question/${question.id}` 
-                              : `/practice/question/${question.id}`
-                            );
-                          }}
-                        >
-                          <CardContent className="p-2 space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono font-bold text-xs">{simpleId}</span>
-                              <div className="flex items-center gap-0.5">
-                                {notesSet.has(question.id) && (
-                                  <StickyNote className="h-3 w-3 text-amber-500" />
-                                )}
-                                {status === 'completed' && (
-                                  <CheckCircle2 className="h-3 w-3 text-green-500" />
-                                )}
-                                {(status === 'needs_review' || inReview) && (
-                                  <RotateCcw className="h-3 w-3 text-orange-500" />
-                                )}
-                                {status === 'video_watched' && !inReview && (
-                                  <PlayCircle className="h-3 w-3 text-yellow-500" />
-                                )}
-                              </div>
-                            </div>
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "text-[9px] truncate max-w-full",
-                                getCategoryColor(question.category?.name || '')
-                              )}
-                            >
-                              {question.category?.name?.split(' ')[0] || 'N/A'}
-                            </Badge>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No questions in this selection</p>
-                  </div>
-                )}
-              </ScrollArea>
+          {/* Full Width Question Grid */}
+          <Card>
+            <CardContent className="p-4">
+              {questionsLoading ? (
+                <div className="text-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                </div>
+              ) : filteredQuestions.length > 0 ? (
+                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-15 gap-2">
+                  {filteredQuestions.map((question, index) => {
+                    const status = getQuestionStatus(question.id);
+                    const inReview = reviewQueueSet.has(question.id);
+                    const displayNum = index + 1;
+
+                    return (
+                      <button
+                        key={question.id}
+                        className={cn(
+                          "aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition-all hover:scale-105 hover:shadow-md cursor-pointer",
+                          status === 'completed' && 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400',
+                          (status === 'needs_review' || inReview) && 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400',
+                          status === 'video_watched' && !inReview && 'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+                          status === 'not_started' && 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        )}
+                        onClick={() => {
+                          logActivity('question_click', { question_id: question.id });
+                          navigate(`/practice/question/${question.id}`);
+                        }}
+                      >
+                        <span className="text-sm font-bold">{displayNum}</span>
+                        {status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
+                        {(status === 'needs_review' || inReview) && <RotateCcw className="h-3 w-3" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No questions available</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[calc(100vh-320px)]">
+          {/* Left Panel - Categories & Subtopics */}
+          <Card className="h-fit lg:h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                {subject === 'math' ? 'Math Areas' : 'English Skills'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+              <ScrollArea className="h-[300px] lg:h-[calc(100vh-450px)]">
+                <div className="space-y-1 pr-4">
+                  {/* All Questions option */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-between text-left h-auto py-2 px-3",
+                      !selectedCategory && "bg-primary/10 text-primary"
+                    )}
+                    onClick={clearSelection}
+                  >
+                    <span className="font-medium">All Questions</span>
+                    <span className="text-xs text-muted-foreground">{questions?.length || 0}</span>
+                  </Button>
+
+                  {categoryTree.map(cat => (
+                    <Collapsible 
+                      key={cat.id} 
+                      open={expandedCategories.has(cat.id)}
+                      onOpenChange={() => toggleCategory(cat.id)}
+                    >
+                      <div className="flex items-center">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-1 hover:bg-transparent"
+                          >
+                            {expandedCategories.has(cat.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "flex-1 justify-between text-left h-auto py-2 px-2",
+                            selectedCategory === cat.id && !selectedSubtopic && "bg-primary/10 text-primary"
+                          )}
+                          onClick={() => handleCategoryClick(cat.id)}
+                        >
+                          <span className="font-medium text-sm truncate">{cat.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{cat.completed}/{cat.total}</span>
+                            <Progress value={cat.percent} className="w-12 h-1.5" />
+                          </div>
+                        </Button>
+                      </div>
+                      <CollapsibleContent className="pl-7 space-y-0.5">
+                        {cat.subtopics.length > 0 ? (
+                          cat.subtopics.map(subtopic => {
+                            const subtopicQuestions = questions?.filter(
+                              q => q.category_id === cat.id && q.subtopic === subtopic
+                            ) || [];
+                            const subtopicCompleted = subtopicQuestions.filter(
+                              q => getQuestionStatus(q.id) === 'completed'
+                            ).length;
+                            
+                            return (
+                              <Button
+                                key={subtopic}
+                                variant="ghost"
+                                size="sm"
+                                className={cn(
+                                  "w-full justify-between text-left h-auto py-1.5 px-2 text-xs",
+                                  selectedSubtopic === subtopic && selectedCategory === cat.id && "bg-primary/10 text-primary"
+                                )}
+                                onClick={() => handleSubtopicClick(cat.id, subtopic)}
+                              >
+                                <span className="truncate">{subtopic}</span>
+                                <span className="text-muted-foreground">{subtopicCompleted}/{subtopicQuestions.length}</span>
+                              </Button>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-muted-foreground py-2 px-2">No subtopics available</p>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Right Panel - Questions Display */}
+          <div className="space-y-4">
+            {/* Selected Area Header & Progress */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  {selectedSubtopic || selectedCategoryName || 'All Questions'}
+                  {selectedCategory && (
+                    <Button variant="ghost" size="sm" onClick={clearSelection} className="ml-auto text-xs h-6">
+                      Clear
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Progress value={areaStats.percent} className="h-2" />
+                <p className="text-sm text-muted-foreground">
+                  {areaStats.completed}/{areaStats.total} mastered ({areaStats.percent}%)
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Question Grid */}
+            <Card className="flex-1">
+              <CardContent className="p-3">
+                <ScrollArea className="h-[300px] lg:h-[calc(100vh-520px)]">
+                  {questionsLoading ? (
+                    <div className="text-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    </div>
+                  ) : filteredQuestions.length > 0 ? (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-4">
+                      {filteredQuestions.map((question, index) => {
+                        const status = getQuestionStatus(question.id);
+                        const inReview = reviewQueueSet.has(question.id);
+                        
+                        const displayId = question.question_id;
+                        let simpleId = displayId;
+                        
+                        if (displayId.startsWith('CB')) {
+                          const num = parseInt(displayId.replace('CB', ''), 10);
+                          simpleId = isNaN(num) ? displayId : String(num);
+                        } else if (displayId.startsWith('ENG')) {
+                          const num = parseInt(displayId.replace('ENG', ''), 10);
+                          simpleId = isNaN(num) ? displayId : String(num);
+                        }
+                        
+                        return (
+                          <Card 
+                            key={question.id}
+                            className={cn(
+                              "cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]",
+                              status === 'completed' && 'border-green-500/50 bg-green-500/5',
+                              (status === 'needs_review' || inReview) && 'border-orange-500/50 bg-orange-500/5',
+                              status === 'video_watched' && !inReview && 'border-yellow-500/50 bg-yellow-500/5'
+                            )}
+                            onClick={() => {
+                              logActivity('question_click', { question_id: question.id });
+                              navigate(subject === 'english' 
+                                ? `/practice/english/question/${question.id}` 
+                                : `/practice/question/${question.id}`
+                              );
+                            }}
+                          >
+                            <CardContent className="p-2 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono font-bold text-xs">{simpleId}</span>
+                                <div className="flex items-center gap-0.5">
+                                  {notesSet.has(question.id) && (
+                                    <StickyNote className="h-3 w-3 text-amber-500" />
+                                  )}
+                                  {status === 'completed' && (
+                                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                  )}
+                                  {(status === 'needs_review' || inReview) && (
+                                    <RotateCcw className="h-3 w-3 text-orange-500" />
+                                  )}
+                                  {status === 'video_watched' && !inReview && (
+                                    <PlayCircle className="h-3 w-3 text-yellow-500" />
+                                  )}
+                                </div>
+                              </div>
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-[9px] truncate max-w-full",
+                                  getCategoryColor(question.category?.name || '')
+                                )}
+                              >
+                                {question.category?.name?.split(' ')[0] || 'N/A'}
+                              </Badge>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No questions in this selection</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
