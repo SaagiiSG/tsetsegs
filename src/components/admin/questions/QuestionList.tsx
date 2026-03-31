@@ -66,6 +66,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
       // Filter by question set
       if (questionSet === '68') {
         query = query.eq('question_set', '68');
+      } else if (questionSet === '150') {
+        query = query.eq('question_set', 'SATMathTraining800');
       } else {
         query = query.eq('question_set', 'CollegeBoard');
       }
