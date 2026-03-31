@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100 } = body;
+    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set } = body;
 
     // Clamp limit to prevent abuse
     const safeLimit = Math.min(Math.max(limit, 1), 200);
@@ -178,9 +178,15 @@ Deno.serve(async (req) => {
       .from("questions")
       .select("question_id, question_text, answer, multiple_choice_options, difficulty_level, subject, question_type, rationale, passage_text, original_cb_id, question_set, subtopic, alternate_answers, question_image_url, choice_images, video_url, skill, has_figure, figure_type, figure_description, figure_svg")
       .eq("is_active", true)
-      .eq("is_original", true)
       .order("created_at", { ascending: true })
       .range(offset, offset + safeLimit - 1);
+
+    // Filter by question_set if specified, otherwise only fetch originals
+    if (question_set) {
+      query = query.eq("question_set", question_set);
+    } else {
+      query = query.eq("is_original", true);
+    }
 
     if (subject) query = query.eq("subject", subject);
     if (since_date) query = query.gt("created_at", since_date);

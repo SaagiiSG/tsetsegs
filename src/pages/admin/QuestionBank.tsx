@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,12 +24,14 @@ import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuest
 import { toast } from '@/hooks/use-toast';
 
 export default function QuestionBank() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('questions-68');
   const [formOpen, setFormOpen] = useState(false);
   const [cbFormOpen, setCbFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [syncing150, setSyncing150] = useState(false);
   const [syncSubject, setSyncSubject] = useState<string>('all');
   const [syncCategory, setSyncCategory] = useState<string>('all');
   const [syncing, setSyncing] = useState(false);
@@ -174,6 +176,46 @@ export default function QuestionBank() {
     if (activeTab === 'questions-68') return 'Add 68 Question';
     if (activeTab === 'questions-cb') return 'Add CB Question';
     return null;
+  };
+
+  const handleSync150 = async () => {
+    setSyncing150(true);
+    try {
+      let offset = 0;
+      let totalImported = 0;
+      let totalSkipped = 0;
+      let totalErrors = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+          body: { question_set: 'SATMathTraining800', offset, limit: 200 },
+        });
+        if (error) throw error;
+        if (!data) throw new Error('No response data');
+
+        totalImported += data.imported || 0;
+        totalSkipped += data.skipped || 0;
+        totalErrors += data.errors || 0;
+        hasMore = data.has_more === true && (data.total_found || 0) > 0;
+        offset = data.next_offset || offset + 200;
+      }
+
+      toast({
+        title: 'Import Complete',
+        description: `Imported ${totalImported} new, skipped ${totalSkipped} duplicates.${totalErrors > 0 ? ` Errors: ${totalErrors}` : ''}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['questions', '150'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-150-count'] });
+    } catch (err: any) {
+      toast({
+        title: 'Import Failed',
+        description: err.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing150(false);
+    }
   };
 
   const [syncProgress, setSyncProgress] = useState('');
@@ -687,6 +729,16 @@ export default function QuestionBank() {
         </TabsContent>
 
         <TabsContent value="questions-150" className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSync150}
+              disabled={syncing150}
+              className="gap-2"
+            >
+              {syncing150 ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+              {syncing150 ? 'Importing...' : 'Import 150 Hard from External DB'}
+            </Button>
+          </div>
           <QuestionList onEdit={handleEdit} questionSet="150" />
         </TabsContent>
 
