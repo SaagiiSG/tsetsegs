@@ -92,6 +92,17 @@ export default function QuestionBank() {
     }
   });
 
+  // Fetch 150 Hard questions count
+  const { data: questions150Count } = useQuery({
+    queryKey: ['questions-150-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('question_set', 'SATMathTraining800');
+      return count || 0;
+    }
+  });
   // Fetch pending variations count
   const { data: pendingVariationsCount } = useQuery({
     queryKey: ['pending-variations-count'],
