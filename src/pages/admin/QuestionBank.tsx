@@ -331,6 +331,10 @@ export default function QuestionBank() {
             </div>
           </div>
 
+          {syncProgress && (
+            <p className="text-sm text-muted-foreground mt-2 animate-pulse">{syncProgress}</p>
+          )}
+
           {/* Results Area */}
           <div className="flex-1 overflow-y-auto min-h-0 mt-4">
             {syncResult && (
