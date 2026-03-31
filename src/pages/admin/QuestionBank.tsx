@@ -165,24 +165,65 @@ export default function QuestionBank() {
     return null;
   };
 
+  const [syncProgress, setSyncProgress] = useState('');
+
   const handleSync = async (dryRun = false) => {
     setSyncing(true);
     setSyncResult(null);
+    setSyncProgress('');
     try {
-      const { data, error } = await supabase.functions.invoke('sync-external-questions', {
-        body: {
-          subject: syncSubject === 'all' ? undefined : syncSubject,
-          category: syncSubject === 'math' && syncCategory !== 'all' ? syncCategory : undefined,
-          dry_run: dryRun,
-        },
-      });
-      if (error) throw error;
-      setSyncResult(data);
-      setPreviewPage(0);
-      if (!dryRun && data?.success) {
+      const baseBody = {
+        subject: syncSubject === 'all' ? undefined : syncSubject,
+        category: syncSubject === 'math' && syncCategory !== 'all' ? syncCategory : undefined,
+        dry_run: dryRun,
+      };
+
+      if (dryRun) {
+        // Dry run: single call, no pagination needed
+        const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+          body: { ...baseBody, limit: 100 },
+        });
+        if (error) throw error;
+        setSyncResult(data);
+        setPreviewPage(0);
+      } else {
+        // Live sync: paginate through all questions
+        let offset = 0;
+        let totalImported = 0;
+        let totalUpdated = 0;
+        let totalErrors = 0;
+        let totalFound = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          setSyncProgress(`Syncing batch at offset ${offset}...`);
+          const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+            body: { ...baseBody, offset, limit: 100 },
+          });
+          if (error) throw error;
+          if (!data) throw new Error('No response data');
+
+          totalImported += data.imported || 0;
+          totalUpdated += data.updated || 0;
+          totalErrors += data.errors || 0;
+          totalFound += data.total_found || 0;
+          hasMore = data.has_more === true && (data.total_found || 0) > 0;
+          offset = data.next_offset || offset + 100;
+
+          setSyncProgress(`Imported ${totalImported}, updated ${totalUpdated} so far...`);
+        }
+
+        setSyncResult({
+          success: true,
+          total_found: totalFound,
+          imported: totalImported,
+          updated: totalUpdated,
+          errors: totalErrors,
+        });
+
         toast({
           title: 'Sync Complete',
-          description: `Imported ${data.imported} new, updated ${data.updated || 0} existing questions.`,
+          description: `Imported ${totalImported} new, updated ${totalUpdated} existing questions.`,
         });
       }
     } catch (err: any) {
@@ -193,6 +234,7 @@ export default function QuestionBank() {
       });
     } finally {
       setSyncing(false);
+      setSyncProgress('');
     }
   };
 
@@ -288,6 +330,10 @@ export default function QuestionBank() {
               </Button>
             </div>
           </div>
+
+          {syncProgress && (
+            <p className="text-sm text-muted-foreground mt-2 animate-pulse">{syncProgress}</p>
+          )}
 
           {/* Results Area */}
           <div className="flex-1 overflow-y-auto min-h-0 mt-4">
