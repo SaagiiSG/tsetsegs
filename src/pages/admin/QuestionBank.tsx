@@ -609,6 +609,17 @@ export default function QuestionBank() {
           </CardContent>
         </Card>
 
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-150')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">150 Hard</CardTitle>
+            <FileQuestion className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{questions150Count ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Training 800</p>
+          </CardContent>
+        </Card>
+
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('students')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">Students</CardTitle>
