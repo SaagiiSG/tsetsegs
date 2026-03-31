@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 
 type Subject = 'math' | 'english';
-type QuestionSet = '68' | 'CB';
+type QuestionSet = '68' | 'CB' | '150';
 
 export default function StudentSmartPractice() {
   const navigate = useNavigate();
@@ -178,6 +178,13 @@ export default function StudentSmartPractice() {
                   onClick={() => setQuestionSet('CB')}
                 >
                   CollegeBoard
+                </Button>
+                <Button
+                  variant={questionSet === '150' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setQuestionSet('150')}
+                >
+                  150 Hard
                 </Button>
               </div>
             </div>

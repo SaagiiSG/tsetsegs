@@ -19,7 +19,7 @@ interface AdaptiveQuestion {
   priority: number;
 }
 
-export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questionSet: '68' | 'CB' = '68') {
+export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questionSet: '68' | 'CB' | '150' = '68') {
   const { student } = useStudentAuth();
   const queryClient = useQueryClient();
   const [sessionQuestions, setSessionQuestions] = useState<AdaptiveQuestion[]>([]);
@@ -38,6 +38,8 @@ export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questi
       if (subject === 'math') {
         if (questionSet === '68') {
           query = query.eq('question_set', '68');
+        } else if (questionSet === '150') {
+          query = query.eq('question_set', 'SATMathTraining800');
         } else {
           query = query.eq('question_set', 'CollegeBoard').eq('is_original', true);
         }

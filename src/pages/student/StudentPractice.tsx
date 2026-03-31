@@ -16,7 +16,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
 
-type QuestionSet = '68' | 'CB';
+type QuestionSet = '68' | 'CB' | '150';
 type Subject = 'math' | 'english';
 
 const MATH_CATEGORIES = [
@@ -84,11 +84,11 @@ export default function StudentPractice() {
       
       if (subject === 'math') {
         if (questionSet === '68') {
-          // For 68 set: include ALL questions (original + variations as separate)
           query = query.eq('question_set', '68');
+        } else if (questionSet === '150') {
+          query = query.eq('question_set', 'SATMathTraining800');
         } else {
-          // For CB set: CollegeBoard + External imported questions, only originals
-          query = query.neq('question_set', '68').eq('is_original', true);
+          query = query.neq('question_set', '68').neq('question_set', 'SATMathTraining800').eq('is_original', true);
         }
       } else {
         // For English: only originals
@@ -111,32 +111,35 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult] = await Promise.all([
-        // For 68 set: count ALL questions (including variations)
+      const [set68Result, cbResult, englishResult, set150Result] = await Promise.all([
         supabase
           .from('questions')
           .select('id')
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
-        // For CB: all non-68 math originals (CollegeBoard + External)
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
           .neq('question_set', '68')
+          .neq('question_set', 'SATMathTraining800')
           .eq('subject', 'math'),
-        // For English: only count originals
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english')
+          .eq('subject', 'english'),
+        supabase
+          .from('questions')
+          .select('id')
+          .eq('is_active', true)
+          .eq('question_set', 'SATMathTraining800')
+          .eq('subject', 'math')
       ]);
       
-      // Filter out bluebook questions from counts
       const filterBluebook = (data: { id: string }[] | null) => {
         if (!data || !bluebookQuestionIds) return 0;
         return data.filter(q => !bluebookQuestionIds.has(q.id)).length;
@@ -145,7 +148,8 @@ export default function StudentPractice() {
       return {
         set68: filterBluebook(set68Result.data),
         cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data)
+        english: filterBluebook(englishResult.data),
+        set150: filterBluebook(set150Result.data)
       };
     },
     enabled: !!student && bluebookLoaded
@@ -419,6 +423,19 @@ export default function StudentPractice() {
                 >
                   <Target className="h-4 w-4" />
                   CB ({questionCounts?.cb || 0})
+                </Button>
+                <Button
+                  variant={questionSet === '150' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setQuestionSet('150');
+                    setSelectedCategory(null);
+                    setSelectedSubtopic(null);
+                  }}
+                  className="gap-2"
+                >
+                  <Target className="h-4 w-4" />
+                  150 ({questionCounts?.set150 || 0})
                 </Button>
               </div>
             )}
