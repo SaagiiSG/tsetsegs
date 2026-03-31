@@ -201,7 +201,7 @@ export default function QuestionBank() {
         // Live sync: paginate through all questions
         let offset = 0;
         let totalImported = 0;
-        let totalUpdated = 0;
+        let totalSkipped = 0;
         let totalErrors = 0;
         let totalFound = 0;
         let hasMore = true;
@@ -215,13 +215,13 @@ export default function QuestionBank() {
           if (!data) throw new Error('No response data');
 
           totalImported += data.imported || 0;
-          totalUpdated += data.updated || 0;
+          totalSkipped += data.skipped || 0;
           totalErrors += data.errors || 0;
           totalFound += data.total_found || 0;
           hasMore = data.has_more === true && (data.total_found || 0) > 0;
           offset = data.next_offset || offset + 100;
 
-          setSyncProgress(`Imported ${totalImported}, updated ${totalUpdated} so far...`);
+          setSyncProgress(`Imported ${totalImported}, skipped ${totalSkipped} so far...`);
         }
 
         setSyncResult({
