@@ -177,6 +177,46 @@ export default function QuestionBank() {
     return null;
   };
 
+  const handleSync150 = async () => {
+    setSyncing150(true);
+    try {
+      let offset = 0;
+      let totalImported = 0;
+      let totalSkipped = 0;
+      let totalErrors = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+          body: { question_set: 'SATMathTraining800', offset, limit: 200 },
+        });
+        if (error) throw error;
+        if (!data) throw new Error('No response data');
+
+        totalImported += data.imported || 0;
+        totalSkipped += data.skipped || 0;
+        totalErrors += data.errors || 0;
+        hasMore = data.has_more === true && (data.total_found || 0) > 0;
+        offset = data.next_offset || offset + 200;
+      }
+
+      toast({
+        title: 'Import Complete',
+        description: `Imported ${totalImported} new, skipped ${totalSkipped} duplicates.${totalErrors > 0 ? ` Errors: ${totalErrors}` : ''}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['questions', '150'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-150-count'] });
+    } catch (err: any) {
+      toast({
+        title: 'Import Failed',
+        description: err.message || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing150(false);
+    }
+  };
+
   const [syncProgress, setSyncProgress] = useState('');
 
   const handleSync = async (dryRun = false) => {
