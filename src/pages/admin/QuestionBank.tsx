@@ -24,6 +24,7 @@ import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuest
 import { toast } from '@/hooks/use-toast';
 
 export default function QuestionBank() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('questions-68');
   const [formOpen, setFormOpen] = useState(false);
   const [cbFormOpen, setCbFormOpen] = useState(false);
