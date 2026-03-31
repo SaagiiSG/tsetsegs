@@ -228,13 +228,13 @@ export default function QuestionBank() {
           success: true,
           total_found: totalFound,
           imported: totalImported,
-          updated: totalUpdated,
+          skipped: totalSkipped,
           errors: totalErrors,
         });
 
         toast({
           title: 'Sync Complete',
-          description: `Imported ${totalImported} new, updated ${totalUpdated} existing questions.`,
+          description: `Imported ${totalImported} new, skipped ${totalSkipped} duplicates.`,
         });
       }
     } catch (err: any) {
