@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
       .filter((n: number) => !isNaN(n));
     let nextExtNum = extIds.length > 0 ? Math.max(...extIds) + 1 : 1;
 
-    let imported = 0, updated = 0, errors = 0;
+    let imported = 0, skipped = 0, errors = 0;
     const errorDetails: string[] = [];
 
     // Process in batches of 25
@@ -274,7 +274,6 @@ Deno.serve(async (req) => {
       const batch = filteredQuestions.slice(i, i + BATCH_SIZE);
 
       const toInsert: any[] = [];
-      const toUpdate: { id: string; data: any }[] = [];
 
       for (const q of batch) {
         const cbId = q.original_cb_id as string | null;
@@ -284,11 +283,10 @@ Deno.serve(async (req) => {
           ? existingCbIds.get(cbId)!
           : existingQIds.has(qId) ? existingQIds.get(qId)! : null;
 
-        const questionData = normalizeQuestion(q, categoryMap);
-
         if (existingId) {
-          toUpdate.push({ id: existingId, data: questionData });
+          skipped++;
         } else {
+          const questionData = normalizeQuestion(q, categoryMap);
           const newQuestionId = `EXT${String(nextExtNum).padStart(4, "0")}`;
           nextExtNum++;
           toInsert.push({ ...questionData, question_id: newQuestionId });
@@ -311,21 +309,6 @@ Deno.serve(async (req) => {
             existingQIds.set(row.question_id, row.id);
             if (row.original_cb_id) existingCbIds.set(row.original_cb_id, row.id);
           }
-        }
-      }
-
-      // Updates still need individual calls (different IDs)
-      for (const item of toUpdate) {
-        const { error: updateError } = await adminClient
-          .from("questions")
-          .update(item.data)
-          .eq("id", item.id);
-
-        if (updateError) {
-          errors++;
-          errorDetails.push(`update ${item.id}: ${updateError.message}`);
-        } else {
-          updated++;
         }
       }
     }
