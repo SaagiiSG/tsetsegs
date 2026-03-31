@@ -240,20 +240,28 @@ export default function StudentDashboardHome() {
         }
       }
 
-      // Fetch latest Bluebook test score as Real Mock Score
-      let realTestScore: number | null = null;
-      const { data: latestBluebook } = await supabase
-        .from('bluebook_attempts')
-        .select('total_score')
-        .eq('student_account_id', student.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Fetch 150 Hard questions completion
+      const { data: hard150Questions } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('question_set', 'SATMathTraining800')
+        .eq('is_active', true);
 
-      if (latestBluebook?.total_score) {
-        realTestScore = latestBluebook.total_score;
-      }
+      const hard150Ids = hard150Questions?.map(q => q.id) || [];
+
+      const { data: hard150Attempts } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', student.id)
+        .eq('is_correct', true)
+        .in('question_id', hard150Ids.length > 0 ? hard150Ids : ['00000000-0000-0000-0000-000000000000']);
+
+      const uniqueHard150Correct = new Set(hard150Attempts?.map(a => a.question_id) || []);
+      const totalHard150 = hard150Questions?.length || 0;
+      const completedHard150 = uniqueHard150Correct.size;
+      const hard150Completion = totalHard150 > 0
+        ? Math.round((completedHard150 / totalHard150) * 100)
+        : 0;
 
       return {
         completion68,
@@ -263,7 +271,9 @@ export default function StudentDashboardHome() {
         totalCB: totalCBCount,
         completedCB: completedCBCount,
         practiceTestAvg,
-        realTestScore,
+        hard150Completion,
+        totalHard150,
+        completedHard150,
       };
     },
     enabled: !!student?.id,
@@ -813,7 +823,7 @@ export default function StudentDashboardHome() {
         transition={{ delay: 0.05 }}
       >
         <ScorePathwayCard
-          currentScore={targetCurrentScore || stats?.realTestScore || null}
+          currentScore={targetCurrentScore || null}
           targetScore={targetScore}
           onTargetScoreChange={updateTargetScore}
           weakestTopic={weakestTopic || undefined}
@@ -896,7 +906,7 @@ export default function StudentDashboardHome() {
           </Card>
         </motion.div>
 
-        {/* Real Practice Test */}
+        {/* 150 Hard Questions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -906,15 +916,14 @@ export default function StudentDashboardHome() {
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Real Mock Score
+                150 Hard
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.realTestScore || '—'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                SAT Mock Test
+              <div className="text-2xl font-bold">{stats?.hard150Completion || 0}%</div>
+              <Progress value={stats?.hard150Completion || 0} className="mt-2 h-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats?.completedHard150 || 0} / {stats?.totalHard150 || 150} mastered
               </p>
             </CardContent>
           </Card>
