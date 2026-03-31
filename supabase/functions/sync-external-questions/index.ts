@@ -253,18 +253,32 @@ Deno.serve(async (req) => {
       categoryMap[cat.name.toLowerCase()] = cat.id;
     }
 
-    // Get existing question IDs for dedup
-    const { data: existingQuestions } = await adminClient
-      .from("questions")
-      .select("id, question_id, original_cb_id");
+    // Get ALL existing question IDs for dedup (paginate past 1000-row default)
+    const allExistingQuestions: { id: string; question_id: string; original_cb_id: string | null }[] = [];
+    const DEDUP_PAGE = 1000;
+    let dedupOffset = 0;
+    while (true) {
+      const { data: page, error: pageErr } = await adminClient
+        .from("questions")
+        .select("id, question_id, original_cb_id")
+        .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1);
+      if (pageErr) {
+        console.error("Dedup fetch error:", pageErr.message);
+        break;
+      }
+      if (!page || page.length === 0) break;
+      allExistingQuestions.push(...page);
+      if (page.length < DEDUP_PAGE) break;
+      dedupOffset += DEDUP_PAGE;
+    }
 
-    const existingQIds = new Map((existingQuestions || []).map((q) => [q.question_id, q.id]));
+    const existingQIds = new Map(allExistingQuestions.map((q) => [q.question_id, q.id]));
     const existingCbIds = new Map(
-      (existingQuestions || []).filter((q) => q.original_cb_id).map((q) => [q.original_cb_id!, q.id])
+      allExistingQuestions.filter((q) => q.original_cb_id).map((q) => [q.original_cb_id!, q.id])
     );
 
     // Find highest EXT number
-    const extIds = (existingQuestions || [])
+    const extIds = allExistingQuestions
       .map((q) => q.question_id)
       .filter((id: string) => id.startsWith("EXT"))
       .map((id: string) => parseInt(id.replace("EXT", ""), 10))
