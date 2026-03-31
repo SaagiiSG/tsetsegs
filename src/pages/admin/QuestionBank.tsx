@@ -648,6 +648,7 @@ export default function QuestionBank() {
         <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
           <TabsList className="inline-flex w-max md:w-auto md:flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
+            <TabsTrigger value="questions-150" className="text-xs md:text-sm px-2 md:px-3">150 Hard</TabsTrigger>
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
             <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
               <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
