@@ -17,7 +17,7 @@ import { useState } from 'react';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
-  questionSet?: '68' | 'CB';
+  questionSet?: '68' | 'CB' | '150';
 }
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
