@@ -356,7 +356,7 @@ export default function StudentPractice() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 select-none">
+    <div className="p-4 md:p-6 space-y-4 select-none flex flex-col h-[calc(100vh-2rem)]">
       {/* Desmos Calculator Floating Button (only for Math) */}
       {subject === 'math' && <DesmosCalculator />}
       
