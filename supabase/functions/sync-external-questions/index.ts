@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
         success: true,
         total_found: filteredQuestions.length,
         imported,
-        updated,
+        skipped,
         errors,
         has_more: hasMore,
         next_offset: offset + safeLimit,

@@ -391,7 +391,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                             {q.category?.name || 'N/A'}
                           </Badge>
                         </TableCell>
-                        {questionSet === 'CB' && (
+                        {(questionSet === 'CB' || questionSet === '150') && (
                           <TableCell>
                             <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
                               {q.difficulty_level || 'N/A'}
