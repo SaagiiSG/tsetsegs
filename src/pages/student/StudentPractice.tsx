@@ -111,32 +111,35 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult] = await Promise.all([
-        // For 68 set: count ALL questions (including variations)
+      const [set68Result, cbResult, englishResult, set150Result] = await Promise.all([
         supabase
           .from('questions')
           .select('id')
           .eq('is_active', true)
           .eq('question_set', '68')
           .eq('subject', 'math'),
-        // For CB: all non-68 math originals (CollegeBoard + External)
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
           .neq('question_set', '68')
+          .neq('question_set', 'SATMathTraining800')
           .eq('subject', 'math'),
-        // For English: only count originals
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english')
+          .eq('subject', 'english'),
+        supabase
+          .from('questions')
+          .select('id')
+          .eq('is_active', true)
+          .eq('question_set', 'SATMathTraining800')
+          .eq('subject', 'math')
       ]);
       
-      // Filter out bluebook questions from counts
       const filterBluebook = (data: { id: string }[] | null) => {
         if (!data || !bluebookQuestionIds) return 0;
         return data.filter(q => !bluebookQuestionIds.has(q.id)).length;
@@ -145,7 +148,8 @@ export default function StudentPractice() {
       return {
         set68: filterBluebook(set68Result.data),
         cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data)
+        english: filterBluebook(englishResult.data),
+        set150: filterBluebook(set150Result.data)
       };
     },
     enabled: !!student && bluebookLoaded
