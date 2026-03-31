@@ -460,9 +460,9 @@ export default function StudentPractice() {
 
       {/* Layout: 150 tab = full width grid, others = two column */}
       {questionSet === '150' && subject === 'math' ? (
-        <div className="space-y-4 min-h-[calc(100vh-320px)]">
+        <div className="flex flex-col flex-1 gap-4" style={{ minHeight: 0 }}>
           {/* Selected Area Header & Progress */}
-          <Card>
+          <Card className="shrink-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 150 Hard Questions
@@ -476,15 +476,15 @@ export default function StudentPractice() {
             </CardContent>
           </Card>
 
-          {/* Full Width Question Grid */}
-          <Card>
-            <CardContent className="p-4">
+          {/* Full Width Question Grid - fills remaining height */}
+          <Card className="flex-1 min-h-0 flex flex-col">
+            <CardContent className="p-4 flex-1 min-h-0">
               {questionsLoading ? (
                 <div className="text-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 </div>
               ) : filteredQuestions.length > 0 ? (
-                <ScrollArea className="h-[240px]">
+                <ScrollArea className="h-full">
                   <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-15 gap-2 pr-4">
                     {filteredQuestions.map((question, index) => {
                       const status = getQuestionStatus(question.id);
