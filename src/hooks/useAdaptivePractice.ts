@@ -38,6 +38,8 @@ export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questi
       if (subject === 'math') {
         if (questionSet === '68') {
           query = query.eq('question_set', '68');
+        } else if (questionSet === '150') {
+          query = query.eq('question_set', 'SATMathTraining800');
         } else {
           query = query.eq('question_set', 'CollegeBoard').eq('is_original', true);
         }

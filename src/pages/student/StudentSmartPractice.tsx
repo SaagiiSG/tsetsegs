@@ -179,6 +179,13 @@ export default function StudentSmartPractice() {
                 >
                   CollegeBoard
                 </Button>
+                <Button
+                  variant={questionSet === '150' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setQuestionSet('150')}
+                >
+                  150 Hard
+                </Button>
               </div>
             </div>
           )}
