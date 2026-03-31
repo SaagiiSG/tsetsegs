@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100 } = body;
+    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set } = body;
 
     // Clamp limit to prevent abuse
     const safeLimit = Math.min(Math.max(limit, 1), 200);
