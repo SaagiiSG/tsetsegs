@@ -823,7 +823,7 @@ export default function StudentDashboardHome() {
         transition={{ delay: 0.05 }}
       >
         <ScorePathwayCard
-          currentScore={targetCurrentScore || stats?.realTestScore || null}
+          currentScore={targetCurrentScore || null}
           targetScore={targetScore}
           onTargetScoreChange={updateTargetScore}
           weakestTopic={weakestTopic || undefined}
