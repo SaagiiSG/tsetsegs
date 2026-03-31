@@ -92,6 +92,17 @@ export default function QuestionBank() {
     }
   });
 
+  // Fetch 150 Hard questions count
+  const { data: questions150Count } = useQuery({
+    queryKey: ['questions-150-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('question_set', 'SATMathTraining800');
+      return count || 0;
+    }
+  });
   // Fetch pending variations count
   const { data: pendingVariationsCount } = useQuery({
     queryKey: ['pending-variations-count'],
@@ -190,7 +201,7 @@ export default function QuestionBank() {
         // Live sync: paginate through all questions
         let offset = 0;
         let totalImported = 0;
-        let totalUpdated = 0;
+        let totalSkipped = 0;
         let totalErrors = 0;
         let totalFound = 0;
         let hasMore = true;
@@ -204,26 +215,26 @@ export default function QuestionBank() {
           if (!data) throw new Error('No response data');
 
           totalImported += data.imported || 0;
-          totalUpdated += data.updated || 0;
+          totalSkipped += data.skipped || 0;
           totalErrors += data.errors || 0;
           totalFound += data.total_found || 0;
           hasMore = data.has_more === true && (data.total_found || 0) > 0;
           offset = data.next_offset || offset + 100;
 
-          setSyncProgress(`Imported ${totalImported}, updated ${totalUpdated} so far...`);
+          setSyncProgress(`Imported ${totalImported}, skipped ${totalSkipped} so far...`);
         }
 
         setSyncResult({
           success: true,
           total_found: totalFound,
           imported: totalImported,
-          updated: totalUpdated,
+          skipped: totalSkipped,
           errors: totalErrors,
         });
 
         toast({
           title: 'Sync Complete',
-          description: `Imported ${totalImported} new, updated ${totalUpdated} existing questions.`,
+          description: `Imported ${totalImported} new, skipped ${totalSkipped} duplicates.`,
         });
       }
     } catch (err: any) {
@@ -393,7 +404,7 @@ export default function QuestionBank() {
                       <p className="font-medium text-green-600">✓ Sync Complete</p>
                       <p>Found: {syncResult.total_found}</p>
                       <p>Imported: {syncResult.imported}</p>
-                      <p>Updated (duplicates): {syncResult.updated || 0}</p>
+                      <p>Skipped (duplicates): {syncResult.skipped || 0}</p>
                        {syncResult.errors > 0 && (
                         <>
                           <p className="text-destructive">Errors: {syncResult.errors}</p>
@@ -575,7 +586,7 @@ export default function QuestionBank() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
+      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">68 Questions</CardTitle>
@@ -595,6 +606,17 @@ export default function QuestionBank() {
           <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             <div className="text-xl md:text-2xl font-bold">{questionsCBCount ?? 0}</div>
             <p className="text-xs text-muted-foreground hidden sm:block">Imported CB</p>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-150')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">150 Hard</CardTitle>
+            <FileQuestion className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{questions150Count ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Training 800</p>
           </CardContent>
         </Card>
 
@@ -626,6 +648,7 @@ export default function QuestionBank() {
         <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
           <TabsList className="inline-flex w-max md:w-auto md:flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
+            <TabsTrigger value="questions-150" className="text-xs md:text-sm px-2 md:px-3">150 Hard</TabsTrigger>
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
             <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
               <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
@@ -661,6 +684,10 @@ export default function QuestionBank() {
 
         <TabsContent value="questions-68" className="space-y-4">
           <QuestionList onEdit={handleEdit} questionSet="68" />
+        </TabsContent>
+
+        <TabsContent value="questions-150" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="150" />
         </TabsContent>
 
         <TabsContent value="questions-cb" className="space-y-4">
