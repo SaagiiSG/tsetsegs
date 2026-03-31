@@ -240,20 +240,28 @@ export default function StudentDashboardHome() {
         }
       }
 
-      // Fetch latest Bluebook test score as Real Mock Score
-      let realTestScore: number | null = null;
-      const { data: latestBluebook } = await supabase
-        .from('bluebook_attempts')
-        .select('total_score')
-        .eq('student_account_id', student.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Fetch 150 Hard questions completion
+      const { data: hard150Questions } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('question_set', 'SATMathTraining800')
+        .eq('is_active', true);
 
-      if (latestBluebook?.total_score) {
-        realTestScore = latestBluebook.total_score;
-      }
+      const hard150Ids = hard150Questions?.map(q => q.id) || [];
+
+      const { data: hard150Attempts } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', student.id)
+        .eq('is_correct', true)
+        .in('question_id', hard150Ids.length > 0 ? hard150Ids : ['00000000-0000-0000-0000-000000000000']);
+
+      const uniqueHard150Correct = new Set(hard150Attempts?.map(a => a.question_id) || []);
+      const totalHard150 = hard150Questions?.length || 0;
+      const completedHard150 = uniqueHard150Correct.size;
+      const hard150Completion = totalHard150 > 0
+        ? Math.round((completedHard150 / totalHard150) * 100)
+        : 0;
 
       return {
         completion68,
@@ -263,7 +271,9 @@ export default function StudentDashboardHome() {
         totalCB: totalCBCount,
         completedCB: completedCBCount,
         practiceTestAvg,
-        realTestScore,
+        hard150Completion,
+        totalHard150,
+        completedHard150,
       };
     },
     enabled: !!student?.id,
