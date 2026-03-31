@@ -84,11 +84,11 @@ export default function StudentPractice() {
       
       if (subject === 'math') {
         if (questionSet === '68') {
-          // For 68 set: include ALL questions (original + variations as separate)
           query = query.eq('question_set', '68');
+        } else if (questionSet === '150') {
+          query = query.eq('question_set', 'SATMathTraining800');
         } else {
-          // For CB set: CollegeBoard + External imported questions, only originals
-          query = query.neq('question_set', '68').eq('is_original', true);
+          query = query.neq('question_set', '68').neq('question_set', 'SATMathTraining800').eq('is_original', true);
         }
       } else {
         // For English: only originals
