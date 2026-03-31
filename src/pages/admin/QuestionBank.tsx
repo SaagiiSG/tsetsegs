@@ -688,6 +688,16 @@ export default function QuestionBank() {
         </TabsContent>
 
         <TabsContent value="questions-150" className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSync150}
+              disabled={syncing150}
+              className="gap-2"
+            >
+              {syncing150 ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+              {syncing150 ? 'Importing...' : 'Import 150 Hard from External DB'}
+            </Button>
+          </div>
           <QuestionList onEdit={handleEdit} questionSet="150" />
         </TabsContent>
 
