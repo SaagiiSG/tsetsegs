@@ -17,7 +17,7 @@ import { useState } from 'react';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
-  questionSet?: '68' | 'CB' | '150';
+  questionSet?: '68' | 'CB' | '150' | 'english';
 }
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
@@ -68,6 +68,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.eq('question_set', '68');
       } else if (questionSet === '150') {
         query = query.eq('question_set', 'SATMathTraining800');
+      } else if (questionSet === 'english') {
+        query = query.eq('subject', 'english');
       } else {
         query = query.eq('question_set', 'CollegeBoard');
       }
@@ -222,7 +224,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
             <div className="flex items-center justify-between">
               <div>
               <CardTitle className="text-base md:text-xl">
-                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : 'CB Questions'} ({questions?.length || 0})
+                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : questionSet === 'english' ? 'English Questions' : 'CB Questions'} ({questions?.length || 0})
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 hidden md:block">
                   Tip: Drag to select multiple • Shift+click for range
@@ -264,7 +266,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                     ))}
                   </SelectContent>
                 </Select>
-                {(questionSet === 'CB' || questionSet === '150') && (
+                {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && (
                   <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                     <SelectTrigger className="flex-1 sm:w-28">
                       <SelectValue placeholder="Diff" />
@@ -309,10 +311,13 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                           <Badge variant="secondary" className={`text-[10px] ${getCategoryColor(q.category?.name || '')}`}>
                             {q.category?.name || 'N/A'}
                           </Badge>
-                          {(questionSet === 'CB' || questionSet === '150') && q.difficulty_level && (
+                          {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && q.difficulty_level && (
                             <Badge variant="outline" className={`text-[10px] ${getDifficultyColor(q.difficulty_level)}`}>
                               {q.difficulty_level}
                             </Badge>
+                          )}
+                          {questionSet === 'english' && q.passage_text && (
+                            <Badge variant="outline" className="text-[10px]">📄 Passage</Badge>
                           )}
                         </div>
                       </div>
@@ -361,7 +366,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                       <TableHead className="w-24">ID</TableHead>
                       <TableHead>Question</TableHead>
                       <TableHead className="w-36">Category</TableHead>
-                      {(questionSet === 'CB' || questionSet === '150') && <TableHead className="w-24">Difficulty</TableHead>}
+                      {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && <TableHead className="w-24">Difficulty</TableHead>}
                       <TableHead className="w-28">Type</TableHead>
                       <TableHead className="w-20">Media</TableHead>
                       <TableHead className="w-24 text-right">Actions</TableHead>
@@ -391,7 +396,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                             {q.category?.name || 'N/A'}
                           </Badge>
                         </TableCell>
-                        {(questionSet === 'CB' || questionSet === '150') && (
+                        {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && (
                           <TableCell>
                             <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
                               {q.difficulty_level || 'N/A'}

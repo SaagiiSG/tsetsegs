@@ -105,6 +105,18 @@ export default function QuestionBank() {
       return count || 0;
     }
   });
+  // Fetch English questions count
+  const { data: questionsEnglishCount } = useQuery({
+    queryKey: ['questions-english-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('subject', 'english');
+      return count || 0;
+    }
+  });
+
   // Fetch pending variations count
   const { data: pendingVariationsCount } = useQuery({
     queryKey: ['pending-variations-count'],
@@ -628,7 +640,7 @@ export default function QuestionBank() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
+      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">68 Questions</CardTitle>
@@ -662,6 +674,17 @@ export default function QuestionBank() {
           </CardContent>
         </Card>
 
+        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-english')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs font-medium">English</CardTitle>
+            <FileQuestion className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold">{questionsEnglishCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">R&W Questions</p>
+          </CardContent>
+        </Card>
+
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('students')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">Students</CardTitle>
@@ -692,6 +715,7 @@ export default function QuestionBank() {
             <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
             <TabsTrigger value="questions-150" className="text-xs md:text-sm px-2 md:px-3">150 Hard</TabsTrigger>
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
+            <TabsTrigger value="questions-english" className="text-xs md:text-sm px-2 md:px-3">English ({questionsEnglishCount ?? 0})</TabsTrigger>
             <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
               <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               <span className="hidden sm:inline">Import </span>Math
@@ -744,6 +768,10 @@ export default function QuestionBank() {
 
         <TabsContent value="questions-cb" className="space-y-4">
           <QuestionList onEdit={handleEdit} questionSet="CB" />
+        </TabsContent>
+
+        <TabsContent value="questions-english" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="english" />
         </TabsContent>
 
         <TabsContent value="import" className="space-y-4">
