@@ -366,7 +366,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                       <TableHead className="w-24">ID</TableHead>
                       <TableHead>Question</TableHead>
                       <TableHead className="w-36">Category</TableHead>
-                      {(questionSet === 'CB' || questionSet === '150') && <TableHead className="w-24">Difficulty</TableHead>}
+                      {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && <TableHead className="w-24">Difficulty</TableHead>}
                       <TableHead className="w-28">Type</TableHead>
                       <TableHead className="w-20">Media</TableHead>
                       <TableHead className="w-24 text-right">Actions</TableHead>
