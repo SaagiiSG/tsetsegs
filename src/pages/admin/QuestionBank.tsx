@@ -640,7 +640,7 @@ export default function QuestionBank() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
+      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">68 Questions</CardTitle>
