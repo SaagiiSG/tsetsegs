@@ -1,33 +1,24 @@
 
 
-## Plan: Add "150 Hard Questions" Tab + Skip-Duplicates Sync
+## Plan: Add English Tab to Admin Question Bank
 
-### What changes
+The question bank already has math tabs (68, CB, 150) and import tabs. Since there's already an "Import Eng" tab for importing English questions, we just need a viewing tab and stat card for them.
 
-**1. Edge Function: Skip existing questions instead of updating**
-`supabase/functions/sync-external-questions/index.ts`
+### Changes
 
-- Change dedup logic: when a question already exists in the main DB (matched by `original_cb_id` or `question_id`), **skip it** instead of updating
-- Add a `skipped` count to the response
-- Remove all update logic (the `toUpdate` array and individual update calls)
-- This makes sync import-only: only new questions get added
+**1. `src/components/admin/questions/QuestionList.tsx`**
+- Expand `questionSet` type: `'68' | 'CB' | '150' | 'english'`
+- Add filter branch: when `questionSet === 'english'`, query `.eq('subject', 'english')` instead of filtering by `question_set`
+- Show passage indicator for English questions that have `passage_text`
 
-**2. Admin Question Bank: Add "150" tab**
-`src/pages/admin/QuestionBank.tsx`
+**2. `src/pages/admin/QuestionBank.tsx`**
+- Add `questionsEnglishCount` query counting questions where `subject = 'english'`
+- Add an "English" stat card to the top row (update grid to `md:grid-cols-6`)
+- Add `TabsTrigger` for `"questions-english"` labeled "English" between "CB" and "Import Math"
+- Add `TabsContent` rendering `<QuestionList onEdit={handleEdit} questionSet="english" />`
+- Update `getAddButtonText` to return null for the English tab (import-only)
 
-- Add a new stat card for "150 Hard Qs" showing count of questions with `question_set = 'SATMathTraining800'`
-- Add a new tab trigger "150 Hard" in the TabsList
-- Add a new TabsContent rendering `<QuestionList questionSet="150" />`
-- Update sync result toast to show skipped count
-
-**3. QuestionList: Support '150' question set**
-`src/components/admin/questions/QuestionList.tsx`
-
-- Extend `questionSet` prop type from `'68' | 'CB'` to `'68' | 'CB' | '150'`
-- Add filter branch: when `questionSet === '150'`, query `.eq('question_set', 'SATMathTraining800')`
-
-### Files modified
-- `supabase/functions/sync-external-questions/index.ts` — skip duplicates, add `skipped` count
-- `src/pages/admin/QuestionBank.tsx` — add stat card, tab, count query
-- `src/components/admin/questions/QuestionList.tsx` — support '150' question set filter
+### Technical notes
+- English questions use `subject = 'english'` and IDs prefixed with `ENG`
+- No structural changes needed on student-facing pages — English practice already has dedicated separate pages (`StudentEnglishPractice`, `StudentEnglishQuestion`)
 
