@@ -266,7 +266,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                     ))}
                   </SelectContent>
                 </Select>
-                {(questionSet === 'CB' || questionSet === '150') && (
+                {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && (
                   <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                     <SelectTrigger className="flex-1 sm:w-28">
                       <SelectValue placeholder="Diff" />
