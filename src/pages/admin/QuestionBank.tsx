@@ -105,6 +105,18 @@ export default function QuestionBank() {
       return count || 0;
     }
   });
+  // Fetch English questions count
+  const { data: questionsEnglishCount } = useQuery({
+    queryKey: ['questions-english-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('subject', 'english');
+      return count || 0;
+    }
+  });
+
   // Fetch pending variations count
   const { data: pendingVariationsCount } = useQuery({
     queryKey: ['pending-variations-count'],
