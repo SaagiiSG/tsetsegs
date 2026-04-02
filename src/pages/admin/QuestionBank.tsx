@@ -770,6 +770,10 @@ export default function QuestionBank() {
           <QuestionList onEdit={handleEdit} questionSet="CB" />
         </TabsContent>
 
+        <TabsContent value="questions-english" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="english" />
+        </TabsContent>
+
         <TabsContent value="import" className="space-y-4">
           <CBQuestionImport />
           <CBImportReviewSessions />
