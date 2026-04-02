@@ -715,6 +715,7 @@ export default function QuestionBank() {
             <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
             <TabsTrigger value="questions-150" className="text-xs md:text-sm px-2 md:px-3">150 Hard</TabsTrigger>
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
+            <TabsTrigger value="questions-english" className="text-xs md:text-sm px-2 md:px-3">English ({questionsEnglishCount ?? 0})</TabsTrigger>
             <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
               <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               <span className="hidden sm:inline">Import </span>Math
