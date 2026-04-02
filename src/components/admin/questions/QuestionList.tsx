@@ -311,10 +311,13 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                           <Badge variant="secondary" className={`text-[10px] ${getCategoryColor(q.category?.name || '')}`}>
                             {q.category?.name || 'N/A'}
                           </Badge>
-                          {(questionSet === 'CB' || questionSet === '150') && q.difficulty_level && (
+                          {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && q.difficulty_level && (
                             <Badge variant="outline" className={`text-[10px] ${getDifficultyColor(q.difficulty_level)}`}>
                               {q.difficulty_level}
                             </Badge>
+                          )}
+                          {questionSet === 'english' && q.passage_text && (
+                            <Badge variant="outline" className="text-[10px]">📄 Passage</Badge>
                           )}
                         </div>
                       </div>
