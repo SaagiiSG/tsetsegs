@@ -224,7 +224,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
             <div className="flex items-center justify-between">
               <div>
               <CardTitle className="text-base md:text-xl">
-                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : 'CB Questions'} ({questions?.length || 0})
+                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : questionSet === 'english' ? 'English Questions' : 'CB Questions'} ({questions?.length || 0})
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 hidden md:block">
                   Tip: Drag to select multiple • Shift+click for range
