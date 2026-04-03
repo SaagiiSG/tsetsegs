@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2, Flag, Gamepad2 } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2, Gamepad2 } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IntensePrepContent } from "@/components/teacher/intense-prep";
