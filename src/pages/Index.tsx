@@ -340,7 +340,7 @@ const Index = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16 md:py-20">
-          <div className="w-full max-w-6xl mx-auto text-center space-y-8">
+          <div className="w-full max-w-6xl mx-auto text-center space-y-6 md:space-y-8">
             {/* Top Badge - Outside frosted glass */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
