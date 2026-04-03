@@ -575,7 +575,7 @@ const Index = () => {
                         {t(feature.titleKey)}
                       </h3>
                       <p 
-                        className="text-base leading-relaxed"
+                        className="text-sm md:text-base leading-relaxed"
                         style={{ color: `hsl(${GOLD.muted})` }}
                       >
                         {t(feature.descKey)}
