@@ -548,7 +548,7 @@ const Index = () => {
                     transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } 
                   }
                 }}
-                className="w-[80%]"
+                className="w-full md:w-[80%]"
               >
                 <Card 
                   className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
