@@ -59,6 +59,7 @@ import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
 
 // Public Pages
 import PublicClosingReport from "./pages/PublicClosingReport";
+import LiveSession from "./pages/LiveSession";
 
 const queryClient = new QueryClient();
 
@@ -188,6 +189,9 @@ const App = () => (
                   
                   {/* Public Closing Report */}
                   <Route path="/report/:token" element={<PublicClosingReport />} />
+
+                  {/* Live Practice Session */}
+                  <Route path="/live/:joinCode" element={<LiveSession />} />
 
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />

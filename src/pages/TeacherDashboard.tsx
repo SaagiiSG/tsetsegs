@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2, Flag } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2, Flag, Gamepad2 } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IntensePrepContent } from "@/components/teacher/intense-prep";
@@ -18,6 +18,7 @@ import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand"
 import { ReviewRegistrationContent } from "@/components/teacher/ReviewRegistrationContent";
 import { getErrorToast } from "@/lib/errorUtils";
 import { TeacherFlaggedQuestions } from "@/components/teacher/TeacherFlaggedQuestions";
+import { LivePracticeContent } from "@/components/teacher/live-practice";
 
 interface Batch {
   id: string;
@@ -34,9 +35,9 @@ interface SwitchedStudentInfo {
   otherBatchName: string;
 }
 
-type DashboardMode = "dashboard" | "review" | "intense";
+type DashboardMode = "dashboard" | "review" | "intense" | "practice";
 
-const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense"];
+const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense", "practice"];
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
@@ -637,6 +638,19 @@ export default function TeacherDashboard() {
                   <IntensePrepContent />
                 </motion.div>
               )}
+              {activeMode === "practice" && (
+                <motion.div
+                  key="practice"
+                  custom={slideDirection}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={slideTransition}
+                >
+                  <LivePracticeContent />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
@@ -674,6 +688,15 @@ export default function TeacherDashboard() {
             >
               <Flame className="h-4 w-4" />
               <span className="hidden sm:inline">Intense</span>
+            </Button>
+            <Button
+              variant={activeMode === "practice" ? "default" : "ghost"}
+              size="sm"
+              className="h-9 rounded-full gap-2 text-xs px-3"
+              onClick={() => handleModeChange("practice")}
+            >
+              <Gamepad2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Practice</span>
             </Button>
           </motion.div>
         </div>

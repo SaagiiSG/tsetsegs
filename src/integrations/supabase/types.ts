@@ -1119,6 +1119,171 @@ export type Database = {
           },
         ]
       }
+      live_session_answers: {
+        Row: {
+          answer: string
+          id: string
+          is_correct: boolean
+          participant_id: string
+          points_earned: number
+          question_id: string
+          session_id: string
+          submitted_at: string
+          time_taken_ms: number
+        }
+        Insert: {
+          answer: string
+          id?: string
+          is_correct?: boolean
+          participant_id: string
+          points_earned?: number
+          question_id: string
+          session_id: string
+          submitted_at?: string
+          time_taken_ms?: number
+        }
+        Update: {
+          answer?: string
+          id?: string
+          is_correct?: boolean
+          participant_id?: string
+          points_earned?: number
+          question_id?: string
+          session_id?: string
+          submitted_at?: string
+          time_taken_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "live_session_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_session_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          phone_number: string
+          player_name: string
+          session_id: string
+          total_points: number
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          phone_number: string
+          player_name: string
+          session_id: string
+          total_points?: number
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          phone_number?: string
+          player_name?: string
+          session_id?: string
+          total_points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_session_questions: {
+        Row: {
+          id: string
+          order_index: number
+          question_id: string
+          session_id: string
+        }
+        Insert: {
+          id?: string
+          order_index: number
+          question_id: string
+          session_id: string
+        }
+        Update: {
+          id?: string
+          order_index?: number
+          question_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_questions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_sessions: {
+        Row: {
+          created_at: string
+          current_question_index: number
+          finished_at: string | null
+          id: string
+          join_code: string
+          question_set: string
+          status: string
+          teacher_name: string
+          time_per_question: number
+        }
+        Insert: {
+          created_at?: string
+          current_question_index?: number
+          finished_at?: string | null
+          id?: string
+          join_code: string
+          question_set: string
+          status?: string
+          teacher_name: string
+          time_per_question?: number
+        }
+        Update: {
+          created_at?: string
+          current_question_index?: number
+          finished_at?: string | null
+          id?: string
+          join_code?: string
+          question_set?: string
+          status?: string
+          teacher_name?: string
+          time_per_question?: number
+        }
+        Relationships: []
+      }
       point_transactions: {
         Row: {
           category: string

@@ -1,0 +1,430 @@
+import { useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { MathText } from "@/components/MathText";
+import { Gamepad2, Clock, CheckCircle, XCircle, Trophy, Loader2 } from "lucide-react";
+
+type Phase = "join" | "waiting" | "question" | "feedback" | "finished";
+
+interface SessionData {
+  id: string;
+  status: string;
+  current_question_index: number;
+  time_per_question: number;
+  teacher_name: string;
+}
+
+interface QuestionData {
+  id: string;
+  question_text: string;
+  multiple_choice_options: Record<string, string>;
+  answer: string;
+  order_index: number;
+}
+
+export default function LiveSession() {
+  const { joinCode } = useParams<{ joinCode: string }>();
+  const [phase, setPhase] = useState<Phase>("join");
+  const [playerName, setPlayerName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [participantId, setParticipantId] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<QuestionData[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [myRank, setMyRank] = useState(0);
+  const [isJoining, setIsJoining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const questionStartRef = useRef<number>(0);
+  const hasAnsweredRef = useRef(false);
+
+  // Look up session on mount
+  useEffect(() => {
+    if (!joinCode) return;
+    const fetchSession = async () => {
+      const { data, error } = await supabase
+        .from("live_sessions")
+        .select("*")
+        .eq("join_code", joinCode.toUpperCase())
+        .single();
+
+      if (error || !data) {
+        setError("Session not found. Check your code and try again.");
+        return;
+      }
+      if (data.status === "finished") {
+        setError("This session has already ended.");
+        return;
+      }
+      setSession(data as SessionData);
+
+      // Load questions
+      const { data: qData } = await supabase
+        .from("live_session_questions")
+        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer)")
+        .eq("session_id", data.id)
+        .order("order_index", { ascending: true });
+
+      if (qData) {
+        setQuestions(
+          qData.map((d: any) => ({ ...d.questions, order_index: d.order_index }))
+        );
+      }
+    };
+    fetchSession();
+  }, [joinCode]);
+
+  // Subscribe to session changes
+  useEffect(() => {
+    if (!session?.id) return;
+
+    const channel = supabase
+      .channel(`session-${session.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "live_sessions",
+          filter: `id=eq.${session.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as SessionData;
+          setSession(updated);
+
+          if (updated.status === "active" && phase === "waiting") {
+            startQuestion(updated.current_question_index);
+          } else if (updated.status === "active" && updated.current_question_index !== currentIndex) {
+            startQuestion(updated.current_question_index);
+          } else if (updated.status === "finished") {
+            setPhase("finished");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.id, phase, currentIndex]);
+
+  const startQuestion = (index: number) => {
+    setCurrentIndex(index);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setPointsEarned(0);
+    hasAnsweredRef.current = false;
+    questionStartRef.current = Date.now();
+    setTimeLeft(session?.time_per_question || 30);
+    setPhase("question");
+
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          if (!hasAnsweredRef.current) {
+            handleAutoSubmit();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleAutoSubmit = async () => {
+    if (hasAnsweredRef.current || !session || !participantId) return;
+    hasAnsweredRef.current = true;
+    setPhase("feedback");
+    setIsCorrect(false);
+    setPointsEarned(0);
+  };
+
+  const handleJoin = async () => {
+    if (!session || !playerName.trim() || !phoneNumber.trim()) return;
+    setIsJoining(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("live_session_participants")
+        .insert({
+          session_id: session.id,
+          player_name: playerName.trim(),
+          phone_number: phoneNumber.trim(),
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      setParticipantId(data.id);
+
+      if (session.status === "active") {
+        startQuestion(session.current_question_index);
+      } else {
+        setPhase("waiting");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleAnswer = async (choice: string) => {
+    if (hasAnsweredRef.current || !session || !participantId) return;
+    hasAnsweredRef.current = true;
+    clearInterval(timerRef.current);
+
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return;
+
+    const timeTaken = Date.now() - questionStartRef.current;
+    const correct = choice === currentQ.answer;
+    const totalTime = session.time_per_question * 1000;
+    const timeRemaining = Math.max(0, totalTime - timeTaken);
+    const points = correct ? Math.max(100, Math.round(1000 * (timeRemaining / totalTime))) : 0;
+
+    setSelectedAnswer(choice);
+    setIsCorrect(correct);
+    setPointsEarned(points);
+    setTotalPoints((prev) => prev + points);
+    setPhase("feedback");
+
+    await supabase.from("live_session_answers").insert({
+      session_id: session.id,
+      participant_id: participantId,
+      question_id: currentQ.id,
+      answer: choice,
+      is_correct: correct,
+      time_taken_ms: timeTaken,
+      points_earned: points,
+    });
+
+    // Update participant total
+    await supabase
+      .from("live_session_participants")
+      .update({ total_points: totalPoints + points })
+      .eq("id", participantId);
+  };
+
+  // Error state
+  if (error && phase === "join") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-6 max-w-sm w-full text-center space-y-4">
+          <XCircle className="h-12 w-12 text-destructive mx-auto" />
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Join form
+  if (phase === "join") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-6 max-w-sm w-full space-y-6">
+          <div className="text-center space-y-2">
+            <Gamepad2 className="h-10 w-10 text-primary mx-auto" />
+            <h1 className="text-xl font-bold">Join Live Quiz</h1>
+            {session && (
+              <p className="text-sm text-muted-foreground">
+                Hosted by {session.teacher_name}
+              </p>
+            )}
+          </div>
+          <div className="space-y-3">
+            <Input
+              placeholder="Your name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="h-12 text-center text-lg"
+              autoFocus
+            />
+            <Input
+              placeholder="Phone number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="h-12 text-center text-lg"
+              type="tel"
+            />
+            <Button
+              className="w-full h-12 text-lg"
+              onClick={handleJoin}
+              disabled={!playerName.trim() || !phoneNumber.trim() || isJoining}
+            >
+              {isJoining ? <Loader2 className="h-5 w-5 animate-spin" /> : "Join Game"}
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Waiting lobby
+  if (phase === "waiting") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-6">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+          >
+            <Gamepad2 className="h-16 w-16 text-primary mx-auto" />
+          </motion.div>
+          <div>
+            <h2 className="text-xl font-bold">You're in, {playerName}!</h2>
+            <p className="text-muted-foreground text-sm mt-1">
+              Waiting for the teacher to start...
+            </p>
+          </div>
+          <div className="animate-pulse text-sm text-muted-foreground">
+            Get ready! 🔥
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Question phase
+  if (phase === "question") {
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return null;
+
+    const options = currentQ.multiple_choice_options || {};
+
+    return (
+      <div className="min-h-screen bg-background p-4 flex flex-col">
+        {/* Timer bar */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-muted-foreground">
+            Q{currentIndex + 1}/{questions.length}
+          </span>
+          <motion.div
+            key={timeLeft}
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            className={`flex items-center gap-1 text-lg font-bold ${
+              timeLeft <= 5 ? "text-destructive" : "text-primary"
+            }`}
+          >
+            <Clock className="h-4 w-4" />
+            {timeLeft}
+          </motion.div>
+        </div>
+
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
+          <motion.div
+            className="h-full bg-primary"
+            initial={{ width: "0%" }}
+            animate={{
+              width: `${((session?.time_per_question || 30) - timeLeft) / (session?.time_per_question || 30) * 100}%`,
+            }}
+          />
+        </div>
+
+        {/* Question */}
+        <Card className="p-4 mb-4 flex-shrink-0">
+          <div className="text-base font-medium leading-relaxed">
+            <MathText text={currentQ.question_text} />
+          </div>
+        </Card>
+
+        {/* Options */}
+        <div className="flex-1 grid grid-cols-1 gap-3">
+          {Object.entries(options).map(([key, value]) => (
+            <Button
+              key={key}
+              variant="outline"
+              className="h-auto min-h-[56px] text-left justify-start p-4 text-base whitespace-normal"
+              onClick={() => handleAnswer(key)}
+            >
+              <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                {key}
+              </span>
+              <MathText text={String(value)} />
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Feedback phase
+  if (phase === "feedback") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center space-y-4"
+        >
+          {isCorrect ? (
+            <>
+              <motion.div
+                initial={{ rotate: -20, scale: 0 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ type: "spring" }}
+              >
+                <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
+              </motion.div>
+              <h2 className="text-2xl font-bold text-green-500">Correct!</h2>
+              <p className="text-3xl font-bold text-primary">+{pointsEarned}</p>
+            </>
+          ) : (
+            <>
+              <XCircle className="h-20 w-20 text-destructive mx-auto" />
+              <h2 className="text-2xl font-bold text-destructive">
+                {selectedAnswer ? "Wrong!" : "Time's up!"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Correct answer: {questions[currentIndex]?.answer}
+              </p>
+            </>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Total: {totalPoints} points
+          </p>
+          <p className="text-xs text-muted-foreground animate-pulse">
+            Waiting for next question...
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Finished
+  if (phase === "finished") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center space-y-4"
+        >
+          <Trophy className="h-16 w-16 text-yellow-500 mx-auto" />
+          <h2 className="text-2xl font-bold">Game Over!</h2>
+          <div>
+            <p className="text-4xl font-bold text-primary">{totalPoints}</p>
+            <p className="text-sm text-muted-foreground">Total Points</p>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Great job, {playerName}! 🎉
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return null;
+}
