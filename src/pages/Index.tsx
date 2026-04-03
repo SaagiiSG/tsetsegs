@@ -946,7 +946,7 @@ const Index = () => {
 
       {/* TsetsegsOS Footer */}
       <footer 
-        className="relative py-16 px-4 pb-40 overflow-hidden"
+        className="relative py-12 md:py-16 px-4 pb-32 md:pb-40 overflow-hidden"
         style={{ borderTop: `1px solid hsl(${GOLD.primary} / 0.1)` }}
       >
         <motion.div 
