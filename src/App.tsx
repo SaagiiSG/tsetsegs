@@ -59,6 +59,7 @@ import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
 
 // Public Pages
 import PublicClosingReport from "./pages/PublicClosingReport";
+import LiveSession from "./pages/LiveSession";
 
 const queryClient = new QueryClient();
 
