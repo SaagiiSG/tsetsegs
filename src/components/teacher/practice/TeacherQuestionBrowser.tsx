@@ -181,46 +181,51 @@ export function TeacherQuestionBrowser() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <p className="text-xs text-muted-foreground px-1">
               {questions.length} question{questions.length !== 1 ? 's' : ''} found
             </p>
-            <div className="grid gap-2">
-              {questions.map((q, index) => (
-                <Card
-                  key={q.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/30"
-                  onClick={() => setSelectedQuestionIndex(index)}
-                >
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
-                      {q.question_id}
-                    </Badge>
-                    {q.difficulty_level && (
-                      <Badge variant="outline" className={`text-[10px] flex-shrink-0 ${difficultyColor(q.difficulty_level)}`}>
-                        {q.difficulty_level}
-                      </Badge>
-                    )}
-                    {q.category?.name && (
-                      <Badge variant="secondary" className="text-[10px] flex-shrink-0 hidden sm:inline-flex">
-                        {q.category.name}
-                      </Badge>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs line-clamp-1">
-                        <MathText text={q.question_text} />
-                      </p>
-                    </div>
-                    {q.question_image_url && (
-                      <img
-                        src={q.question_image_url}
-                        alt=""
-                        className="h-8 w-8 rounded border object-contain flex-shrink-0"
-                      />
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+              {questions.map((q, index) => {
+                const displayId = q.question_id;
+                let simpleId = displayId;
+                if (displayId.startsWith('CB')) {
+                  const num = parseInt(displayId.replace('CB', ''), 10);
+                  simpleId = isNaN(num) ? displayId : String(num);
+                } else if (displayId.startsWith('ENG')) {
+                  const num = parseInt(displayId.replace('ENG', ''), 10);
+                  simpleId = isNaN(num) ? displayId : String(num);
+                }
+
+                return (
+                  <Card
+                    key={q.id}
+                    className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] hover:border-primary/40"
+                    onClick={() => setSelectedQuestionIndex(index)}
+                  >
+                    <CardContent className="p-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs">{simpleId}</span>
+                        {q.question_image_url && (
+                          <img src={q.question_image_url} alt="" className="h-4 w-4 rounded object-contain" />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {q.difficulty_level && (
+                          <Badge variant="outline" className={`text-[9px] px-1 py-0 ${difficultyColor(q.difficulty_level)}`}>
+                            {q.difficulty_level}
+                          </Badge>
+                        )}
+                        {q.category?.name && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 truncate max-w-full">
+                            {(q.category as any).name?.split(' ')[0] || ''}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
