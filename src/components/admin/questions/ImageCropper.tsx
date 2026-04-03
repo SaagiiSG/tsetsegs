@@ -138,6 +138,7 @@ export function ImageCropper({ open, onOpenChange, imageSrc, onCropComplete, fil
                 src={imageSrc}
                 alt="Crop preview"
                 onLoad={onImageLoad}
+                crossOrigin="anonymous"
                 className="max-h-[60vh] max-w-full object-contain"
               />
             </ReactCrop>
