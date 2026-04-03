@@ -66,7 +66,7 @@ export function TeacherQuestionBrowser() {
       } else if (questionSet === 'cb') {
         query = query.not('original_cb_id', 'is', null);
       } else if (questionSet === '150_hard') {
-        query = query.eq('question_set', '150_hard');
+        query = query.eq('question_set', 'SATMathTraining800');
       } else if (questionSet === 'english') {
         query = query.eq('subject', 'english');
       }
