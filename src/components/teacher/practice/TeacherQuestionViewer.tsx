@@ -96,7 +96,12 @@ export function TeacherQuestionViewer({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-background flex flex-col"
+          className="fixed inset-0 z-50 bg-background flex flex-col transition-all duration-300"
+          style={{
+            marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
+            marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
+            width: calculatorSnapSide ? '60vw' : '100%',
+          }}
         >
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0">
