@@ -218,9 +218,41 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
         <div className="text-lg font-medium leading-relaxed">
           <MathText text={currentQuestion.question_text} />
         </div>
-      </Card>
 
-      {/* Answer distribution */}
+        {/* Passage text */}
+        {currentQuestion.passage_text && (
+          <div className="mt-4 p-4 rounded-lg bg-muted/50 border text-sm leading-relaxed max-h-48 overflow-y-auto">
+            <MathText text={currentQuestion.passage_text} />
+          </div>
+        )}
+
+        {/* Figure: SVG or image */}
+        {currentQuestion.has_figure && currentQuestion.figure_svg && (
+          <div className="mt-4 flex justify-center">
+            <div
+              className="max-w-md w-full rounded-lg border bg-background p-2"
+              dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
+            />
+          </div>
+        )}
+
+        {currentQuestion.question_image_url && (
+          <div className="mt-4 flex justify-center">
+            <img
+              src={currentQuestion.question_image_url}
+              alt={currentQuestion.figure_description || "Question figure"}
+              className="max-w-md w-full rounded-lg border"
+            />
+          </div>
+        )}
+
+        {/* Figure description fallback */}
+        {currentQuestion.has_figure && !currentQuestion.figure_svg && !currentQuestion.question_image_url && currentQuestion.figure_description && (
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground italic text-center">
+            📊 {currentQuestion.figure_description}
+          </div>
+        )}
+      </Card>
       <div className="space-y-2">
         {Object.entries(options).map(([key, value]) => {
           const count = answerStats.distribution[key] || 0;
