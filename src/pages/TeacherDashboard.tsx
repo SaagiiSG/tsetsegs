@@ -423,7 +423,7 @@ export default function TeacherDashboard() {
   // Dashboard content (existing tabs)
   const DashboardContent = () => (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
-      <TabsList className="grid w-full grid-cols-4 h-9 md:h-10">
+      <TabsList className="grid w-full grid-cols-3 h-9 md:h-10">
         <TabsTrigger value="classes" className="text-xs md:text-sm px-1.5">
           Classes
         </TabsTrigger>
@@ -434,10 +434,6 @@ export default function TeacherDashboard() {
         <TabsTrigger value="alerts" className="text-xs md:text-sm px-1.5">
           <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
           <span className="hidden xs:inline">Alerts</span>
-        </TabsTrigger>
-        <TabsTrigger value="flagged" className="text-xs md:text-sm px-1.5">
-          <Flag className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-          <span className="hidden xs:inline">Flagged</span>
         </TabsTrigger>
       </TabsList>
 
