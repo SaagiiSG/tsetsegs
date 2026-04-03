@@ -1,24 +1,16 @@
 
 
-## Plan: Add English Tab to Admin Question Bank
+## Fix Browser Tab Title
 
-The question bank already has math tabs (68, CB, 150) and import tabs. Since there's already an "Import Eng" tab for importing English questions, we just need a viewing tab and stat card for them.
+The `<title>` tag in `index.html` currently shows the raw project ID (`b17aa099-0564-465a-8bde-ea42ea79d257`) instead of a proper name. The OG meta tags have the same issue.
 
 ### Changes
 
-**1. `src/components/admin/questions/QuestionList.tsx`**
-- Expand `questionSet` type: `'68' | 'CB' | '150' | 'english'`
-- Add filter branch: when `questionSet === 'english'`, query `.eq('subject', 'english')` instead of filtering by `question_set`
-- Show passage indicator for English questions that have `passage_text`
+**`index.html`** — Update these lines:
+- `<title>` → something like "Tsetsegs SAT Prep" (or whatever brand name you prefer)
+- `<meta property="og:title">` → same brand name
+- `<meta property="og:description">` → a proper description like "SAT preparation platform"
+- `<meta name="description">` → same
 
-**2. `src/pages/admin/QuestionBank.tsx`**
-- Add `questionsEnglishCount` query counting questions where `subject = 'english'`
-- Add an "English" stat card to the top row (update grid to `md:grid-cols-6`)
-- Add `TabsTrigger` for `"questions-english"` labeled "English" between "CB" and "Import Math"
-- Add `TabsContent` rendering `<QuestionList onEdit={handleEdit} questionSet="english" />`
-- Update `getAddButtonText` to return null for the English tab (import-only)
-
-### Technical notes
-- English questions use `subject = 'english'` and IDs prefixed with `ENG`
-- No structural changes needed on student-facing pages — English practice already has dedicated separate pages (`StudentEnglishPractice`, `StudentEnglishQuestion`)
+This is a single-file, 4-line change.
 
