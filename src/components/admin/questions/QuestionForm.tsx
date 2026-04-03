@@ -30,7 +30,7 @@ const variationSchema = z.object({
 const questionSchema = z.object({
   question_id: z.string().min(1, 'Question ID is required'),
   question_text: z.string().min(1, 'Question text is required'),
-  category_id: z.string().min(1, 'Category is required'),
+  category_id: z.string().optional().default(''),
   question_type: z.enum(['multiple_choice', 'fill_blank']),
   answer: z.string().min(1, 'Answer is required'),
   option_a: z.string().optional(),
