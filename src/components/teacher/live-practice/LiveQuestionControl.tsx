@@ -47,7 +47,7 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
     const loadQuestions = async () => {
       const { data } = await supabase
         .from("live_session_questions")
-        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer)")
+        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer, has_figure, figure_svg, figure_description, question_image_url, passage_text)")
         .eq("session_id", sessionId)
         .order("order_index", { ascending: true });
 
