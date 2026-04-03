@@ -26,6 +26,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
   const serverSearch = isInlineSearch ? '' : search.trim();
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [figureFilter, setFigureFilter] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const { toast } = useToast();
