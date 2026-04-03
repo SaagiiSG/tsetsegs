@@ -662,7 +662,7 @@ const Index = () => {
           {/* Real scores */}
           {successScores && successScores.length > 0 && (
             <motion.div 
-              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mt-10 md:mt-16"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
