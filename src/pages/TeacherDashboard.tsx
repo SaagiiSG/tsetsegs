@@ -689,6 +689,15 @@ export default function TeacherDashboard() {
               <Flame className="h-4 w-4" />
               <span className="hidden sm:inline">Intense</span>
             </Button>
+            <Button
+              variant={activeMode === "practice" ? "default" : "ghost"}
+              size="sm"
+              className="h-9 rounded-full gap-2 text-xs px-3"
+              onClick={() => handleModeChange("practice")}
+            >
+              <Gamepad2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Practice</span>
+            </Button>
           </motion.div>
         </div>
       </div>
