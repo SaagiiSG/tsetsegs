@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
-import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import {
   ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2,
@@ -30,6 +30,7 @@ export function TeacherQuestionViewer({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [fillAnswer, setFillAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const calculatorSnapSide = useCalculatorSnap();
 
   const { data: question, isLoading } = useQuery({
     queryKey: ['teacher-question-detail', questionId],
@@ -95,7 +96,12 @@ export function TeacherQuestionViewer({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-background flex flex-col"
+          className="fixed inset-0 z-50 bg-background flex flex-col transition-all duration-300"
+          style={{
+            marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
+            marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
+            width: calculatorSnapSide ? '60vw' : '100%',
+          }}
         >
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0">
