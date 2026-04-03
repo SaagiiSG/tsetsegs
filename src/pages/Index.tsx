@@ -844,7 +844,7 @@ const Index = () => {
               className="rounded-3xl"
             >
               <Card 
-                className="relative overflow-hidden p-8 md:p-12"
+                className="relative overflow-hidden p-6 md:p-12"
                 style={{
                   background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
                   border: `1px solid hsl(${GOLD.primary} / 0.2)`,
