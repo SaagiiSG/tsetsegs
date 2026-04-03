@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useDeferredValue } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +22,7 @@ interface QuestionListProps {
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
   // Fetch questions based on question set (excluding bluebook questions)
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, search],
+    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, deferredSearch],
     queryFn: async () => {
       // First, get all question IDs that are in bluebook tests
       const { data: bluebookQuestionIds } = await supabase
@@ -82,8 +83,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.eq('difficulty_level', difficultyFilter);
       }
 
-      if (search) {
-        query = query.or(`question_id.ilike.%${search}%,question_text.ilike.%${search}%`);
+      if (deferredSearch) {
+        query = query.or(`question_id.ilike.%${deferredSearch}%,question_text.ilike.%${deferredSearch}%`);
       }
 
       // Exclude bluebook questions
