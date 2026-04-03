@@ -822,7 +822,7 @@ const Index = () => {
       </section> */}
 
       {/* CTA Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-4xl mx-auto"
           initial="hidden"
