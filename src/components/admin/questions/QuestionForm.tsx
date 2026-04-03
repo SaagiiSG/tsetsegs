@@ -142,7 +142,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       form.reset({
         question_id: editingQuestion.question_id,
         question_text: editingQuestion.question_text,
-        category_id: editingQuestion.category_id,
+        category_id: editingQuestion.category_id || '',
         question_type: editingQuestion.question_type,
         answer: editingQuestion.answer,
         option_a: options.A || '',
