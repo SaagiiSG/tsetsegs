@@ -551,7 +551,7 @@ const Index = () => {
                 className="w-full md:w-[80%]"
               >
                 <Card 
-                  className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
+                  className="relative p-5 md:p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
                   style={{
                     background: `hsl(${GOLD.cardBg} / 0.95)`,
                     border: `1px solid hsl(${GOLD.primary} / 0.2)`,
