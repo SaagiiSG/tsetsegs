@@ -719,7 +719,7 @@ const Index = () => {
       </section>
 
       {/* IELTS Achievements Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
