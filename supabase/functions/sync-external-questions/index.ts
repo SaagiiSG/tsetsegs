@@ -181,10 +181,10 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: true })
       .range(offset, offset + safeLimit - 1);
 
-    // Filter by question_set if specified, otherwise only fetch originals
+    // Filter by question_set if specified, otherwise only fetch originals (skip for english)
     if (question_set) {
       query = query.eq("question_set", question_set);
-    } else {
+    } else if (subject !== 'english') {
       query = query.eq("is_original", true);
     }
 
