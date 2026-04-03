@@ -1,101 +1,65 @@
 
 
-## Live Practice Mode (Kahoot-style) for Teacher Dashboard
+## Expand Practice Tab into a Full Teacher Practice Hub
 
-### Concept
-A new **"Practice"** mode in the teacher bottom nav that lets teachers run live, competitive quiz sessions in class. Teachers pick questions from any question set, generate a QR code, students scan it, enter their name + phone, and race to answer -- earning points in real-time with a live leaderboard projected on screen.
+### Vision
+The "Practice" tab becomes a comprehensive teaching tool — not just the Kahoot live session. Teachers get a question browser where they can view, solve, and discuss any problem from the question bank, with Desmos calculator access. The Live Session (Kahoot) becomes one sub-feature within this hub.
 
-### Flow
+### Structure
 
 ```text
-Teacher Flow:
-[Bottom Nav: Practice] → Create Session screen
-  → Pick question set (68 / CollegeBoard / 150 Hard / English / All)
-  → Pick # of questions (5, 10, 15, 20) or hand-pick specific ones
-  → Set time per question (15s, 30s, 45s, 60s)
-  → "Start Session" → QR code + join code displayed
-  → Lobby (see who's joined, live count)
-  → Teacher taps "Next Question" to advance
-  → Live leaderboard after each question
-  → Final podium / results at the end
-
-Student Flow:
-[Scans QR / visits link] → Enter name + phone number
-  → Waiting lobby ("Waiting for teacher...")
-  → Question appears with countdown timer
-  → Submit answer → instant feedback (correct/wrong)
-  → See rank after each round
-  → Final results screen with total points
+Practice Tab
+├── [Tab: Browse Questions]  ← NEW (default)
+│   ├── Question set picker (68 / CB / 150 Hard / English / All)
+│   ├── Subject toggle (Math / English)
+│   ├── Category filter + difficulty filter
+│   ├── Scrollable question list with preview cards
+│   ├── Click → full question view (MathText, passage, image, choices)
+│   ├── Teacher can select answer → see correct/wrong + rationale
+│   ├── Desmos calculator button (floating, same as student has)
+│   └── Reference sheet button (for geometry formulas)
+│
+├── [Tab: Live Session]  ← existing Kahoot feature (moved here)
+│   └── LivePracticeContent (create session, lobby, play, results)
+│
+└── [Tab: Flagged]  ← move TeacherFlaggedQuestions here
+    └── Read-only flagged questions list with preview
 ```
-
-### Database Changes (3 new tables)
-
-**`live_sessions`** -- one row per quiz session
-- `id` (uuid PK), `teacher_name` (text), `join_code` (text unique, 6-char), `question_set` (text), `time_per_question` (int, seconds), `status` (enum: waiting/active/finished), `current_question_index` (int default 0), `created_at`, `finished_at`
-
-**`live_session_questions`** -- ordered questions for a session
-- `id` (uuid PK), `session_id` (FK → live_sessions), `question_id` (FK → questions), `order_index` (int)
-
-**`live_session_participants`** -- who joined + their answers
-- `id` (uuid PK), `session_id` (FK → live_sessions), `player_name` (text), `phone_number` (text), `total_points` (int default 0), `joined_at`
-
-**`live_session_answers`** -- individual answers per question
-- `id` (uuid PK), `session_id` (FK), `participant_id` (FK → live_session_participants), `question_id` (FK → questions), `answer` (text), `is_correct` (bool), `time_taken_ms` (int), `points_earned` (int), `submitted_at`
-
-Enable **Realtime** on `live_session_participants` and `live_session_answers` for live updates.
-
-RLS: All tables public-read for active sessions (students join without auth), insert allowed for participants/answers. Only teachers can create/update sessions.
 
 ### File Changes
 
-1. **`src/pages/TeacherDashboard.tsx`**
-   - Add `"practice"` to `DashboardMode` type and `MODE_ORDER`
-   - Add Practice button to bottom nav bar (Gamepad2 icon)
-   - Render `<LivePracticeContent />` when mode is "practice"
+1. **New: `src/components/teacher/practice/TeacherPracticeHub.tsx`**
+   - Tab container with three sub-tabs: "Browse", "Live Session", "Flagged"
+   - Browse tab is default
+   - Renders `TeacherQuestionBrowser`, `LivePracticeContent`, `TeacherFlaggedQuestions`
 
-2. **New: `src/components/teacher/live-practice/LivePracticeContent.tsx`**
-   - Main container: setup form → lobby → question control → results
-   - Question set selector (68 / CB / 150 / English / All)
-   - Count selector + time-per-question selector
-   - Random question picker from selected set
-   - Generates 6-char join code, creates `live_sessions` row
-   - Shows QR code (pointing to `/live/{joinCode}`) + join code text
+2. **New: `src/components/teacher/practice/TeacherQuestionBrowser.tsx`**
+   - Question set selector (reuses same sets as student practice)
+   - Subject toggle (math/english), category dropdown, difficulty filter
+   - Fetches questions from `questions` table with filters
+   - Renders a scrollable list of question cards (question_id, preview text, difficulty badge, category)
+   - Click a card → opens `TeacherQuestionViewer` dialog
 
-3. **New: `src/components/teacher/live-practice/LiveLobby.tsx`**
-   - Real-time participant list via Supabase subscription
-   - "Start" button when >= 1 player joined
-   - Live player count with animation
+3. **New: `src/components/teacher/practice/TeacherQuestionViewer.tsx`**
+   - Full question display using `MathText` (same rendering as StudentQuestion)
+   - Shows passage, image, multiple choice options or fill-in-blank input
+   - Teacher can select an answer → reveals correct answer, rationale, video link
+   - Desmos calculator toggle button (reuses `DesmosCalculator` component)
+   - Reference sheet toggle (reuses `ReferenceSheet` component)
+   - Navigation: prev/next question buttons within filtered set
 
-4. **New: `src/components/teacher/live-practice/LiveQuestionControl.tsx`**
-   - Teacher view: shows current question, answer distribution bar chart, timer
-   - "Next Question" / "Show Results" buttons
-   - Updates `current_question_index` and `status` in real-time
+4. **Edit: `src/pages/TeacherDashboard.tsx`**
+   - Replace `<LivePracticeContent />` with `<TeacherPracticeHub />`
+   - Remove standalone `TeacherFlaggedQuestions` from the dashboard tabs (it moves into Practice hub)
+   - Remove the "Flagged" tab from the dashboard's main tabs since it's now inside Practice
 
-5. **New: `src/components/teacher/live-practice/LiveLeaderboard.tsx`**
-   - After each question: animated leaderboard with point changes
-   - Final screen: podium (top 3) with confetti, full rankings
-
-6. **New: `src/pages/LiveSession.tsx`** (public route, no auth required)
-   - Student-facing join page at `/live/:joinCode`
-   - Enter name + phone → join as participant
-   - Listens to session state changes via Realtime
-   - Shows question + choices + countdown timer
-   - Submit answer → instant correct/wrong feedback
-   - Between questions: shows player's current rank
-
-7. **`src/App.tsx`**
-   - Add public route: `/live/:joinCode` → `<LiveSession />`
-
-### Points Logic
-- Correct answer: base 1000 points, scaled by speed (faster = more points)
-- Formula: `points = correct ? Math.round(1000 * (timeRemaining / totalTime)) : 0`
-- Minimum 100 points for any correct answer
+### No Database Changes
+All data already exists — this is purely a UI/component restructuring using existing question data and components.
 
 ### Key UX Details
-- Teacher projects their screen showing the QR/lobby/leaderboard
-- Students play on their phones -- no login needed, just name + phone
-- Questions render with `<MathText>` for LaTeX support
-- Mobile-first student UI with large tap targets
-- Animated transitions between states (framer-motion)
-- Sound-optional celebration effects on correct answers
+- Teachers project questions on screen for class discussion
+- Desmos floats the same way it does for students — draggable, snappable
+- Question cards show difficulty color coding (green/yellow/red)
+- Rationale is hidden until teacher "submits" an answer (prevents accidental spoilers)
+- Mobile-friendly: question list collapses to single column, viewer goes full-screen
 
