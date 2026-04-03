@@ -383,7 +383,7 @@ const Index = () => {
                     splitType="chars"
                   />
                 </h1>
-                <div className="text-5xl md:text-7xl lg:text-8xl font-bold">
+                <div className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold">
                   <GradientText
                     colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
                     animationSpeed={6}
