@@ -6,7 +6,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
-import { OnboardingSATModal } from './OnboardingSATModal';
+import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
