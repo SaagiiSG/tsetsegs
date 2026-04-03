@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2 } from "lucide-react";
+import { LogOut, Users, Calendar, MapPin, AlertTriangle, Settings, GraduationCap, BarChart3, Search, QrCode, ArrowRightLeft, LayoutDashboard, Flame, X, Flower2, Flag } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IntensePrepContent } from "@/components/teacher/intense-prep";
@@ -17,6 +17,7 @@ import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
 import { ReviewRegistrationContent } from "@/components/teacher/ReviewRegistrationContent";
 import { getErrorToast } from "@/lib/errorUtils";
+import { TeacherFlaggedQuestions } from "@/components/teacher/TeacherFlaggedQuestions";
 
 interface Batch {
   id: string;
@@ -422,17 +423,21 @@ export default function TeacherDashboard() {
   // Dashboard content (existing tabs)
   const DashboardContent = () => (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
-      <TabsList className="grid w-full grid-cols-3 h-9 md:h-10">
-        <TabsTrigger value="classes" className="text-xs md:text-sm px-2">
+      <TabsList className="grid w-full grid-cols-4 h-9 md:h-10">
+        <TabsTrigger value="classes" className="text-xs md:text-sm px-1.5">
           Classes
         </TabsTrigger>
-        <TabsTrigger value="students" className="text-xs md:text-sm px-2">
+        <TabsTrigger value="students" className="text-xs md:text-sm px-1.5">
           <GraduationCap className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
           <span className="hidden xs:inline">Students</span>
         </TabsTrigger>
-        <TabsTrigger value="alerts" className="text-xs md:text-sm px-2">
+        <TabsTrigger value="alerts" className="text-xs md:text-sm px-1.5">
           <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
           <span className="hidden xs:inline">Alerts</span>
+        </TabsTrigger>
+        <TabsTrigger value="flagged" className="text-xs md:text-sm px-1.5">
+          <Flag className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+          <span className="hidden xs:inline">Flagged</span>
         </TabsTrigger>
       </TabsList>
 
@@ -541,6 +546,16 @@ export default function TeacherDashboard() {
           ) : (
             <p className="text-muted-foreground text-center py-4 text-xs">Loading...</p>
           )}
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="flagged">
+        <Card className="p-3 md:p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Flag className="h-4 w-4 text-orange-500" />
+            <h3 className="text-sm md:text-base font-semibold">Flagged Questions</h3>
+          </div>
+          <TeacherFlaggedQuestions />
         </Card>
       </TabsContent>
     </Tabs>
