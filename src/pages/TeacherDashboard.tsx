@@ -545,15 +545,6 @@ export default function TeacherDashboard() {
         </Card>
       </TabsContent>
 
-      <TabsContent value="flagged">
-        <Card className="p-3 md:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Flag className="h-4 w-4 text-orange-500" />
-            <h3 className="text-sm md:text-base font-semibold">Flagged Questions</h3>
-          </div>
-          <TeacherFlaggedQuestions />
-        </Card>
-      </TabsContent>
     </Tabs>
   );
 
