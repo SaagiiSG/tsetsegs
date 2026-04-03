@@ -778,7 +778,7 @@ const Index = () => {
                 ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5].map((img, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                  className="flex-shrink-0 w-36 h-48 md:w-56 md:h-72 rounded-lg md:rounded-xl overflow-hidden"
                   style={{
                     border: `2px solid hsl(${GOLD.primary} / 0.3)`,
                     boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
