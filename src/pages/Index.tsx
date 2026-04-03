@@ -328,18 +328,18 @@ const Index = () => {
           }}
         />
         
-        {/* Golden gradient orbs */}
+        {/* Golden gradient orbs - hidden on mobile to avoid overflow */}
         <div 
-          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none"
+          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
           style={{ background: `hsl(${GOLD.primary} / 0.2)` }}
         />
         <div 
-          className="absolute top-[40%] -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none"
+          className="absolute top-[40%] -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
           style={{ background: `hsl(${GOLD.light} / 0.15)`, animationDelay: "1s" }}
         />
 
         {/* Hero Content */}
-        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16 md:py-20">
           <div className="w-full max-w-6xl mx-auto text-center space-y-8">
             {/* Top Badge - Outside frosted glass */}
             <motion.div
