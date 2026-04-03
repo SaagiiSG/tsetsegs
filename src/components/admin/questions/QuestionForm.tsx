@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Youtube, Plus, Trash2, ImagePlus } from 'lucide-react';
+import { Loader2, X, Youtube, Plus, Trash2, ImagePlus, Crop as CropIcon } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1033,12 +1033,26 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
 
                 {/* Preview Image */}
                 {imagePreview && (
-                  <div className="rounded-lg border overflow-hidden bg-white">
+                  <div className="rounded-lg border overflow-hidden bg-white relative group">
                     <img 
                       src={imagePreview} 
                       alt="Question figure" 
                       className="w-full object-contain max-h-48"
                     />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs h-7"
+                      onClick={() => {
+                        setCropperSrc(imagePreview);
+                        setCropperTarget('main');
+                        setCropperOpen(true);
+                      }}
+                    >
+                      <CropIcon className="h-3 w-3 mr-1" />
+                      Crop
+                    </Button>
                   </div>
                 )}
 
