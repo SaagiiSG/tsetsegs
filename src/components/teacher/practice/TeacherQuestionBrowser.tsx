@@ -136,7 +136,7 @@ export function TeacherQuestionBrowser() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {QUESTION_SETS.map(s => (
+              {(subject === 'english' ? ENGLISH_QUESTION_SETS : MATH_QUESTION_SETS).map(s => (
                     <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
                   ))}
                 </SelectContent>
