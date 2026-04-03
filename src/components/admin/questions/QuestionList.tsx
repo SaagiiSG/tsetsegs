@@ -48,7 +48,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
   // Fetch questions based on question set (excluding bluebook questions)
   const { data: allQuestions, isLoading } = useQuery({
-    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, serverSearch],
+    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, serverSearch, figureFilter],
     queryFn: async () => {
       // First, get all question IDs that are in bluebook tests
       const { data: bluebookQuestionIds } = await supabase
