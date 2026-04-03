@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { MathText } from '@/components/MathText';
+
 import { TeacherQuestionViewer } from './TeacherQuestionViewer';
 
 const QUESTION_SETS = [
