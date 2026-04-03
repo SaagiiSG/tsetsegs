@@ -56,7 +56,7 @@ export function WelcomeOnboardingModal({ open, onClose }: WelcomeOnboardingModal
   const [saving, setSaving] = useState(false);
   const [direction, setDirection] = useState(1);
 
-  const firstName = student?.linked_student?.name?.split(' ')[0] || 'there';
+  const firstName = student?.linked_student?.first_name || 'there';
 
   const steps: Step[] = [
     {
