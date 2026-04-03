@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
-import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import {
   ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2,
