@@ -26,6 +26,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
   const serverSearch = isInlineSearch ? '' : search.trim();
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [figureFilter, setFigureFilter] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const { toast } = useToast();
@@ -47,7 +48,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
   // Fetch questions based on question set (excluding bluebook questions)
   const { data: allQuestions, isLoading } = useQuery({
-    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, serverSearch],
+    queryKey: ['questions', questionSet, categoryFilter, difficultyFilter, serverSearch, figureFilter],
     queryFn: async () => {
       // First, get all question IDs that are in bluebook tests
       const { data: bluebookQuestionIds } = await supabase
@@ -86,6 +87,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
 
       if (serverSearch) {
         query = query.or(`question_id.ilike.%${serverSearch}%,question_text.ilike.%${serverSearch}%`);
+      }
+
+      // Filter by figure
+      if (figureFilter) {
+        query = query.eq('has_figure', true);
       }
 
       // Exclude bluebook questions
@@ -302,6 +308,15 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                     </SelectContent>
                   </Select>
                 )}
+                <Button
+                  variant={figureFilter ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFigureFilter(!figureFilter)}
+                  className="flex-shrink-0"
+                >
+                  <Image className="h-3.5 w-3.5 mr-1" />
+                  Figures
+                </Button>
               </div>
             </div>
           </div>
