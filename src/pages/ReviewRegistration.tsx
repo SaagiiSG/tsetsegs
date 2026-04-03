@@ -656,35 +656,45 @@ export default function ReviewRegistration() {
                 )}
               </div>
 
-              {/* Teacher Selection */}
-              <div className="space-y-2">
-                <Label>Select Teacher's Class</Label>
-                <Select
-                  onValueChange={(value) => registrationForm.setValue("teacher", value)}
-                >
-                  <SelectTrigger
-                    className={
-                      registrationForm.formState.errors.teacher
-                        ? "border-destructive"
-                        : ""
-                    }
+              {/* Teacher Selection - hidden when auto-set from QR/batch link */}
+              {batchInfo?.teacher ? (
+                <div className="space-y-2">
+                  <Label>Teacher</Label>
+                  <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>{batchInfo.teacher}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Select Teacher's Class</Label>
+                  <Select
+                    onValueChange={(value) => registrationForm.setValue("teacher", value)}
                   >
-                    <SelectValue placeholder="Choose a teacher..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.name}>
-                        {teacher.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {registrationForm.formState.errors.teacher && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.teacher.message}
-                  </p>
-                )}
-              </div>
+                    <SelectTrigger
+                      className={
+                        registrationForm.formState.errors.teacher
+                          ? "border-destructive"
+                          : ""
+                      }
+                    >
+                      <SelectValue placeholder="Choose a teacher..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teachers.map((teacher) => (
+                        <SelectItem key={teacher.id} value={teacher.name}>
+                          {teacher.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {registrationForm.formState.errors.teacher && (
+                    <p className="text-sm text-destructive">
+                      {registrationForm.formState.errors.teacher.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* SAT Experience */}
               <div className="space-y-2">
