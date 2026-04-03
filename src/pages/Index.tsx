@@ -372,7 +372,7 @@ const Index = () => {
               {/* Main headline with animated text */}
               <div className="space-y-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
                 <h1 
-                  className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
+                  className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
                   style={{ color: `hsl(${GOLD.text})` }}
                 >
                   <SplitText
