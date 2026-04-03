@@ -674,7 +674,7 @@ export default function TeacherDashboard() {
           <div className="flex flex-col items-center gap-4 py-4">
             <div className="bg-white p-4 rounded-xl">
               <QRCodeComponent
-                value={`https://tsetsegs.lovable.app/register?batch=${qrBatch?.id}`}
+                value={`https://flowersos.co/register?batch=${qrBatch?.id}`}
                 size={220}
                 level="H"
               />

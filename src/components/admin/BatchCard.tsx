@@ -34,7 +34,7 @@ export function BatchCard({ batch, onUpdate, studentCount }: BatchCardProps) {
   const { toast } = useToast();
 
   const handleCopyLink = () => {
-    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    const batchLink = `https://flowersos.co/batch/${batch.unique_link_id}`;
     navigator.clipboard.writeText(batchLink);
     toast({
       title: "Link Copied",
@@ -99,7 +99,7 @@ export function BatchCard({ batch, onUpdate, studentCount }: BatchCardProps) {
   };
 
   const getSmsTemplate = () => {
-    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    const batchLink = `https://flowersos.co/batch/${batch.unique_link_id}`;
     
     // IELTS template
     if (batch.course_type === 'IELTS') {

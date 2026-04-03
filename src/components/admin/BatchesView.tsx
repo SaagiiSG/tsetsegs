@@ -128,7 +128,7 @@ export function BatchesView() {
   };
 
   const handleCopyLink = (batch: any) => {
-    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    const batchLink = `https://flowersos.co/batch/${batch.unique_link_id}`;
     navigator.clipboard.writeText(batchLink);
     toast({ title: "Link Copied", description: "Batch link copied to clipboard" });
   };
@@ -152,7 +152,7 @@ export function BatchesView() {
   };
 
   const getSmsTemplate = (batch: any) => {
-    const batchLink = `https://tsetsegs.lovable.app/batch/${batch.unique_link_id}`;
+    const batchLink = `https://flowersos.co/batch/${batch.unique_link_id}`;
     if (batch.course_type === 'IELTS') {
       return `Сайн байна уу? \n\nTsetsegs IELTS сургалтаас холбогдож байна. \n\nАнгийн мэдээлэл: ${batchLink}\n\nТус групт\n1. Бидний хэрэглэх ном (Google drive дотор)\n2. Цээжлэх үгс (Google drive дотор)\n3. ЭЕШ-д бэлдэх Англи хэл, Нийгмийн 700+ материал\n4. Сургалтын төлөвлөгөө зэрэг байгаа тул эхний postоос эхлэн дуустал нь уншаарай.\n\nБаярлалаа.`;
     }
