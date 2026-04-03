@@ -307,12 +307,14 @@ export function TeacherQuestionViewer({
               ) : null}
             </div>
           </ScrollArea>
+
+          {/* Floating tools — inside the z-50 overlay so they render on top */}
+          <div className="relative" style={{ zIndex: 60 }}>
+            <DesmosCalculator />
+            <ReferenceSheet />
+          </div>
         </motion.div>
       </AnimatePresence>
-
-      {/* Floating tools */}
-      <DesmosCalculator />
-      <ReferenceSheet />
     </>
   );
 }
