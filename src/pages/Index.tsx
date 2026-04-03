@@ -328,19 +328,19 @@ const Index = () => {
           }}
         />
         
-        {/* Golden gradient orbs */}
+        {/* Golden gradient orbs - hidden on mobile to avoid overflow */}
         <div 
-          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none"
+          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
           style={{ background: `hsl(${GOLD.primary} / 0.2)` }}
         />
         <div 
-          className="absolute top-[40%] -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none"
+          className="absolute top-[40%] -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
           style={{ background: `hsl(${GOLD.light} / 0.15)`, animationDelay: "1s" }}
         />
 
         {/* Hero Content */}
-        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20">
-          <div className="w-full max-w-6xl mx-auto text-center space-y-8">
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16 md:py-20">
+          <div className="w-full max-w-6xl mx-auto text-center space-y-6 md:space-y-8">
             {/* Top Badge - Outside frosted glass */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -362,7 +362,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="backdrop-blur-xl rounded-3xl px-6 py-10 md:px-12 md:py-14 w-full"
+              className="backdrop-blur-xl rounded-2xl md:rounded-3xl px-4 py-8 md:px-12 md:py-14 w-full"
               style={{
                 background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.7), hsl(${GOLD.cardBg} / 0.5))`,
                 border: `1px solid hsl(${GOLD.primary} / 0.2)`,
@@ -372,7 +372,7 @@ const Index = () => {
               {/* Main headline with animated text */}
               <div className="space-y-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
                 <h1 
-                  className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
+                  className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
                   style={{ color: `hsl(${GOLD.text})` }}
                 >
                   <SplitText
@@ -383,7 +383,7 @@ const Index = () => {
                     splitType="chars"
                   />
                 </h1>
-                <div className="text-5xl md:text-7xl lg:text-8xl font-bold">
+                <div className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold">
                   <GradientText
                     colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
                     animationSpeed={6}
@@ -404,7 +404,7 @@ const Index = () => {
               >
                 <BlurText
                   text={t('heroSubtitle')}
-                  className="text-lg md:text-xl max-w-3xl mx-auto"
+                  className="text-base md:text-xl max-w-3xl mx-auto"
                   delay={20}
                   animateBy="words"
                 />
@@ -458,7 +458,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.5, duration: 0.5 }}
-              className="grid grid-cols-3 gap-8 pt-8 max-w-3xl mx-auto"
+              className="grid grid-cols-3 gap-4 md:gap-8 pt-6 md:pt-8 max-w-3xl mx-auto"
             >
               {stats.map((stat, index) => (
                 <motion.div
@@ -469,7 +469,7 @@ const Index = () => {
                   className="text-center"
                 >
                   <div 
-                    className="text-3xl md:text-5xl font-bold"
+                    className="text-2xl md:text-5xl font-bold"
                     style={{ color: `hsl(${GOLD.light})` }}
                   >
                     <Counter 
@@ -493,7 +493,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-6xl mx-auto"
           initial="hidden"
@@ -548,34 +548,34 @@ const Index = () => {
                     transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } 
                   }
                 }}
-                className="w-[80%]"
+                className="w-full md:w-[80%]"
               >
                 <Card 
-                  className="relative p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
+                  className="relative p-5 md:p-8 backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-xl group"
                   style={{
                     background: `hsl(${GOLD.cardBg} / 0.95)`,
                     border: `1px solid hsl(${GOLD.primary} / 0.2)`,
                   }}
                 >
-                  <div className="flex items-start gap-6">
+                  <div className="flex items-start gap-4 md:gap-6">
                     <motion.div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                      className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
                       style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                     >
                       <feature.icon 
-                        className="w-7 h-7"
+                        className="w-5 h-5 md:w-7 md:h-7"
                         style={{ color: `hsl(${GOLD.light})` }}
                       />
                     </motion.div>
                     <div className="space-y-2">
                       <h3 
-                        className="text-2xl font-semibold"
+                        className="text-lg md:text-2xl font-semibold"
                         style={{ color: `hsl(${GOLD.text})` }}
                       >
                         {t(feature.titleKey)}
                       </h3>
                       <p 
-                        className="text-base leading-relaxed"
+                        className="text-sm md:text-base leading-relaxed"
                         style={{ color: `hsl(${GOLD.muted})` }}
                       >
                         {t(feature.descKey)}
@@ -590,7 +590,7 @@ const Index = () => {
       </section>
 
       {/* Student Success Section with DomeGallery */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
@@ -647,7 +647,7 @@ const Index = () => {
               boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5)`,
             }}
           >
-            <div className="w-full h-[550px]">
+            <div className="w-full h-[350px] md:h-[550px]">
               <DomeGallery 
                 images={galleryImages}
                 overlayBlurColor="transparent"
@@ -662,7 +662,7 @@ const Index = () => {
           {/* Real scores */}
           {successScores && successScores.length > 0 && (
             <motion.div 
-              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-16"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mt-10 md:mt-16"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
@@ -719,7 +719,7 @@ const Index = () => {
       </section>
 
       {/* IELTS Achievements Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
@@ -778,7 +778,7 @@ const Index = () => {
                 ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5].map((img, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                  className="flex-shrink-0 w-36 h-48 md:w-56 md:h-72 rounded-lg md:rounded-xl overflow-hidden"
                   style={{
                     border: `2px solid hsl(${GOLD.primary} / 0.3)`,
                     boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
@@ -802,7 +802,7 @@ const Index = () => {
                 ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15].map((img, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-48 h-60 md:w-56 md:h-72 rounded-xl overflow-hidden"
+                  className="flex-shrink-0 w-36 h-48 md:w-56 md:h-72 rounded-lg md:rounded-xl overflow-hidden"
                   style={{
                     border: `2px solid hsl(${GOLD.primary} / 0.3)`,
                     boxShadow: `0 8px 24px hsl(${GOLD.bg} / 0.6)`,
@@ -822,7 +822,7 @@ const Index = () => {
       </section> */}
 
       {/* CTA Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-4xl mx-auto"
           initial="hidden"
@@ -844,7 +844,7 @@ const Index = () => {
               className="rounded-3xl"
             >
               <Card 
-                className="relative overflow-hidden p-8 md:p-12"
+                className="relative overflow-hidden p-6 md:p-12"
                 style={{
                   background: `linear-gradient(135deg, hsl(${GOLD.cardBg}), hsl(${GOLD.bg}))`,
                   border: `1px solid hsl(${GOLD.primary} / 0.2)`,
@@ -885,7 +885,7 @@ const Index = () => {
                       hidden: { opacity: 0, y: 30 },
                       visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
                     }}
-                    className="text-3xl md:text-4xl font-bold"
+                    className="text-2xl md:text-4xl font-bold"
                     style={{ color: `hsl(${GOLD.text})`, fontFamily: "'Outfit', sans-serif" }}
                   >
                     {t('readyToStart')}
@@ -946,7 +946,7 @@ const Index = () => {
 
       {/* TsetsegsOS Footer */}
       <footer 
-        className="relative py-16 px-4 pb-40 overflow-hidden"
+        className="relative py-12 md:py-16 px-4 pb-32 md:pb-40 overflow-hidden"
         style={{ borderTop: `1px solid hsl(${GOLD.primary} / 0.1)` }}
       >
         <motion.div 
