@@ -22,6 +22,7 @@ interface QuestionListProps {
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
