@@ -227,7 +227,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       const questionData: any = {
         question_id: data.question_id,
         question_text: data.question_text,
-        category_id: data.category_id,
+        category_id: data.category_id || null,
         question_type: data.question_type,
         answer: data.answer,
         question_image_url: imageUrl,
