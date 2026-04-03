@@ -30,6 +30,7 @@ export function TeacherQuestionViewer({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [fillAnswer, setFillAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const calculatorSnapSide = useCalculatorSnap();
 
   const { data: question, isLoading } = useQuery({
     queryKey: ['teacher-question-detail', questionId],
