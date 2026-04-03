@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Youtube, Plus, Trash2, ImagePlus } from 'lucide-react';
+import { Loader2, X, Youtube, Plus, Trash2, ImagePlus, Crop as CropIcon } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
