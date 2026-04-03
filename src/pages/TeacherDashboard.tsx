@@ -18,6 +18,7 @@ import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand"
 import { ReviewRegistrationContent } from "@/components/teacher/ReviewRegistrationContent";
 import { getErrorToast } from "@/lib/errorUtils";
 import { TeacherFlaggedQuestions } from "@/components/teacher/TeacherFlaggedQuestions";
+import { LivePracticeContent } from "@/components/teacher/live-practice";
 
 interface Batch {
   id: string;
