@@ -638,6 +638,19 @@ export default function TeacherDashboard() {
                   <IntensePrepContent />
                 </motion.div>
               )}
+              {activeMode === "practice" && (
+                <motion.div
+                  key="practice"
+                  custom={slideDirection}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={slideTransition}
+                >
+                  <LivePracticeContent />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
