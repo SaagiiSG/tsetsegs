@@ -308,6 +308,15 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                     </SelectContent>
                   </Select>
                 )}
+                <Button
+                  variant={figureFilter ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFigureFilter(!figureFilter)}
+                  className="flex-shrink-0"
+                >
+                  <Image className="h-3.5 w-3.5 mr-1" />
+                  Figures
+                </Button>
               </div>
             </div>
           </div>
