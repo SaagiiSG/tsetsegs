@@ -83,8 +83,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.eq('difficulty_level', difficultyFilter);
       }
 
-      if (search) {
-        query = query.or(`question_id.ilike.%${search}%,question_text.ilike.%${search}%`);
+      if (deferredSearch) {
+        query = query.or(`question_id.ilike.%${deferredSearch}%,question_text.ilike.%${deferredSearch}%`);
       }
 
       // Exclude bluebook questions
