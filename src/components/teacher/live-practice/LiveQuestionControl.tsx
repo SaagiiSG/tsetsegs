@@ -13,6 +13,11 @@ interface Question {
   multiple_choice_options: any;
   answer: string;
   order_index: number;
+  has_figure: boolean | null;
+  figure_svg: string | null;
+  figure_description: string | null;
+  question_image_url: string | null;
+  passage_text: string | null;
 }
 
 interface AnswerStats {
