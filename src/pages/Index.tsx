@@ -362,7 +362,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="backdrop-blur-xl rounded-3xl px-6 py-10 md:px-12 md:py-14 w-full"
+              className="backdrop-blur-xl rounded-2xl md:rounded-3xl px-4 py-8 md:px-12 md:py-14 w-full"
               style={{
                 background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.7), hsl(${GOLD.cardBg} / 0.5))`,
                 border: `1px solid hsl(${GOLD.primary} / 0.2)`,
