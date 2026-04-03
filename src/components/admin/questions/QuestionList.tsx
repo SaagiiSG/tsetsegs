@@ -89,6 +89,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.or(`question_id.ilike.%${serverSearch}%,question_text.ilike.%${serverSearch}%`);
       }
 
+      // Filter by figure
+      if (figureFilter) {
+        query = query.eq('has_figure', true);
+      }
+
       // Exclude bluebook questions
       if (excludeIds.length > 0) {
         query = query.not('id', 'in', `(${excludeIds.join(',')})`);
