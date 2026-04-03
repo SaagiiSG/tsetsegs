@@ -111,7 +111,10 @@ export function TeacherQuestionBrowser() {
                   variant={subject === 'math' ? 'default' : 'ghost'}
                   size="sm"
                   className="h-8 rounded-none text-xs"
-                  onClick={() => setSubject('math')}
+                  onClick={() => {
+                    setSubject('math');
+                    setQuestionSet('all');
+                  }}
                 >
                   Math
                 </Button>
@@ -119,7 +122,10 @@ export function TeacherQuestionBrowser() {
                   variant={subject === 'english' ? 'default' : 'ghost'}
                   size="sm"
                   className="h-8 rounded-none text-xs"
-                  onClick={() => setSubject('english')}
+                  onClick={() => {
+                    setSubject('english');
+                    setQuestionSet('all');
+                  }}
                 >
                   English
                 </Button>
