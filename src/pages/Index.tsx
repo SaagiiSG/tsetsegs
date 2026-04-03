@@ -885,7 +885,7 @@ const Index = () => {
                       hidden: { opacity: 0, y: 30 },
                       visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
                     }}
-                    className="text-3xl md:text-4xl font-bold"
+                    className="text-2xl md:text-4xl font-bold"
                     style={{ color: `hsl(${GOLD.text})`, fontFamily: "'Outfit', sans-serif" }}
                   >
                     {t('readyToStart')}
