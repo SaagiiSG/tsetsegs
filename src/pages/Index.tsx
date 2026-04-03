@@ -563,7 +563,7 @@ const Index = () => {
                       style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                     >
                       <feature.icon 
-                        className="w-7 h-7"
+                        className="w-5 h-5 md:w-7 md:h-7"
                         style={{ color: `hsl(${GOLD.light})` }}
                       />
                     </motion.div>
