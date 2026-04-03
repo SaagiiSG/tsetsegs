@@ -30,7 +30,7 @@ const variationSchema = z.object({
 const questionSchema = z.object({
   question_id: z.string().min(1, 'Question ID is required'),
   question_text: z.string().min(1, 'Question text is required'),
-  category_id: z.string().min(1, 'Category is required'),
+  category_id: z.string().optional().default(''),
   question_type: z.enum(['multiple_choice', 'fill_blank']),
   answer: z.string().min(1, 'Answer is required'),
   option_a: z.string().optional(),
@@ -142,7 +142,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       form.reset({
         question_id: editingQuestion.question_id,
         question_text: editingQuestion.question_text,
-        category_id: editingQuestion.category_id,
+        category_id: editingQuestion.category_id || '',
         question_type: editingQuestion.question_type,
         answer: editingQuestion.answer,
         option_a: options.A || '',
@@ -227,7 +227,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       const questionData: any = {
         question_id: data.question_id,
         question_text: data.question_text,
-        category_id: data.category_id,
+        category_id: data.category_id || null,
         question_type: data.question_type,
         answer: data.answer,
         question_image_url: imageUrl,
