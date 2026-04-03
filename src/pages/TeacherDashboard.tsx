@@ -634,7 +634,7 @@ export default function TeacherDashboard() {
                   exit="exit"
                   transition={slideTransition}
                 >
-                  <LivePracticeContent />
+                  <TeacherPracticeHub />
                 </motion.div>
               )}
             </AnimatePresence>
