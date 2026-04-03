@@ -92,11 +92,20 @@ export function TeacherQuestionViewer({
   return (
     <>
       <AnimatePresence>
+        {/* Full-screen backdrop to cover the dashboard completely */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-background flex flex-col transition-all duration-300"
+          className="fixed inset-0 z-50 bg-background"
+        />
+
+        {/* Content area that shifts when calculator snaps */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex flex-col transition-all duration-300"
           style={{
             marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
             marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
@@ -167,9 +176,9 @@ export function TeacherQuestionViewer({
                       <Badge
                         variant="outline"
                         className={
-                          question.difficulty_level === 'hard' ? 'border-red-500 text-red-500' :
-                          question.difficulty_level === 'medium' ? 'border-yellow-500 text-yellow-500' :
-                          'border-green-500 text-green-500'
+                          question.difficulty_level === 'hard' ? 'border-destructive text-destructive' :
+                          question.difficulty_level === 'medium' ? 'border-accent-foreground text-accent-foreground' :
+                          'border-primary text-primary'
                         }
                       >
                         {question.difficulty_level}
@@ -219,8 +228,8 @@ export function TeacherQuestionViewer({
 
                         let borderClass = 'border-border bg-muted/30';
                         if (isSelected && !showResult) borderClass = 'border-primary bg-primary/10';
-                        if (showResult && isCorrect) borderClass = 'border-green-500/60 bg-green-500/10';
-                        if (showResult && isSelected && !isCorrect) borderClass = 'border-red-500/60 bg-red-500/10';
+                        if (showResult && isCorrect) borderClass = 'border-primary bg-primary/10';
+                        if (showResult && isSelected && !isCorrect) borderClass = 'border-destructive bg-destructive/10';
 
                         return (
                           <button
@@ -229,8 +238,8 @@ export function TeacherQuestionViewer({
                             className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors text-left ${borderClass} ${!submitted ? 'hover:border-primary/40 cursor-pointer' : ''}`}
                           >
                             <span className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
-                              showResult && isCorrect ? 'bg-green-500 text-white' :
-                              showResult && isSelected && !isCorrect ? 'bg-red-500 text-white' :
+                              showResult && isCorrect ? 'bg-primary text-primary-foreground' :
+                              showResult && isSelected && !isCorrect ? 'bg-destructive text-destructive-foreground' :
                               isSelected ? 'bg-primary text-primary-foreground' :
                               'bg-muted text-muted-foreground'
                             }`}>
@@ -240,8 +249,8 @@ export function TeacherQuestionViewer({
                               {imgUrl && <img src={imgUrl} alt={`Choice ${label}`} className="max-h-24 rounded mb-1" />}
                               {text && <MathText text={text} className="text-sm md:text-base" />}
                             </div>
-                            {showResult && isCorrect && <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />}
-                            {showResult && isSelected && !isCorrect && <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
+                            {showResult && isCorrect && <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />}
+                            {showResult && isSelected && !isCorrect && <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />}
                           </button>
                         );
                       })}
@@ -261,9 +270,9 @@ export function TeacherQuestionViewer({
                       />
                       {submitted && (
                         <div className={`flex items-center gap-3 p-4 rounded-lg border-2 ${
-                          isCorrectAnswer() ? 'border-green-500/60 bg-green-500/10' : 'border-red-500/60 bg-red-500/10'
+                          isCorrectAnswer() ? 'border-primary bg-primary/10' : 'border-destructive bg-destructive/10'
                         }`}>
-                          {isCorrectAnswer() ? <CheckCircle className="h-6 w-6 text-green-500" /> : <XCircle className="h-6 w-6 text-red-500" />}
+                          {isCorrectAnswer() ? <CheckCircle className="h-6 w-6 text-primary" /> : <XCircle className="h-6 w-6 text-destructive" />}
                           <span className="text-sm font-medium">Correct answer:</span>
                           <MathText text={question.answer} className="font-bold" />
                         </div>
@@ -291,8 +300,8 @@ export function TeacherQuestionViewer({
 
                   {/* Rationale */}
                   {submitted && question.rationale && (
-                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-5">
-                      <p className="text-xs font-medium text-blue-400 mb-2 uppercase tracking-wide">Rationale</p>
+                    <div className="bg-accent/50 border border-accent rounded-lg p-5">
+                      <p className="text-xs font-medium text-accent-foreground mb-2 uppercase tracking-wide">Rationale</p>
                       <MathText text={question.rationale} className="text-sm text-muted-foreground leading-relaxed" />
                     </div>
                   )}
@@ -305,7 +314,7 @@ export function TeacherQuestionViewer({
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <Video className="h-5 w-5 text-red-500" />
+                      <Video className="h-5 w-5 text-destructive" />
                       <span className="text-sm font-medium">Watch Explanation Video</span>
                     </a>
                   )}
@@ -313,14 +322,16 @@ export function TeacherQuestionViewer({
               ) : null}
             </div>
           </ScrollArea>
-
-          {/* Floating tools — inside the z-50 overlay so they render on top */}
-          <div className="relative" style={{ zIndex: 60 }}>
-            <DesmosCalculator />
-            <ReferenceSheet />
-          </div>
         </motion.div>
       </AnimatePresence>
+
+      {/* Floating tools — rendered outside the shifting container, above the backdrop */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 51 }}>
+        <div className="pointer-events-auto">
+          <DesmosCalculator />
+          <ReferenceSheet />
+        </div>
+      </div>
     </>
   );
 }
