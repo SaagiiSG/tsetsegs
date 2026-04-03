@@ -469,7 +469,7 @@ const Index = () => {
                   className="text-center"
                 >
                   <div 
-                    className="text-3xl md:text-5xl font-bold"
+                    className="text-2xl md:text-5xl font-bold"
                     style={{ color: `hsl(${GOLD.light})` }}
                   >
                     <Counter 
