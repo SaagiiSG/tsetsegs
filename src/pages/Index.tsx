@@ -559,7 +559,7 @@ const Index = () => {
                 >
                   <div className="flex items-start gap-4 md:gap-6">
                     <motion.div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                      className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
                       style={{ background: `hsl(${GOLD.primary} / 0.15)` }}
                     >
                       <feature.icon 
