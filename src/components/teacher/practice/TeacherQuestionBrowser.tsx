@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input';
 
 import { TeacherQuestionViewer } from './TeacherQuestionViewer';
 
-const QUESTION_SETS = [
+const MATH_QUESTION_SETS = [
   { value: 'all', label: 'All Questions' },
   { value: '68', label: '68 Problems' },
   { value: 'cb', label: 'CollegeBoard' },
   { value: '150_hard', label: '150 Hard' },
-  { value: 'english', label: 'English' },
+];
+
+const ENGLISH_QUESTION_SETS = [
+  { value: 'all', label: 'All Questions' },
 ];
 
 const DIFFICULTIES = [
