@@ -35,9 +35,9 @@ interface SwitchedStudentInfo {
   otherBatchName: string;
 }
 
-type DashboardMode = "dashboard" | "review" | "intense";
+type DashboardMode = "dashboard" | "review" | "intense" | "practice";
 
-const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense"];
+const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense", "practice"];
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
