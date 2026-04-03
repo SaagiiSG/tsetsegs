@@ -404,7 +404,7 @@ const Index = () => {
               >
                 <BlurText
                   text={t('heroSubtitle')}
-                  className="text-lg md:text-xl max-w-3xl mx-auto"
+                  className="text-base md:text-xl max-w-3xl mx-auto"
                   delay={20}
                   animateBy="words"
                 />
