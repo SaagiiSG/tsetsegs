@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -396,69 +397,82 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
                   </TableHeader>
                   <TableBody>
                     {questions.map((q, index) => (
-                      <TableRow 
-                        key={q.id} 
-                        className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                        onClick={(e) => handleRowClick(index, q.id, e)}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedIds.has(q.id)}
-                            onCheckedChange={() => toggleSelect(q.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
-                        <TableCell className="max-w-md">
-                          <div className="truncate">
-                            <MathText text={q.question_text} />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={getCategoryColor(q.category?.name || '')}>
-                            {q.category?.name || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && (
-                          <TableCell>
-                            <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
-                              {q.difficulty_level || 'N/A'}
-                            </Badge>
-                          </TableCell>
-                        )}
-                        <TableCell>
-                          <Badge variant="outline">
-                            {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {q.question_image_url && (
-                              <Image className="h-4 w-4 text-muted-foreground" />
+                      <ContextMenu key={q.id}>
+                        <ContextMenuTrigger asChild>
+                          <TableRow 
+                            className={`cursor-pointer ${selectedIds.has(q.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                            onClick={(e) => handleRowClick(index, q.id, e)}
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedIds.has(q.id)}
+                                onCheckedChange={() => toggleSelect(q.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-mono font-medium">{q.question_id}</TableCell>
+                            <TableCell className="max-w-md">
+                              <div className="truncate">
+                                <MathText text={q.question_text} />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className={getCategoryColor(q.category?.name || '')}>
+                                {q.category?.name || 'N/A'}
+                              </Badge>
+                            </TableCell>
+                            {(questionSet === 'CB' || questionSet === '150' || questionSet === 'english') && (
+                              <TableCell>
+                                <Badge variant="outline" className={getDifficultyColor(q.difficulty_level)}>
+                                  {q.difficulty_level || 'N/A'}
+                                </Badge>
+                              </TableCell>
                             )}
-                            {q.video_url && (
-                              <Youtube className="h-4 w-4 text-red-500" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEdit(q)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteId(q.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {q.question_type === 'multiple_choice' ? 'MC' : 'Fill'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {q.question_image_url && (
+                                  <Image className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                {q.video_url && (
+                                  <Youtube className="h-4 w-4 text-red-500" />
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => onEdit(q)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteId(q.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => onEdit(q)} className="gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => setDeleteId(q.id)} className="gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     ))}
                   </TableBody>
                 </Table>
