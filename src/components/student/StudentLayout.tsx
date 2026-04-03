@@ -111,7 +111,7 @@ function StudentLayoutContent() {
       </main>
 
       {/* SAT Date Onboarding Modal */}
-      <OnboardingSATModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
+      <WelcomeOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       
       <StudentBottomNav />
       
