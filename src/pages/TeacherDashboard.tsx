@@ -17,6 +17,7 @@ import { StudentAlertsTab } from "@/components/teacher/StudentAlertsTab";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
 import { ReviewRegistrationContent } from "@/components/teacher/ReviewRegistrationContent";
 import { getErrorToast } from "@/lib/errorUtils";
+import { TeacherFlaggedQuestions } from "@/components/teacher/TeacherFlaggedQuestions";
 
 interface Batch {
   id: string;
