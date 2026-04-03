@@ -458,7 +458,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.5, duration: 0.5 }}
-              className="grid grid-cols-3 gap-8 pt-8 max-w-3xl mx-auto"
+              className="grid grid-cols-3 gap-4 md:gap-8 pt-6 md:pt-8 max-w-3xl mx-auto"
             >
               {stats.map((stat, index) => (
                 <motion.div
