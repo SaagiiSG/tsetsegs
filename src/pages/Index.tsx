@@ -647,7 +647,7 @@ const Index = () => {
               boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5)`,
             }}
           >
-            <div className="w-full h-[550px]">
+            <div className="w-full h-[350px] md:h-[550px]">
               <DomeGallery 
                 images={galleryImages}
                 overlayBlurColor="transparent"
