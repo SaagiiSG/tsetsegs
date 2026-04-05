@@ -188,8 +188,8 @@ export default function StudentRegistration() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
-          <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
         </div>
         <CardTitle className="text-2xl">Хүсэлт илгээгдлээ!</CardTitle>

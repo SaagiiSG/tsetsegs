@@ -194,6 +194,9 @@ const App = () => (
                   {/* Live Practice Session */}
                   <Route path="/live/:joinCode" element={<LiveSession />} />
 
+                  {/* Student Self-Registration */}
+                  <Route path="/student-register" element={<StudentRegistration />} />
+
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />
                   <Route 

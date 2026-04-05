@@ -184,6 +184,7 @@ export function RegistrationQueue() {
                 {pendingRequests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell className="font-medium">{request.full_name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{request.parent_name || '—'}</TableCell>
                     <TableCell className="font-mono text-sm">{request.phone_number}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(request.created_at), 'MMM d, HH:mm')}
