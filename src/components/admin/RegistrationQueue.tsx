@@ -81,6 +81,7 @@ export function RegistrationQueue() {
       const { error: studentError } = await supabase
         .from('students')
         .insert([{
+          name: request.full_name,
           first_name: firstName || 'Unknown',
           last_name: lastName,
           phone: request.phone_number,
