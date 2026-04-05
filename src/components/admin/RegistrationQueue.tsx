@@ -70,6 +70,13 @@ export function RegistrationQueue() {
       const firstName = nameParts[0];
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null;
 
+      // Get batch's unique_link_id
+      const { data: batchData } = await supabase
+        .from('batches')
+        .select('unique_link_id')
+        .eq('id', batchId)
+        .single();
+
       // Create student record
       const { error: studentError } = await supabase
         .from('students')
@@ -77,7 +84,8 @@ export function RegistrationQueue() {
           first_name: firstName,
           last_name: lastName,
           phone: request.phone_number,
-          batch_id: batchId
+          batch_id: batchId,
+          unique_link_id: batchData?.unique_link_id || batchId
         });
 
       if (studentError) throw studentError;
