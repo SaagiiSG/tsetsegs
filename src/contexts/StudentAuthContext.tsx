@@ -299,9 +299,9 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean }> => {
+  const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }> => {
     try {
-      // First check if phone exists in students table (may have multiple records for multi-course students)
+      // First check if phone exists in students table
       const { data: studentRecords, error: studentError } = await supabase
         .from('students')
         .select('id, first_name, phone')
@@ -315,7 +315,31 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!studentRecord) {
-        return { error: 'No student found with this phone number. Please contact your teacher.' };
+        // Phone not found in students table — check registration_requests
+        const { data: existingRequest } = await supabase
+          .from('registration_requests')
+          .select('*')
+          .eq('phone_number', phoneNumber)
+          .maybeSingle();
+
+        setPendingPhone(phoneNumber);
+
+        if (existingRequest) {
+          if (existingRequest.status === 'pending') {
+            setAuthStep('pending_approval');
+            return { error: null, pendingApproval: true };
+          } else if (existingRequest.status === 'approved') {
+            // Approved but student record should exist — re-check or proceed
+            // This case shouldn't normally happen since approval creates the student record
+            return { error: 'Your request was approved. Please try logging in again.' };
+          } else if (existingRequest.status === 'rejected') {
+            return { error: 'Your registration request was not approved. Please contact your teacher.' };
+          }
+        }
+
+        // No request exists — show registration request form
+        setAuthStep('request_registration');
+        return { error: null, needsRegistration: true };
       }
 
       // Check if student account exists
@@ -329,16 +353,12 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         throw fetchError;
       }
 
-      const deviceId = getDeviceId();
-
       if (!studentAccount) {
-        // Create new student account (trigger will auto-link to students table)
+        // Create new student account WITHOUT device lock (deferred to first password login)
         const { data: newStudent, error: createError } = await supabase
           .from('student_accounts')
           .insert({ 
-            phone_number: phoneNumber,
-            registered_device_id: deviceId,
-            device_registered_at: new Date().toISOString()
+            phone_number: phoneNumber
           })
           .select()
           .single();
@@ -370,6 +390,37 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       console.error('Phone check error:', err);
       return { error: err.message || 'Failed to check phone number' };
+    }
+  };
+
+  const submitRegistrationRequest = async (fullName: string): Promise<{ error: string | null }> => {
+    try {
+      if (!pendingPhone) {
+        return { error: 'Session expired. Please start over.' };
+      }
+
+      const { error: insertError } = await supabase
+        .from('registration_requests')
+        .insert({
+          phone_number: pendingPhone,
+          full_name: fullName.trim(),
+          status: 'pending'
+        });
+
+      if (insertError) {
+        if (insertError.code === '23505') {
+          // Unique constraint — request already exists
+          setAuthStep('pending_approval');
+          return { error: null };
+        }
+        throw insertError;
+      }
+
+      setAuthStep('pending_approval');
+      return { error: null };
+    } catch (err: any) {
+      console.error('Registration request error:', err);
+      return { error: err.message || 'Failed to submit request' };
     }
   };
 
