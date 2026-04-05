@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAnalytics } from '@/hooks/useStudentAnalytics';
 import { PriorityAlertCard } from '@/components/student/analytics/PriorityAlertCard';
 import { WeaknessIdentifier } from '@/components/student/analytics/WeaknessIdentifier';
