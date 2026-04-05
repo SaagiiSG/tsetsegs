@@ -80,13 +80,13 @@ export function RegistrationQueue() {
       // Create student record
       const { error: studentError } = await supabase
         .from('students')
-        .insert({
-          first_name: firstName,
+        .insert([{
+          first_name: firstName || 'Unknown',
           last_name: lastName,
           phone: request.phone_number,
           batch_id: batchId,
-          unique_link_id: batchData?.unique_link_id || batchId
-        });
+          unique_link_id: batchData?.unique_link_id ?? batchId
+        }]);
 
       if (studentError) throw studentError;
 
