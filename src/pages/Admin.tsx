@@ -22,6 +22,7 @@ import SprintMonitor from '@/pages/admin/SprintMonitor';
 import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
 import BugReports from '@/pages/admin/BugReports';
+import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 
 const Admin = () => {
