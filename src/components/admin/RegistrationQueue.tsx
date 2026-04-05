@@ -67,7 +67,7 @@ export function RegistrationQueue() {
       const firstName = nameParts[0];
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null;
 
-      let uniqueLinkId = crypto.randomUUID();
+      let uniqueLinkId: string = crypto.randomUUID();
 
       if (batchId) {
         const { data: batchData } = await supabase
