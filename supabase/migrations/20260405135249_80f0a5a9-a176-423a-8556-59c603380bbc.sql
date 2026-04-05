@@ -1,0 +1,1 @@
+ALTER TABLE public.registration_requests ADD COLUMN parent_name text;
