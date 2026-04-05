@@ -75,7 +75,7 @@ export function RegistrationQueue() {
           .select('unique_link_id')
           .eq('id', batchId)
           .single();
-        uniqueLinkId = batchData?.unique_link_id ?? uniqueLinkId;
+        uniqueLinkId = batchData?.unique_link_id ?? uniqueLinkId as string;
       }
 
       // Create student record — no batch = review student
