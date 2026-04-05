@@ -1598,6 +1598,47 @@ export type Database = {
           },
         ]
       }
+      registration_requests: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone_number: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          phone_number: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone_number?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_requests_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_session_templates: {
         Row: {
           created_at: string
