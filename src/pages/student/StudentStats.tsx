@@ -32,7 +32,8 @@ function AnalyticsSkeleton() {
 }
 
 export default function StudentStats() {
-  const analytics = useStudentAnalytics();
+  const [subject, setSubject] = useState<'math' | 'english'>('math');
+  const analytics = useStudentAnalytics(subject);
 
   if (analytics.isLoading) {
     return (
