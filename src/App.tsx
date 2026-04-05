@@ -56,6 +56,7 @@ import StudentClosingReport from "./pages/student/StudentClosingReport";
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
 import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
+import StudentRegistration from "./pages/StudentRegistration";
 
 // Public Pages
 import PublicClosingReport from "./pages/PublicClosingReport";
