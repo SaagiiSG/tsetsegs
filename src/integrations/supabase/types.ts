@@ -1604,6 +1604,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          parent_name: string | null
           phone_number: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1614,6 +1615,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id?: string
+          parent_name?: string | null
           phone_number: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1624,6 +1626,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          parent_name?: string | null
           phone_number?: string
           reviewed_at?: string | null
           reviewed_by?: string | null

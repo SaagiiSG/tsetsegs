@@ -13,6 +13,7 @@ interface RegistrationRequest {
   id: string;
   phone_number: string;
   full_name: string;
+  parent_name: string | null;
   status: string;
   batch_id: string | null;
   reviewed_at: string | null;
@@ -172,6 +173,7 @@ export function RegistrationQueue() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Parent</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Requested</TableHead>
                   <TableHead>Assign to Batch</TableHead>
@@ -182,6 +184,7 @@ export function RegistrationQueue() {
                 {pendingRequests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell className="font-medium">{request.full_name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{request.parent_name || '—'}</TableCell>
                     <TableCell className="font-mono text-sm">{request.phone_number}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(request.created_at), 'MMM d, HH:mm')}

@@ -56,6 +56,7 @@ import StudentClosingReport from "./pages/student/StudentClosingReport";
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
 import ReviewRegistrationAdmin from "./pages/ReviewRegistrationAdmin";
+import StudentRegistration from "./pages/StudentRegistration";
 
 // Public Pages
 import PublicClosingReport from "./pages/PublicClosingReport";
@@ -192,6 +193,9 @@ const App = () => (
 
                   {/* Live Practice Session */}
                   <Route path="/live/:joinCode" element={<LiveSession />} />
+
+                  {/* Student Self-Registration */}
+                  <Route path="/student-register" element={<StudentRegistration />} />
 
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />

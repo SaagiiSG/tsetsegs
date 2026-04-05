@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Phone, BookOpen, GraduationCap, Loader2, Lock, ArrowLeft, Eye, EyeOff, CheckCircle2, User, Clock } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 // Password validation rules
@@ -539,9 +539,14 @@ export default function StudentPortal() {
           </div>
         )}
 
-        <p className="text-center text-xs text-muted-foreground">
-          Having trouble logging in? Contact your teacher.
-        </p>
+        <div className="text-center space-y-1">
+          <Link to="/student-register" className="text-sm text-primary hover:underline">
+            Шинээр бүртгүүлэх
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            Having trouble logging in? Contact your teacher.
+          </p>
+        </div>
       </div>
     </div>
   );
