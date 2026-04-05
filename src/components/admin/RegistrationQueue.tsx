@@ -13,6 +13,7 @@ interface RegistrationRequest {
   id: string;
   phone_number: string;
   full_name: string;
+  parent_name: string | null;
   status: string;
   batch_id: string | null;
   reviewed_at: string | null;
