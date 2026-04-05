@@ -714,6 +714,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       pendingPhone,
       pendingStudentAccount,
       checkPhone,
+      submitRegistrationRequest,
       loginWithPassword,
       setPassword,
       resetAuthFlow,
