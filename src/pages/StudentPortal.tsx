@@ -307,8 +307,8 @@ export default function StudentPortal() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
-          <div className="h-16 w-16 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <Clock className="h-8 w-8 text-amber-500" />
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Clock className="h-8 w-8 text-primary" />
           </div>
         </div>
         <CardTitle className="text-2xl">Pending Approval</CardTitle>

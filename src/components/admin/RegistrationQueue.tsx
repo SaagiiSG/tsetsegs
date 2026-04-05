@@ -156,7 +156,7 @@ export function RegistrationQueue() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-amber-500" />
+            <Clock className="h-5 w-5 text-primary" />
             Pending Requests
             {pendingRequests.length > 0 && (
               <Badge variant="secondary" className="ml-2">{pendingRequests.length}</Badge>
