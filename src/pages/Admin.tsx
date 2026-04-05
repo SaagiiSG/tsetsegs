@@ -88,6 +88,7 @@ const Admin = () => {
               <Route path="student/:studentId" element={<TeacherStudentProfile />} />
               <Route path="review-sessions" element={<ReviewSessions />} />
               <Route path="bug-reports" element={<BugReports />} />
+              <Route path="registration-queue" element={<RegistrationQueue />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </main>

@@ -61,6 +61,7 @@ const menuSections: MenuSection[] = [
     items: [
       { title: "Search", url: "/admin/search", icon: Search },
       { title: "Accounts", url: "/admin/students", icon: UserCheck },
+      { title: "Registration Queue", url: "/admin/registration-queue", icon: UserPlus },
     ],
     defaultOpen: false,
   },
