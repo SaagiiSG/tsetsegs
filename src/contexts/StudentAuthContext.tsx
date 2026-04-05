@@ -40,7 +40,8 @@ interface StudentAuthContextType {
   authStep: AuthStep;
   pendingPhone: string | null;
   pendingStudentAccount: StudentAccount | null;
-  checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean }>;
+  checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }>;
+  submitRegistrationRequest: (fullName: string) => Promise<{ error: string | null }>;
   loginWithPassword: (password: string) => Promise<{ error: string | null }>;
   setPassword: (password: string) => Promise<{ error: string | null }>;
   resetAuthFlow: () => void;
