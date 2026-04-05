@@ -196,7 +196,7 @@ export function RegistrationQueue() {
                         onValueChange={(val) => setSelectedBatches(prev => ({ ...prev, [request.id]: val }))}
                       >
                         <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select batch..." />
+                          <SelectValue placeholder="No batch (platform only)" />
                         </SelectTrigger>
                         <SelectContent>
                           {batches.map((batch) => (
