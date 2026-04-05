@@ -1,4 +1,4 @@
-import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug } from "lucide-react";
+import { Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, UserCheck, ClipboardList, Search, QrCode, CalendarDays, ChevronDown, LayoutDashboard, Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,6 +61,7 @@ const menuSections: MenuSection[] = [
     items: [
       { title: "Search", url: "/admin/search", icon: Search },
       { title: "Accounts", url: "/admin/students", icon: UserCheck },
+      { title: "Registration Queue", url: "/admin/registration-queue", icon: UserPlus },
     ],
     defaultOpen: false,
   },

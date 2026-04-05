@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { Phone, BookOpen, GraduationCap, Loader2, Lock, ArrowLeft, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Phone, BookOpen, GraduationCap, Loader2, Lock, ArrowLeft, Eye, EyeOff, CheckCircle2, User, Clock } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +37,7 @@ export default function StudentPortal() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -46,6 +47,7 @@ export default function StudentPortal() {
     authStep, 
     pendingPhone,
     checkPhone, 
+    submitRegistrationRequest,
     loginWithPassword, 
     setPassword: setPasswordAuth,
     resetAuthFlow 
@@ -154,9 +156,42 @@ export default function StudentPortal() {
     setIsLoading(false);
   };
 
+  const handleRegistrationRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!fullName.trim() || fullName.trim().length < 2) {
+      toast({
+        title: 'Invalid name',
+        description: 'Please enter your full name',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await submitRegistrationRequest(fullName);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error,
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Request submitted!',
+        description: 'Your teacher will review your request shortly.'
+      });
+    }
+
+    setIsLoading(false);
+  };
+
   const handleBack = () => {
     setPassword('');
     setConfirmPassword('');
+    setFullName('');
     resetAuthFlow();
   };
 
@@ -206,6 +241,94 @@ export default function StudentPortal() {
             )}
           </Button>
         </form>
+      </CardContent>
+    </Card>
+  );
+
+  const renderRegistrationRequestStep = () => (
+    <Card className="border-0 shadow-lg">
+      <CardHeader className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <CardTitle className="text-2xl">Request Access</CardTitle>
+        </div>
+        <CardDescription className="pl-10">
+          This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleRegistrationRequest} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="pl-10"
+                maxLength={100}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Use the name your teacher knows you by
+            </p>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full h-12 text-lg"
+            disabled={isLoading || fullName.trim().length < 2}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              'Request Access'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPendingApprovalStep = () => (
+    <Card className="border-0 shadow-lg">
+      <CardHeader className="space-y-1 text-center">
+        <div className="flex justify-center mb-2">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Clock className="h-8 w-8 text-primary" />
+          </div>
+        </div>
+        <CardTitle className="text-2xl">Pending Approval</CardTitle>
+        <CardDescription>
+          Your registration request has been submitted. Your teacher will review it shortly.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="bg-muted/50 rounded-lg p-4 text-center">
+          <p className="text-sm text-muted-foreground">Phone: <span className="font-mono font-medium text-foreground">{pendingPhone}</span></p>
+          <p className="text-xs text-muted-foreground mt-1">You'll be able to log in once approved</p>
+        </div>
+        <Button 
+          variant="outline"
+          className="w-full"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Login
+        </Button>
       </CardContent>
     </Card>
   );
@@ -384,6 +507,8 @@ export default function StudentPortal() {
         {authStep === 'phone' && renderPhoneStep()}
         {authStep === 'password' && renderPasswordStep()}
         {authStep === 'set_password' && renderSetPasswordStep()}
+        {authStep === 'request_registration' && renderRegistrationRequestStep()}
+        {authStep === 'pending_approval' && renderPendingApprovalStep()}
 
         {/* Features Preview - only show on phone step */}
         {authStep === 'phone' && (
