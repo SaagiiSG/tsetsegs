@@ -173,6 +173,7 @@ export function RegistrationQueue() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Parent</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Requested</TableHead>
                   <TableHead>Assign to Batch</TableHead>
