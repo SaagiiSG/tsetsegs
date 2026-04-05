@@ -85,7 +85,15 @@ export default function StudentStats() {
         </div>
       </motion.div>
 
-      {/* Quick Stats Bar */}
+      {/* Subject Toggle */}
+      <Tabs value={subject} onValueChange={(v) => setSubject(v as 'math' | 'english')}>
+        <TabsList>
+          <TabsTrigger value="math">Math</TabsTrigger>
+          <TabsTrigger value="english">English</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
