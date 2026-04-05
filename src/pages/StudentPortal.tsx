@@ -539,9 +539,14 @@ export default function StudentPortal() {
           </div>
         )}
 
-        <p className="text-center text-xs text-muted-foreground">
-          Having trouble logging in? Contact your teacher.
-        </p>
+        <div className="text-center space-y-1">
+          <Link to="/student-register" className="text-sm text-primary hover:underline">
+            Шинээр бүртгүүлэх
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            Having trouble logging in? Contact your teacher.
+          </p>
+        </div>
       </div>
     </div>
   );
