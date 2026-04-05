@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAnalytics } from '@/hooks/useStudentAnalytics';
 import { PriorityAlertCard } from '@/components/student/analytics/PriorityAlertCard';
 import { WeaknessIdentifier } from '@/components/student/analytics/WeaknessIdentifier';
@@ -30,7 +32,8 @@ function AnalyticsSkeleton() {
 }
 
 export default function StudentStats() {
-  const analytics = useStudentAnalytics();
+  const [subject, setSubject] = useState<'math' | 'english'>('math');
+  const analytics = useStudentAnalytics(subject);
 
   if (analytics.isLoading) {
     return (
@@ -82,7 +85,15 @@ export default function StudentStats() {
         </div>
       </motion.div>
 
-      {/* Quick Stats Bar */}
+      {/* Subject Toggle */}
+      <Tabs value={subject} onValueChange={(v) => setSubject(v as 'math' | 'english')}>
+        <TabsList>
+          <TabsTrigger value="math">Math</TabsTrigger>
+          <TabsTrigger value="english">English</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -82,19 +82,19 @@ const TOPIC_SUBJECTS: Record<string, 'Math' | 'English'> = {
   'Grammar': 'English',
 };
 
-export function useStudentAnalytics(): StudentAnalytics {
+export function useStudentAnalytics(subject: 'math' | 'english' | 'all' = 'all'): StudentAnalytics {
   const { student } = useStudentAuth();
 
   // Fetch all attempts with question details
   const { data: attempts, isLoading: attemptsLoading } = useQuery({
-    queryKey: ['analytics-attempts', student?.id],
+    queryKey: ['analytics-attempts', student?.id, subject],
     queryFn: async () => {
       if (!student) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('student_attempts')
         .select(`
           *,
-          question:questions(
+          question:questions!inner(
             id,
             question_id,
             difficulty_level,
@@ -105,6 +105,10 @@ export function useStudentAnalytics(): StudentAnalytics {
         `)
         .eq('student_account_id', student.id)
         .order('attempted_at', { ascending: false });
+      if (subject !== 'all') {
+        query = query.eq('question.subject', subject);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -113,13 +117,17 @@ export function useStudentAnalytics(): StudentAnalytics {
 
   // Fetch total questions count
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['analytics-questions-count'],
+    queryKey: ['analytics-questions-count', subject],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('questions')
-        .select('id, category:question_categories(name), difficulty_level')
+        .select('id, category:question_categories(name), difficulty_level, subject')
         .eq('is_original', true)
         .eq('is_active', true);
+      if (subject !== 'all') {
+        query = query.eq('subject', subject);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
