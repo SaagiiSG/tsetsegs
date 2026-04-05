@@ -58,11 +58,7 @@ export function RegistrationQueue() {
   };
 
   const handleApprove = async (request: RegistrationRequest) => {
-    const batchId = selectedBatches[request.id];
-    if (!batchId) {
-      toast({ title: 'Select a batch', description: 'Please select which batch to enroll this student in.', variant: 'destructive' });
-      return;
-    }
+    const batchId = selectedBatches[request.id] || null;
 
     setProcessingId(request.id);
     try {
@@ -71,14 +67,18 @@ export function RegistrationQueue() {
       const firstName = nameParts[0];
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null;
 
-      // Get batch's unique_link_id
-      const { data: batchData } = await supabase
-        .from('batches')
-        .select('unique_link_id')
-        .eq('id', batchId)
-        .single();
+      let uniqueLinkId: string = crypto.randomUUID();
 
-      // Create student record
+      if (batchId) {
+        const { data: batchData } = await supabase
+          .from('batches')
+          .select('unique_link_id')
+          .eq('id', batchId)
+          .single();
+        uniqueLinkId = batchData?.unique_link_id ?? uniqueLinkId as string;
+      }
+
+      // Create student record — no batch = review student
       const { error: studentError } = await supabase
         .from('students')
         .insert([{
@@ -87,7 +87,8 @@ export function RegistrationQueue() {
           last_name: lastName,
           phone: request.phone_number,
           batch_id: batchId,
-          unique_link_id: batchData?.unique_link_id ?? batchId
+          unique_link_id: uniqueLinkId,
+          is_review_student: !batchId
         }]);
 
       if (studentError) throw studentError;
@@ -104,7 +105,7 @@ export function RegistrationQueue() {
 
       if (updateError) throw updateError;
 
-      toast({ title: 'Approved!', description: `${request.full_name} has been enrolled.` });
+      toast({ title: 'Approved!', description: `${request.full_name} has been ${batchId ? 'enrolled' : 'added as a platform student'}.` });
       fetchData();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -195,7 +196,7 @@ export function RegistrationQueue() {
                         onValueChange={(val) => setSelectedBatches(prev => ({ ...prev, [request.id]: val }))}
                       >
                         <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select batch..." />
+                          <SelectValue placeholder="No batch (platform only)" />
                         </SelectTrigger>
                         <SelectContent>
                           {batches.map((batch) => (
