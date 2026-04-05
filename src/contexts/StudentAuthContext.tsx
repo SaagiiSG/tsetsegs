@@ -32,7 +32,7 @@ interface StudentAccount {
   onboarding_completed: boolean;
 }
 
-export type AuthStep = 'phone' | 'password' | 'set_password';
+export type AuthStep = 'phone' | 'password' | 'set_password' | 'request_registration' | 'pending_approval';
 
 interface StudentAuthContextType {
   student: StudentAccount | null;
