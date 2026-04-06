@@ -849,10 +849,19 @@ export default function StudentQuestion() {
                 <CardContent className="space-y-6">
                   {/* Question Text */}
                   <div className="prose dark:prose-invert max-w-none">
-                    <p className="text-lg">
+                    <p className="text-lg leading-relaxed">
                       <MathText text={currentQuestion.question_text} />
                     </p>
                   </div>
+
+                  {/* Passage Text */}
+                  {currentQuestion.passage_text && (
+                    <div className="prose dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4 border border-border/50">
+                      <p className="text-base leading-relaxed whitespace-pre-wrap">
+                        <MathText text={currentQuestion.passage_text} />
+                      </p>
+                    </div>
+                  )}
 
                   {/* Question Image */}
                   {currentQuestion.question_image_url && (
