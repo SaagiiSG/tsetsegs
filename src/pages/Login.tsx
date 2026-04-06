@@ -35,44 +35,37 @@ export default function Login() {
   const { signIn: adminSignIn, signUp: adminSignUp, user: adminUser, isAdmin, isLoading: authLoading } = useAuth();
   const { signIn: teacherSignIn, user: teacherUser, needsPasswordChange } = useTeacherAuth();
 
-  // Track if we've already shown a toast for this login attempt
-  const [hasShownAdminToast, setHasShownAdminToast] = useState(false);
+  // Track whether a fresh login just succeeded
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
 
-  // Handle admin auth redirects
+  // If user is already logged in as admin, redirect immediately on page load
   useEffect(() => {
-    // Only process when auth is fully loaded and we're actively trying to login
-    if (authLoading || !adminLoading) return;
+    if (!authLoading && adminUser && isAdmin) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, adminUser, isAdmin, navigate]);
+
+  // Handle redirect after a NEW successful login (not stale session)
+  useEffect(() => {
+    if (!loginSucceeded || authLoading) return;
 
     if (adminUser && isAdmin) {
-      if (!hasShownAdminToast) {
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully logged in as admin.",
-        });
-        setHasShownAdminToast(true);
-      }
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in as admin.",
+      });
       navigate("/admin");
+      setLoginSucceeded(false);
     } else if (adminUser && !isAdmin) {
-      // Only show access denied if we were actively trying to log in as admin
       setAdminLoading(false);
-      if (!hasShownAdminToast) {
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin privileges.",
-          variant: "destructive",
-        });
-        setHasShownAdminToast(true);
-      }
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin privileges.",
+        variant: "destructive",
+      });
+      setLoginSucceeded(false);
     }
-  }, [adminUser, isAdmin, authLoading, adminLoading, navigate, toast, hasShownAdminToast]);
-
-  // Reset toast flag when user logs out or switches tabs
-  useEffect(() => {
-    if (!adminUser) {
-      setHasShownAdminToast(false);
-      setAdminLoading(false);
-    }
-  }, [adminUser]);
+  }, [adminUser, isAdmin, authLoading, loginSucceeded, navigate, toast]);
 
   // Handle teacher auth redirects
   useEffect(() => {
