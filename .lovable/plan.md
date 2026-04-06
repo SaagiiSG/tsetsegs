@@ -1,48 +1,56 @@
 
 
-# Fix: Speed Session History Not Showing
+# Fix Math Formatting in 150 Hard Question Set
 
 ## Problem
-The speed session history page reads from `student_activity_logs` to display past sessions, stats, and the 7-day performance chart. But this table has **no SELECT policy** for the public role. Since students use custom phone auth (which operates as `anon`/`public`), all their SELECT queries silently return empty arrays.
+The 150 Hard questions store math expressions in **plain text** (e.g., `n^(3/2)`, `3x^2`, `√3/2`, `f(x) = 64(16)^x`) rather than LaTeX-delimited `$...$` format. The `MathText` component only renders content inside `$...$` as formatted math — everything else passes through as raw text. So students see ugly strings like `n^(3/2)` instead of properly rendered exponents and fractions.
 
-The INSERT policy works fine — sessions ARE being saved. Students just can't read them back.
+Out of 150 questions: only 6 contain `$` signs (and those are actually dollar amounts like "$96", not LaTeX). About 20 questions have math expressions using `^`, `√`, `∛`, superscript unicode, etc.
 
-## Fix
+Answer choices have the same issue — options like `√3/2`, `(7r-13)/3`, `f(x) = 64(16)^x` appear as raw text.
 
-**Single database migration** — add a public SELECT policy to `student_activity_logs`:
+## Approach
+Enhance the `MathText` component to **auto-detect and render common plain-text math patterns** as formatted KaTeX, even when they're not wrapped in `$...$`. Also improve the overall visual styling of rendered math.
 
-```sql
-CREATE POLICY "Public can read activity logs"
-  ON public.student_activity_logs
-  FOR SELECT TO public USING (true);
-```
+This is better than a database migration because:
+- It fixes all existing AND future questions automatically
+- No risk of corrupting question data
+- Works across all question sets, not just the 150
 
-No code changes needed. The queries in `StudentSpeedMode.tsx` (lines 191-288) are correct — they just get empty results due to the missing policy.
+## Changes
 
-## What This Fixes
-- Speed session history drawer (all past sessions)
-- Last 7 days performance chart
-- Best score and total session count stats
-- Dashboard speed session display (`StudentDashboardHome.tsx`)
+### 1. Enhance `MathText.tsx` — Auto-detect plain-text math patterns
 
-## Also Included
-Fix `student_question_notes` policies (currently restricted to `authenticated` instead of `public`):
+Add a pre-processing step that identifies common math patterns in plain text and wraps them in LaTeX before rendering:
 
-```sql
-DROP POLICY IF EXISTS "Authenticated can insert notes" ON public.student_question_notes;
-DROP POLICY IF EXISTS "Authenticated can read notes" ON public.student_question_notes;
-DROP POLICY IF EXISTS "Authenticated can update notes" ON public.student_question_notes;
+- **Exponents**: `x^2`, `x^(3/2)`, `16^(x+1)` → `$x^{2}$`, `$x^{\frac{3}{2}}$`, `$16^{x+1}$`
+- **Unicode math**: `√3`, `∛(a⁵)`, superscript characters → proper LaTeX `$\sqrt{3}$`, `$\sqrt[3]{a^5}$`
+- **Fractions in context**: `√3/2` → `$\frac{\sqrt{3}}{2}$`
+- **Function notation**: `f(x) = 64(16)^x` → rendered as math expression
+- **Dollar amounts**: Preserve `$96`, `$218` as literal text (not LaTeX)
 
-CREATE POLICY "Public can insert notes" ON public.student_question_notes
-  FOR INSERT TO public WITH CHECK (true);
-CREATE POLICY "Public can read notes" ON public.student_question_notes
-  FOR SELECT TO public USING (true);
-CREATE POLICY "Public can update notes" ON public.student_question_notes
-  FOR UPDATE TO public USING (true);
-```
+Key detection heuristics:
+- Contains `^` with variables/numbers nearby → math expression
+- Contains `√` or `∛` → math expression
+- Expressions like `(number/number)` after `^` → exponent with fraction
+- Variable names followed by operators → math context
 
-This fixes student notes/drawings not saving — same root cause (wrong role).
+### 2. Improve KaTeX visual styling in `index.css`
 
-## Files
-- **1 new migration** — the two policy fixes above
+Add custom CSS to make rendered math blend better:
+- Slightly larger math font size relative to surrounding text
+- Better vertical alignment of inline math
+- Consistent spacing around rendered expressions
+- Ensure math doesn't look "floaty" next to regular text
+
+### 3. Polish question card typography in `StudentQuestion.tsx`
+
+- Improve the question text area with better line-height and letter-spacing
+- Add slightly more padding around answer choices for readability
+- Ensure math in answer choice buttons renders at the right size
+
+## Files to modify
+1. `src/components/MathText.tsx` — Add auto-detection preprocessing + improve rendering
+2. `src/index.css` — Add KaTeX visual polish styles
+3. `src/pages/StudentQuestion.tsx` — Minor typography improvements for question display
 
