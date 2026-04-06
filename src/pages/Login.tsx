@@ -112,8 +112,10 @@ export default function Login() {
             variant: "destructive",
           });
           setAdminLoading(false);
+        } else {
+          // Signal that a fresh login succeeded — useEffect will handle redirect
+          setLoginSucceeded(true);
         }
-        // Don't set loading false - wait for role check in useEffect
       }
     } catch (error: any) {
       toast({
