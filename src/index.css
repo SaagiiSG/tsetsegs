@@ -526,6 +526,31 @@ All colors MUST be HSL.
   color: hsl(343 90% 55%);
 }
 
+/* KaTeX inline math polish */
+.math-text-container {
+  line-height: 1.7;
+}
+
+.math-inline .katex {
+  font-size: 1.05em;
+  padding: 0 0.1em;
+}
+
+.math-inline {
+  display: inline;
+  vertical-align: baseline;
+}
+
+/* Ensure math in answer choice buttons is properly sized */
+button .math-inline .katex {
+  font-size: 1.08em;
+}
+
+/* Question passage math spacing */
+.prose .math-text-container {
+  line-height: 1.8;
+}
+
 @keyframes scroll-left {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
