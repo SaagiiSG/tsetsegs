@@ -131,6 +131,17 @@ export function ScorePredictionCard({ studentId }: ScorePredictionCardProps) {
                 {formatAdj(factors.practiceAdj)}
               </span>
             </div>
+            {factors.variancePenalty !== 0 && (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Target className="h-3 w-3" />
+                  <span>Score volatility</span>
+                </div>
+                <span className="font-medium text-red-500">
+                  {formatAdj(factors.variancePenalty)}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

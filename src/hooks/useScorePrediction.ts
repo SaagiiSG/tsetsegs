@@ -13,6 +13,7 @@ interface ScorePredictionResult {
     hardAccuracy: number;
     attemptVolume: number;
     practiceAdj: number;
+    variancePenalty: number;
   };
   hasBaseline: boolean;
 }
@@ -181,10 +182,22 @@ export function useScorePrediction(studentId: string | undefined) {
       const tests = (practiceTestsRes.data || []).filter(t => t.score !== null);
       let baseScore: number;
       let hasBaseline = tests.length > 0;
+      let variancePenalty = 0;
+      let halfRange = 10; // default ±10
 
       if (tests.length >= 3) {
         // tests are ordered desc, so [0]=most recent, [1]=second, [2]=third
         baseScore = tests[0].score! * 0.5 + tests[1].score! * 0.3 + tests[2].score! * 0.2;
+        
+        // Variance penalty: if scores are volatile, prediction is less reliable
+        const scores = tests.slice(0, 3).map(t => t.score!);
+        const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const variance = scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
+        const stdev = Math.sqrt(variance);
+        // Penalty only when stdev > 25 (meaningful volatility), scale at 0.3
+        variancePenalty = stdev > 25 ? -Math.min(Math.round((stdev - 25) * 0.5), 25) : 0;
+        // Widen range when volatile
+        if (stdev > 30) halfRange = Math.min(Math.round(stdev * 0.4), 20);
       } else if (tests.length === 2) {
         baseScore = tests[0].score! * 0.6 + tests[1].score! * 0.4;
       } else if (tests.length === 1) {
@@ -195,23 +208,33 @@ export function useScorePrediction(studentId: string | undefined) {
         const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
         const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
         baseScore = getBaseFromHardAccuracy(hardAcc);
+        halfRange = 20; // wider range for no-baseline estimates
       }
 
       // Calculate adjustments
       const { rate: attendanceRate, adj: attendanceAdj } = calculateAttendanceAdj(attendanceRes.data);
       const { rate: homeworkRate, adj: homeworkAdj } = calculateHomeworkAdj(homeworkRes.data || []);
-      const { hardAccuracy, volume: attemptVolume, adj: practiceAdj } = calculatePracticeAdj(attempts);
+      let { hardAccuracy, volume: attemptVolume, adj: practiceAdj } = calculatePracticeAdj(attempts);
+
+      // Cap practice bonus at higher base scores (diminishing returns)
+      if (baseScore >= 730) practiceAdj = Math.min(practiceAdj, 5);
+      else if (baseScore >= 700) practiceAdj = Math.min(practiceAdj, 10);
 
       // Final prediction
-      const predicted = Math.max(200, Math.min(800, Math.round(baseScore + attendanceAdj + homeworkAdj + practiceAdj)));
+      const predicted = Math.max(200, Math.min(800, Math.round(
+        baseScore + attendanceAdj + homeworkAdj + practiceAdj + variancePenalty
+      )));
 
-      // Confidence
+      // Confidence — downgrade when variance is high
       let confidence: 'high' | 'medium' | 'low' = 'low';
-      if (hasBaseline && tests.length >= 3 && attemptVolume >= 100) confidence = 'high';
-      else if (hasBaseline) confidence = 'medium';
+      if (hasBaseline && tests.length >= 3 && attemptVolume >= 100) {
+        confidence = Math.abs(variancePenalty) > 15 ? 'medium' : 'high';
+      } else if (hasBaseline) {
+        confidence = 'medium';
+      }
 
       return {
-        predictedRange: [Math.max(200, predicted - 10), Math.min(800, predicted + 10)] as [number, number],
+        predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],
         confidence,
         baseScore: Math.round(baseScore),
         factors: {
@@ -222,6 +245,7 @@ export function useScorePrediction(studentId: string | undefined) {
           hardAccuracy,
           attemptVolume,
           practiceAdj,
+          variancePenalty,
         },
         hasBaseline,
       };
