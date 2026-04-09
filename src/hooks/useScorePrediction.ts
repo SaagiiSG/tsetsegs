@@ -128,8 +128,7 @@ export function useScorePrediction(studentId: string | undefined) {
           .eq('student_id', studentId)
           .eq('batch_id', student.batch_id)
           .not('score', 'is', null)
-          .order('test_number', { ascending: false })
-          .limit(3),
+          .order('test_number', { ascending: false }),
         supabase
           .from('attendance')
           .select('*')
@@ -183,21 +182,27 @@ export function useScorePrediction(studentId: string | undefined) {
       let baseScore: number;
       let hasBaseline = tests.length > 0;
       let variancePenalty = 0;
-      let halfRange = 10; // default ±10
+      let halfRange = 15; // default ±15
 
-      if (tests.length >= 3) {
-        // tests are ordered desc, so [0]=most recent, [1]=second, [2]=third
+      if (tests.length >= 5) {
+        // Blend: 60% weighted-last-3 + 40% last-5-average (regression to recent mean)
+        const last3Weighted = tests[0].score! * 0.5 + tests[1].score! * 0.3 + tests[2].score! * 0.2;
+        const last5Scores = tests.slice(0, 5).map(t => t.score!);
+        const last5Avg = last5Scores.reduce((a, b) => a + b, 0) / 5;
+        baseScore = last3Weighted * 0.6 + last5Avg * 0.4;
+
+        // Variance from last 5 tests
+        const mean5 = last5Avg;
+        const stdev5 = Math.sqrt(last5Scores.reduce((sum, s) => sum + Math.pow(s - mean5, 2), 0) / 5);
+        variancePenalty = stdev5 > 20 ? -Math.min(Math.round((stdev5 - 20) * 0.35), 25) : 0;
+        halfRange = Math.max(15, Math.min(Math.round(stdev5 * 0.5), 25));
+      } else if (tests.length >= 3) {
         baseScore = tests[0].score! * 0.5 + tests[1].score! * 0.3 + tests[2].score! * 0.2;
-        
-        // Variance penalty: if scores are volatile, prediction is less reliable
-        const scores = tests.slice(0, 3).map(t => t.score!);
-        const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-        const variance = scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
-        const stdev = Math.sqrt(variance);
-        // Penalty only when stdev > 25 (meaningful volatility), scale at 0.3
-        variancePenalty = stdev > 25 ? -Math.min(Math.round((stdev - 25) * 0.5), 25) : 0;
-        // Widen range when volatile
-        if (stdev > 30) halfRange = Math.min(Math.round(stdev * 0.4), 20);
+        const scores3 = tests.slice(0, 3).map(t => t.score!);
+        const mean3 = scores3.reduce((a, b) => a + b, 0) / 3;
+        const stdev3 = Math.sqrt(scores3.reduce((sum, s) => sum + Math.pow(s - mean3, 2), 0) / 3);
+        variancePenalty = stdev3 > 25 ? -Math.min(Math.round((stdev3 - 25) * 0.35), 20) : 0;
+        if (stdev3 > 30) halfRange = Math.min(Math.round(stdev3 * 0.5), 20);
       } else if (tests.length === 2) {
         baseScore = tests[0].score! * 0.6 + tests[1].score! * 0.4;
       } else if (tests.length === 1) {
@@ -208,7 +213,7 @@ export function useScorePrediction(studentId: string | undefined) {
         const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
         const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
         baseScore = getBaseFromHardAccuracy(hardAcc);
-        halfRange = 20; // wider range for no-baseline estimates
+        halfRange = 25; // wider range for no-baseline estimates
       }
 
       // Calculate adjustments
@@ -217,8 +222,8 @@ export function useScorePrediction(studentId: string | undefined) {
       let { hardAccuracy, volume: attemptVolume, adj: practiceAdj } = calculatePracticeAdj(attempts);
 
       // Cap practice bonus at higher base scores (diminishing returns)
-      if (baseScore >= 730) practiceAdj = Math.min(practiceAdj, 5);
-      else if (baseScore >= 700) practiceAdj = Math.min(practiceAdj, 10);
+      if (baseScore >= 730) practiceAdj = Math.min(practiceAdj, 0);
+      else if (baseScore >= 700) practiceAdj = Math.min(practiceAdj, 5);
 
       // Final prediction
       const predicted = Math.max(200, Math.min(800, Math.round(
