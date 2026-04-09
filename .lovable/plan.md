@@ -1,56 +1,101 @@
 
 
-# Fix Math Formatting in 150 Hard Question Set
+# SAT Math Score Prediction — Implementation Plan
 
-## Problem
-The 150 Hard questions store math expressions in **plain text** (e.g., `n^(3/2)`, `3x^2`, `√3/2`, `f(x) = 64(16)^x`) rather than LaTeX-delimited `$...$` format. The `MathText` component only renders content inside `$...$` as formatted math — everything else passes through as raw text. So students see ugly strings like `n^(3/2)` instead of properly rendered exponents and fractions.
+## Context
+Algorithm approved in previous conversation. Predicts a 20-point SAT Math score range for each student, shown on teacher dashboard only. Calibrated against Erdene-Tana (actual: 720, predicted: 710-730).
 
-Out of 150 questions: only 6 contain `$` signs (and those are actually dollar amounts like "$96", not LaTeX). About 20 questions have math expressions using `^`, `√`, `∛`, superscript unicode, etc.
+**Data insight from audit**: Time data needs capping at 600s per question to filter idle sessions.
 
-Answer choices have the same issue — options like `√3/2`, `(7r-13)/3`, `f(x) = 64(16)^x` appear as raw text.
+## Files to Create
 
-## Approach
-Enhance the `MathText` component to **auto-detect and render common plain-text math patterns** as formatted KaTeX, even when they're not wrapped in `$...$`. Also improve the overall visual styling of rendered math.
+### 1. `src/hooks/useScorePrediction.ts`
+New hook that takes a `studentId` (from `students` table) and returns the prediction.
 
-This is better than a database migration because:
-- It fixes all existing AND future questions automatically
-- No risk of corrupting question data
-- Works across all question sets, not just the 150
+**Data fetching:**
+- Last 3 `practice_tests` scores for the student (ordered by `test_number` desc), filtered to SAT batches
+- `attendance` record for the student's batch (sessions 1-15)
+- `homework` records for the student's batch
+- `student_attempts` via the linked `student_accounts` record — grouped by difficulty, with `time_spent_seconds` capped at 600s
 
-## Changes
+**Algorithm (all client-side):**
 
-### 1. Enhance `MathText.tsx` — Auto-detect plain-text math patterns
+```text
+Base Score:
+  - 3 tests: weighted avg (0.5, 0.3, 0.2)
+  - 2 tests: (0.6, 0.4)  
+  - 1 test: use directly
+  - 0 tests: lookup from hard accuracy
 
-Add a pre-processing step that identifies common math patterns in plain text and wraps them in LaTeX before rendering:
+Attendance Adj (-20 to 0):
+  - Session 3 = 2x weight, others 1x
+  - present/late = counted
+  - 100% → 0, 90%+ → -3, 80%+ → -8, 70%+ → -15, <70% → -20
 
-- **Exponents**: `x^2`, `x^(3/2)`, `16^(x+1)` → `$x^{2}$`, `$x^{\frac{3}{2}}$`, `$16^{x+1}$`
-- **Unicode math**: `√3`, `∛(a⁵)`, superscript characters → proper LaTeX `$\sqrt{3}$`, `$\sqrt[3]{a^5}$`
-- **Fractions in context**: `√3/2` → `$\frac{\sqrt{3}}{2}$`
-- **Function notation**: `f(x) = 64(16)^x` → rendered as math expression
-- **Dollar amounts**: Preserve `$96`, `$218` as literal text (not LaTeX)
+Homework Adj (-10 to 0):
+  - completed / total assigned
+  - 100% → 0, 90%+ → -2, 80%+ → -5, <80% → -10
 
-Key detection heuristics:
-- Contains `^` with variables/numbers nearby → math expression
-- Contains `√` or `∛` → math expression
-- Expressions like `(number/number)` after `^` → exponent with fraction
-- Variable names followed by operators → math context
+Practice Intensity (-10 to +15):
+  - Hard accuracy: >55% → +10, 40-55% → +3, 25-40% → 0, <25% → -5
+  - Volume: >400 → +5, 200-400 → +2, <100 → -5
+  - No platform data → 0
 
-### 2. Improve KaTeX visual styling in `index.css`
+Output: { low: predicted-10, high: predicted+10, confidence, factors }
+```
 
-Add custom CSS to make rendered math blend better:
-- Slightly larger math font size relative to surrounding text
-- Better vertical alignment of inline math
-- Consistent spacing around rendered expressions
-- Ensure math doesn't look "floaty" next to regular text
+**Return type:**
+```ts
+{
+  predictedRange: [number, number];
+  confidence: 'high' | 'medium' | 'low';
+  baseScore: number;
+  factors: {
+    attendanceRate: number;
+    attendanceAdj: number;
+    homeworkRate: number;
+    homeworkAdj: number;
+    hardAccuracy: number;
+    attemptVolume: number;
+    practiceAdj: number;
+  };
+  hasBaseline: boolean;
+}
+```
 
-### 3. Polish question card typography in `StudentQuestion.tsx`
+### 2. `src/components/teacher/ScorePredictionCard.tsx`
+Card component for the teacher student profile page.
 
-- Improve the question text area with better line-height and letter-spacing
-- Add slightly more padding around answer choices for readability
-- Ensure math in answer choice buttons renders at the right size
+- Shows predicted range prominently (e.g., "710 - 730")
+- Color: green (700+), yellow (600-700), red (<600)
+- Confidence badge (high/medium/low)
+- Expandable breakdown showing each factor's contribution
+- "Estimated" label when no practice test baseline exists
+- Uses existing Card, Badge UI components
 
-## Files to modify
-1. `src/components/MathText.tsx` — Add auto-detection preprocessing + improve rendering
-2. `src/index.css` — Add KaTeX visual polish styles
-3. `src/pages/StudentQuestion.tsx` — Minor typography improvements for question display
+### 3. `src/components/teacher/ScorePredictionBadge.tsx`
+Compact inline badge for student cards/lists.
+- Shows range like "710-730" in a small colored badge
+- Tooltip with confidence level on hover
+
+## Files to Modify
+
+### 4. `src/pages/TeacherStudentProfile.tsx`
+- Import and render `ScorePredictionCard` in the student profile
+- Pass the student ID to `useScorePrediction`
+- Place it prominently near the top of the profile
+
+### 5. `src/components/teacher/StudentCard.tsx`
+- Import `ScorePredictionBadge`
+- Add the compact badge to each student card in the list view
+- Need to check how the student card currently gets its student data to pass the right ID
+
+## Technical Notes
+
+- The hook needs to bridge `students.id` → `student_accounts.linked_student_id` to get platform attempt data
+- `practice_tests` uses `student_id` (from `students` table), not `student_account_id`
+- `attendance` and `homework` also use `student_id` from `students` table
+- Cap `time_spent_seconds` at 600s when computing avg speed to filter idle time
+- All computation is client-side — no edge function needed
+- Clamp final prediction to [200, 800]
 
