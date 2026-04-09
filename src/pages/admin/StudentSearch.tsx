@@ -298,6 +298,7 @@ export default function StudentSearch() {
         <TableHeader>
           <TableRow>
             <TableHead className="sticky left-0 bg-background z-10 min-w-[180px]">Name</TableHead>
+            <TableHead className="min-w-[100px]">Predicted</TableHead>
             <TableHead className="min-w-[120px]">Phone</TableHead>
             <TableHead className="min-w-[120px]">Parent Phone</TableHead>
             <TableHead className="min-w-[150px]">School</TableHead>
@@ -324,6 +325,9 @@ export default function StudentSearch() {
                       <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <span className="truncate">{student.first_name} {student.last_name || ''}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <InlineScorePrediction studentId={student.id} courseType={student.batch?.course_type} />
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-sm">{student.phone}</span>
