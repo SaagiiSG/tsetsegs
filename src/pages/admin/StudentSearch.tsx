@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, User, GraduationCap, ChevronLeft, ChevronRight, Loader2, Trash2, RefreshCw } from 'lucide-react';
+import { InlineScorePrediction } from '@/components/admin/InlineScorePrediction';
 import { toast } from 'sonner';
 
 
