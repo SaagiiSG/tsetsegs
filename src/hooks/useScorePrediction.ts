@@ -194,10 +194,10 @@ export function useScorePrediction(studentId: string | undefined) {
         const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
         const variance = scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
         const stdev = Math.sqrt(variance);
-        // Penalty: half the stdev, capped at -30
-        variancePenalty = -Math.min(Math.round(stdev * 0.5), 30);
+        // Penalty only when stdev > 25 (meaningful volatility), scale at 0.3
+        variancePenalty = stdev > 25 ? -Math.min(Math.round((stdev - 25) * 0.5), 25) : 0;
         // Widen range when volatile
-        if (stdev > 30) halfRange = Math.min(Math.round(stdev * 0.5), 25);
+        if (stdev > 30) halfRange = Math.min(Math.round(stdev * 0.4), 20);
       } else if (tests.length === 2) {
         baseScore = tests[0].score! * 0.6 + tests[1].score! * 0.4;
       } else if (tests.length === 1) {
