@@ -261,6 +261,7 @@ export function StudentDeepDiveTab() {
           </button>
 
           <StudentProfileHeader studentId={selectedStudentId} />
+          <AdminScorePrediction studentAccountId={selectedStudentId} />
 
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
