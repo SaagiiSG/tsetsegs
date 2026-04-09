@@ -13,6 +13,7 @@ interface ScorePredictionResult {
     hardAccuracy: number;
     attemptVolume: number;
     practiceAdj: number;
+    variancePenalty: number;
   };
   hasBaseline: boolean;
 }
