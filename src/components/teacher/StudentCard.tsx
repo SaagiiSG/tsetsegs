@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy, ArrowRightLeft } from "lucide-react";
 import { NudgeButton } from './NudgeButton';
+import { ScorePredictionBadge } from './ScorePredictionBadge';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorToast } from "@/lib/errorUtils";
