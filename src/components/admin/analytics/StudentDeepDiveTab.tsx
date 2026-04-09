@@ -10,6 +10,7 @@ import {
   Search, AlertTriangle, Crown, Clock, Trophy, X, Users, Filter
 } from 'lucide-react';
 import { StudentProfileHeader } from './StudentProfileHeader';
+import { AdminScorePrediction } from './AdminScorePrediction';
 import { StudentOverviewSubTab } from './StudentOverviewSubTab';
 import { TopicMasterySubTab } from './TopicMasterySubTab';
 import { LearningBehaviorSubTab } from './LearningBehaviorSubTab';
@@ -260,6 +261,7 @@ export function StudentDeepDiveTab() {
           </button>
 
           <StudentProfileHeader studentId={selectedStudentId} />
+          <AdminScorePrediction studentAccountId={selectedStudentId} />
 
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
