@@ -338,7 +338,7 @@ export function StudentCard({
                 </span>
                 <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </button>
-              {switchedInfo && (
+              {courseType === 'SAT' && <ScorePredictionBadge studentId={student.id} />}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 cursor-help">
