@@ -1,5 +1,6 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type AttendanceStatus = "present" | "late" | "absent" | "sick" | "excused" | "";
 
@@ -8,19 +9,47 @@ interface AttendanceSliderProps {
   onChange: (value: AttendanceStatus) => void;
 }
 
-const statusOptions: { value: AttendanceStatus; label: string; selectedColor: string }[] = [
-  { value: "", label: "—", selectedColor: "text-muted-foreground" },
-  { value: "present", label: "Present", selectedColor: "text-[#03C988]" },
-  { value: "late", label: "Late", selectedColor: "text-[#FFDE0B]" },
-  { value: "absent", label: "Absent", selectedColor: "text-[#FA6363]" },
-  { value: "sick", label: "Sick", selectedColor: "text-blue-400" },
-  { value: "excused", label: "Excused", selectedColor: "text-purple-400" },
+const statusOptions: { value: AttendanceStatus; label: string; shortLabel: string; selectedColor: string; bgColor: string }[] = [
+  { value: "", label: "—", shortLabel: "—", selectedColor: "text-muted-foreground", bgColor: "bg-muted" },
+  { value: "present", label: "Present", shortLabel: "P", selectedColor: "text-[#03C988]", bgColor: "bg-[#03C988]/15" },
+  { value: "late", label: "Late", shortLabel: "L", selectedColor: "text-[#FFDE0B]", bgColor: "bg-[#FFDE0B]/15" },
+  { value: "absent", label: "Absent", shortLabel: "A", selectedColor: "text-[#FA6363]", bgColor: "bg-[#FA6363]/15" },
+  { value: "sick", label: "Sick", shortLabel: "S", selectedColor: "text-blue-400", bgColor: "bg-blue-400/15" },
+  { value: "excused", label: "Excused", shortLabel: "E", selectedColor: "text-purple-400", bgColor: "bg-purple-400/15" },
 ];
 
 const ITEM_HEIGHT = 44;
 
-export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
+// Mobile: simple tap-to-cycle button
+function MobileAttendanceButton({ value, onChange }: AttendanceSliderProps) {
+  const currentIndex = statusOptions.findIndex((opt) => opt.value === value);
+  const current = statusOptions[currentIndex >= 0 ? currentIndex : 0];
+
+  const handleTap = () => {
+    const nextIndex = ((currentIndex >= 0 ? currentIndex : 0) + 1) % statusOptions.length;
+    onChange(statusOptions[nextIndex].value);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleTap}
+      className={cn(
+        "h-10 w-14 rounded-lg font-bold text-sm flex items-center justify-center transition-colors active:scale-95",
+        current.bgColor,
+        current.selectedColor
+      )}
+    >
+      {current.shortLabel}
+    </button>
+  );
+}
+
+// Desktop: scroll-based picker (unchanged behavior)
+function DesktopAttendanceSlider({ value, onChange }: AttendanceSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingProgrammatically = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   
   const selectedIndex = statusOptions.findIndex((opt) => opt.value === value);
   const currentIndex = selectedIndex >= 0 ? selectedIndex : 0;
@@ -28,26 +57,55 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
   // Scroll to selected value on mount
   useEffect(() => {
     if (containerRef.current && currentIndex >= 0) {
+      isScrollingProgrammatically.current = true;
       containerRef.current.scrollTop = currentIndex * ITEM_HEIGHT;
+      // Reset flag after scroll settles
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 100);
     }
   }, []);
 
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const scrollTop = containerRef.current.scrollTop;
-    const newIndex = Math.round(scrollTop / ITEM_HEIGHT);
-    const clampedIndex = Math.max(0, Math.min(newIndex, statusOptions.length - 1));
-    if (statusOptions[clampedIndex]?.value !== value) {
-      onChange(statusOptions[clampedIndex].value);
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current || isScrollingProgrammatically.current) return;
+    
+    // Debounce scroll handling
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  };
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (!containerRef.current) return;
+      const scrollTop = containerRef.current.scrollTop;
+      const newIndex = Math.round(scrollTop / ITEM_HEIGHT);
+      const clampedIndex = Math.max(0, Math.min(newIndex, statusOptions.length - 1));
+      if (statusOptions[clampedIndex]?.value !== value) {
+        onChange(statusOptions[clampedIndex].value);
+      }
+    }, 80);
+  }, [value, onChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const scrollToIndex = (index: number) => {
     if (containerRef.current) {
+      isScrollingProgrammatically.current = true;
       containerRef.current.scrollTo({
         top: index * ITEM_HEIGHT,
         behavior: 'smooth'
       });
+      // Reset flag after animation
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 300);
+      onChange(statusOptions[index].value);
     }
   };
 
@@ -91,4 +149,14 @@ export function AttendanceSlider({ value, onChange }: AttendanceSliderProps) {
       </div>
     </div>
   );
+}
+
+export function AttendanceSlider(props: AttendanceSliderProps) {
+  const isMobile = useIsMobile();
+  
+  if (isMobile) {
+    return <MobileAttendanceButton {...props} />;
+  }
+  
+  return <DesktopAttendanceSlider {...props} />;
 }
