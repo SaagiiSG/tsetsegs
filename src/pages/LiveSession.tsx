@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,50 +40,100 @@ export default function LiveSession() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [pointsEarned, setPointsEarned] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
-  const [myRank, setMyRank] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const questionStartRef = useRef<number>(0);
   const hasAnsweredRef = useRef(false);
 
+  // Use refs to avoid stale closures in realtime subscription
+  const phaseRef = useRef<Phase>(phase);
+  const currentIndexRef = useRef(currentIndex);
+  const sessionRef = useRef<SessionData | null>(session);
+  const participantIdRef = useRef<string | null>(participantId);
+  const questionsRef = useRef<QuestionData[]>(questions);
+  const totalPointsRef = useRef(0);
+
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { participantIdRef.current = participantId; }, [participantId]);
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
+  useEffect(() => { totalPointsRef.current = totalPoints; }, [totalPoints]);
+
   // Look up session on mount
   useEffect(() => {
     if (!joinCode) return;
     const fetchSession = async () => {
-      const { data, error } = await supabase
-        .from("live_sessions")
-        .select("*")
-        .eq("join_code", joinCode.toUpperCase())
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("live_sessions")
+          .select("*")
+          .eq("join_code", joinCode.toUpperCase())
+          .single();
 
-      if (error || !data) {
-        setError("Session not found. Check your code and try again.");
-        return;
-      }
-      if (data.status === "finished") {
-        setError("This session has already ended.");
-        return;
-      }
-      setSession(data as SessionData);
+        if (error || !data) {
+          setError("Session not found. Check your code and try again.");
+          return;
+        }
+        if (data.status === "finished") {
+          setError("This session has already ended.");
+          return;
+        }
+        setSession(data as SessionData);
 
-      // Load questions
-      const { data: qData } = await supabase
-        .from("live_session_questions")
-        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer)")
-        .eq("session_id", data.id)
-        .order("order_index", { ascending: true });
+        // Load questions
+        const { data: qData } = await supabase
+          .from("live_session_questions")
+          .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer)")
+          .eq("session_id", data.id)
+          .order("order_index", { ascending: true });
 
-      if (qData) {
-        setQuestions(
-          qData.map((d: any) => ({ ...d.questions, order_index: d.order_index }))
-        );
+        if (qData) {
+          setQuestions(
+            qData.map((d: any) => ({ ...d.questions, order_index: d.order_index }))
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching session:", err);
+        setError("Failed to load session. Please refresh and try again.");
       }
     };
     fetchSession();
   }, [joinCode]);
 
-  // Subscribe to session changes
+  const startQuestion = useCallback((index: number) => {
+    const sess = sessionRef.current;
+    setCurrentIndex(index);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setPointsEarned(0);
+    hasAnsweredRef.current = false;
+    questionStartRef.current = Date.now();
+    const timePerQ = sess?.time_per_question || 30;
+    setTimeLeft(timePerQ);
+    setPhase("question");
+
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          if (!hasAnsweredRef.current) {
+            // Auto-submit inline to avoid stale closure
+            hasAnsweredRef.current = true;
+            setPhase("feedback");
+            setIsCorrect(false);
+            setPointsEarned(0);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  // Subscribe to session changes — use refs to avoid stale closures
   useEffect(() => {
     if (!session?.id) return;
 
@@ -98,15 +148,20 @@ export default function LiveSession() {
           filter: `id=eq.${session.id}`,
         },
         (payload) => {
-          const updated = payload.new as SessionData;
-          setSession(updated);
+          try {
+            const updated = payload.new as SessionData;
+            setSession(updated);
 
-          if (updated.status === "active" && phase === "waiting") {
-            startQuestion(updated.current_question_index);
-          } else if (updated.status === "active" && updated.current_question_index !== currentIndex) {
-            startQuestion(updated.current_question_index);
-          } else if (updated.status === "finished") {
-            setPhase("finished");
+            if (updated.status === "active" && phaseRef.current === "waiting") {
+              startQuestion(updated.current_question_index);
+            } else if (updated.status === "active" && updated.current_question_index !== currentIndexRef.current) {
+              startQuestion(updated.current_question_index);
+            } else if (updated.status === "finished") {
+              clearInterval(timerRef.current);
+              setPhase("finished");
+            }
+          } catch (err) {
+            console.error("Error handling session update:", err);
           }
         }
       )
@@ -115,40 +170,14 @@ export default function LiveSession() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.id, phase, currentIndex]);
+  }, [session?.id, startQuestion]);
 
-  const startQuestion = (index: number) => {
-    setCurrentIndex(index);
-    setSelectedAnswer(null);
-    setIsCorrect(null);
-    setPointsEarned(0);
-    hasAnsweredRef.current = false;
-    questionStartRef.current = Date.now();
-    setTimeLeft(session?.time_per_question || 30);
-    setPhase("question");
-
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          if (!hasAnsweredRef.current) {
-            handleAutoSubmit();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const handleAutoSubmit = async () => {
-    if (hasAnsweredRef.current || !session || !participantId) return;
-    hasAnsweredRef.current = true;
-    setPhase("feedback");
-    setIsCorrect(false);
-    setPointsEarned(0);
-  };
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current);
+    };
+  }, []);
 
   const handleJoin = async () => {
     if (!session || !playerName.trim() || !phoneNumber.trim()) return;
@@ -181,16 +210,18 @@ export default function LiveSession() {
   };
 
   const handleAnswer = async (choice: string) => {
-    if (hasAnsweredRef.current || !session || !participantId) return;
+    const sess = sessionRef.current;
+    const pid = participantIdRef.current;
+    if (hasAnsweredRef.current || !sess || !pid) return;
     hasAnsweredRef.current = true;
     clearInterval(timerRef.current);
 
-    const currentQ = questions[currentIndex];
+    const currentQ = questionsRef.current[currentIndexRef.current];
     if (!currentQ) return;
 
     const timeTaken = Date.now() - questionStartRef.current;
     const correct = choice === currentQ.answer;
-    const totalTime = session.time_per_question * 1000;
+    const totalTime = sess.time_per_question * 1000;
     const timeRemaining = Math.max(0, totalTime - timeTaken);
     const points = correct ? Math.max(100, Math.round(1000 * (timeRemaining / totalTime))) : 0;
 
@@ -200,21 +231,25 @@ export default function LiveSession() {
     setTotalPoints((prev) => prev + points);
     setPhase("feedback");
 
-    await supabase.from("live_session_answers").insert({
-      session_id: session.id,
-      participant_id: participantId,
-      question_id: currentQ.id,
-      answer: choice,
-      is_correct: correct,
-      time_taken_ms: timeTaken,
-      points_earned: points,
-    });
+    try {
+      await supabase.from("live_session_answers").insert({
+        session_id: sess.id,
+        participant_id: pid,
+        question_id: currentQ.id,
+        answer: choice,
+        is_correct: correct,
+        time_taken_ms: timeTaken,
+        points_earned: points,
+      });
 
-    // Update participant total
-    await supabase
-      .from("live_session_participants")
-      .update({ total_points: totalPoints + points })
-      .eq("id", participantId);
+      // Update participant total
+      await supabase
+        .from("live_session_participants")
+        .update({ total_points: totalPointsRef.current + points })
+        .eq("id", pid);
+    } catch (err) {
+      console.error("Error submitting answer:", err);
+    }
   };
 
   // Error state
@@ -224,6 +259,9 @@ export default function LiveSession() {
         <Card className="p-6 max-w-sm w-full text-center space-y-4">
           <XCircle className="h-12 w-12 text-destructive mx-auto" />
           <p className="text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </Card>
       </div>
     );
@@ -299,7 +337,17 @@ export default function LiveSession() {
   // Question phase
   if (phase === "question") {
     const currentQ = questions[currentIndex];
-    if (!currentQ) return null;
+    if (!currentQ) {
+      // Show loading instead of returning null (which causes blank screen)
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm text-muted-foreground">Loading question...</p>
+          </div>
+        </div>
+      );
+    }
 
     const options = currentQ.multiple_choice_options || {};
 
