@@ -504,9 +504,11 @@ export default function TeacherClassAttendance() {
                             
                             return (
                               <td key={i} className="p-1 text-center">
-                                <AttendanceSlider
-                                  value={(status as "present" | "late" | "absent" | "sick" | "") || ""}
-                                  onChange={(value) => updateAttendance(student.id, i + 1, value)}
+                                <MemoizedAttendanceSlider
+                                  studentId={student.id}
+                                  sessionNumber={i + 1}
+                                  value={(status as "present" | "late" | "absent" | "sick" | "excused" | "") || ""}
+                                  onUpdate={updateAttendance}
                                 />
                               </td>
                             );
