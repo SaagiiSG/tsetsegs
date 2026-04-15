@@ -939,7 +939,7 @@ export default function TeacherStudentCards() {
         {/* Student Card Carousel */}
         <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
           <div className="w-full max-w-4xl flex flex-col" style={{ height: 'calc(100% - 80px)' }}>
-            <div className="overflow-visible h-full mb-4" ref={emblaRef}>
+            <div className="overflow-visible h-full mb-4 touch-pan-y" ref={emblaRef} style={{ touchAction: 'pan-y' }}>
               <div className="flex h-full">
                 {students.map((student, index) => {
                   const studentData = studentDataMap.get(student.id);
