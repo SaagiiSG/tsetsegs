@@ -74,6 +74,11 @@ export default function TeacherClassAttendance() {
     if (batchId) {
       fetchData();
     }
+    return () => {
+      // Clean up pending debounced updates
+      pendingUpdatesRef.current.forEach((t) => clearTimeout(t));
+      pendingUpdatesRef.current.clear();
+    };
   }, [batchId]);
 
   const fetchData = async () => {
