@@ -247,16 +247,16 @@ export function StudentDashboardSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="border-t p-1.5 md:p-2">
         <Button 
           variant="ghost" 
           className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-            open ? "justify-start gap-3" : "justify-center p-2"
+            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs md:text-sm",
+            open ? "justify-start gap-2 md:gap-3" : "justify-center p-2"
           )}
           onClick={logout}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-3.5 w-3.5 md:h-4 md:w-4" />
           {open && <span>Logout</span>}
         </Button>
       </SidebarFooter>
