@@ -238,46 +238,43 @@ export default function TeacherClassAttendance() {
     }
   };
 
-  const updateAttendance = async (studentId: string, session: number, status: string) => {
-    const attendanceRecord = attendance[studentId];
-    if (!attendanceRecord) return;
+  const pendingUpdatesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  const updateAttendance = useCallback(async (studentId: string, session: number, status: string) => {
     const sessionKey = `session_${session}` as keyof Attendance;
 
-    // Optimistic update - update UI immediately
-    setAttendance((prev) => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        [sessionKey]: status,
-      },
-    }));
+    // Optimistic update
+    setAttendance((prev) => {
+      const record = prev[studentId];
+      if (!record) return prev;
+      return {
+        ...prev,
+        [studentId]: { ...record, [sessionKey]: status },
+      };
+    });
 
-    try {
-      const { error } = await supabase
-        .from('attendance')
-        .update({ [sessionKey]: status })
-        .eq('id', attendanceRecord.id);
+    // Debounce the API call per student+session combo
+    const key = `${studentId}-${session}`;
+    const existing = pendingUpdatesRef.current.get(key);
+    if (existing) clearTimeout(existing);
 
-      if (error) {
-        // Revert on error
-        setAttendance((prev) => ({
-          ...prev,
-          [studentId]: {
-            ...prev[studentId],
-            [sessionKey]: attendanceRecord[sessionKey],
-          },
-        }));
-        throw error;
+    pendingUpdatesRef.current.set(key, setTimeout(async () => {
+      pendingUpdatesRef.current.delete(key);
+      try {
+        const record = attendance[studentId];
+        if (!record) return;
+        const { error } = await supabase
+          .from('attendance')
+          .update({ [sessionKey]: status })
+          .eq('id', record.id);
+
+        if (error) throw error;
+      } catch (error: any) {
+        const errorToast = getErrorToast(error, "update attendance");
+        toast({ ...errorToast, variant: 'destructive' });
       }
-    } catch (error: any) {
-      const errorToast = getErrorToast(error, "update attendance");
-      toast({
-        ...errorToast,
-        variant: 'destructive',
-      });
-    }
-  };
+    }, 300));
+  }, [attendance, toast]);
 
   const handleAddStudent = async () => {
     try {
