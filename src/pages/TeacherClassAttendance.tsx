@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AttendanceSlider } from '@/components/teacher/AttendanceSlider';
+import { MemoizedAttendanceSlider } from '@/components/teacher/MemoizedAttendanceSlider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,6 +74,11 @@ export default function TeacherClassAttendance() {
     if (batchId) {
       fetchData();
     }
+    return () => {
+      // Clean up pending debounced updates
+      pendingUpdatesRef.current.forEach((t) => clearTimeout(t));
+      pendingUpdatesRef.current.clear();
+    };
   }, [batchId]);
 
   const fetchData = async () => {
@@ -238,46 +243,43 @@ export default function TeacherClassAttendance() {
     }
   };
 
-  const updateAttendance = async (studentId: string, session: number, status: string) => {
-    const attendanceRecord = attendance[studentId];
-    if (!attendanceRecord) return;
+  const pendingUpdatesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  const updateAttendance = useCallback(async (studentId: string, session: number, status: string) => {
     const sessionKey = `session_${session}` as keyof Attendance;
 
-    // Optimistic update - update UI immediately
-    setAttendance((prev) => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        [sessionKey]: status,
-      },
-    }));
+    // Optimistic update
+    setAttendance((prev) => {
+      const record = prev[studentId];
+      if (!record) return prev;
+      return {
+        ...prev,
+        [studentId]: { ...record, [sessionKey]: status },
+      };
+    });
 
-    try {
-      const { error } = await supabase
-        .from('attendance')
-        .update({ [sessionKey]: status })
-        .eq('id', attendanceRecord.id);
+    // Debounce the API call per student+session combo
+    const key = `${studentId}-${session}`;
+    const existing = pendingUpdatesRef.current.get(key);
+    if (existing) clearTimeout(existing);
 
-      if (error) {
-        // Revert on error
-        setAttendance((prev) => ({
-          ...prev,
-          [studentId]: {
-            ...prev[studentId],
-            [sessionKey]: attendanceRecord[sessionKey],
-          },
-        }));
-        throw error;
+    pendingUpdatesRef.current.set(key, setTimeout(async () => {
+      pendingUpdatesRef.current.delete(key);
+      try {
+        const record = attendance[studentId];
+        if (!record) return;
+        const { error } = await supabase
+          .from('attendance')
+          .update({ [sessionKey]: status })
+          .eq('id', record.id);
+
+        if (error) throw error;
+      } catch (error: any) {
+        const errorToast = getErrorToast(error, "update attendance");
+        toast({ ...errorToast, variant: 'destructive' });
       }
-    } catch (error: any) {
-      const errorToast = getErrorToast(error, "update attendance");
-      toast({
-        ...errorToast,
-        variant: 'destructive',
-      });
-    }
-  };
+    }, 300));
+  }, [attendance, toast]);
 
   const handleAddStudent = async () => {
     try {
@@ -507,9 +509,11 @@ export default function TeacherClassAttendance() {
                             
                             return (
                               <td key={i} className="p-1 text-center">
-                                <AttendanceSlider
-                                  value={(status as "present" | "late" | "absent" | "sick" | "") || ""}
-                                  onChange={(value) => updateAttendance(student.id, i + 1, value)}
+                                <MemoizedAttendanceSlider
+                                  studentId={student.id}
+                                  sessionNumber={i + 1}
+                                  value={(status as "present" | "late" | "absent" | "sick" | "excused" | "") || ""}
+                                  onUpdate={updateAttendance}
                                 />
                               </td>
                             );
