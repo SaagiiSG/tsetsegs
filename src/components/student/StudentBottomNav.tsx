@@ -13,7 +13,7 @@ const navItems = [
 export function StudentBottomNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-50 safe-area-inset-bottom">
-      <div className="flex items-center justify-around h-16">
+      <div className="flex items-center justify-around h-12 md:h-16">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -24,8 +24,8 @@ export function StudentBottomNav() {
             )}
             activeClassName="text-primary"
           >
-            <item.icon className="h-5 w-5" />
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <item.icon className="h-4 w-4" />
+            <span className="text-[9px] font-medium">{item.label}</span>
           </NavLink>
         ))}
       </div>

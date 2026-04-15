@@ -356,17 +356,17 @@ export default function StudentPractice() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 select-none flex flex-col h-[calc(100vh-2rem)]">
+    <div className="p-2 md:p-6 space-y-2 md:space-y-4 select-none flex flex-col h-[calc(100vh-2rem)]">
       {/* Desmos Calculator Floating Button (only for Math) */}
       {subject === 'math' && <DesmosCalculator />}
       
       {/* Island Selector */}
       <Card className="bg-gradient-to-br from-card via-card to-muted/30 shadow-lg border-2">
-        <CardContent className="p-4 space-y-4">
+        <CardContent className="p-2 md:p-4 space-y-2 md:space-y-4">
           {/* Subject & Question Set Row */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-1.5 md:gap-3">
             {/* Subject Toggle */}
-            <div className="flex rounded-lg border bg-muted/50 p-1">
+            <div className="flex rounded-lg border bg-muted/50 p-0.5 md:p-1">
               <Button
                 variant={subject === 'math' ? 'default' : 'ghost'}
                 size="sm"
@@ -375,9 +375,9 @@ export default function StudentPractice() {
                   setSelectedCategory(null);
                   setSelectedSubtopic(null);
                 }}
-                className="gap-2"
+                className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-2 md:px-3"
               >
-                <Target className="h-4 w-4" />
+                <Target className="h-3 w-3 md:h-4 md:w-4" />
                 Math
               </Button>
               <Button
@@ -388,16 +388,16 @@ export default function StudentPractice() {
                   setSelectedCategory(null);
                   setSelectedSubtopic(null);
                 }}
-                className="gap-2"
+                className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-2 md:px-3"
               >
-                <FileText className="h-4 w-4" />
+                <FileText className="h-3 w-3 md:h-4 md:w-4" />
                 English
               </Button>
             </div>
 
             {/* Question Set Toggle (Math only) */}
             {subject === 'math' && (
-              <div className="flex rounded-lg border bg-muted/50 p-1">
+              <div className="flex rounded-lg border bg-muted/50 p-0.5 md:p-1">
                 <Button
                   variant={questionSet === '68' ? 'default' : 'ghost'}
                   size="sm"
@@ -406,9 +406,9 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-2"
+                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <BookOpen className="h-3 w-3 md:h-4 md:w-4 hidden md:block" />
                   68 ({questionCounts?.set68 || 0})
                 </Button>
                 <Button
@@ -419,9 +419,8 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-2"
+                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
                 >
-                  <Target className="h-4 w-4" />
                   CB ({questionCounts?.cb || 0})
                 </Button>
                 <Button
@@ -432,28 +431,27 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-2"
+                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
                 >
-                  <Target className="h-4 w-4" />
                   150 ({questionCounts?.set150 || 0})
                 </Button>
               </div>
             )}
 
             {subject === 'english' && (
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className="text-xs md:text-sm">
                 {questionCounts?.english || 0} questions
               </Badge>
             )}
           </div>
 
           {/* Overall Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center justify-between text-xs md:text-sm">
               <span className="text-muted-foreground">Overall Progress</span>
               <span className="font-medium">{completedCount}/{totalQuestions} ({Math.round(progressPercent)}%)</span>
             </div>
-            <Progress value={progressPercent} className="h-2" />
+            <Progress value={progressPercent} className="h-1.5 md:h-2" />
           </div>
         </CardContent>
       </Card>
@@ -524,17 +522,17 @@ export default function StudentPractice() {
           </Card>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[calc(100vh-320px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4 min-h-[calc(100vh-320px)]">
           {/* Left Panel - Categories & Subtopics */}
           <Card className="h-fit lg:h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Target className="h-4 w-4" />
+            <CardHeader className="pb-1 md:pb-2 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
+                <Target className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {subject === 'math' ? 'Math Areas' : 'English Skills'}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-2">
-              <ScrollArea className="h-[300px] lg:h-[calc(100vh-450px)]">
+            <CardContent className="p-1.5 md:p-2">
+              <ScrollArea className="h-[250px] lg:h-[calc(100vh-450px)]">
                 <div className="space-y-1 pr-4">
                   {/* All Questions option */}
                   <Button
@@ -624,11 +622,11 @@ export default function StudentPractice() {
           </Card>
 
           {/* Right Panel - Questions Display */}
-          <div className="space-y-4">
+          <div className="space-y-2 md:space-y-4">
             {/* Selected Area Header & Progress */}
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+              <CardHeader className="pb-1 md:pb-2 px-3 md:px-6 pt-2 md:pt-6">
+                <CardTitle className="text-sm md:text-base flex items-center gap-2">
                   {selectedSubtopic || selectedCategoryName || 'All Questions'}
                   {selectedCategory && (
                     <Button variant="ghost" size="sm" onClick={clearSelection} className="ml-auto text-xs h-6">
@@ -637,9 +635,9 @@ export default function StudentPractice() {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Progress value={areaStats.percent} className="h-2" />
-                <p className="text-sm text-muted-foreground">
+              <CardContent className="space-y-1 md:space-y-2 px-3 md:px-6">
+                <Progress value={areaStats.percent} className="h-1.5 md:h-2" />
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {areaStats.completed}/{areaStats.total} mastered ({areaStats.percent}%)
                 </p>
               </CardContent>
@@ -647,14 +645,14 @@ export default function StudentPractice() {
 
             {/* Question Grid */}
             <Card className="flex-1">
-              <CardContent className="p-3">
-                <ScrollArea className="h-[300px] lg:h-[calc(100vh-520px)]">
+              <CardContent className="p-2 md:p-3">
+                <ScrollArea className="h-[250px] lg:h-[calc(100vh-520px)]">
                   {questionsLoading ? (
-                    <div className="text-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <div className="text-center py-8">
+                      <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin mx-auto text-primary" />
                     </div>
                   ) : filteredQuestions.length > 0 ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-4">
+                    <div className="grid grid-cols-4 sm:grid-cols-4 gap-1.5 md:gap-2 pr-2 md:pr-4">
                       {filteredQuestions.map((question, index) => {
                         const status = getQuestionStatus(question.id);
                         const inReview = reviewQueueSet.has(question.id);

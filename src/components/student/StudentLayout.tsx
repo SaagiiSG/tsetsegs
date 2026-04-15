@@ -80,19 +80,19 @@ function StudentLayoutContent() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex w-full">
       <StudentDashboardSidebar />
       
-      <main className="flex-1 pb-20 md:pb-0 overflow-auto">
+      <main className="flex-1 pb-16 md:pb-0 overflow-auto">
         {/* Mobile check-in banner */}
         <div className="md:hidden sticky top-0 z-40">
           <CheckInWidget variant="banner" />
         </div>
         {/* Header with sidebar trigger and tier badge */}
-        <div className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-2.5 py-2 md:p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <SidebarTrigger />
-            <span className="font-semibold text-sm">SAT Practice</span>
+            <span className="font-semibold text-xs md:text-sm">SAT Practice</span>
           </div>
           <div 
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+            className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
             style={{ 
               backgroundColor: `${TIER_COLORS[tier]}20`,
               color: TIER_COLORS[tier],
@@ -100,7 +100,7 @@ function StudentLayoutContent() {
             }}
           >
             <div 
-              className="w-2 h-2 rounded-full" 
+              className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
               style={{ backgroundColor: TIER_COLORS[tier] }}
             />
             {TIER_DISPLAY_NAMES[tier]}
