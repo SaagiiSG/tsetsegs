@@ -165,6 +165,8 @@ export function MathText({ text, className = '' }: MathTextProps) {
       
       // Handle basic formatting
       let formatted = part;
+      // Restore protected currency tokens (e.g., $5, $96)
+      formatted = formatted.replace(/\uE000/g, '$');
       // Bold **text**
       formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       // Italic *text*
