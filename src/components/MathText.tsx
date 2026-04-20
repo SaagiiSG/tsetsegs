@@ -12,6 +12,8 @@ interface MathTextProps {
  * Handles exponents, roots, function notation, fractions, and unicode math symbols.
  * Preserves dollar amounts like $96 as literal text.
  */
+const CURRENCY_TOKEN = '\uE000';
+
 function autoDetectMath(text: string): string {
   if (!text) return text;
 
@@ -125,8 +127,11 @@ export function MathText({ text, className = '' }: MathTextProps) {
   const renderedContent = useMemo(() => {
     if (!text) return null;
 
+    // Protect literal currency ($5, $96, $1,200.50) from being mis-parsed as math delimiters
+    const currencyProtected = text.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
+
     // Pre-process: auto-detect math patterns
-    const processed = autoDetectMath(text);
+    const processed = autoDetectMath(currencyProtected);
     
     // Split by math delimiters $ ... $ (but not dollar amounts like $96)
     // Dollar amounts: $ followed by digits then space/punctuation/end
@@ -160,6 +165,8 @@ export function MathText({ text, className = '' }: MathTextProps) {
       
       // Handle basic formatting
       let formatted = part;
+      // Restore protected currency tokens (e.g., $5, $96)
+      formatted = formatted.replace(/\uE000/g, '$');
       // Bold **text**
       formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       // Italic *text*
