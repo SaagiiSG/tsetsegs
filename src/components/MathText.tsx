@@ -128,11 +128,12 @@ export function MathText({ text, className = '' }: MathTextProps) {
     if (!text) return null;
 
     // Protect literal currency ($5, $96, $1,200.50) from being mis-parsed as math delimiters.
-    // Skip strings that contain LaTeX commands (e.g. "$20\left(p+r+s\right)$") — those are real math.
+    // Only protect when the number is NOT followed by another `$` (that would indicate a
+    // LaTeX-delimited number like "$92.16$"). Skip strings with LaTeX commands too.
     const hasLatexCommand = /\\[a-zA-Z]+/.test(text);
     const currencyProtected = hasLatexCommand
       ? text
-      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
+      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)(?!\$)/g, `${CURRENCY_TOKEN}$1`);
 
     // Pre-process: auto-detect math patterns
     const processed = autoDetectMath(currencyProtected);
