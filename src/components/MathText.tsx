@@ -12,6 +12,8 @@ interface MathTextProps {
  * Handles exponents, roots, function notation, fractions, and unicode math symbols.
  * Preserves dollar amounts like $96 as literal text.
  */
+const CURRENCY_TOKEN = '\uE000';
+
 function autoDetectMath(text: string): string {
   if (!text) return text;
 
