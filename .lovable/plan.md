@@ -1,101 +1,37 @@
 
+## Confirmed bug
 
-# SAT Math Score Prediction — Implementation Plan
+User confirms the exact symptom: question text/passage and multiple-choice options that contain literal currency like `$5`, `$4`, `$3` are displaying with the `$` rendered (good intent), but the surrounding text gets garbled because the math-split regex `/(\$[^$]+\$)/g` in `MathText.tsx` greedily pairs two `$` signs and feeds the inner text to KaTeX.
 
-## Context
-Algorithm approved in previous conversation. Predicts a 20-point SAT Math score range for each student, shown on teacher dashboard only. Calibrated against Erdene-Tana (actual: 720, predicted: 710-730).
+Example: `"A pole is $5 inches and a rope is $3 inches"` → split pairs `$5 inches and a rope is $3` → KaTeX tries to render "5 inches and a rope is 3" as math → broken output. Same for option lists where multiple options share the page (`A. $4`, `B. $3`).
 
-**Data insight from audit**: Time data needs capping at 600s per question to filter idle sessions.
+## Fix (minimal, isolated to currency only)
 
-## Files to Create
+Single file: `src/components/MathText.tsx`
 
-### 1. `src/hooks/useScorePrediction.ts`
-New hook that takes a `studentId` (from `students` table) and returns the prediction.
+1. Define `const CURRENCY_TOKEN = '\uE000'` (Unicode private-use area, won't appear in any real content)
+2. **Before** `autoDetectMath()` runs, swap literal currency:
+   ```ts
+   text = text.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`)
+   ```
+3. Run existing `autoDetectMath` + math-split + KaTeX rendering completely unchanged
+4. **In the plain-text branch only** (after `formatted = part`), restore:
+   ```ts
+   formatted = formatted.replace(/\uE000/g, '$')
+   ```
+5. Keep the existing pure-digit dollar-amount fallback inside the math branch as a second safety net (no removal)
 
-**Data fetching:**
-- Last 3 `practice_tests` scores for the student (ordered by `test_number` desc), filtered to SAT batches
-- `attendance` record for the student's batch (sessions 1-15)
-- `homework` records for the student's batch
-- `student_attempts` via the linked `student_accounts` record — grouped by difficulty, with `time_spent_seconds` capped at 600s
+## Why this is safe for every other set
 
-**Algorithm (all client-side):**
+- `autoDetectMath` regexes never produce or consume `\uE000` — output identical for non-currency strings
+- Real LaTeX (`$x^2$`, `$\frac{1}{2}$`, `$\sqrt{3}$`) doesn't start with `$<digit-followed-by-non-math>`, so the currency regex won't match it
+- Strings with no `$<digits>` pattern flow through completely unchanged
+- The placeholder is stripped to `$` only in the plain-text rendering branch, so KaTeX never sees it
+- 68-set, CB, English, 150-set math expressions, and rationale rendering all unaffected
 
-```text
-Base Score:
-  - 3 tests: weighted avg (0.5, 0.3, 0.2)
-  - 2 tests: (0.6, 0.4)  
-  - 1 test: use directly
-  - 0 tests: lookup from hard accuracy
+## Out of scope (separate, after this fix ships)
 
-Attendance Adj (-20 to 0):
-  - Session 3 = 2x weight, others 1x
-  - present/late = counted
-  - 100% → 0, 90%+ → -3, 80%+ → -8, 70%+ → -15, <70% → -20
+The 150-set answer audit against `SATMathTrainingfor800.pdf` — will do a read-only diff to `/mnt/documents/sat800_answer_diff.csv` after this fix lands, then propose answer-correction migration on user approval. No DB writes without explicit approval.
 
-Homework Adj (-10 to 0):
-  - completed / total assigned
-  - 100% → 0, 90%+ → -2, 80%+ → -5, <80% → -10
-
-Practice Intensity (-10 to +15):
-  - Hard accuracy: >55% → +10, 40-55% → +3, 25-40% → 0, <25% → -5
-  - Volume: >400 → +5, 200-400 → +2, <100 → -5
-  - No platform data → 0
-
-Output: { low: predicted-10, high: predicted+10, confidence, factors }
-```
-
-**Return type:**
-```ts
-{
-  predictedRange: [number, number];
-  confidence: 'high' | 'medium' | 'low';
-  baseScore: number;
-  factors: {
-    attendanceRate: number;
-    attendanceAdj: number;
-    homeworkRate: number;
-    homeworkAdj: number;
-    hardAccuracy: number;
-    attemptVolume: number;
-    practiceAdj: number;
-  };
-  hasBaseline: boolean;
-}
-```
-
-### 2. `src/components/teacher/ScorePredictionCard.tsx`
-Card component for the teacher student profile page.
-
-- Shows predicted range prominently (e.g., "710 - 730")
-- Color: green (700+), yellow (600-700), red (<600)
-- Confidence badge (high/medium/low)
-- Expandable breakdown showing each factor's contribution
-- "Estimated" label when no practice test baseline exists
-- Uses existing Card, Badge UI components
-
-### 3. `src/components/teacher/ScorePredictionBadge.tsx`
-Compact inline badge for student cards/lists.
-- Shows range like "710-730" in a small colored badge
-- Tooltip with confidence level on hover
-
-## Files to Modify
-
-### 4. `src/pages/TeacherStudentProfile.tsx`
-- Import and render `ScorePredictionCard` in the student profile
-- Pass the student ID to `useScorePrediction`
-- Place it prominently near the top of the profile
-
-### 5. `src/components/teacher/StudentCard.tsx`
-- Import `ScorePredictionBadge`
-- Add the compact badge to each student card in the list view
-- Need to check how the student card currently gets its student data to pass the right ID
-
-## Technical Notes
-
-- The hook needs to bridge `students.id` → `student_accounts.linked_student_id` to get platform attempt data
-- `practice_tests` uses `student_id` (from `students` table), not `student_account_id`
-- `attendance` and `homework` also use `student_id` from `students` table
-- Cap `time_spent_seconds` at 600s when computing avg speed to filter idle time
-- All computation is client-side — no edge function needed
-- Clamp final prediction to [200, 800]
-
+## File touched
+- `src/components/MathText.tsx` only
