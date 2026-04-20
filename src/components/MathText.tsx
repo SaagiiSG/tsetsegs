@@ -127,8 +127,12 @@ export function MathText({ text, className = '' }: MathTextProps) {
   const renderedContent = useMemo(() => {
     if (!text) return null;
 
-    // Protect literal currency ($5, $96, $1,200.50) from being mis-parsed as math delimiters
-    const currencyProtected = text.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
+    // Protect literal currency ($5, $96, $1,200.50) from being mis-parsed as math delimiters.
+    // Skip strings that contain LaTeX commands (e.g. "$20\left(p+r+s\right)$") — those are real math.
+    const hasLatexCommand = /\\[a-zA-Z]+/.test(text);
+    const currencyProtected = hasLatexCommand
+      ? text
+      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
 
     // Pre-process: auto-detect math patterns
     const processed = autoDetectMath(currencyProtected);
