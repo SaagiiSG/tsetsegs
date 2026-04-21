@@ -839,74 +839,140 @@ export default function StudentQuestion() {
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Question Text */}
-                  <div className="prose dark:prose-invert max-w-none">
-                    <p className="text-lg leading-relaxed">
-                      <MathText text={currentQuestion.question_text} />
-                    </p>
-                  </div>
+                  {currentQuestion.question_image_url ? (
+                    /* Side-by-side layout when figure exists */
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                      {/* Figure column - sticky on desktop */}
+                      <div className="md:col-span-2">
+                        <div className="md:sticky md:top-4">
+                          <img
+                            src={currentQuestion.question_image_url}
+                            alt="Question"
+                            className="w-full max-h-64 md:max-h-[70vh] rounded-lg border object-contain bg-white"
+                          />
+                        </div>
+                      </div>
 
-                  {/* Passage Text */}
-                  {currentQuestion.passage_text && (
-                    <div className="prose dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4 border border-border/50">
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">
-                        <MathText text={currentQuestion.passage_text} />
-                      </p>
+                      {/* Question content column */}
+                      <div className="md:col-span-3 space-y-6">
+                        <div className="prose dark:prose-invert max-w-none">
+                          <p className="text-lg leading-relaxed">
+                            <MathText text={currentQuestion.question_text} />
+                          </p>
+                        </div>
+
+                        {currentQuestion.passage_text && (
+                          <div className="prose dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4 border border-border/50">
+                            <p className="text-base leading-relaxed whitespace-pre-wrap">
+                              <MathText text={currentQuestion.passage_text} />
+                            </p>
+                          </div>
+                        )}
+
+                        {currentQuestion.question_type === 'multiple_choice' && options && (
+                          <div className="space-y-3">
+                            {['A', 'B', 'C', 'D'].map((opt) => {
+                              const choiceImages = (currentQuestion as any).choice_images as Record<string, string> | null;
+                              const choiceImg = choiceImages?.[opt];
+                              return (
+                                <button
+                                  key={opt}
+                                  onClick={() => !submitted && setSelectedAnswer(opt)}
+                                  disabled={submitted}
+                                  className={`w-full p-4 rounded-lg border text-left transition-all ${
+                                    submitted && opt === selectedAnswer && isCorrect
+                                      ? 'border-green-500 bg-green-500/10'
+                                      : submitted && opt === selectedAnswer && !isCorrect
+                                      ? 'border-red-500 bg-red-500/10'
+                                      : selectedAnswer === opt
+                                      ? 'border-primary bg-primary/10'
+                                      : 'hover:border-primary/50'
+                                  }`}
+                                >
+                                  <span className="font-medium mr-3">{opt}.</span>
+                                  {choiceImg && (
+                                    <img src={choiceImg} alt={`Choice ${opt}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
+                                  )}
+                                  <MathText text={options[opt]} />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {currentQuestion.question_type === 'fill_blank' && (
+                          <div className="space-y-3">
+                            <Input
+                              value={fillAnswer}
+                              onChange={(e) => setFillAnswer(e.target.value)}
+                              placeholder="Type your answer..."
+                              disabled={submitted}
+                              className="text-lg"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  ) : (
+                    /* Single-column layout (no figure) */
+                    <>
+                      <div className="prose dark:prose-invert max-w-none">
+                        <p className="text-lg leading-relaxed">
+                          <MathText text={currentQuestion.question_text} />
+                        </p>
+                      </div>
 
-                  {/* Question Image */}
-                  {currentQuestion.question_image_url && (
-                    <img 
-                      src={currentQuestion.question_image_url} 
-                      alt="Question" 
-                      className="max-w-full rounded-lg border"
-                    />
-                  )}
+                      {currentQuestion.passage_text && (
+                        <div className="prose dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4 border border-border/50">
+                          <p className="text-base leading-relaxed whitespace-pre-wrap">
+                            <MathText text={currentQuestion.passage_text} />
+                          </p>
+                        </div>
+                      )}
 
-                  {/* Multiple Choice Options */}
-                  {currentQuestion.question_type === 'multiple_choice' && options && (
-                    <div className="space-y-3">
-                      {['A', 'B', 'C', 'D'].map((opt) => {
-                        const choiceImages = (currentQuestion as any).choice_images as Record<string, string> | null;
-                        const choiceImg = choiceImages?.[opt];
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => !submitted && setSelectedAnswer(opt)}
+                      {currentQuestion.question_type === 'multiple_choice' && options && (
+                        <div className="space-y-3">
+                          {['A', 'B', 'C', 'D'].map((opt) => {
+                            const choiceImages = (currentQuestion as any).choice_images as Record<string, string> | null;
+                            const choiceImg = choiceImages?.[opt];
+                            return (
+                              <button
+                                key={opt}
+                                onClick={() => !submitted && setSelectedAnswer(opt)}
+                                disabled={submitted}
+                                className={`w-full p-4 rounded-lg border text-left transition-all ${
+                                  submitted && opt === selectedAnswer && isCorrect
+                                    ? 'border-green-500 bg-green-500/10'
+                                    : submitted && opt === selectedAnswer && !isCorrect
+                                    ? 'border-red-500 bg-red-500/10'
+                                    : selectedAnswer === opt
+                                    ? 'border-primary bg-primary/10'
+                                    : 'hover:border-primary/50'
+                                }`}
+                              >
+                                <span className="font-medium mr-3">{opt}.</span>
+                                {choiceImg && (
+                                  <img src={choiceImg} alt={`Choice ${opt}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
+                                )}
+                                <MathText text={options[opt]} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {currentQuestion.question_type === 'fill_blank' && (
+                        <div className="space-y-3">
+                          <Input
+                            value={fillAnswer}
+                            onChange={(e) => setFillAnswer(e.target.value)}
+                            placeholder="Type your answer..."
                             disabled={submitted}
-                            className={`w-full p-4 rounded-lg border text-left transition-all ${
-                              submitted && opt === selectedAnswer && isCorrect
-                                ? 'border-green-500 bg-green-500/10'
-                                : submitted && opt === selectedAnswer && !isCorrect
-                                ? 'border-red-500 bg-red-500/10'
-                                : selectedAnswer === opt
-                                ? 'border-primary bg-primary/10'
-                                : 'hover:border-primary/50'
-                            }`}
-                          >
-                            <span className="font-medium mr-3">{opt}.</span>
-                            {choiceImg && (
-                              <img src={choiceImg} alt={`Choice ${opt}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
-                            )}
-                            <MathText text={options[opt]} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Fill in the Blank */}
-                  {currentQuestion.question_type === 'fill_blank' && (
-                    <div className="space-y-3">
-                      <Input
-                        value={fillAnswer}
-                        onChange={(e) => setFillAnswer(e.target.value)}
-                        placeholder="Type your answer..."
-                        disabled={submitted}
-                        className="text-lg"
-                      />
-                    </div>
+                            className="text-lg"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Result */}
