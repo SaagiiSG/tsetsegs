@@ -457,7 +457,7 @@ export function DesmosCalculator() {
             >
               <svg
                 viewBox="0 0 16 16"
-                className="w-full h-full text-muted-foreground/60 group-hover:text-primary transition-colors"
+                className="w-full h-full text-muted-foreground/60 group-hover:text-primary transition-colors rotate-90"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
