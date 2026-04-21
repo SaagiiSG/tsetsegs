@@ -651,45 +651,51 @@ export default function TeacherDashboard() {
             { mode: "practice" as const, icon: Gamepad2, label: "Practice" },
           ];
           return (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 27 }}
-              className={`fixed z-50 flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+            <div
+              className={`fixed z-50 pointer-events-none flex transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 isPracticeMode
-                  ? "bottom-4 left-1/2 -translate-x-1/2 flex-row md:bottom-auto md:left-4 md:top-1/2 md:-translate-x-0 md:-translate-y-1/2 md:flex-col"
-                  : "bottom-4 left-1/2 -translate-x-1/2 flex-row"
+                  ? "inset-x-0 bottom-4 justify-center md:inset-y-0 md:bottom-0 md:left-4 md:right-auto md:items-center md:justify-start"
+                  : "inset-x-0 bottom-4 justify-center"
               }`}
             >
-              {navItems.map(({ mode, icon: Icon, label }) => {
-                const btn = (
-                  <Button
-                    variant={activeMode === mode ? "default" : "ghost"}
-                    size="sm"
-                    className={`h-9 rounded-full gap-2 text-xs transition-all ${
-                      isPracticeMode ? "px-3 md:w-9 md:px-0" : "px-3"
-                    }`}
-                    onClick={() => handleModeChange(mode)}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className={isPracticeMode ? "hidden sm:inline md:hidden" : "hidden sm:inline"}>
-                      {label}
-                    </span>
-                  </Button>
-                );
-                return isPracticeMode ? (
-                  <Tooltip key={mode}>
-                    <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                    <TooltipContent side="right" className="hidden md:block">
-                      {label}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <div key={mode}>{btn}</div>
-                );
-              })}
-            </motion.div>
+              <motion.div
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 27 }}
+                className={`pointer-events-auto flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                  isPracticeMode ? "flex-row md:flex-col" : "flex-row"
+                }`}
+              >
+                {navItems.map(({ mode, icon: Icon, label }) => {
+                  const btn = (
+                    <Button
+                      variant={activeMode === mode ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-9 rounded-full gap-2 text-xs transition-all ${
+                        isPracticeMode ? "px-3 md:w-9 md:px-0" : "px-3"
+                      }`}
+                      onClick={() => handleModeChange(mode)}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className={isPracticeMode ? "hidden sm:inline md:hidden" : "hidden sm:inline"}>
+                        {label}
+                      </span>
+                    </Button>
+                  );
+                  return isPracticeMode ? (
+                    <Tooltip key={mode}>
+                      <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                      <TooltipContent side="right" className="hidden md:block">
+                        {label}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <div key={mode}>{btn}</div>
+                  );
+                })}
+              </motion.div>
+            </div>
           );
         })()}
       </div>
