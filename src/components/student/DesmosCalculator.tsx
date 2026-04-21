@@ -371,6 +371,16 @@ export function DesmosCalculator() {
         </div>
       )}
 
+      {/* Drag/resize overlay - prevents the iframe from stealing focus mid-drag,
+          which was causing the SecurityWrapper to flash a "window blur" overlay
+          (looked like a page refresh). */}
+      {(isDragging || isResizing) && (
+        <div
+          className="fixed inset-0 z-[45]"
+          style={{ cursor: isDragging ? 'move' : undefined }}
+        />
+      )}
+
       {/* Calculator Window */}
       <div
         ref={windowRef}
@@ -380,9 +390,11 @@ export function DesmosCalculator() {
           left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
           right: snapSide === 'right' ? 0 : 'auto',
           top: snapSide ? '60px' : position.y,
+          bottom: snapSide ? 0 : 'auto',
           width: windowWidth,
           height: windowHeight,
           maxWidth: '95vw',
+          paddingBottom: snapSide ? 'env(safe-area-inset-bottom)' : undefined,
           borderRadius: snapSide ? 0 : undefined,
           transition: (isDragging || isResizing) ? 'none' : 'all 0.2s ease-out'
         }}
@@ -412,7 +424,7 @@ export function DesmosCalculator() {
               onTouchStart={(e) => handleResizeTouchStart(e, 'e')}
             />
 
-            {/* Corner handles */}
+            {/* Top corner handles (small, mouse-friendly) */}
             <div 
               className={`${resizeHandleBase} ${resizeHandleCorner} top-0 left-0 cursor-nw-resize`}
               onMouseDown={(e) => handleResizeStart(e, 'nw')}
@@ -423,16 +435,39 @@ export function DesmosCalculator() {
               onMouseDown={(e) => handleResizeStart(e, 'ne')}
               onTouchStart={(e) => handleResizeTouchStart(e, 'ne')}
             />
+
+            {/* Bottom corners — larger touch hit area for iPad/touch users */}
             <div 
-              className={`${resizeHandleBase} ${resizeHandleCorner} bottom-0 left-0 cursor-sw-resize`}
+              className={`${resizeHandleBase} ${resizeHandleCornerTouch} bottom-0 left-0 cursor-sw-resize`}
               onMouseDown={(e) => handleResizeStart(e, 'sw')}
               onTouchStart={(e) => handleResizeTouchStart(e, 'sw')}
             />
             <div 
-              className={`${resizeHandleBase} ${resizeHandleCorner} bottom-0 right-0 cursor-se-resize`}
+              className={`${resizeHandleBase} ${resizeHandleCornerTouch} bottom-0 right-0 cursor-se-resize`}
               onMouseDown={(e) => handleResizeStart(e, 'se')}
               onTouchStart={(e) => handleResizeTouchStart(e, 'se')}
             />
+
+            {/* iOS-style visible resize grip on the bottom-left corner */}
+            <div
+              className="absolute bottom-0 left-0 z-20 w-6 h-6 cursor-sw-resize flex items-end justify-start p-[3px] group"
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'sw')}
+              aria-label="Resize calculator"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                className="w-full h-full text-muted-foreground/60 group-hover:text-primary transition-colors"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              >
+                <line x1="2" y1="14" x2="14" y2="2" />
+                <line x1="2" y1="9" x2="9" y2="2" />
+                <line x1="2" y1="4.5" x2="4.5" y2="2" />
+              </svg>
+            </div>
           </>
         )}
 
