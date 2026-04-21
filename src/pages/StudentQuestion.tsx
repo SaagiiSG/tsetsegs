@@ -21,6 +21,7 @@ import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/compone
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
+import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -366,18 +367,9 @@ export default function StudentQuestion() {
     mutationFn: async (answer: string) => {
       if (!student || !currentQuestion) return;
       
-      // Normalize answer for comparison
-      const normalizeAnswer = (ans: string) => ans.trim().toUpperCase();
-      const normalizedInput = normalizeAnswer(answer);
-      const primaryCorrect = normalizedInput === normalizeAnswer(currentQuestion.answer);
-      
-      // Check alternate answers if primary doesn't match
-      const alternatesArray = currentQuestion.alternate_answers as string[] | null;
-      const alternateCorrect = alternatesArray?.some(
-        alt => normalizedInput === normalizeAnswer(alt)
-      ) ?? false;
-      
-      const correct = primaryCorrect || alternateCorrect;
+      const correct = currentQuestion.question_type === 'fill_blank'
+        ? isAcceptedFillBlankAnswer(answer, currentQuestion.answer, currentQuestion.alternate_answers as string[] | null)
+        : answer.trim().toUpperCase() === currentQuestion.answer.trim().toUpperCase();
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
       const attemptNumber = currentAttempts.length + 1;
       
