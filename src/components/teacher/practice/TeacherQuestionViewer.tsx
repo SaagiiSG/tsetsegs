@@ -13,6 +13,7 @@ import {
   Calculator, BookOpen, Video, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 
 interface TeacherQuestionViewerProps {
   open: boolean;
@@ -81,10 +82,7 @@ export function TeacherQuestionViewer({
   const isCorrectAnswer = () => {
     if (!question) return false;
     if (question.question_type === 'multiple_choice') return selectedAnswer === correctAnswer;
-    const trimmed = fillAnswer.trim();
-    if (trimmed.toLowerCase() === question.answer?.toLowerCase()) return true;
-    if (question.alternate_answers?.some((a: string) => a.toLowerCase() === trimmed.toLowerCase())) return true;
-    return false;
+    return isAcceptedFillBlankAnswer(fillAnswer, question.answer, question.alternate_answers as string[] | null);
   };
 
   if (!open) return null;
