@@ -484,7 +484,11 @@ export function DesmosCalculator() {
               <span className="text-xs text-muted-foreground">(snapped {snapSide})</span>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div
+            className="flex items-center gap-1"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="icon"
