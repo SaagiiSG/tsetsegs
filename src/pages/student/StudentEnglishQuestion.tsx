@@ -17,6 +17,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLe
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
+import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -173,18 +174,9 @@ export default function StudentEnglishQuestion() {
     mutationFn: async ({ answer, questionId }: { answer: string; questionId: string }) => {
       if (!student || !question) throw new Error('Not authenticated');
       
-      // Normalize answer for comparison
-      const normalizeAnswer = (ans: string) => ans.trim().toUpperCase();
-      const normalizedInput = normalizeAnswer(answer);
-      const primaryCorrect = normalizedInput === normalizeAnswer(question.answer);
-      
-      // Check alternate answers if primary doesn't match
-      const alternatesArray = question.alternate_answers as string[] | null;
-      const alternateCorrect = alternatesArray?.some(
-        alt => normalizedInput === normalizeAnswer(alt)
-      ) ?? false;
-      
-      const correct = primaryCorrect || alternateCorrect;
+      const correct = question.question_type === 'fill_blank'
+        ? isAcceptedFillBlankAnswer(answer, question.answer, question.alternate_answers as string[] | null)
+        : answer.trim().toUpperCase() === question.answer.trim().toUpperCase();
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const attemptNumber = attemptCount + 1;
       
