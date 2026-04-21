@@ -291,19 +291,39 @@ export function DesmosCalculator() {
     };
   }, [snapSide]);
 
+  // Mark body while dragging/resizing so SecurityWrapper can ignore the
+  // window.blur events caused by the iframe stealing focus.
+  useEffect(() => {
+    if (isDragging || isResizing) {
+      document.body.dataset.calculatorDragging = 'true';
+    } else {
+      delete document.body.dataset.calculatorDragging;
+    }
+    return () => {
+      delete document.body.dataset.calculatorDragging;
+    };
+  }, [isDragging, isResizing]);
+
   // When closed, don't render anything - toggle is handled via header button
   if (!isOpen) {
     return null;
   }
 
   const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : `${size.width}px`;
-  const windowHeight = snapSide ? 'calc(100vh - 60px)' : `${size.height}px`;
-  const contentHeight = snapSide ? 'calc(100vh - 60px - 44px)' : `${size.height - 44}px`;
+  // Use 100dvh so browser chrome (Arc/Safari) doesn't clip the bottom; fall back to 100vh
+  const windowHeight = snapSide
+    ? 'min(calc(100dvh - 60px), calc(100vh - 60px))'
+    : `${size.height}px`;
+  const contentHeight = snapSide
+    ? 'min(calc(100dvh - 60px - 44px), calc(100vh - 60px - 44px))'
+    : `${size.height - 44}px`;
 
   // Resize handle styles
   const resizeHandleBase = "absolute z-10";
   const resizeHandleEdge = "bg-transparent hover:bg-primary/20 transition-colors";
   const resizeHandleCorner = "w-3 h-3";
+  // Larger hit area for touch on bottom corners
+  const resizeHandleCornerTouch = "w-6 h-6";
 
   return (
     <>
