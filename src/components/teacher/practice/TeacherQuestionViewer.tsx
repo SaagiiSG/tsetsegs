@@ -195,87 +195,164 @@ export function TeacherQuestionViewer({
                     </div>
                   )}
 
-                  {/* Question image */}
-                  {question.question_image_url && (
-                    <div className="flex justify-center">
-                      <img
-                        src={question.question_image_url}
-                        alt="Question figure"
-                        className="max-w-full max-h-80 rounded-lg border object-contain"
-                      />
+                  {/* Side-by-side layout when figure exists */}
+                  {question.question_image_url ? (
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                      <div className="md:col-span-2">
+                        <div className="md:sticky md:top-4">
+                          <img
+                            src={question.question_image_url}
+                            alt="Question figure"
+                            className="w-full max-h-64 md:max-h-[70vh] rounded-lg border object-contain bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-3 space-y-6">
+                        <div className="bg-card rounded-lg p-5 border-2">
+                          <MathText text={question.question_text} className="text-base md:text-lg leading-relaxed" />
+                        </div>
+
+                        {question.question_type === 'multiple_choice' && options && (
+                          <div className="grid gap-3">
+                            {labels.map((label) => {
+                              const key = label.toLowerCase();
+                              const text = options[key] || options[label];
+                              const imgUrl = choiceImages?.[key] || choiceImages?.[label];
+                              if (!text && !imgUrl) return null;
+
+                              const isSelected = selectedAnswer === label;
+                              const isCorrect = label === correctAnswer;
+                              const showResult = submitted;
+
+                              let borderClass = 'border-border bg-muted/30';
+                              if (isSelected && !showResult) borderClass = 'border-primary bg-primary/10';
+                              if (showResult && isCorrect) borderClass = 'border-primary bg-primary/10';
+                              if (showResult && isSelected && !isCorrect) borderClass = 'border-destructive bg-destructive/10';
+
+                              return (
+                                <button
+                                  key={label}
+                                  onClick={() => { if (!submitted) setSelectedAnswer(label); }}
+                                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors text-left ${borderClass} ${!submitted ? 'hover:border-primary/40 cursor-pointer' : ''}`}
+                                >
+                                  <span className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
+                                    showResult && isCorrect ? 'bg-primary text-primary-foreground' :
+                                    showResult && isSelected && !isCorrect ? 'bg-destructive text-destructive-foreground' :
+                                    isSelected ? 'bg-primary text-primary-foreground' :
+                                    'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {label}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    {imgUrl && <img src={imgUrl} alt={`Choice ${label}`} className="max-h-24 rounded mb-1" />}
+                                    {text && <MathText text={text} className="text-sm md:text-base" />}
+                                  </div>
+                                  {showResult && isCorrect && <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />}
+                                  {showResult && isSelected && !isCorrect && <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {question.question_type === 'fill_blank' && (
+                          <div className="space-y-3">
+                            <Input
+                              placeholder="Type your answer..."
+                              value={fillAnswer}
+                              onChange={e => setFillAnswer(e.target.value)}
+                              disabled={submitted}
+                              className="text-base h-12"
+                              onKeyDown={e => { if (e.key === 'Enter' && fillAnswer.trim() && !submitted) handleSubmit(); }}
+                            />
+                            {submitted && (
+                              <div className={`flex items-center gap-3 p-4 rounded-lg border-2 ${
+                                isCorrectAnswer() ? 'border-primary bg-primary/10' : 'border-destructive bg-destructive/10'
+                              }`}>
+                                {isCorrectAnswer() ? <CheckCircle className="h-6 w-6 text-primary" /> : <XCircle className="h-6 w-6 text-destructive" />}
+                                <span className="text-sm font-medium">Correct answer:</span>
+                                <MathText text={question.answer} className="font-bold" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      {/* Question text */}
+                      <div className="bg-card rounded-lg p-5 border-2">
+                        <MathText text={question.question_text} className="text-base md:text-lg leading-relaxed" />
+                      </div>
 
-                  {/* Question text */}
-                  <div className="bg-card rounded-lg p-5 border-2">
-                    <MathText text={question.question_text} className="text-base md:text-lg leading-relaxed" />
-                  </div>
+                      {/* Multiple choice */}
+                      {question.question_type === 'multiple_choice' && options && (
+                        <div className="grid gap-3">
+                          {labels.map((label) => {
+                            const key = label.toLowerCase();
+                            const text = options[key] || options[label];
+                            const imgUrl = choiceImages?.[key] || choiceImages?.[label];
+                            if (!text && !imgUrl) return null;
 
-                  {/* Multiple choice */}
-                  {question.question_type === 'multiple_choice' && options && (
-                    <div className="grid gap-3">
-                      {labels.map((label) => {
-                        const key = label.toLowerCase();
-                        const text = options[key] || options[label];
-                        const imgUrl = choiceImages?.[key] || choiceImages?.[label];
-                        if (!text && !imgUrl) return null;
+                            const isSelected = selectedAnswer === label;
+                            const isCorrect = label === correctAnswer;
+                            const showResult = submitted;
 
-                        const isSelected = selectedAnswer === label;
-                        const isCorrect = label === correctAnswer;
-                        const showResult = submitted;
+                            let borderClass = 'border-border bg-muted/30';
+                            if (isSelected && !showResult) borderClass = 'border-primary bg-primary/10';
+                            if (showResult && isCorrect) borderClass = 'border-primary bg-primary/10';
+                            if (showResult && isSelected && !isCorrect) borderClass = 'border-destructive bg-destructive/10';
 
-                        let borderClass = 'border-border bg-muted/30';
-                        if (isSelected && !showResult) borderClass = 'border-primary bg-primary/10';
-                        if (showResult && isCorrect) borderClass = 'border-primary bg-primary/10';
-                        if (showResult && isSelected && !isCorrect) borderClass = 'border-destructive bg-destructive/10';
-
-                        return (
-                          <button
-                            key={label}
-                            onClick={() => { if (!submitted) setSelectedAnswer(label); }}
-                            className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors text-left ${borderClass} ${!submitted ? 'hover:border-primary/40 cursor-pointer' : ''}`}
-                          >
-                            <span className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
-                              showResult && isCorrect ? 'bg-primary text-primary-foreground' :
-                              showResult && isSelected && !isCorrect ? 'bg-destructive text-destructive-foreground' :
-                              isSelected ? 'bg-primary text-primary-foreground' :
-                              'bg-muted text-muted-foreground'
-                            }`}>
-                              {label}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              {imgUrl && <img src={imgUrl} alt={`Choice ${label}`} className="max-h-24 rounded mb-1" />}
-                              {text && <MathText text={text} className="text-sm md:text-base" />}
-                            </div>
-                            {showResult && isCorrect && <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />}
-                            {showResult && isSelected && !isCorrect && <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Fill in blank */}
-                  {question.question_type === 'fill_blank' && (
-                    <div className="space-y-3">
-                      <Input
-                        placeholder="Type your answer..."
-                        value={fillAnswer}
-                        onChange={e => setFillAnswer(e.target.value)}
-                        disabled={submitted}
-                        className="text-base h-12"
-                        onKeyDown={e => { if (e.key === 'Enter' && fillAnswer.trim() && !submitted) handleSubmit(); }}
-                      />
-                      {submitted && (
-                        <div className={`flex items-center gap-3 p-4 rounded-lg border-2 ${
-                          isCorrectAnswer() ? 'border-primary bg-primary/10' : 'border-destructive bg-destructive/10'
-                        }`}>
-                          {isCorrectAnswer() ? <CheckCircle className="h-6 w-6 text-primary" /> : <XCircle className="h-6 w-6 text-destructive" />}
-                          <span className="text-sm font-medium">Correct answer:</span>
-                          <MathText text={question.answer} className="font-bold" />
+                            return (
+                              <button
+                                key={label}
+                                onClick={() => { if (!submitted) setSelectedAnswer(label); }}
+                                className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors text-left ${borderClass} ${!submitted ? 'hover:border-primary/40 cursor-pointer' : ''}`}
+                              >
+                                <span className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
+                                  showResult && isCorrect ? 'bg-primary text-primary-foreground' :
+                                  showResult && isSelected && !isCorrect ? 'bg-destructive text-destructive-foreground' :
+                                  isSelected ? 'bg-primary text-primary-foreground' :
+                                  'bg-muted text-muted-foreground'
+                                }`}>
+                                  {label}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  {imgUrl && <img src={imgUrl} alt={`Choice ${label}`} className="max-h-24 rounded mb-1" />}
+                                  {text && <MathText text={text} className="text-sm md:text-base" />}
+                                </div>
+                                {showResult && isCorrect && <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />}
+                                {showResult && isSelected && !isCorrect && <XCircle className="h-6 w-6 text-destructive flex-shrink-0" />}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
-                    </div>
+
+                      {/* Fill in blank */}
+                      {question.question_type === 'fill_blank' && (
+                        <div className="space-y-3">
+                          <Input
+                            placeholder="Type your answer..."
+                            value={fillAnswer}
+                            onChange={e => setFillAnswer(e.target.value)}
+                            disabled={submitted}
+                            className="text-base h-12"
+                            onKeyDown={e => { if (e.key === 'Enter' && fillAnswer.trim() && !submitted) handleSubmit(); }}
+                          />
+                          {submitted && (
+                            <div className={`flex items-center gap-3 p-4 rounded-lg border-2 ${
+                              isCorrectAnswer() ? 'border-primary bg-primary/10' : 'border-destructive bg-destructive/10'
+                            }`}>
+                              {isCorrectAnswer() ? <CheckCircle className="h-6 w-6 text-primary" /> : <XCircle className="h-6 w-6 text-destructive" />}
+                              <span className="text-sm font-medium">Correct answer:</span>
+                              <MathText text={question.answer} className="font-bold" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Submit / Reset */}
