@@ -448,11 +448,11 @@ export function DesmosCalculator() {
               onTouchStart={(e) => handleResizeTouchStart(e, 'se')}
             />
 
-            {/* iOS-style visible resize grip on the bottom-left corner */}
+            {/* iOS-style visible resize grip on the bottom-right corner */}
             <div
-              className="absolute bottom-0 left-0 z-20 w-6 h-6 cursor-sw-resize flex items-end justify-start p-[3px] group"
-              onMouseDown={(e) => handleResizeStart(e, 'sw')}
-              onTouchStart={(e) => handleResizeTouchStart(e, 'sw')}
+              className="absolute bottom-0 right-0 z-20 w-6 h-6 cursor-se-resize flex items-end justify-end p-[3px] group"
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'se')}
               aria-label="Resize calculator"
             >
               <svg
@@ -463,9 +463,9 @@ export function DesmosCalculator() {
                 strokeWidth="1.5"
                 strokeLinecap="round"
               >
-                <line x1="2" y1="14" x2="14" y2="2" />
-                <line x1="2" y1="9" x2="9" y2="2" />
-                <line x1="2" y1="4.5" x2="4.5" y2="2" />
+                <line x1="14" y1="14" x2="2" y2="2" />
+                <line x1="14" y1="9" x2="7" y2="2" />
+                <line x1="14" y1="4.5" x2="11.5" y2="2" />
               </svg>
             </div>
           </>
