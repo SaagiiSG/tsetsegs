@@ -552,7 +552,7 @@ export default function TeacherDashboard() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <div className="container mx-auto p-3 md:p-6 lg:p-8 pb-24">
+        <div className={`container mx-auto p-3 md:p-6 lg:p-8 pb-24 transition-[padding] duration-300 ${activeMode === "practice" ? "md:pl-20" : ""}`}>
           <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
             <div className="min-w-0 flex-1">
               <h1 className="text-lg md:text-2xl lg:text-3xl font-bold truncate">Welcome, {teacherName}!</h1>
@@ -641,51 +641,57 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        {/* Mode navigation toolbar at bottom center */}
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1"
-          >
-            <Button
-              variant={activeMode === "dashboard" ? "default" : "ghost"}
-              size="sm"
-              className="h-9 rounded-full gap-2 text-xs px-3"
-              onClick={() => handleModeChange("dashboard")}
+        {/* Mode navigation toolbar — bottom on default modes, left dock on practice (md+) */}
+        {(() => {
+          const isPracticeMode = activeMode === "practice";
+          const navItems = [
+            { mode: "dashboard" as const, icon: LayoutDashboard, label: "Dashboard" },
+            { mode: "review" as const, icon: QrCode, label: "Review" },
+            { mode: "intense" as const, icon: Flame, label: "Intense" },
+            { mode: "practice" as const, icon: Gamepad2, label: "Practice" },
+          ];
+          return (
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 27 }}
+              className={`fixed z-50 flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                isPracticeMode
+                  ? "bottom-4 left-1/2 -translate-x-1/2 flex-row md:bottom-auto md:left-4 md:top-1/2 md:-translate-x-0 md:-translate-y-1/2 md:flex-col"
+                  : "bottom-4 left-1/2 -translate-x-1/2 flex-row"
+              }`}
             >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Button>
-            <Button
-              variant={activeMode === "review" ? "default" : "ghost"}
-              size="sm"
-              className="h-9 rounded-full gap-2 text-xs px-3"
-              onClick={() => handleModeChange("review")}
-            >
-              <QrCode className="h-4 w-4" />
-              <span className="hidden sm:inline">Review</span>
-            </Button>
-            <Button
-              variant={activeMode === "intense" ? "default" : "ghost"}
-              size="sm"
-              className="h-9 rounded-full gap-2 text-xs px-3"
-              onClick={() => handleModeChange("intense")}
-            >
-              <Flame className="h-4 w-4" />
-              <span className="hidden sm:inline">Intense</span>
-            </Button>
-            <Button
-              variant={activeMode === "practice" ? "default" : "ghost"}
-              size="sm"
-              className="h-9 rounded-full gap-2 text-xs px-3"
-              onClick={() => handleModeChange("practice")}
-            >
-              <Gamepad2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Practice</span>
-            </Button>
-          </motion.div>
-        </div>
+              {navItems.map(({ mode, icon: Icon, label }) => {
+                const btn = (
+                  <Button
+                    variant={activeMode === mode ? "default" : "ghost"}
+                    size="sm"
+                    className={`h-9 rounded-full gap-2 text-xs transition-all ${
+                      isPracticeMode ? "px-3 md:w-9 md:px-0" : "px-3"
+                    }`}
+                    onClick={() => handleModeChange(mode)}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className={isPracticeMode ? "hidden sm:inline md:hidden" : "hidden sm:inline"}>
+                      {label}
+                    </span>
+                  </Button>
+                );
+                return isPracticeMode ? (
+                  <Tooltip key={mode}>
+                    <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                    <TooltipContent side="right" className="hidden md:block">
+                      {label}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div key={mode}>{btn}</div>
+                );
+              })}
+            </motion.div>
+          );
+        })()}
       </div>
 
       {/* QR Code Dialog */}
