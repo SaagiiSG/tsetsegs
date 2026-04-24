@@ -137,9 +137,12 @@ export function MathText({ text, className = '' }: MathTextProps) {
     // (letters, ^, _, {, }, +, -, *, /, =) — this is a math expression, not currency.
     const hasNumericMathSpan = /\$\d[^$]*[a-zA-Z\^_{}+\-*/=][^$]*\$/.test(text);
     const skipCurrencyProtection = hasLatexCommand || hasLatexSyntax || hasNumericMathSpan;
+    // Use a negative lookahead that rejects digits/dots/$ to prevent regex backtracking
+    // from matching a partial number (e.g. matching "$92.1" inside "$92.16$" by giving up
+    // the trailing "6" so the lookahead succeeds).
     const currencyProtected = skipCurrencyProtection
       ? text
-      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)(?!\$)/g, `${CURRENCY_TOKEN}$1`);
+      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)(?![\d.$])/g, `${CURRENCY_TOKEN}$1`);
 
     // Pre-process: auto-detect math patterns
     const processed = autoDetectMath(currencyProtected);
