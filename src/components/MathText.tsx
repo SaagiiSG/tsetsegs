@@ -155,9 +155,11 @@ export function MathText({ text, className = '' }: MathTextProps) {
       if (part.startsWith('$') && part.endsWith('$')) {
         const mathContent = part.slice(1, -1);
         
-        // Skip if it looks like a dollar amount (pure number, possibly with commas)
+        // Pure-number content wrapped in $...$ is treated as a stray LaTeX wrap
+        // around a plain number — render the number as-is without the $ prefix.
+        // Real currency in source content should be written as "160 dollars" (no $).
         if (/^\d[\d,]*\.?\d*$/.test(mathContent.trim())) {
-          return <span key={index}>${mathContent}</span>;
+          return <span key={index}>{mathContent}</span>;
         }
         
         try {
