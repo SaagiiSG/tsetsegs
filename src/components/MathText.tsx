@@ -134,34 +134,26 @@ export function MathText({ text, className = '' }: MathTextProps) {
     // Walk through `processed` and decide for every `$` whether it opens a math span
     // (paired with the next `$`) or is a literal dollar sign (currency).
     //
-    // A `$` is treated as literal currency when ANY of these hold for the candidate
-    // span $X$:
-    //   (a) X looks like a pure currency amount (\d[\d,]*(\.\d+)?) AND the opening `$`
-    //       is at a currency-ish boundary (start / whitespace / punctuation before),
-    //       AND the closing `$` is at a currency-ish boundary (whitespace / punctuation
-    //       / end after).
-    //   (b) KaTeX fails to render X with throwOnError: true.
-    // Otherwise the span is rendered as math.
-    //
-    // Special case: if X starts with `\$` (CB-escaped currency like "$\$5$"), KaTeX
-    // renders it cleanly as a literal "$" + content — that path Just Works through (b).
+    // Decision order at each `$`:
+    //   1. If the next two chars are `\$` (CB-escaped currency, e.g. "$\$5$"), emit
+    //      a literal `$`, skip the backslash, keep walking. The trailing `$` will be
+    //      evaluated on its own (usually unmatched → literal).
+    //   2. Look ahead for the next `$`. Build the inner span.
+    //   3. If the inner span LOOKS like English prose (contains a 2+ letter alphabetic
+    //      word adjacent to whitespace/punctuation, e.g. " and ", "spent ", "per "),
+    //      treat the opening `$` as literal currency. This catches mis-paired spans
+    //      like "$36 and spent $20".
+    //   4. Else trial-render the inner with KaTeX (throwOnError). If it parses, render
+    //      as math; otherwise treat the opening `$` as literal.
 
     type Token =
       | { kind: 'text'; value: string }
       | { kind: 'math'; value: string };
     const tokens: Token[] = [];
 
-    const isCurrencyBoundaryBefore = (s: string, i: number): boolean => {
-      if (i <= 0) return true;
-      const c = s[i - 1];
-      return /[\s(\[\>\-—–:;,]/.test(c);
-    };
-    const isCurrencyBoundaryAfter = (s: string, i: number): boolean => {
-      if (i >= s.length) return true;
-      const c = s[i];
-      return /[\s.,;:!\?\)\]\<\-—–]/.test(c);
-    };
-    const PURE_CURRENCY = /^\d{1,3}(?:,\d{3})*(?:\.\d+)?$|^\d+(?:\.\d+)?$/;
+    // Detect prose: a run of 2+ letters with whitespace on at least one side, or any
+    // common english connective word.
+    const PROSE = /(?:^|\s)[a-zA-Z]{2,}(?:\s|[.,;:!?]|$)/;
 
     let buf = '';
     let i = 0;
@@ -173,34 +165,34 @@ export function MathText({ text, className = '' }: MathTextProps) {
         i++;
         continue;
       }
-      // Found a `$`. Look for a closing `$`.
+
+      // (1) CB-escaped currency: `$\$...`. Emit literal `$`, drop the backslash.
+      if (processed[i + 1] === '\\' && processed[i + 2] === '$') {
+        buf += '$';
+        i += 2; // skip the `$` and the `\`, leave the inner `$` to be consumed as text
+        // Now consume the literal `$` that the backslash was escaping:
+        buf += '$';
+        i += 1;
+        continue;
+      }
+
+      // (2) Find a closing `$`.
       const close = processed.indexOf('$', i + 1);
       if (close === -1) {
-        // Unmatched — treat as literal.
         buf += '$';
         i++;
         continue;
       }
       const inner = processed.slice(i + 1, close);
 
-      // Heuristic (a): pure currency amount with currency boundaries on the OPENING `$`.
-      // We only need the opening boundary to look like currency; the closing `$` may be
-      // followed by another currency span ("$36 and $68").
-      if (
-        PURE_CURRENCY.test(inner.trim()) &&
-        isCurrencyBoundaryBefore(processed, i)
-      ) {
-        // Opening `$` is literal currency. Consume `$` + the number, leave the closing
-        // `$` for the next iteration to evaluate independently.
-        const m = inner.match(/^(\s*)(\d[\d,]*(?:\.\d+)?)/);
-        if (m) {
-          buf += '$' + m[1] + m[2];
-          i = i + 1 + m[1].length + m[2].length;
-          continue;
-        }
+      // (3) If the inner span reads like English prose, the opening `$` is currency.
+      if (PROSE.test(inner)) {
+        buf += '$';
+        i++;
+        continue;
       }
 
-      // Heuristic (b): trial-render with KaTeX. If it parses, it's math.
+      // (4) Trial-render with KaTeX.
       let html: string | null = null;
       try {
         html = katex.renderToString(inner, {
@@ -227,7 +219,7 @@ export function MathText({ text, className = '' }: MathTextProps) {
         continue;
       }
 
-      // KaTeX failed → opening `$` is literal.
+      // KaTeX failed → opening `$` is literal currency.
       buf += '$';
       i++;
     }
