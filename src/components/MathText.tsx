@@ -182,23 +182,7 @@ export function MathText({ text, className = '' }: MathTextProps) {
         continue;
       }
 
-      // (2) Find a closing `$`.
-      const close = processed.indexOf('$', i + 1);
-      if (close === -1) {
-        buf += '$';
-        i++;
-        continue;
-      }
-      const inner = processed.slice(i + 1, close);
-
-      // (3) If the inner span reads like English prose, the opening `$` is currency.
-      if (PROSE.test(inner)) {
-        buf += '$';
-        i++;
-        continue;
-      }
-
-      // (4) Trial-render with KaTeX.
+      // (3) Trial-render with KaTeX.
       let html: string | null = null;
       try {
         html = katex.renderToString(inner, {
