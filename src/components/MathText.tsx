@@ -127,76 +127,113 @@ export function MathText({ text, className = '' }: MathTextProps) {
   const renderedContent = useMemo(() => {
     if (!text) return null;
 
-    // Protect literal currency ($5, $96, $1,200.50) from being mis-parsed as math delimiters.
-    // Skip protection when the text clearly contains LaTeX math (commands like \frac,
-    // exponent/subscript syntax like ^{ or _{, or balanced $...$ pairs that wrap math
-    // expressions starting with a digit, e.g. "$4x^{2}+21x+33$").
-    const hasLatexCommand = /\\[a-zA-Z]+/.test(text);
-    const hasLatexSyntax = /[\^_]\{|\\[a-zA-Z]/.test(text);
-    // Detect a $...$ span that begins with a digit but contains non-numeric math chars
-    // (letters, ^, _, {, }, +, -, *, /, =) — this is a math expression, not currency.
-    const hasNumericMathSpan = /\$\d[^$]*[a-zA-Z\^_{}+\-*/=][^$]*\$/.test(text);
-    const skipCurrencyProtection = hasLatexCommand || hasLatexSyntax || hasNumericMathSpan;
-    // Use a negative lookahead that rejects digits/dots/$ to prevent regex backtracking
-    // from matching a partial number (e.g. matching "$92.1" inside "$92.16$" by giving up
-    // the trailing "6" so the lookahead succeeds).
-    const currencyProtected = skipCurrencyProtection
-      ? text
-      : text.replace(/\$(\d[\d,]*(?:\.\d+)?)(?![\d.$])/g, `${CURRENCY_TOKEN}$1`);
+    // Pre-process: auto-detect unicode/notational math patterns first.
+    const processed = autoDetectMath(text);
 
-    // Pre-process: auto-detect math patterns
-    const processed = autoDetectMath(currencyProtected);
-    
-    // Split by math delimiters $ ... $ (but not dollar amounts like $96)
-    // Dollar amounts: $ followed by digits then space/punctuation/end
-    const parts = processed.split(/(\$[^$]+\$)/g);
-    
-    return parts.map((part, index) => {
-      if (part.startsWith('$') && part.endsWith('$')) {
-        const mathContent = part.slice(1, -1);
-        
-        // Pure-number content wrapped in $...$ is treated as a stray LaTeX wrap
-        // around a plain number — render the number as-is without the $ prefix.
-        // Real currency in source content should be written as "160 dollars" (no $).
-        if (/^\d[\d,]*\.?\d*$/.test(mathContent.trim())) {
-          return <span key={index}>{mathContent}</span>;
-        }
-        
-        try {
-          const html = katex.renderToString(mathContent, {
-            throwOnError: false,
-            displayMode: false,
-          });
-          return (
-            <span 
-              key={index} 
-              dangerouslySetInnerHTML={{ __html: html }}
-              className="math-inline"
-            />
-          );
-        } catch (e) {
-          return <span key={index} className="text-destructive">{part}</span>;
-        }
+    // ---------- Stateful tokenizer ----------
+    // Walk through `processed` and decide for every `$` whether it opens a math span
+    // (paired with the next `$`) or is a literal dollar sign (currency).
+    //
+    // Decision order at each `$`:
+    //   1. Look ahead for the next `$`. Build the inner span.
+    //   2. If the inner span LOOKS like English prose (contains a 2+ letter alphabetic
+    //      word adjacent to whitespace/punctuation, e.g. " and ", "spent ", "per "),
+    //      treat the opening `$` as literal currency. This catches mis-paired spans
+    //      like "$36 and spent $20".
+    //   3. Else trial-render the inner with KaTeX (throwOnError). If it parses, render
+    //      as math; otherwise treat the opening `$` as literal.
+    //
+    // CB-escaped currency like "$\$5$" works automatically: KaTeX renders `\$5` as
+    // a literal "$" followed by "5", so the output reads "$5".
+
+    type Token =
+      | { kind: 'text'; value: string }
+      | { kind: 'math'; value: string };
+    const tokens: Token[] = [];
+
+    // Detect prose: a run of 2+ letters with whitespace on at least one side, or any
+    // common english connective word.
+    const PROSE = /(?:^|\s)[a-zA-Z]{2,}(?:\s|[.,;:!?]|$)/;
+
+    let buf = '';
+    let i = 0;
+    const n = processed.length;
+    while (i < n) {
+      const ch = processed[i];
+      if (ch !== '$') {
+        buf += ch;
+        i++;
+        continue;
       }
-      
-      // Handle basic formatting
-      let formatted = part;
-      // Restore protected currency tokens (e.g., $5, $96)
-      formatted = formatted.replace(/\uE000/g, '$');
-      // Bold **text**
+
+      // (1) Find a closing `$`.
+      const close = processed.indexOf('$', i + 1);
+      if (close === -1) {
+        buf += '$';
+        i++;
+        continue;
+      }
+      const inner = processed.slice(i + 1, close);
+
+      // (2) If the inner span reads like English prose, the opening `$` is currency.
+      if (PROSE.test(inner)) {
+        buf += '$';
+        i++;
+        continue;
+      }
+
+      // (3) Trial-render with KaTeX.
+      let html: string | null = null;
+      try {
+        html = katex.renderToString(inner, {
+          throwOnError: true,
+          displayMode: false,
+        });
+      } catch {
+        html = null;
+      }
+
+      if (html !== null) {
+        // Pure-number math wrap like "$-4$" or "$4$" (CB MC choice convention) —
+        // render the number bare so it doesn't look italicized.
+        if (/^-?\d[\d,]*\.?\d*$/.test(inner.trim())) {
+          if (buf) tokens.push({ kind: 'text', value: buf });
+          buf = '';
+          tokens.push({ kind: 'text', value: inner.trim() });
+        } else {
+          if (buf) tokens.push({ kind: 'text', value: buf });
+          buf = '';
+          tokens.push({ kind: 'math', value: html });
+        }
+        i = close + 1;
+        continue;
+      }
+
+      // KaTeX failed → opening `$` is literal currency.
+      buf += '$';
+      i++;
+    }
+    if (buf) tokens.push({ kind: 'text', value: buf });
+
+    return tokens.map((tok, index) => {
+      if (tok.kind === 'math') {
+        return (
+          <span
+            key={index}
+            dangerouslySetInnerHTML={{ __html: tok.value }}
+            className="math-inline"
+          />
+        );
+      }
+      let formatted = tok.value;
       formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      // Italic *text*
       formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-      // Subscript ~text~
       formatted = formatted.replace(/~([^~]+)~/g, '<sub>$1</sub>');
-      // Superscript ^text^
       formatted = formatted.replace(/\^([^^]+)\^/g, '<sup>$1</sup>');
-      // Line breaks
       formatted = formatted.replace(/\n/g, '<br/>');
-      
       return (
-        <span 
-          key={index} 
+        <span
+          key={index}
           dangerouslySetInnerHTML={{ __html: formatted }}
         />
       );
