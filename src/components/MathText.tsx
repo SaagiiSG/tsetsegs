@@ -135,16 +135,16 @@ export function MathText({ text, className = '' }: MathTextProps) {
     // (paired with the next `$`) or is a literal dollar sign (currency).
     //
     // Decision order at each `$`:
-    //   1. If the next two chars are `\$` (CB-escaped currency, e.g. "$\$5$"), emit
-    //      a literal `$`, skip the backslash, keep walking. The trailing `$` will be
-    //      evaluated on its own (usually unmatched → literal).
-    //   2. Look ahead for the next `$`. Build the inner span.
-    //   3. If the inner span LOOKS like English prose (contains a 2+ letter alphabetic
+    //   1. Look ahead for the next `$`. Build the inner span.
+    //   2. If the inner span LOOKS like English prose (contains a 2+ letter alphabetic
     //      word adjacent to whitespace/punctuation, e.g. " and ", "spent ", "per "),
     //      treat the opening `$` as literal currency. This catches mis-paired spans
     //      like "$36 and spent $20".
-    //   4. Else trial-render the inner with KaTeX (throwOnError). If it parses, render
+    //   3. Else trial-render the inner with KaTeX (throwOnError). If it parses, render
     //      as math; otherwise treat the opening `$` as literal.
+    //
+    // CB-escaped currency like "$\$5$" works automatically: KaTeX renders `\$5` as
+    // a literal "$" followed by "5", so the output reads "$5".
 
     type Token =
       | { kind: 'text'; value: string }
@@ -166,13 +166,19 @@ export function MathText({ text, className = '' }: MathTextProps) {
         continue;
       }
 
-      // (1) CB-escaped currency: `$\$...`. Emit literal `$`, drop the backslash.
-      if (processed[i + 1] === '\\' && processed[i + 2] === '$') {
+      // (1) Find a closing `$`.
+      const close = processed.indexOf('$', i + 1);
+      if (close === -1) {
         buf += '$';
-        i += 2; // skip the `$` and the `\`, leave the inner `$` to be consumed as text
-        // Now consume the literal `$` that the backslash was escaping:
+        i++;
+        continue;
+      }
+      const inner = processed.slice(i + 1, close);
+
+      // (2) If the inner span reads like English prose, the opening `$` is currency.
+      if (PROSE.test(inner)) {
         buf += '$';
-        i += 1;
+        i++;
         continue;
       }
 
