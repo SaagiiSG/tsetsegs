@@ -166,6 +166,30 @@ export function MathText({ text, className = '' }: MathTextProps) {
         continue;
       }
 
+      // (0) Display math: `$$...$$` (CB equations, fractions, systems).
+      if (processed[i + 1] === '$') {
+        const dispClose = processed.indexOf('$$', i + 2);
+        if (dispClose !== -1) {
+          const dispInner = processed.slice(i + 2, dispClose);
+          let dispHtml: string | null = null;
+          try {
+            dispHtml = katex.renderToString(dispInner, {
+              throwOnError: true,
+              displayMode: true,
+            });
+          } catch {
+            dispHtml = null;
+          }
+          if (dispHtml !== null) {
+            if (buf) tokens.push({ kind: 'text', value: buf });
+            buf = '';
+            tokens.push({ kind: 'math', value: dispHtml });
+            i = dispClose + 2;
+            continue;
+          }
+        }
+      }
+
       // (1) Find a closing `$`.
       const close = processed.indexOf('$', i + 1);
       if (close === -1) {
