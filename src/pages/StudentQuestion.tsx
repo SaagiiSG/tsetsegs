@@ -53,6 +53,7 @@ export default function StudentQuestion() {
   
   const [videoWatched, setVideoWatched] = useState(false);
   const [currentVariationIndex, setCurrentVariationIndex] = useState(0);
+  useEffect(() => { setCurrentVariationIndex(0); }, [questionId]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [fillAnswer, setFillAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
