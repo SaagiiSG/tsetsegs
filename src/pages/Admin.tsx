@@ -31,6 +31,7 @@ const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     checkIfTeacher();
