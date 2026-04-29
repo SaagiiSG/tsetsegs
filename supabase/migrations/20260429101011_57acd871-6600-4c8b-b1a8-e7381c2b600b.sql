@@ -1,0 +1,2 @@
+ALTER TABLE public.student_attempts
+DROP CONSTRAINT IF EXISTS student_attempts_attempt_number_check;

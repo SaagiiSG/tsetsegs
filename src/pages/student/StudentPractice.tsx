@@ -192,7 +192,8 @@ export default function StudentPractice() {
       const { data, error } = await supabase
         .from('student_attempts')
         .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
-        .eq('student_account_id', student.id);
+        .eq('student_account_id', student.id)
+        .range(0, 9999);
       if (error) throw error;
       return data;
     },
