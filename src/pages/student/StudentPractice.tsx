@@ -191,7 +191,7 @@ export default function StudentPractice() {
       if (!student) return [];
       const { data, error } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id)')
+        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
         .eq('student_account_id', student.id);
       if (error) throw error;
       return data;
@@ -245,7 +245,16 @@ export default function StudentPractice() {
   };
   
   attempts?.forEach(a => {
-    const parentQuestionId = Array.isArray((a as any).question)
+    const attemptedQuestion = Array.isArray((a as any).question)
+      ? (a as any).question[0]
+      : (a as any).question;
+    const parentQuestionId = attemptedQuestion?.question_set !== '68'
+      ? attemptedQuestion?.parent_question_id
+      : null;
+
+    recordAttemptStatus(a.question_id, a.is_correct, a.attempt_number);
+    recordAttemptStatus(parentQuestionId, a.is_correct, a.attempt_number);
+  });
       ? (a as any).question[0]?.parent_question_id
       : (a as any).question?.parent_question_id;
 
