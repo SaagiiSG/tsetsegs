@@ -695,7 +695,7 @@ export default function StudentPractice() {
                                   {status === 'completed' && (
                                     <CheckCircle2 className="h-3 w-3 text-green-500" />
                                   )}
-                                  {(status === 'needs_review' || inReview) && (
+                                  {status !== 'completed' && (status === 'needs_review' || inReview) && (
                                     <RotateCcw className="h-3 w-3 text-orange-500" />
                                   )}
                                   {status === 'video_watched' && !inReview && (
