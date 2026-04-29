@@ -495,7 +495,7 @@ export default function StudentPractice() {
                           className={cn(
                             "aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition-all hover:scale-105 hover:shadow-md cursor-pointer",
                             status === 'completed' && 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400',
-                            (status === 'needs_review' || inReview) && 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400',
+                            status !== 'completed' && (status === 'needs_review' || inReview) && 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400',
                             status === 'video_watched' && !inReview && 'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
                             status === 'not_started' && 'border-border bg-card text-muted-foreground hover:border-primary/50'
                           )}
