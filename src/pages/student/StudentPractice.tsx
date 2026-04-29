@@ -686,31 +686,11 @@ export default function StudentPractice() {
           </Card>
 
           {/* Right Panel - Questions Display */}
-          <div className="space-y-2 md:space-y-4">
-            {/* Selected Area Header & Progress */}
-            <Card>
-              <CardHeader className="pb-1 md:pb-2 px-3 md:px-6 pt-2 md:pt-6">
-                <CardTitle className="text-sm md:text-base flex items-center gap-2">
-                  {selectedSubtopic || selectedCategoryName || 'All Questions'}
-                  {selectedCategory && (
-                    <Button variant="ghost" size="sm" onClick={clearSelection} className="ml-auto text-xs h-6">
-                      Clear
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1 md:space-y-2 px-3 md:px-6">
-                <Progress value={areaStats.percent} className="h-1.5 md:h-2" />
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  {areaStats.completed}/{areaStats.total} mastered ({areaStats.percent}%)
-                </p>
-              </CardContent>
-            </Card>
-
+          <div className="space-y-2 md:space-y-4 h-full flex flex-col">
             {/* Question Grid */}
-            <Card className="flex-1">
-              <CardContent className="p-2 md:p-3">
-                <ScrollArea className="h-[250px] lg:h-[calc(100vh-520px)]">
+            <Card className="flex-1 h-full">
+              <CardContent className="p-2 md:p-3 h-full">
+                <ScrollArea className="h-[450px] lg:h-[calc(100vh-340px)]">
                   {questionsLoading ? (
                     <div className="text-center py-8">
                       <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin mx-auto text-primary" />
