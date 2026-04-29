@@ -246,6 +246,27 @@ export default function StudentPractice() {
 
   const reviewQueueSet = new Set(reviewQueue?.map(r => r.question_id) || []);
 
+  /**
+   * QA CHECKLIST — Card border/icon color after eventual correct attempt
+   * -------------------------------------------------------------------
+   * Goal: A question solved correctly on ANY attempt (1st, 2nd, 3rd, 4th+)
+   * must show GREEN border + CheckCircle2 icon, even if it's still in the
+   * spaced-repetition review queue (inReview === true).
+   *
+   * Manual test steps:
+   *  1. Pick a fresh question (not_started). Border = neutral.
+   *  2. Submit WRONG answer → border turns ORANGE, RotateCcw icon, in review queue.
+   *  3. Submit WRONG again (2nd try) → still ORANGE.
+   *  4. Submit WRONG again (3rd try) → still ORANGE.
+   *  5. Submit CORRECT on 4th try → border MUST turn GREEN, icon MUST be CheckCircle2.
+   *  6. Reload /practice/dashboard → card stays GREEN (not orange) even though
+   *     reviewQueueSet still contains the question id.
+   *
+   * Logic invariant (do not regress):
+   *   attemptInfo.correct === true  ⇒  status === 'completed'  ⇒  GREEN wins
+   *   The render conditions below MUST gate orange on `status !== 'completed'`.
+   *   See lines ~497-509 (grid view) and ~676-700 (list view).
+   */
   const getQuestionStatus = (questionId: string) => {
     const attemptInfo = attemptsMap.get(questionId);
     const prog = progressMap.get(questionId);
