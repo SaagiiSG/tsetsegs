@@ -19,6 +19,72 @@ import { cn } from '@/lib/utils';
 type QuestionSet = '68' | 'CB' | '150';
 type Subject = 'math' | 'english';
 
+const PAGE_SIZE = 1000;
+const PRACTICE_QUESTION_SELECT = `
+  id,
+  question_id,
+  category_id,
+  question_set,
+  subject,
+  subtopic,
+  is_original,
+  parent_question_id,
+  category:question_categories(id, name)
+`;
+
+const applyPracticeQuestionFilters = (query: any, questionSet: QuestionSet, subject: Subject) => {
+  let filteredQuery = query.eq('is_active', true).eq('subject', subject);
+
+  if (subject === 'math') {
+    if (questionSet === '68') {
+      filteredQuery = filteredQuery.eq('question_set', '68');
+    } else if (questionSet === '150') {
+      filteredQuery = filteredQuery.eq('question_set', 'SATMathTraining800');
+    } else {
+      filteredQuery = filteredQuery
+        .neq('question_set', '68')
+        .neq('question_set', 'SATMathTraining800')
+        .eq('is_original', true);
+    }
+  } else {
+    filteredQuery = filteredQuery.eq('is_original', true);
+  }
+
+  return filteredQuery;
+};
+
+const fetchAllPracticeQuestionRows = async <T,>(
+  selectColumns: string,
+  questionSet: QuestionSet,
+  subject: Subject,
+  orderColumn: string = 'id'
+) => {
+  const allRows: T[] = [];
+
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const to = from + PAGE_SIZE - 1;
+    let query = applyPracticeQuestionFilters(
+      supabase.from('questions').select(selectColumns),
+      questionSet,
+      subject
+    ).order(orderColumn, { ascending: true });
+
+    if (orderColumn !== 'id') {
+      query = query.order('id', { ascending: true });
+    }
+
+    const { data, error } = await query.range(from, to);
+    if (error) throw error;
+
+    const rows = (data || []) as T[];
+    allRows.push(...rows);
+
+    if (rows.length < PAGE_SIZE) break;
+  }
+
+  return allRows;
+};
+
 const MATH_CATEGORIES = [
   'Advanced Math',
   'Algebra',
