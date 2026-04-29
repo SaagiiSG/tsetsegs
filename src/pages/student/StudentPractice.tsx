@@ -708,6 +708,12 @@ export default function StudentPractice() {
                       {filteredQuestions.map((question, index) => {
                         const status = getQuestionStatus(question.id);
                         const inReview = reviewQueueSet.has(question.id);
+                        const attemptInfo = attemptsMap.get(question.id);
+                        const attemptsCount = attemptInfo?.attempts ?? 0;
+                        const lastCorrect = attemptInfo?.correct ?? false;
+                        const tooltipText = attemptsCount === 0
+                          ? 'Not started yet'
+                          : `${attemptsCount} attempt${attemptsCount === 1 ? '' : 's'} • ${lastCorrect ? 'Solved correctly ✓' : 'Not yet solved — needs a correct answer'}`;
                         
                         const displayId = question.question_id;
                         let simpleId = displayId;
@@ -723,6 +729,7 @@ export default function StudentPractice() {
                         return (
                           <Card 
                             key={question.id}
+                            title={tooltipText}
                             className={cn(
                               "cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]",
                               status === 'completed' && 'border-green-500/50 bg-green-500/5',
