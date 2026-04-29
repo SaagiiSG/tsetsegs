@@ -1,41 +1,93 @@
-## Diagnosis (no bug in the code)
+## Goal
 
-I checked the live data for Marcus D.'s practice dashboard. Card **6861** is orange because it genuinely has **3 wrong attempts and zero correct attempts** in the database (today, 09:24 UTC):
+Make the entire `/admin` experience usable on mobile in a "thumb-first, 3-taps-max" layout. The desktop sidebar shell is awkward on phones today (offcanvas hides, header is sparse, dashboard cards stack into a long scroll). We'll add a dedicated mobile chrome that overlays the existing routes — no rewrites of feature pages.
 
-| Question | Attempts | Result | Card color |
-|---|---|---|---|
-| 6855 | wrong → **correct** (2nd try) | solved | green |
-| 6861 | wrong, wrong, wrong | **never correct** | orange |
-| 6863 | correct (1st try) | solved | green |
-| 6864 | correct (1st try) | solved | green |
+## UX principles
 
-So the green-on-Nth-try logic from the previous fix **is working**. 6861 is orange because it has not been solved correctly yet — the system is rendering the correct state.
+- **3-tap rule** — every destination reachable in ≤3 taps from any admin screen.
+  - Tap 1: bottom nav tab OR FAB (Command).
+  - Tap 2: section/item in the sheet.
+  - Tap 3: deep action (e.g. specific student, specific batch).
+- **Thumb zone** — primary nav lives at the bottom, header is minimal.
+- **Density over decoration** — collapse hero cards into a 2-up KPI strip; defer charts behind expandable sections.
+- **Keep desktop untouched** — all changes gated by `useIsMobile()`; desktop renders the current `AdminSidebar` + layout exactly as today.
 
-## Why the confusion keeps happening
+## Information architecture (5 bottom tabs)
 
-After a wrong submission the question screen lets the student try again, but there is no obvious moment that says "you finally got it." It's easy to think you solved it when you really just moved on. Plus, after a correct attempt the dashboard relies on cache invalidation which can lag for a second.
+Picked from the 18 admin routes by frequency of use:
 
-## Plan: make the "you solved it" moment unmistakable
+```text
+[ Home ]  [ Batches ]  [ ⌘ ]  [ Students ]  [ More ]
+  /admin    /batches   FAB     /search       sheet
+```
 
-1. **`src/pages/StudentQuestion.tsx` — explicit success banner on correct answer**
-   - When `is_correct === true` show a prominent green confirmation: "Correct! This question is now marked solved." with a CheckCircle2 icon.
-   - When wrong, keep the existing retry UI but add subtitle: "Not yet solved — keep trying. Card stays orange until you get one correct."
+- **Home** → `/admin` (Dashboard)
+- **Batches** → `/admin/batches`
+- **⌘ Command** (center FAB) → opens full-screen Command Sheet (search + every route, grouped exactly like the sidebar). This is the universal escape hatch — any route in 2 taps.
+- **Students** → `/admin/search` (search-first, since admins usually open a student by name)
+- **More** → bottom Sheet listing the long-tail routes (SAT Schedule, Bluebook, Sprint Monitor, Review Sessions, Bug Reports, Registration Queue, Question Bank, Team, Settings, Sign Out)
 
-2. **`src/pages/StudentQuestion.tsx` — force fresh dashboard state on success**
-   - On correct submission, `await` both `queryClient.invalidateQueries` AND `queryClient.refetchQueries` for `student-attempts`, `review-queue`, `navigator-attempts` before navigating back, so the grid is guaranteed fresh.
+The center FAB makes "More" effectively redundant for power users — but we keep both because Command requires typing/scrolling while More is a fixed grid.
 
-3. **`src/pages/student/StudentPractice.tsx` — legend chip above the grid**
-   - Small inline legend: green = solved, orange = needs another correct attempt, yellow = video watched only, gray = not started. Removes ambiguity at a glance.
+## Mobile chrome components (new)
 
-4. **`src/pages/student/StudentPractice.tsx` — tooltip on each card**
-   - Hovering a card shows: "X attempts, last correct: yes/no". Lets the student verify exactly why a card is the color it is.
+All new files live under `src/components/admin/mobile/`:
 
-5. **No DB changes, no logic changes to status calculation** — the existing `getQuestionStatus` rule (`attemptInfo.correct ⇒ completed`) is correct and stays as-is.
+1. **`MobileAdminShell.tsx`** — wraps `<main>` on mobile. Adds:
+   - Compact sticky header (40px): logo mark, page title (derived from route), Sign Out icon-only.
+   - Bottom padding (`pb-20`) so content clears the nav.
+   - Renders `MobileBottomNav` + `CommandSheet` + `MoreSheet`.
+2. **`MobileBottomNav.tsx`** — fixed bottom bar, 5 slots, center FAB elevated. Active tab gets primary color + dot indicator. Uses `NavLink` for routing.
+3. **`CommandSheet.tsx`** — full-screen `Sheet` (side="bottom", h-[92vh]) with:
+   - Search input (filters by title across all routes).
+   - Recently visited (last 5, stored in `localStorage`).
+   - All sections from `menuSections` (reuse the array from `AdminSidebar` — extract to `src/components/admin/menuSections.ts` to share).
+4. **`MoreSheet.tsx`** — bottom Sheet with a 3-column icon grid of long-tail routes + Sign Out.
 
-## What this does NOT do
+## Dashboard compaction (mobile only)
 
-- Does not change how points are awarded.
-- Does not auto-flip 6861 to green — that question genuinely needs a correct answer first.
-- Does not touch the spaced-repetition queue logic.
+Edit `DashboardStats.tsx` to switch layout based on `useIsMobile()`:
 
-After this, when you next solve 6861 correctly the card will turn green immediately and a success banner will confirm it on the question screen.
+- Header: drop subtitle, shrink "Live" pill, h1 → `text-lg`.
+- `HeroStatsRow`: render as 2-col grid (currently 4-col on desktop) with smaller cards — pass an `dense` prop or wrap with mobile-specific Tailwind.
+- Collapse `ActivityHeatmap`, `TopicWeakSpots`, `SprintPreview`, `RecentClasses`, `AtRiskQuickView` into shadcn `Accordion` items, with **At-Risk** open by default (highest-signal for admins).
+- Remove `dashboard-grid-bg` background pattern on mobile (visual noise).
+- `QuickActionsBar` — convert to horizontal scroll row on mobile.
+
+## Wiring
+
+`src/pages/Admin.tsx`:
+- Import `useIsMobile` and `MobileAdminShell`.
+- On mobile: hide `AdminSidebar` + desktop header, wrap `<Routes>` in `MobileAdminShell`.
+- On desktop: render exactly as today.
+
+```text
+Admin.tsx
+├─ if (isMobile)
+│   └─ <MobileAdminShell><Routes/></MobileAdminShell>
+└─ else
+    └─ <SidebarProvider><AdminSidebar/><main><Routes/></main></SidebarProvider>
+```
+
+## Files
+
+**New**
+- `src/components/admin/menuSections.ts` (extracted shared nav data)
+- `src/components/admin/mobile/MobileAdminShell.tsx`
+- `src/components/admin/mobile/MobileBottomNav.tsx`
+- `src/components/admin/mobile/CommandSheet.tsx`
+- `src/components/admin/mobile/MoreSheet.tsx`
+- `src/components/admin/mobile/usePageTitle.ts` (route → title map for header)
+
+**Edited**
+- `src/pages/Admin.tsx` — branch on `useIsMobile()`.
+- `src/components/admin/AdminSidebar.tsx` — import from new `menuSections.ts`.
+- `src/components/admin/DashboardStats.tsx` — mobile-dense layout.
+- `src/components/admin/dashboard/HeroStatsRow.tsx` — 2-col + smaller card variant on mobile.
+- `src/components/admin/dashboard/QuickActionsBar.tsx` — horizontal scroll on mobile.
+
+## Out of scope
+
+- No changes to feature pages themselves (Question Bank, Bluebook, etc.) — those keep their current responsive behavior. We can compact them in a follow-up once the shell ships.
+- No PWA/install prompts.
+- No data changes, no migrations.
