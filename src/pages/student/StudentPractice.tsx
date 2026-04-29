@@ -255,12 +255,6 @@ export default function StudentPractice() {
     recordAttemptStatus(a.question_id, a.is_correct, a.attempt_number);
     recordAttemptStatus(parentQuestionId, a.is_correct, a.attempt_number);
   });
-      ? (a as any).question[0]?.parent_question_id
-      : (a as any).question?.parent_question_id;
-
-    recordAttemptStatus(a.question_id, a.is_correct, a.attempt_number);
-    recordAttemptStatus(parentQuestionId, a.is_correct, a.attempt_number);
-  });
 
   const reviewQueueSet = new Set(reviewQueue?.map(r => r.question_id) || []);
 
