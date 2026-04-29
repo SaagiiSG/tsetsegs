@@ -535,6 +535,12 @@ export default function StudentQuestion() {
       queryClient.invalidateQueries({ queryKey: ['total-points'] });
       queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
       queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
+      // On correct answer, force-refetch the dashboard signals so the card flips to green immediately
+      if (correct) {
+        queryClient.refetchQueries({ queryKey: ['student-attempts'] });
+        queryClient.refetchQueries({ queryKey: ['navigator-attempts'] });
+        queryClient.refetchQueries({ queryKey: ['review-queue'] });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -914,18 +920,27 @@ export default function StudentQuestion() {
 
                   {/* Result */}
                   {submitted && (
-                    <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                      <div className="flex items-center gap-2">
+                    <div className={`p-4 rounded-lg border ${isCorrect ? 'bg-green-500/10 border-green-500/40' : 'bg-red-500/10 border-red-500/40'}`}>
+                      <div className="flex items-start gap-3">
                         {isCorrect ? (
                           <>
-                            <CheckCircle2 className="h-6 w-6 text-green-500" />
-                            <span className="text-green-500 font-medium">Correct!</span>
+                            <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0 mt-0.5" />
+                            <div className="flex flex-col">
+                              <span className="text-green-500 font-semibold text-base">Correct! ✓</span>
+                              <span className="text-green-500/80 text-sm">
+                                This question is now marked solved. The card on your dashboard will turn green.
+                              </span>
+                            </div>
                           </>
                         ) : (
                           <>
-                            <span className="text-red-500 font-medium">
-                              Incorrect. Try again!
-                            </span>
+                            <XCircle className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
+                            <div className="flex flex-col">
+                              <span className="text-red-500 font-semibold text-base">Not quite — try again</span>
+                              <span className="text-red-500/80 text-sm">
+                                Not yet solved. The card stays orange until you get one correct answer.
+                              </span>
+                            </div>
                           </>
                         )}
                       </div>
