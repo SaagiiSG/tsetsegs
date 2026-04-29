@@ -182,14 +182,14 @@ export function QuestionNavigatorDialog({
       
       let status: QuestionStatus = 'not_attempted';
       
-      if (q.id === currentQuestionId) {
+      if (attemptData?.correct) {
+        status = attemptData.hasIncorrect ? 'correct_with_mistakes' : 'correct';
+      } else if (q.id === currentQuestionId) {
         status = 'current';
       } else if (isMarked) {
         status = 'marked';
       } else if (inReview) {
         status = 'for_review';
-      } else if (attemptData?.correct) {
-        status = attemptData.hasIncorrect ? 'correct_with_mistakes' : 'correct';
       } else if (attemptData && !attemptData.correct) {
         status = 'incorrect';
       }
