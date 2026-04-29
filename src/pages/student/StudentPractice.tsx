@@ -95,7 +95,7 @@ export default function StudentPractice() {
         query = query.eq('is_original', true);
       }
       
-      const { data, error } = await query.order('question_id');
+      const { data, error } = await query.order('question_id').range(0, 9999);
       if (error) throw error;
       
       // Filter out bluebook questions
@@ -117,7 +117,8 @@ export default function StudentPractice() {
           .select('id')
           .eq('is_active', true)
           .eq('question_set', '68')
-          .eq('subject', 'math'),
+          .eq('subject', 'math')
+          .range(0, 9999),
         supabase
           .from('questions')
           .select('id')
@@ -125,19 +126,22 @@ export default function StudentPractice() {
           .eq('is_active', true)
           .neq('question_set', '68')
           .neq('question_set', 'SATMathTraining800')
-          .eq('subject', 'math'),
+          .eq('subject', 'math')
+          .range(0, 9999),
         supabase
           .from('questions')
           .select('id')
           .eq('is_original', true)
           .eq('is_active', true)
-          .eq('subject', 'english'),
+          .eq('subject', 'english')
+          .range(0, 9999),
         supabase
           .from('questions')
           .select('id')
           .eq('is_active', true)
           .eq('question_set', 'SATMathTraining800')
           .eq('subject', 'math')
+          .range(0, 9999)
       ]);
       
       const filterBluebook = (data: { id: string }[] | null) => {
