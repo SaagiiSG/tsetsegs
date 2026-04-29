@@ -374,7 +374,7 @@ export default function StudentQuestion() {
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
       const attemptNumber = currentAttempts.length + 1;
       
-      await supabase
+      const { error: attemptError } = await supabase
         .from('student_attempts')
         .insert({
           student_account_id: student.id,
@@ -384,6 +384,8 @@ export default function StudentQuestion() {
           is_correct: correct,
           time_spent_seconds: timeSpent,
         });
+
+      if (attemptError) throw attemptError;
 
       // Update study streak (fire-and-forget)
       updateStudentStreak(student.id).catch(() => {});
