@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, Bookmark, CheckCircle2, XCircle, X, AlertCircle } from 'lucide-react';
+import { ChevronUp, Bookmark, CheckCircle2, XCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Event for marking questions
@@ -226,7 +226,7 @@ export function QuestionNavigatorDialog({
       case 'correct':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'correct_with_mistakes':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return 'bg-green-50 text-green-700 border-green-200';
       case 'incorrect':
         return 'bg-red-50 text-red-600 border-red-200';
       case 'for_review':
@@ -305,8 +305,8 @@ export function QuestionNavigatorDialog({
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Correct (incorrect attempts)</span>
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <span className="text-muted-foreground">Correct after retry</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">Incorrect</span>
