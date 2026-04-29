@@ -679,6 +679,25 @@ export default function StudentPractice() {
             {/* Question Grid */}
             <Card className="flex-1">
               <CardContent className="p-2 md:p-3">
+                {/* Color legend */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 pb-2 text-[10px] md:text-xs text-muted-foreground border-b mb-2">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm border border-green-500/60 bg-green-500/20" />
+                    Solved
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm border border-orange-500/60 bg-orange-500/20" />
+                    Needs correct answer
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm border border-yellow-500/60 bg-yellow-500/20" />
+                    Video watched
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm border border-border bg-card" />
+                    Not started
+                  </span>
+                </div>
                 <ScrollArea className="h-[250px] lg:h-[calc(100vh-520px)]">
                   {questionsLoading ? (
                     <div className="text-center py-8">
