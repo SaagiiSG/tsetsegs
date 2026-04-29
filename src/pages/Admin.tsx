@@ -24,11 +24,14 @@ import ReviewSessions from '@/pages/admin/ReviewSessions';
 import BugReports from '@/pages/admin/BugReports';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     checkIfTeacher();
@@ -45,6 +48,33 @@ const Admin = () => {
       setIsTeacher(true);
     }
   };
+
+  const routesEl = (
+    <Routes>
+      <Route index element={<DashboardStats />} />
+      <Route path="analytics" element={<AnalyticsDashboard />} />
+      <Route path="overview" element={<BatchOverview />} />
+      <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
+      <Route path="batches" element={<BatchesView />} />
+      <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
+      <Route path="questions" element={<QuestionBank />} />
+      <Route path="bluebook/*" element={<BluebookManager />} />
+      <Route path="sprint-monitor" element={<SprintMonitor />} />
+      <Route path="team" element={<TeamManagement />} />
+      <Route path="students" element={<StudentAccountsManagement />} />
+      <Route path="search" element={<StudentSearch />} />
+      <Route path="sat-schedule" element={<SATSchedule />} />
+      <Route path="student/:studentId" element={<TeacherStudentProfile />} />
+      <Route path="review-sessions" element={<ReviewSessions />} />
+      <Route path="bug-reports" element={<BugReports />} />
+      <Route path="registration-queue" element={<RegistrationQueue />} />
+      <Route path="settings" element={<AdminSettings />} />
+    </Routes>
+  );
+
+  if (isMobile) {
+    return <MobileAdminShell>{routesEl}</MobileAdminShell>;
+  }
 
   return (
     <SidebarProvider>
@@ -71,26 +101,7 @@ const Admin = () => {
         <div className="flex w-full">
           <AdminSidebar />
           <main className="flex-1 container mx-auto px-4 py-8">
-            <Routes>
-              <Route index element={<DashboardStats />} />
-              <Route path="analytics" element={<AnalyticsDashboard />} />
-              <Route path="overview" element={<BatchOverview />} />
-              <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
-              <Route path="batches" element={<BatchesView />} />
-              <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
-              <Route path="questions" element={<QuestionBank />} />
-              <Route path="bluebook/*" element={<BluebookManager />} />
-              <Route path="sprint-monitor" element={<SprintMonitor />} />
-              <Route path="team" element={<TeamManagement />} />
-              <Route path="students" element={<StudentAccountsManagement />} />
-              <Route path="search" element={<StudentSearch />} />
-              <Route path="sat-schedule" element={<SATSchedule />} />
-              <Route path="student/:studentId" element={<TeacherStudentProfile />} />
-              <Route path="review-sessions" element={<ReviewSessions />} />
-              <Route path="bug-reports" element={<BugReports />} />
-              <Route path="registration-queue" element={<RegistrationQueue />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Routes>
+            {routesEl}
           </main>
         </div>
       </div>
