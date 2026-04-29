@@ -130,7 +130,7 @@ export function QuestionNavigatorDialog({
       if (!student) return [];
       const { data, error } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
+        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
         .eq('student_account_id', student.id);
       if (error) throw error;
       return data || [];
@@ -160,17 +160,30 @@ export function QuestionNavigatorDialog({
     
     // Group attempts by question
     const attemptsByQuestion = new Map<string, { correct: boolean; hasIncorrect: boolean }>();
-    attempts?.forEach(a => {
-      const existing = attemptsByQuestion.get(a.question_id);
+    const recordAttempt = (questionId: string | null | undefined, isCorrect: boolean) => {
+      if (!questionId) return;
+      const existing = attemptsByQuestion.get(questionId);
       if (!existing) {
-        attemptsByQuestion.set(a.question_id, {
-          correct: a.is_correct,
-          hasIncorrect: !a.is_correct
+        attemptsByQuestion.set(questionId, {
+          correct: isCorrect,
+          hasIncorrect: !isCorrect
         });
       } else {
-        if (a.is_correct) existing.correct = true;
-        if (!a.is_correct) existing.hasIncorrect = true;
+        if (isCorrect) existing.correct = true;
+        if (!isCorrect) existing.hasIncorrect = true;
       }
+    };
+
+    attempts?.forEach(a => {
+      const attemptedQuestion = Array.isArray((a as any).question)
+        ? (a as any).question[0]
+        : (a as any).question;
+      const parentQuestionId = attemptedQuestion?.question_set !== '68'
+        ? attemptedQuestion?.parent_question_id
+        : null;
+
+      recordAttempt(a.question_id, a.is_correct);
+      recordAttempt(parentQuestionId, a.is_correct);
     });
     
     const reviewSet = new Set(reviewQueue?.map(r => r.question_id) || []);
