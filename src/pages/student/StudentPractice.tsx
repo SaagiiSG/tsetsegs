@@ -191,7 +191,7 @@ export default function StudentPractice() {
       if (!student) return [];
       const { data, error } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
+        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
         .eq('student_account_id', student.id);
       if (error) throw error;
       return data;
@@ -233,15 +233,27 @@ export default function StudentPractice() {
 
   const progressMap = new Map(progress?.map(p => [p.question_id, p]) || []);
   const attemptsMap = new Map<string, { correct: boolean; attempts: number }>();
-  
-  attempts?.forEach(a => {
-    const existing = attemptsMap.get(a.question_id);
-    if (!existing || a.is_correct) {
-      attemptsMap.set(a.question_id, {
-        correct: a.is_correct || existing?.correct || false,
-        attempts: Math.max(a.attempt_number, existing?.attempts || 0)
+  const recordAttemptStatus = (questionId: string | null | undefined, isCorrect: boolean, attemptNumber: number) => {
+    if (!questionId) return;
+    const existing = attemptsMap.get(questionId);
+    if (!existing || isCorrect) {
+      attemptsMap.set(questionId, {
+        correct: isCorrect || existing?.correct || false,
+        attempts: Math.max(attemptNumber, existing?.attempts || 0)
       });
     }
+  };
+  
+  attempts?.forEach(a => {
+    const attemptedQuestion = Array.isArray((a as any).question)
+      ? (a as any).question[0]
+      : (a as any).question;
+    const parentQuestionId = attemptedQuestion?.question_set !== '68'
+      ? attemptedQuestion?.parent_question_id
+      : null;
+
+    recordAttemptStatus(a.question_id, a.is_correct, a.attempt_number);
+    recordAttemptStatus(parentQuestionId, a.is_correct, a.attempt_number);
   });
 
   const reviewQueueSet = new Set(reviewQueue?.map(r => r.question_id) || []);

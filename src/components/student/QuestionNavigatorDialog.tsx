@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, Bookmark, CheckCircle2, XCircle, X, AlertCircle } from 'lucide-react';
+import { ChevronUp, Bookmark, CheckCircle2, XCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Event for marking questions
@@ -130,7 +130,7 @@ export function QuestionNavigatorDialog({
       if (!student) return [];
       const { data, error } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
+        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
         .eq('student_account_id', student.id);
       if (error) throw error;
       return data || [];
@@ -160,17 +160,30 @@ export function QuestionNavigatorDialog({
     
     // Group attempts by question
     const attemptsByQuestion = new Map<string, { correct: boolean; hasIncorrect: boolean }>();
-    attempts?.forEach(a => {
-      const existing = attemptsByQuestion.get(a.question_id);
+    const recordAttempt = (questionId: string | null | undefined, isCorrect: boolean) => {
+      if (!questionId) return;
+      const existing = attemptsByQuestion.get(questionId);
       if (!existing) {
-        attemptsByQuestion.set(a.question_id, {
-          correct: a.is_correct,
-          hasIncorrect: !a.is_correct
+        attemptsByQuestion.set(questionId, {
+          correct: isCorrect,
+          hasIncorrect: !isCorrect
         });
       } else {
-        if (a.is_correct) existing.correct = true;
-        if (!a.is_correct) existing.hasIncorrect = true;
+        if (isCorrect) existing.correct = true;
+        if (!isCorrect) existing.hasIncorrect = true;
       }
+    };
+
+    attempts?.forEach(a => {
+      const attemptedQuestion = Array.isArray((a as any).question)
+        ? (a as any).question[0]
+        : (a as any).question;
+      const parentQuestionId = attemptedQuestion?.question_set !== '68'
+        ? attemptedQuestion?.parent_question_id
+        : null;
+
+      recordAttempt(a.question_id, a.is_correct);
+      recordAttempt(parentQuestionId, a.is_correct);
     });
     
     const reviewSet = new Set(reviewQueue?.map(r => r.question_id) || []);
@@ -182,14 +195,14 @@ export function QuestionNavigatorDialog({
       
       let status: QuestionStatus = 'not_attempted';
       
-      if (q.id === currentQuestionId) {
+      if (attemptData?.correct) {
+        status = attemptData.hasIncorrect ? 'correct_with_mistakes' : 'correct';
+      } else if (q.id === currentQuestionId) {
         status = 'current';
       } else if (isMarked) {
         status = 'marked';
       } else if (inReview) {
         status = 'for_review';
-      } else if (attemptData?.correct) {
-        status = attemptData.hasIncorrect ? 'correct_with_mistakes' : 'correct';
       } else if (attemptData && !attemptData.correct) {
         status = 'incorrect';
       }
@@ -213,7 +226,7 @@ export function QuestionNavigatorDialog({
       case 'correct':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'correct_with_mistakes':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return 'bg-green-50 text-green-700 border-green-200';
       case 'incorrect':
         return 'bg-red-50 text-red-600 border-red-200';
       case 'for_review':
@@ -292,8 +305,8 @@ export function QuestionNavigatorDialog({
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Correct (incorrect attempts)</span>
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <span className="text-muted-foreground">Correct after retry</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">Incorrect</span>

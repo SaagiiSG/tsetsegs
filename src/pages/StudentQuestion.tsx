@@ -523,6 +523,8 @@ export default function StudentQuestion() {
       setAttemptCount(prev => prev + 1);
       // Invalidate all related caches for auto-sync
       queryClient.invalidateQueries({ queryKey: ['question-attempts-all'] });
+      queryClient.invalidateQueries({ queryKey: ['student-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['navigator-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['student-progress'] });
       queryClient.invalidateQueries({ queryKey: ['review-queue'] });
       queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
