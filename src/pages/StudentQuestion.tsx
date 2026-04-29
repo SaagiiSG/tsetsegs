@@ -937,22 +937,12 @@ export default function StudentQuestion() {
                         {isCorrect ? (
                           <>
                             <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0 mt-0.5" />
-                            <div className="flex flex-col">
-                              <span className="text-green-500 font-semibold text-base">Correct! ✓</span>
-                              <span className="text-green-500/80 text-sm">
-                                This question is now marked solved. The card on your dashboard will turn green.
-                              </span>
-                            </div>
+                            <span className="text-green-500 font-semibold text-base">Correct! ✓</span>
                           </>
                         ) : (
                           <>
                             <XCircle className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
-                            <div className="flex flex-col">
-                              <span className="text-red-500 font-semibold text-base">Not quite — try again</span>
-                              <span className="text-red-500/80 text-sm">
-                                Not yet solved. The card stays orange until you get one correct answer.
-                              </span>
-                            </div>
+                            <span className="text-red-500 font-semibold text-base">Not quite — try again</span>
                           </>
                         )}
                       </div>
