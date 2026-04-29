@@ -535,6 +535,12 @@ export default function StudentQuestion() {
       queryClient.invalidateQueries({ queryKey: ['total-points'] });
       queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
       queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
+      // On correct answer, force-refetch the dashboard signals so the card flips to green immediately
+      if (correct) {
+        queryClient.refetchQueries({ queryKey: ['student-attempts'] });
+        queryClient.refetchQueries({ queryKey: ['navigator-attempts'] });
+        queryClient.refetchQueries({ queryKey: ['review-queue'] });
+      }
     },
     onError: (error: any) => {
       toast({
