@@ -24,6 +24,8 @@ import ReviewSessions from '@/pages/admin/ReviewSessions';
 import BugReports from '@/pages/admin/BugReports';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
