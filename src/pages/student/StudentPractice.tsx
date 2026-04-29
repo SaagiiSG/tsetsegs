@@ -573,14 +573,30 @@ export default function StudentPractice() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4 min-h-[calc(100vh-320px)]">
           {/* Left Panel - Categories & Subtopics */}
           <Card className="h-fit lg:h-full">
-            <CardHeader className="pb-1 md:pb-2 px-2 md:px-6 pt-2 md:pt-6">
+            <CardHeader className="pb-1 md:pb-2 px-2 md:px-6 pt-2 md:pt-6 space-y-2">
               <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
                 <Target className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {subject === 'math' ? 'Math Areas' : 'English Skills'}
               </CardTitle>
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs md:text-sm font-semibold truncate">
+                    {selectedSubtopic || selectedCategoryName || 'All Questions'}
+                  </span>
+                  {selectedCategory && (
+                    <Button variant="ghost" size="sm" onClick={clearSelection} className="text-xs h-6 px-2">
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <Progress value={areaStats.percent} className="h-1.5 md:h-2" />
+                <p className="text-[10px] md:text-xs text-muted-foreground">
+                  {areaStats.completed}/{areaStats.total} mastered ({areaStats.percent}%)
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="p-1.5 md:p-2">
-              <ScrollArea className="h-[250px] lg:h-[calc(100vh-450px)]">
+              <ScrollArea className="h-[200px] lg:h-[calc(100vh-560px)]">
                 <div className="space-y-1 pr-4">
                   {/* All Questions option */}
                   <Button
