@@ -132,37 +132,7 @@ export default function StudentPractice() {
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['practice-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      let query = supabase
-        .from('questions')
-        .select(`
-          id,
-          question_id,
-          category_id,
-          question_set,
-          subject,
-          subtopic,
-          is_original,
-          parent_question_id,
-          category:question_categories(id, name)
-        `)
-        .eq('is_active', true)
-        .eq('subject', subject);
-      
-      if (subject === 'math') {
-        if (questionSet === '68') {
-          query = query.eq('question_set', '68');
-        } else if (questionSet === '150') {
-          query = query.eq('question_set', 'SATMathTraining800');
-        } else {
-          query = query.neq('question_set', '68').neq('question_set', 'SATMathTraining800').eq('is_original', true);
-        }
-      } else {
-        // For English: only originals
-        query = query.eq('is_original', true);
-      }
-      
-      const { data, error } = await query.order('question_id').range(0, 9999);
-      if (error) throw error;
+      const data = await fetchAllPracticeQuestionRows<any>(PRACTICE_QUESTION_SELECT, questionSet, subject, 'question_id');
       
       // Filter out bluebook questions
       if (bluebookQuestionIds && data) {
@@ -177,49 +147,23 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Result, cbResult, englishResult, set150Result] = await Promise.all([
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_active', true)
-          .eq('question_set', '68')
-          .eq('subject', 'math')
-          .range(0, 9999),
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_original', true)
-          .eq('is_active', true)
-          .neq('question_set', '68')
-          .neq('question_set', 'SATMathTraining800')
-          .eq('subject', 'math')
-          .range(0, 9999),
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_original', true)
-          .eq('is_active', true)
-          .eq('subject', 'english')
-          .range(0, 9999),
-        supabase
-          .from('questions')
-          .select('id')
-          .eq('is_active', true)
-          .eq('question_set', 'SATMathTraining800')
-          .eq('subject', 'math')
-          .range(0, 9999)
+      const [set68Rows, cbRows, englishRows, set150Rows] = await Promise.all([
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '68', 'math'),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'math'),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'english'),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math')
       ]);
       
-      const filterBluebook = (data: { id: string }[] | null) => {
+      const filterBluebook = (data: { id: string }[]) => {
         if (!data || !bluebookQuestionIds) return 0;
         return data.filter(q => !bluebookQuestionIds.has(q.id)).length;
       };
       
       return {
-        set68: filterBluebook(set68Result.data),
-        cb: filterBluebook(cbResult.data),
-        english: filterBluebook(englishResult.data),
-        set150: filterBluebook(set150Result.data)
+        set68: filterBluebook(set68Rows),
+        cb: filterBluebook(cbRows),
+        english: filterBluebook(englishRows),
+        set150: filterBluebook(set150Rows)
       };
     },
     enabled: !!student && bluebookLoaded
