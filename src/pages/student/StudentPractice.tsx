@@ -674,7 +674,7 @@ export default function StudentPractice() {
                             className={cn(
                               "cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]",
                               status === 'completed' && 'border-green-500/50 bg-green-500/5',
-                              (status === 'needs_review' || inReview) && 'border-orange-500/50 bg-orange-500/5',
+                              status !== 'completed' && (status === 'needs_review' || inReview) && 'border-orange-500/50 bg-orange-500/5',
                               status === 'video_watched' && !inReview && 'border-yellow-500/50 bg-yellow-500/5'
                             )}
                             onClick={() => {
