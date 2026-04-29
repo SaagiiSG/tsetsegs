@@ -506,7 +506,7 @@ export default function StudentPractice() {
                         >
                           <span className="text-sm font-bold">{displayNum}</span>
                           {status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
-                          {(status === 'needs_review' || inReview) && <RotateCcw className="h-3 w-3" />}
+                          {status !== 'completed' && (status === 'needs_review' || inReview) && <RotateCcw className="h-3 w-3" />}
                         </button>
                       );
                     })}
