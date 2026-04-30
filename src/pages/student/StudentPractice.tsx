@@ -147,13 +147,14 @@ export default function StudentPractice() {
 
   useEffect(() => {
     if (selectedCategory) {
+      // categories is fetched below; this effect re-runs after it loads
       const name =
-        (categoryNames.find((n) => false) as any) ||
-        document.querySelector(`[data-category-id="${selectedCategory}"]`)?.textContent ||
-        '';
-      recordCategory(selectedCategory, String(name).trim() || selectedCategory);
+        (typeof categories !== 'undefined' && categories?.find((c: any) => c.id === selectedCategory)?.name) ||
+        selectedCategory;
+      recordCategory(selectedCategory, String(name));
     }
-  }, [selectedCategory, recordCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
   // ----------------------------------------------------------------------
 
   // Fetch questions that are NOT part of bluebook tests
