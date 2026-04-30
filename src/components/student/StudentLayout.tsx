@@ -12,6 +12,15 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sid
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
+import { useLocation } from 'react-router-dom';
+import {
+  PracticeCommandSheetProvider,
+  usePracticeCommandSheet,
+} from './practice/PracticeCommandSheetContext';
+import { PracticeCommandSheet } from './practice/PracticeCommandSheet';
+import { PracticeQuickFab } from './practice/PracticeQuickFab';
+import { GestureHintOverlay } from './practice/GestureHintOverlay';
+import { useSwipe } from '@/hooks/useSwipe';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
