@@ -22,6 +22,9 @@ import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/Refer
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { useSwipe } from '@/hooks/useSwipe';
+import { useHaptics } from '@/hooks/useHaptics';
+import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -633,6 +636,38 @@ export default function StudentQuestion() {
       navigate(`/practice/question/${nextQuestion.id}`);
     }
   };
+
+  // ---------- iOS-style gestures + recents ----------
+  const haptics = useHaptics();
+  const { recordQuestion } = usePracticeRecents();
+
+  useEffect(() => {
+    if (questionId && question) {
+      const label =
+        (question as any).question_id?.toString() ||
+        (question as any).category?.name ||
+        'Question';
+      recordQuestion(questionId, String(label));
+    }
+  }, [questionId, question, recordQuestion]);
+
+  useSwipe({
+    onSwipeLeft: () => {
+      if (nextQuestion) {
+        haptics('light');
+        handleNextQuestion();
+      }
+    },
+    onSwipeRight: () => {
+      if (prevQuestion) {
+        haptics('light');
+        handlePrevQuestion();
+      }
+    },
+    threshold: 70,
+    maxPerpendicular: 60,
+  });
+  // ---------------------------------------------------
 
   // Extract YouTube video ID
   const getYouTubeId = (url: string) => {

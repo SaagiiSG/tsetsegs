@@ -12,6 +12,15 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sid
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
+import { useLocation } from 'react-router-dom';
+import {
+  PracticeCommandSheetProvider,
+  usePracticeCommandSheet,
+} from './practice/PracticeCommandSheetContext';
+import { PracticeCommandSheet } from './practice/PracticeCommandSheet';
+import { PracticeQuickFab } from './practice/PracticeQuickFab';
+import { GestureHintOverlay } from './practice/GestureHintOverlay';
+import { useSwipe } from '@/hooks/useSwipe';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -114,6 +123,12 @@ function StudentLayoutContent() {
       <WelcomeOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       
       <StudentBottomNav />
+
+      {/* iOS-style quick command sheet (⌘K, swipe-up, FAB) */}
+      <PracticeCommandSheet />
+      <PracticeQuickFab />
+      <GestureHintOverlay />
+      <GlobalEdgeSwipeUp />
       
       {/* Security overlay */}
       <div 
@@ -126,10 +141,29 @@ function StudentLayoutContent() {
   );
 }
 
+/** Listens for an upward swipe from the bottom edge anywhere in /practice/* and opens the command sheet. */
+function GlobalEdgeSwipeUp() {
+  const { setOpen } = usePracticeCommandSheet();
+  const { pathname } = useLocation();
+  const enabled = pathname.startsWith('/practice');
+
+  useSwipe(
+    {
+      enabled,
+      edgeOnly: { from: 'bottom', px: 32 },
+      onSwipeUp: () => setOpen(true),
+      threshold: 40,
+    },
+  );
+  return null;
+}
+
 export function StudentLayout() {
   return (
     <SidebarProvider>
-      <StudentLayoutContent />
+      <PracticeCommandSheetProvider>
+        <StudentLayoutContent />
+      </PracticeCommandSheetProvider>
     </SidebarProvider>
   );
 }

@@ -15,6 +15,9 @@ import {
 import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 import { cn } from '@/lib/utils';
+import { useSwipe } from '@/hooks/useSwipe';
+import { useHaptics } from '@/hooks/useHaptics';
+import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 
 type QuestionSet = '68' | 'CB' | '150';
 type Subject = 'math' | 'english';
@@ -113,6 +116,46 @@ export default function StudentPractice() {
       logActivity('dashboard_view');
     }
   }, [student]);
+
+  // ---------- iOS-style gestures: cycle 68 → CB → 150 → English ----------
+  const haptics = useHaptics();
+  const { recordSet, recordCategory } = usePracticeRecents();
+  const SET_CYCLE: { set: QuestionSet; subject: Subject; key: '68' | 'CB' | '150' | 'english' }[] = [
+    { set: '68', subject: 'math', key: '68' },
+    { set: 'CB', subject: 'math', key: 'CB' },
+    { set: '150', subject: 'math', key: '150' },
+    { set: 'CB', subject: 'english', key: 'english' },
+  ];
+  const cycleSet = (dir: 1 | -1) => {
+    const currentKey: '68' | 'CB' | '150' | 'english' =
+      subject === 'english' ? 'english' : (questionSet as any);
+    const idx = SET_CYCLE.findIndex((s) => s.key === currentKey);
+    const next = SET_CYCLE[(idx + dir + SET_CYCLE.length) % SET_CYCLE.length];
+    haptics('light');
+    setQuestionSet(next.set);
+    setSubject(next.subject);
+    setSelectedCategory(null);
+    setSelectedSubtopic(null);
+    recordSet(next.key);
+  };
+  useSwipe({
+    onSwipeLeft: () => cycleSet(1),
+    onSwipeRight: () => cycleSet(-1),
+    threshold: 90,
+    maxPerpendicular: 50,
+  });
+
+  useEffect(() => {
+    if (selectedCategory) {
+      // categories is fetched below; this effect re-runs after it loads
+      const name =
+        (typeof categories !== 'undefined' && categories?.find((c: any) => c.id === selectedCategory)?.name) ||
+        selectedCategory;
+      recordCategory(selectedCategory, String(name));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
+  // ----------------------------------------------------------------------
 
   // Fetch questions that are NOT part of bluebook tests
   const { data: bluebookQuestionIds = new Set<string>(), isSuccess: bluebookLoaded } = useQuery({
