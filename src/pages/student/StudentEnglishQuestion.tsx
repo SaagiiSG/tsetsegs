@@ -18,6 +18,9 @@ import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { useSwipe } from '@/hooks/useSwipe';
+import { useHaptics } from '@/hooks/useHaptics';
+import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -303,6 +306,32 @@ export default function StudentEnglishQuestion() {
     : null;
 
   const options = question?.multiple_choice_options as Record<string, string> | null;
+
+  // ---------- iOS-style gestures + recents ----------
+  const haptics = useHaptics();
+  const { recordQuestion } = usePracticeRecents();
+  useEffect(() => {
+    if (questionId && question) {
+      recordQuestion(questionId, String((question as any).question_id || 'English'));
+    }
+  }, [questionId, question, recordQuestion]);
+  useSwipe({
+    onSwipeLeft: () => {
+      if (nextQuestion) {
+        haptics('light');
+        navigate(`/practice/english/question/${nextQuestion.id}`);
+      }
+    },
+    onSwipeRight: () => {
+      if (prevQuestion) {
+        haptics('light');
+        navigate(`/practice/english/question/${prevQuestion.id}`);
+      }
+    },
+    threshold: 70,
+    maxPerpendicular: 60,
+  });
+  // ---------------------------------------------------
 
   if (questionLoading && !question) {
     return (
