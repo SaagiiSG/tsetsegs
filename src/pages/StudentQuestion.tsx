@@ -637,6 +637,38 @@ export default function StudentQuestion() {
     }
   };
 
+  // ---------- iOS-style gestures + recents ----------
+  const haptics = useHaptics();
+  const { recordQuestion } = usePracticeRecents();
+
+  useEffect(() => {
+    if (questionId && question) {
+      const label =
+        (question as any).question_id?.toString() ||
+        (question as any).category?.name ||
+        'Question';
+      recordQuestion(questionId, String(label));
+    }
+  }, [questionId, question, recordQuestion]);
+
+  useSwipe({
+    onSwipeLeft: () => {
+      if (nextQuestion) {
+        haptics('light');
+        handleNextQuestion();
+      }
+    },
+    onSwipeRight: () => {
+      if (prevQuestion) {
+        haptics('light');
+        handlePrevQuestion();
+      }
+    },
+    threshold: 70,
+    maxPerpendicular: 60,
+  });
+  // ---------------------------------------------------
+
   // Extract YouTube video ID
   const getYouTubeId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
