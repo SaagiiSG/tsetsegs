@@ -1,93 +1,112 @@
-## Goal
+# Practice Section: 3-Taps / Gestures To Anywhere
 
-Make the entire `/admin` experience usable on mobile in a "thumb-first, 3-taps-max" layout. The desktop sidebar shell is awkward on phones today (offcanvas hides, header is sparse, dashboard cards stack into a long scroll). We'll add a dedicated mobile chrome that overlays the existing routes — no rewrites of feature pages.
+iOS-style efficiency for the entire practice flow. Any meaningful action is reachable in **≤3 taps OR a single gesture**, on every viewport (mobile, tablet, desktop).
 
-## UX principles
+## The "3-taps-max" promise
 
-- **3-tap rule** — every destination reachable in ≤3 taps from any admin screen.
-  - Tap 1: bottom nav tab OR FAB (Command).
-  - Tap 2: section/item in the sheet.
-  - Tap 3: deep action (e.g. specific student, specific batch).
-- **Thumb zone** — primary nav lives at the bottom, header is minimal.
-- **Density over decoration** — collapse hero cards into a 2-up KPI strip; defer charts behind expandable sections.
-- **Keep desktop untouched** — all changes gated by `useIsMobile()`; desktop renders the current `AdminSidebar` + layout exactly as today.
+From anywhere inside `/practice/*`:
+- Jump to any question set (68 / CB / 150 / English) and category
+- Next / previous question, mark, flag, notes, calculator, reference
+- Open Speed mode, review queue, vocabulary, leaderboard, profile, booking
+- Resume "last attempted question"
 
-## Information architecture (5 bottom tabs)
+## Three Interaction Layers
 
-Picked from the 18 admin routes by frequency of use:
+### Layer 1 — Persistent Quick-Access (all viewports)
 
+- **Mobile (<768px)**: existing `StudentBottomNav` keeps 5 tabs. The middle slot becomes a **Quick FAB** when on `/practice/*` routes.
+- **Tablet/Desktop (≥768px)**: a floating circular **Quick FAB** pinned bottom-right, plus the existing sidebar.
+- **Long-press on any nav item / sidebar item** → jumps to that section's most-used sub-page (e.g. long-press Practice = resume last question).
+- **Light haptics** via `navigator.vibrate(10)` on supported devices.
+
+### Layer 2 — Command Sheet (the "⌘K for students")
+
+A unified `PracticeCommandSheet` opened by:
+- Quick FAB tap (1 tap) — works on every screen size
+- **Swipe-up from bottom edge** anywhere in `/practice/*` (touch + trackpad)
+- **`⌘K` / `Ctrl+K`** keyboard shortcut
+
+Single-screen layout (no scroll needed for top items):
 ```text
-[ Home ]  [ Batches ]  [ ⌘ ]  [ Students ]  [ More ]
-  /admin    /batches   FAB     /search       sheet
+[ Search questions, categories, tools…        ]
+
+Resume                  → Question #142 (Algebra)
+Continue last set       → CB · Advanced Math
+
+Quick Jump
+[ 68 ] [ CB ] [ 150 ] [ English ] [ Speed ]
+
+Tools
+[ Calculator ] [ Reference ] [ Notes ] [ Marked ]
+
+Recent
+- Geometry · Triangles
+- Vocabulary · Day 12
 ```
 
-- **Home** → `/admin` (Dashboard)
-- **Batches** → `/admin/batches`
-- **⌘ Command** (center FAB) → opens full-screen Command Sheet (search + every route, grouped exactly like the sidebar). This is the universal escape hatch — any route in 2 taps.
-- **Students** → `/admin/search` (search-first, since admins usually open a student by name)
-- **More** → bottom Sheet listing the long-tail routes (SAT Schedule, Bluebook, Sprint Monitor, Review Sessions, Bug Reports, Registration Queue, Question Bank, Team, Settings, Sign Out)
+Selecting a top-level item = action #2; nested items expand inline so the third tap always completes the journey.
 
-The center FAB makes "More" effectively redundant for power users — but we keep both because Command requires typing/scrolling while More is a fixed grid.
+### Layer 3 — Gestures (in-question and in-list, all viewports)
 
-## Mobile chrome components (new)
+Within `StudentQuestion` / `StudentEnglishQuestion`:
+| Gesture | Action |
+|---|---|
+| Swipe **left** | Next question |
+| Swipe **right** | Previous question |
+| Swipe **down** from top edge | Open Question Navigator |
+| Swipe **up** from bottom edge | Open Command Sheet |
+| **Two-finger tap** (or `Alt+C`) | Toggle Calculator |
+| **Long-press** on question text (or right-click on desktop) | Mark / unmark |
+| **Double-tap / double-click** on a choice | Submit that choice |
 
-All new files live under `src/components/admin/mobile/`:
+Within `StudentPractice` list:
+| Gesture | Action |
+|---|---|
+| Swipe **left/right** on set-chip row | Cycle 68 → CB → 150 → English |
+| Long-press on a category | Start a 10-question quick session |
+| Pull-to-refresh (mobile) / `R` key (desktop) | Re-fetch progress |
 
-1. **`MobileAdminShell.tsx`** — wraps `<main>` on mobile. Adds:
-   - Compact sticky header (40px): logo mark, page title (derived from route), Sign Out icon-only.
-   - Bottom padding (`pb-20`) so content clears the nav.
-   - Renders `MobileBottomNav` + `CommandSheet` + `MoreSheet`.
-2. **`MobileBottomNav.tsx`** — fixed bottom bar, 5 slots, center FAB elevated. Active tab gets primary color + dot indicator. Uses `NavLink` for routing.
-3. **`CommandSheet.tsx`** — full-screen `Sheet` (side="bottom", h-[92vh]) with:
-   - Search input (filters by title across all routes).
-   - Recently visited (last 5, stored in `localStorage`).
-   - All sections from `menuSections` (reuse the array from `AdminSidebar` — extract to `src/components/admin/menuSections.ts` to share).
-4. **`MoreSheet.tsx`** — bottom Sheet with a 3-column icon grid of long-tail routes + Sign Out.
+All gestures use shared pointer-event hooks so they work on touch, mouse, and trackpad alike. Edge-swipes use a 20px hit zone to avoid clashing with scrolling.
 
-## Dashboard compaction (mobile only)
+## Discoverability
 
-Edit `DashboardStats.tsx` to switch layout based on `useIsMobile()`:
+Shown the first 3 visits per screen (tracked in `localStorage`):
+- Faint "← swipe →" pill near the question footer
+- 1-second pulse on the Quick FAB
+- Small `?` chip in the header opens a "Gestures" cheat-sheet drawer (also lists keyboard shortcuts on desktop)
 
-- Header: drop subtitle, shrink "Live" pill, h1 → `text-lg`.
-- `HeroStatsRow`: render as 2-col grid (currently 4-col on desktop) with smaller cards — pass an `dense` prop or wrap with mobile-specific Tailwind.
-- Collapse `ActivityHeatmap`, `TopicWeakSpots`, `SprintPreview`, `RecentClasses`, `AtRiskQuickView` into shadcn `Accordion` items, with **At-Risk** open by default (highest-signal for admins).
-- Remove `dashboard-grid-bg` background pattern on mobile (visual noise).
-- `QuickActionsBar` — convert to horizontal scroll row on mobile.
+## Technical Implementation
 
-## Wiring
+**New files**
+- `src/hooks/useSwipe.ts` — pointer-event swipe (direction, velocity, edge zone)
+- `src/hooks/useLongPress.ts`
+- `src/hooks/useHaptics.ts` — wraps `navigator.vibrate`, no-op when unsupported
+- `src/components/student/practice/PracticeCommandSheet.tsx` — full-screen on mobile, centered dialog on desktop, powered by existing `cmdk` (`ui/command`)
+- `src/components/student/practice/PracticeQuickFab.tsx` — mobile injects into bottom nav center; desktop renders as bottom-right floating button
+- `src/components/student/practice/GestureHintOverlay.tsx`
+- `src/hooks/usePracticeRecents.ts` — last question id / set / category in localStorage
+- `src/hooks/usePracticeKeymap.ts` — global `⌘K`, `Alt+C`, `R`, arrow-key prev/next on question screens
 
-`src/pages/Admin.tsx`:
-- Import `useIsMobile` and `MobileAdminShell`.
-- On mobile: hide `AdminSidebar` + desktop header, wrap `<Routes>` in `MobileAdminShell`.
-- On desktop: render exactly as today.
+**Modified files**
+- `src/components/student/StudentLayout.tsx` — mount `PracticeCommandSheet` provider, global edge-swipe-up listener, `GestureHintOverlay`, desktop FAB
+- `src/components/student/StudentBottomNav.tsx` — center slot becomes `PracticeQuickFab` on `/practice/*`; long-press handlers per tab
+- `src/components/student/StudentDashboardSidebar.tsx` — long-press / right-click on items uses recents
+- `src/pages/StudentQuestion.tsx` — wire swipes (left/right/down), long-press on question body, double-click on choices, keymap; record recents
+- `src/pages/student/StudentEnglishQuestion.tsx` — same gesture wiring
+- `src/pages/student/StudentPractice.tsx` — swipe on set-chip row, long-press on category cards
+- `src/pages/student/StudentSpeedMode.tsx` — swipe-down to exit (matches iOS modal dismiss)
 
-```text
-Admin.tsx
-├─ if (isMobile)
-│   └─ <MobileAdminShell><Routes/></MobileAdminShell>
-└─ else
-    └─ <SidebarProvider><AdminSidebar/><main><Routes/></main></SidebarProvider>
-```
+**Behavior guards**
+- Disable horizontal swipes when a `Dialog`, `Sheet`, or `DesmosCalculator` is open (check `[data-state="open"]`)
+- Skip gestures over `<input>`, `<textarea>`, contenteditable, the drawing canvas
+- Respect `prefers-reduced-motion` — hint pulses become static
+- Feature-flag the system behind `practice_quick_nav` so it can be toggled per cohort
 
-## Files
-
-**New**
-- `src/components/admin/menuSections.ts` (extracted shared nav data)
-- `src/components/admin/mobile/MobileAdminShell.tsx`
-- `src/components/admin/mobile/MobileBottomNav.tsx`
-- `src/components/admin/mobile/CommandSheet.tsx`
-- `src/components/admin/mobile/MoreSheet.tsx`
-- `src/components/admin/mobile/usePageTitle.ts` (route → title map for header)
-
-**Edited**
-- `src/pages/Admin.tsx` — branch on `useIsMobile()`.
-- `src/components/admin/AdminSidebar.tsx` — import from new `menuSections.ts`.
-- `src/components/admin/DashboardStats.tsx` — mobile-dense layout.
-- `src/components/admin/dashboard/HeroStatsRow.tsx` — 2-col + smaller card variant on mobile.
-- `src/components/admin/dashboard/QuickActionsBar.tsx` — horizontal scroll on mobile.
+**Routes touched**: `/practice`, `/practice/home`, `/practice/dashboard`, `/practice/english`, `/practice/speed`, `/practice/question/:id`, `/practice/english/question/:id`, `/practice/booking`, `/practice/profile`, `/practice/vocabulary`, `/practice/review`, `/practice/leaderboard`.
 
 ## Out of scope
+- Bluebook simulator (strict exam UX, no shortcuts)
+- Teacher / Admin panels
+- Backend changes — recents and hint counters are localStorage only
 
-- No changes to feature pages themselves (Question Bank, Bluebook, etc.) — those keep their current responsive behavior. We can compact them in a follow-up once the shell ships.
-- No PWA/install prompts.
-- No data changes, no migrations.
+After approval I'll implement, then verify on 390px, 768px, and 1440px viewports with the browser tools and tune hit zones.
