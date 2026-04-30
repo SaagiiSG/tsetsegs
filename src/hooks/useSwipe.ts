@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 export type SwipeDirection = 'left' | 'right' | 'up' | 'down';
+export type SwipeEdge = 'left' | 'right' | 'top' | 'bottom';
 
 interface SwipeHandlers {
   onSwipeLeft?: () => void;
@@ -8,7 +9,7 @@ interface SwipeHandlers {
   onSwipeUp?: () => void;
   onSwipeDown?: () => void;
   /** If set, only fire when start point is within edge px of that side. */
-  edgeOnly?: { from: SwipeDirection; px: number };
+  edgeOnly?: { from: SwipeEdge; px: number };
   /** Minimum distance (px) to register as a swipe. Default 60. */
   threshold?: number;
   /** Maximum perpendicular drift (px). Default 80. */
