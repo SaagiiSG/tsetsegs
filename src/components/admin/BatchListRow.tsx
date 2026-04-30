@@ -88,10 +88,10 @@ export function BatchListRow({
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 rounded-lg transition-colors group">
+    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-muted/50 rounded-lg transition-colors group min-w-0">
       {/* Course badge */}
       <Badge
-        className="font-semibold text-xs shrink-0 w-12 justify-center"
+        className="font-semibold text-[10px] sm:text-xs shrink-0 w-11 sm:w-12 justify-center"
         style={{
           backgroundColor: batch.course_type === 'SAT' ? 'hsl(217, 91%, 60%)' : 'hsl(271, 91%, 65%)',
           color: 'white',
@@ -100,37 +100,34 @@ export function BatchListRow({
         {batch.course_type}
       </Badge>
 
-      {/* Teacher */}
-      <span className="text-sm font-medium truncate min-w-[100px] max-w-[160px]">
-        {batch.teacher || '—'}
-      </span>
-
-      {/* Schedule */}
-      <span className="text-sm text-muted-foreground truncate min-w-[120px] max-w-[180px]">
-        {shortSchedule || '—'}
-      </span>
+      {/* Main info: teacher + schedule (stacks on mobile, inline on sm+) */}
+      <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:gap-3">
+        <span className="text-sm font-medium truncate sm:min-w-[100px] sm:max-w-[160px]">
+          {batch.teacher || '—'}
+        </span>
+        <span className="text-xs sm:text-sm text-muted-foreground truncate sm:min-w-[120px] sm:max-w-[180px]">
+          {shortSchedule || '—'}
+        </span>
+      </div>
 
       {/* Start date */}
-      <span className="text-sm text-muted-foreground shrink-0 w-[60px]">
+      <span className="text-xs sm:text-sm text-muted-foreground shrink-0 hidden xs:inline">
         {formatDate(batch.start_date)}
       </span>
 
       {/* Student count */}
-      <span className="text-sm text-muted-foreground shrink-0 flex items-center gap-1">
+      <span className="text-xs sm:text-sm text-muted-foreground shrink-0 flex items-center gap-1">
         <Users className="w-3.5 h-3.5" />
         {studentCount}
       </span>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* 3-dot menu */}
+      {/* 3-dot menu — always visible on mobile, hover on desktop */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-8 w-8 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>

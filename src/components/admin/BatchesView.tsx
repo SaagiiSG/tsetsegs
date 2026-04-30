@@ -256,7 +256,7 @@ export function BatchesView() {
             Showing {filteredBatches.length} of {batches.length} batch{batches.length !== 1 ? 'es' : ''}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
           {filteredBatches.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               {batches.length === 0
@@ -267,10 +267,10 @@ export function BatchesView() {
             <div className="space-y-6">
               {groupedBatches.map((group) => (
                 <div key={group.month}>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-4">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2 sm:px-4">
                     {group.month}
                   </h3>
-                  <div className="divide-y divide-border rounded-lg border">
+                  <div className="divide-y divide-border rounded-lg border overflow-hidden">
                     {group.batches.map((batch) => (
                       <BatchListRow
                         key={batch.id}
