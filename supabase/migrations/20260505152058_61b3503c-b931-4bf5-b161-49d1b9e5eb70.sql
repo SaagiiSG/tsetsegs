@@ -1,0 +1,1 @@
+UPDATE public.ngee_sessions SET booking_opens_at = now() - interval '1 hour' WHERE id = '59967274-b8f9-4bcb-b4ac-d4b76a68140a';
