@@ -185,7 +185,7 @@ export default function NGEEBooking() {
         <div className="text-center pt-4">
           <Badge variant="secondary" className="mb-2">Free Course</Badge>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{course.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Wed & Fri • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>
+          <p className="text-sm text-muted-foreground mt-1">{weekdayLabel} • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>
         </div>
 
         {!sessions?.length && (
