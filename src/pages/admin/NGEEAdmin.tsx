@@ -11,7 +11,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { format, isAfter, isBefore } from 'date-fns';
-import { CheckCircle2, QrCode, Copy, Loader2, RefreshCw, Undo2, Search } from 'lucide-react';
+import { CheckCircle2, QrCode, Copy, Loader2, RefreshCw, Undo2, Search, Download } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
 
@@ -326,13 +326,45 @@ export default function NGEEAdmin() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Public booking QR</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center gap-4 p-4">
-            <div className="bg-white p-4 rounded-xl">
+            <div id="ngee-qr-wrap" className="bg-white p-4 rounded-xl">
               <QRCode value={publicUrl} size={220} />
             </div>
             <code className="text-xs text-muted-foreground break-all text-center">{publicUrl}</code>
-            <Button variant="outline" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Copied'); }}>
-              <Copy className="h-4 w-4 mr-2" />Copy link
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Copied'); }}>
+                <Copy className="h-4 w-4 mr-2" />Copy link
+              </Button>
+              <Button onClick={() => {
+                const svg = document.querySelector('#ngee-qr-wrap svg') as SVGSVGElement | null;
+                if (!svg) return;
+                const size = 1024;
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const img = new Image();
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = size; canvas.height = size;
+                  const ctx = canvas.getContext('2d')!;
+                  ctx.fillStyle = '#fff';
+                  ctx.fillRect(0, 0, size, size);
+                  ctx.drawImage(img, 0, 0, size, size);
+                  URL.revokeObjectURL(url);
+                  canvas.toBlob((blob) => {
+                    if (!blob) return;
+                    const a = document.createElement('a');
+                    const safe = (course?.name || 'lecture').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `qr-${safe}.png`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                  }, 'image/png');
+                };
+                img.src = url;
+              }}>
+                <Download className="h-4 w-4 mr-2" />Download PNG
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
