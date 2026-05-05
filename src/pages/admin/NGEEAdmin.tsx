@@ -170,16 +170,19 @@ export default function NGEEAdmin() {
     a.click();
   };
 
-  const publicUrl = 'https://flowersos.co/ngee';
+  const publicUrl = course ? `https://flowersos.co/ngee/${course.id}` : 'https://flowersos.co/ngee';
+  const weekdayLabel = course
+    ? (course.weekdays as number[]).map(d => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d-1]).join(' & ')
+    : '';
 
-  if (!course) return <div className="p-8 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (!courses) return <div className="p-8 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{course.name}</h1>
-          <p className="text-sm text-muted-foreground">Wed & Fri • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>
+          <h1 className="text-2xl font-bold">{course?.name ?? 'Select a course'}</h1>
+          {course && <p className="text-sm text-muted-foreground">{weekdayLabel} • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copied'); }}>
@@ -189,6 +192,18 @@ export default function NGEEAdmin() {
             <QrCode className="h-4 w-4 mr-2" />QR
           </Button>
         </div>
+      </div>
+
+      {/* Course picker */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+          <SelectTrigger className="w-full sm:w-96"><SelectValue placeholder="Select a course" /></SelectTrigger>
+          <SelectContent>
+            {courses?.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Session picker */}
