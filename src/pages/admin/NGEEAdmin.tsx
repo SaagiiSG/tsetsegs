@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 
 export default function NGEEAdmin() {
   const qc = useQueryClient();
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
   const [showQR, setShowQR] = useState(false);
   const [search, setSearch] = useState('');
@@ -24,14 +25,20 @@ export default function NGEEAdmin() {
   const codeInputRef = useRef<HTMLInputElement>(null);
   const [recentCheckins, setRecentCheckins] = useState<Array<{ id: string; name: string; seat: number; time: Date; alreadyChecked: boolean }>>([]);
 
-  const { data: course } = useQuery({
-    queryKey: ['ngee-admin-course'],
+  const { data: courses } = useQuery({
+    queryKey: ['ngee-admin-courses'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('ngee_courses').select('*').eq('is_active', true).limit(1).maybeSingle();
+      const { data, error } = await supabase.from('ngee_courses').select('*').eq('is_active', true).order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     },
   });
+
+  useEffect(() => {
+    if (!selectedCourseId && courses?.length) setSelectedCourseId(courses[0].id);
+  }, [courses, selectedCourseId]);
+
+  const course = courses?.find(c => c.id === selectedCourseId) || null;
 
   const { data: sessions } = useQuery({
     queryKey: ['ngee-admin-sessions', course?.id],
