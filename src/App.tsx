@@ -62,6 +62,7 @@ import StudentRegistration from "./pages/StudentRegistration";
 import PublicClosingReport from "./pages/PublicClosingReport";
 import LiveSession from "./pages/LiveSession";
 import NGEEBooking from "./pages/public/NGEEBooking";
+import LecturesHub from "./pages/public/LecturesHub";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />
+                  <Route path="/lectures" element={<LecturesHub />} />
                   <Route 
                     path="/admin/*" 
                     element={
