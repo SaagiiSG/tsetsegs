@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,15 +38,27 @@ export default function NGEEBooking() {
   const [success, setSuccess] = useState<{ seat: number; code: string; sessionTitle: string } | null>(null);
   const [showSessionList, setShowSessionList] = useState(false);
 
+  const { courseId } = useParams<{ courseId?: string }>();
   const { data: course } = useQuery({
-    queryKey: ['ngee-course'],
+    queryKey: ['ngee-course', courseId ?? 'default'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ngee_courses').select('*').eq('is_active', true).limit(1).maybeSingle();
+      let q = supabase.from('ngee_courses').select('*');
+      if (courseId) {
+        const { data, error } = await q.eq('id', courseId).maybeSingle();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await q.eq('is_active', true).order('created_at', { ascending: true }).limit(1).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  const weekdayLabel = (() => {
+    if (!course) return '';
+    const names = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    return (course.weekdays as number[]).map(d => names[d-1]).join(' & ');
+  })();
 
   const { data: sessions } = useQuery({
     queryKey: ['ngee-sessions', course?.id],
@@ -172,7 +185,7 @@ export default function NGEEBooking() {
         <div className="text-center pt-4">
           <Badge variant="secondary" className="mb-2">Free Course</Badge>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{course.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Wed & Fri • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>
+          <p className="text-sm text-muted-foreground mt-1">{weekdayLabel} • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>
         </div>
 
         {!sessions?.length && (
