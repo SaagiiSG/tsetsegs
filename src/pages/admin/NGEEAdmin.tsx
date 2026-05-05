@@ -158,7 +158,7 @@ export default function NGEEAdmin() {
     a.click();
   };
 
-  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/ngee` : '/ngee';
+  const publicUrl = 'https://flowersos.co/ngee';
 
   if (!course) return <div className="p-8 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
