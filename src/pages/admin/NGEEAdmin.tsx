@@ -51,6 +51,11 @@ export default function NGEEAdmin() {
     },
   });
 
+  // Reset session selection when course changes
+  useEffect(() => {
+    setSelectedSessionId('');
+  }, [selectedCourseId]);
+
   // Auto-select today's or next upcoming session
   useEffect(() => {
     if (!selectedSessionId && sessions?.length) {
