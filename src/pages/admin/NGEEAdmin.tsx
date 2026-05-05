@@ -170,7 +170,10 @@ export default function NGEEAdmin() {
     a.click();
   };
 
-  const publicUrl = course ? `https://flowersos.co/ngee/${course.id}` : 'https://flowersos.co/ngee';
+  const [qrMode, setQrMode] = useState<'course' | 'lectures'>('course');
+  const lecturesHubUrl = 'https://flowersos.co/lectures';
+  const courseUrl = course ? `https://flowersos.co/ngee/${course.id}` : 'https://flowersos.co/ngee';
+  const publicUrl = qrMode === 'lectures' ? lecturesHubUrl : courseUrl;
   const weekdayLabel = course
     ? (course.weekdays as number[]).map(d => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d-1]).join(' & ')
     : '';
@@ -184,12 +187,15 @@ export default function NGEEAdmin() {
           <h1 className="text-2xl font-bold">{course?.name ?? 'Select a course'}</h1>
           {course && <p className="text-sm text-muted-foreground">{weekdayLabel} • {course.start_time.slice(0,5)}–{course.end_time.slice(0,5)} • Room {course.room}</p>}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copied'); }}>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(courseUrl); toast.success('Link copied'); }}>
             <Copy className="h-4 w-4 mr-2" />Copy link
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowQR(true)}>
-            <QrCode className="h-4 w-4 mr-2" />QR
+          <Button variant="outline" size="sm" onClick={() => { setQrMode('course'); setShowQR(true); }}>
+            <QrCode className="h-4 w-4 mr-2" />Course QR
+          </Button>
+          <Button variant="default" size="sm" onClick={() => { setQrMode('lectures'); setShowQR(true); }}>
+            <QrCode className="h-4 w-4 mr-2" />All Lectures QR
           </Button>
         </div>
       </div>
@@ -324,7 +330,7 @@ export default function NGEEAdmin() {
       {/* QR dialog */}
       <Dialog open={showQR} onOpenChange={setShowQR}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Public booking QR</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{qrMode === 'lectures' ? 'All Lectures — Booking QR' : 'Public booking QR'}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center gap-4 p-4">
             <div id="ngee-qr-wrap" className="bg-white p-4 rounded-xl">
               <QRCode value={publicUrl} size={220} />
@@ -353,7 +359,7 @@ export default function NGEEAdmin() {
                   canvas.toBlob((blob) => {
                     if (!blob) return;
                     const a = document.createElement('a');
-                    const safe = (course?.name || 'lecture').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+                    const safe = qrMode === 'lectures' ? 'all-lectures' : (course?.name || 'lecture').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
                     a.href = URL.createObjectURL(blob);
                     a.download = `qr-${safe}.png`;
                     a.click();
