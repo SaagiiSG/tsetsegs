@@ -1,112 +1,150 @@
-# Practice Section: 3-Taps / Gestures To Anywhere
+## National Generalized Entrance Exam (NGEE) — Public Seat Booking + Hex Check-In
 
-iOS-style efficiency for the entire practice flow. Any meaningful action is reachable in **≤3 taps OR a single gesture**, on every viewport (mobile, tablet, desktop).
+A standalone, **public** booking system for the new NGEE course (taught via the YouTube channel). No student account required. Students scan a QR → fill name + phone → pick a seat → receive a unique **hex check-in code**. On the day of class, the teacher enters the hex code in their panel to mark the student present.
 
-## The "3-taps-max" promise
+This is intentionally separate from the existing `review_sessions` / `seat_bookings` system (which requires a `student_account_id`).
 
-From anywhere inside `/practice/*`:
-- Jump to any question set (68 / CB / 150 / English) and category
-- Next / previous question, mark, flag, notes, calculator, reference
-- Open Speed mode, review queue, vocabulary, leaderboard, profile, booking
-- Resume "last attempted question"
+### Course details (seeded)
+- Course name: **National Generalized Entrance Exam (NGEE)**
+- Room: **1105**
+- Schedule: **Wed & Fri, 16:30 – 18:00**
+- Total seats: **25**
+- First session: **tomorrow**
+- Booking window per session: **opens 08:00 day-of, closes 14:30 (2 h before start)**
 
-## Three Interaction Layers
+---
 
-### Layer 1 — Persistent Quick-Access (all viewports)
+### 1. Database (new tables, isolated)
 
-- **Mobile (<768px)**: existing `StudentBottomNav` keeps 5 tabs. The middle slot becomes a **Quick FAB** when on `/practice/*` routes.
-- **Tablet/Desktop (≥768px)**: a floating circular **Quick FAB** pinned bottom-right, plus the existing sidebar.
-- **Long-press on any nav item / sidebar item** → jumps to that section's most-used sub-page (e.g. long-press Practice = resume last question).
-- **Light haptics** via `navigator.vibrate(10)` on supported devices.
+`public.ngee_courses`
+- `id`, `name`, `room`, `total_seats` (default 25)
+- `weekdays int[]` (e.g. `{3,5}`)
+- `start_time time` (16:30), `end_time time` (18:00)
+- `start_date date`, `is_active bool`
+- `booking_opens_hour int` (default 8), `booking_closes_hours_before int` (default 2)
 
-### Layer 2 — Command Sheet (the "⌘K for students")
+`public.ngee_sessions` (auto-generated instances)
+- `id`, `course_id`, `session_date timestamptz`, `session_end_date timestamptz`
+- `booking_opens_at timestamptz`, `booking_closes_at timestamptz`
+- `total_seats int`, `is_cancelled bool`
 
-A unified `PracticeCommandSheet` opened by:
-- Quick FAB tap (1 tap) — works on every screen size
-- **Swipe-up from bottom edge** anywhere in `/practice/*` (touch + trackpad)
-- **`⌘K` / `Ctrl+K`** keyboard shortcut
+`public.ngee_bookings`
+- `id`, `session_id` → ngee_sessions
+- `first_name text`, `last_name text`, `phone text` (normalized to +976)
+- `seat_number int`
+- `check_in_code text NOT NULL` — short hex (e.g. 4 chars uppercase, ~65k space; unique per session)
+- `attended bool DEFAULT false`, `checked_in_at timestamptz`, `checked_in_by text`
+- `booked_at`, `cancelled_at`
+- Partial unique indexes:
+  - one active seat per session
+  - one active booking per phone per session
+  - unique `check_in_code` per session
 
-Single-screen layout (no scroll needed for top items):
-```text
-[ Search questions, categories, tools…        ]
+**RLS**
+- `ngee_courses`, `ngee_sessions`: public SELECT (active only); admin manage.
+- `ngee_bookings`:
+  - Public INSERT (booking) — BEFORE INSERT trigger validates `now()` is between `booking_opens_at` and `booking_closes_at`, and seat is in range. Trigger also generates the hex code.
+  - **No public SELECT of full rows** — names/phones/codes must stay private. Instead expose:
+    - View `ngee_session_taken_seats(session_id, seat_number)` → public SELECT (powers the seat grid).
+    - RPC `lookup_my_booking(phone, session_id)` → returns the caller's own booking (used on success screen + self-cancel).
+  - Admin + teacher: full SELECT/UPDATE.
+  - RPC `check_in_by_code(session_id, code)` (SECURITY DEFINER) — teachers/admins call this to flip `attended=true`. Returns the booking row on success.
 
-Resume                  → Question #142 (Algebra)
-Continue last set       → CB · Advanced Math
+**Hex code generation** (trigger):
+- 4 uppercase hex chars (`A1F3`, `7BC2`, …). Retry up to 5× on collision within session.
+- Easy to read aloud; ~65k unique codes per session is way more than 25 seats.
 
-Quick Jump
-[ 68 ] [ CB ] [ 150 ] [ English ] [ Speed ]
+**Session generation**: SQL function `generate_ngee_sessions(course_id uuid, weeks_ahead int)` — inserts upcoming Wed/Fri rows for the next N weeks based on weekdays + times. Idempotent (skips existing dates). Run on seed and re-runnable from admin.
 
-Tools
-[ Calculator ] [ Reference ] [ Notes ] [ Marked ]
+---
 
-Recent
-- Geometry · Triangles
-- Vocabulary · Day 12
-```
+### 2. Public booking page (no auth)
 
-Selecting a top-level item = action #2; nested items expand inline so the third tap always completes the journey.
+Route: `/ngee/:courseId` (QR target)
 
-### Layer 3 — Gestures (in-question and in-list, all viewports)
+Flow (3 taps max):
+1. Land → see next upcoming session at top + tabs/dropdown for other sessions. Seat grid (`<SeatGrid />`) below.
+2. Tap a seat → modal with **First name / Last name / Phone** (zod: name 1–50, phone normalized; +976 default).
+3. Tap **Confirm** → insert + show **success screen**:
+   - Big seat number
+   - **Big hex code** in JetBrains Mono (e.g. `A1F3`)
+   - "Show this code to the teacher when you arrive" (Mongolian + English)
+   - Session date / time / room 1105
+   - "Save / screenshot" hint, "Add to calendar" link
+   - "Cancel my booking" (uses phone to look up)
 
-Within `StudentQuestion` / `StudentEnglishQuestion`:
-| Gesture | Action |
-|---|---|
-| Swipe **left** | Next question |
-| Swipe **right** | Previous question |
-| Swipe **down** from top edge | Open Question Navigator |
-| Swipe **up** from bottom edge | Open Command Sheet |
-| **Two-finger tap** (or `Alt+C`) | Toggle Calculator |
-| **Long-press** on question text (or right-click on desktop) | Mark / unmark |
-| **Double-tap / double-click** on a choice | Submit that choice |
+Edge states:
+- Booking not yet open → countdown to 08:00.
+- Booking closed → "Closed 2h before session" (greyed grid).
+- Phone already booked for the session → show their existing seat + hex code.
+- Seat just taken (race) → "Just taken, pick another".
+- Session full → message + show next available session.
 
-Within `StudentPractice` list:
-| Gesture | Action |
-|---|---|
-| Swipe **left/right** on set-chip row | Cycle 68 → CB → 150 → English |
-| Long-press on a category | Start a 10-question quick session |
-| Pull-to-refresh (mobile) / `R` key (desktop) | Re-fetch progress |
+Mobile-first, brand colors (coral / indigo), Chillax headers, JetBrains Mono for seat # and hex code.
 
-All gestures use shared pointer-event hooks so they work on touch, mouse, and trackpad alike. Edge-swipes use a 20px hit zone to avoid clashing with scrolling.
+---
 
-## Discoverability
+### 3. Teacher / admin panel
 
-Shown the first 3 visits per screen (tracked in `localStorage`):
-- Faint "← swipe →" pill near the question footer
-- 1-second pulse on the Quick FAB
-- Small `?` chip in the header opens a "Gestures" cheat-sheet drawer (also lists keyboard shortcuts on desktop)
+New route: `/admin/ngee` (and `/teacher/ngee` if teachers need it). Added to `menuSections.ts` under **Tools** as "NGEE Course" (Armchair icon) and surfaced in the mobile MoreSheet automatically.
 
-## Technical Implementation
+Tabs:
 
-**New files**
-- `src/hooks/useSwipe.ts` — pointer-event swipe (direction, velocity, edge zone)
-- `src/hooks/useLongPress.ts`
-- `src/hooks/useHaptics.ts` — wraps `navigator.vibrate`, no-op when unsupported
-- `src/components/student/practice/PracticeCommandSheet.tsx` — full-screen on mobile, centered dialog on desktop, powered by existing `cmdk` (`ui/command`)
-- `src/components/student/practice/PracticeQuickFab.tsx` — mobile injects into bottom nav center; desktop renders as bottom-right floating button
-- `src/components/student/practice/GestureHintOverlay.tsx`
-- `src/hooks/usePracticeRecents.ts` — last question id / set / category in localStorage
-- `src/hooks/usePracticeKeymap.ts` — global `⌘K`, `Alt+C`, `R`, arrow-key prev/next on question screens
+**a. Today's Check-In** (default tab — the most-used screen)
+- Big input: "Enter hex code" (auto-uppercases, 4 chars, autofocus, mobile numeric/text keyboard).
+- On submit → calls `check_in_by_code` RPC → shows green flash with student name, seat #, time → ready for next code.
+- Live attendance counter: `12 / 25 checked in`.
+- Recent check-ins list (last 10) with undo within 30 s.
+- Errors: "Code not found", "Already checked in at HH:MM" (still surfaces who).
 
-**Modified files**
-- `src/components/student/StudentLayout.tsx` — mount `PracticeCommandSheet` provider, global edge-swipe-up listener, `GestureHintOverlay`, desktop FAB
-- `src/components/student/StudentBottomNav.tsx` — center slot becomes `PracticeQuickFab` on `/practice/*`; long-press handlers per tab
-- `src/components/student/StudentDashboardSidebar.tsx` — long-press / right-click on items uses recents
-- `src/pages/StudentQuestion.tsx` — wire swipes (left/right/down), long-press on question body, double-click on choices, keymap; record recents
-- `src/pages/student/StudentEnglishQuestion.tsx` — same gesture wiring
-- `src/pages/student/StudentPractice.tsx` — swipe on set-chip row, long-press on category cards
-- `src/pages/student/StudentSpeedMode.tsx` — swipe-down to exit (matches iOS modal dismiss)
+**b. Sessions**
+- List upcoming + past sessions (booked / total, status: Open / Closed / Done).
+- Per session: View bookings, Cancel session, "Regenerate next 8 weeks".
 
-**Behavior guards**
-- Disable horizontal swipes when a `Dialog`, `Sheet`, or `DesmosCalculator` is open (check `[data-state="open"]`)
-- Skip gestures over `<input>`, `<textarea>`, contenteditable, the drawing canvas
-- Respect `prefers-reduced-motion` — hint pulses become static
-- Feature-flag the system behind `practice_quick_nav` so it can be toggled per cohort
+**c. Bookings (per session)**
+- Table: name, phone, seat #, hex code, booked_at, attended toggle, cancel.
+- Search by name/phone/code. CSV export.
 
-**Routes touched**: `/practice`, `/practice/home`, `/practice/dashboard`, `/practice/english`, `/practice/speed`, `/practice/question/:id`, `/practice/english/question/:id`, `/practice/booking`, `/practice/profile`, `/practice/vocabulary`, `/practice/review`, `/practice/leaderboard`.
+**d. Course settings**
+- Room, total seats, weekdays/times, booking window. Edits apply only to **future** generated sessions.
+- "Copy public link" + "Show QR" (inline `qrcode` lib) — admin grabs the QR PNG to put in YouTube video / pinned comment.
 
-## Out of scope
-- Bluebook simulator (strict exam UX, no shortcuts)
-- Teacher / Admin panels
-- Backend changes — recents and hint counters are localStorage only
+---
 
-After approval I'll implement, then verify on 390px, 768px, and 1440px viewports with the browser tools and tune hit zones.
+### 4. Seeding (one-time, in the migration)
+
+- Insert one `ngee_courses` row with the details above.
+- Call `generate_ngee_sessions(course_id, 12)` so the next ~12 weeks of Wed/Fri sessions exist immediately, including tomorrow's.
+
+---
+
+### Files to add / change
+
+**Migration**
+- `supabase/migrations/<ts>_ngee_booking.sql` — tables, RLS, view, trigger (hex + window validation), RPCs, generator function, seed.
+
+**New pages / components**
+- `src/pages/public/NGEEBooking.tsx` — public booking page.
+- `src/components/ngee/NGEEBookingForm.tsx` — name/phone modal.
+- `src/components/ngee/NGEEBookingSuccess.tsx` — hex code success screen.
+- `src/pages/admin/NGEEAdmin.tsx` — wraps the 4 tabs.
+- `src/components/admin/ngee/NGEECheckInTab.tsx`
+- `src/components/admin/ngee/NGEESessionsList.tsx`
+- `src/components/admin/ngee/NGEEBookingsTable.tsx`
+- `src/components/admin/ngee/NGEECourseSettings.tsx`
+- `src/components/admin/ngee/NGEEQRDialog.tsx`
+
+**Modified**
+- `src/App.tsx` — add public `/ngee/:courseId` route (outside ProtectedRoute) and `/admin/ngee`.
+- `src/components/admin/menuSections.ts` — add "NGEE Course" entry under Tools.
+
+Reuses: `<SeatGrid />`, existing UI primitives, react-query patterns from `StudentBooking.tsx`, brand tokens.
+
+---
+
+### Open defaults (will use unless told otherwise)
+
+1. Hex length: **4 uppercase chars** (easy to say aloud). Switch to 6 if you want more entropy.
+2. Phone normalization: **+976 Mongolia** (matches rest of platform).
+3. Self-cancel: **enabled** until `booking_closes_at`, identified by phone.
+4. Public link: **per course** (one QR for the whole NGEE channel).

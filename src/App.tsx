@@ -61,6 +61,7 @@ import StudentRegistration from "./pages/StudentRegistration";
 // Public Pages
 import PublicClosingReport from "./pages/PublicClosingReport";
 import LiveSession from "./pages/LiveSession";
+import NGEEBooking from "./pages/public/NGEEBooking";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,8 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/ngee" element={<NGEEBooking />} />
+                  <Route path="/ngee/:courseId" element={<NGEEBooking />} />
                   <Route 
                     path="/admin/*" 
                     element={

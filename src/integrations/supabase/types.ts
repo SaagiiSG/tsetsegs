@@ -1284,6 +1284,148 @@ export type Database = {
         }
         Relationships: []
       }
+      ngee_bookings: {
+        Row: {
+          attended: boolean
+          booked_at: string
+          cancelled_at: string | null
+          check_in_code: string
+          checked_in_at: string | null
+          checked_in_by: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          seat_number: number
+          session_id: string
+        }
+        Insert: {
+          attended?: boolean
+          booked_at?: string
+          cancelled_at?: string | null
+          check_in_code: string
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          seat_number: number
+          session_id: string
+        }
+        Update: {
+          attended?: boolean
+          booked_at?: string
+          cancelled_at?: string | null
+          check_in_code?: string
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          seat_number?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ngee_bookings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ngee_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ngee_courses: {
+        Row: {
+          booking_closes_hours_before: number
+          booking_opens_hour: number
+          created_at: string
+          end_time: string
+          id: string
+          is_active: boolean
+          name: string
+          room: string | null
+          start_date: string
+          start_time: string
+          total_seats: number
+          weekdays: number[]
+        }
+        Insert: {
+          booking_closes_hours_before?: number
+          booking_opens_hour?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          room?: string | null
+          start_date?: string
+          start_time?: string
+          total_seats?: number
+          weekdays?: number[]
+        }
+        Update: {
+          booking_closes_hours_before?: number
+          booking_opens_hour?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          room?: string | null
+          start_date?: string
+          start_time?: string
+          total_seats?: number
+          weekdays?: number[]
+        }
+        Relationships: []
+      }
+      ngee_sessions: {
+        Row: {
+          booking_closes_at: string
+          booking_opens_at: string
+          course_id: string
+          created_at: string
+          id: string
+          is_cancelled: boolean
+          session_date: string
+          session_end_date: string
+          total_seats: number
+        }
+        Insert: {
+          booking_closes_at: string
+          booking_opens_at: string
+          course_id: string
+          created_at?: string
+          id?: string
+          is_cancelled?: boolean
+          session_date: string
+          session_end_date: string
+          total_seats?: number
+        }
+        Update: {
+          booking_closes_at?: string
+          booking_opens_at?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          is_cancelled?: boolean
+          session_date?: string
+          session_end_date?: string
+          total_seats?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ngee_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "ngee_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       point_transactions: {
         Row: {
           category: string
@@ -2778,9 +2920,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ngee_session_taken_seats: {
+        Row: {
+          seat_number: number | null
+          session_id: string | null
+        }
+        Insert: {
+          seat_number?: number | null
+          session_id?: string | null
+        }
+        Update: {
+          seat_number?: number | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ngee_bookings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ngee_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      generate_ngee_sessions: {
+        Args: { p_course_id: string; p_weeks_ahead?: number }
+        Returns: number
+      }
       generate_share_token: { Args: never; Returns: string }
       get_all_users: {
         Args: never
@@ -2813,6 +2981,34 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      ngee_cancel_booking: {
+        Args: { p_phone: string; p_session_id: string }
+        Returns: boolean
+      }
+      ngee_check_in_by_code: {
+        Args: { p_code: string; p_session_id: string }
+        Returns: {
+          already_checked: boolean
+          checked_in_at: string
+          first_name: string
+          id: string
+          last_name: string
+          seat_number: number
+        }[]
+      }
+      ngee_lookup_booking: {
+        Args: { p_phone: string; p_session_id: string }
+        Returns: {
+          attended: boolean
+          cancelled_at: string
+          check_in_code: string
+          first_name: string
+          id: string
+          last_name: string
+          seat_number: number
+        }[]
+      }
+      ngee_undo_check_in: { Args: { p_booking_id: string }; Returns: boolean }
       student_owns_record: {
         Args: { phone: string; student_id: string }
         Returns: boolean
