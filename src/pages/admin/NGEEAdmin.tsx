@@ -199,108 +199,100 @@ export default function NGEEAdmin() {
         </Button>
       </div>
 
-      <Tabs defaultValue="checkin">
-        <TabsList>
-          <TabsTrigger value="checkin">Check-in</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings ({activeBookings.length})</TabsTrigger>
-        </TabsList>
-
+      <div className="space-y-4">
         {/* CHECK-IN */}
-        <TabsContent value="checkin" className="space-y-4">
-          {activeSession && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Today's Check-In</span>
-                  <Badge variant="secondary" className="text-base font-mono">{checkedInCount} / {activeBookings.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <form onSubmit={e => { e.preventDefault(); if (code.trim()) checkInMutation.mutate(code); }}
-                      className="flex gap-2">
-                  <Input ref={codeInputRef} autoFocus value={code} onChange={e => setCode(e.target.value.toUpperCase().slice(0, 4))}
-                    placeholder="ENTER CODE"
-                    className="font-mono text-3xl h-16 text-center tracking-widest uppercase" maxLength={4} />
-                  <Button type="submit" size="lg" className="h-16 px-8" disabled={checkInMutation.isPending || code.length < 4}>
-                    {checkInMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Check in'}
-                  </Button>
-                </form>
-                <div className="space-y-1.5">
-                  {recentCheckins.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No check-ins yet</p>}
-                  {recentCheckins.map((c, i) => (
-                    <div key={`${c.id}-${i}`} className={cn("flex items-center justify-between rounded-lg border p-2.5", c.alreadyChecked ? "bg-amber-500/5 border-amber-500/20" : "bg-primary/5 border-primary/20")}>
-                      <div className="flex items-center gap-2.5">
-                        <CheckCircle2 className={cn("h-4 w-4", c.alreadyChecked ? "text-amber-500" : "text-primary")} />
-                        <span className="font-medium text-sm">{c.name}</span>
-                        <Badge variant="outline" className="text-xs">Seat #{c.seat}</Badge>
-                        {c.alreadyChecked && <Badge variant="outline" className="text-xs text-amber-600 border-amber-500/30">already in</Badge>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{format(c.time, 'HH:mm:ss')}</span>
-                        {!c.alreadyChecked && (Date.now() - c.time.getTime() < 30000) && (
-                          <Button variant="ghost" size="sm" className="h-7" onClick={() => undoMutation.mutate(c.id)}>
-                            <Undo2 className="h-3 w-3 mr-1" />Undo
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* BOOKINGS */}
-        <TabsContent value="bookings" className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search by name, phone, code or seat #" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-            <Button variant="outline" size="sm" onClick={exportCSV} disabled={!activeBookings.length}>Export CSV</Button>
-          </div>
+        {activeSession && (
           <Card>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Seat</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Booked</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBookings.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No bookings yet</TableCell></TableRow>
-                  )}
-                  {filteredBookings.map(b => (
-                    <TableRow key={b.id}>
-                      <TableCell className="font-mono font-bold">#{b.seat_number}</TableCell>
-                      <TableCell>{b.first_name} {b.last_name}</TableCell>
-                      <TableCell className="font-mono text-xs">{b.phone}</TableCell>
-                      <TableCell className="font-mono font-bold tracking-widest text-primary">{b.check_in_code}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{format(new Date(b.booked_at), 'MMM d HH:mm')}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="sm" variant={b.attended ? 'default' : 'outline'}
-                            onClick={() => toggleAttended.mutate({ id: b.id, attended: !b.attended })}>
-                            {b.attended ? '✓ Present' : 'Mark present'}
-                          </Button>
-                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm('Cancel this booking?')) cancelBooking.mutate(b.id); }}>×</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Today's Check-In</span>
+                <Badge variant="secondary" className="text-base font-mono">{checkedInCount} / {activeBookings.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={e => { e.preventDefault(); if (code.trim()) checkInMutation.mutate(code); }}
+                    className="flex gap-2">
+                <Input ref={codeInputRef} autoFocus value={code} onChange={e => setCode(e.target.value.toUpperCase().slice(0, 4))}
+                  placeholder="ENTER CODE"
+                  className="font-mono text-3xl h-16 text-center tracking-widest uppercase" maxLength={4} />
+                <Button type="submit" size="lg" className="h-16 px-8" disabled={checkInMutation.isPending || code.length < 4}>
+                  {checkInMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Check in'}
+                </Button>
+              </form>
+              <div className="space-y-1.5">
+                {recentCheckins.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No check-ins yet</p>}
+                {recentCheckins.map((c, i) => (
+                  <div key={`${c.id}-${i}`} className={cn("flex items-center justify-between rounded-lg border p-2.5", c.alreadyChecked ? "bg-amber-500/5 border-amber-500/20" : "bg-primary/5 border-primary/20")}>
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle2 className={cn("h-4 w-4", c.alreadyChecked ? "text-amber-500" : "text-primary")} />
+                      <span className="font-medium text-sm">{c.name}</span>
+                      <Badge variant="outline" className="text-xs">Seat #{c.seat}</Badge>
+                      {c.alreadyChecked && <Badge variant="outline" className="text-xs text-amber-600 border-amber-500/30">already in</Badge>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{format(c.time, 'HH:mm:ss')}</span>
+                      {!c.alreadyChecked && (Date.now() - c.time.getTime() < 30000) && (
+                        <Button variant="ghost" size="sm" className="h-7" onClick={() => undoMutation.mutate(c.id)}>
+                          <Undo2 className="h-3 w-3 mr-1" />Undo
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        )}
+
+        {/* BOOKINGS */}
+        <div className="flex items-center gap-2 flex-wrap pt-2">
+          <h2 className="text-lg font-semibold mr-auto">Bookings ({activeBookings.length})</h2>
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Search by name, phone, code or seat #" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <Button variant="outline" size="sm" onClick={exportCSV} disabled={!activeBookings.length}>Export CSV</Button>
+        </div>
+        <Card>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Seat</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Booked</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBookings.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No bookings yet</TableCell></TableRow>
+                )}
+                {filteredBookings.map(b => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-mono font-bold">#{b.seat_number}</TableCell>
+                    <TableCell>{b.first_name} {b.last_name}</TableCell>
+                    <TableCell className="font-mono text-xs">{b.phone}</TableCell>
+                    <TableCell className="font-mono font-bold tracking-widest text-primary">{b.check_in_code}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{format(new Date(b.booked_at), 'MMM d HH:mm')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button size="sm" variant={b.attended ? 'default' : 'outline'}
+                          onClick={() => toggleAttended.mutate({ id: b.id, attended: !b.attended })}>
+                          {b.attended ? '✓ Present' : 'Mark present'}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm('Cancel this booking?')) cancelBooking.mutate(b.id); }}>×</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* QR dialog */}
       <Dialog open={showQR} onOpenChange={setShowQR}>
