@@ -11,7 +11,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { format, isAfter, isBefore } from 'date-fns';
-import { CheckCircle2, QrCode, Copy, Loader2, RefreshCw, Undo2, Search } from 'lucide-react';
+import { CheckCircle2, QrCode, Copy, Loader2, RefreshCw, Undo2, Search, Download } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
 
