@@ -21,6 +21,7 @@ import BluebookManager from '@/pages/admin/BluebookManager';
 import SprintMonitor from '@/pages/admin/SprintMonitor';
 import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
+import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
@@ -66,6 +67,7 @@ const Admin = () => {
       <Route path="sat-schedule" element={<SATSchedule />} />
       <Route path="student/:studentId" element={<TeacherStudentProfile />} />
       <Route path="review-sessions" element={<ReviewSessions />} />
+      <Route path="ngee" element={<NGEEAdmin />} />
       <Route path="bug-reports" element={<BugReports />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />

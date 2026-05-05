@@ -58,6 +58,7 @@ export const menuSections: MenuSection[] = [
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
+      { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
       { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
     ],
     defaultOpen: false,
