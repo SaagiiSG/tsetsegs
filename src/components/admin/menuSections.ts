@@ -61,7 +61,7 @@ export const menuSections: MenuSection[] = [
       { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
       { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
     ],
-    defaultOpen: false,
+    defaultOpen: true,
   },
   {
     label: "Admin",
