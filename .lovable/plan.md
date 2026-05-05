@@ -1,150 +1,59 @@
-## National Generalized Entrance Exam (NGEE) — Public Seat Booking + Hex Check-In
+# Add 4 Standalone Lectures with QR Booking + Check-In
 
-A standalone, **public** booking system for the new NGEE course (taught via the YouTube channel). No student account required. Students scan a QR → fill name + phone → pick a seat → receive a unique **hex check-in code**. On the day of class, the teacher enters the hex code in their panel to mark the student present.
+Create 4 one-off lectures, each with its own course record, public booking page (unique URL + QR), and admin check-in tab. Hex check-in code flow stays identical to NGEE.
 
-This is intentionally separate from the existing `review_sessions` / `seat_bookings` system (which requires a `student_account_id`).
+## The 4 lectures (all 18:20–20:00, Room same as NGEE)
 
-### Course details (seeded)
-- Course name: **National Generalized Entrance Exam (NGEE)**
-- Room: **1105**
-- Schedule: **Wed & Fri, 16:30 – 18:00**
-- Total seats: **25**
-- First session: **tomorrow**
-- Booking window per session: **opens 08:00 day-of, closes 14:30 (2 h before start)**
+| Date | Lecture (MN) |
+|---|---|
+| May 8 | Сэтгэл зүйч мэргэжилийн тухай |
+| May 13 | Үерхлийн хил хязгаар |
+| May 20 | College Application явуулах зөвлөгөө |
+| May 27 | Сэтгэцийн эрүүл мэндээ анхаарах зөвлөгөө |
 
----
+## 1. Database (data only, no schema change)
 
-### 1. Database (new tables, isolated)
+For each lecture, insert one row in `ngee_courses` and one row in `ngee_sessions`:
 
-`public.ngee_courses`
-- `id`, `name`, `room`, `total_seats` (default 25)
-- `weekdays int[]` (e.g. `{3,5}`)
-- `start_time time` (16:30), `end_time time` (18:00)
-- `start_date date`, `is_active bool`
-- `booking_opens_hour int` (default 8), `booking_closes_hours_before int` (default 2)
+- `ngee_courses`: `name = "<MN title>"`, `is_active = true`, `start_date = <lecture date>`, `start_time = 18:20`, `end_time = 20:00`, `weekdays = {<that single weekday>}`, `total_seats = 25`, `room` = same as the existing NGEE course, `booking_opens_hour = 8`, `booking_closes_hours_before = 1`.
+- `ngee_sessions`: one row per course on the lecture date at 18:20 Asia/Ulaanbaatar, `booking_opens_at = now()` (open immediately so you can test), `booking_closes_at = session_date - 1h`, `total_seats = 25`.
 
-`public.ngee_sessions` (auto-generated instances)
-- `id`, `course_id`, `session_date timestamptz`, `session_end_date timestamptz`
-- `booking_opens_at timestamptz`, `booking_closes_at timestamptz`
-- `total_seats int`, `is_cancelled bool`
+(Skip `generate_ngee_sessions` — we insert the single session directly so no extra weekly sessions are created.)
 
-`public.ngee_bookings`
-- `id`, `session_id` → ngee_sessions
-- `first_name text`, `last_name text`, `phone text` (normalized to +976)
-- `seat_number int`
-- `check_in_code text NOT NULL` — short hex (e.g. 4 chars uppercase, ~65k space; unique per session)
-- `attended bool DEFAULT false`, `checked_in_at timestamptz`, `checked_in_by text`
-- `booked_at`, `cancelled_at`
-- Partial unique indexes:
-  - one active seat per session
-  - one active booking per phone per session
-  - unique `check_in_code` per session
+## 2. Public booking page — `src/pages/public/NGEEBooking.tsx`
 
-**RLS**
-- `ngee_courses`, `ngee_sessions`: public SELECT (active only); admin manage.
-- `ngee_bookings`:
-  - Public INSERT (booking) — BEFORE INSERT trigger validates `now()` is between `booking_opens_at` and `booking_closes_at`, and seat is in range. Trigger also generates the hex code.
-  - **No public SELECT of full rows** — names/phones/codes must stay private. Instead expose:
-    - View `ngee_session_taken_seats(session_id, seat_number)` → public SELECT (powers the seat grid).
-    - RPC `lookup_my_booking(phone, session_id)` → returns the caller's own booking (used on success screen + self-cancel).
-  - Admin + teacher: full SELECT/UPDATE.
-  - RPC `check_in_by_code(session_id, code)` (SECURITY DEFINER) — teachers/admins call this to flip `attended=true`. Returns the booking row on success.
+Currently the route `/ngee/:courseId` exists but `courseId` is ignored — it always loads the first active course. Change the course query:
 
-**Hex code generation** (trigger):
-- 4 uppercase hex chars (`A1F3`, `7BC2`, …). Retry up to 5× on collision within session.
-- Easy to read aloud; ~65k unique codes per session is way more than 25 seats.
+- Read `useParams<{ courseId?: string }>()`.
+- If `courseId` provided → `select * from ngee_courses where id = courseId` (no `is_active` filter so old lectures still resolve their old QR).
+- Else → current behaviour (first active NGEE course) for backwards compatibility with `/ngee`.
 
-**Session generation**: SQL function `generate_ngee_sessions(course_id uuid, weeks_ahead int)` — inserts upcoming Wed/Fri rows for the next N weeks based on weekdays + times. Idempotent (skips existing dates). Run on seed and re-runnable from admin.
+Sessions query already filters by `course_id`, so it just works. The header line "Wed & Fri • …" should be replaced with a generic line built from the loaded course (`format(weekdays) • start–end • Room X`) so lecture pages don't say "Wed & Fri".
 
----
+## 3. Admin page — `src/pages/admin/NGEEAdmin.tsx`
 
-### 2. Public booking page (no auth)
+Add a course switcher at the top so the same admin screen handles NGEE + each lecture:
 
-Route: `/ngee/:courseId` (QR target)
+- Query all `ngee_courses where is_active = true` ordered by start_date.
+- Add a `Select` (or pill row) labeled "Course" above the session picker. Default = NGEE course (first by created_at) so existing flow is unchanged.
+- All downstream queries (sessions, bookings, check-in by code, QR) re-key on the selected course id.
+- QR / public link becomes `https://flowersos.co/ngee/<courseId>` instead of `/ngee`. The "Copy link" + QR dialog use this dynamic URL.
+- Header shows the selected course's name + schedule.
 
-Flow (3 taps max):
-1. Land → see next upcoming session at top + tabs/dropdown for other sessions. Seat grid (`<SeatGrid />`) below.
-2. Tap a seat → modal with **First name / Last name / Phone** (zod: name 1–50, phone normalized; +976 default).
-3. Tap **Confirm** → insert + show **success screen**:
-   - Big seat number
-   - **Big hex code** in JetBrains Mono (e.g. `A1F3`)
-   - "Show this code to the teacher when you arrive" (Mongolian + English)
-   - Session date / time / room 1105
-   - "Save / screenshot" hint, "Add to calendar" link
-   - "Cancel my booking" (uses phone to look up)
+Result: from `/admin/ngee` admin can pick any of the 5 courses (NGEE + 4 lectures), see that course's sessions, accept hex check-in codes, and grab the QR for printing/sharing.
 
-Edge states:
-- Booking not yet open → countdown to 08:00.
-- Booking closed → "Closed 2h before session" (greyed grid).
-- Phone already booked for the session → show their existing seat + hex code.
-- Seat just taken (race) → "Just taken, pick another".
-- Session full → message + show next available session.
+## 4. Check-in flow
 
-Mobile-first, brand colors (coral / indigo), Chillax headers, JetBrains Mono for seat # and hex code.
+No changes needed. `ngee_check_in_by_code(p_session_id, p_code)` already scopes by session, and the trigger `ngee_validate_and_codegen` generates a unique 4-char hex per booking per session. Each lecture's session is independent so codes can repeat across lectures without collision.
 
----
+## Out of scope
 
-### 3. Teacher / admin panel
+- No recurring schedule for lectures (one-off only). If you later want to repeat any of them, just insert another `ngee_sessions` row for the same `course_id`.
+- No SMS / reminders.
+- No edits to `SeatGrid` or the booking form.
 
-New route: `/admin/ngee` (and `/teacher/ngee` if teachers need it). Added to `menuSections.ts` under **Tools** as "NGEE Course" (Armchair icon) and surfaced in the mobile MoreSheet automatically.
+## Files touched
 
-Tabs:
-
-**a. Today's Check-In** (default tab — the most-used screen)
-- Big input: "Enter hex code" (auto-uppercases, 4 chars, autofocus, mobile numeric/text keyboard).
-- On submit → calls `check_in_by_code` RPC → shows green flash with student name, seat #, time → ready for next code.
-- Live attendance counter: `12 / 25 checked in`.
-- Recent check-ins list (last 10) with undo within 30 s.
-- Errors: "Code not found", "Already checked in at HH:MM" (still surfaces who).
-
-**b. Sessions**
-- List upcoming + past sessions (booked / total, status: Open / Closed / Done).
-- Per session: View bookings, Cancel session, "Regenerate next 8 weeks".
-
-**c. Bookings (per session)**
-- Table: name, phone, seat #, hex code, booked_at, attended toggle, cancel.
-- Search by name/phone/code. CSV export.
-
-**d. Course settings**
-- Room, total seats, weekdays/times, booking window. Edits apply only to **future** generated sessions.
-- "Copy public link" + "Show QR" (inline `qrcode` lib) — admin grabs the QR PNG to put in YouTube video / pinned comment.
-
----
-
-### 4. Seeding (one-time, in the migration)
-
-- Insert one `ngee_courses` row with the details above.
-- Call `generate_ngee_sessions(course_id, 12)` so the next ~12 weeks of Wed/Fri sessions exist immediately, including tomorrow's.
-
----
-
-### Files to add / change
-
-**Migration**
-- `supabase/migrations/<ts>_ngee_booking.sql` — tables, RLS, view, trigger (hex + window validation), RPCs, generator function, seed.
-
-**New pages / components**
-- `src/pages/public/NGEEBooking.tsx` — public booking page.
-- `src/components/ngee/NGEEBookingForm.tsx` — name/phone modal.
-- `src/components/ngee/NGEEBookingSuccess.tsx` — hex code success screen.
-- `src/pages/admin/NGEEAdmin.tsx` — wraps the 4 tabs.
-- `src/components/admin/ngee/NGEECheckInTab.tsx`
-- `src/components/admin/ngee/NGEESessionsList.tsx`
-- `src/components/admin/ngee/NGEEBookingsTable.tsx`
-- `src/components/admin/ngee/NGEECourseSettings.tsx`
-- `src/components/admin/ngee/NGEEQRDialog.tsx`
-
-**Modified**
-- `src/App.tsx` — add public `/ngee/:courseId` route (outside ProtectedRoute) and `/admin/ngee`.
-- `src/components/admin/menuSections.ts` — add "NGEE Course" entry under Tools.
-
-Reuses: `<SeatGrid />`, existing UI primitives, react-query patterns from `StudentBooking.tsx`, brand tokens.
-
----
-
-### Open defaults (will use unless told otherwise)
-
-1. Hex length: **4 uppercase chars** (easy to say aloud). Switch to 6 if you want more entropy.
-2. Phone normalization: **+976 Mongolia** (matches rest of platform).
-3. Self-cancel: **enabled** until `booking_closes_at`, identified by phone.
-4. Public link: **per course** (one QR for the whole NGEE channel).
+- `supabase/migrations/<new>.sql` — `INSERT` 4 courses + 4 sessions (data seed via migration is fine here since it's idempotent with `ON CONFLICT DO NOTHING` on a new `slug`-style key… actually we'll just guard with `WHERE NOT EXISTS (… name = …)`).
+- `src/pages/public/NGEEBooking.tsx` — read `:courseId`, dynamic header.
+- `src/pages/admin/NGEEAdmin.tsx` — course selector, dynamic public URL.
