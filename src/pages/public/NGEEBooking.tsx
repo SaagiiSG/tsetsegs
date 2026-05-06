@@ -107,20 +107,25 @@ export default function NGEEBooking() {
       const parsed = bookingSchema.safeParse(form);
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
       const phone = normalizePhone(form.phone);
-      const { data, error } = await supabase.from('ngee_bookings').insert({
+      const { error } = await supabase.from('ngee_bookings').insert({
         session_id: activeSession.id,
         first_name: parsed.data.first_name,
         last_name: parsed.data.last_name,
         phone,
         seat_number: selectedSeat,
         check_in_code: '', // trigger replaces
-      }).select('seat_number, check_in_code').single();
+      });
       if (error) {
         if (error.message.includes('idx_ngee_unique_seat')) throw new Error('This seat was just taken — pick another.');
         if (error.message.includes('idx_ngee_unique_phone')) throw new Error('This phone already booked a seat for this session.');
         throw new Error(error.message);
       }
-      return data;
+      const { data: lookup, error: lookupError } = await supabase
+        .rpc('ngee_lookup_booking', { p_session_id: activeSession.id, p_phone: phone });
+      if (lookupError) throw new Error(lookupError.message);
+      const row = Array.isArray(lookup) ? lookup[0] : lookup;
+      if (!row) throw new Error('Booking not found after creation');
+      return { seat_number: row.seat_number, check_in_code: row.check_in_code };
     },
     onSuccess: (d) => {
       setSuccess({ seat: d.seat_number, code: d.check_in_code, sessionTitle: format(new Date(activeSession!.session_date), 'EEE, MMM d • HH:mm') });
