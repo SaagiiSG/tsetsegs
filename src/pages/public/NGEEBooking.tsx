@@ -257,18 +257,33 @@ export default function NGEEBooking() {
               )}
             </Card>
 
-            {/* Seat grid */}
-            <Card>
-              <CardContent className="p-4 md:p-6">
-                <SeatGrid
-                  totalSeats={activeSession.total_seats}
-                  takenSeats={sessionTakenSeats}
-                  selectedSeat={selectedSeat}
-                  onSelectSeat={(s) => { setSelectedSeat(s); setShowForm(true); }}
-                  disabled={!isOpen}
-                />
-              </CardContent>
-            </Card>
+            {/* Seat grid or fully booked */}
+            {available === 0 ? (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-8 text-center space-y-3">
+                  <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <Armchair className="h-7 w-7 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold">Бүх суудал захиалагдсан</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Энэ хичээлийн бүх {activeSession.total_seats} суудал дүүрсэн байна. Дараагийн хичээлийг сонгоно уу.
+                  </p>
+                  <p className="text-xs text-muted-foreground">All {activeSession.total_seats} seats are taken for this session.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-4 md:p-6">
+                  <SeatGrid
+                    totalSeats={activeSession.total_seats}
+                    takenSeats={sessionTakenSeats}
+                    selectedSeat={selectedSeat}
+                    onSelectSeat={(s) => { setSelectedSeat(s); setShowForm(true); }}
+                    disabled={!isOpen}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
 
