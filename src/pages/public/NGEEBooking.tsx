@@ -249,7 +249,10 @@ export default function NGEEBooking() {
                     </div>
                   </div>
                 </div>
-                <Badge variant="secondary"><Armchair className="h-3 w-3 mr-1" />{available}/{activeSession.total_seats}</Badge>
+                <Badge variant="secondary">
+                  <Armchair className="h-3 w-3 mr-1" />
+                  {takenSeatsLoaded ? available : '...'}/{activeSession.total_seats}
+                </Badge>
               </CardContent>
               {notYetOpen && (
                 <div className="border-t px-4 py-2.5 text-xs text-amber-600 dark:text-amber-400">
@@ -267,7 +270,24 @@ export default function NGEEBooking() {
             </Card>
 
             {/* Seat grid or fully booked */}
-            {available === 0 ? (
+            {takenSeatsLoading || !takenSeatsLoaded ? (
+              <Card>
+                <CardContent className="p-8 text-center space-y-3 text-muted-foreground">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  <p className="text-sm">Checking seat availability...</p>
+                </CardContent>
+              </Card>
+            ) : takenSeatsError ? (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-8 text-center space-y-3">
+                  <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertCircle className="h-7 w-7 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold">Суудлын мэдээлэл ачаалсангүй</h2>
+                  <p className="text-sm text-muted-foreground">Дахин ачаалаад үзнэ үү. Seat booking is locked until availability loads.</p>
+                </CardContent>
+              </Card>
+            ) : available === 0 ? (
               <Card className="border-destructive/30 bg-destructive/5">
                 <CardContent className="p-8 text-center space-y-3">
                   <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
