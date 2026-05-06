@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { SeatGrid } from '@/components/student/SeatGrid';
 import { toast } from 'sonner';
 import { format, isAfter, isBefore, formatDistanceToNow } from 'date-fns';
-import { Clock, MapPin, Armchair, CheckCircle2, Copy, Loader2, ChevronDown } from 'lucide-react';
+import { Clock, MapPin, Armchair, CheckCircle2, Copy, Loader2, ChevronDown, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
@@ -74,11 +74,16 @@ export default function NGEEBooking() {
     },
   });
 
-  const { data: takenSeatsAll } = useQuery({
-    queryKey: ['ngee-taken-seats'],
+  const sessionIds = useMemo(() => sessions?.map(s => s.id) || [], [sessions]);
+
+  const { data: takenSeatsAll, isLoading: takenSeatsLoading, isError: takenSeatsError } = useQuery({
+    queryKey: ['ngee-taken-seats', sessionIds],
     enabled: !!sessions?.length,
     queryFn: async () => {
-      const { data, error } = await supabase.from('ngee_session_taken_seats').select('*');
+      const { data, error } = await supabase
+        .from('ngee_session_taken_seats')
+        .select('session_id, seat_number')
+        .in('session_id', sessionIds);
       if (error) throw error;
       return data;
     },
@@ -99,11 +104,15 @@ export default function NGEEBooking() {
   const isOpen = activeSession && isAfter(now, new Date(activeSession.booking_opens_at)) && isBefore(now, new Date(activeSession.booking_closes_at));
   const notYetOpen = activeSession && isBefore(now, new Date(activeSession.booking_opens_at));
   const isClosed = activeSession && isAfter(now, new Date(activeSession.booking_closes_at));
-  const available = activeSession ? activeSession.total_seats - sessionTakenSeats.length : 0;
+  const takenSeatsLoaded = Array.isArray(takenSeatsAll);
+  const available = activeSession && takenSeatsLoaded ? Math.max(0, activeSession.total_seats - sessionTakenSeats.length) : 0;
 
   const bookMutation = useMutation({
     mutationFn: async () => {
       if (!activeSession || selectedSeat == null) throw new Error('Pick a seat');
+      if (!takenSeatsLoaded) throw new Error('Seat availability is still loading. Please wait.');
+      if (available <= 0) throw new Error('This session is fully booked.');
+      if (sessionTakenSeats.includes(selectedSeat)) throw new Error('This seat is already taken — pick another.');
       const parsed = bookingSchema.safeParse(form);
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
       const phone = normalizePhone(form.phone);
