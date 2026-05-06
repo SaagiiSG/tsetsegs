@@ -34,14 +34,21 @@ export function SeatGrid({ totalSeats, takenSeats, selectedSeat, onSelectSeat, d
           const isSelected = selectedSeat === seatNum;
           const isMine = myBookedSeat === seatNum;
 
+          const isDisabled = disabled || (isTaken && !isMine);
           return (
             <button
               key={seatNum}
-              disabled={disabled || (isTaken && !isMine)}
-              onClick={() => !isTaken && onSelectSeat(seatNum)}
+              type="button"
+              disabled={isDisabled}
+              aria-disabled={isDisabled}
+              onClick={(e) => {
+                if (isDisabled || isTaken) { e.preventDefault(); e.stopPropagation(); return; }
+                onSelectSeat(seatNum);
+              }}
               className={cn(
-                "flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-200 border",
-                "hover:scale-105 active:scale-95",
+                "flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-200 border select-none",
+                !isDisabled && "hover:scale-105 active:scale-95",
+                isDisabled && "pointer-events-none",
                 isMine
                   ? "bg-primary text-primary-foreground border-primary shadow-md"
                   : isSelected
