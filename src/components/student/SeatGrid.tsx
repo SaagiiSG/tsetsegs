@@ -35,14 +35,35 @@ export function SeatGrid({ totalSeats, takenSeats, selectedSeat, onSelectSeat, d
           const isMine = myBookedSeat === seatNum;
 
           const isDisabled = disabled || (isTaken && !isMine);
+          if (isDisabled) {
+            return (
+              <div
+                key={seatNum}
+                role="status"
+                aria-label={`Seat ${seatNum} unavailable`}
+                className={cn(
+                  "flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-200 border select-none touch-none",
+                  isMine
+                    ? "bg-primary text-primary-foreground border-primary shadow-md"
+                    : isTaken
+                      ? "bg-muted text-muted-foreground/40 border-muted cursor-not-allowed opacity-50"
+                      : "bg-card text-muted-foreground border-border cursor-not-allowed"
+                )}
+              >
+                <Armchair className={cn(
+                  "h-4 w-4 sm:h-5 sm:w-5",
+                  isMine ? "text-primary-foreground" : isTaken ? "text-muted-foreground/30" : "text-muted-foreground"
+                )} />
+                <span className="text-[10px] sm:text-xs font-medium mt-0.5">{seatNum}</span>
+              </div>
+            );
+          }
+
           return (
             <button
               key={seatNum}
               type="button"
-              disabled={isDisabled}
-              aria-disabled={isDisabled}
               onClick={(e) => {
-                if (isDisabled || isTaken) { e.preventDefault(); e.stopPropagation(); return; }
                 onSelectSeat(seatNum);
               }}
               className={cn(

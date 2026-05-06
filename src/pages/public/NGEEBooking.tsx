@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { SeatGrid } from '@/components/student/SeatGrid';
 import { toast } from 'sonner';
 import { format, isAfter, isBefore, formatDistanceToNow } from 'date-fns';
-import { Clock, MapPin, Armchair, CheckCircle2, Copy, Loader2, ChevronDown } from 'lucide-react';
+import { Clock, MapPin, Armchair, CheckCircle2, Copy, Loader2, ChevronDown, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
@@ -74,11 +74,16 @@ export default function NGEEBooking() {
     },
   });
 
-  const { data: takenSeatsAll } = useQuery({
-    queryKey: ['ngee-taken-seats'],
+  const sessionIds = useMemo(() => sessions?.map(s => s.id) || [], [sessions]);
+
+  const { data: takenSeatsAll, isLoading: takenSeatsLoading, isError: takenSeatsError } = useQuery({
+    queryKey: ['ngee-taken-seats', sessionIds],
     enabled: !!sessions?.length,
     queryFn: async () => {
-      const { data, error } = await supabase.from('ngee_session_taken_seats').select('*');
+      const { data, error } = await supabase
+        .from('ngee_session_taken_seats')
+        .select('session_id, seat_number')
+        .in('session_id', sessionIds);
       if (error) throw error;
       return data;
     },
@@ -99,11 +104,15 @@ export default function NGEEBooking() {
   const isOpen = activeSession && isAfter(now, new Date(activeSession.booking_opens_at)) && isBefore(now, new Date(activeSession.booking_closes_at));
   const notYetOpen = activeSession && isBefore(now, new Date(activeSession.booking_opens_at));
   const isClosed = activeSession && isAfter(now, new Date(activeSession.booking_closes_at));
-  const available = activeSession ? activeSession.total_seats - sessionTakenSeats.length : 0;
+  const takenSeatsLoaded = Array.isArray(takenSeatsAll);
+  const available = activeSession && takenSeatsLoaded ? Math.max(0, activeSession.total_seats - sessionTakenSeats.length) : 0;
 
   const bookMutation = useMutation({
     mutationFn: async () => {
       if (!activeSession || selectedSeat == null) throw new Error('Pick a seat');
+      if (!takenSeatsLoaded) throw new Error('Seat availability is still loading. Please wait.');
+      if (available <= 0) throw new Error('This session is fully booked.');
+      if (sessionTakenSeats.includes(selectedSeat)) throw new Error('This seat is already taken — pick another.');
       const parsed = bookingSchema.safeParse(form);
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
       const phone = normalizePhone(form.phone);
@@ -240,7 +249,10 @@ export default function NGEEBooking() {
                     </div>
                   </div>
                 </div>
-                <Badge variant="secondary"><Armchair className="h-3 w-3 mr-1" />{available}/{activeSession.total_seats}</Badge>
+                <Badge variant="secondary">
+                  <Armchair className="h-3 w-3 mr-1" />
+                  {takenSeatsLoaded ? available : '...'}/{activeSession.total_seats}
+                </Badge>
               </CardContent>
               {notYetOpen && (
                 <div className="border-t px-4 py-2.5 text-xs text-amber-600 dark:text-amber-400">
@@ -258,7 +270,24 @@ export default function NGEEBooking() {
             </Card>
 
             {/* Seat grid or fully booked */}
-            {available === 0 ? (
+            {takenSeatsLoading || !takenSeatsLoaded ? (
+              <Card>
+                <CardContent className="p-8 text-center space-y-3 text-muted-foreground">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  <p className="text-sm">Checking seat availability...</p>
+                </CardContent>
+              </Card>
+            ) : takenSeatsError ? (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-8 text-center space-y-3">
+                  <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertCircle className="h-7 w-7 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold">Суудлын мэдээлэл ачаалсангүй</h2>
+                  <p className="text-sm text-muted-foreground">Дахин ачаалаад үзнэ үү. Seat booking is locked until availability loads.</p>
+                </CardContent>
+              </Card>
+            ) : available === 0 ? (
               <Card className="border-destructive/30 bg-destructive/5">
                 <CardContent className="p-8 text-center space-y-3">
                   <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
