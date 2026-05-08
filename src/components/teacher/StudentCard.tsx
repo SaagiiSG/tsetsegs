@@ -117,6 +117,7 @@ export function StudentCard({
   onHomeworkChange,
   onTestScoreChange,
   onRemoveFromClass,
+  onMoveToClass,
 }: StudentCardProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
