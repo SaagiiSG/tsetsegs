@@ -93,6 +93,7 @@ interface StudentCardProps {
   onHomeworkChange: (session: number, status: string) => void;
   onTestScoreChange: (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => void;
   onRemoveFromClass?: (permanentDelete: boolean) => void;
+  onMoveToClass?: (newBatchId: string) => Promise<void>;
 }
 
 export function StudentCard({
