@@ -415,6 +415,15 @@ export function StudentCard({
               />
             )}
 
+            {onMoveToClass && (
+              <MoveStudentDialog
+                studentName={`${student.first_name} ${student.last_name}`}
+                currentBatchId={batchId}
+                courseType={courseType}
+                onMoveToClass={onMoveToClass}
+              />
+            )}
+
             {onRemoveFromClass && (
               <RemoveStudentDialog
                 studentId={student.id}
