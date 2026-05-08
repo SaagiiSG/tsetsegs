@@ -110,6 +110,7 @@ export function StudentCard({
   teacherName,
   teacherId,
   switchedInfo,
+  onAcknowledgeSwitched,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
