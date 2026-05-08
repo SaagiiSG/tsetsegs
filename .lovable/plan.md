@@ -1,49 +1,45 @@
-## Problem
+## Move Student to Different Class
 
-In question 6805 (and other 68-set geometry items), text like `$FGH$`, `$KLM$`, `$GH$`, `$LM$`, `$GHF$` shows up with the literal `$` characters instead of italicized math variables.
+Add a "Move to another class" action on each student card in the teacher dashboard, alongside the existing Remove option.
 
-## Root cause
+### UX flow
+1. Teacher clicks a new **Move to class** button (icon: `ArrowRightLeft`) in the student card actions area, next to "Remove from class".
+2. A dialog opens showing:
+   - Student name + current batch (read-only)
+   - Searchable dropdown of all active batches with the **same `course_type`** as the current batch (excluding the current one). Each option shows: batch name, schedule, teacher name, current student count.
+   - Confirmation copy explaining attendance/homework/test records will be reassigned to the new batch.
+3. On confirm:
+   - Update `students.batch_id` to the new batch.
+   - Update all related records' `batch_id` to the new batch: `attendance`, `homework`, `practice_test_scores` (and any other tables tied via `batch_id` for this student).
+   - Show success toast, close dialog, remove the moved student from the current carousel view (or refetch).
+4. After move, teacher stays on the current batch view; the student no longer appears.
 
-`src/components/MathText.tsx` uses a "prose detector" to protect mispaired currency like `I have $36 and spent $20`:
+### Files to change
+- `src/components/teacher/StudentCard.tsx`
+  - Add `onMoveToClass?: (newBatchId: string) => Promise<void>` prop
+  - Add Move button in the same actions block as Remove
+  - New `MoveToClassDialog` subcomponent (loads target batches via Supabase on open, filtered by `course_type`)
+- `src/pages/TeacherStudentCards.tsx`
+  - New `handleMoveStudent(studentId, newBatchId)` async handler that performs all the updates (students, attendance, homework, practice tests)
+  - Remove the moved student from local `students` state
+  - Pass handler to `StudentCard`
 
-```ts
-const PROSE = /(?:^|\s)[a-zA-Z]{2,}(?:\s|[.,;:!?]|$)/;
-```
+### Data updates (no schema changes)
+For the moved student, set `batch_id = newBatchId` on:
+- `students` (1 row)
+- `attendance` (rows where `student_id = X AND batch_id = oldBatchId`)
+- `homework` (same filter)
+- `practice_test_scores` (same filter, if table tied to batch)
 
-For an inner span of `FGH`, this regex matches (start-of-string + 2+ letters + end-of-string), so the opening `$` is treated as currency and KaTeX is never tried. Single letters (`$G$`, `$L$`) escape because of `{2,}`, which is exactly why only multi-letter geometry labels look broken.
+All mutations use the existing RLS — teacher already has admin/teacher write access on these tables for batches they manage. Since the user chose "all teachers, same course type", we rely on the teacher being authenticated (existing policies allow teachers/admins to update these records).
 
-## Fix (one file, UI only)
+### Edge cases handled
+- Disable confirm button while loading / no target selected
+- Show empty state if no other batches exist for that course type
+- Toast on partial failure (use single try/catch, surface clearest error)
+- Refetch switched-students map after move so the orange "Switched" warning doesn't reappear inappropriately
 
-In `src/components/MathText.tsx`, tighten the prose check so it fires on actual prose, not on a single uppercase token:
-
-1. Replace the `PROSE` regex to require **either**:
-   - whitespace inside the span (real prose has spaces), OR
-   - a lowercase word of 2+ letters (`\b[a-z]{2,}\b`) — geometry labels are uppercase, so they won't match; words like "and", "spent", "per" still will.
-2. Before running the prose check, short-circuit: if `inner` is a single whitespace-free token, skip the heuristic and go straight to the KaTeX trial render. KaTeX failure still falls back to literal `$`, so genuine currency is unaffected.
-
-## Why this won't break other rendering paths
-
-The tokenizer in `MathText` has multiple ordered branches; this change only narrows step (2) "treat opening `$` as currency without trying KaTeX". Every other branch is preserved:
-
-- **Display math `$$...$$`** — handled in branch (0) before the prose check. Untouched.
-- **Already-LaTeX content** — `autoDetectMath` early-returns when `$...$` is present. Untouched.
-- **Single-letter math `$G$`, `$x$`** — already worked, still works (KaTeX trial render path).
-- **Pure numbers `$-4$`, `$36$`** — still hit the "render bare to avoid italic" branch at line 223.
-- **Currency `$36`, `$96`** — no closing `$`, falls through to literal. Untouched.
-- **Mispaired currency `I have $36 and spent $20`** — inner span is `36 and spent ` which contains whitespace AND lowercase words, so refined PROSE still matches → still treated as currency. ✅
-- **Auto-detected unicode/notation (`x²`, `√3`, `π`, `≤`, exponents, fractions)** — produced upstream in `autoDetectMath`, then trial-rendered by KaTeX. The change only makes KaTeX MORE likely to be tried, never less, so these keep working.
-- **Markdown post-processing (`**bold**`, `*em*`, `~sub~`, `^sup^`, `\n`)** — runs in the `text` branch only; unchanged.
-
-The only behavior change: spans whose inner is a single whitespace-free uppercase token (`FGH`, `KLM`, `GH`, `LM`, `GHF`, `FH`, `KM`, etc.) now reach KaTeX and render italic. Nothing else is affected.
-
-## Verification checklist
-
-After implementing:
-1. Q6805 in the 68 set — `FGH`, `KLM`, `GH`, `LM`, `GHF`, `FH`, `KM` render italic, no visible `$`.
-2. A word problem with currency (e.g. "I have $36 and spent $20") — dollars still render as literal currency.
-3. A CB algebra question with `$$\frac{a}{b}$$` — display equation still renders correctly.
-4. A unicode-heavy question (`x²`, `√3`, `π`) — still auto-formats.
-5. A pure-number choice like `$-4$` — still renders bare (not italicized).
-6. Single-variable spans `$x$`, `$y$`, `$G$` — still italic.
-
-No DB / backend / config changes. Single file edit.
+### Out of scope
+- No schema changes
+- No bulk move (single student per action)
+- No undo (teacher can move them back manually)

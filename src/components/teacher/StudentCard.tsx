@@ -93,6 +93,7 @@ interface StudentCardProps {
   onHomeworkChange: (session: number, status: string) => void;
   onTestScoreChange: (testNumber: number, score: number | null, skills?: { listening?: number | null; reading?: number | null; writing?: number | null; speaking?: number | null }) => void;
   onRemoveFromClass?: (permanentDelete: boolean) => void;
+  onMoveToClass?: (newBatchId: string) => Promise<void>;
 }
 
 export function StudentCard({
@@ -116,6 +117,7 @@ export function StudentCard({
   onHomeworkChange,
   onTestScoreChange,
   onRemoveFromClass,
+  onMoveToClass,
 }: StudentCardProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -410,6 +412,15 @@ export function StudentCard({
                 missedClasses={missedClasses}
                 missedHomework={missedHomework}
                 variant="compact"
+              />
+            )}
+
+            {onMoveToClass && (
+              <MoveStudentDialog
+                studentName={`${student.first_name} ${student.last_name}`}
+                currentBatchId={batchId}
+                courseType={courseType}
+                onMoveToClass={onMoveToClass}
               />
             )}
 
@@ -997,6 +1008,128 @@ function RemoveStudentDialog({
               {isPermanent ? "Delete permanently" : "Remove from class"}
             </AlertDialogAction>
           )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function MoveStudentDialog({
+  studentName,
+  currentBatchId,
+  courseType,
+  onMoveToClass,
+}: {
+  studentName: string;
+  currentBatchId: string;
+  courseType: 'SAT' | 'IELTS';
+  onMoveToClass: (newBatchId: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [batches, setBatches] = useState<Array<{ id: string; batch_name: string | null; schedule: string; teacher: string | null; student_count: number }>>([]);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>("");
+
+  const handleOpenChange = async (isOpen: boolean) => {
+    setOpen(isOpen);
+    setSelectedBatchId("");
+    if (isOpen) {
+      setLoading(true);
+      try {
+        const { data: batchesData, error } = await supabase
+          .from("batches")
+          .select("id, batch_name, schedule, teacher")
+          .eq("course_type", courseType)
+          .neq("id", currentBatchId)
+          .order("start_date", { ascending: false });
+        if (error) throw error;
+
+        const ids = (batchesData || []).map(b => b.id);
+        let countMap = new Map<string, number>();
+        if (ids.length) {
+          const { data: studentRows } = await supabase
+            .from("students")
+            .select("batch_id")
+            .in("batch_id", ids);
+          (studentRows || []).forEach(r => {
+            if (r.batch_id) countMap.set(r.batch_id, (countMap.get(r.batch_id) || 0) + 1);
+          });
+        }
+        setBatches((batchesData || []).map(b => ({ ...b, student_count: countMap.get(b.id) || 0 })));
+      } catch {
+        setBatches([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedBatchId) return;
+    setSubmitting(true);
+    try {
+      await onMoveToClass(selectedBatchId);
+      setOpen(false);
+    } catch {
+      // error toast handled upstream
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2"
+          title="Move to another class"
+        >
+          <ArrowRightLeft className="h-3.5 w-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Move {studentName} to another class</AlertDialogTitle>
+          <AlertDialogDescription>
+            Their attendance, homework, and practice test records will be transferred to the new class. Session numbers stay the same — review them after the move.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="py-2">
+          {loading ? (
+            <div className="text-sm text-muted-foreground">Loading {courseType} classes...</div>
+          ) : batches.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No other {courseType} classes available.</div>
+          ) : (
+            <Select value={selectedBatchId} onValueChange={setSelectedBatchId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a target class" />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {batches.map(b => (
+                  <SelectItem key={b.id} value={b.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{b.batch_name || "Unnamed"} · {b.teacher || "No teacher"}</span>
+                      <span className="text-xs text-muted-foreground">{b.schedule} · {b.student_count} student{b.student_count !== 1 ? "s" : ""}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); handleConfirm(); }}
+            disabled={!selectedBatchId || submitting || loading}
+          >
+            {submitting ? "Moving..." : "Move student"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
