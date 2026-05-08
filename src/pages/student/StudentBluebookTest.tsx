@@ -540,6 +540,13 @@ export default function StudentBluebookTest() {
   const questionId = currentQuestion?.question?.id;
   const currentAnswer = questionId ? answers[questionId] : null;
 
+  // Track Desmos calculator usage context (math modules only)
+  useEffect(() => {
+    if (!questionId || module?.section !== 'math') return;
+    setDesmosContext({ questionId, context: 'bluebook' });
+    return () => clearDesmosContext();
+  }, [questionId, module?.section]);
+
   if (attemptLoading || questionsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
