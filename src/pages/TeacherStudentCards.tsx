@@ -1045,6 +1045,7 @@ export default function TeacherStudentCards() {
                           onHomeworkChange={handleHomeworkChange}
                           onTestScoreChange={handleTestScoreChange}
                           onRemoveFromClass={(permanentDelete) => handleRemoveFromClass(student.id, permanentDelete)}
+                          onMoveToClass={(newBatchId) => handleMoveStudent(student.id, newBatchId)}
                         />
                       </Card>
                     </div>
