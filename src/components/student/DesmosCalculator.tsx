@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calculator, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { getDesmosContext } from '@/lib/desmosTracking';
 
 const SNAP_THRESHOLD = 80; // pixels from edge to trigger snap zone
 const SNAP_WIDTH = 40; // percentage of screen width when snapped
