@@ -802,6 +802,39 @@ export type Database = {
         }
         Relationships: []
       }
+      desmos_usage_events: {
+        Row: {
+          closed_at: string | null
+          context: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          opened_at: string
+          question_id: string | null
+          student_account_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          context?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          opened_at?: string
+          question_id?: string | null
+          student_account_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          context?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          opened_at?: string
+          question_id?: string | null
+          student_account_id?: string
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           created_at: string
