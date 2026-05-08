@@ -136,6 +136,13 @@ export default function StudentSpeedSession() {
 
   const currentQuestion = questions?.[currentIndex];
 
+  // Track Desmos calculator usage context for the current question
+  useEffect(() => {
+    if (!currentQuestion?.id) return;
+    setDesmosContext({ questionId: currentQuestion.id, context: 'speed' });
+    return () => clearDesmosContext();
+  }, [currentQuestion?.id]);
+
   // Track elapsed time per question for star display
   useEffect(() => {
     if (sessionComplete || !questions?.length || showResult) return;
