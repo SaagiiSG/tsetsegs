@@ -31,6 +31,8 @@ interface Student {
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   batch_id: string | null;
+  sat_test_month?: string | null;
+  switched_acknowledged?: boolean;
 }
 
 interface Attendance {
