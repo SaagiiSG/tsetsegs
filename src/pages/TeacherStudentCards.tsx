@@ -330,6 +330,9 @@ export default function TeacherStudentCards() {
       const switched: Record<string, SwitchedStudentInfo> = {};
 
       currentStudents.forEach(currentStudent => {
+        // Skip students whose switched warning has been acknowledged
+        if ((currentStudent as any).switched_acknowledged) return;
+
         const normalizedName = (currentStudent.name || `${currentStudent.first_name} ${currentStudent.last_name}`).toLowerCase().trim();
         const normalizedPhone = currentStudent.phone.trim();
         
