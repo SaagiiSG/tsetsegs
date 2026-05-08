@@ -87,6 +87,7 @@ interface StudentCardProps {
     otherAttendance: number;
     currentAttendance: number;
   };
+  onAcknowledgeSwitched?: () => void;
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
