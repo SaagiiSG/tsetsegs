@@ -542,10 +542,10 @@ export default function StudentBluebookTest() {
 
   // Track Desmos calculator usage context (math modules only)
   useEffect(() => {
-    if (!questionId || module?.section !== 'math') return;
+    if (!questionId || currentModule?.section !== 'math') return;
     setDesmosContext({ questionId, context: 'bluebook' });
     return () => clearDesmosContext();
-  }, [questionId, module?.section]);
+  }, [questionId, currentModule?.section]);
 
   if (attemptLoading || questionsLoading) {
     return (
