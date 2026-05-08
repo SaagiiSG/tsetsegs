@@ -87,6 +87,13 @@ export default function StudentQuestion() {
     };
   }, [student, questionId]);
 
+  // Track Desmos calculator usage context for this question
+  useEffect(() => {
+    if (!questionId) return;
+    setDesmosContext({ questionId, context: 'practice' });
+    return () => clearDesmosContext();
+  }, [questionId]);
+
   // Fetch bluebook question IDs to exclude from practice
   const { data: bluebookQuestionIds } = useQuery({
     queryKey: ['bluebook-question-ids'],
