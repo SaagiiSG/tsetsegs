@@ -468,7 +468,26 @@ export default function TeacherStudentCards() {
     }
   };
 
-  const handleRemoveFromClass = async (studentId: string, permanentDelete: boolean) => {
+  const handleAcknowledgeSwitched = async (studentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update({ switched_acknowledged: true })
+        .eq("id", studentId);
+      if (error) throw error;
+      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, switched_acknowledged: true } : s));
+      setSwitchedStudents(prev => {
+        const next = { ...prev };
+        delete next[studentId];
+        return next;
+      });
+      toast({ title: "Marked as noted" });
+    } catch (error: any) {
+      const errorToast = getErrorToast(error, "mark switched as noted");
+      toast({ variant: "destructive", ...errorToast });
+    }
+  };
+
     try {
       if (permanentDelete) {
         // Use edge function with service role to cascade delete
