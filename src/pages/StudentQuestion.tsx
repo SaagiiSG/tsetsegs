@@ -25,6 +25,7 @@ import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
+import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
