@@ -31,6 +31,7 @@ import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/compone
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
 import { cn } from '@/lib/utils';
+import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 interface ResultsData {
   totalScore: number;
