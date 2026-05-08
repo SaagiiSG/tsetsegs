@@ -488,6 +488,7 @@ export default function TeacherStudentCards() {
     }
   };
 
+  const handleRemoveFromClass = async (studentId: string, permanentDelete: boolean) => {
     try {
       if (permanentDelete) {
         // Use edge function with service role to cascade delete
