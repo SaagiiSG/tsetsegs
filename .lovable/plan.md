@@ -1,59 +1,49 @@
-# Add 4 Standalone Lectures with QR Booking + Check-In
+## Problem
 
-Create 4 one-off lectures, each with its own course record, public booking page (unique URL + QR), and admin check-in tab. Hex check-in code flow stays identical to NGEE.
+In question 6805 (and other 68-set geometry items), text like `$FGH$`, `$KLM$`, `$GH$`, `$LM$`, `$GHF$` shows up with the literal `$` characters instead of italicized math variables.
 
-## The 4 lectures (all 18:20–20:00, Room same as NGEE)
+## Root cause
 
-| Date | Lecture (MN) |
-|---|---|
-| May 8 | Сэтгэл зүйч мэргэжилийн тухай |
-| May 13 | Үерхлийн хил хязгаар |
-| May 20 | College Application явуулах зөвлөгөө |
-| May 27 | Сэтгэцийн эрүүл мэндээ анхаарах зөвлөгөө |
+`src/components/MathText.tsx` uses a "prose detector" to protect mispaired currency like `I have $36 and spent $20`:
 
-## 1. Database (data only, no schema change)
+```ts
+const PROSE = /(?:^|\s)[a-zA-Z]{2,}(?:\s|[.,;:!?]|$)/;
+```
 
-For each lecture, insert one row in `ngee_courses` and one row in `ngee_sessions`:
+For an inner span of `FGH`, this regex matches (start-of-string + 2+ letters + end-of-string), so the opening `$` is treated as currency and KaTeX is never tried. Single letters (`$G$`, `$L$`) escape because of `{2,}`, which is exactly why only multi-letter geometry labels look broken.
 
-- `ngee_courses`: `name = "<MN title>"`, `is_active = true`, `start_date = <lecture date>`, `start_time = 18:20`, `end_time = 20:00`, `weekdays = {<that single weekday>}`, `total_seats = 25`, `room` = same as the existing NGEE course, `booking_opens_hour = 8`, `booking_closes_hours_before = 1`.
-- `ngee_sessions`: one row per course on the lecture date at 18:20 Asia/Ulaanbaatar, `booking_opens_at = now()` (open immediately so you can test), `booking_closes_at = session_date - 1h`, `total_seats = 25`.
+## Fix (one file, UI only)
 
-(Skip `generate_ngee_sessions` — we insert the single session directly so no extra weekly sessions are created.)
+In `src/components/MathText.tsx`, tighten the prose check so it fires on actual prose, not on a single uppercase token:
 
-## 2. Public booking page — `src/pages/public/NGEEBooking.tsx`
+1. Replace the `PROSE` regex to require **either**:
+   - whitespace inside the span (real prose has spaces), OR
+   - a lowercase word of 2+ letters (`\b[a-z]{2,}\b`) — geometry labels are uppercase, so they won't match; words like "and", "spent", "per" still will.
+2. Before running the prose check, short-circuit: if `inner` is a single whitespace-free token, skip the heuristic and go straight to the KaTeX trial render. KaTeX failure still falls back to literal `$`, so genuine currency is unaffected.
 
-Currently the route `/ngee/:courseId` exists but `courseId` is ignored — it always loads the first active course. Change the course query:
+## Why this won't break other rendering paths
 
-- Read `useParams<{ courseId?: string }>()`.
-- If `courseId` provided → `select * from ngee_courses where id = courseId` (no `is_active` filter so old lectures still resolve their old QR).
-- Else → current behaviour (first active NGEE course) for backwards compatibility with `/ngee`.
+The tokenizer in `MathText` has multiple ordered branches; this change only narrows step (2) "treat opening `$` as currency without trying KaTeX". Every other branch is preserved:
 
-Sessions query already filters by `course_id`, so it just works. The header line "Wed & Fri • …" should be replaced with a generic line built from the loaded course (`format(weekdays) • start–end • Room X`) so lecture pages don't say "Wed & Fri".
+- **Display math `$$...$$`** — handled in branch (0) before the prose check. Untouched.
+- **Already-LaTeX content** — `autoDetectMath` early-returns when `$...$` is present. Untouched.
+- **Single-letter math `$G$`, `$x$`** — already worked, still works (KaTeX trial render path).
+- **Pure numbers `$-4$`, `$36$`** — still hit the "render bare to avoid italic" branch at line 223.
+- **Currency `$36`, `$96`** — no closing `$`, falls through to literal. Untouched.
+- **Mispaired currency `I have $36 and spent $20`** — inner span is `36 and spent ` which contains whitespace AND lowercase words, so refined PROSE still matches → still treated as currency. ✅
+- **Auto-detected unicode/notation (`x²`, `√3`, `π`, `≤`, exponents, fractions)** — produced upstream in `autoDetectMath`, then trial-rendered by KaTeX. The change only makes KaTeX MORE likely to be tried, never less, so these keep working.
+- **Markdown post-processing (`**bold**`, `*em*`, `~sub~`, `^sup^`, `\n`)** — runs in the `text` branch only; unchanged.
 
-## 3. Admin page — `src/pages/admin/NGEEAdmin.tsx`
+The only behavior change: spans whose inner is a single whitespace-free uppercase token (`FGH`, `KLM`, `GH`, `LM`, `GHF`, `FH`, `KM`, etc.) now reach KaTeX and render italic. Nothing else is affected.
 
-Add a course switcher at the top so the same admin screen handles NGEE + each lecture:
+## Verification checklist
 
-- Query all `ngee_courses where is_active = true` ordered by start_date.
-- Add a `Select` (or pill row) labeled "Course" above the session picker. Default = NGEE course (first by created_at) so existing flow is unchanged.
-- All downstream queries (sessions, bookings, check-in by code, QR) re-key on the selected course id.
-- QR / public link becomes `https://flowersos.co/ngee/<courseId>` instead of `/ngee`. The "Copy link" + QR dialog use this dynamic URL.
-- Header shows the selected course's name + schedule.
+After implementing:
+1. Q6805 in the 68 set — `FGH`, `KLM`, `GH`, `LM`, `GHF`, `FH`, `KM` render italic, no visible `$`.
+2. A word problem with currency (e.g. "I have $36 and spent $20") — dollars still render as literal currency.
+3. A CB algebra question with `$$\frac{a}{b}$$` — display equation still renders correctly.
+4. A unicode-heavy question (`x²`, `√3`, `π`) — still auto-formats.
+5. A pure-number choice like `$-4$` — still renders bare (not italicized).
+6. Single-variable spans `$x$`, `$y$`, `$G$` — still italic.
 
-Result: from `/admin/ngee` admin can pick any of the 5 courses (NGEE + 4 lectures), see that course's sessions, accept hex check-in codes, and grab the QR for printing/sharing.
-
-## 4. Check-in flow
-
-No changes needed. `ngee_check_in_by_code(p_session_id, p_code)` already scopes by session, and the trigger `ngee_validate_and_codegen` generates a unique 4-char hex per booking per session. Each lecture's session is independent so codes can repeat across lectures without collision.
-
-## Out of scope
-
-- No recurring schedule for lectures (one-off only). If you later want to repeat any of them, just insert another `ngee_sessions` row for the same `course_id`.
-- No SMS / reminders.
-- No edits to `SeatGrid` or the booking form.
-
-## Files touched
-
-- `supabase/migrations/<new>.sql` — `INSERT` 4 courses + 4 sessions (data seed via migration is fine here since it's idempotent with `ON CONFLICT DO NOTHING` on a new `slug`-style key… actually we'll just guard with `WHERE NOT EXISTS (… name = …)`).
-- `src/pages/public/NGEEBooking.tsx` — read `:courseId`, dynamic header.
-- `src/pages/admin/NGEEAdmin.tsx` — course selector, dynamic public URL.
+No DB / backend / config changes. Single file edit.

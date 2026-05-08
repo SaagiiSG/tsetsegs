@@ -151,9 +151,11 @@ export function MathText({ text, className = '' }: MathTextProps) {
       | { kind: 'math'; value: string };
     const tokens: Token[] = [];
 
-    // Detect prose: a run of 2+ letters with whitespace on at least one side, or any
-    // common english connective word.
-    const PROSE = /(?:^|\s)[a-zA-Z]{2,}(?:\s|[.,;:!?]|$)/;
+    // Detect prose inside a `$...$` span. Real prose has either internal whitespace
+    // or a lowercase word (math labels like FGH, KLM, GH are uppercase tokens).
+    // A single whitespace-free token (e.g. "FGH", "x", "GHF") is NOT prose — let
+    // KaTeX try to render it so geometry labels italicize correctly.
+    const PROSE = /\s|\b[a-z]{2,}\b/;
 
     let buf = '';
     let i = 0;
