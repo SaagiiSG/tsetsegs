@@ -62,6 +62,71 @@ export function DesmosCalculator() {
   const [currentDragX, setCurrentDragX] = useState(0);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
+  const { student } = useStudentAuth();
+  const usageEventIdRef = useRef<string | null>(null);
+  const usageOpenedAtRef = useRef<number | null>(null);
+  const studentIdRef = useRef<string | null>(null);
+
+  // Keep latest student id in a ref so close handlers always see it
+  useEffect(() => {
+    studentIdRef.current = student?.id ?? null;
+  }, [student?.id]);
+
+  // Log when calculator opens — insert a usage event row
+  useEffect(() => {
+    if (!isOpen) return;
+    const sid = studentIdRef.current;
+    if (!sid) return;
+
+    const { questionId, context } = getDesmosContext();
+    const openedAt = new Date();
+    usageOpenedAtRef.current = openedAt.getTime();
+
+    let cancelled = false;
+    supabase
+      .from('desmos_usage_events')
+      .insert({
+        student_account_id: sid,
+        question_id: questionId,
+        context,
+        opened_at: openedAt.toISOString(),
+      })
+      .select('id')
+      .single()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.warn('[desmos] failed to log open:', error.message);
+          return;
+        }
+        usageEventIdRef.current = data?.id ?? null;
+      });
+
+    return () => {
+      cancelled = true;
+      // Closing — finalize the row
+      const id = usageEventIdRef.current;
+      const openedMs = usageOpenedAtRef.current;
+      usageEventIdRef.current = null;
+      usageOpenedAtRef.current = null;
+      if (!id || !openedMs) return;
+      const closedAt = new Date();
+      const durationSeconds = Math.max(
+        0,
+        Math.round((closedAt.getTime() - openedMs) / 1000)
+      );
+      supabase
+        .from('desmos_usage_events')
+        .update({
+          closed_at: closedAt.toISOString(),
+          duration_seconds: durationSeconds,
+        })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.warn('[desmos] failed to log close:', error.message);
+        });
+    };
+  }, [isOpen]);
 
   // Listen for external toggle events
   useEffect(() => {
