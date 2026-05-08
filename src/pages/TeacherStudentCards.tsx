@@ -1000,6 +1000,7 @@ export default function TeacherStudentCards() {
                           batchId={batchId || ''}
                           teacherName={teacherName || ''}
                           switchedInfo={switchedStudents[student.id]}
+                          onAcknowledgeSwitched={() => handleAcknowledgeSwitched(student.id)}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
