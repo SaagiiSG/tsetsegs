@@ -2809,6 +2809,7 @@ export type Database = {
           review_teacher: string | null
           sat_test_month: string | null
           school_name: string | null
+          switched_acknowledged: boolean
           unique_link_id: string
         }
         Insert: {
@@ -2832,6 +2833,7 @@ export type Database = {
           review_teacher?: string | null
           sat_test_month?: string | null
           school_name?: string | null
+          switched_acknowledged?: boolean
           unique_link_id: string
         }
         Update: {
@@ -2855,6 +2857,7 @@ export type Database = {
           review_teacher?: string | null
           sat_test_month?: string | null
           school_name?: string | null
+          switched_acknowledged?: boolean
           unique_link_id?: string
         }
         Relationships: [

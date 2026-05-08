@@ -10,7 +10,7 @@ import { AttendanceSlider } from "@/components/teacher/AttendanceSlider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy, ArrowRightLeft } from "lucide-react";
+import { Edit2, Check, X, ExternalLink, StickyNote, Send, Trash2, Pencil, ChevronDown, ChevronUp, ClipboardList, Trophy, ArrowRightLeft, CalendarClock, CheckCheck } from "lucide-react";
 import { NudgeButton } from './NudgeButton';
 import { ScorePredictionBadge } from './ScorePredictionBadge';
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ interface Student {
   school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
+  sat_test_month?: string | null;
 }
 
 interface Attendance {
@@ -86,6 +87,7 @@ interface StudentCardProps {
     otherAttendance: number;
     currentAttendance: number;
   };
+  onAcknowledgeSwitched?: () => void;
   onUpdateStudent: (updates: Partial<Student>) => void;
   onAttendanceChange: (session: number, status: string) => void;
   onHomeworkChange: (session: number, status: string) => void;
@@ -108,6 +110,7 @@ export function StudentCard({
   teacherName,
   teacherId,
   switchedInfo,
+  onAcknowledgeSwitched,
   onUpdateStudent,
   onAttendanceChange,
   onHomeworkChange,
@@ -325,10 +328,21 @@ export function StudentCard({
     <TooltipProvider>
     <Card className={`shadow-lg ${switchedInfo ? 'ring-2 ring-amber-500/50' : ''}`}>
       <CardHeader className="border-b bg-background sticky top-0 z-10 shadow-sm p-3 md:p-4">
+        {/* SAT exam date pill — only for SAT students with a saved test month */}
+        {courseType === 'SAT' && student.sat_test_month && (
+          <div className="mb-2 flex">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+              <CalendarClock className="h-3 w-3 text-primary" />
+              <span className="text-[10px] md:text-xs font-medium text-primary">
+                Taking SAT: {student.sat_test_month}
+              </span>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           {/* Left side: Student name and count */}
           <div className="flex flex-col gap-0.5 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button 
                 onClick={() => navigate(`/teacher/student/${student.id}`)}
                 className="text-sm md:text-lg font-bold text-left hover:text-primary transition-colors flex items-center gap-1.5 group truncate"
@@ -340,22 +354,42 @@ export function StudentCard({
               </button>
               {courseType === 'SAT' && <ScorePredictionBadge studentId={student.id} />}
               {switchedInfo && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 cursor-help">
-                      <ArrowRightLeft className="h-3 w-3 text-amber-600" />
-                      <span className="text-[10px] font-medium text-amber-600">Switched</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[280px]">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-amber-600">Student enrolled in another class</p>
-                      <p className="text-xs">
-                        More active in <span className="font-medium">{switchedInfo.otherBatchName}</span> ({switchedInfo.otherAttendance} sessions) vs this class ({switchedInfo.currentAttendance} sessions).
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
+                <div className="flex items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 cursor-help">
+                        <ArrowRightLeft className="h-3 w-3 text-amber-600" />
+                        <span className="text-[10px] font-medium text-amber-600">Switched</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[280px]">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-amber-600">Student enrolled in another class</p>
+                        <p className="text-xs">
+                          More active in <span className="font-medium">{switchedInfo.otherBatchName}</span> ({switchedInfo.otherAttendance} sessions) vs this class ({switchedInfo.currentAttendance} sessions).
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                  {onAcknowledgeSwitched && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                          onClick={onAcknowledgeSwitched}
+                          aria-label="Mark switched warning as noted"
+                        >
+                          <CheckCheck className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p className="text-xs">Mark as noted — hides this warning</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               )}
             </div>
             <p className="text-xs text-muted-foreground">

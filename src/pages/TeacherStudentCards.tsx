@@ -31,6 +31,8 @@ interface Student {
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   batch_id: string | null;
+  sat_test_month?: string | null;
+  switched_acknowledged?: boolean;
 }
 
 interface Attendance {
@@ -175,7 +177,7 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, batch_id")
+        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, batch_id, sat_test_month, switched_acknowledged")
         .eq("batch_id", batchId)
         .order("first_name");
 
@@ -328,6 +330,9 @@ export default function TeacherStudentCards() {
       const switched: Record<string, SwitchedStudentInfo> = {};
 
       currentStudents.forEach(currentStudent => {
+        // Skip students whose switched warning has been acknowledged
+        if ((currentStudent as any).switched_acknowledged) return;
+
         const normalizedName = (currentStudent.name || `${currentStudent.first_name} ${currentStudent.last_name}`).toLowerCase().trim();
         const normalizedPhone = currentStudent.phone.trim();
         
@@ -460,6 +465,26 @@ export default function TeacherStudentCards() {
         variant: "destructive",
         ...errorToast,
       });
+    }
+  };
+
+  const handleAcknowledgeSwitched = async (studentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update({ switched_acknowledged: true })
+        .eq("id", studentId);
+      if (error) throw error;
+      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, switched_acknowledged: true } : s));
+      setSwitchedStudents(prev => {
+        const next = { ...prev };
+        delete next[studentId];
+        return next;
+      });
+      toast({ title: "Marked as noted" });
+    } catch (error: any) {
+      const errorToast = getErrorToast(error, "mark switched as noted");
+      toast({ variant: "destructive", ...errorToast });
     }
   };
 
@@ -975,6 +1000,7 @@ export default function TeacherStudentCards() {
                           batchId={batchId || ''}
                           teacherName={teacherName || ''}
                           switchedInfo={switchedStudents[student.id]}
+                          onAcknowledgeSwitched={() => handleAcknowledgeSwitched(student.id)}
                           onUpdateStudent={handleUpdateStudent}
                           onAttendanceChange={handleAttendanceChange}
                           onHomeworkChange={handleHomeworkChange}
