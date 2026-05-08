@@ -39,6 +39,7 @@ interface Student {
   school_name?: string;
   math_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
   english_level?: 'bad' | 'average' | 'good' | 'B1' | 'B2' | 'C1' | 'C2' | string;
+  sat_test_month?: string | null;
 }
 
 interface Attendance {
