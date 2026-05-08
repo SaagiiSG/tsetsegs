@@ -31,6 +31,7 @@ import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/compone
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
 import { cn } from '@/lib/utils';
+import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 interface ResultsData {
   totalScore: number;
@@ -538,6 +539,13 @@ export default function StudentBluebookTest() {
   const currentQuestion = moduleQuestions?.[currentQuestionIndex];
   const questionId = currentQuestion?.question?.id;
   const currentAnswer = questionId ? answers[questionId] : null;
+
+  // Track Desmos calculator usage context (math modules only)
+  useEffect(() => {
+    if (!questionId || currentModule?.section !== 'math') return;
+    setDesmosContext({ questionId, context: 'bluebook' });
+    return () => clearDesmosContext();
+  }, [questionId, currentModule?.section]);
 
   if (attemptLoading || questionsLoading) {
     return (

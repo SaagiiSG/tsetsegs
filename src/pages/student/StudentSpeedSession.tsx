@@ -18,6 +18,7 @@ import { syncBadgeProgressForStudent } from '@/hooks/useSyncBadgeProgress';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 interface Question {
   id: string;
@@ -134,6 +135,13 @@ export default function StudentSpeedSession() {
   });
 
   const currentQuestion = questions?.[currentIndex];
+
+  // Track Desmos calculator usage context for the current question
+  useEffect(() => {
+    if (!currentQuestion?.id) return;
+    setDesmosContext({ questionId: currentQuestion.id, context: 'speed' });
+    return () => clearDesmosContext();
+  }, [currentQuestion?.id]);
 
   // Track elapsed time per question for star display
   useEffect(() => {

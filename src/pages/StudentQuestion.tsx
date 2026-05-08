@@ -25,6 +25,7 @@ import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
+import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -85,6 +86,13 @@ export default function StudentQuestion() {
       document.body.style.webkitUserSelect = '';
     };
   }, [student, questionId]);
+
+  // Track Desmos calculator usage context for this question
+  useEffect(() => {
+    if (!questionId) return;
+    setDesmosContext({ questionId, context: 'practice' });
+    return () => clearDesmosContext();
+  }, [questionId]);
 
   // Fetch bluebook question IDs to exclude from practice
   const { data: bluebookQuestionIds } = useQuery({
