@@ -177,7 +177,7 @@ export default function TeacherStudentCards() {
       // Fetch students
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
-        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, batch_id")
+        .select("id, name, first_name, last_name, phone, parent_phone, grade, school_name, math_level, english_level, batch_id, sat_test_month, switched_acknowledged")
         .eq("batch_id", batchId)
         .order("first_name");
 
