@@ -537,6 +537,45 @@ export default function TeacherStudentCards() {
     }
   };
 
+  const handleMoveStudent = async (studentId: string, newBatchId: string) => {
+    try {
+      // Update related records first so RLS still sees the old batch_id link
+      await Promise.all([
+        supabase.from("attendance").update({ batch_id: newBatchId }).eq("student_id", studentId).eq("batch_id", batchId),
+        supabase.from("homework").update({ batch_id: newBatchId }).eq("student_id", studentId).eq("batch_id", batchId),
+        supabase.from("practice_tests").update({ batch_id: newBatchId }).eq("student_id", studentId).eq("batch_id", batchId),
+      ]);
+
+      const { error } = await supabase
+        .from("students")
+        .update({ batch_id: newBatchId, switched_acknowledged: false })
+        .eq("id", studentId)
+        .eq("batch_id", batchId);
+      if (error) throw error;
+
+      setStudents((prev) => {
+        const next = prev.filter((s) => s.id !== studentId);
+        const nextIndex = Math.min(currentIndex, Math.max(0, next.length - 1));
+        if (nextIndex !== currentIndex) {
+          setCurrentIndex(nextIndex);
+          emblaApi?.scrollTo(nextIndex);
+        }
+        return next;
+      });
+      setStudentDataMap((prev) => {
+        const next = new Map(prev);
+        next.delete(studentId);
+        return next;
+      });
+
+      toast({ title: "Moved", description: "Student was moved to the new class with their records." });
+    } catch (error: any) {
+      const errorToast = getErrorToast(error, "move student");
+      toast({ variant: "destructive", ...errorToast });
+      throw error;
+    }
+  };
+
   const handleAttendanceChange = async (sessionNumber: number, status: string) => {
     const currentStudent = students[currentIndex];
     try {
