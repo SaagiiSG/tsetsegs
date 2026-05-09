@@ -114,6 +114,7 @@ function StudentLayoutContent() {
             />
             {TIER_DISPLAY_NAMES[tier]}
           </div>
+          <PracticeQuickFab compact />
         </div>
         
         <Outlet />
@@ -126,7 +127,6 @@ function StudentLayoutContent() {
 
       {/* iOS-style quick command sheet (⌘K, swipe-up, FAB) */}
       <PracticeCommandSheet />
-      <PracticeQuickFab />
       <GestureHintOverlay />
       <GlobalEdgeSwipeUp />
       
