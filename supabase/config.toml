@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.send-welcome-sms]
 verify_jwt = false
+
+[functions.send-fee-paid-sms]
+verify_jwt = false
+
+[functions.send-batch-start-reminder]
+verify_jwt = false
+
+[functions.send-broadcast-sms]
+verify_jwt = false
