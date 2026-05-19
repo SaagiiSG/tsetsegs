@@ -61,6 +61,7 @@ export const menuSections: MenuSection[] = [
       { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
       { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
       { title: "SMS Log", url: "/admin/sms", icon: MessageSquare },
+      { title: "SMS Flows", url: "/admin/sms-flows", icon: MessageSquare },
     ],
     defaultOpen: true,
   },
