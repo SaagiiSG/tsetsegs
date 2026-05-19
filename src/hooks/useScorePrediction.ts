@@ -65,16 +65,21 @@ function calculateHomeworkAdj(homeworkData: any[]): { rate: number; adj: number 
   return { rate: rate * 100, adj };
 }
 
-function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: number; adj: number } {
-  if (!attempts || attempts.length === 0) return { hardAccuracy: 0, volume: 0, adj: 0 };
+// Normalize difficulty — DB stores lowercase ('hard','medium','easy'),
+// older code compared against 'Hard' (capitalized) and silently matched nothing.
+const isHard = (d: string | null | undefined) => (d ?? '').toLowerCase() === 'hard';
+
+function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: number; adj: number; hardCount: number } {
+  if (!attempts || attempts.length === 0) return { hardAccuracy: 0, volume: 0, adj: 0, hardCount: 0 };
 
   const volume = attempts.length;
-  const hardAttempts = attempts.filter(a => a.difficulty_level === 'Hard');
+  const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
   const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
   const hardAccuracy = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
 
   let hardAdj = 0;
   if (hardAttempts.length === 0) hardAdj = 0;
+  else if (hardAccuracy > 70) hardAdj = 15;        // new top tier — proven mastery
   else if (hardAccuracy > 55) hardAdj = 10;
   else if (hardAccuracy >= 40) hardAdj = 3;
   else if (hardAccuracy >= 25) hardAdj = 0;
@@ -85,7 +90,7 @@ function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: 
   else if (volume >= 200) volumeAdj = 2;
   else if (volume < 100) volumeAdj = -5;
 
-  return { hardAccuracy, volume, adj: hardAdj + volumeAdj };
+  return { hardAccuracy, volume, adj: hardAdj + volumeAdj, hardCount: hardAttempts.length };
 }
 
 function getBaseFromHardAccuracy(hardAccuracy: number): number {
@@ -94,6 +99,33 @@ function getBaseFromHardAccuracy(hardAccuracy: number): number {
   if (hardAccuracy >= 35) return 620;
   if (hardAccuracy >= 20) return 560;
   return 500;
+}
+
+// Downside deviation — only penalize stdev driven by scores BELOW the mean.
+// High outliers (e.g. an 800) are a positive signal at the top, not risk.
+function downsideStdev(scores: number[]): number {
+  if (scores.length === 0) return 0;
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const sq = scores.reduce((sum, s) => sum + Math.pow(Math.max(0, mean - s), 2), 0) / scores.length;
+  return Math.sqrt(sq);
+}
+
+// Linear-regression slope of score vs. test_number across the supplied tests.
+// tests are passed most-recent-first; we flip to chronological for slope.
+function trendSlope(tests: { test_number: number; score: number }[]): number {
+  if (tests.length < 3) return 0;
+  const chrono = [...tests].reverse();
+  const n = chrono.length;
+  const xs = chrono.map(t => t.test_number);
+  const ys = chrono.map(t => t.score);
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY);
+    den += Math.pow(xs[i] - meanX, 2);
+  }
+  return den === 0 ? 0 : num / den;
 }
 
 export function useScorePrediction(studentId: string | undefined) {
