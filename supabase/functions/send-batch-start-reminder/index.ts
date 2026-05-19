@@ -54,10 +54,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    await supabase.from('sms_flows').update({ last_fired_at: new Date().toISOString(), sent_count: (sent ? undefined : undefined) }).eq('key', 'batch_start');
-    // Increment sent_count via raw
     if (sent > 0) {
-      await supabase.rpc('exec_increment_flow_count', { p_key: 'batch_start', p_n: sent }).catch(() => {});
+      const { data: cur } = await supabase.from('sms_flows').select('sent_count').eq('key', 'batch_start').maybeSingle();
+      await supabase.from('sms_flows').update({
+        last_fired_at: new Date().toISOString(),
+        sent_count: (cur?.sent_count ?? 0) + sent,
+      }).eq('key', 'batch_start');
     }
 
     return new Response(JSON.stringify({ batches: batches?.length ?? 0, sent }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
