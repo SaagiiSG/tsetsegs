@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -60,6 +60,7 @@ export const menuSections: MenuSection[] = [
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
       { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
       { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
+      { title: "SMS Log", url: "/admin/sms", icon: MessageSquare },
     ],
     defaultOpen: true,
   },

@@ -2117,6 +2117,75 @@ export type Database = {
           },
         ]
       }
+      sms_logs: {
+        Row: {
+          batch_id: string | null
+          body: string
+          created_at: string
+          dedupe_key: string | null
+          error: string | null
+          from_phone: string | null
+          id: string
+          kind: string
+          recipient_role: string
+          session_number: number | null
+          status: string | null
+          student_id: string | null
+          to_phone: string
+          twilio_sid: string | null
+          twilio_status: string
+        }
+        Insert: {
+          batch_id?: string | null
+          body: string
+          created_at?: string
+          dedupe_key?: string | null
+          error?: string | null
+          from_phone?: string | null
+          id?: string
+          kind: string
+          recipient_role: string
+          session_number?: number | null
+          status?: string | null
+          student_id?: string | null
+          to_phone: string
+          twilio_sid?: string | null
+          twilio_status?: string
+        }
+        Update: {
+          batch_id?: string | null
+          body?: string
+          created_at?: string
+          dedupe_key?: string | null
+          error?: string | null
+          from_phone?: string | null
+          id?: string
+          kind?: string
+          recipient_role?: string
+          session_number?: number | null
+          status?: string | null
+          student_id?: string | null
+          to_phone?: string
+          twilio_sid?: string | null
+          twilio_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sprints: {
         Row: {
           created_at: string
@@ -2981,6 +3050,10 @@ export type Database = {
       }
     }
     Functions: {
+      _post_edge_function: {
+        Args: { fn_name: string; payload: Json }
+        Returns: undefined
+      }
       generate_ngee_sessions: {
         Args: { p_course_id: string; p_weeks_ahead?: number }
         Returns: number
