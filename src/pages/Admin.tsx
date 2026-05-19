@@ -70,6 +70,7 @@ const Admin = () => {
       <Route path="review-sessions" element={<ReviewSessions />} />
       <Route path="ngee" element={<NGEEAdmin />} />
       <Route path="bug-reports" element={<BugReports />} />
+      <Route path="sms" element={<SmsLog />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
