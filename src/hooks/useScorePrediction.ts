@@ -204,7 +204,7 @@ export function useScorePrediction(studentId: string | undefined) {
           const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
           attempts = attemptsData.map(a => ({
             ...a,
-            difficulty_level: difficultyMap.get(a.question_id) || 'Medium',
+            difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
         }
       }
