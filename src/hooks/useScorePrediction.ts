@@ -65,16 +65,21 @@ function calculateHomeworkAdj(homeworkData: any[]): { rate: number; adj: number 
   return { rate: rate * 100, adj };
 }
 
-function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: number; adj: number } {
-  if (!attempts || attempts.length === 0) return { hardAccuracy: 0, volume: 0, adj: 0 };
+// Normalize difficulty — DB stores lowercase ('hard','medium','easy'),
+// older code compared against 'Hard' (capitalized) and silently matched nothing.
+const isHard = (d: string | null | undefined) => (d ?? '').toLowerCase() === 'hard';
+
+function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: number; adj: number; hardCount: number } {
+  if (!attempts || attempts.length === 0) return { hardAccuracy: 0, volume: 0, adj: 0, hardCount: 0 };
 
   const volume = attempts.length;
-  const hardAttempts = attempts.filter(a => a.difficulty_level === 'Hard');
+  const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
   const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
   const hardAccuracy = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
 
   let hardAdj = 0;
   if (hardAttempts.length === 0) hardAdj = 0;
+  else if (hardAccuracy > 70) hardAdj = 15;        // new top tier — proven mastery
   else if (hardAccuracy > 55) hardAdj = 10;
   else if (hardAccuracy >= 40) hardAdj = 3;
   else if (hardAccuracy >= 25) hardAdj = 0;
@@ -85,7 +90,7 @@ function calculatePracticeAdj(attempts: any[]): { hardAccuracy: number; volume: 
   else if (volume >= 200) volumeAdj = 2;
   else if (volume < 100) volumeAdj = -5;
 
-  return { hardAccuracy, volume, adj: hardAdj + volumeAdj };
+  return { hardAccuracy, volume, adj: hardAdj + volumeAdj, hardCount: hardAttempts.length };
 }
 
 function getBaseFromHardAccuracy(hardAccuracy: number): number {
@@ -94,6 +99,33 @@ function getBaseFromHardAccuracy(hardAccuracy: number): number {
   if (hardAccuracy >= 35) return 620;
   if (hardAccuracy >= 20) return 560;
   return 500;
+}
+
+// Downside deviation — only penalize stdev driven by scores BELOW the mean.
+// High outliers (e.g. an 800) are a positive signal at the top, not risk.
+function downsideStdev(scores: number[]): number {
+  if (scores.length === 0) return 0;
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const sq = scores.reduce((sum, s) => sum + Math.pow(Math.max(0, mean - s), 2), 0) / scores.length;
+  return Math.sqrt(sq);
+}
+
+// Linear-regression slope of score vs. test_number across the supplied tests.
+// tests are passed most-recent-first; we flip to chronological for slope.
+function trendSlope(tests: { test_number: number; score: number }[]): number {
+  if (tests.length < 3) return 0;
+  const chrono = [...tests].reverse();
+  const n = chrono.length;
+  const xs = chrono.map(t => t.test_number);
+  const ys = chrono.map(t => t.score);
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY);
+    den += Math.pow(xs[i] - meanX, 2);
+  }
+  return den === 0 ? 0 : num / den;
 }
 
 export function useScorePrediction(studentId: string | undefined) {
@@ -172,7 +204,7 @@ export function useScorePrediction(studentId: string | undefined) {
           const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
           attempts = attemptsData.map(a => ({
             ...a,
-            difficulty_level: difficultyMap.get(a.question_id) || 'Medium',
+            difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
         }
       }
@@ -183,60 +215,102 @@ export function useScorePrediction(studentId: string | undefined) {
       let hasBaseline = tests.length > 0;
       let variancePenalty = 0;
       let halfRange = 15; // default ±15
+      let ceilingLift = 0;
+      let trendBonus = 0;
 
       if (tests.length >= 5) {
-        // Blend: 60% weighted-last-3 + 40% last-5-average (regression to recent mean)
+        // Blend: 60% weighted-last-3 + 40% last-5-average
         const last3Weighted = tests[0].score! * 0.5 + tests[1].score! * 0.3 + tests[2].score! * 0.2;
         const last5Scores = tests.slice(0, 5).map(t => t.score!);
         const last5Avg = last5Scores.reduce((a, b) => a + b, 0) / 5;
         baseScore = last3Weighted * 0.6 + last5Avg * 0.4;
 
-        // Variance from last 5 tests
-        const mean5 = last5Avg;
-        const stdev5 = Math.sqrt(last5Scores.reduce((sum, s) => sum + Math.pow(s - mean5, 2), 0) / 5);
-        variancePenalty = stdev5 > 20 ? -Math.min(Math.round((stdev5 - 20) * 0.35), 25) : 0;
-        halfRange = Math.max(15, Math.min(Math.round(stdev5 * 0.5), 25));
+        // Downside-only variance (high outliers don't punish)
+        const dStd = downsideStdev(last5Scores);
+        variancePenalty = dStd > 25 ? -Math.min(Math.round((dStd - 25) * 0.4), 20) : 0;
+        halfRange = Math.max(15, Math.min(Math.round(dStd * 0.5), 25));
+
+        // Ceiling lift — reward demonstrated peak performance
+        const maxLast5 = Math.max(...last5Scores);
+        const last3Avg = (tests[0].score! + tests[1].score! + tests[2].score!) / 3;
+        if (maxLast5 >= 780 && last3Avg >= 740) {
+          ceilingLift = Math.max(0, Math.min(25,
+            Math.round((maxLast5 - 760) * 0.4 + (last3Avg - 740) * 0.3)
+          ));
+        }
       } else if (tests.length >= 3) {
         baseScore = tests[0].score! * 0.5 + tests[1].score! * 0.3 + tests[2].score! * 0.2;
         const scores3 = tests.slice(0, 3).map(t => t.score!);
-        const mean3 = scores3.reduce((a, b) => a + b, 0) / 3;
-        const stdev3 = Math.sqrt(scores3.reduce((sum, s) => sum + Math.pow(s - mean3, 2), 0) / 3);
-        variancePenalty = stdev3 > 25 ? -Math.min(Math.round((stdev3 - 25) * 0.35), 20) : 0;
-        if (stdev3 > 30) halfRange = Math.min(Math.round(stdev3 * 0.5), 20);
+        const dStd = downsideStdev(scores3);
+        variancePenalty = dStd > 25 ? -Math.min(Math.round((dStd - 25) * 0.4), 20) : 0;
+        if (dStd > 30) halfRange = Math.min(Math.round(dStd * 0.5), 20);
+
+        const max3 = Math.max(...scores3);
+        const last3Avg = scores3.reduce((a, b) => a + b, 0) / 3;
+        if (max3 >= 780 && last3Avg >= 740) {
+          ceilingLift = Math.max(0, Math.min(20,
+            Math.round((max3 - 760) * 0.35 + (last3Avg - 740) * 0.25)
+          ));
+        }
       } else if (tests.length === 2) {
         baseScore = tests[0].score! * 0.6 + tests[1].score! * 0.4;
       } else if (tests.length === 1) {
         baseScore = tests[0].score!;
       } else {
-        // No baseline - use hard accuracy lookup
-        const hardAttempts = attempts.filter(a => a.difficulty_level === 'Hard');
+        // No baseline — use hard accuracy lookup (now actually works after case fix)
+        const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
         const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
         const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
         baseScore = getBaseFromHardAccuracy(hardAcc);
-        halfRange = 25; // wider range for no-baseline estimates
+        halfRange = 25;
+      }
+
+      // Trend bonus — reward sustained upward trajectory across last 4 tests
+      if (tests.length >= 4) {
+        const slope = trendSlope(tests.slice(0, 4) as any);
+        if (slope >= 15) trendBonus = Math.min(10, Math.round((slope - 10) * 0.4));
+        else if (slope >= 8) trendBonus = 3;
       }
 
       // Calculate adjustments
       const { rate: attendanceRate, adj: attendanceAdj } = calculateAttendanceAdj(attendanceRes.data);
-      const { rate: homeworkRate, adj: homeworkAdj } = calculateHomeworkAdj(homeworkRes.data || []);
-      let { hardAccuracy, volume: attemptVolume, adj: practiceAdj } = calculatePracticeAdj(attempts);
+      let { rate: homeworkRate, adj: homeworkAdj } = calculateHomeworkAdj(homeworkRes.data || []);
+      let { hardAccuracy, volume: attemptVolume, adj: practiceAdj, hardCount } = calculatePracticeAdj(attempts);
 
-      // Cap practice bonus at higher base scores (diminishing returns)
-      if (baseScore >= 730) practiceAdj = Math.min(practiceAdj, 0);
-      else if (baseScore >= 700) practiceAdj = Math.min(practiceAdj, 5);
+      // Apply ceiling lift directly to base
+      baseScore += ceilingLift;
+
+      // Soften homework penalty when mastery is demonstrated (mastery beats compliance)
+      if (hardAccuracy >= 60 && (homeworkRate / 100) >= 0.7) {
+        homeworkAdj = Math.max(homeworkAdj, -3);
+      }
+
+      // Practice cap — tiered, lifts entirely when hard mastery is proven
+      const provenMastery = hardAccuracy >= 65 && hardCount >= 50;
+      if (!provenMastery) {
+        if (baseScore >= 730) practiceAdj = Math.min(practiceAdj, 5);
+        else if (baseScore >= 700) practiceAdj = Math.min(practiceAdj, 8);
+      }
 
       // Final prediction
       const predicted = Math.max(200, Math.min(800, Math.round(
-        baseScore + attendanceAdj + homeworkAdj + practiceAdj + variancePenalty
+        baseScore + attendanceAdj + homeworkAdj + practiceAdj + variancePenalty + trendBonus
       )));
 
-      // Confidence — downgrade when variance is high
+      // Tighter range for high-confidence students
+      if (tests.length >= 5 && hardAccuracy >= 65 && attemptVolume >= 300) {
+        const dStd = downsideStdev(tests.slice(0, 5).map(t => t.score!));
+        halfRange = Math.max(12, Math.min(Math.round(dStd * 0.35), 20));
+      }
+
+      // Confidence — downgrade when downside variance is high
       let confidence: 'high' | 'medium' | 'low' = 'low';
       if (hasBaseline && tests.length >= 3 && attemptVolume >= 100) {
         confidence = Math.abs(variancePenalty) > 15 ? 'medium' : 'high';
       } else if (hasBaseline) {
         confidence = 'medium';
       }
+
 
       return {
         predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],
