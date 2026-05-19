@@ -2117,6 +2117,51 @@ export type Database = {
           },
         ]
       }
+      sms_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          last_fired_at: string | null
+          name: string
+          recipient_role: string
+          sent_count: number
+          template_mn: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          last_fired_at?: string | null
+          name: string
+          recipient_role?: string
+          sent_count?: number
+          template_mn: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          last_fired_at?: string | null
+          name?: string
+          recipient_role?: string
+          sent_count?: number
+          template_mn?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sms_logs: {
         Row: {
           batch_id: string | null
@@ -2863,6 +2908,7 @@ export type Database = {
           batch_id: string | null
           created_at: string
           english_level: string | null
+          fee_paid_at: string | null
           first_name: string
           first_session_completed: boolean | null
           grade: string | null
@@ -2887,6 +2933,7 @@ export type Database = {
           batch_id?: string | null
           created_at?: string
           english_level?: string | null
+          fee_paid_at?: string | null
           first_name?: string
           first_session_completed?: boolean | null
           grade?: string | null
@@ -2911,6 +2958,7 @@ export type Database = {
           batch_id?: string | null
           created_at?: string
           english_level?: string | null
+          fee_paid_at?: string | null
           first_name?: string
           first_session_completed?: boolean | null
           grade?: string | null
