@@ -198,18 +198,20 @@ export default function StudentSpeedSession() {
         });
 
         if (activeSprint) {
-          const { data: currentRanking } = await supabase
-            .from('student_sprint_rankings')
-            .select('total_points')
-            .eq('student_account_id', student.id)
-            .eq('sprint_id', activeSprint.id)
-            .maybeSingle();
+          const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
 
-          if (currentRanking) {
+          if (ranking) {
             await supabase.from('student_sprint_rankings')
-              .update({ total_points: (currentRanking.total_points || 0) + points, updated_at: new Date().toISOString() })
-              .eq('student_account_id', student.id)
-              .eq('sprint_id', activeSprint.id);
+              .update({ total_points: (ranking.total_points || 0) + points, updated_at: new Date().toISOString() })
+              .eq('id', ranking.id);
+          }
+
+          if (wasNewlyEnrolled) {
+            const snapshot = await getSprintEnrollmentSnapshot(student.id, activeSprint.id);
+            if (snapshot) {
+              pendingEnrollmentSnapshot.current = snapshot;
+              pendingEnrollmentPoints.current = points;
+            }
           }
         }
       }
