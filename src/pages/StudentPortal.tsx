@@ -8,6 +8,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Phone, BookOpen, GraduationCap, Loader2, Lock, ArrowLeft, Eye, EyeOff, CheckCircle2, User, Clock } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 
 // Password validation rules
 const PASSWORD_RULES = {
@@ -40,6 +41,7 @@ export default function StudentPortal() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
   const { toast } = useToast();
   const { 
     student, 
@@ -391,6 +393,14 @@ export default function StudentPortal() {
               'Sign In'
             )}
           </Button>
+          <Button
+            type="button"
+            variant="link"
+            className="w-full text-sm text-muted-foreground"
+            onClick={() => setForgotPassword(true)}
+          >
+            Forgot password?
+          </Button>
         </form>
       </CardContent>
     </Card>
@@ -504,11 +514,29 @@ export default function StudentPortal() {
         </div>
 
         {/* Auth Step Cards */}
-        {authStep === 'phone' && renderPhoneStep()}
-        {authStep === 'password' && renderPasswordStep()}
-        {authStep === 'set_password' && renderSetPasswordStep()}
-        {authStep === 'request_registration' && renderRegistrationRequestStep()}
-        {authStep === 'pending_approval' && renderPendingApprovalStep()}
+        {forgotPassword ? (
+          <ForgotPasswordCard
+            initialPhone={pendingPhone || phoneNumber}
+            onBack={() => setForgotPassword(false)}
+            onSuccess={() => {
+              setForgotPassword(false);
+              resetAuthFlow();
+              setPassword('');
+              toast({
+                title: 'Password reset',
+                description: 'Please log in with your new password.',
+              });
+            }}
+          />
+        ) : (
+          <>
+            {authStep === 'phone' && renderPhoneStep()}
+            {authStep === 'password' && renderPasswordStep()}
+            {authStep === 'set_password' && renderSetPasswordStep()}
+            {authStep === 'request_registration' && renderRegistrationRequestStep()}
+            {authStep === 'pending_approval' && renderPendingApprovalStep()}
+          </>
+        )}
 
         {/* Features Preview - only show on phone step */}
         {authStep === 'phone' && (
