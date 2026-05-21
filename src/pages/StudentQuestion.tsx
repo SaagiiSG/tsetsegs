@@ -423,9 +423,12 @@ export default function StudentQuestion() {
       });
 
       // Award points for correct answers (first 3 attempts only: 1st = 10 pts, 2nd = 5 pts, 3rd = 2 pts)
+      let enrollmentSnapshot: SprintEnrollmentSnapshot | null = null;
+      let pointsAwarded = 0;
       if (correct && attemptNumber <= 3) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
-        
+        pointsAwarded = points;
+
         // Get active sprint (optional - points are awarded regardless)
         const { data: activeSprint } = await supabase
           .from('sprints')
@@ -444,27 +447,27 @@ export default function StudentQuestion() {
             metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
           });
 
-        // Update sprint ranking only if there's an active sprint
+        // Update sprint ranking only if there's an active sprint.
+        // First-correct-answer-of-the-sprint enrolls the student.
         if (activeSprint) {
-          const { data: currentRanking } = await supabase
-            .from('student_sprint_rankings')
-            .select('total_points')
-            .eq('student_account_id', student.id)
-            .eq('sprint_id', activeSprint.id)
-            .maybeSingle();
+          const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
 
-          if (currentRanking) {
+          if (ranking) {
             await supabase
               .from('student_sprint_rankings')
-              .update({ 
-                total_points: (currentRanking.total_points || 0) + points,
+              .update({
+                total_points: (ranking.total_points || 0) + points,
                 updated_at: new Date().toISOString()
               })
-              .eq('student_account_id', student.id)
-              .eq('sprint_id', activeSprint.id);
+              .eq('id', ranking.id);
+          }
+
+          if (wasNewlyEnrolled) {
+            enrollmentSnapshot = await getSprintEnrollmentSnapshot(student.id, activeSprint.id);
           }
         }
       }
+
 
       // Add to spaced repetition queue if incorrect
       if (!correct && questionId) {
