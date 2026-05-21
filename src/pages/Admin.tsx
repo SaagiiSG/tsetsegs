@@ -26,6 +26,7 @@ import BugReports from '@/pages/admin/BugReports';
 import SmsLog from '@/pages/admin/SmsLog';
 import SmsFlows from '@/pages/admin/SmsFlows';
 import SmsInbox from '@/pages/admin/SmsInbox';
+import SmsAutoReplies from '@/pages/admin/SmsAutoReplies';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
