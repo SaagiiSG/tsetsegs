@@ -2117,6 +2117,42 @@ export type Database = {
           },
         ]
       }
+      sms_auto_replies: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          flow_key: string
+          id: string
+          keyword: string
+          last_fired_at: string | null
+          reply_template: string
+          sent_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          flow_key: string
+          id?: string
+          keyword: string
+          last_fired_at?: string | null
+          reply_template: string
+          sent_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          flow_key?: string
+          id?: string
+          keyword?: string
+          last_fired_at?: string | null
+          reply_template?: string
+          sent_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sms_flows: {
         Row: {
           created_at: string
