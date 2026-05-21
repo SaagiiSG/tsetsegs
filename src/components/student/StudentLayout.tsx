@@ -7,11 +7,22 @@ import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
+import { IELTSPracticeNotice } from './IELTSPracticeNotice';
+import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
+import { useLocation } from 'react-router-dom';
+import {
+  PracticeCommandSheetProvider,
+  usePracticeCommandSheet,
+} from './practice/PracticeCommandSheetContext';
+import { PracticeCommandSheet } from './practice/PracticeCommandSheet';
+import { PracticeQuickFab } from './practice/PracticeQuickFab';
+import { GestureHintOverlay } from './practice/GestureHintOverlay';
+import { useSwipe } from '@/hooks/useSwipe';
 import { useLocation } from 'react-router-dom';
 import {
   PracticeCommandSheetProvider,
@@ -29,6 +40,7 @@ function StudentLayoutContent() {
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const courses = useStudentCourses();
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
@@ -83,6 +95,12 @@ function StudentLayoutContent() {
 
   if (!hasAccess) {
     return <Navigate to="/practice" replace />;
+  }
+
+  // SAT-only gate: IELTS-only students cannot access the practice portal.
+  // Teachers/admins viewing a student bypass this gate.
+  if (student && !isTeacherOrAdmin && !courses.loading && courses.isIELTSOnly) {
+    return <IELTSPracticeNotice />;
   }
 
   return (

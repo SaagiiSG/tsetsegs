@@ -12,6 +12,7 @@ interface LinkedStudent {
   school_name: string | null;
   parent_phone?: string | null;
   sat_test_month?: string | null;
+  course_type?: string | null;
 }
 
 interface StudentAccount {
@@ -246,23 +247,30 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Fetch linked student profile if exists
-      let linkedStudent: LinkedStudent | null = null;
-      let linkedStudents: LinkedStudent[] = [];
-      if (studentAccount.linked_student_id) {
-        const { data: linkedData } = await supabase
-          .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
-          .eq('id', studentAccount.linked_student_id)
-          .maybeSingle();
-        linkedStudent = linkedData;
-      }
-      // Fetch ALL student records matching this phone (for multi-batch students)
-      const { data: allLinked } = await supabase
+      // Fetch ALL student records matching this phone (with batch course_type), then pick SAT as primary.
+      const { data: allLinkedRaw } = await supabase
         .from('students')
-        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
+        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month, batches(course_type)')
         .or(`phone.eq.${studentAccount.phone_number},phone.eq.${studentAccount.phone_number.replace(/-/g, '')}`);
-      linkedStudents = allLinked || [];
+      const linkedStudents: LinkedStudent[] = (allLinkedRaw ?? []).map((r: any) => ({
+        id: r.id,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        phone: r.phone,
+        batch_id: r.batch_id,
+        grade: r.grade,
+        school_name: r.school_name,
+        parent_phone: r.parent_phone,
+        sat_test_month: r.sat_test_month,
+        course_type: r.batches?.course_type ?? null,
+      }));
+
+      // Prefer SAT record as the primary `linked_student`, falling back to the stored linked_student_id.
+      let linkedStudent: LinkedStudent | null =
+        linkedStudents.find((s) => s.course_type === 'SAT') ??
+        linkedStudents.find((s) => s.id === studentAccount.linked_student_id) ??
+        linkedStudents[0] ??
+        null;
 
       setStudent({
         ...studentAccount,
@@ -606,23 +614,29 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         .update({ last_login: new Date().toISOString() })
         .eq('id', studentAccount.id);
 
-      // Fetch linked student profile if exists
-      let linkedStudent: LinkedStudent | null = null;
-      let linkedStudents: LinkedStudent[] = [];
-      if (studentAccount.linked_student_id) {
-        const { data: linkedData } = await supabase
-          .from('students')
-          .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
-          .eq('id', studentAccount.linked_student_id)
-          .maybeSingle();
-        linkedStudent = linkedData;
-      }
-      // Fetch ALL student records matching this phone (for multi-batch students)
-      const { data: allLinked } = await supabase
+      // Fetch ALL student records matching this phone (with batch course_type), prefer SAT as primary.
+      const { data: allLinkedRaw } = await supabase
         .from('students')
-        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month')
+        .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month, batches(course_type)')
         .or(`phone.eq.${studentAccount.phone_number},phone.eq.${studentAccount.phone_number.replace(/-/g, '')}`);
-      linkedStudents = allLinked || [];
+      const linkedStudents: LinkedStudent[] = (allLinkedRaw ?? []).map((r: any) => ({
+        id: r.id,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        phone: r.phone,
+        batch_id: r.batch_id,
+        grade: r.grade,
+        school_name: r.school_name,
+        parent_phone: r.parent_phone,
+        sat_test_month: r.sat_test_month,
+        course_type: r.batches?.course_type ?? null,
+      }));
+
+      const linkedStudent: LinkedStudent | null =
+        linkedStudents.find((s) => s.course_type === 'SAT') ??
+        linkedStudents.find((s) => s.id === studentAccount.linked_student_id) ??
+        linkedStudents[0] ??
+        null;
 
       // Store session info
       localStorage.setItem('student_session_id', session.id);
