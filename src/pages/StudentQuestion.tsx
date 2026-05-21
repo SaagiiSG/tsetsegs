@@ -72,6 +72,7 @@ export default function StudentQuestion() {
   const [noteContent, setNoteContent] = useState('');
   const [noteTab, setNoteTab] = useState<'text' | 'draw'>('text');
   const [drawingData, setDrawingData] = useState<string | null>(null);
+  const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   // Security: Prevent screenshots
   useEffect(() => {
