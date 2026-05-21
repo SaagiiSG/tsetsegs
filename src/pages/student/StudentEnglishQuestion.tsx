@@ -595,6 +595,12 @@ export default function StudentEnglishQuestion() {
           </DialogContent>
         </Dialog>
       </div>
+      <SprintEnrollmentDialog
+        open={enrollmentDialog.open}
+        onOpenChange={(open) => setEnrollmentDialog((s) => ({ ...s, open }))}
+        snapshot={enrollmentDialog.snapshot}
+        pointsEarned={enrollmentDialog.pointsEarned}
+      />
     </SecurityWrapper>
   );
 }
