@@ -21,24 +21,4 @@ verify_jwt = false
 [functions.sync-external-questions]
 verify_jwt = false
 
-[functions.send-sms]
-verify_jwt = false
-
-[functions.notify-attendance-change]
-verify_jwt = false
-
-[functions.send-welcome-sms]
-verify_jwt = false
-
-[functions.send-fee-paid-sms]
-verify_jwt = false
-
-[functions.send-batch-start-reminder]
-verify_jwt = false
-
-[functions.send-broadcast-sms]
-verify_jwt = false
-
-[functions.receive-sms]
-verify_jwt = false
 
