@@ -89,15 +89,12 @@ Deno.serve(async (req) => {
       .single();
     if (logErr) throw logErr;
 
-    // Send via Twilio gateway
-    // For Mongolian numbers (+976), force the US long code so replies work (two-way SMS).
-    // The Messaging Service routes via alphanumeric sender 'Tsetsegs' which is one-way only.
-    // For everything else, prefer the Messaging Service if available.
-    const isMongolian = to.startsWith('+976');
+    // Send via Twilio gateway — prefer Messaging Service.
+    // Note: Twilio US long codes CANNOT deliver SMS to Mongolia (+976) — carrier restriction (error 21612).
+    // The Messaging Service routes MN traffic via the 'Tsetsegs' alphanumeric sender, which is one-way only.
+    // For true two-way SMS with MN parents, WhatsApp Business via Twilio is the only realistic path.
     const twParams: Record<string, string> = { To: to, Body: payload.body };
-    if (isMongolian && FROM) {
-      twParams.From = FROM;
-    } else if (MESSAGING_SERVICE_SID) {
+    if (MESSAGING_SERVICE_SID) {
       twParams.MessagingServiceSid = MESSAGING_SERVICE_SID;
     } else {
       twParams.From = FROM!;
