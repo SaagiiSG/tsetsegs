@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Phone, KeyRound, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp';
+import { ArrowLeft, Phone, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -168,17 +169,25 @@ export function ForgotPasswordCard({ initialPhone = '', onBack, onSuccess }: Pro
         <form onSubmit={handleVerify} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="reset-code">SMS Code</Label>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="reset-code"
-                inputMode="numeric"
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="pl-10 text-lg tracking-[0.5em] font-mono"
+            <div className="flex justify-center py-2">
+              <InputOTP
                 maxLength={6}
-              />
+                value={code}
+                onChange={(v) => setCode(v.replace(/\D/g, ''))}
+                id="reset-code"
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
             </div>
           </div>
 
