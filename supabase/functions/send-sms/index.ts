@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
     const FROM = Deno.env.get('TWILIO_FROM_NUMBER');
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !FROM) {
+    const MESSAGING_SERVICE_SID = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID');
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!FROM && !MESSAGING_SERVICE_SID)) {
       throw new Error('Missing TWILIO credentials');
     }
 
