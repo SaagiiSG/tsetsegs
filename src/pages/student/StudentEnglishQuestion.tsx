@@ -42,6 +42,7 @@ export default function StudentEnglishQuestion() {
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   useEffect(() => {
     if (student && questionId) {
