@@ -76,7 +76,7 @@ export function SprintEnrollmentDialog({ open, onOpenChange, snapshot, pointsEar
           <Button
             onClick={() => {
               onOpenChange(false);
-              navigate('/student/leaderboard');
+              navigate('/practice/leaderboard');
             }}
           >
             View leaderboard
