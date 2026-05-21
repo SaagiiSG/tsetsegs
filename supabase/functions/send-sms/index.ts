@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         kind: payload.kind,
         recipient_role: payload.recipient_role,
         to_phone: to,
-        from_phone: FROM,
+        from_phone: MESSAGING_SERVICE_SID ?? FROM ?? '',
         body: payload.body,
         student_id: payload.student_id ?? null,
         batch_id: payload.batch_id ?? null,
@@ -88,6 +88,24 @@ Deno.serve(async (req) => {
       .select('id')
       .single();
     if (logErr) throw logErr;
+
+    // Send via Twilio gateway — prefer Messaging Service (auto-routes alpha sender for MN)
+    const twParams: Record<string, string> = { To: to, Body: payload.body };
+    if (MESSAGING_SERVICE_SID) {
+      twParams.MessagingServiceSid = MESSAGING_SERVICE_SID;
+    } else {
+      twParams.From = FROM!;
+    }
+
+    const twRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        'X-Connection-Api-Key': TWILIO_API_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(twParams),
+    });
 
     // Send via Twilio gateway
     const twRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
