@@ -2162,6 +2162,59 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_inbox: {
+        Row: {
+          body: string | null
+          created_at: string
+          from_phone: string
+          id: string
+          matched_role: string | null
+          matched_student_id: string | null
+          media_urls: Json | null
+          num_media: number | null
+          raw: Json | null
+          read_at: string | null
+          to_phone: string
+          twilio_sid: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          from_phone: string
+          id?: string
+          matched_role?: string | null
+          matched_student_id?: string | null
+          media_urls?: Json | null
+          num_media?: number | null
+          raw?: Json | null
+          read_at?: string | null
+          to_phone: string
+          twilio_sid?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          from_phone?: string
+          id?: string
+          matched_role?: string | null
+          matched_student_id?: string | null
+          media_urls?: Json | null
+          num_media?: number | null
+          raw?: Json | null
+          read_at?: string | null
+          to_phone?: string
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_inbox_matched_student_id_fkey"
+            columns: ["matched_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_logs: {
         Row: {
           batch_id: string | null
