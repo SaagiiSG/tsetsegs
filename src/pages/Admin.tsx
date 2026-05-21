@@ -76,6 +76,7 @@ const Admin = () => {
       <Route path="sms" element={<SmsLog />} />
       <Route path="sms-flows" element={<SmsFlows />} />
       <Route path="sms-inbox" element={<SmsInbox />} />
+      <Route path="sms-auto-replies" element={<SmsAutoReplies />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
