@@ -235,6 +235,26 @@ export default function StudentSpeedSession() {
     setQuestionElapsed(0);
   }, [currentIndex]);
 
+  // When the speed session completes, show the sprint enrollment dialog if the
+  // student got their first sprint-eligible correct answer during the session.
+  useEffect(() => {
+    if (!sessionComplete || !pendingEnrollmentSnapshot.current || !student?.id) return;
+    const snap = pendingEnrollmentSnapshot.current;
+    pendingEnrollmentSnapshot.current = null;
+    const points = pendingEnrollmentPoints.current;
+    pendingEnrollmentPoints.current = 0;
+
+    // Refresh snapshot so rank/points reflect end-of-session standing.
+    (async () => {
+      const { data: activeSprint } = await supabase
+        .from('sprints').select('id').eq('is_active', true).maybeSingle();
+      const refreshed = activeSprint
+        ? await getSprintEnrollmentSnapshot(student.id, activeSprint.id)
+        : null;
+      setEnrollmentDialog({ open: true, snapshot: refreshed || snap, pointsEarned: points });
+    })();
+  }, [sessionComplete, student?.id]);
+
   const normalizeAnswer = (answer: string) => answer.trim().toLowerCase().replace(/\s+/g, ' ');
 
   const handleSubmit = useCallback((timeout = false) => {
