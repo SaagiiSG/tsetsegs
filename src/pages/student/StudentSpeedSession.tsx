@@ -110,6 +110,9 @@ export default function StudentSpeedSession() {
   const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number }[]>([]);
   const questionStartTime = useRef(Date.now());
   const [questionElapsed, setQuestionElapsed] = useState(0);
+  const pendingEnrollmentSnapshot = useRef<SprintEnrollmentSnapshot | null>(null);
+  const pendingEnrollmentPoints = useRef<number>(0);
+  const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['speed-questions', categoryId, maxQuestions],
