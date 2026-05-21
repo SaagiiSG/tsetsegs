@@ -544,9 +544,10 @@ export default function StudentQuestion() {
         }
       }
 
-      return correct;
+      return { correct, enrollmentSnapshot, pointsAwarded };
     },
-    onSuccess: (correct) => {
+    onSuccess: (result) => {
+      const correct = result?.correct;
       setSubmitted(true);
       setIsCorrect(correct || false);
       setAttemptCount(prev => prev + 1);
@@ -569,6 +570,10 @@ export default function StudentQuestion() {
         queryClient.refetchQueries({ queryKey: ['student-attempts'] });
         queryClient.refetchQueries({ queryKey: ['navigator-attempts'] });
         queryClient.refetchQueries({ queryKey: ['review-queue'] });
+      }
+      // Sprint enrollment celebration (only fires on the first correct answer of the sprint)
+      if (result?.enrollmentSnapshot) {
+        setEnrollmentDialog({ open: true, snapshot: result.enrollmentSnapshot, pointsEarned: result.pointsAwarded || 0 });
       }
     },
     onError: (error: any) => {
