@@ -19,6 +19,8 @@ import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
+import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 
 interface Question {
   id: string;
@@ -108,6 +110,9 @@ export default function StudentSpeedSession() {
   const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number }[]>([]);
   const questionStartTime = useRef(Date.now());
   const [questionElapsed, setQuestionElapsed] = useState(0);
+  const pendingEnrollmentSnapshot = useRef<SprintEnrollmentSnapshot | null>(null);
+  const pendingEnrollmentPoints = useRef<number>(0);
+  const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['speed-questions', categoryId, maxQuestions],
@@ -193,18 +198,20 @@ export default function StudentSpeedSession() {
         });
 
         if (activeSprint) {
-          const { data: currentRanking } = await supabase
-            .from('student_sprint_rankings')
-            .select('total_points')
-            .eq('student_account_id', student.id)
-            .eq('sprint_id', activeSprint.id)
-            .maybeSingle();
+          const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
 
-          if (currentRanking) {
+          if (ranking) {
             await supabase.from('student_sprint_rankings')
-              .update({ total_points: (currentRanking.total_points || 0) + points, updated_at: new Date().toISOString() })
-              .eq('student_account_id', student.id)
-              .eq('sprint_id', activeSprint.id);
+              .update({ total_points: (ranking.total_points || 0) + points, updated_at: new Date().toISOString() })
+              .eq('id', ranking.id);
+          }
+
+          if (wasNewlyEnrolled) {
+            const snapshot = await getSprintEnrollmentSnapshot(student.id, activeSprint.id);
+            if (snapshot) {
+              pendingEnrollmentSnapshot.current = snapshot;
+              pendingEnrollmentPoints.current = points;
+            }
           }
         }
       }
@@ -227,6 +234,26 @@ export default function StudentSpeedSession() {
     questionStartTime.current = Date.now();
     setQuestionElapsed(0);
   }, [currentIndex]);
+
+  // When the speed session completes, show the sprint enrollment dialog if the
+  // student got their first sprint-eligible correct answer during the session.
+  useEffect(() => {
+    if (!sessionComplete || !pendingEnrollmentSnapshot.current || !student?.id) return;
+    const snap = pendingEnrollmentSnapshot.current;
+    pendingEnrollmentSnapshot.current = null;
+    const points = pendingEnrollmentPoints.current;
+    pendingEnrollmentPoints.current = 0;
+
+    // Refresh snapshot so rank/points reflect end-of-session standing.
+    (async () => {
+      const { data: activeSprint } = await supabase
+        .from('sprints').select('id').eq('is_active', true).maybeSingle();
+      const refreshed = activeSprint
+        ? await getSprintEnrollmentSnapshot(student.id, activeSprint.id)
+        : null;
+      setEnrollmentDialog({ open: true, snapshot: refreshed || snap, pointsEarned: points });
+    })();
+  }, [sessionComplete, student?.id]);
 
   const normalizeAnswer = (answer: string) => answer.trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -321,6 +348,7 @@ export default function StudentSpeedSession() {
     const avgTime = results.length > 0 ? Math.round(totalTime / results.length / 1000) : 0;
 
     return (
+      <>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center space-y-6">
@@ -360,6 +388,13 @@ export default function StudentSpeedSession() {
           </CardContent>
         </Card>
       </div>
+      <SprintEnrollmentDialog
+        open={enrollmentDialog.open}
+        onOpenChange={(open) => setEnrollmentDialog((s) => ({ ...s, open }))}
+        snapshot={enrollmentDialog.snapshot}
+        pointsEarned={enrollmentDialog.pointsEarned}
+      />
+      </>
     );
   }
 

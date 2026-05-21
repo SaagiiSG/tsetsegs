@@ -141,6 +141,14 @@ export function CurrentSprintTab({
                 </p>
               </div>
             </div>
+          ) : !currentUserRanking ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">You haven't joined this sprint yet</p>
+              <p className="text-sm mt-1">
+                Solve your first problem {sprint ? `in Sprint ${sprint.sprintNumber}` : ''} to join the leaderboard.
+              </p>
+            </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />

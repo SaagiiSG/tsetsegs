@@ -26,6 +26,8 @@ import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
+import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -70,6 +72,7 @@ export default function StudentQuestion() {
   const [noteContent, setNoteContent] = useState('');
   const [noteTab, setNoteTab] = useState<'text' | 'draw'>('text');
   const [drawingData, setDrawingData] = useState<string | null>(null);
+  const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   // Security: Prevent screenshots
   useEffect(() => {
@@ -420,9 +423,12 @@ export default function StudentQuestion() {
       });
 
       // Award points for correct answers (first 3 attempts only: 1st = 10 pts, 2nd = 5 pts, 3rd = 2 pts)
+      let enrollmentSnapshot: SprintEnrollmentSnapshot | null = null;
+      let pointsAwarded = 0;
       if (correct && attemptNumber <= 3) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
-        
+        pointsAwarded = points;
+
         // Get active sprint (optional - points are awarded regardless)
         const { data: activeSprint } = await supabase
           .from('sprints')
@@ -441,27 +447,27 @@ export default function StudentQuestion() {
             metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
           });
 
-        // Update sprint ranking only if there's an active sprint
+        // Update sprint ranking only if there's an active sprint.
+        // First-correct-answer-of-the-sprint enrolls the student.
         if (activeSprint) {
-          const { data: currentRanking } = await supabase
-            .from('student_sprint_rankings')
-            .select('total_points')
-            .eq('student_account_id', student.id)
-            .eq('sprint_id', activeSprint.id)
-            .maybeSingle();
+          const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
 
-          if (currentRanking) {
+          if (ranking) {
             await supabase
               .from('student_sprint_rankings')
-              .update({ 
-                total_points: (currentRanking.total_points || 0) + points,
+              .update({
+                total_points: (ranking.total_points || 0) + points,
                 updated_at: new Date().toISOString()
               })
-              .eq('student_account_id', student.id)
-              .eq('sprint_id', activeSprint.id);
+              .eq('id', ranking.id);
+          }
+
+          if (wasNewlyEnrolled) {
+            enrollmentSnapshot = await getSprintEnrollmentSnapshot(student.id, activeSprint.id);
           }
         }
       }
+
 
       // Add to spaced repetition queue if incorrect
       if (!correct && questionId) {
@@ -538,9 +544,10 @@ export default function StudentQuestion() {
         }
       }
 
-      return correct;
+      return { correct, enrollmentSnapshot, pointsAwarded };
     },
-    onSuccess: (correct) => {
+    onSuccess: (result) => {
+      const correct = result?.correct;
       setSubmitted(true);
       setIsCorrect(correct || false);
       setAttemptCount(prev => prev + 1);
@@ -563,6 +570,10 @@ export default function StudentQuestion() {
         queryClient.refetchQueries({ queryKey: ['student-attempts'] });
         queryClient.refetchQueries({ queryKey: ['navigator-attempts'] });
         queryClient.refetchQueries({ queryKey: ['review-queue'] });
+      }
+      // Sprint enrollment celebration (only fires on the first correct answer of the sprint)
+      if (result?.enrollmentSnapshot) {
+        setEnrollmentDialog({ open: true, snapshot: result.enrollmentSnapshot, pointsEarned: result.pointsAwarded || 0 });
       }
     },
     onError: (error: any) => {
@@ -1090,6 +1101,12 @@ export default function StudentQuestion() {
         </Dialog>
       </div>
     </SecurityWrapper>
+    <SprintEnrollmentDialog
+      open={enrollmentDialog.open}
+      onOpenChange={(open) => setEnrollmentDialog((s) => ({ ...s, open }))}
+      snapshot={enrollmentDialog.snapshot}
+      pointsEarned={enrollmentDialog.pointsEarned}
+    />
     </>
   );
 }
