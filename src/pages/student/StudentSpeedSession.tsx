@@ -348,6 +348,7 @@ export default function StudentSpeedSession() {
     const avgTime = results.length > 0 ? Math.round(totalTime / results.length / 1000) : 0;
 
     return (
+      <>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center space-y-6">
@@ -387,6 +388,13 @@ export default function StudentSpeedSession() {
           </CardContent>
         </Card>
       </div>
+      <SprintEnrollmentDialog
+        open={enrollmentDialog.open}
+        onOpenChange={(open) => setEnrollmentDialog((s) => ({ ...s, open }))}
+        snapshot={enrollmentDialog.snapshot}
+        pointsEarned={enrollmentDialog.pointsEarned}
+      />
+      </>
     );
   }
 
