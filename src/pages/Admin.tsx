@@ -23,10 +23,6 @@ import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
 import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
-import SmsLog from '@/pages/admin/SmsLog';
-import SmsFlows from '@/pages/admin/SmsFlows';
-import SmsInbox from '@/pages/admin/SmsInbox';
-import SmsAutoReplies from '@/pages/admin/SmsAutoReplies';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -73,10 +69,6 @@ const Admin = () => {
       <Route path="review-sessions" element={<ReviewSessions />} />
       <Route path="ngee" element={<NGEEAdmin />} />
       <Route path="bug-reports" element={<BugReports />} />
-      <Route path="sms" element={<SmsLog />} />
-      <Route path="sms-flows" element={<SmsFlows />} />
-      <Route path="sms-inbox" element={<SmsInbox />} />
-      <Route path="sms-auto-replies" element={<SmsAutoReplies />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
