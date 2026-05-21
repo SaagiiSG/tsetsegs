@@ -38,3 +38,7 @@ verify_jwt = false
 
 [functions.send-broadcast-sms]
 verify_jwt = false
+
+[functions.receive-sms]
+verify_jwt = false
+

@@ -25,6 +25,7 @@ import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
 import SmsLog from '@/pages/admin/SmsLog';
 import SmsFlows from '@/pages/admin/SmsFlows';
+import SmsInbox from '@/pages/admin/SmsInbox';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -73,6 +74,7 @@ const Admin = () => {
       <Route path="bug-reports" element={<BugReports />} />
       <Route path="sms" element={<SmsLog />} />
       <Route path="sms-flows" element={<SmsFlows />} />
+      <Route path="sms-inbox" element={<SmsInbox />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
