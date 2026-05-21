@@ -63,6 +63,7 @@ export const menuSections: MenuSection[] = [
       { title: "SMS Inbox", url: "/admin/sms-inbox", icon: MessageSquare },
       { title: "SMS Log", url: "/admin/sms", icon: MessageSquare },
       { title: "SMS Flows", url: "/admin/sms-flows", icon: MessageSquare },
+      { title: "SMS Auto-Replies", url: "/admin/sms-auto-replies", icon: MessageSquare },
     ],
     defaultOpen: true,
   },

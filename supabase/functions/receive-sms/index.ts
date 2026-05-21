@@ -84,6 +84,74 @@ Deno.serve(async (req) => {
       raw: params,
     });
 
+    // ---- Context-aware keyword auto-reply ----
+    try {
+      const keyword = (body || '').trim();
+      if (keyword.length > 0 && keyword.length <= 40) {
+        // Find the most recent outbound SMS to this number in the last 48h to get flow context
+        const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+        const { data: lastOut } = await supabase
+          .from('sms_logs')
+          .select('kind, student_id, batch_id')
+          .eq('to_phone', from)
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const flowKey = lastOut?.kind ?? null;
+
+        // Try flow-specific match first, then fall back to 'global'
+        let rule: { id: string; reply_template: string; sent_count: number } | null = null;
+        if (flowKey) {
+          const { data } = await supabase
+            .from('sms_auto_replies')
+            .select('id, reply_template, sent_count')
+            .eq('enabled', true)
+            .eq('flow_key', flowKey)
+            .ilike('keyword', keyword)
+            .maybeSingle();
+          rule = data ?? null;
+        }
+        if (!rule) {
+          const { data } = await supabase
+            .from('sms_auto_replies')
+            .select('id, reply_template, sent_count')
+            .eq('enabled', true)
+            .eq('flow_key', 'global')
+            .ilike('keyword', keyword)
+            .maybeSingle();
+          rule = data ?? null;
+        }
+
+        if (rule) {
+          // Fire send-sms
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-sms`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+            },
+            body: JSON.stringify({
+              to: from,
+              body: rule.reply_template,
+              kind: 'manual',
+              recipient_role: matched_role === 'parent' ? 'parent' : 'other',
+              student_id: matched_student_id,
+              dedupe_key: `autoreply:${rule.id}:${sid ?? from + ':' + Date.now()}`,
+            }),
+          });
+          await supabase
+            .from('sms_auto_replies')
+            .update({ sent_count: rule.sent_count + 1, last_fired_at: new Date().toISOString() })
+            .eq('id', rule.id);
+        }
+      }
+    } catch (e) {
+      console.error('auto-reply error:', e);
+    }
+
+
     // Empty TwiML so Twilio doesn't auto-reply
     return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
       headers: { ...corsHeaders, 'Content-Type': 'text/xml' },
