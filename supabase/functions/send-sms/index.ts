@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
     const FROM = Deno.env.get('TWILIO_FROM_NUMBER');
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !FROM) {
+    const MESSAGING_SERVICE_SID = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID');
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!FROM && !MESSAGING_SERVICE_SID)) {
       throw new Error('Missing TWILIO credentials');
     }
 
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
         kind: payload.kind,
         recipient_role: payload.recipient_role,
         to_phone: to,
-        from_phone: FROM,
+        from_phone: MESSAGING_SERVICE_SID ?? FROM ?? '',
         body: payload.body,
         student_id: payload.student_id ?? null,
         batch_id: payload.batch_id ?? null,
@@ -88,7 +89,14 @@ Deno.serve(async (req) => {
       .single();
     if (logErr) throw logErr;
 
-    // Send via Twilio gateway
+    // Send via Twilio gateway — prefer Messaging Service (auto-routes alpha sender for MN)
+    const twParams: Record<string, string> = { To: to, Body: payload.body };
+    if (MESSAGING_SERVICE_SID) {
+      twParams.MessagingServiceSid = MESSAGING_SERVICE_SID;
+    } else {
+      twParams.From = FROM!;
+    }
+
     const twRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: 'POST',
       headers: {
@@ -96,7 +104,7 @@ Deno.serve(async (req) => {
         'X-Connection-Api-Key': TWILIO_API_KEY,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({ To: to, From: FROM, Body: payload.body }),
+      body: new URLSearchParams(twParams),
     });
     const twData = await twRes.json();
 
