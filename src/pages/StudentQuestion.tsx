@@ -1101,6 +1101,12 @@ export default function StudentQuestion() {
         </Dialog>
       </div>
     </SecurityWrapper>
+    <SprintEnrollmentDialog
+      open={enrollmentDialog.open}
+      onOpenChange={(open) => setEnrollmentDialog((s) => ({ ...s, open }))}
+      snapshot={enrollmentDialog.snapshot}
+      pointsEarned={enrollmentDialog.pointsEarned}
+    />
     </>
   );
 }
