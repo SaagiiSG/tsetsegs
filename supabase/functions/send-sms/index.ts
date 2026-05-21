@@ -89,9 +89,15 @@ Deno.serve(async (req) => {
       .single();
     if (logErr) throw logErr;
 
-    // Send via Twilio gateway — prefer Messaging Service (auto-routes alpha sender for MN)
+    // Send via Twilio gateway
+    // For Mongolian numbers (+976), force the US long code so replies work (two-way SMS).
+    // The Messaging Service routes via alphanumeric sender 'Tsetsegs' which is one-way only.
+    // For everything else, prefer the Messaging Service if available.
+    const isMongolian = to.startsWith('+976');
     const twParams: Record<string, string> = { To: to, Body: payload.body };
-    if (MESSAGING_SERVICE_SID) {
+    if (isMongolian && FROM) {
+      twParams.From = FROM;
+    } else if (MESSAGING_SERVICE_SID) {
       twParams.MessagingServiceSid = MESSAGING_SERVICE_SID;
     } else {
       twParams.From = FROM!;
