@@ -106,17 +106,6 @@ Deno.serve(async (req) => {
       },
       body: new URLSearchParams(twParams),
     });
-
-    // Send via Twilio gateway
-    const twRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        'X-Connection-Api-Key': TWILIO_API_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({ To: to, From: FROM, Body: payload.body }),
-    });
     const twData = await twRes.json();
 
     if (!twRes.ok) {
