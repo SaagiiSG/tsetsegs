@@ -232,91 +232,10 @@ export function useLeaderboard(selectedTier?: TierType) {
     }
   });
 
-  // Auto-enroll student in active sprint if not already enrolled
-  useQuery({
-    queryKey: ['auto-enroll-sprint', activeSprint?.id, student?.id],
-    enabled: !!activeSprint?.id && !!student?.id,
-    queryFn: async () => {
-      if (!activeSprint?.id || !student?.id) return null;
+  // NOTE: Sprint enrollment is no longer triggered by viewing the leaderboard.
+  // Students enroll the first time they solve a question correctly during the
+  // active sprint — see src/lib/sprintEnrollment.ts.
 
-      // Check if already enrolled
-      const { data: existing } = await supabase
-        .from('student_sprint_rankings')
-        .select('id')
-        .eq('sprint_id', activeSprint.id)
-        .eq('student_account_id', student.id)
-        .single();
-
-      if (existing) return existing;
-
-      // Get previous tier from last sprint
-      const { data: previousRanking } = await supabase
-        .from('student_sprint_rankings')
-        .select('current_tier, reserved_next_tier')
-        .eq('student_account_id', student.id)
-        .neq('sprint_id', activeSprint.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      const startingTier = previousRanking?.reserved_next_tier || previousRanking?.current_tier || 'unranked';
-
-      // Get current group counts for this tier to assign appropriate group
-      const { data: groupCounts } = await supabase
-        .from('student_sprint_rankings')
-        .select('group_number')
-        .eq('sprint_id', activeSprint.id)
-        .eq('current_tier', startingTier);
-
-      // Calculate which group to assign
-      let assignedGroup = 1;
-      if (groupCounts && groupCounts.length > 0) {
-        // Count students per group
-        const groupMap: Record<number, number> = {};
-        groupCounts.forEach(r => {
-          const g = r.group_number || 1;
-          groupMap[g] = (groupMap[g] || 0) + 1;
-        });
-
-        // Find first group with space (less than MAX_GROUP_SIZE)
-        const maxGroup = Math.max(...Object.keys(groupMap).map(Number));
-        let foundGroup = false;
-        for (let i = 1; i <= maxGroup; i++) {
-          if ((groupMap[i] || 0) < MAX_GROUP_SIZE) {
-            assignedGroup = i;
-            foundGroup = true;
-            break;
-          }
-        }
-        // If all groups are full, create a new group
-        if (!foundGroup) {
-          assignedGroup = maxGroup + 1;
-        }
-      }
-
-      // Enroll in new sprint with assigned group
-      const { data: newRanking, error } = await supabase
-        .from('student_sprint_rankings')
-        .insert({
-          sprint_id: activeSprint.id,
-          student_account_id: student.id,
-          current_tier: startingTier,
-          total_points: 0,
-          is_top_1: false,
-          group_number: assignedGroup
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Failed to auto-enroll in sprint:', error);
-        return null;
-      }
-
-      return newRanking;
-    },
-    staleTime: Infinity // Only run once
-  });
 
   // Fetch current sprint leaderboard (filtered by user's group)
   const { data: leaderboardData, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
