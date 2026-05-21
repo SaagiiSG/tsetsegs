@@ -19,6 +19,8 @@ import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
+import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 
 interface Question {
   id: string;
