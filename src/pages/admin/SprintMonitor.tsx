@@ -202,73 +202,9 @@ export default function SprintMonitor() {
       
       if (error) throw error;
       
-      // Auto-enroll all active students into Sprint 1 as unranked
-      const sprint1Id = createdSprints?.find(s => s.sprint_number === 1)?.id;
-      if (sprint1Id) {
-        // Fetch all active student accounts
-        const { data: activeStudents } = await supabase
-          .from('student_accounts')
-          .select('id')
-          .eq('is_active', true);
-        
-        if (activeStudents && activeStudents.length > 0) {
-          // Fetch previous sprint rankings to get each student's tier
-          const { data: previousRankings } = await supabase
-            .from('student_sprint_rankings')
-            .select('student_account_id, current_tier, reserved_next_tier')
-            .order('created_at', { ascending: false });
-          
-          // Build a map of student_account_id -> their starting tier
-          const studentTierMap: Record<string, string> = {};
-          if (previousRankings) {
-            // Use the most recent ranking for each student
-            const seen = new Set<string>();
-            for (const r of previousRankings) {
-              if (!seen.has(r.student_account_id)) {
-                seen.add(r.student_account_id);
-                studentTierMap[r.student_account_id] = r.reserved_next_tier || r.current_tier || 'unranked';
-              }
-            }
-          }
-          
-          // Group students by their starting tier for proper group assignment
-          const tierGroups: Record<string, string[]> = {};
-          for (const student of activeStudents) {
-            const tier = studentTierMap[student.id] || 'unranked';
-            if (!tierGroups[tier]) tierGroups[tier] = [];
-            tierGroups[tier].push(student.id);
-          }
-          
-          // Create rankings with proper tier and group assignment
-          const rankings: Array<{
-            student_account_id: string;
-            sprint_id: string;
-            current_tier: string;
-            group_number: number;
-            total_points: number;
-          }> = [];
-          
-          for (const [tier, studentIds] of Object.entries(tierGroups)) {
-            studentIds.forEach((studentId, index) => {
-              rankings.push({
-                student_account_id: studentId,
-                sprint_id: sprint1Id,
-                current_tier: tier,
-                group_number: calculateGroupNumber(index, studentIds.length),
-                total_points: 0,
-              });
-            });
-          }
-          
-          const { error: rankingsError } = await supabase
-            .from('student_sprint_rankings')
-            .insert(rankings);
-          
-          if (rankingsError) {
-            console.error('Failed to seed students:', rankingsError);
-          }
-        }
-      }
+      // NOTE: We no longer auto-seed all active students into Sprint 1.
+      // Students enroll themselves the first time they correctly answer a
+      // question in the active sprint (see src/lib/sprintEnrollment.ts).
       
       // Refresh data
       await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
