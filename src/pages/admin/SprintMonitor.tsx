@@ -627,7 +627,7 @@ export default function SprintMonitor() {
               <div className="flex items-center justify-between pt-2 border-t border-border/50">
                 <div className="text-xs text-muted-foreground space-y-0.5">
                   <p>• Sprints run back-to-back (no gaps)</p>
-                  <p>• All active students auto-enrolled</p>
+                  <p>• Students enroll on their first solved problem</p>
                 </div>
                 <Button onClick={handleCreateSeason} disabled={isCreating} size="lg" className="gap-2 px-8">
                   {isCreating ? (
