@@ -20,7 +20,7 @@ import { format, differenceInSeconds, differenceInDays, differenceInHours, diffe
 import { cn } from '@/lib/utils';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
-const MAX_GROUP_SIZE = 55; // 40 ± 15 margin, effective range 25-55
+const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
 const TARGET_GROUP_SIZE = 40;
 
 const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
@@ -202,73 +202,9 @@ export default function SprintMonitor() {
       
       if (error) throw error;
       
-      // Auto-enroll all active students into Sprint 1 as unranked
-      const sprint1Id = createdSprints?.find(s => s.sprint_number === 1)?.id;
-      if (sprint1Id) {
-        // Fetch all active student accounts
-        const { data: activeStudents } = await supabase
-          .from('student_accounts')
-          .select('id')
-          .eq('is_active', true);
-        
-        if (activeStudents && activeStudents.length > 0) {
-          // Fetch previous sprint rankings to get each student's tier
-          const { data: previousRankings } = await supabase
-            .from('student_sprint_rankings')
-            .select('student_account_id, current_tier, reserved_next_tier')
-            .order('created_at', { ascending: false });
-          
-          // Build a map of student_account_id -> their starting tier
-          const studentTierMap: Record<string, string> = {};
-          if (previousRankings) {
-            // Use the most recent ranking for each student
-            const seen = new Set<string>();
-            for (const r of previousRankings) {
-              if (!seen.has(r.student_account_id)) {
-                seen.add(r.student_account_id);
-                studentTierMap[r.student_account_id] = r.reserved_next_tier || r.current_tier || 'unranked';
-              }
-            }
-          }
-          
-          // Group students by their starting tier for proper group assignment
-          const tierGroups: Record<string, string[]> = {};
-          for (const student of activeStudents) {
-            const tier = studentTierMap[student.id] || 'unranked';
-            if (!tierGroups[tier]) tierGroups[tier] = [];
-            tierGroups[tier].push(student.id);
-          }
-          
-          // Create rankings with proper tier and group assignment
-          const rankings: Array<{
-            student_account_id: string;
-            sprint_id: string;
-            current_tier: string;
-            group_number: number;
-            total_points: number;
-          }> = [];
-          
-          for (const [tier, studentIds] of Object.entries(tierGroups)) {
-            studentIds.forEach((studentId, index) => {
-              rankings.push({
-                student_account_id: studentId,
-                sprint_id: sprint1Id,
-                current_tier: tier,
-                group_number: calculateGroupNumber(index, studentIds.length),
-                total_points: 0,
-              });
-            });
-          }
-          
-          const { error: rankingsError } = await supabase
-            .from('student_sprint_rankings')
-            .insert(rankings);
-          
-          if (rankingsError) {
-            console.error('Failed to seed students:', rankingsError);
-          }
-        }
-      }
+      // NOTE: We no longer auto-seed all active students into Sprint 1.
+      // Students enroll themselves the first time they correctly answer a
+      // question in the active sprint (see src/lib/sprintEnrollment.ts).
       
       // Refresh data
       await queryClient.invalidateQueries({ queryKey: ['admin-sprints'] });
@@ -507,6 +443,22 @@ export default function SprintMonitor() {
   const totalParticipants = rankings?.length || 0;
   const countdown = useCountdown(activeSprint?.end_date || null);
 
+  // Count of eligible active students (denominator for participation rate)
+  const { data: eligibleCount = 0 } = useQuery({
+    queryKey: ['active-student-account-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('student_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const participationPct = eligibleCount > 0
+    ? Math.min(100, Math.round((totalParticipants / eligibleCount) * 100))
+    : 0;
+
   const getSprintStatus = (sprint: Sprint) => {
     const now = new Date();
     const start = new Date(sprint.start_date);
@@ -675,7 +627,7 @@ export default function SprintMonitor() {
               <div className="flex items-center justify-between pt-2 border-t border-border/50">
                 <div className="text-xs text-muted-foreground space-y-0.5">
                   <p>• Sprints run back-to-back (no gaps)</p>
-                  <p>• All active students auto-enrolled</p>
+                  <p>• Students enroll on their first solved problem</p>
                 </div>
                 <Button onClick={handleCreateSeason} disabled={isCreating} size="lg" className="gap-2 px-8">
                   {isCreating ? (
@@ -730,11 +682,18 @@ export default function SprintMonitor() {
                   </span>
                 </div>
 
-                {/* Participants */}
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Participants:</span>
-                  <span className="font-medium">{totalParticipants}</span>
+                {/* Enrollment / participation */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Enrolled (solved ≥1):</span>
+                    <span className="font-medium font-mono">{totalParticipants}</span>
+                    <span className="text-muted-foreground">/ {eligibleCount} eligible</span>
+                    <Badge variant="outline" className="ml-auto font-mono text-xs">
+                      {participationPct}%
+                    </Badge>
+                  </div>
+                  <Progress value={participationPct} className="h-1.5" />
                 </div>
               </div>
             ) : (
@@ -1108,9 +1067,16 @@ export default function SprintMonitor() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No participants yet</p>
+              <div className="text-center py-10 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-foreground">
+                  {activeSprint
+                    ? `No students have joined Sprint ${activeSprint.sprint_number} yet`
+                    : 'No participants yet'}
+                </p>
+                <p className="text-sm mt-1">
+                  Students appear here once they solve their first problem.
+                </p>
               </div>
             )}
           </CardContent>
