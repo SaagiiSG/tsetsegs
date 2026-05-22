@@ -443,6 +443,22 @@ export default function SprintMonitor() {
   const totalParticipants = rankings?.length || 0;
   const countdown = useCountdown(activeSprint?.end_date || null);
 
+  // Count of eligible active students (denominator for participation rate)
+  const { data: eligibleCount = 0 } = useQuery({
+    queryKey: ['active-student-account-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('student_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const participationPct = eligibleCount > 0
+    ? Math.min(100, Math.round((totalParticipants / eligibleCount) * 100))
+    : 0;
+
   const getSprintStatus = (sprint: Sprint) => {
     const now = new Date();
     const start = new Date(sprint.start_date);
