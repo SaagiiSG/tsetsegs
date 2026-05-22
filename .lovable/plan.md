@@ -1,58 +1,45 @@
-# Sprint Enrollment via First Solved Problem
+# Update /admin/sprint-monitor for new enrollment logic
 
-## Goal
+Sprint enrollment is now triggered when a student answers their first correct problem in a sprint (via `ensureSprintEnrollment`). The Sprint Monitor still assumes "all active students are seeded on season creation," which is now wrong. Update the page so admins see active vs latent participation accurately.
 
-Students are no longer auto-enrolled into the active sprint just by visiting the leaderboard. They get enrolled the moment they **solve their first question** in that sprint, and immediately see a popup showing their freshly-assigned rank and points.
+## Changes
 
-## Current behavior (to remove)
+### 1. Stop auto-seeding on season creation
+In `handleCreateSeason` (SprintMonitor.tsx, lines ~205–271):
+- Remove the block that fetches `student_accounts` and bulk-inserts `student_sprint_rankings` for Sprint 1.
+- Keep sprint row creation and the existing toast.
+- Update the builder footer copy from "All active students auto-enrolled" → "Students join by solving their first problem".
 
-- `src/hooks/useLeaderboard.ts` (lines ~235–319) runs a `useQuery` that auto-inserts a `student_sprint_rankings` row the first time the leaderboard loads. This silently enrolls every student who opens the leaderboard, even if they never practice.
+### 2. Rework the "Active Sprint" overview card
+Currently shows `Participants: {totalParticipants}` which equals the count of ranking rows (was = all active students; now = students who have solved ≥1 problem).
 
-## New behavior
+Add a second stat so the picture is honest:
+- **Enrolled**: `rankings.length` (students who solved ≥1)
+- **Eligible**: count of `student_accounts` where `is_active = true`
+- **Participation**: `enrolled / eligible` shown as a small progress bar + `%`
 
-### 1. Enrollment trigger moves to question-solving
+Add a new query `useQuery(['active-student-account-count'])` that selects `count` from `student_accounts` with `is_active=true` and `head: true`.
 
-Sprint points are currently awarded in three places (all on correct answers):
+Rename the existing "Participants" label → "Enrolled (solved ≥1)" for clarity.
 
-- `src/pages/StudentQuestion.tsx` (~L422–463) — SAT Math
-- `src/pages/student/StudentEnglishQuestion.tsx` (~L225–245) — English
-- `src/pages/student/StudentSpeedSession.tsx` (~L195–210) — Speed mode
+### 3. Tier breakdown empty-state
+`tierBreakdown` filters out tiers with `studentCount === 0`. Early in a sprint this can leave the section empty. Add a fallback panel:
 
-Each of these reads the active sprint, then tries to UPDATE the student's `student_sprint_rankings` row. The new logic: if no ranking row exists for `(active_sprint, student)`, INSERT it first (using the same tier/group assignment logic that lives in `useLeaderboard.ts`), then apply the points. This means the very first correct answer in a sprint = enrollment.
+> "No students have joined Sprint N yet. Students appear here once they solve their first problem."
 
-Extract the existing enrollment block from `useLeaderboard.ts` into a shared helper, e.g. `src/lib/sprintEnrollment.ts`:
+Shown only when `activeSprint` exists and `rankings.length === 0`.
 
-- `ensureSprintEnrollment(studentId, sprintId)` → returns the ranking row, inserting it (with tier inheritance from previous sprint + group assignment respecting `MAX_GROUP_SIZE`) if missing. Returns `{ ranking, wasNewlyEnrolled }`.
+### 4. Group capacity copy
+The MAX_GROUP_SIZE constant in SprintMonitor.tsx is `55`, but `sprintEnrollment.ts` uses `40` (matches the `±15 around target 40` rule in project memory). Align SprintMonitor to use `40` so admin group displays match what students actually experience.
 
-Update the three question pages to call this helper before the points UPDATE. Drop the silent auto-enroll `useQuery` from `useLeaderboard.ts` so visiting the leaderboard no longer enrolls.
+Update `calculateGroupNumber` use sites — group sizing in `tierBreakdown` already derives from real `group_number` on rows, so the only real change is the constant + any "capacity" labels that reference 55.
 
-### 2. Leaderboard treats non-enrolled students gracefully
-
-With auto-enroll removed, a student who hasn't solved anything yet will have no ranking row. The leaderboard tabs (`CurrentSprintTab`, `MyRankTab`) should show an empty / call-to-action state: "Solve your first problem to join Sprint X."
-
-### 3. First-solve celebration popup
-
-After the first correct answer enrolls the student, fire a popup. New component:
-
-- `src/components/student/SprintEnrollmentDialog.tsx` — Dialog showing:
-  - Headline: "You're in Sprint {N}!"
-  - Their tier + group
-  - Points earned from this question
-  - Current rank within their group (computed from `student_sprint_rankings` ordered by `total_points` within the same `sprint_id` + `current_tier` + `group_number`)
-  - CTA: "View leaderboard" → navigates to `/student/leaderboard`; secondary "Keep practicing" closes.
-
-Wiring: the three question pages call `ensureSprintEnrollment`; when `wasNewlyEnrolled === true`, set local state to open the dialog after the existing answer-feedback flow finishes (don't block the answer reveal). Rank is fetched fresh after the points UPDATE so the dialog shows accurate standing.
-
-Only show the dialog on the **first solved problem of the sprint** — gate by `wasNewlyEnrolled`, so it never re-appears in the same sprint.
+### 5. Minor: builder footer
+Replace the bullet "All active students auto-enrolled" with "Students enroll on their first solved problem".
 
 ## Files touched
+- `src/pages/admin/SprintMonitor.tsx` (only)
 
-- New: `src/lib/sprintEnrollment.ts`, `src/components/student/SprintEnrollmentDialog.tsx`
-- Edit: `src/hooks/useLeaderboard.ts` (remove auto-enroll query)
-- Edit: `src/pages/StudentQuestion.tsx`, `src/pages/student/StudentEnglishQuestion.tsx`, `src/pages/student/StudentSpeedSession.tsx` (call helper, show dialog)
-- Edit: `src/components/student/leaderboard/CurrentSprintTab.tsx` and `MyRankTab.tsx` (empty state for non-enrolled)
-
-## Open questions
-
-1. Should the enrollment trigger fire on **any** answered question, or only **correct** ones? Current points-award logic only runs on correct answers; enrolling only on correct keeps it consistent and rewards real effort. Confirm this is what you want, or whether even a wrong first attempt should enroll them. only on correct ones 
-2. Should the popup also appear on the **Speed Session** flow? It can feel intrusive mid-timed-session; alternative is to enroll silently there and show the popup only on the regular practice pages. - if the first correcly solved question is in the speed session then after the session the sprint enrollment will be played
+## Out of scope
+- `finalize-sprint` edge function (separate concern — already operates on whoever is in `student_sprint_rankings`).
+- Past seasons that were already seeded under the old logic stay as-is.

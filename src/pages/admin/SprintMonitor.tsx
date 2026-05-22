@@ -20,7 +20,7 @@ import { format, differenceInSeconds, differenceInDays, differenceInHours, diffe
 import { cn } from '@/lib/utils';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
-const MAX_GROUP_SIZE = 55; // 40 ± 15 margin, effective range 25-55
+const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
 const TARGET_GROUP_SIZE = 40;
 
 const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
