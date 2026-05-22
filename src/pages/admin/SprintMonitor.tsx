@@ -682,11 +682,18 @@ export default function SprintMonitor() {
                   </span>
                 </div>
 
-                {/* Participants */}
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Participants:</span>
-                  <span className="font-medium">{totalParticipants}</span>
+                {/* Enrollment / participation */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Enrolled (solved ≥1):</span>
+                    <span className="font-medium font-mono">{totalParticipants}</span>
+                    <span className="text-muted-foreground">/ {eligibleCount} eligible</span>
+                    <Badge variant="outline" className="ml-auto font-mono text-xs">
+                      {participationPct}%
+                    </Badge>
+                  </div>
+                  <Progress value={participationPct} className="h-1.5" />
                 </div>
               </div>
             ) : (
