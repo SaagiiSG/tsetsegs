@@ -1067,9 +1067,16 @@ export default function SprintMonitor() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No participants yet</p>
+              <div className="text-center py-10 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-foreground">
+                  {activeSprint
+                    ? `No students have joined Sprint ${activeSprint.sprint_number} yet`
+                    : 'No participants yet'}
+                </p>
+                <p className="text-sm mt-1">
+                  Students appear here once they solve their first problem.
+                </p>
               </div>
             )}
           </CardContent>
