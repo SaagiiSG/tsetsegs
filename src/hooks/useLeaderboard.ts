@@ -241,8 +241,9 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current sprint leaderboard (filtered by user's group)
   const { data: leaderboardData, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
     queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier, student?.id],
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<{ entries: LeaderboardEntry[]; groupInfo: GroupInfo | null }> => {
       if (!activeSprint?.id) return { entries: [], groupInfo: null };
 
