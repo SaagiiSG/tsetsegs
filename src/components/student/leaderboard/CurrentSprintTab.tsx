@@ -75,18 +75,7 @@ export function CurrentSprintTab({
             </div>
           ) : leaderboard.length > 0 ? (
             <TooltipProvider delayDuration={300}>
-              <motion.div 
-                className="space-y-2"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: { 
-                    opacity: 1,
-                    transition: { staggerChildren: 0.02 }
-                  }
-                }}
-              >
+              <div className="space-y-2">
                 {leaderboard.map((entry, index) => {
                   const isCurrentUser = entry.userId === currentUserId;
                   const entryWithRank = { ...entry, rank: index + 1 };
@@ -120,7 +109,7 @@ export function CurrentSprintTab({
                     </Tooltip>
                   );
                 })}
-              </motion.div>
+              </div>
             </TooltipProvider>
           ) : currentUserRanking && ['ruby', 'diamond', 'platinum'].includes(currentUserRanking.currentTier) ? (
             // Special message for exclusive tiers with no/few competitors

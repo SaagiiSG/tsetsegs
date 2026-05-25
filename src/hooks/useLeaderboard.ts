@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { TIER_PROMOTION_CUTOFFS, calculateLevel, TierType } from '@/data/badgeDefinitions';
@@ -61,8 +61,9 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current active sprint
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
     queryKey: ['active-sprint'],
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<SprintInfo | null> => {
       const { data, error } = await supabase
         .from('sprints')
@@ -92,7 +93,7 @@ export function useLeaderboard(selectedTier?: TierType) {
         isActive: data.is_active
       };
     },
-    refetchInterval: 60000 // Refetch every minute
+    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
   });
 
   // Fetch most recent ended sprint (for showing results)
@@ -159,8 +160,11 @@ export function useLeaderboard(selectedTier?: TierType) {
         isActive: false
       };
     },
-    refetchInterval: 60000
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000
   });
+
 
   // Fetch user's last sprint results (with final_rank) - from any completed sprint they participated in
   const { data: lastSprintResults } = useQuery({
@@ -240,8 +244,9 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current sprint leaderboard (filtered by user's group)
   const { data: leaderboardData, isLoading: leaderboardLoading, refetch: refetchLeaderboard } = useQuery({
     queryKey: ['sprint-leaderboard', activeSprint?.id, selectedTier, student?.id],
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<{ entries: LeaderboardEntry[]; groupInfo: GroupInfo | null }> => {
       if (!activeSprint?.id) return { entries: [], groupInfo: null };
 
@@ -380,7 +385,7 @@ export function useLeaderboard(selectedTier?: TierType) {
       };
     },
     enabled: !!activeSprint?.id,
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 2 * 60 * 1000 // Refetch every 2 minutes
   });
 
   const leaderboard = leaderboardData?.entries || [];
