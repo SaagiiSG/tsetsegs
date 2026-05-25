@@ -61,8 +61,9 @@ export function useLeaderboard(selectedTier?: TierType) {
   // Fetch current active sprint
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
     queryKey: ['active-sprint'],
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<SprintInfo | null> => {
       const { data, error } = await supabase
         .from('sprints')
@@ -92,7 +93,7 @@ export function useLeaderboard(selectedTier?: TierType) {
         isActive: data.is_active
       };
     },
-    refetchInterval: 60000 // Refetch every minute
+    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
   });
 
   // Fetch most recent ended sprint (for showing results)
