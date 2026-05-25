@@ -382,7 +382,7 @@ export function useLeaderboard(selectedTier?: TierType) {
       };
     },
     enabled: !!activeSprint?.id,
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 2 * 60 * 1000 // Refetch every 2 minutes
   });
 
   const leaderboard = leaderboardData?.entries || [];
