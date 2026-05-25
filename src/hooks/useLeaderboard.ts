@@ -163,6 +163,8 @@ export function useLeaderboard(selectedTier?: TierType) {
     refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000
+  });
+
 
   // Fetch user's last sprint results (with final_rank) - from any completed sprint they participated in
   const { data: lastSprintResults } = useQuery({
