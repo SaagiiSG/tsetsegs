@@ -62,10 +62,13 @@ export async function ensureSprintEnrollment(
     .limit(1)
     .maybeSingle();
 
+  // First-ever enrollment after calibration → start at Bronze (they earned a
+  // rank by completing 44 questions). Returning students inherit their
+  // reserved/previous tier.
   const startingTier =
     (previousRanking as any)?.reserved_next_tier ||
     (previousRanking as any)?.current_tier ||
-    'unranked';
+    'bronze';
 
   // Assign group with available space
   const { data: groupCounts } = await supabase
