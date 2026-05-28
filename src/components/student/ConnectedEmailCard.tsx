@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import {
+  clearBorrowedGoogleSession,
+  clearStudentEmailLinkPending,
+  linkCurrentGoogleEmail,
+  markStudentEmailLinkPending,
+} from '@/lib/studentEmailLinking';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Sparkles } from 'lucide-react';
@@ -33,17 +39,16 @@ export function ConnectedEmailCard() {
     if (params.get('link_email') !== '1' || !student?.id) return;
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
         setBusy(true);
-        const { error } = await supabase.functions.invoke('link-google-email', {
-          body: { student_account_id: student.id },
-        });
-        if (error) toast.error(error.message);
-        else toast.success('Email connected');
+        const linkedEmail = await linkCurrentGoogleEmail(student.id);
+        setEmail(linkedEmail);
+        toast.success('Email connected');
+      } catch (e: any) {
+        toast.error(e.message || 'Failed to link email');
       } finally {
-        // Drop the Google Supabase session so it doesn't shadow the student session
-        try { await supabase.auth.signOut(); } catch {}
+        // Drop the Google session so it doesn't shadow the phone-based student session.
+        await clearBorrowedGoogleSession();
+        clearStudentEmailLinkPending();
         setBusy(false);
         const url = new URL(window.location.href);
         url.searchParams.delete('link_email');
@@ -54,6 +59,8 @@ export function ConnectedEmailCard() {
   }, [student?.id]);
 
   const connect = async () => {
+    if (!student?.id) return;
+    markStudentEmailLinkPending(student.id);
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth('google', {
       redirect_uri: window.location.origin + '/practice/settings?link_email=1',
