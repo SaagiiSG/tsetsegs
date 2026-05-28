@@ -82,7 +82,6 @@ export function LinkEmailModal() {
 
   const skip = async () => {
 
-  const skip = async () => {
     if (!student?.id) return;
     setBusy(true);
     await supabase
