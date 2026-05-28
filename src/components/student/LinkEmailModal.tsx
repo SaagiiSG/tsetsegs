@@ -20,20 +20,6 @@ export function LinkEmailModal() {
   // Detect whether to show on mount / route change
   useEffect(() => {
     if (!student?.id) return;
-    (async () => {
-      // already linked?
-      const { data: link } = await supabase
-        .from('student_email_links')
-        .select('id')
-        .eq('student_account_id', student.id)
-        .maybeSingle();
-      if (link) return;
-      if ((student as any).email_link_prompted_at) return;
-      setOpen(true);
-    })();
-  // Detect whether to show on mount / route change
-  useEffect(() => {
-    if (!student?.id) return;
     const params = new URLSearchParams(window.location.search);
     // Don't auto-open while we're mid OAuth-return; the handler below decides.
     if (params.get('link_email') === '1') return;
@@ -63,7 +49,6 @@ export function LinkEmailModal() {
           body: { student_account_id: student.id },
         });
         if (error) throw error;
-        // Stamp so we never re-prompt this student
         await supabase
           .from('student_accounts')
           .update({ email_link_prompted_at: new Date().toISOString() })
@@ -84,8 +69,18 @@ export function LinkEmailModal() {
     })();
   }, [student?.id]);
 
+  const connect = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin + '/practice/dashboard?link_email=1',
+    });
+    if (result.error) {
+      toast.error('Could not start Google sign-in');
+      setBusy(false);
     }
   };
+
+  const skip = async () => {
 
   const skip = async () => {
     if (!student?.id) return;
