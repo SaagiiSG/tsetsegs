@@ -28,8 +28,12 @@ export async function linkCurrentGoogleEmail(studentAccountId: string): Promise<
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Google sign-in did not finish. Please try again.');
 
+  const studentSessionId = localStorage.getItem('student_session_id') ?? '';
+  if (!studentSessionId) throw new Error('Student session missing. Please log in again.');
+
   const { data, error } = await supabase.functions.invoke('link-google-email', {
     body: { student_account_id: studentAccountId },
+    headers: { 'x-student-session-id': studentSessionId },
   });
 
   if (error) throw error;
@@ -37,6 +41,7 @@ export async function linkCurrentGoogleEmail(studentAccountId: string): Promise<
   if (response?.error) throw new Error(response.error);
   return response?.email ?? null;
 }
+
 
 export async function clearBorrowedGoogleSession() {
   try {
