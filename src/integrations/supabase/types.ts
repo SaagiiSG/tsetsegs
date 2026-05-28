@@ -2408,6 +2408,7 @@ export type Database = {
           password_hash: string | null
           password_set_at: string | null
           phone_number: string
+          rank_unlocked_at: string | null
           registered_device_id: string | null
           share_token: string | null
           share_token_created_at: string | null
@@ -2429,6 +2430,7 @@ export type Database = {
           password_hash?: string | null
           password_set_at?: string | null
           phone_number: string
+          rank_unlocked_at?: string | null
           registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
@@ -2450,6 +2452,7 @@ export type Database = {
           password_hash?: string | null
           password_set_at?: string | null
           phone_number?: string
+          rank_unlocked_at?: string | null
           registered_device_id?: string | null
           share_token?: string | null
           share_token_created_at?: string | null
@@ -3257,6 +3260,14 @@ export type Database = {
         Returns: {
           batch_id: string
           student_count: number
+        }[]
+      }
+      get_calibration_progress: {
+        Args: { _student_account_id: string }
+        Returns: {
+          required: number
+          solved: number
+          unlocked: boolean
         }[]
       }
       get_current_teacher_username: { Args: never; Returns: string }

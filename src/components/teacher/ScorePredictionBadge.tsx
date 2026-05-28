@@ -11,6 +11,24 @@ export function ScorePredictionBadge({ studentId }: ScorePredictionBadgeProps) {
 
   if (isLoading || !prediction) return null;
 
+  if (prediction.calibrationLocked) {
+    const { solved, required } = prediction.calibrationLocked;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-dashed bg-muted/40 text-muted-foreground text-[10px] font-semibold cursor-help">
+            <Brain className="h-2.5 w-2.5" />
+            <span>🔒 {solved}/{required}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">
+          <p className="font-medium">Prediction locked</p>
+          <p className="text-muted-foreground">Unlocks at {required} calibration problems.</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
   const [low, high] = prediction.predictedRange;
   const mid = Math.round((low + high) / 2);
 

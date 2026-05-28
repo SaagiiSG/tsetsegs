@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Brain, ChevronDown, ChevronUp, TrendingUp, BookOpen, CheckCircle2, Target } from "lucide-react";
 import { useScorePrediction } from "@/hooks/useScorePrediction";
+import { ScorePredictionLockedCard } from "./ScorePredictionLockedCard";
 
 interface ScorePredictionCardProps {
   studentId: string;
@@ -24,6 +25,15 @@ export function ScorePredictionCard({ studentId }: ScorePredictionCardProps) {
   }
 
   if (!prediction) return null;
+
+  if (prediction.calibrationLocked) {
+    return (
+      <ScorePredictionLockedCard
+        solved={prediction.calibrationLocked.solved}
+        required={prediction.calibrationLocked.required}
+      />
+    );
+  }
 
   const [low, high] = prediction.predictedRange;
   const midScore = Math.round((low + high) / 2);

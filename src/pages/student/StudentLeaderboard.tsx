@@ -16,6 +16,7 @@ import {
   EpicBadgeUnlock,
   RankAdvancementCelebration
 } from '@/components/student/leaderboard';
+import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
 import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER } from '@/data/badgeDefinitions';
 
 // Badge name to tier mapping (same as in edge function)
@@ -270,6 +271,11 @@ export default function StudentLeaderboard() {
           Compete with other students and climb the ranks
         </p>
       </motion.div>
+
+      {/* Calibration gate — hidden once the student has solved 44 problems */}
+      <CalibrationProgressCard variant="leaderboard" />
+
+
 
       {/* Tabs - always show, but Current Sprint tab content changes based on active sprint */}
       <Tabs defaultValue={noActiveSprint ? "alltime" : "current"} className="w-full">
