@@ -61,6 +61,8 @@ export function StudentDashboardSidebar() {
   const { open } = useSidebar();
   const [learningOpen, setLearningOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
+  const { data: annData } = useStudentAnnouncements();
+  const unread = annData?.unreadCount ?? 0;
 
   const studentName = student?.linked_student 
     ? `${student.linked_student.first_name}${student.linked_student.last_name ? ' ' + student.linked_student.last_name.charAt(0) + '.' : ''}`
