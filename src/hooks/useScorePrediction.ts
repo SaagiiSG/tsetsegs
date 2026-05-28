@@ -229,6 +229,32 @@ export function useScorePrediction(studentId: string | undefined) {
       // Fetch platform attempts if student account exists
       let attempts: any[] = [];
       if (studentAccountRes.data?.id) {
+        const { data: attemptsData } = await supabase
+          .from('student_attempts')
+          .select('is_correct, time_spent_seconds, question_id')
+          .eq('student_account_id', studentAccountRes.data.id);
+
+        if (attemptsData && attemptsData.length > 0) {
+          const questionIds = [...new Set(attemptsData.map(a => a.question_id))];
+          const allQuestions: any[] = [];
+          for (let i = 0; i < questionIds.length; i += 500) {
+            const batch = questionIds.slice(i, i + 500);
+            const { data: qData } = await supabase
+              .from('questions')
+              .select('id, difficulty_level')
+              .in('id', batch);
+            if (qData) allQuestions.push(...qData);
+          }
+
+          const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
+          attempts = attemptsData.map(a => ({
+            ...a,
+            difficulty_level: difficultyMap.get(a.question_id) || 'medium',
+          }));
+        }
+      }
+
+
 
       // Calculate base score
       const tests = (practiceTestsRes.data || []).filter(t => t.score !== null);
