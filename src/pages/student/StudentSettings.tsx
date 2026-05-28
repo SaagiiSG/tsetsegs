@@ -101,6 +101,7 @@ export default function StudentSettings() {
       </div>
 
       {/* Profile Card */}
+      <ConnectedEmailCard />
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
