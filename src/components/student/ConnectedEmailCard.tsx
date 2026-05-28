@@ -32,19 +32,24 @@ export function ConnectedEmailCard() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('link_email') !== '1' || !student?.id) return;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      setBusy(true);
-      const { error } = await supabase.functions.invoke('link-google-email', {
-        body: { student_account_id: student.id },
-      });
-      setBusy(false);
-      if (error) toast.error(error.message);
-      else toast.success('Email connected');
-      const url = new URL(window.location.href);
-      url.searchParams.delete('link_email');
-      window.history.replaceState({}, '', url.toString());
-      load();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        setBusy(true);
+        const { error } = await supabase.functions.invoke('link-google-email', {
+          body: { student_account_id: student.id },
+        });
+        if (error) toast.error(error.message);
+        else toast.success('Email connected');
+      } finally {
+        // Drop the Google Supabase session so it doesn't shadow the student session
+        try { await supabase.auth.signOut(); } catch {}
+        setBusy(false);
+        const url = new URL(window.location.href);
+        url.searchParams.delete('link_email');
+        window.history.replaceState({}, '', url.toString());
+        load();
+      }
     })();
   }, [student?.id]);
 
