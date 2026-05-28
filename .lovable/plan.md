@@ -1,64 +1,75 @@
-# Plan: Calibration Tier Grading + Google OAuth Email + Announcements
+## Email announcements for SAT students
 
-## 1. Calibration tier mapping (update existing logic)
+Use **Lovable Emails** on `flowersos.co`. Announcements are opt-in (linked Google email only) and per-post (admin checks "Send by email").
 
-Update `ensureSprintEnrollment.ts` so that when a student crosses the 44-question threshold and gets their first sprint enrollment, their starting tier is graded by calibration accuracy:
+---
 
-- Accuracy ≥ 70% → **silver**
-- Accuracy ≥ 60% → **bronze**
-- Accuracy < 60% → **bronze** (floor — we don't drop students into Iron at unlock)
+### 1. Email infrastructure setup
 
-Accuracy = correct attempts / total attempts across the first 44 distinct questions (using `student_attempts.is_correct`).
+- Configure email sender domain on `flowersos.co` (subdomain like `notify.flowersos.co`)
+- Set up shared email queue infrastructure (queues, retry, suppression, unsubscribe tokens)
+- Scaffold the transactional email Edge Functions
+- Build a branded unsubscribe page at `/email-unsubscribe` matching the coral/indigo theme
 
-Add a small helper `getCalibrationAccuracy(studentAccountId)` next to `useCalibrationProgress`. Surface the resulting tier on the unlock celebration toast: "Calibration complete — you've been placed in Silver".
+### 2. Announcement email template
 
-## 2. Google OAuth email capture (prompted at first login)
+- New React Email template `announcement-notification.tsx`
+- Coral/indigo branding, Chillax-style heading, white body background
+- Dynamic data: student first name, announcement title, announcement body, link back to in-app `/practice/announcements`
+- CTA button: "Read in app"
+- System-managed unsubscribe footer (no manual unsub link in template)
 
-Goal: capture a real email for each student so we can send announcements, without changing the phone/password login.
+### 3. Database changes
 
-### Backend
-- Call `configure_social_auth(["google"])` to enable Google as a managed provider (keep email/password disabled — students still log in by phone).
-- New migration:
-  - `student_email_links` table: `student_account_id` (unique FK), `email` (citext, unique), `google_sub` text, `linked_at`, `unsubscribed_at` nullable.
-  - GRANTs for authenticated + service_role; RLS so a student only sees their own link; admin/teacher can read all via `has_role`.
-  - Add `email_link_prompted_at` on `student_accounts` so we only auto-prompt once.
-- New edge function `link-google-email` (verify_jwt = false, called from client with the student session token): verifies the Google ID token returned by `lovable.auth.signInWithOAuth`, upserts into `student_email_links`, returns the linked email.
+- Add `send_by_email` (boolean, default false) to `announcements` table
+- Add `email_sent_at` (timestamp, nullable) to `announcements` table to prevent double-sends
+- Add `announcement_email_sends` table to track per-recipient send status (announcement_id, student_account_id, email, status, sent_at) — for admin visibility and idempotency
+- RLS: admin-only insert/select on `announcement_email_sends`; admin-only update on the new announcement columns
 
-### Frontend
-- `LinkEmailModal` component shown once after a student logs in via phone/password when `email_link_prompted_at IS NULL` AND no row in `student_email_links`. Two actions:
-  - **Connect with Google** → `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/practice?link_email=1" })`. On return, call `link-google-email`, then stamp `email_link_prompted_at`.
-  - **Skip for now** → just stamp `email_link_prompted_at` (so we don't nag every session — they can still link from Settings).
-- Student **Settings** page: new "Connected email" row showing the linked email, with "Connect with Google" if not linked and "Disconnect" if linked.
+### 4. Admin UI changes (`AdminAnnouncements` page)
 
-## 3. Announcements (in-app inbox + email blast)
+- "Send to students by email" checkbox in the announcement composer
+- Audience preview: "X students will receive this email" (count of SAT students with linked, non-unsubscribed emails)
+- After publish, if checkbox was on:
+  - Confirm dialog: "Email N students. This cannot be undone."
+  - Server-side fan-out queues one transactional send per recipient (per-student trigger, not a loop on the client) — keeps the queue's retry/rate-limit safety per recipient
+- Status display on each announcement card: "Emailed X of Y students" once sent
 
-### Backend
-- New migration:
-  - `announcements` table: `title`, `body` (markdown), `audience` enum (`all` | `batch` | `tier`), `audience_batch_id` nullable FK, `audience_tier` text nullable (bronze/silver/…), `published_at` nullable, `created_by` uuid, `send_email` boolean default true.
-  - `announcement_reads` table: `(announcement_id, student_account_id)` composite PK, `read_at`.
-  - GRANTs + RLS:
-    - Students: SELECT announcements where `published_at IS NOT NULL` and audience matches them; INSERT/SELECT own `announcement_reads`.
-    - Admin/teacher: full CRUD via `has_role`.
-- New edge function `send-announcement-emails`: takes `announcement_id`, resolves recipients (join `student_email_links` ↔ audience filter, exclude `unsubscribed_at`), enqueues via the existing email queue using `send-transactional-email`. Triggered when an admin publishes with `send_email = true`.
+### 5. Server-side fan-out (Edge Function)
 
-### Email infrastructure prerequisite
-Email blast requires a sender domain. `flowersos.co` is the project's custom domain — we'll check `email_domain--check_email_domain_status` first. If none is configured, we'll surface the email-setup dialog before the announcement send path is wired live; the in-app inbox works without it.
+- New Edge Function `dispatch-announcement-email`
+- Admin-only (requires admin role check, same pattern as the other admin functions)
+- Inputs: `announcement_id`
+- Logic:
+  - Verify announcement exists, has `send_by_email = true`, has not already been sent
+  - Query: SAT students with linked Google email, not unsubscribed
+  - For each recipient, call `send-transactional-email` with `idempotencyKey = announcement-{id}-{student_account_id}` (idempotent retries; one email per student even if dispatcher reruns)
+  - Insert one `announcement_email_sends` row per recipient
+  - Stamp `email_sent_at` on the announcement when done
 
-### Frontend
-- **Admin**: new page `/admin/announcements`:
-  - List of past announcements (draft + published).
-  - Composer: title, markdown body, audience selector (All / Specific batch / Specific tier), "Also send email" toggle, "Publish" button. Shows resolved recipient count before publish.
-- **Student sidebar**: new "Announcements" item with unread badge (count of published-and-visible-to-me announcements where no `announcement_reads` row exists).
-- **Student page** `/practice/announcements`: inbox list (newest first) + detail view that marks the announcement as read on open.
+### 6. Audience filter (SAT only)
 
-## Order of execution
+- Join `student_email_links` → `student_accounts` → `students` → `batches` and filter `batches.course_type = 'SAT'`
+- Exclude students with `unsubscribed_at` set on `student_email_links`
 
-1. Migration: calibration tier grading helper, `student_email_links`, `email_link_prompted_at`, `announcements`, `announcement_reads`.
-2. Update `ensureSprintEnrollment` + unlock toast for tier grading.
-3. Enable Google OAuth, build `link-google-email` function, `LinkEmailModal`, Settings row.
-4. Build admin announcements page, student sidebar item + inbox page.
-5. Check email domain status; if active, wire `send-announcement-emails`. If not, prompt the email-setup dialog and ship in-app inbox first.
+### 7. Student-facing
 
-## Open question
+- No new UI needed — the existing announcements page and the Settings "Connect with Google" flow are already in place
+- Each email links back to the in-app announcement (canonical content stays in-app)
 
-For announcements audience targeting, do you want **both** batch-level and tier-level filters on day one, or is "All students" enough for v1 (we can add batch/tier in a follow-up)?
+---
+
+### Technical notes
+
+- One transactional send per recipient (correct queue pattern — not a bulk blast). Each send is independently retried/rate-limited.
+- Provider: Lovable Emails (no Resend account needed; no API key to manage).
+- Sender: `notify@notify.flowersos.co` (or chosen subdomain).
+- Idempotency key per (announcement, student) prevents duplicate emails on retries.
+- Unsubscribe tokens are per-email-address (system-managed); when a student unsubscribes, all future announcement emails to them are blocked automatically.
+- Existing `student_email_links.unsubscribed_at` will be set by the unsubscribe handler so the audience query naturally excludes them next time.
+
+### Out of scope (suggested but optional)
+
+- Re-send to failed recipients (manual retry button) — can add later
+- Scheduled send (publish now, email later) — can add later
+- Per-batch targeting (e.g. only Batch 12) — currently "all SAT students with linked email"
