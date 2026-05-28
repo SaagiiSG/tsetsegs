@@ -60,6 +60,7 @@ export const menuSections: MenuSection[] = [
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
       { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
       { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug },
+      { title: "Announcements", url: "/admin/announcements", icon: Megaphone },
     ],
     defaultOpen: true,
   },
