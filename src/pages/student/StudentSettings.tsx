@@ -13,6 +13,7 @@ import { TIER_COLORS, TIER_DISPLAY_NAMES, TIER_THEME_HSL_LIGHT, TIER_THEME_HSL_D
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { cn } from '@/lib/utils';
 import { PasswordChangeCard } from '@/components/student/PasswordChangeCard';
+import { ConnectedEmailCard } from '@/components/student/ConnectedEmailCard';
 
 type ThemeOption = 'rank' | TierType;
 
