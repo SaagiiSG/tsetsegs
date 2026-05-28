@@ -75,11 +75,26 @@ export function LinkEmailModal() {
     if (!student?.id) return;
     markStudentEmailLinkPending(student.id);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin + '/practice/dashboard?link_email=1',
-    });
-    if (result.error) {
-      toast.error('Could not start Google sign-in');
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin + '/practice/dashboard?link_email=1',
+      });
+      if (result.error) throw result.error;
+      if (!result.redirected) {
+        await linkCurrentGoogleEmail(student.id);
+        await supabase
+          .from('student_accounts')
+          .update({ email_link_prompted_at: new Date().toISOString() })
+          .eq('id', student.id);
+        await clearBorrowedGoogleSession();
+        clearStudentEmailLinkPending();
+        toast.success('Email connected — you\'ll get announcements');
+        setOpen(false);
+      }
+    } catch (e: any) {
+      clearStudentEmailLinkPending();
+      toast.error(e.message || 'Could not start Google sign-in');
+    } finally {
       setBusy(false);
     }
   };
