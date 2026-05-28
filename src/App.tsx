@@ -185,6 +185,7 @@ const App = () => (
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
                     <Route path="closing-report" element={<StudentClosingReport />} />
+                    <Route path="announcements" element={<StudentAnnouncements />} />
                   </Route>
                   {/* Bluebook test-taking - outside StudentLayout for full screen */}
                   <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
