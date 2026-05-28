@@ -5,6 +5,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
   clearBorrowedGoogleSession,
   clearStudentEmailLinkPending,
+  getErrorMessage,
   linkCurrentGoogleEmail,
   markStudentEmailLinkPending,
 } from '@/lib/studentEmailLinking';
@@ -27,7 +28,7 @@ export function ConnectedEmailCard() {
       .select('email')
       .eq('student_account_id', student.id)
       .maybeSingle();
-    setEmail((data as any)?.email ?? null);
+    setEmail(data?.email ?? null);
     setLoading(false);
   };
 
@@ -43,8 +44,8 @@ export function ConnectedEmailCard() {
         const linkedEmail = await linkCurrentGoogleEmail(student.id);
         setEmail(linkedEmail);
         toast.success('Email connected');
-      } catch (e: any) {
-        toast.error(e.message || 'Failed to link email');
+      } catch (e: unknown) {
+        toast.error(getErrorMessage(e, 'Failed to link email'));
       } finally {
         // Drop the Google session so it doesn't shadow the phone-based student session.
         await clearBorrowedGoogleSession();
@@ -74,9 +75,9 @@ export function ConnectedEmailCard() {
         await clearBorrowedGoogleSession();
         clearStudentEmailLinkPending();
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       clearStudentEmailLinkPending();
-      toast.error(e.message || 'Could not start Google sign-in');
+      toast.error(getErrorMessage(e, 'Could not start Google sign-in'));
     } finally {
       setBusy(false);
     }
