@@ -62,11 +62,22 @@ export function ConnectedEmailCard() {
     if (!student?.id) return;
     markStudentEmailLinkPending(student.id);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin + '/practice/settings?link_email=1',
-    });
-    if (result.error) {
-      toast.error('Could not start Google sign-in');
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin + '/practice/settings?link_email=1',
+      });
+      if (result.error) throw result.error;
+      if (!result.redirected) {
+        const linkedEmail = await linkCurrentGoogleEmail(student.id);
+        setEmail(linkedEmail);
+        toast.success('Email connected');
+        await clearBorrowedGoogleSession();
+        clearStudentEmailLinkPending();
+      }
+    } catch (e: any) {
+      clearStudentEmailLinkPending();
+      toast.error(e.message || 'Could not start Google sign-in');
+    } finally {
       setBusy(false);
     }
   };
