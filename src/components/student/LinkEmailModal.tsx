@@ -5,6 +5,13 @@ import { Mail, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import {
+  clearBorrowedGoogleSession,
+  clearStudentEmailLinkPending,
+  getErrorMessage,
+  linkCurrentGoogleEmail,
+  markStudentEmailLinkPending,
+} from '@/lib/studentEmailLinking';
 import { toast } from 'sonner';
 
 /**
@@ -30,7 +37,7 @@ export function LinkEmailModal() {
         .eq('student_account_id', student.id)
         .maybeSingle();
       if (link) return;
-      if ((student as any).email_link_prompted_at) return;
+      if (student.email_link_prompted_at) return;
       setOpen(true);
     })();
   }, [student?.id]);
@@ -43,24 +50,20 @@ export function LinkEmailModal() {
     (async () => {
       try {
         setBusy(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-        const { error } = await supabase.functions.invoke('link-google-email', {
-          body: { student_account_id: student.id },
-        });
-        if (error) throw error;
+        await linkCurrentGoogleEmail(student.id);
         await supabase
           .from('student_accounts')
           .update({ email_link_prompted_at: new Date().toISOString() })
           .eq('id', student.id);
         toast.success('Email connected — you\'ll get announcements');
         setOpen(false);
-      } catch (e: any) {
-        toast.error(e.message || 'Failed to link email');
+      } catch (e: unknown) {
+        toast.error(getErrorMessage(e, 'Failed to link email'));
       } finally {
-        // CRITICAL: drop the Google Supabase session immediately so it doesn't
+        // CRITICAL: drop the Google session immediately so it doesn't
         // hijack the student's custom phone-based session on next login.
-        try { await supabase.auth.signOut(); } catch {}
+        await clearBorrowedGoogleSession();
+        clearStudentEmailLinkPending();
         const url = new URL(window.location.href);
         url.searchParams.delete('link_email');
         window.history.replaceState({}, '', url.toString());
@@ -70,12 +73,29 @@ export function LinkEmailModal() {
   }, [student?.id]);
 
   const connect = async () => {
+    if (!student?.id) return;
+    markStudentEmailLinkPending(student.id);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin + '/practice/dashboard?link_email=1',
-    });
-    if (result.error) {
-      toast.error('Could not start Google sign-in');
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin + '/practice/dashboard?link_email=1',
+      });
+      if (result.error) throw result.error;
+      if (!result.redirected) {
+        await linkCurrentGoogleEmail(student.id);
+        await supabase
+          .from('student_accounts')
+          .update({ email_link_prompted_at: new Date().toISOString() })
+          .eq('id', student.id);
+        await clearBorrowedGoogleSession();
+        clearStudentEmailLinkPending();
+        toast.success('Email connected — you\'ll get announcements');
+        setOpen(false);
+      }
+    } catch (e: unknown) {
+      clearStudentEmailLinkPending();
+      toast.error(getErrorMessage(e, 'Could not start Google sign-in'));
+    } finally {
       setBusy(false);
     }
   };
