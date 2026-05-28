@@ -23,6 +23,7 @@ import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
 import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
+import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -69,6 +70,7 @@ const Admin = () => {
       <Route path="review-sessions" element={<ReviewSessions />} />
       <Route path="ngee" element={<NGEEAdmin />} />
       <Route path="bug-reports" element={<BugReports />} />
+      <Route path="announcements" element={<AdminAnnouncements />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>

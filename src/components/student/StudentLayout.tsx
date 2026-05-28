@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
+import { LinkEmailModal } from './LinkEmailModal';
 import { IELTSPracticeNotice } from './IELTSPracticeNotice';
 import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
@@ -131,6 +132,7 @@ function StudentLayoutContent() {
 
       {/* SAT Date Onboarding Modal */}
       <WelcomeOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
+      {student && !isTeacherOrAdmin && <LinkEmailModal />}
       
       <StudentBottomNav />
 

@@ -38,6 +38,7 @@ import StudentReview from "./pages/student/StudentReview";
 import StudentStats from "./pages/student/StudentStats";
 import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import StudentSettings from "./pages/student/StudentSettings";
+import StudentAnnouncements from "./pages/student/StudentAnnouncements";
 import StudentShareProfile from "./pages/student/StudentShareProfile";
 import StudentVocabulary from "./pages/student/StudentVocabulary";
 import StudentEnglishPractice from "./pages/student/StudentEnglishPractice";
@@ -184,6 +185,7 @@ const App = () => (
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />
                     <Route path="english/question/:questionId" element={<StudentEnglishQuestion />} />
                     <Route path="closing-report" element={<StudentClosingReport />} />
+                    <Route path="announcements" element={<StudentAnnouncements />} />
                   </Route>
                   {/* Bluebook test-taking - outside StudentLayout for full screen */}
                   <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
