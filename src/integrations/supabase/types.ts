@@ -61,6 +61,89 @@ export type Database = {
           },
         ]
       }
+      announcement_reads: {
+        Row: {
+          announcement_id: string
+          read_at: string
+          student_account_id: string
+        }
+        Insert: {
+          announcement_id: string
+          read_at?: string
+          student_account_id: string
+        }
+        Update: {
+          announcement_id?: string
+          read_at?: string
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_reads_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          audience: string
+          audience_batch_id: string | null
+          audience_tier: string | null
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          published_at: string | null
+          send_email: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          audience_batch_id?: string | null
+          audience_tier?: string | null
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          send_email?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          audience_batch_id?: string | null
+          audience_tier?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          send_email?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_audience_batch_id_fkey"
+            columns: ["audience_batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           batch_id: string
@@ -2398,6 +2481,7 @@ export type Database = {
           created_at: string
           device_fingerprint: string | null
           device_registered_at: string | null
+          email_link_prompted_at: string | null
           id: string
           is_active: boolean
           is_blocked: boolean | null
@@ -2420,6 +2504,7 @@ export type Database = {
           created_at?: string
           device_fingerprint?: string | null
           device_registered_at?: string | null
+          email_link_prompted_at?: string | null
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
@@ -2442,6 +2527,7 @@ export type Database = {
           created_at?: string
           device_fingerprint?: string | null
           device_registered_at?: string | null
+          email_link_prompted_at?: string | null
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
@@ -2607,6 +2693,47 @@ export type Database = {
             foreignKeyName: "student_badges_student_account_id_fkey"
             columns: ["student_account_id"]
             isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_email_links: {
+        Row: {
+          created_at: string
+          email: string
+          google_sub: string | null
+          id: string
+          linked_at: string
+          student_account_id: string
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          google_sub?: string | null
+          id?: string
+          linked_at?: string
+          student_account_id: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          google_sub?: string | null
+          id?: string
+          linked_at?: string
+          student_account_id?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_email_links_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: true
             referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },
@@ -3261,6 +3388,10 @@ export type Database = {
           batch_id: string
           student_count: number
         }[]
+      }
+      get_calibration_accuracy: {
+        Args: { _student_account_id: string }
+        Returns: number
       }
       get_calibration_progress: {
         Args: { _student_account_id: string }
