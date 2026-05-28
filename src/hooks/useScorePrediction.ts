@@ -186,35 +186,49 @@ export function useScorePrediction(studentId: string | undefined) {
           .maybeSingle(),
       ]);
 
+      // Calibration gate — short-circuit with a locked result if the student
+      // hasn't completed 44 distinct questions yet. We still need to know
+      // their solved count so the UI can show a progress bar.
+      let calibrationLocked: { solved: number; required: number } | undefined;
+      if (studentAccountRes.data?.id) {
+        const { data: acctCal } = await supabase
+          .from('student_accounts')
+          .select('rank_unlocked_at')
+          .eq('id', studentAccountRes.data.id)
+          .maybeSingle();
+        if (!(acctCal as any)?.rank_unlocked_at) {
+          const { data: solvedRows } = await supabase
+            .from('student_attempts')
+            .select('question_id')
+            .eq('student_account_id', studentAccountRes.data.id)
+            .limit(2000);
+          const distinct = new Set((solvedRows ?? []).map((r: any) => r.question_id));
+          calibrationLocked = { solved: distinct.size, required: CALIBRATION_REQUIRED };
+        }
+      } else {
+        // No student account yet — definitely locked.
+        calibrationLocked = { solved: 0, required: CALIBRATION_REQUIRED };
+      }
+
+      if (calibrationLocked) {
+        return {
+          predictedRange: [0, 0] as [number, number],
+          confidence: 'low' as const,
+          baseScore: 0,
+          factors: {
+            attendanceRate: 0, attendanceAdj: 0,
+            homeworkRate: 0, homeworkAdj: 0,
+            hardAccuracy: 0, attemptVolume: 0,
+            practiceAdj: 0, variancePenalty: 0,
+          },
+          hasBaseline: false,
+          calibrationLocked,
+        };
+      }
+
       // Fetch platform attempts if student account exists
       let attempts: any[] = [];
       if (studentAccountRes.data?.id) {
-        const { data: attemptsData } = await supabase
-          .from('student_attempts')
-          .select('is_correct, time_spent_seconds, question_id')
-          .eq('student_account_id', studentAccountRes.data.id);
-        
-        if (attemptsData && attemptsData.length > 0) {
-          // Get question difficulty levels
-          const questionIds = [...new Set(attemptsData.map(a => a.question_id))];
-          // Fetch in batches of 500 to avoid query limits
-          const allQuestions: any[] = [];
-          for (let i = 0; i < questionIds.length; i += 500) {
-            const batch = questionIds.slice(i, i + 500);
-            const { data: qData } = await supabase
-              .from('questions')
-              .select('id, difficulty_level')
-              .in('id', batch);
-            if (qData) allQuestions.push(...qData);
-          }
-          
-          const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
-          attempts = attemptsData.map(a => ({
-            ...a,
-            difficulty_level: difficultyMap.get(a.question_id) || 'medium',
-          }));
-        }
-      }
 
       // Calculate base score
       const tests = (practiceTestsRes.data || []).filter(t => t.score !== null);
