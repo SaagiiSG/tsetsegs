@@ -14,6 +14,16 @@ export const getStudentEmailLinkPending = () => {
   return localStorage.getItem(STUDENT_EMAIL_LINK_PENDING_KEY);
 };
 
+type LinkEmailResponse = {
+  ok?: boolean;
+  email?: string;
+  error?: string;
+};
+
+export const getErrorMessage = (error: unknown, fallback: string) => {
+  return error instanceof Error ? error.message : fallback;
+};
+
 export async function linkCurrentGoogleEmail(studentAccountId: string): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Google sign-in did not finish. Please try again.');
@@ -23,8 +33,9 @@ export async function linkCurrentGoogleEmail(studentAccountId: string): Promise<
   });
 
   if (error) throw error;
-  if ((data as any)?.error) throw new Error((data as any).error);
-  return ((data as any)?.email as string | undefined) ?? null;
+  const response = data as LinkEmailResponse | null;
+  if (response?.error) throw new Error(response.error);
+  return response?.email ?? null;
 }
 
 export async function clearBorrowedGoogleSession() {
