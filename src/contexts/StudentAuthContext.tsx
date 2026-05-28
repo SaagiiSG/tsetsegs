@@ -37,6 +37,7 @@ interface StudentAccount {
   password_hash: string | null;
   password_set_at: string | null;
   onboarding_completed: boolean;
+  email_link_prompted_at: string | null;
 }
 
 export type AuthStep = 'phone' | 'password' | 'set_password' | 'request_registration' | 'pending_approval';
