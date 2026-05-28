@@ -23,6 +23,24 @@ export function InlineScorePrediction({ studentId, courseType }: InlineScorePred
     return <span className="text-muted-foreground text-xs">-</span>;
   }
 
+  if (prediction.calibrationLocked) {
+    const { solved, required } = prediction.calibrationLocked;
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className="text-xs font-mono cursor-default bg-muted/40 text-muted-foreground border-dashed">
+              🔒 {solved}/{required}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p>Prediction locked until calibration ({required} problems).</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   const [low, high] = prediction.predictedRange;
   const confidenceColor = prediction.confidence === 'high'
     ? 'bg-green-500/10 text-green-700 border-green-500/30'
