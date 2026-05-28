@@ -6,6 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+async function requireAdmin(req: Request, supabaseAdmin: any): Promise<Response | null> {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const token = authHeader.replace('Bearer ', '')
+  const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token)
+  if (userErr || !userData?.user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const { data: role } = await supabaseAdmin.from('user_roles')
+    .select('role').eq('user_id', userData.user.id).eq('role', 'admin').maybeSingle()
+  if (!role) {
+    return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  return null
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -17,6 +35,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
+
+    const authFail = await requireAdmin(req, supabaseAdmin)
+    if (authFail) return authFail
 
     const { studentId, batchId } = await req.json()
 
@@ -43,22 +64,19 @@ serve(async (req) => {
       .maybeSingle()
 
     if (account) {
-      // Delete all related records for the student account
       const accountId = account.id
-      
-      // Delete bluebook answers via attempts
+
       const { data: attempts } = await supabaseAdmin
         .from('bluebook_attempts')
         .select('id')
         .eq('student_account_id', accountId)
-      
+
       if (attempts && attempts.length > 0) {
-        const attemptIds = attempts.map(a => a.id)
+        const attemptIds = attempts.map((a: any) => a.id)
         await supabaseAdmin.from('bluebook_answers').delete().in('attempt_id', attemptIds)
         await supabaseAdmin.from('bluebook_attempts').delete().eq('student_account_id', accountId)
       }
 
-      // Delete all account-related records
       const tables = [
         'student_attempts', 'student_progress', 'student_badges',
         'student_sessions', 'student_activity_logs', 'point_transactions',
@@ -71,11 +89,9 @@ serve(async (req) => {
         await supabaseAdmin.from(table).delete().eq('student_account_id', accountId)
       }
 
-      // Delete the account itself
       await supabaseAdmin.from('student_accounts').delete().eq('id', accountId)
     }
 
-    // Delete student-related records
     await supabaseAdmin.from('attendance').delete().eq('student_id', studentId)
     await supabaseAdmin.from('homework').delete().eq('student_id', studentId)
     await supabaseAdmin.from('practice_tests').delete().eq('student_id', studentId)
@@ -84,7 +100,6 @@ serve(async (req) => {
     await supabaseAdmin.from('student_nudges').delete().eq('student_id', studentId)
     await supabaseAdmin.from('intense_prep_members').delete().eq('student_id', studentId)
 
-    // Finally delete the student
     const { error } = await supabaseAdmin.from('students').delete().eq('id', studentId)
 
     if (error) {
