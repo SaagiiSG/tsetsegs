@@ -38,6 +38,7 @@ import StudentReview from "./pages/student/StudentReview";
 import StudentStats from "./pages/student/StudentStats";
 import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import StudentSettings from "./pages/student/StudentSettings";
+import StudentAnnouncements from "./pages/student/StudentAnnouncements";
 import StudentShareProfile from "./pages/student/StudentShareProfile";
 import StudentVocabulary from "./pages/student/StudentVocabulary";
 import StudentEnglishPractice from "./pages/student/StudentEnglishPractice";
