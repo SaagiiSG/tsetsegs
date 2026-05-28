@@ -15,13 +15,23 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     )
+
+    // Admin auth check
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const { data: role } = await supabaseAdmin.from('user_roles')
+      .select('role').eq('user_id', userData.user.id).eq('role', 'admin').maybeSingle()
+    if (!role) {
+      return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     const { userId } = await req.json()
 
@@ -29,39 +39,30 @@ serve(async (req) => {
       throw new Error('User ID is required')
     }
 
-    // Delete user from auth (this will cascade to user_roles via foreign key)
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (authError) {
       throw new Error(`Auth deletion error: ${authError.message}`)
     }
 
-    // Delete teacher record (if exists)
     const { error: teacherError } = await supabaseAdmin
       .from('teachers')
       .delete()
-      .eq('username', userId) // This might need adjustment based on how we identify teachers
+      .eq('username', userId)
 
-    // Note: We're ignoring teacher deletion errors since the record might not exist
     if (teacherError) {
       console.log('Teacher record deletion note:', teacherError.message)
     }
 
     return new Response(
       JSON.stringify({ success: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     )
   } catch (error: any) {
     console.error('Error deleting teacher account:', error)
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
     )
   }
 })

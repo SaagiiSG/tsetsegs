@@ -156,6 +156,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Admin role check
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: adminRole } = await adminClient.from('user_roles')
+      .select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
+    if (!adminRole) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const body = await req.json().catch(() => ({}));
     const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set } = body;
 

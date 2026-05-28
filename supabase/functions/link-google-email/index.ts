@@ -40,9 +40,26 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
+
+    // Ownership check: caller must present an active student session for the target account
+    const sessionId = req.headers.get('x-student-session-id') ?? '';
+    if (!sessionId) {
+      return new Response(JSON.stringify({ error: 'missing student session' }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: session } = await admin
+      .from('student_sessions')
+      .select('student_account_id, is_active, expires_at')
+      .eq('id', sessionId)
+      .maybeSingle();
+    if (!session || !session.is_active || new Date(session.expires_at as string) < new Date() || session.student_account_id !== student_account_id) {
+      return new Response(JSON.stringify({ error: 'session does not own this account' }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const email = user.email.toLowerCase();
-    const googleSub = (user.user_metadata as any)?.sub
-      ?? (user.identities?.find((i: any) => i.provider === "google")?.id ?? null);
 
     const { error: upsertErr } = await admin
       .from("student_email_links")
