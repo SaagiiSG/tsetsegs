@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CALIBRATION_REQUIRED } from "./useCalibrationProgress";
 
-interface ScorePredictionResult {
+export interface ScorePredictionResult {
   predictedRange: [number, number];
   confidence: 'high' | 'medium' | 'low';
   baseScore: number;
@@ -16,6 +17,12 @@ interface ScorePredictionResult {
     variancePenalty: number;
   };
   hasBaseline: boolean;
+  // When set, the student hasn't finished calibration yet — UI should show
+  // a locked card and the underlying prediction values are not meaningful.
+  calibrationLocked?: {
+    solved: number;
+    required: number;
+  };
 }
 
 function calculateAttendanceAdj(attendanceData: any): { rate: number; adj: number } {
