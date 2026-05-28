@@ -20,8 +20,10 @@ export function LinkEmailModal() {
   // Detect whether to show on mount / route change
   useEffect(() => {
     if (!student?.id) return;
+    const params = new URLSearchParams(window.location.search);
+    // Don't auto-open while we're mid OAuth-return; the handler below decides.
+    if (params.get('link_email') === '1') return;
     (async () => {
-      // already linked?
       const { data: link } = await supabase
         .from('student_email_links')
         .select('id')
@@ -47,15 +49,21 @@ export function LinkEmailModal() {
           body: { student_account_id: student.id },
         });
         if (error) throw error;
+        await supabase
+          .from('student_accounts')
+          .update({ email_link_prompted_at: new Date().toISOString() })
+          .eq('id', student.id);
         toast.success('Email connected — you\'ll get announcements');
-        // clean URL
-        const url = new URL(window.location.href);
-        url.searchParams.delete('link_email');
-        window.history.replaceState({}, '', url.toString());
         setOpen(false);
       } catch (e: any) {
         toast.error(e.message || 'Failed to link email');
       } finally {
+        // CRITICAL: drop the Google Supabase session immediately so it doesn't
+        // hijack the student's custom phone-based session on next login.
+        try { await supabase.auth.signOut(); } catch {}
+        const url = new URL(window.location.href);
+        url.searchParams.delete('link_email');
+        window.history.replaceState({}, '', url.toString());
         setBusy(false);
       }
     })();
@@ -73,6 +81,7 @@ export function LinkEmailModal() {
   };
 
   const skip = async () => {
+
     if (!student?.id) return;
     setBusy(true);
     await supabase
