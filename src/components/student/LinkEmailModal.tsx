@@ -8,6 +8,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
   clearBorrowedGoogleSession,
   clearStudentEmailLinkPending,
+  getErrorMessage,
   linkCurrentGoogleEmail,
   markStudentEmailLinkPending,
 } from '@/lib/studentEmailLinking';
@@ -36,7 +37,7 @@ export function LinkEmailModal() {
         .eq('student_account_id', student.id)
         .maybeSingle();
       if (link) return;
-      if ((student as any).email_link_prompted_at) return;
+      if (student.email_link_prompted_at) return;
       setOpen(true);
     })();
   }, [student?.id]);
@@ -56,8 +57,8 @@ export function LinkEmailModal() {
           .eq('id', student.id);
         toast.success('Email connected — you\'ll get announcements');
         setOpen(false);
-      } catch (e: any) {
-        toast.error(e.message || 'Failed to link email');
+      } catch (e: unknown) {
+        toast.error(getErrorMessage(e, 'Failed to link email'));
       } finally {
         // CRITICAL: drop the Google session immediately so it doesn't
         // hijack the student's custom phone-based session on next login.
@@ -91,9 +92,9 @@ export function LinkEmailModal() {
         toast.success('Email connected — you\'ll get announcements');
         setOpen(false);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       clearStudentEmailLinkPending();
-      toast.error(e.message || 'Could not start Google sign-in');
+      toast.error(getErrorMessage(e, 'Could not start Google sign-in'));
     } finally {
       setBusy(false);
     }
