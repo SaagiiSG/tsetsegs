@@ -98,7 +98,6 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
     const MESSAGING_SERVICE_SID = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID');
-    const FROM_NUMBER = Deno.env.get('TWILIO_FROM_NUMBER');
 
     if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       console.error('Missing Twilio credentials');
@@ -108,20 +107,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Always send via the Messaging Service so the alphanumeric Sender ID
+    // ("Tsetsegs") shows up as the sender on the student's phone. We do NOT
+    // fall back to TWILIO_FROM_NUMBER — a numeric fallback would defeat the
+    // branded-sender goal.
+    if (!MESSAGING_SERVICE_SID) {
+      console.error('TWILIO_MESSAGING_SERVICE_SID not configured');
+      return new Response(
+        JSON.stringify({ error: 'SMS sender (Messaging Service) not configured' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
     const to = normalizePhone(phone);
     const text = `Tsetsegs нууц үг сэргээх код: ${code}. 10 минутын дотор ашиглана уу.`;
 
-    const params = new URLSearchParams({ To: to, Body: text });
-    if (MESSAGING_SERVICE_SID) {
-      params.set('MessagingServiceSid', MESSAGING_SERVICE_SID);
-    } else if (FROM_NUMBER) {
-      params.set('From', FROM_NUMBER);
-    } else {
-      return new Response(JSON.stringify({ error: 'No SMS sender configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const params = new URLSearchParams({
+      To: to,
+      Body: text,
+      MessagingServiceSid: MESSAGING_SERVICE_SID,
+    });
 
     const twilioRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: 'POST',
