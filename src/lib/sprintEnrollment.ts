@@ -62,13 +62,21 @@ export async function ensureSprintEnrollment(
     .limit(1)
     .maybeSingle();
 
-  // First-ever enrollment after calibration → start at Bronze (they earned a
-  // rank by completing 44 questions). Returning students inherit their
-  // reserved/previous tier.
-  const startingTier =
+  // Returning students inherit their reserved/previous tier.
+  // First-ever enrollment → grade starting tier by calibration accuracy:
+  //   ≥ 70% → silver, ≥ 60% → bronze, else bronze (floor).
+  let startingTier =
     (previousRanking as any)?.reserved_next_tier ||
     (previousRanking as any)?.current_tier ||
-    'bronze';
+    null;
+
+  if (!startingTier) {
+    const { data: accuracyData } = await supabase
+      .rpc('get_calibration_accuracy', { _student_account_id: studentAccountId });
+    const accuracy = Number(accuracyData) || 0;
+    if (accuracy >= 0.7) startingTier = 'silver';
+    else startingTier = 'bronze';
+  }
 
   // Assign group with available space
   const { data: groupCounts } = await supabase
