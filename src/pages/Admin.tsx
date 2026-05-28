@@ -23,6 +23,7 @@ import AnalyticsDashboard from '@/pages/admin/AnalyticsDashboard';
 import ReviewSessions from '@/pages/admin/ReviewSessions';
 import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
+import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { LogOut, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
