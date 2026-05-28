@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  clearBorrowedGoogleSession,
+  clearStudentEmailLinkPending,
+  getStudentEmailLinkPending,
+  linkCurrentGoogleEmail,
+} from '@/lib/studentEmailLinking';
 import { v4 as uuidv4 } from 'uuid';
 
 interface LinkedStudent {
@@ -277,6 +283,22 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         linked_student: linkedStudent,
         linked_students: linkedStudents
       } as StudentAccount);
+
+      const params = new URLSearchParams(window.location.search);
+      const pendingEmailLinkStudentId = getStudentEmailLinkPending();
+      if (params.get('link_email') === '1' && pendingEmailLinkStudentId === studentAccount.id) {
+        try {
+          await linkCurrentGoogleEmail(studentAccount.id);
+        } catch (error) {
+          console.error('Email link restore error:', error);
+        } finally {
+          await clearBorrowedGoogleSession();
+          clearStudentEmailLinkPending();
+          params.delete('link_email');
+          const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`;
+          window.history.replaceState({}, '', nextUrl);
+        }
+      }
     } catch (err) {
       console.error('Session check error:', err);
     } finally {
