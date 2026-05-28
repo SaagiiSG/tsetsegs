@@ -26,6 +26,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
+import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
 import { useSyncBadgeProgress } from '@/hooks/useSyncBadgeProgress';
 import {
   Drawer,
