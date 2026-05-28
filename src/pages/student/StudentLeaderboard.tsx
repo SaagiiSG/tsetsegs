@@ -16,6 +16,7 @@ import {
   EpicBadgeUnlock,
   RankAdvancementCelebration
 } from '@/components/student/leaderboard';
+import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
 import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER } from '@/data/badgeDefinitions';
 
 // Badge name to tier mapping (same as in edge function)
