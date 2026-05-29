@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
-import { ExternalResourcesCard } from '@/components/student/ExternalResourcesCard';
 import { cn } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -547,10 +546,6 @@ export default function StudentPractice() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="shrink-0">
-        <ExternalResourcesCard />
-      </div>
 
 
 
