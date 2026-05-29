@@ -1,7 +1,7 @@
 import { NavLink } from '@/components/NavLink';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { 
-  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked, Armchair, Bug
+  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked, Armchair, Bug, Flag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,9 +16,11 @@ const navItems = [
   { to: '/practice/stats', icon: BarChart3, label: 'Stats' },
   { to: '/practice/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
+  { to: '/practice/my-flags', icon: Flag, label: 'My Flags' },
   { to: '/practice/bug-report', icon: Bug, label: 'Report Bug' },
   { to: '/practice/settings', icon: Settings, label: 'Settings' },
 ];
+
 
 export function StudentSidebar() {
   const { student, logout } = useStudentAuth();

@@ -55,6 +55,8 @@ import StudentBooking from "./pages/student/StudentBooking";
 import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
+import StudentMyFlags from "./pages/student/StudentMyFlags";
+
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
@@ -183,7 +185,9 @@ const App = () => (
                     <Route path="vocabulary" element={<StudentVocabulary />} />
                     <Route path="smart" element={<StudentSmartPractice />} />
                     <Route path="reading" element={<StudentReadingModule />} />
-                    <Route path="booking" element={<StudentBooking />} />
+                    <Route path="bug-report" element={<StudentBugReport />} />
+                    <Route path="my-flags" element={<StudentMyFlags />} />
+
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
                     <Route path="english" element={<Navigate to="/practice/dashboard" replace />} />

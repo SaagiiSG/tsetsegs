@@ -547,11 +547,8 @@ export default function StudentQuestion() {
       return { correct, enrollmentSnapshot, pointsAwarded };
     },
     onSuccess: (result) => {
-      const correct = result?.correct;
-      setSubmitted(true);
-      setIsCorrect(correct || false);
-      setAttemptCount(prev => prev + 1);
-      // Invalidate all related caches for auto-sync
+      // UI was already updated optimistically in handleSubmit.
+      // Just sync caches in the background and surface the sprint enrollment dialog.
       queryClient.invalidateQueries({ queryKey: ['question-attempts-all'] });
       queryClient.invalidateQueries({ queryKey: ['student-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['navigator-attempts'] });
@@ -565,25 +562,21 @@ export default function StudentQuestion() {
       queryClient.invalidateQueries({ queryKey: ['total-points'] });
       queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
       queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
-      // On correct answer, force-refetch the dashboard signals so the card flips to green immediately
-      if (correct) {
-        queryClient.refetchQueries({ queryKey: ['student-attempts'] });
-        queryClient.refetchQueries({ queryKey: ['navigator-attempts'] });
-        queryClient.refetchQueries({ queryKey: ['review-queue'] });
-      }
       // Sprint enrollment celebration (only fires on the first correct answer of the sprint)
       if (result?.enrollmentSnapshot) {
         setEnrollmentDialog({ open: true, snapshot: result.enrollmentSnapshot, pointsEarned: result.pointsAwarded || 0 });
       }
     },
     onError: (error: any) => {
+      // Persistence failed in the background — let the student know but keep their feedback visible.
       toast({
-        title: 'Error',
+        title: 'Could not save attempt',
         description: error.message,
         variant: 'destructive'
       });
     }
   });
+
 
   // Flag question mutation
   const flagMutation = useMutation({
@@ -621,6 +614,18 @@ export default function StudentQuestion() {
       return;
     }
 
+    if (submitAnswerMutation.isPending || !currentQuestion) return;
+
+    // Instant feedback — compute correctness on the client and flip the UI immediately.
+    // The mutation persists the attempt + points + review queue in the background.
+    const correct = currentQuestion.question_type === 'fill_blank'
+      ? isAcceptedFillBlankAnswer(answer, currentQuestion.answer, currentQuestion.alternate_answers as string[] | null)
+      : answer.trim().toUpperCase() === currentQuestion.answer.trim().toUpperCase();
+
+    setSubmitted(true);
+    setIsCorrect(correct);
+    setAttemptCount(prev => prev + 1);
+
     submitAnswerMutation.mutate(answer);
   };
 
@@ -630,6 +635,8 @@ export default function StudentQuestion() {
     setFillAnswer('');
     setStartTime(Date.now());
   };
+
+
 
   const handleNextVariation = () => {
     if (currentVariationIndex < practiceQuestions.length - 1) {
