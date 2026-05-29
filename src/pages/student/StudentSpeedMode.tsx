@@ -620,37 +620,6 @@ export default function StudentSpeedMode() {
         Start Session
       </Button>
 
-      {/* Bottom Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Best Score */}
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-yellow-600 mb-2">
-              <Trophy className="h-4 w-4" />
-              <span className="font-medium text-sm">Best Score</span>
-            </div>
-            <p className="text-2xl font-bold">{stats?.bestScore?.accuracy ?? '--'}%</p>
-            <p className="text-xs text-muted-foreground">
-              {stats?.bestScore?.avgTime ? `${Math.round(stats.bestScore.avgTime)}s avg` : 'No sessions yet'}
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Session Count */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-primary mb-2">
-              <Zap className="h-4 w-4" />
-              <span className="font-medium text-sm">Sessions</span>
-            </div>
-            <p className="text-2xl font-bold">{stats?.totalSessions ?? '--'}</p>
-            <p className="text-xs text-muted-foreground">total completed</p>
-          </CardContent>
-        </Card>
-        
-        {/* Speed Badges Progress */}
-        <SpeedBadgesCard studentId={student?.id} />
-      </div>
     </div>
   );
 }
