@@ -48,7 +48,36 @@ Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+
+  // Enforce caller authorization (see auth note above)
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || ''
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  const claims = token ? decodeJwtPayload(token) : null
+  const callerRole = claims?.role as string | undefined
+  let authorized = callerRole === 'service_role'
+  if (!authorized && callerRole === 'authenticated' && claims?.sub) {
+    try {
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+      const { data: roleRow } = await adminClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', claims.sub)
+        .eq('role', 'admin')
+        .maybeSingle()
+      authorized = !!roleRow
+    } catch (e) {
+      console.error('Role check failed', e)
+    }
   }
+  if (!authorized) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
