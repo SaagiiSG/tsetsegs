@@ -154,6 +154,7 @@ export default function StudentSpeedMode() {
   const [sessionDuration, setSessionDuration] = useState(120); // 2 min default (first reasonable option)
   const [questionCount, setQuestionCount] = useState(15);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<'math' | 'english'>('math');
 
   // Fetch categories grouped by subject
   const { data: categories } = useQuery({
@@ -307,13 +308,15 @@ export default function StudentSpeedMode() {
     logActivity('speed_mode_start', { 
       duration: sessionDuration,
       questionCount,
-      category: selectedCategory 
+      category: selectedCategory,
+      subject: selectedSubject,
     });
     
     const params = new URLSearchParams({
       duration: String(sessionDuration),
       questions: String(questionCount),
-      category: selectedCategory
+      category: selectedCategory,
+      subject: selectedSubject,
     });
     
     navigate(`/practice/speed/session?${params.toString()}`);
@@ -533,7 +536,30 @@ export default function StudentSpeedMode() {
 
             {/* Category Badge Selector - 60% */}
             <div className="flex flex-col items-center w-full sm:w-[60%]">
-              <span className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wider">Category</span>
+              <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Category</span>
+
+              {/* Subject Tabs */}
+              <div className="flex rounded-lg border bg-muted/40 p-0.5 mb-3">
+                {(['math', 'english'] as const).map((subj) => (
+                  <button
+                    key={subj}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubject(subj);
+                      setSelectedCategory('all');
+                    }}
+                    className={cn(
+                      "px-4 py-1.5 text-xs font-semibold rounded-md transition-all capitalize",
+                      selectedSubject === subj
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {subj}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto px-2">
                 <Badge
                   variant={selectedCategory === 'all' ? 'default' : 'outline'}
@@ -548,23 +574,7 @@ export default function StudentSpeedMode() {
                   All Mixed
                 </Badge>
                 
-                {categories?.math?.map(cat => (
-                  <Badge
-                    key={cat.id}
-                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
-                    className={cn(
-                      "cursor-pointer px-4 py-2 text-sm transition-all",
-                      selectedCategory === cat.id 
-                        ? "bg-primary text-primary-foreground" 
-                        : "hover:bg-primary/10"
-                    )}
-                    onClick={() => setSelectedCategory(cat.id)}
-                  >
-                    {cat.name}
-                  </Badge>
-                ))}
-                
-                {categories?.english?.map(cat => (
+                {(selectedSubject === 'math' ? categories?.math : categories?.english)?.map(cat => (
                   <Badge
                     key={cat.id}
                     variant={selectedCategory === cat.id ? 'default' : 'outline'}
