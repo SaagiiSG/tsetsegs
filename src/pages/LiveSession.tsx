@@ -427,6 +427,18 @@ export default function LiveSession() {
     );
   }
 
+  // Restoring from refresh — show spinner instead of flashing the join form
+  if (isRestoring && phase === "join") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Reconnecting you to the game…</p>
+        </div>
+      </div>
+    );
+  }
+
   // Join form
   if (phase === "join") {
     return (
