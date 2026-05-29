@@ -292,22 +292,56 @@ export default function LiveSession() {
   }, []);
 
   const handleJoin = async () => {
-    if (!session || !playerName.trim() || !phoneNumber.trim()) return;
+    if (!session || !joinCode || !playerName.trim() || !phoneNumber.trim()) return;
     setIsJoining(true);
 
     try {
-      const { data, error } = await supabase
-        .from("live_session_participants")
-        .insert({
-          session_id: session.id,
-          player_name: playerName.trim(),
-          phone_number: phoneNumber.trim(),
-        })
-        .select("id")
-        .single();
+      const trimmedName = playerName.trim();
+      const trimmedPhone = phoneNumber.trim();
 
-      if (error) throw error;
-      setParticipantId(data.id);
+      // If this phone already joined this session (e.g. they cleared localStorage
+      // but their participant row still exists), reuse the existing row instead
+      // of creating a duplicate that resets points.
+      const { data: existing } = await supabase
+        .from("live_session_participants")
+        .select("id, player_name, phone_number, total_points")
+        .eq("session_id", session.id)
+        .eq("phone_number", trimmedPhone)
+        .maybeSingle();
+
+      let pid: string;
+      let restoredPoints = 0;
+
+      if (existing) {
+        pid = existing.id;
+        restoredPoints = existing.total_points || 0;
+      } else {
+        const { data, error } = await supabase
+          .from("live_session_participants")
+          .insert({
+            session_id: session.id,
+            player_name: trimmedName,
+            phone_number: trimmedPhone,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        pid = data.id;
+      }
+
+      setParticipantId(pid);
+      setTotalPoints(restoredPoints);
+      saveStored(joinCode, { participantId: pid, playerName: trimmedName, phoneNumber: trimmedPhone });
+
+      // Replay answered questions so they can't double-submit if they rejoined mid-game
+      const { data: answers } = await supabase
+        .from("live_session_answers")
+        .select("question_id")
+        .eq("participant_id", pid);
+      if (answers) {
+        setAnsweredQuestionIds(new Set(answers.map((a: any) => a.question_id)));
+        answeredRef.current = new Set(answers.map((a: any) => a.question_id));
+      }
 
       if (session.status === "active") {
         startQuestion(session.current_question_index);
