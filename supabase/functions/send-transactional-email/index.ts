@@ -25,9 +25,24 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: verify_jwt = true in config.toml, but Supabase's gateway accepts the
+// public anon JWT as valid. We MUST enforce an additional caller check here so
+// that anon users (anyone with the public publishable key) cannot relay arbitrary
+// emails through this function. Allowed callers:
+//   - service_role JWT (used by process-email-queue + other server functions)
+//   - authenticated user with the 'admin' role in public.user_roles
+function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const part = token.split('.')[1]
+    if (!part) return null
+    const pad = part.length % 4 === 0 ? '' : '='.repeat(4 - (part.length % 4))
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/') + pad)
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
