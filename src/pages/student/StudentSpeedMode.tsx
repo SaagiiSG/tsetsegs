@@ -347,6 +347,7 @@ export default function StudentSpeedMode() {
             <span className="text-lg font-bold font-mono text-primary">{stats?.totalSessions ?? 0}</span>
           </div>
         </div>
+      </div>
 
 
       {/* SAT Countdown Widget */}
