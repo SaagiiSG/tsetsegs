@@ -100,6 +100,7 @@ export default function StudentSpeedSession() {
   const duration = Number(searchParams.get('duration')) || 120;
   const maxQuestions = Number(searchParams.get('questions')) || 15;
   const categoryId = searchParams.get('category');
+  const subject = (searchParams.get('subject') as 'math' | 'english' | null) ?? 'math';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(duration);
@@ -115,7 +116,7 @@ export default function StudentSpeedSession() {
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['speed-questions', categoryId, maxQuestions],
+    queryKey: ['speed-questions', categoryId, subject, maxQuestions],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -124,8 +125,13 @@ export default function StudentSpeedSession() {
           multiple_choice_options,
           category:question_categories(name)
         `)
-        .eq('is_original', true)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('subject', subject);
+
+      // English bypasses is_original filter (per question-bank spec)
+      if (subject === 'math') {
+        query = query.eq('is_original', true);
+      }
 
       if (categoryId && categoryId !== 'all') {
         query = query.eq('category_id', categoryId);
