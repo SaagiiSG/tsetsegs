@@ -608,13 +608,6 @@ export default function StudentQuestion() {
 
     if (!answer) {
       toast({
-  const handleSubmit = () => {
-    const answer = currentQuestion?.question_type === 'multiple_choice' 
-      ? selectedAnswer 
-      : fillAnswer;
-
-    if (!answer) {
-      toast({
         title: 'Please select an answer',
         variant: 'destructive'
       });
@@ -635,6 +628,14 @@ export default function StudentQuestion() {
 
     submitAnswerMutation.mutate(answer);
   };
+
+  const handleTryAgain = () => {
+    setSubmitted(false);
+    setSelectedAnswer(null);
+    setFillAnswer('');
+    setStartTime(Date.now());
+  };
+
 
 
   const handleNextVariation = () => {
