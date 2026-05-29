@@ -85,9 +85,9 @@ function CircularTimer({ timeLeft, duration, size = 200 }: { timeLeft: number; d
 
 // Score tier data (display only - actual scoring unchanged)
 const scoreTiers = [
-  { stars: 3, label: '1600 pts', threshold: '≤28s', maxTime: 28 },
-  { stars: 2, label: '1450 pts', threshold: '≤46s', maxTime: 46 },
-  { stars: 1, label: '1300 pts', threshold: '≤91s', maxTime: 91 },
+  { stars: 3, label: '800 pts', threshold: '≤28s', maxTime: 28 },
+  { stars: 2, label: '650 pts', threshold: '≤46s', maxTime: 46 },
+  { stars: 1, label: '500 pts', threshold: '≤91s', maxTime: 91 },
 ];
 
 export default function StudentSpeedSession() {
