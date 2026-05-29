@@ -325,15 +325,30 @@ export default function StudentSpeedMode() {
   return (
     <div className="p-4 md:p-6 space-y-6 select-none">
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Zap className="h-6 w-6 text-yellow-500" />
-          Speed Practice
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Challenge yourself with timed practice sessions
-        </p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+            <Zap className="h-5 w-5 text-yellow-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold leading-tight">Speed Practice</h1>
+            <p className="text-xs text-muted-foreground">Challenge yourself with timed sessions</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-2 rounded-xl bg-card border flex flex-col items-center min-w-[84px]">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Best Acc</span>
+            <span className="text-lg font-bold font-mono">
+              {stats?.bestScore ? `${stats.bestScore.accuracy}%` : '—'}
+            </span>
+          </div>
+          <div className="px-3 py-2 rounded-xl bg-card border flex flex-col items-center min-w-[84px]">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sessions</span>
+            <span className="text-lg font-bold font-mono">{stats?.totalSessions ?? 0}</span>
+          </div>
+        </div>
       </div>
+
 
       {/* SAT Countdown Widget */}
       <SATCountdownWidget variant="sidebar" />
