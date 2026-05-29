@@ -608,21 +608,34 @@ export default function StudentQuestion() {
 
     if (!answer) {
       toast({
+  const handleSubmit = () => {
+    const answer = currentQuestion?.question_type === 'multiple_choice' 
+      ? selectedAnswer 
+      : fillAnswer;
+
+    if (!answer) {
+      toast({
         title: 'Please select an answer',
         variant: 'destructive'
       });
       return;
     }
 
+    if (submitAnswerMutation.isPending || !currentQuestion) return;
+
+    // Instant feedback — compute correctness on the client and flip the UI immediately.
+    // The mutation persists the attempt + points + review queue in the background.
+    const correct = currentQuestion.question_type === 'fill_blank'
+      ? isAcceptedFillBlankAnswer(answer, currentQuestion.answer, currentQuestion.alternate_answers as string[] | null)
+      : answer.trim().toUpperCase() === currentQuestion.answer.trim().toUpperCase();
+
+    setSubmitted(true);
+    setIsCorrect(correct);
+    setAttemptCount(prev => prev + 1);
+
     submitAnswerMutation.mutate(answer);
   };
 
-  const handleTryAgain = () => {
-    setSubmitted(false);
-    setSelectedAnswer(null);
-    setFillAnswer('');
-    setStartTime(Date.now());
-  };
 
   const handleNextVariation = () => {
     if (currentVariationIndex < practiceQuestions.length - 1) {
