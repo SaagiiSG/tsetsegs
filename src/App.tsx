@@ -20,6 +20,8 @@ import StudentReveal from "./pages/StudentReveal";
 import StudentPortal from "./pages/StudentPortal";
 import StudentQuestion from "./pages/StudentQuestion";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
+
 
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherChangePassword from "./pages/TeacherChangePassword";
@@ -87,6 +89,8 @@ const App = () => (
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />
                   <Route path="/lectures" element={<LecturesHub />} />
+                  <Route path="/unsubscribe" element={<Unsubscribe />} />
+
                   <Route 
                     path="/admin/*" 
                     element={
