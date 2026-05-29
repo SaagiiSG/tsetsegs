@@ -202,16 +202,30 @@ export default function LiveSession() {
 
   const startQuestion = useCallback((index: number) => {
     const sess = sessionRef.current;
+    const q = questionsRef.current[index];
     setCurrentIndex(index);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setPointsEarned(0);
-    hasAnsweredRef.current = false;
+
+    // If this device already answered this question (refreshed mid-game), don't let them re-answer
+    const alreadyAnswered = q ? answeredRef.current.has(q.id) : false;
+    hasAnsweredRef.current = alreadyAnswered;
+
     questionStartRef.current = Date.now();
     const timePerQ = sess?.time_per_question || 30;
     setTimeLeft(timePerQ);
-    setPhase("question");
 
+    if (alreadyAnswered) {
+      // Show neutral "waiting for next question" state instead of letting them score twice
+      setPhase("feedback");
+      setIsCorrect(null);
+      setPointsEarned(0);
+      clearInterval(timerRef.current);
+      return;
+    }
+
+    setPhase("question");
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
