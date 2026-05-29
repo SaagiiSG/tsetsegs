@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { CheckInWidget } from './CheckInWidget';
+import { ExternalResourcesPopover } from './ExternalResourcesPopover';
 import { SATCountdownWidget } from './SATCountdownWidget';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
@@ -289,7 +290,8 @@ export function StudentDashboardSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-1.5 md:p-2">
+      <SidebarFooter className="border-t p-1.5 md:p-2 space-y-1">
+        <ExternalResourcesPopover collapsed={!open} />
         <Button 
           variant="ghost" 
           className={cn(
