@@ -25,15 +25,59 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: verify_jwt = true in config.toml, but Supabase's gateway accepts the
+// public anon JWT as valid. We MUST enforce an additional caller check here so
+// that anon users (anyone with the public publishable key) cannot relay arbitrary
+// emails through this function. Allowed callers:
+//   - service_role JWT (used by process-email-queue + other server functions)
+//   - authenticated user with the 'admin' role in public.user_roles
+function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const part = token.split('.')[1]
+    if (!part) return null
+    const pad = part.length % 4 === 0 ? '' : '='.repeat(4 - (part.length % 4))
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/') + pad)
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+
+  // Enforce caller authorization (see auth note above)
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || ''
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  const claims = token ? decodeJwtPayload(token) : null
+  const callerRole = claims?.role as string | undefined
+  let authorized = callerRole === 'service_role'
+  if (!authorized && callerRole === 'authenticated' && claims?.sub) {
+    try {
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+      const { data: roleRow } = await adminClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', claims.sub)
+        .eq('role', 'admin')
+        .maybeSingle()
+      authorized = !!roleRow
+    } catch (e) {
+      console.error('Role check failed', e)
+    }
   }
+  if (!authorized) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
