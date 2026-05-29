@@ -28,7 +28,7 @@ const RESOURCES: Resource[] = [
   {
     label: 'Discord',
     description: 'Hang out with classmates',
-    href: 'https://discord.gg/kDueGTK6Uk',
+    href: 'https://discord.gg/njvTx9uHU',
     icon: MessageCircle,
     accent: 'from-indigo-500/20 to-purple-500/10 text-indigo-600 dark:text-indigo-400',
   },
