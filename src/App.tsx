@@ -55,6 +55,8 @@ import StudentBooking from "./pages/student/StudentBooking";
 import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
+import StudentMyFlags from "./pages/student/StudentMyFlags";
+
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
