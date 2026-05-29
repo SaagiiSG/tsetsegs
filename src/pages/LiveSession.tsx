@@ -75,7 +75,16 @@ export default function LiveSession() {
   const [pointsEarned, setPointsEarned] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(() => {
+    // Synchronously check localStorage so we never flash the join form on refresh
+    try {
+      const code = window.location.pathname.split("/").pop();
+      if (!code) return false;
+      return !!localStorage.getItem(`live-session:${code.toUpperCase()}`);
+    } catch {
+      return false;
+    }
+  });
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const questionStartRef = useRef<number>(0);
