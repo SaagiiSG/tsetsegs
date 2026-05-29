@@ -7,7 +7,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
