@@ -336,15 +336,15 @@ export default function StudentSpeedMode() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-2 rounded-xl bg-card border flex flex-col items-center min-w-[84px]">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Best Acc</span>
-            <span className="text-lg font-bold font-mono">
+          <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-yellow-500/15 to-yellow-500/5 border border-yellow-500/30 flex flex-col items-center min-w-[88px]">
+            <span className="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-500/90 font-semibold">Best Acc</span>
+            <span className="text-lg font-bold font-mono text-yellow-700 dark:text-yellow-400">
               {stats?.bestScore ? `${stats.bestScore.accuracy}%` : '—'}
             </span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-card border flex flex-col items-center min-w-[84px]">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sessions</span>
-            <span className="text-lg font-bold font-mono">{stats?.totalSessions ?? 0}</span>
+          <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 flex flex-col items-center min-w-[88px]">
+            <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">Sessions</span>
+            <span className="text-lg font-bold font-mono text-primary">{stats?.totalSessions ?? 0}</span>
           </div>
         </div>
       </div>
@@ -620,37 +620,6 @@ export default function StudentSpeedMode() {
         Start Session
       </Button>
 
-      {/* Bottom Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Best Score */}
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-yellow-600 mb-2">
-              <Trophy className="h-4 w-4" />
-              <span className="font-medium text-sm">Best Score</span>
-            </div>
-            <p className="text-2xl font-bold">{stats?.bestScore?.accuracy ?? '--'}%</p>
-            <p className="text-xs text-muted-foreground">
-              {stats?.bestScore?.avgTime ? `${Math.round(stats.bestScore.avgTime)}s avg` : 'No sessions yet'}
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Session Count */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-primary mb-2">
-              <Zap className="h-4 w-4" />
-              <span className="font-medium text-sm">Sessions</span>
-            </div>
-            <p className="text-2xl font-bold">{stats?.totalSessions ?? '--'}</p>
-            <p className="text-xs text-muted-foreground">total completed</p>
-          </CardContent>
-        </Card>
-        
-        {/* Speed Badges Progress */}
-        <SpeedBadgesCard studentId={student?.id} />
-      </div>
     </div>
   );
 }
