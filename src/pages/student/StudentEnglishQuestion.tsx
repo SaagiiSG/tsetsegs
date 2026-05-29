@@ -309,7 +309,6 @@ export default function StudentEnglishQuestion() {
     submitMutation.mutate({ answer: selectedAnswer, questionId });
   };
 
-  };
 
   const handleTryAgain = () => {
     setSubmitted(false);
