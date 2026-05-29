@@ -26,6 +26,39 @@ interface QuestionData {
   order_index: number;
 }
 
+interface StoredSession {
+  participantId: string;
+  playerName: string;
+  phoneNumber: string;
+}
+
+const storageKey = (joinCode: string) => `live-session:${joinCode.toUpperCase()}`;
+
+const loadStored = (joinCode: string): StoredSession | null => {
+  try {
+    const raw = localStorage.getItem(storageKey(joinCode));
+    return raw ? (JSON.parse(raw) as StoredSession) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveStored = (joinCode: string, data: StoredSession) => {
+  try {
+    localStorage.setItem(storageKey(joinCode), JSON.stringify(data));
+  } catch {
+    // ignore quota errors
+  }
+};
+
+const clearStored = (joinCode: string) => {
+  try {
+    localStorage.removeItem(storageKey(joinCode));
+  } catch {
+    // ignore
+  }
+};
+
 export default function LiveSession() {
   const { joinCode } = useParams<{ joinCode: string }>();
   const [phase, setPhase] = useState<Phase>("join");
@@ -34,6 +67,7 @@ export default function LiveSession() {
   const [session, setSession] = useState<SessionData | null>(null);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<QuestionData[]>([]);
+  const [answeredQuestionIds, setAnsweredQuestionIds] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -41,6 +75,7 @@ export default function LiveSession() {
   const [pointsEarned, setPointsEarned] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const questionStartRef = useRef<number>(0);
@@ -53,6 +88,7 @@ export default function LiveSession() {
   const participantIdRef = useRef<string | null>(participantId);
   const questionsRef = useRef<QuestionData[]>(questions);
   const totalPointsRef = useRef(0);
+  const answeredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
@@ -60,8 +96,9 @@ export default function LiveSession() {
   useEffect(() => { participantIdRef.current = participantId; }, [participantId]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { totalPointsRef.current = totalPoints; }, [totalPoints]);
+  useEffect(() => { answeredRef.current = answeredQuestionIds; }, [answeredQuestionIds]);
 
-  // Look up session on mount
+  // Look up session on mount + restore from localStorage if the user refreshed
   useEffect(() => {
     if (!joinCode) return;
     const fetchSession = async () => {
@@ -77,6 +114,23 @@ export default function LiveSession() {
           return;
         }
         if (data.status === "finished") {
+          // Still try to show the user's final score from a previous join
+          const stored = loadStored(joinCode);
+          if (stored) {
+            const { data: p } = await supabase
+              .from("live_session_participants")
+              .select("total_points, player_name")
+              .eq("id", stored.participantId)
+              .maybeSingle();
+            if (p) {
+              setParticipantId(stored.participantId);
+              setPlayerName(p.player_name || stored.playerName);
+              setTotalPoints(p.total_points || 0);
+              setSession(data as SessionData);
+              setPhase("finished");
+              return;
+            }
+          }
           setError("This session has already ended.");
           return;
         }
@@ -94,12 +148,56 @@ export default function LiveSession() {
             qData.map((d: any) => ({ ...d.questions, order_index: d.order_index }))
           );
         }
+
+        // Restore prior participant if this device already joined this session
+        const stored = loadStored(joinCode);
+        if (stored) {
+          setIsRestoring(true);
+          const { data: participant } = await supabase
+            .from("live_session_participants")
+            .select("id, player_name, phone_number, total_points")
+            .eq("id", stored.participantId)
+            .maybeSingle();
+
+          if (participant && participant.id) {
+            // Hydrate from server — points survive refresh
+            setParticipantId(participant.id);
+            setPlayerName(participant.player_name);
+            setPhoneNumber(participant.phone_number);
+            setTotalPoints(participant.total_points || 0);
+
+            // Replay which questions they've already answered (anti-double-submit)
+            const { data: answers } = await supabase
+              .from("live_session_answers")
+              .select("question_id")
+              .eq("participant_id", participant.id);
+            if (answers) {
+              setAnsweredQuestionIds(new Set(answers.map((a: any) => a.question_id)));
+            }
+
+            if (data.status === "active") {
+              startQuestion(data.current_question_index);
+            } else if (data.status === "waiting" || data.status === "lobby") {
+              setPhase("waiting");
+            } else {
+              setPhase("waiting");
+            }
+          } else {
+            // Stored id is stale — wipe and let them re-join fresh
+            clearStored(joinCode);
+            setPlayerName(stored.playerName);
+            setPhoneNumber(stored.phoneNumber);
+          }
+          setIsRestoring(false);
+        }
       } catch (err) {
         console.error("Error fetching session:", err);
         setError("Failed to load session. Please refresh and try again.");
+        setIsRestoring(false);
       }
     };
     fetchSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joinCode]);
 
   const startQuestion = useCallback((index: number) => {
