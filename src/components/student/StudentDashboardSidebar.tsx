@@ -7,7 +7,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,7 @@ const toolsItems: NavItem[] = [
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
+  { to: '/practice/my-flags', icon: Flag, label: 'My Flags' },
 ];
 
 const accountItems: NavItem[] = [
