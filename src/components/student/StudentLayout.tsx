@@ -47,7 +47,11 @@ function StudentLayoutContent() {
   // Allow access if user is a student, teacher, or admin
   const isTeacherOrAdmin = (teacherUser && teacherName) || isAdmin;
   const hasAccess = student || isTeacherOrAdmin;
-  const isLoading = studentLoading && teacherLoading && adminLoading;
+  // Wait until ALL auth checks have settled before deciding access.
+  // Using && caused a redirect loop: teacher/admin auth resolves instantly,
+  // flipping isLoading=false while student is still loading, kicking the user
+  // back to /practice → StudentPortal then redirects to /practice/dashboard → loop.
+  const isLoading = studentLoading || teacherLoading || adminLoading;
 
   // Security: Prevent screenshots (CSS-based) - only for students
   useEffect(() => {
