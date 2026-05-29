@@ -272,9 +272,6 @@ export default function StudentLeaderboard() {
         </p>
       </motion.div>
 
-      {/* Calibration gate — hidden once the student has solved 44 problems */}
-      <CalibrationProgressCard variant="leaderboard" />
-
 
 
       {/* Tabs - always show, but Current Sprint tab content changes based on active sprint */}

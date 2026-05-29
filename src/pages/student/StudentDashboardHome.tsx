@@ -765,8 +765,6 @@ export default function StudentDashboardHome() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Calibration gate — hidden once 44 problems are solved */}
-      <CalibrationProgressCard variant="dashboard" />
       {/* Closing Report Auto-Popup Dialog */}
       <Dialog open={showClosingReport} onOpenChange={setShowClosingReport}>
         <DialogContent className="max-w-md w-[95vw] h-[80vh] max-h-[600px] p-0 gap-0 overflow-hidden">

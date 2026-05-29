@@ -39,18 +39,9 @@ export async function ensureSprintEnrollment(
     return { ranking: existing as any, wasNewlyEnrolled: false };
   }
 
-  // Calibration gate: students don't appear on the leaderboard / get a tier
-  // until they've cleared the 44-question calibration. Tracked by the
-  // rank_unlocked_at column on student_accounts (auto-set by DB trigger).
-  const { data: account } = await supabase
-    .from('student_accounts')
-    .select('rank_unlocked_at')
-    .eq('id', studentAccountId)
-    .maybeSingle();
+  // Note: calibration (44-question gate) only locks score prediction now —
+  // students get ranked / appear on the leaderboard from their first sprint.
 
-  if (!account || !(account as any).rank_unlocked_at) {
-    return { ranking: null, wasNewlyEnrolled: false };
-  }
 
   // Inherit tier from most recent previous sprint
   const { data: previousRanking } = await supabase
