@@ -375,6 +375,12 @@ export default function LiveSession() {
     setIsCorrect(correct);
     setPointsEarned(points);
     setTotalPoints((prev) => prev + points);
+    setAnsweredQuestionIds((prev) => {
+      const next = new Set(prev);
+      next.add(currentQ.id);
+      answeredRef.current = next;
+      return next;
+    });
     setPhase("feedback");
 
     try {
@@ -388,10 +394,18 @@ export default function LiveSession() {
         points_earned: points,
       });
 
-      // Update participant total
+      // Update participant total — always re-read latest from server first to
+      // avoid clobbering points if the same participant is open on another tab
+      const { data: latest } = await supabase
+        .from("live_session_participants")
+        .select("total_points")
+        .eq("id", pid)
+        .maybeSingle();
+      const serverTotal = latest?.total_points ?? totalPointsRef.current;
+
       await supabase
         .from("live_session_participants")
-        .update({ total_points: totalPointsRef.current + points })
+        .update({ total_points: serverTotal + points })
         .eq("id", pid);
     } catch (err) {
       console.error("Error submitting answer:", err);
