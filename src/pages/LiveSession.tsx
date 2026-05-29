@@ -162,20 +162,39 @@ export default function LiveSession() {
         const stored = loadStored(joinCode);
         if (stored) {
           setIsRestoring(true);
-          const { data: participant } = await supabase
+          let participant: any = null;
+
+          // 1) Try the stored participant id
+          const { data: byId } = await supabase
             .from("live_session_participants")
             .select("id, player_name, phone_number, total_points")
             .eq("id", stored.participantId)
             .maybeSingle();
+          participant = byId;
+
+          // 2) Fallback: look up by session + phone (handles cleared/stale id)
+          if (!participant && stored.phoneNumber) {
+            const { data: byPhone } = await supabase
+              .from("live_session_participants")
+              .select("id, player_name, phone_number, total_points")
+              .eq("session_id", data.id)
+              .eq("phone_number", stored.phoneNumber)
+              .maybeSingle();
+            participant = byPhone;
+          }
 
           if (participant && participant.id) {
-            // Hydrate from server — points survive refresh
             setParticipantId(participant.id);
             setPlayerName(participant.player_name);
             setPhoneNumber(participant.phone_number);
             setTotalPoints(participant.total_points || 0);
+            // Re-save in case the id changed (phone fallback path)
+            saveStored(joinCode, {
+              participantId: participant.id,
+              playerName: participant.player_name,
+              phoneNumber: participant.phone_number,
+            });
 
-            // Replay which questions they've already answered (anti-double-submit)
             const { data: answers } = await supabase
               .from("live_session_answers")
               .select("question_id")
@@ -186,13 +205,11 @@ export default function LiveSession() {
 
             if (data.status === "active") {
               startQuestion(data.current_question_index);
-            } else if (data.status === "waiting" || data.status === "lobby") {
-              setPhase("waiting");
             } else {
               setPhase("waiting");
             }
           } else {
-            // Stored id is stale — wipe and let them re-join fresh
+            // No participant row at all — keep the entered name/phone but drop stale id
             clearStored(joinCode);
             setPlayerName(stored.playerName);
             setPhoneNumber(stored.phoneNumber);
