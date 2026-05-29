@@ -257,10 +257,8 @@ export default function StudentEnglishQuestion() {
 
       return { correct, enrollmentSnapshot, pointsAwarded };
     },
-    onSuccess: ({ correct, enrollmentSnapshot, pointsAwarded }) => {
-      setIsCorrect(correct);
-      setSubmitted(true);
-      setAttemptCount(prev => prev + 1);
+    onSuccess: ({ enrollmentSnapshot, pointsAwarded }) => {
+      // UI was already updated optimistically in handleSubmit — just sync caches.
       queryClient.invalidateQueries({ queryKey: ['english-question-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['student-english-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
@@ -273,6 +271,7 @@ export default function StudentEnglishQuestion() {
       }
     }
   });
+
 
   const flagMutation = useMutation({
     mutationFn: async () => {
