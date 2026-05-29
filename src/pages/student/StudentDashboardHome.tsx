@@ -27,6 +27,8 @@ import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
+import { ExternalResourcesCard } from '@/components/student/ExternalResourcesCard';
+
 import { useSyncBadgeProgress } from '@/hooks/useSyncBadgeProgress';
 import {
   Drawer,
@@ -1370,7 +1372,10 @@ export default function StudentDashboardHome() {
             </CardContent>
           </Card>
         </motion.div>
+
+        <ExternalResourcesCard />
       </div>
+
     </div>
   );
 }
