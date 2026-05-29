@@ -293,10 +293,22 @@ export default function StudentEnglishQuestion() {
       setFlagReason('');
     }
   });
-
   const handleSubmit = () => {
-    if (!selectedAnswer || !questionId) return;
+    if (!selectedAnswer || !questionId || !question) return;
+    if (submitMutation.isPending) return;
+
+    // Instant feedback — compute correctness on the client and flip the UI immediately.
+    const correct = question.question_type === 'fill_blank'
+      ? isAcceptedFillBlankAnswer(selectedAnswer, question.answer, question.alternate_answers as string[] | null)
+      : selectedAnswer.trim().toUpperCase() === question.answer.trim().toUpperCase();
+
+    setIsCorrect(correct);
+    setSubmitted(true);
+    setAttemptCount(prev => prev + 1);
+
     submitMutation.mutate({ answer: selectedAnswer, questionId });
+  };
+
   };
 
   const handleTryAgain = () => {
