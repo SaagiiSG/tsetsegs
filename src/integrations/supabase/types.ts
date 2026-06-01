@@ -2563,6 +2563,7 @@ export type Database = {
       }
       student_accounts: {
         Row: {
+          auth_user_id: string | null
           blocked_at: string | null
           blocked_reason: string | null
           created_at: string
@@ -2586,6 +2587,7 @@ export type Database = {
           target_score: number | null
         }
         Insert: {
+          auth_user_id?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
@@ -2609,6 +2611,7 @@ export type Database = {
           target_score?: number | null
         }
         Update: {
+          auth_user_id?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
@@ -3473,6 +3476,7 @@ export type Database = {
         Args: { fn_name: string; payload: Json }
         Returns: undefined
       }
+      current_student_account_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3529,6 +3533,7 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -3566,6 +3571,7 @@ export type Database = {
         }[]
       }
       ngee_undo_check_in: { Args: { p_booking_id: string }; Returns: boolean }
+      normalize_mn_phone: { Args: { p: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
