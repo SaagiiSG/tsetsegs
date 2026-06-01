@@ -64,11 +64,19 @@ serve(async (req) => {
 
     const results = []
 
+    const generateSecurePassword = (): string => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
+      const bytes = new Uint32Array(14)
+      crypto.getRandomValues(bytes)
+      let out = ''
+      for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length]
+      return out
+    }
+
     for (const teacher of teachers || []) {
       try {
         const username = teacher.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50)
-        const phoneDigits = teacher.phone.replace(/\D/g, '')
-        const password = phoneDigits.slice(-8)
+        const password = generateSecurePassword()
         const email = `${username}@teachers.tsetsegs.mn`
 
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -85,7 +93,7 @@ serve(async (req) => {
 
         const { error: updateError } = await supabaseAdmin
           .from('teachers')
-          .update({ username, password_hash: 'managed_by_supabase_auth', temporary_password: false })
+          .update({ username, password_hash: 'managed_by_supabase_auth', temporary_password: true })
           .eq('id', teacher.id)
 
         if (updateError) throw updateError
