@@ -36,6 +36,7 @@ import {
   Key, KeyRound, RotateCcw, Shield, ShieldOff
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -356,6 +357,9 @@ export function StudentAccountsManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Phase 2 migration panel — remove once all accounts are migrated */}
+      <StudentAuthMigrationPanel />
 
       {/* Search and Actions */}
       <div className="flex items-center gap-4">
