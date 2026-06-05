@@ -69,11 +69,10 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
     }
   }, [legacySchedule]);
 
-  // IELTS has no math or english schedule sections — clear any slots when switching to IELTS
+  // IELTS has no math schedule — clear any slots when switching to IELTS
   useEffect(() => {
-    if (courseType === 'IELTS') {
-      if (mathSchedule.length > 0) setMathSchedule([]);
-      if (englishSchedule.length > 0) setEnglishSchedule([]);
+    if (courseType === 'IELTS' && mathSchedule.length > 0) {
+      setMathSchedule([]);
     }
   }, [courseType]);
 
