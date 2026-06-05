@@ -689,7 +689,7 @@ export function ScheduleBuilder({
 
         <div className="flex flex-col lg:flex-row gap-4">
           {showMath && renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
-          {showEnglish && renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
+          {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
         </div>
 
         {overlapResult.hasConflict && (

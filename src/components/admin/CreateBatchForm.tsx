@@ -397,7 +397,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
                   onMathScheduleChange={setMathSchedule}
                   onEnglishScheduleChange={setEnglishSchedule}
                   showMath={courseType !== 'IELTS'}
-                  showEnglish={courseType !== 'IELTS'}
+                  courseType={courseType}
                 />
               </CollapsibleContent>
             </Collapsible>
