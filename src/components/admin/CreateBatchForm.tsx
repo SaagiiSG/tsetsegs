@@ -69,6 +69,13 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
     }
   }, [legacySchedule]);
 
+  // IELTS has no math schedule — clear any slots when switching to IELTS
+  useEffect(() => {
+    if (courseType === 'IELTS' && mathSchedule.length > 0) {
+      setMathSchedule([]);
+    }
+  }, [courseType]);
+
   const fetchTeachers = async () => {
     const { data } = await supabase.from('teachers').select('*').order('name');
     if (data) setTeachers(data);
@@ -89,7 +96,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const getCombinedScheduleString = (): string => {
     if (!useScheduleBuilder) return legacySchedule;
     
-    const mathStr = formatScheduleDisplay(mathSchedule);
+    const mathStr = courseType === 'IELTS' ? '' : formatScheduleDisplay(mathSchedule);
     const englishStr = formatScheduleDisplay(englishSchedule);
     
     let combined = '';
@@ -115,10 +122,19 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       return;
     }
 
-    if (useScheduleBuilder && mathSchedule.length === 0 && englishSchedule.length === 0) {
+    if (useScheduleBuilder && courseType !== 'IELTS' && mathSchedule.length === 0 && englishSchedule.length === 0) {
       toast({
         title: "Missing Schedule",
         description: "Please add at least one time slot for Math or English",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (useScheduleBuilder && courseType === 'IELTS' && englishSchedule.length === 0) {
+      toast({
+        title: "Missing Schedule",
+        description: "Please add at least one English time slot",
         variant: "destructive"
       });
       return;
@@ -133,8 +149,8 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       return;
     }
 
-    // Check for schedule overlap
-    if (useScheduleBuilder && checkScheduleOverlap(mathSchedule, englishSchedule)) {
+    // Check for schedule overlap (SAT only — IELTS has no math schedule)
+    if (useScheduleBuilder && courseType !== 'IELTS' && checkScheduleOverlap(mathSchedule, englishSchedule)) {
       toast({
         title: "Schedule Conflict",
         description: "Math and English schedules cannot overlap. Please adjust the times.",
@@ -195,7 +211,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           unique_link_id: batchLinkId,
           batch_name: batchName,
           course_type: courseType,
-          math_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(mathSchedule)) : null,
+          math_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(mathSchedule)) : null,
           english_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(englishSchedule)) : null,
         })
         .select()
@@ -385,6 +401,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
                   englishSchedule={englishSchedule}
                   onMathScheduleChange={setMathSchedule}
                   onEnglishScheduleChange={setEnglishSchedule}
+                  showMath={courseType !== 'IELTS'}
                 />
               </CollapsibleContent>
             </Collapsible>
