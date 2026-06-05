@@ -97,7 +97,10 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const getCombinedScheduleString = (): string => {
     if (!useScheduleBuilder) return legacySchedule;
     
-    const mathStr = courseType === 'IELTS' ? '' : formatScheduleDisplay(mathSchedule);
+    // IELTS uses neither math nor english schedule builder sections
+    if (courseType === 'IELTS') return '';
+    
+    const mathStr = formatScheduleDisplay(mathSchedule);
     const englishStr = formatScheduleDisplay(englishSchedule);
     
     let combined = '';
