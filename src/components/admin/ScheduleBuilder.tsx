@@ -24,7 +24,7 @@ interface ScheduleBuilderProps {
   onMathScheduleChange: (schedule: TimeSlot[]) => void;
   onEnglishScheduleChange: (schedule: TimeSlot[]) => void;
   showMath?: boolean;
-  showEnglish?: boolean;
+  courseType?: 'SAT' | 'IELTS';
 }
 
 const DAYS = [
@@ -58,7 +58,7 @@ export function ScheduleBuilder({
   onMathScheduleChange,
   onEnglishScheduleChange,
   showMath = true,
-  showEnglish = true,
+  courseType = 'SAT',
 }: ScheduleBuilderProps) {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -426,7 +426,13 @@ export function ScheduleBuilder({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             {icon}
-            <span>{subject === 'math' ? 'Math Schedule' : 'English Schedule (үнэгүй)'}</span>
+            <span>
+              {subject === 'math'
+                ? 'Math Schedule'
+                : courseType === 'IELTS'
+                  ? 'English Schedule'
+                  : 'English Schedule (үнэгүй)'}
+            </span>
           </CardTitle>
           <div className="flex gap-2">
             <Dialog open={saveDialogOpen && savingSubject === subject} onOpenChange={(open) => {
@@ -689,7 +695,7 @@ export function ScheduleBuilder({
 
         <div className="flex flex-col lg:flex-row gap-4">
           {showMath && renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
-          {showEnglish && renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
+          {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
         </div>
 
         {overlapResult.hasConflict && (
