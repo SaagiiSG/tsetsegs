@@ -24,6 +24,7 @@ interface ScheduleBuilderProps {
   onMathScheduleChange: (schedule: TimeSlot[]) => void;
   onEnglishScheduleChange: (schedule: TimeSlot[]) => void;
   showMath?: boolean;
+  showEnglish?: boolean;
 }
 
 const DAYS = [
@@ -57,6 +58,7 @@ export function ScheduleBuilder({
   onMathScheduleChange,
   onEnglishScheduleChange,
   showMath = true,
+  showEnglish = true,
 }: ScheduleBuilderProps) {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -687,7 +689,7 @@ export function ScheduleBuilder({
 
         <div className="flex flex-col lg:flex-row gap-4">
           {showMath && renderScheduleSection('math', mathSchedule, <Calculator className="w-4 h-4 text-blue-500" />)}
-          {renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
+          {showEnglish && renderScheduleSection('english', englishSchedule, <BookOpen className="w-4 h-4 text-purple-500" />)}
         </div>
 
         {overlapResult.hasConflict && (

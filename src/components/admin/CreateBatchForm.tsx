@@ -69,10 +69,11 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
     }
   }, [legacySchedule]);
 
-  // IELTS has no math schedule — clear any slots when switching to IELTS
+  // IELTS has no math or english schedule sections — clear any slots when switching to IELTS
   useEffect(() => {
-    if (courseType === 'IELTS' && mathSchedule.length > 0) {
-      setMathSchedule([]);
+    if (courseType === 'IELTS') {
+      if (mathSchedule.length > 0) setMathSchedule([]);
+      if (englishSchedule.length > 0) setEnglishSchedule([]);
     }
   }, [courseType]);
 
@@ -96,7 +97,10 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const getCombinedScheduleString = (): string => {
     if (!useScheduleBuilder) return legacySchedule;
     
-    const mathStr = courseType === 'IELTS' ? '' : formatScheduleDisplay(mathSchedule);
+    // IELTS uses neither math nor english schedule builder sections
+    if (courseType === 'IELTS') return '';
+    
+    const mathStr = formatScheduleDisplay(mathSchedule);
     const englishStr = formatScheduleDisplay(englishSchedule);
     
     let combined = '';
@@ -126,15 +130,6 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       toast({
         title: "Missing Schedule",
         description: "Please add at least one time slot for Math or English",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (useScheduleBuilder && courseType === 'IELTS' && englishSchedule.length === 0) {
-      toast({
-        title: "Missing Schedule",
-        description: "Please add at least one English time slot",
         variant: "destructive"
       });
       return;
@@ -212,7 +207,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           batch_name: batchName,
           course_type: courseType,
           math_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(mathSchedule)) : null,
-          english_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(englishSchedule)) : null,
+          english_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(englishSchedule)) : null,
         })
         .select()
         .single();
@@ -402,6 +397,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
                   onMathScheduleChange={setMathSchedule}
                   onEnglishScheduleChange={setEnglishSchedule}
                   showMath={courseType !== 'IELTS'}
+                  showEnglish={courseType !== 'IELTS'}
                 />
               </CollapsibleContent>
             </Collapsible>
