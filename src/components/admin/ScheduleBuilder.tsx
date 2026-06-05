@@ -24,7 +24,7 @@ interface ScheduleBuilderProps {
   onMathScheduleChange: (schedule: TimeSlot[]) => void;
   onEnglishScheduleChange: (schedule: TimeSlot[]) => void;
   showMath?: boolean;
-  showEnglish?: boolean;
+  courseType?: 'SAT' | 'IELTS';
 }
 
 const DAYS = [
