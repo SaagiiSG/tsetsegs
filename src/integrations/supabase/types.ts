@@ -3525,6 +3525,17 @@ export type Database = {
         }[]
       }
       get_current_teacher_username: { Args: never; Returns: string }
+      get_student_performance_stats: {
+        Args: { _student_account_id: string }
+        Returns: {
+          avg_time_seconds: number
+          correct_attempts: number
+          distinct_solved: number
+          first_attempts: number
+          first_correct: number
+          total_attempts: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
