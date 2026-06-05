@@ -207,7 +207,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           batch_name: batchName,
           course_type: courseType,
           math_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(mathSchedule)) : null,
-          english_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(englishSchedule)) : null,
+          english_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(englishSchedule)) : null,
         })
         .select()
         .single();
