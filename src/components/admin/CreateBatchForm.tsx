@@ -135,15 +135,6 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
       return;
     }
 
-    if (useScheduleBuilder && courseType === 'IELTS' && englishSchedule.length === 0) {
-      toast({
-        title: "Missing Schedule",
-        description: "Please add at least one English time slot",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!useScheduleBuilder && !legacySchedule) {
       toast({
         title: "Missing Schedule",
@@ -406,6 +397,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
                   onMathScheduleChange={setMathSchedule}
                   onEnglishScheduleChange={setEnglishSchedule}
                   showMath={courseType !== 'IELTS'}
+                  showEnglish={courseType !== 'IELTS'}
                 />
               </CollapsibleContent>
             </Collapsible>
