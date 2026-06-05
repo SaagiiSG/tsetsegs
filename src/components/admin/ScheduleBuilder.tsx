@@ -426,7 +426,13 @@ export function ScheduleBuilder({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             {icon}
-            <span>{subject === 'math' ? 'Math Schedule' : 'English Schedule (үнэгүй)'}</span>
+            <span>
+              {subject === 'math'
+                ? 'Math Schedule'
+                : courseType === 'IELTS'
+                  ? 'English Schedule'
+                  : 'English Schedule (үнэгүй)'}
+            </span>
           </CardTitle>
           <div className="flex gap-2">
             <Dialog open={saveDialogOpen && savingSubject === subject} onOpenChange={(open) => {
