@@ -269,17 +269,25 @@ export function useOtherStudentProfile(userId: string | null) {
         };
       }
 
-      // Get all attempts
-      const { data: attempts } = await supabase
-        .from('student_attempts')
-        .select('is_correct, attempt_number, time_spent_seconds')
-        .eq('student_account_id', userId);
+      // Get accurate aggregate stats via SECURITY DEFINER RPC
+      // (previously fetched raw rows which were capped at 1000 → counter drift)
+      const { data: statsRows } = await supabase
+        .rpc('get_student_performance_stats', { _student_account_id: userId });
 
-      const totalAttempts = attempts?.length || 0;
-      const correctAttempts = attempts?.filter(a => a.is_correct).length || 0;
-      const firstAttempts = attempts?.filter(a => a.attempt_number === 1) || [];
-      const firstCorrect = firstAttempts.filter(a => a.is_correct).length;
-      const avgTime = attempts?.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0) / (totalAttempts || 1);
+      const stats = (Array.isArray(statsRows) ? statsRows[0] : statsRows) || {
+        total_attempts: 0,
+        correct_attempts: 0,
+        first_attempts: 0,
+        first_correct: 0,
+        distinct_solved: 0,
+        avg_time_seconds: 0,
+      };
+
+      const totalAttempts = Number(stats.total_attempts) || 0;
+      const firstAttemptsCount = Number(stats.first_attempts) || 0;
+      const firstCorrect = Number(stats.first_correct) || 0;
+      const distinctSolved = Number(stats.distinct_solved) || 0;
+      const avgTime = Number(stats.avg_time_seconds) || 0;
 
       // Get bluebook attempts for practice tests
       const { data: bluebookAttempts } = await supabase
@@ -330,9 +338,9 @@ export function useOtherStudentProfile(userId: string | null) {
       }
 
       return {
-        questionsSolved: correctAttempts,
-        overallAccuracy: totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0,
-        firstAttemptAccuracy: firstAttempts.length > 0 ? Math.round((firstCorrect / firstAttempts.length) * 100) : 0,
+        questionsSolved: distinctSolved,
+        overallAccuracy: totalAttempts > 0 ? Math.round((Number(stats.correct_attempts) / totalAttempts) * 100) : 0,
+        firstAttemptAccuracy: firstAttemptsCount > 0 ? Math.round((firstCorrect / firstAttemptsCount) * 100) : 0,
         avgTimePerQuestion: Math.round(avgTime),
         speedSessionsCompleted: 0,
         avgSpeedSessionTime: 0,

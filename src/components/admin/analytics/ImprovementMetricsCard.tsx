@@ -48,7 +48,7 @@ export function ImprovementMetricsCard() {
             </div>
             <p className="text-2xl font-bold">{metrics?.avgScoreImprovement || 0}%</p>
             <p className="text-xs text-muted-foreground">Avg Score Improvement</p>
-            <p className="text-xs text-muted-foreground mt-1">First mock → Latest</p>
+            <p className="text-xs text-muted-foreground mt-1">First mock → Best score</p>
           </div>
 
           {/* Students Improving */}

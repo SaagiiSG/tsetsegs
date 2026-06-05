@@ -2399,8 +2399,8 @@ export function useImprovementMetrics() {
         };
       }
 
-      // Group by student
-      const studentScores: Record<string, { first: number; latest: number; name: string }> = {};
+      // Group by student — track first mock and BEST (highest) mock score
+      const studentScores: Record<string, { first: number; best: number; name: string }> = {};
       
       attempts.forEach((a: any) => {
         const studentId = a.student_account_id;
@@ -2408,16 +2408,16 @@ export function useImprovementMetrics() {
         const name = studentData?.name || studentData?.first_name || 'Unknown';
         
         if (!studentScores[studentId]) {
-          studentScores[studentId] = { first: a.total_score, latest: a.total_score, name };
+          studentScores[studentId] = { first: a.total_score, best: a.total_score, name };
         } else {
-          studentScores[studentId].latest = a.total_score;
+          studentScores[studentId].best = Math.max(studentScores[studentId].best, a.total_score);
         }
       });
 
       const improvements = Object.values(studentScores).map(s => ({
         name: s.name,
-        improvement: s.latest - s.first,
-        improvementPercent: s.first > 0 ? ((s.latest - s.first) / s.first) * 100 : 0,
+        improvement: s.best - s.first,
+        improvementPercent: s.first > 0 ? ((s.best - s.first) / s.first) * 100 : 0,
       }));
 
       const improvingStudents = improvements.filter(i => i.improvement > 0);
