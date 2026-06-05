@@ -58,7 +58,7 @@ export function ScheduleBuilder({
   onMathScheduleChange,
   onEnglishScheduleChange,
   showMath = true,
-  showEnglish = true,
+  courseType = 'SAT',
 }: ScheduleBuilderProps) {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
