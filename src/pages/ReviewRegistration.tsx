@@ -409,24 +409,24 @@ export default function ReviewRegistration() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {batchInfo ? `Join ${batchInfo.batch_name || 'SAT Class'}` : 'SAT Review Registration'}
+            {batchInfo ? `${batchInfo.batch_name || 'SAT анги'}-д нэгдэх` : 'SAT бүртгэл'}
           </CardTitle>
           <CardDescription>
             {step === "code"
-              ? "Enter the code shown by your teacher to continue"
+              ? "Багшийнхаа өгсөн кодыг оруулна уу"
               : batchInfo
-                ? "Fill out your info to join the class"
-                : "Complete your registration to access the practice portal"}
+                ? "Ангид нэгдэхийн тулд мэдээллээ бөглөнө үү"
+                : "Дасгалын порталд нэвтрэхийн тулд бүртгэлээ бөглөнө үү"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {step === "code" ? (
             <form onSubmit={codeForm.handleSubmit(handleCodeSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="code">Access Code</Label>
+                <Label htmlFor="code">Нэвтрэх код</Label>
                 <Input
                   id="code"
-                  placeholder="Enter 6-character code"
+                  placeholder="6 оронтой кодыг оруулна уу"
                   className={`text-center text-2xl tracking-widest uppercase ${
                     codeForm.formState.errors.code ? "border-destructive" : ""
                   }`}
@@ -447,11 +447,11 @@ export default function ReviewRegistration() {
                 {isValidating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
+                    Шалгаж байна...
                   </>
                 ) : (
                   <>
-                    Continue
+                    Үргэлжлүүлэх
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
