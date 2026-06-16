@@ -718,11 +718,11 @@ export default function ReviewRegistration() {
               {/* Previous SAT Score (conditional) */}
               {hasTakenSat && (
                 <div className="space-y-2">
-                  <Label htmlFor="previousScore">Previous SAT Score</Label>
+                  <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
                   <Input
                     id="previousScore"
                     type="number"
-                    placeholder="e.g. 1200"
+                    placeholder="жишээ нь: 1200"
                     min={400}
                     max={1600}
                     className={
@@ -739,7 +739,7 @@ export default function ReviewRegistration() {
                   />
                   {registrationForm.formState.errors.previousSatScore && (
                     <p className="text-sm text-destructive">
-                      Score must be between 400-1600
+                      Оноо 400-1600 хооронд байх ёстой
                     </p>
                   )}
                 </div>
