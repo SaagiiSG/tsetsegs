@@ -600,7 +600,7 @@ export default function ReviewRegistration() {
 
               {/* Math Level */}
               <div className="space-y-2">
-                <Label>Math Level</Label>
+                <Label>Математикийн түвшин <span className="text-muted-foreground font-normal">(Math Level)</span></Label>
                 <RadioGroup
                   onValueChange={(value) =>
                     registrationForm.setValue("mathLevel", value as "bad" | "average" | "good")
