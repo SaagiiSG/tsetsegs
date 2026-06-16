@@ -464,10 +464,11 @@ export default function ReviewRegistration() {
             >
               {/* First Name */}
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">Өөрийн нэр <span className="text-muted-foreground font-normal">(First Name)</span></Label>
+                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Сараа</span> — паспорт дээрх өөрийн нэр</p>
                 <Input
                   id="firstName"
-                  placeholder="Enter your first name"
+                  placeholder="Өөрийн нэрээ оруулна уу"
                   className={
                     registrationForm.formState.errors.firstName
                       ? "border-destructive"
@@ -484,10 +485,11 @@ export default function ReviewRegistration() {
 
               {/* Last Name */}
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Овог <span className="text-muted-foreground font-normal">(Last Name)</span></Label>
+                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Болдын</span> — эцгийн нэр</p>
                 <Input
                   id="lastName"
-                  placeholder="Enter your last name"
+                  placeholder="Эцэг/эхийн нэрээ оруулна уу"
                   className={
                     registrationForm.formState.errors.lastName
                       ? "border-destructive"
