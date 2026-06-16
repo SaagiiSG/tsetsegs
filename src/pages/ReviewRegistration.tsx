@@ -629,7 +629,7 @@ export default function ReviewRegistration() {
 
               {/* English Level */}
               <div className="space-y-2">
-                <Label>English Level</Label>
+                <Label>Англи хэлний түвшин <span className="text-muted-foreground font-normal">(English Level)</span></Label>
                 <RadioGroup
                   onValueChange={(value) =>
                     registrationForm.setValue("englishLevel", value as "bad" | "average" | "good")
