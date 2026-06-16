@@ -29,9 +29,9 @@ import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
 const codeSchema = z.object({
   code: z
     .string()
-    .min(6, "Code must be 6 characters")
-    .max(6, "Code must be 6 characters")
-    .regex(/^[A-Z0-9]+$/, "Code must be uppercase letters and numbers only"),
+    .min(6, "Код 6 тэмдэгттэй байх ёстой")
+    .max(6, "Код 6 тэмдэгттэй байх ёстой")
+    .regex(/^[A-Z0-9]+$/, "Зөвхөн том үсэг ба тоо оруулна уу"),
 });
 
 // Step 2: Registration form schema
@@ -40,33 +40,31 @@ const generateSATDates = () => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  
+
   const satMonths = [
-    { month: 2, label: "March" },
-    { month: 4, label: "May" },
-    { month: 5, label: "June" },
-    { month: 7, label: "August" },
-    { month: 8, label: "September" },
-    { month: 9, label: "October" },
-    { month: 10, label: "November" },
-    { month: 11, label: "December" },
+    { month: 2, label: "3-р сар" },
+    { month: 4, label: "5-р сар" },
+    { month: 5, label: "6-р сар" },
+    { month: 7, label: "8-р сар" },
+    { month: 8, label: "9-р сар" },
+    { month: 9, label: "10-р сар" },
+    { month: 10, label: "11-р сар" },
+    { month: 11, label: "12-р сар" },
   ];
-  
+
   const dates: { value: string; label: string }[] = [];
-  
-  // Add dates for current and next year
+
   [currentYear, currentYear + 1].forEach(year => {
     satMonths.forEach(({ month, label }) => {
-      // Only include future dates
       if (year > currentYear || (year === currentYear && month >= currentMonth)) {
         dates.push({
           value: `${year}-${String(month + 1).padStart(2, '0')}`,
-          label: `${label} ${year}`,
+          label: `${year} оны ${label}`,
         });
       }
     });
   });
-  
+
   return dates;
 };
 
@@ -77,34 +75,34 @@ const registrationSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, "Please enter your first name")
-    .max(100, "First name is too long"),
+    .min(1, "Өөрийн нэрээ оруулна уу")
+    .max(100, "Нэр хэт урт байна"),
   lastName: z
     .string()
     .trim()
-    .min(1, "Please enter your last name")
-    .max(100, "Last name is too long"),
+    .min(1, "Эцэг/эхийн нэрээ (овог) оруулна уу")
+    .max(100, "Овог хэт урт байна"),
   phone: z
     .string()
-    .regex(/^\d{8}$/, "Phone number must be exactly 8 digits"),
+    .regex(/^\d{8}$/, "Утасны дугаар яг 8 оронтой байх ёстой"),
   parentPhone: z
     .string()
-    .regex(/^\d{8}$/, "Parent's phone number must be exactly 8 digits"),
+    .regex(/^\d{8}$/, "Эцэг/эхийн утасны дугаар яг 8 оронтой байх ёстой"),
   grade: z
     .string()
-    .min(1, "Please select your grade"),
+    .min(1, "Ангиа сонгоно уу"),
   schoolName: z
     .string()
     .trim()
-    .min(1, "Please enter your school name")
-    .max(200, "School name is too long"),
+    .min(1, "Сургуулийнхаа нэрийг оруулна уу")
+    .max(200, "Сургуулийн нэр хэт урт байна"),
   mathLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Please select your math level",
+    required_error: "Математикийн түвшингээ сонгоно уу",
   }),
   englishLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Please select your English level",
+    required_error: "Англи хэлний түвшингээ сонгоно уу",
   }),
-  teacher: z.string().min(1, "Please select a teacher"),
+  teacher: z.string().min(1, "Багшаа сонгоно уу"),
   hasTakenSat: z.boolean().default(false),
   previousSatScore: z.number().min(400).max(1600).optional(),
   plannedSatDate: z.string().optional(),
