@@ -747,12 +747,12 @@ export default function ReviewRegistration() {
 
               {/* Planned SAT Date */}
               <div className="space-y-2">
-                <Label>When are you planning to take the SAT?</Label>
+                <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
                 <Select
                   onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select date..." />
+                    <SelectValue placeholder="Огноо сонгоно уу..." />
                   </SelectTrigger>
                   <SelectContent>
                     {SAT_TEST_DATES.map((date) => (
@@ -768,12 +768,12 @@ export default function ReviewRegistration() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registering...
+                    Бүртгэж байна...
                   </>
                 ) : submitCooldown ? (
-                  `Please wait... (${cooldownSeconds}s)`
+                  `Түр хүлээнэ үү... (${cooldownSeconds}с)`
                 ) : (
-                  "Register"
+                  "Бүртгүүлэх"
                 )}
               </Button>
             </form>
