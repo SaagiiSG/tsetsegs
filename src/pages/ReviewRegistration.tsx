@@ -326,8 +326,8 @@ export default function ReviewRegistration() {
 
       if (insertError) {
         console.error("Error creating student:", insertError);
-        toast.error("Registration failed", {
-          description: "Please try again or contact support.",
+        toast.error("Бүртгэл амжилтгүй боллоо", {
+          description: "Дахин оролдох эсвэл багштайгаа холбогдоно уу.",
         });
         return;
       }
@@ -350,8 +350,8 @@ export default function ReviewRegistration() {
       }
 
       setStep("success");
-      toast.success("Registration complete!", {
-        description: "You can now access the practice portal.",
+      toast.success("Бүртгэл амжилттай!", {
+        description: "Одоо дасгалын порталд нэвтэрч болно.",
       });
 
       // Redirect after a short delay
@@ -360,8 +360,8 @@ export default function ReviewRegistration() {
       }, 2000);
     } catch (error) {
       console.error("Error during registration:", error);
-      toast.error("Something went wrong", {
-        description: "Please try again.",
+      toast.error("Алдаа гарлаа", {
+        description: "Дахин оролдоно уу.",
       });
       // Reset cooldown on error so they can retry after a short wait
       startCooldown(5);
