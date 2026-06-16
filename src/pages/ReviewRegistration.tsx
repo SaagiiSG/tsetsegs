@@ -506,7 +506,7 @@ export default function ReviewRegistration() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Утасны дугаар <span className="text-muted-foreground font-normal">(Phone)</span></Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -528,7 +528,7 @@ export default function ReviewRegistration() {
 
               {/* Parent Phone */}
               <div className="space-y-2">
-                <Label htmlFor="parentPhone">Parent's Phone Number</Label>
+                <Label htmlFor="parentPhone">Эцэг/эхийн утасны дугаар <span className="text-muted-foreground font-normal">(Parent's Phone)</span></Label>
                 <Input
                   id="parentPhone"
                   type="tel"
