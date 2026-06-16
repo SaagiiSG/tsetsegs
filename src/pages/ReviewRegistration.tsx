@@ -659,7 +659,7 @@ export default function ReviewRegistration() {
               {/* Teacher Selection - hidden when auto-set from QR/batch link */}
               {batchInfo?.teacher ? (
                 <div className="space-y-2">
-                  <Label>Teacher</Label>
+                  <Label>Багш <span className="text-muted-foreground font-normal">(Teacher)</span></Label>
                   <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>{batchInfo.teacher}</span>
@@ -667,7 +667,7 @@ export default function ReviewRegistration() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label>Select Teacher's Class</Label>
+                  <Label>Багшийн анги сонгох <span className="text-muted-foreground font-normal">(Teacher's Class)</span></Label>
                   <Select
                     onValueChange={(value) => registrationForm.setValue("teacher", value)}
                   >
@@ -678,7 +678,7 @@ export default function ReviewRegistration() {
                           : ""
                       }
                     >
-                      <SelectValue placeholder="Choose a teacher..." />
+                      <SelectValue placeholder="Багш сонгоно уу..." />
                     </SelectTrigger>
                     <SelectContent>
                       {teachers.map((teacher) => (
