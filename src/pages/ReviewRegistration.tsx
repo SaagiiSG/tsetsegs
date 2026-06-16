@@ -29,9 +29,9 @@ import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
 const codeSchema = z.object({
   code: z
     .string()
-    .min(6, "Code must be 6 characters")
-    .max(6, "Code must be 6 characters")
-    .regex(/^[A-Z0-9]+$/, "Code must be uppercase letters and numbers only"),
+    .min(6, "Код 6 тэмдэгттэй байх ёстой")
+    .max(6, "Код 6 тэмдэгттэй байх ёстой")
+    .regex(/^[A-Z0-9]+$/, "Зөвхөн том үсэг ба тоо оруулна уу"),
 });
 
 // Step 2: Registration form schema
@@ -40,33 +40,31 @@ const generateSATDates = () => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  
+
   const satMonths = [
-    { month: 2, label: "March" },
-    { month: 4, label: "May" },
-    { month: 5, label: "June" },
-    { month: 7, label: "August" },
-    { month: 8, label: "September" },
-    { month: 9, label: "October" },
-    { month: 10, label: "November" },
-    { month: 11, label: "December" },
+    { month: 2, label: "3-р сар" },
+    { month: 4, label: "5-р сар" },
+    { month: 5, label: "6-р сар" },
+    { month: 7, label: "8-р сар" },
+    { month: 8, label: "9-р сар" },
+    { month: 9, label: "10-р сар" },
+    { month: 10, label: "11-р сар" },
+    { month: 11, label: "12-р сар" },
   ];
-  
+
   const dates: { value: string; label: string }[] = [];
-  
-  // Add dates for current and next year
+
   [currentYear, currentYear + 1].forEach(year => {
     satMonths.forEach(({ month, label }) => {
-      // Only include future dates
       if (year > currentYear || (year === currentYear && month >= currentMonth)) {
         dates.push({
           value: `${year}-${String(month + 1).padStart(2, '0')}`,
-          label: `${label} ${year}`,
+          label: `${year} оны ${label}`,
         });
       }
     });
   });
-  
+
   return dates;
 };
 
@@ -77,34 +75,34 @@ const registrationSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, "Please enter your first name")
-    .max(100, "First name is too long"),
+    .min(1, "Өөрийн нэрээ оруулна уу")
+    .max(100, "Нэр хэт урт байна"),
   lastName: z
     .string()
     .trim()
-    .min(1, "Please enter your last name")
-    .max(100, "Last name is too long"),
+    .min(1, "Эцэг/эхийн нэрээ (овог) оруулна уу")
+    .max(100, "Овог хэт урт байна"),
   phone: z
     .string()
-    .regex(/^\d{8}$/, "Phone number must be exactly 8 digits"),
+    .regex(/^\d{8}$/, "Утасны дугаар яг 8 оронтой байх ёстой"),
   parentPhone: z
     .string()
-    .regex(/^\d{8}$/, "Parent's phone number must be exactly 8 digits"),
+    .regex(/^\d{8}$/, "Эцэг/эхийн утасны дугаар яг 8 оронтой байх ёстой"),
   grade: z
     .string()
-    .min(1, "Please select your grade"),
+    .min(1, "Ангиа сонгоно уу"),
   schoolName: z
     .string()
     .trim()
-    .min(1, "Please enter your school name")
-    .max(200, "School name is too long"),
+    .min(1, "Сургуулийнхаа нэрийг оруулна уу")
+    .max(200, "Сургуулийн нэр хэт урт байна"),
   mathLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Please select your math level",
+    required_error: "Математикийн түвшингээ сонгоно уу",
   }),
   englishLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Please select your English level",
+    required_error: "Англи хэлний түвшингээ сонгоно уу",
   }),
-  teacher: z.string().min(1, "Please select a teacher"),
+  teacher: z.string().min(1, "Багшаа сонгоно уу"),
   hasTakenSat: z.boolean().default(false),
   previousSatScore: z.number().min(400).max(1600).optional(),
   plannedSatDate: z.string().optional(),
@@ -195,7 +193,7 @@ export default function ReviewRegistration() {
         .eq("id", batchParam)
         .single();
       if (error || !data) {
-        toast.error("Invalid batch link");
+        toast.error("Холбоос буруу байна");
         setStep("code"); // Fall back to code flow
         return;
       }
@@ -222,12 +220,12 @@ export default function ReviewRegistration() {
 
       if (error || !codeData) {
         if (error?.code === "PGRST116") {
-          toast.error("Invalid or expired code", {
-            description: "Please ask your teacher for a new code.",
+          toast.error("Код буруу эсвэл хүчингүй болсон байна", {
+            description: "Багшаасаа шинэ код аваарай.",
           });
         } else {
-          toast.error("This code has expired", {
-            description: "Please ask your teacher to generate a new code.",
+          toast.error("Энэ код хүчингүй болсон байна", {
+            description: "Багшаасаа шинэ код үүсгэхийг хүснэ үү.",
           });
         }
         return;
@@ -235,13 +233,13 @@ export default function ReviewRegistration() {
 
       setValidatedCode(data.code.toUpperCase());
       setStep("form");
-      toast.success("Code verified!", {
-        description: "Please complete your registration.",
+      toast.success("Код баталгаажлаа!", {
+        description: "Бүртгэлээ үргэлжлүүлнэ үү.",
       });
     } catch (error) {
       console.error("Error validating code:", error);
-      toast.error("Something went wrong", {
-        description: "Please try again.",
+      toast.error("Алдаа гарлаа", {
+        description: "Дахин оролдоно уу.",
       });
     } finally {
       setIsValidating(false);
@@ -272,8 +270,8 @@ export default function ReviewRegistration() {
           .single();
 
         if (existingInBatch) {
-          toast.warning("Already Registered! 🎉", {
-            description: "You're already registered in this class! Log in with your phone number.",
+          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
+            description: "Та энэ ангид бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
             duration: 6000,
           });
           setIsSubmitting(false);
@@ -289,8 +287,8 @@ export default function ReviewRegistration() {
           .single();
 
         if (existingStudent) {
-          toast.warning("Already Registered! 🎉", {
-            description: "You're already in our system! Go to the practice portal and log in with your phone number.",
+          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
+            description: "Та манай системд бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
             duration: 6000,
           });
           setIsSubmitting(false);
@@ -328,8 +326,8 @@ export default function ReviewRegistration() {
 
       if (insertError) {
         console.error("Error creating student:", insertError);
-        toast.error("Registration failed", {
-          description: "Please try again or contact support.",
+        toast.error("Бүртгэл амжилтгүй боллоо", {
+          description: "Дахин оролдох эсвэл багштайгаа холбогдоно уу.",
         });
         return;
       }
@@ -352,8 +350,8 @@ export default function ReviewRegistration() {
       }
 
       setStep("success");
-      toast.success("Registration complete!", {
-        description: "You can now access the practice portal.",
+      toast.success("Бүртгэл амжилттай!", {
+        description: "Одоо дасгалын порталд нэвтэрч болно.",
       });
 
       // Redirect after a short delay
@@ -362,8 +360,8 @@ export default function ReviewRegistration() {
       }, 2000);
     } catch (error) {
       console.error("Error during registration:", error);
-      toast.error("Something went wrong", {
-        description: "Please try again.",
+      toast.error("Алдаа гарлаа", {
+        description: "Дахин оролдоно уу.",
       });
       // Reset cooldown on error so they can retry after a short wait
       startCooldown(5);
@@ -375,11 +373,11 @@ export default function ReviewRegistration() {
   const getLevelLabel = (level: string) => {
     switch (level) {
       case "bad":
-        return "Weak";
+        return "Сул";
       case "average":
-        return "Average";
+        return "Дунд";
       case "good":
-        return "Strong";
+        return "Сайн";
       default:
         return level;
     }
@@ -393,9 +391,9 @@ export default function ReviewRegistration() {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Registration Complete!</CardTitle>
+            <CardTitle className="text-2xl">Бүртгэл амжилттай!</CardTitle>
             <CardDescription>
-              Welcome to the SAT Review Program. Redirecting you to the practice portal...
+              SAT хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -411,24 +409,24 @@ export default function ReviewRegistration() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {batchInfo ? `Join ${batchInfo.batch_name || 'SAT Class'}` : 'SAT Review Registration'}
+            {batchInfo ? `${batchInfo.batch_name || 'SAT анги'}-д нэгдэх` : 'SAT бүртгэл'}
           </CardTitle>
           <CardDescription>
             {step === "code"
-              ? "Enter the code shown by your teacher to continue"
+              ? "Багшийнхаа өгсөн кодыг оруулна уу"
               : batchInfo
-                ? "Fill out your info to join the class"
-                : "Complete your registration to access the practice portal"}
+                ? "Ангид нэгдэхийн тулд мэдээллээ бөглөнө үү"
+                : "Дасгалын порталд нэвтрэхийн тулд бүртгэлээ бөглөнө үү"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {step === "code" ? (
             <form onSubmit={codeForm.handleSubmit(handleCodeSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="code">Access Code</Label>
+                <Label htmlFor="code">Нэвтрэх код</Label>
                 <Input
                   id="code"
-                  placeholder="Enter 6-character code"
+                  placeholder="6 оронтой кодыг оруулна уу"
                   className={`text-center text-2xl tracking-widest uppercase ${
                     codeForm.formState.errors.code ? "border-destructive" : ""
                   }`}
@@ -449,11 +447,11 @@ export default function ReviewRegistration() {
                 {isValidating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
+                    Шалгаж байна...
                   </>
                 ) : (
                   <>
-                    Continue
+                    Үргэлжлүүлэх
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -466,10 +464,11 @@ export default function ReviewRegistration() {
             >
               {/* First Name */}
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">Өөрийн нэр <span className="text-muted-foreground font-normal">(First Name)</span></Label>
+                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Сараа</span> — паспорт дээрх өөрийн нэр</p>
                 <Input
                   id="firstName"
-                  placeholder="Enter your first name"
+                  placeholder="Өөрийн нэрээ оруулна уу"
                   className={
                     registrationForm.formState.errors.firstName
                       ? "border-destructive"
@@ -486,10 +485,11 @@ export default function ReviewRegistration() {
 
               {/* Last Name */}
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Овог <span className="text-muted-foreground font-normal">(Last Name)</span></Label>
+                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Болдын</span> — эцгийн нэр</p>
                 <Input
                   id="lastName"
-                  placeholder="Enter your last name"
+                  placeholder="Эцэг/эхийн нэрээ оруулна уу"
                   className={
                     registrationForm.formState.errors.lastName
                       ? "border-destructive"
@@ -506,7 +506,7 @@ export default function ReviewRegistration() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Утасны дугаар <span className="text-muted-foreground font-normal">(Phone)</span></Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -528,7 +528,7 @@ export default function ReviewRegistration() {
 
               {/* Parent Phone */}
               <div className="space-y-2">
-                <Label htmlFor="parentPhone">Parent's Phone Number</Label>
+                <Label htmlFor="parentPhone">Эцэг/эхийн утасны дугаар <span className="text-muted-foreground font-normal">(Parent's Phone)</span></Label>
                 <Input
                   id="parentPhone"
                   type="tel"
@@ -550,7 +550,7 @@ export default function ReviewRegistration() {
 
               {/* Grade */}
               <div className="space-y-2">
-                <Label>Grade</Label>
+                <Label>Анги <span className="text-muted-foreground font-normal">(Grade)</span></Label>
                 <Select
                   onValueChange={(value) => registrationForm.setValue("grade", value)}
                 >
@@ -561,12 +561,12 @@ export default function ReviewRegistration() {
                         : ""
                     }
                   >
-                    <SelectValue placeholder="Select your grade..." />
+                    <SelectValue placeholder="Ангиа сонгоно уу..." />
                   </SelectTrigger>
                   <SelectContent>
                     {["8", "9", "10", "11", "12"].map((g) => (
                       <SelectItem key={g} value={g}>
-                        Grade {g}
+                        {g}-р анги
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -580,10 +580,10 @@ export default function ReviewRegistration() {
 
               {/* School Name */}
               <div className="space-y-2">
-                <Label htmlFor="schoolName">School Name</Label>
+                <Label htmlFor="schoolName">Сургуулийн нэр <span className="text-muted-foreground font-normal">(School)</span></Label>
                 <Input
                   id="schoolName"
-                  placeholder="Enter your school name"
+                  placeholder="Сургуулийнхаа нэрийг бичнэ үү"
                   className={
                     registrationForm.formState.errors.schoolName
                       ? "border-destructive"
@@ -600,7 +600,7 @@ export default function ReviewRegistration() {
 
               {/* Math Level */}
               <div className="space-y-2">
-                <Label>Math Level</Label>
+                <Label>Математикийн түвшин <span className="text-muted-foreground font-normal">(Math Level)</span></Label>
                 <RadioGroup
                   onValueChange={(value) =>
                     registrationForm.setValue("mathLevel", value as "bad" | "average" | "good")
@@ -629,7 +629,7 @@ export default function ReviewRegistration() {
 
               {/* English Level */}
               <div className="space-y-2">
-                <Label>English Level</Label>
+                <Label>Англи хэлний түвшин <span className="text-muted-foreground font-normal">(English Level)</span></Label>
                 <RadioGroup
                   onValueChange={(value) =>
                     registrationForm.setValue("englishLevel", value as "bad" | "average" | "good")
@@ -659,7 +659,7 @@ export default function ReviewRegistration() {
               {/* Teacher Selection - hidden when auto-set from QR/batch link */}
               {batchInfo?.teacher ? (
                 <div className="space-y-2">
-                  <Label>Teacher</Label>
+                  <Label>Багш <span className="text-muted-foreground font-normal">(Teacher)</span></Label>
                   <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>{batchInfo.teacher}</span>
@@ -667,7 +667,7 @@ export default function ReviewRegistration() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label>Select Teacher's Class</Label>
+                  <Label>Багшийн анги сонгох <span className="text-muted-foreground font-normal">(Teacher's Class)</span></Label>
                   <Select
                     onValueChange={(value) => registrationForm.setValue("teacher", value)}
                   >
@@ -678,7 +678,7 @@ export default function ReviewRegistration() {
                           : ""
                       }
                     >
-                      <SelectValue placeholder="Choose a teacher..." />
+                      <SelectValue placeholder="Багш сонгоно уу..." />
                     </SelectTrigger>
                     <SelectContent>
                       {teachers.map((teacher) => (
@@ -698,7 +698,7 @@ export default function ReviewRegistration() {
 
               {/* SAT Experience */}
               <div className="space-y-2">
-                <Label>Have you taken the SAT before?</Label>
+                <Label>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></Label>
                 <RadioGroup
                   defaultValue="no"
                   onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
@@ -706,11 +706,11 @@ export default function ReviewRegistration() {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="sat-no" />
-                    <Label htmlFor="sat-no" className="cursor-pointer">No</Label>
+                    <Label htmlFor="sat-no" className="cursor-pointer">Үгүй</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="yes" id="sat-yes" />
-                    <Label htmlFor="sat-yes" className="cursor-pointer">Yes</Label>
+                    <Label htmlFor="sat-yes" className="cursor-pointer">Тийм</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -718,11 +718,11 @@ export default function ReviewRegistration() {
               {/* Previous SAT Score (conditional) */}
               {hasTakenSat && (
                 <div className="space-y-2">
-                  <Label htmlFor="previousScore">Previous SAT Score</Label>
+                  <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
                   <Input
                     id="previousScore"
                     type="number"
-                    placeholder="e.g. 1200"
+                    placeholder="жишээ нь: 1200"
                     min={400}
                     max={1600}
                     className={
@@ -739,7 +739,7 @@ export default function ReviewRegistration() {
                   />
                   {registrationForm.formState.errors.previousSatScore && (
                     <p className="text-sm text-destructive">
-                      Score must be between 400-1600
+                      Оноо 400-1600 хооронд байх ёстой
                     </p>
                   )}
                 </div>
@@ -747,12 +747,12 @@ export default function ReviewRegistration() {
 
               {/* Planned SAT Date */}
               <div className="space-y-2">
-                <Label>When are you planning to take the SAT?</Label>
+                <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
                 <Select
                   onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select date..." />
+                    <SelectValue placeholder="Огноо сонгоно уу..." />
                   </SelectTrigger>
                   <SelectContent>
                     {SAT_TEST_DATES.map((date) => (
@@ -768,12 +768,12 @@ export default function ReviewRegistration() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registering...
+                    Бүртгэж байна...
                   </>
                 ) : submitCooldown ? (
-                  `Please wait... (${cooldownSeconds}s)`
+                  `Түр хүлээнэ үү... (${cooldownSeconds}с)`
                 ) : (
-                  "Register"
+                  "Бүртгүүлэх"
                 )}
               </Button>
             </form>
