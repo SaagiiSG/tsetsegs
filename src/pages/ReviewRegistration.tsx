@@ -193,7 +193,7 @@ export default function ReviewRegistration() {
         .eq("id", batchParam)
         .single();
       if (error || !data) {
-        toast.error("Invalid batch link");
+        toast.error("Холбоос буруу байна");
         setStep("code"); // Fall back to code flow
         return;
       }
@@ -220,12 +220,12 @@ export default function ReviewRegistration() {
 
       if (error || !codeData) {
         if (error?.code === "PGRST116") {
-          toast.error("Invalid or expired code", {
-            description: "Please ask your teacher for a new code.",
+          toast.error("Код буруу эсвэл хүчингүй болсон байна", {
+            description: "Багшаасаа шинэ код аваарай.",
           });
         } else {
-          toast.error("This code has expired", {
-            description: "Please ask your teacher to generate a new code.",
+          toast.error("Энэ код хүчингүй болсон байна", {
+            description: "Багшаасаа шинэ код үүсгэхийг хүснэ үү.",
           });
         }
         return;
@@ -233,13 +233,13 @@ export default function ReviewRegistration() {
 
       setValidatedCode(data.code.toUpperCase());
       setStep("form");
-      toast.success("Code verified!", {
-        description: "Please complete your registration.",
+      toast.success("Код баталгаажлаа!", {
+        description: "Бүртгэлээ үргэлжлүүлнэ үү.",
       });
     } catch (error) {
       console.error("Error validating code:", error);
-      toast.error("Something went wrong", {
-        description: "Please try again.",
+      toast.error("Алдаа гарлаа", {
+        description: "Дахин оролдоно уу.",
       });
     } finally {
       setIsValidating(false);
