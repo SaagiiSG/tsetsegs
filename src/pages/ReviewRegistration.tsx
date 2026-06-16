@@ -550,7 +550,7 @@ export default function ReviewRegistration() {
 
               {/* Grade */}
               <div className="space-y-2">
-                <Label>Grade</Label>
+                <Label>Анги <span className="text-muted-foreground font-normal">(Grade)</span></Label>
                 <Select
                   onValueChange={(value) => registrationForm.setValue("grade", value)}
                 >
@@ -561,12 +561,12 @@ export default function ReviewRegistration() {
                         : ""
                     }
                   >
-                    <SelectValue placeholder="Select your grade..." />
+                    <SelectValue placeholder="Ангиа сонгоно уу..." />
                   </SelectTrigger>
                   <SelectContent>
                     {["8", "9", "10", "11", "12"].map((g) => (
                       <SelectItem key={g} value={g}>
-                        Grade {g}
+                        {g}-р анги
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -580,10 +580,10 @@ export default function ReviewRegistration() {
 
               {/* School Name */}
               <div className="space-y-2">
-                <Label htmlFor="schoolName">School Name</Label>
+                <Label htmlFor="schoolName">Сургуулийн нэр <span className="text-muted-foreground font-normal">(School)</span></Label>
                 <Input
                   id="schoolName"
-                  placeholder="Enter your school name"
+                  placeholder="Сургуулийнхаа нэрийг бичнэ үү"
                   className={
                     registrationForm.formState.errors.schoolName
                       ? "border-destructive"
