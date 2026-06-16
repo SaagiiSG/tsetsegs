@@ -270,8 +270,8 @@ export default function ReviewRegistration() {
           .single();
 
         if (existingInBatch) {
-          toast.warning("Already Registered! 🎉", {
-            description: "You're already registered in this class! Log in with your phone number.",
+          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
+            description: "Та энэ ангид бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
             duration: 6000,
           });
           setIsSubmitting(false);
@@ -287,8 +287,8 @@ export default function ReviewRegistration() {
           .single();
 
         if (existingStudent) {
-          toast.warning("Already Registered! 🎉", {
-            description: "You're already in our system! Go to the practice portal and log in with your phone number.",
+          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
+            description: "Та манай системд бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
             duration: 6000,
           });
           setIsSubmitting(false);
