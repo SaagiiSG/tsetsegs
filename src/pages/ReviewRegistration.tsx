@@ -698,7 +698,7 @@ export default function ReviewRegistration() {
 
               {/* SAT Experience */}
               <div className="space-y-2">
-                <Label>Have you taken the SAT before?</Label>
+                <Label>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></Label>
                 <RadioGroup
                   defaultValue="no"
                   onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
@@ -706,11 +706,11 @@ export default function ReviewRegistration() {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="sat-no" />
-                    <Label htmlFor="sat-no" className="cursor-pointer">No</Label>
+                    <Label htmlFor="sat-no" className="cursor-pointer">Үгүй</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="yes" id="sat-yes" />
-                    <Label htmlFor="sat-yes" className="cursor-pointer">Yes</Label>
+                    <Label htmlFor="sat-yes" className="cursor-pointer">Тийм</Label>
                   </div>
                 </RadioGroup>
               </div>
