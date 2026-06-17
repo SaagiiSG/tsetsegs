@@ -3,11 +3,13 @@ import { NavLink } from '@/components/NavLink';
 import { CheckInWidget } from './CheckInWidget';
 import { ExternalResourcesPopover } from './ExternalResourcesPopover';
 import { SATCountdownWidget } from './SATCountdownWidget';
+import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
