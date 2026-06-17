@@ -24,6 +24,7 @@ import { PracticeCommandSheet } from './practice/PracticeCommandSheet';
 import { PracticeQuickFab } from './practice/PracticeQuickFab';
 import { GestureHintOverlay } from './practice/GestureHintOverlay';
 import { useSwipe } from '@/hooks/useSwipe';
+import { StreakCelebrationListener } from './StreakCelebrationListener';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -144,6 +145,7 @@ function StudentLayoutContent() {
       <PracticeCommandSheet />
       <GestureHintOverlay />
       <GlobalEdgeSwipeUp />
+      <StreakCelebrationListener />
       
       {/* Security overlay */}
       <div 

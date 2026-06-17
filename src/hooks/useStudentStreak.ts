@@ -6,8 +6,12 @@ import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 /**
  * Standalone function to update streak for a student (usable outside React components).
  * Call this after any practice activity (question attempt, speed session, etc.)
+ * Dispatches a `streak:extended` CustomEvent when the day flips so a global
+ * listener can show the celebration popup.
  */
-export async function updateStudentStreak(studentAccountId: string): Promise<void> {
+export async function updateStudentStreak(
+  studentAccountId: string
+): Promise<{ extended: boolean; newStreak: number; isNew: boolean } | null> {
   try {
     const today = format(new Date(), "yyyy-MM-dd");
 
@@ -18,10 +22,10 @@ export async function updateStudentStreak(studentAccountId: string): Promise<voi
       .eq("student_account_id", studentAccountId)
       .maybeSingle();
 
-    if (error && error.code !== "PGRST116") return;
+    if (error && error.code !== "PGRST116") return null;
 
     if (!streak) {
-      const { data: newStreak, error: createError } = await supabase
+      const { error: createError } = await supabase
         .from("student_streaks")
         .insert({
           student_account_id: studentAccountId,
@@ -30,16 +34,20 @@ export async function updateStudentStreak(studentAccountId: string): Promise<voi
           last_activity_date: today,
           streak_start_date: today,
           total_practice_days: 1,
-        })
-        .select()
-        .single();
+        });
 
-      if (createError) console.error("Failed to create streak:", createError);
-      return;
+      if (createError) {
+        console.error("Failed to create streak:", createError);
+        return null;
+      }
+      dispatchStreakExtended(1, true);
+      return { extended: true, newStreak: 1, isNew: true };
     }
 
     // Already practiced today
-    if (streak.last_activity_date === today) return;
+    if (streak.last_activity_date === today) {
+      return { extended: false, newStreak: streak.current_streak, isNew: false };
+    }
 
     let newCurrentStreak = streak.current_streak;
     let newLongestStreak = streak.longest_streak;
@@ -48,6 +56,7 @@ export async function updateStudentStreak(studentAccountId: string): Promise<voi
     let streak7 = streak.streak_7_achieved;
     let streak30 = streak.streak_30_achieved;
     let streak100 = streak.streak_100_achieved;
+    let isNew = false;
 
     if (streak.last_activity_date) {
       const daysSince = differenceInDays(
@@ -60,10 +69,12 @@ export async function updateStudentStreak(studentAccountId: string): Promise<voi
       } else if (daysSince > 1) {
         newCurrentStreak = 1;
         newStreakStartDate = today;
+        isNew = true;
       }
     } else {
       newCurrentStreak = 1;
       newStreakStartDate = today;
+      isNew = true;
     }
 
     if (newCurrentStreak > newLongestStreak) {
@@ -87,10 +98,26 @@ export async function updateStudentStreak(studentAccountId: string): Promise<voi
         streak_100_achieved: streak100,
       })
       .eq("student_account_id", studentAccountId);
+
+    dispatchStreakExtended(newCurrentStreak, isNew);
+    return { extended: true, newStreak: newCurrentStreak, isNew };
   } catch (err) {
     console.error("Failed to update student streak:", err);
+    return null;
   }
 }
+
+function dispatchStreakExtended(newStreak: number, isNew: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent("streak:extended", { detail: { newStreak, isNew } })
+    );
+  } catch {
+    /* noop */
+  }
+}
+
 
 interface StudentStreak {
   id: string;

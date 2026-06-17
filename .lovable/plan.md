@@ -1,57 +1,56 @@
-## 1. Admin Improvement Metric: First Mock → Highest Score
+## Goal
+Add a Duolingo-style streak indicator to the top of the student sidebar (next to the name), open a history dialog when tapped, and show an animated popup when a student extends their streak with their first practice of the day.
 
-**File:** `src/hooks/useAdminAnalytics.ts` (`useImprovementMetrics`, ~lines 2365–2458)
+## 1. Sidebar streak badge
+File: `src/components/student/StudentSidebar.tsx` (and the mobile equivalent `StudentDashboardSidebar.tsx` if it shows the same header).
 
-Currently groups bluebook attempts by student and tracks `first` (earliest) and `latest` (most recent overwritten on each iteration). Change `latest` to `best` (max score) so improvement = highest score − first mock score.
+- In the header row, keep name on the left, add a streak chip on the right: flame icon + current streak number.
+- Colors: orange/coral flame when `current_streak > 0`, muted gray when 0 (streak frozen / not started).
+- Tooltip on hover: "X day streak — tap to view history".
+- Data source: `useStudentStreak()` (already exists, returns `streak.current_streak` and `activityDays`).
+- Clicking the chip opens the history dialog (state in the sidebar).
 
-- Rename field `latest` → `best` in the `studentScores` map.
-- When seeding: `best = first = a.total_score`.
-- On subsequent attempts: `best = Math.max(best, a.total_score)` instead of overwriting with the newest.
-- `improvement = best - first` (keeps `>= 0`).
-- Update label copy on `src/components/admin/analytics/ImprovementMetricsCard.tsx` from "First mock → Latest" to "First mock → Best score".
+## 2. Streak history dialog
+New component: `src/components/student/StreakHistoryDialog.tsx`.
 
-No schema or other consumer changes — the public shape of `ImprovementMetrics` stays the same.
+- Shadcn `Dialog`. Header: big flame + current streak, subline "Longest: N · Total practice days: M".
+- Body: reuse the existing `StudyStreakCalendar` component (already renders a heatmap of `activityDays`) — wrap it inside the dialog. If layout doesn't fit, render a compact month grid for the last 90 days using `activityDays` from `useStudentStreak`.
+- Footer: small motivational line ("Practice any question tomorrow to keep your streak.").
+- Closes on overlay click / X.
 
-## 2. Batch Creation: Hide Math Schedule for IELTS
+## 3. Animated "streak extended" celebration
+New component: `src/components/student/StreakExtendedToast.tsx`.
 
-**File:** `src/components/admin/CreateBatchForm.tsx` (also check `EditBatchDialog.tsx` for parity) and `src/components/admin/ScheduleBuilder.tsx`.
+- Fullscreen-centered overlay (fixed, z-50) with a backdrop blur, auto-dismisses after ~2.5s or on click.
+- Animated flame (scale-in + subtle bounce using Tailwind `animate-scale-in` and a custom flame pulse), confetti-style sparkle ring.
+- Headline: "Streak extended!" + big number "N day streak 🔥".
+- Sub: "Come back tomorrow to keep it going."
+- Uses framer-motion if available, otherwise plain Tailwind keyframes already in the project (`animate-scale-in`, `animate-fade-in`, plus a custom flame keyframe).
 
-When `courseType === 'IELTS'`:
-- Hide the Math schedule section in `ScheduleBuilder` (pass a prop like `showMath={courseType !== 'IELTS'}`, or render conditionally).
-- On submit, force `math_schedule = null` and skip the math/english overlap check.
-- The combined legacy `schedule` string should drop the `(Math)` prefix and the `+` separator when only English is present (already handled by the existing concat logic since `mathStr` will be empty).
-- If user switches course type from SAT → IELTS, clear `mathSchedule` state so stray slots don't get saved.
+## 4. Triggering the celebration (single source of truth)
+Update `src/hooks/useStudentStreak.ts`:
 
-Apply the same conditional in `EditBatchDialog` so editing an IELTS batch matches.
+- Change `updateStudentStreak(studentAccountId)` to return a result object: `{ extended: boolean, newStreak: number, wasFirstToday: boolean }`. `extended === true` only when `last_activity_date !== today` AND the new `current_streak > previous current_streak` (i.e. continued, not reset to 1 after a break — though we'll celebrate a reset-to-1 as "Streak started!" too, with the same component using a different label).
+- Existing callers (`StudentQuestion.tsx`, `StudentEnglishQuestion.tsx`, `StudentSpeedSession.tsx`) currently fire-and-forget. We'll keep that but additionally dispatch a browser `CustomEvent('streak:extended', { detail })` from inside `updateStudentStreak` when the day flips. This avoids prop-drilling through three different question pages.
 
-## 3. Student "Questions Solved" Counter Drifting (400 → 300 → 200)
+Mount a single `StreakCelebrationListener` inside `src/components/student/StudentLayout.tsx` that:
+- Listens to `streak:extended`.
+- Invalidates `['student-streak']` query.
+- Renders `<StreakExtendedToast>` for one event at a time.
 
-**Root cause:** `useStudentProfile.ts` (line ~198) and `useOtherStudentProfile.ts` (~line 333) fetch `student_attempts` with no pagination. Supabase caps a single query at **1000 rows**. Once a student exceeds 1000 attempts, only an arbitrary 1000-row slice is returned, so `correctAttempts` fluctuates (and trends down as more incorrect/retry rows fill the slice). This matches the 400 → 300 → 200 symptom.
+## 5. Files touched
 
-Two issues to fix together:
+```text
+NEW  src/components/student/StreakHistoryDialog.tsx
+NEW  src/components/student/StreakExtendedToast.tsx
+NEW  src/components/student/StreakCelebrationListener.tsx
+EDIT src/components/student/StudentSidebar.tsx          (header chip + dialog state)
+EDIT src/components/student/StudentDashboardSidebar.tsx (if it has its own header — verify on build)
+EDIT src/components/student/StudentLayout.tsx           (mount celebration listener)
+EDIT src/hooks/useStudentStreak.ts                      (dispatch CustomEvent, return result)
+```
 
-a. **Semantic bug:** `questionsSolved` counts raw correct *attempts* (re-solving the same question inflates the count). It should be distinct questions solved at least once.
+No database changes — `student_streaks` table and `activityDays` query already provide everything.
 
-b. **Row-limit bug:** Use `count: 'exact', head: true` aggregated queries instead of pulling all rows, since the page only needs counts.
-
-**Fix in `useStudentProfile.ts` and `useOtherStudentProfile.ts`:**
-- Replace the single full-row fetch with separate `head: true` count queries:
-  - `totalAttempts` = count of all attempts for the student.
-  - `firstAttempts` = count where `attempt_number = 1`.
-  - `firstCorrect` = count where `attempt_number = 1 AND is_correct = true`.
-- For `questionsSolved` (distinct questions correctly solved): query `student_attempts` selecting only `question_id` where `is_correct = true`, paginate in batches of 1000 using `.range()` until exhausted, then `new Set(...).size`. Alternatively add a SECURITY DEFINER SQL function `get_student_distinct_solved(_account uuid)` returning a single int; preferred for accuracy and performance.
-- For `avgTimePerQuestion`: either drop it (it requires summing per-row data) or compute via a small RPC `SELECT AVG(time_spent_seconds)`.
-
-Recommended approach: add a single RPC that returns `{ total_attempts, first_attempts, first_correct, distinct_solved, avg_time }` to avoid four round trips, and call it from both hooks.
-
-### Technical Notes
-
-- Field rename `latest → best` in `useImprovementMetrics` is internal to the hook; the returned `ImprovementMetrics` shape is unchanged so `ImprovementMetricsCard` keeps working.
-- For the IELTS schedule change, the DB column `math_schedule` stays nullable; we just always write `null` for IELTS.
-- The new RPC for student stats needs a migration; it should be `SECURITY DEFINER` with `SET search_path = public` and gated so students can only call it for themselves (or accept the account id and rely on existing RLS).
-
-### Out of Scope
-
-- Backfilling/recomputing historical metrics.
-- Touching teacher dashboards other than the Class Analytics improvement label.
-- Wider audit of other places that may also be hitting the 1000-row cap (can follow up).
+## Out of scope
+- No new badges, no streak freeze/repair, no push notifications. Just the chip, the dialog, and the celebration popup.

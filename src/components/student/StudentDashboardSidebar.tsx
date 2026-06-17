@@ -3,11 +3,13 @@ import { NavLink } from '@/components/NavLink';
 import { CheckInWidget } from './CheckInWidget';
 import { ExternalResourcesPopover } from './ExternalResourcesPopover';
 import { SATCountdownWidget } from './SATCountdownWidget';
+import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
@@ -63,8 +65,11 @@ export function StudentDashboardSidebar() {
   const { open } = useSidebar();
   const [learningOpen, setLearningOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
+  const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const { data: annData } = useStudentAnnouncements();
+  const { streak } = useStudentStreak();
   const unread = annData?.unreadCount ?? 0;
+  const currentStreak = streak?.current_streak ?? 0;
 
   const studentName = student?.linked_student 
     ? `${student.linked_student.first_name}${student.linked_student.last_name ? ' ' + student.linked_student.last_name.charAt(0) + '.' : ''}`
@@ -99,6 +104,7 @@ export function StudentDashboardSidebar() {
   );
 
   return (
+    <>
     <Sidebar collapsible="offcanvas" variant="floating" className="border-r-0">
       <SidebarHeader className="border-b">
         <div className={cn(
@@ -112,10 +118,32 @@ export function StudentDashboardSidebar() {
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex-1 min-w-0"
+              className="flex-1 min-w-0 flex items-center gap-2"
             >
-              <h2 className="font-semibold truncate text-sm">{studentName}</h2>
-              <p className="text-xs text-muted-foreground">SAT Practice</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-semibold truncate text-sm">{studentName}</h2>
+                <p className="text-xs text-muted-foreground">SAT Practice</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStreakDialogOpen(true)}
+                title={currentStreak > 0 ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold font-mono transition-all hover:scale-105 active:scale-95 shrink-0",
+                  currentStreak > 0
+                    ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
+                    : "bg-muted text-muted-foreground border border-border"
+                )}
+              >
+                <motion.span
+                  animate={currentStreak > 0 ? { scale: [1, 1.15, 1] } : {}}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="inline-flex"
+                >
+                  <Flame className={cn("w-3.5 h-3.5", currentStreak > 0 ? "fill-orange-500/40" : "")} />
+                </motion.span>
+                {currentStreak}
+              </button>
             </motion.div>
           )}
         </div>
@@ -306,5 +334,7 @@ export function StudentDashboardSidebar() {
         </Button>
       </SidebarFooter>
     </Sidebar>
+    <StreakHistoryDialog open={streakDialogOpen} onOpenChange={setStreakDialogOpen} />
+    </>
   );
 }
