@@ -697,7 +697,57 @@ export default function StudentPractice() {
               </div>
             </CardHeader>
             <CardContent className="p-1.5 md:p-2">
-              <ScrollArea className="h-[200px] lg:h-[calc(100vh-560px)]">
+              {/* MOBILE: horizontal scroll of squarish category cards */}
+              <div className="md:hidden">
+                <ScrollArea className="w-full">
+                  <div className="flex gap-2 pb-2">
+                    <button
+                      onClick={clearSelection}
+                      className={cn(
+                        "shrink-0 w-24 h-24 rounded-2xl border-2 p-2 flex flex-col items-start justify-between text-left transition-all active:scale-95",
+                        !selectedCategory ? "border-primary bg-primary/10" : "border-border bg-card"
+                      )}
+                    >
+                      <span className="text-[11px] font-bold leading-tight">All</span>
+                      <div className="w-full space-y-1">
+                        <Progress value={progressPercent} className="h-1" />
+                        <span className="text-[10px] text-muted-foreground">{completedCount}/{totalQuestions}</span>
+                      </div>
+                    </button>
+                    {categoryTree.map(cat => {
+                      const active = selectedCategory === cat.id;
+                      const shortName = cat.name
+                        .replace('Geometry and Trigonometry', 'Geometry')
+                        .replace('Data Analysis and Problem Solving', 'Data Analysis')
+                        .replace('Standard English Conventions', 'Conventions')
+                        .replace('Information and Ideas', 'Info & Ideas')
+                        .replace('Craft and Structure', 'Craft & Structure')
+                        .replace('Expression of Ideas', 'Expression');
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleCategoryClick(cat.id)}
+                          className={cn(
+                            "shrink-0 w-24 h-24 rounded-2xl border-2 p-2 flex flex-col items-start justify-between text-left transition-all active:scale-95",
+                            active ? "border-primary bg-primary/10" : "border-border bg-card"
+                          )}
+                        >
+                          <span className="text-[11px] font-bold leading-tight line-clamp-2">{shortName}</span>
+                          <div className="w-full space-y-1">
+                            <Progress value={cat.percent} className="h-1" />
+                            <span className="text-[10px] text-muted-foreground">{cat.completed}/{cat.total}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <ScrollBar orientation="horizontal" className="hidden" />
+                </ScrollArea>
+              </div>
+
+              {/* DESKTOP: collapsible tree */}
+              <ScrollArea className="hidden md:block h-[200px] lg:h-[calc(100vh-560px)]">
+
                 <div className="space-y-1 pr-4">
                   {/* All Questions option */}
                   <Button
