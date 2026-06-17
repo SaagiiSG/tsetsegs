@@ -1,0 +1,31 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Flame } from 'lucide-react';
+import { useStudentStreak } from '@/hooks/useStudentStreak';
+import { StudyStreakCalendar } from './StudyStreakCalendar';
+
+interface StreakHistoryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogProps) {
+  const { streak } = useStudentStreak();
+  const current = streak?.current_streak ?? 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-orange-500" />
+            {current > 0 ? `${current}-day streak` : 'Start your streak today'}
+          </DialogTitle>
+        </DialogHeader>
+        <StudyStreakCalendar />
+        <p className="text-xs text-center text-muted-foreground pt-2">
+          Practice any question tomorrow to keep your streak alive.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
