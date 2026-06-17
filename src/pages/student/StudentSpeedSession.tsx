@@ -536,7 +536,7 @@ export default function StudentSpeedSession() {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
-                  <Button variant="outline" onClick={handleFinish}>End</Button>
+                  <Button variant="outline" onClick={() => setSessionComplete(true)} disabled={hasFinishedRef.current}>End</Button>
                 </div>
               </CardContent>
             </Card>
