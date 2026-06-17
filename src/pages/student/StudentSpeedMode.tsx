@@ -147,6 +147,120 @@ const chartConfig = {
 
 // SAT countdown now uses shared widget (imported at top)
 
+// Session Builder Component
+interface SessionBuilderProps {
+  sessionDuration: number;
+  setSessionDuration: (v: number) => void;
+  questionCount: number;
+  setQuestionCount: (v: number) => void;
+  selectedCategory: string;
+  setSelectedCategory: (v: string) => void;
+  selectedSubject: 'math' | 'english';
+  setSelectedSubject: (v: 'math' | 'english') => void;
+  categories: { math: {id:string;name:string}[]; english: {id:string;name:string}[] } | undefined;
+}
+
+function SessionBuilder({
+  sessionDuration,
+  setSessionDuration,
+  questionCount,
+  setQuestionCount,
+  selectedCategory,
+  setSelectedCategory,
+  selectedSubject,
+  setSelectedSubject,
+  categories,
+}: SessionBuilderProps) {
+  return (
+    <Card className="shadow-lg border-2 bg-card/80 backdrop-blur-sm">
+      <CardContent className="py-8 px-6 sm:px-12">
+        <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-6">
+          {/* Both Pickers Container - 40% total */}
+          <div className="flex items-center justify-center gap-6 w-full sm:w-[40%]">
+            <ScrollPicker
+              values={timeValues}
+              selectedValue={sessionDuration}
+              onChange={setSessionDuration}
+              label="Duration"
+            />
+            
+            <div className="w-px h-24 bg-border/30" />
+            
+            <ScrollPicker
+              values={questionValues}
+              selectedValue={questionCount}
+              onChange={setQuestionCount}
+              label="Questions"
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block w-px h-32 bg-border/30" />
+          <div className="sm:hidden w-48 h-px bg-border/30" />
+
+          {/* Category Badge Selector - 60% */}
+          <div className="flex flex-col items-center w-full sm:w-[60%]">
+            <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Category</span>
+
+            {/* Subject Tabs */}
+            <div className="flex rounded-lg border bg-muted/40 p-0.5 mb-3">
+              {(['math', 'english'] as const).map((subj) => (
+                <button
+                  key={subj}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSubject(subj);
+                    setSelectedCategory('all');
+                  }}
+                  className={cn(
+                    "px-4 py-1.5 text-xs font-semibold rounded-md transition-all capitalize",
+                    selectedSubject === subj
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {subj}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto px-2">
+              <Badge
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                className={cn(
+                  "cursor-pointer px-4 py-2 text-sm transition-all",
+                  selectedCategory === 'all' 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-primary/10"
+                )}
+                onClick={() => setSelectedCategory('all')}
+              >
+                All Mixed
+              </Badge>
+              
+              {(selectedSubject === 'math' ? categories?.math : categories?.english)?.map(cat => (
+                <Badge
+                  key={cat.id}
+                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                  className={cn(
+                    "cursor-pointer px-4 py-2 text-sm transition-all",
+                    selectedCategory === cat.id 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-primary/10"
+                  )}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  {cat.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function StudentSpeedMode() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
@@ -344,7 +458,7 @@ export default function StudentSpeedMode() {
             <p className="text-xs text-muted-foreground">Challenge yourself with timed sessions</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-2">
           <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-yellow-500/15 to-yellow-500/5 border border-yellow-500/30 flex flex-col items-center min-w-[88px]">
             <span className="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-500/90 font-semibold">Best Acc</span>
             <span className="text-lg font-bold font-mono text-yellow-700 dark:text-yellow-400">
@@ -358,9 +472,47 @@ export default function StudentSpeedMode() {
         </div>
       </div>
 
+      {/* Mobile: Session Builder at top */}
+      <div className="lg:hidden">
+        <SessionBuilder
+          sessionDuration={sessionDuration}
+          setSessionDuration={setSessionDuration}
+          questionCount={questionCount}
+          setQuestionCount={setQuestionCount}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedSubject={selectedSubject}
+          setSelectedSubject={setSelectedSubject}
+          categories={categories}
+        />
+      </div>
+
 
       {/* SAT Countdown Widget */}
       <SATCountdownWidget variant="sidebar" />
+
+      {/* Mobile: Compact Stats Row */}
+      <div className="lg:hidden grid grid-cols-3 gap-2">
+        <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-yellow-500/15 to-yellow-500/5 border border-yellow-500/30 flex flex-col items-center">
+          <span className="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-500/90 font-semibold">Best Acc</span>
+          <span className="text-lg font-bold font-mono text-yellow-700 dark:text-yellow-400">
+            {stats?.bestScore ? `${stats.bestScore.accuracy}%` : '—'}
+          </span>
+        </div>
+        <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 flex flex-col items-center">
+          <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">Sessions</span>
+          <span className="text-lg font-bold font-mono text-primary">{stats?.totalSessions ?? 0}</span>
+        </div>
+        <div className="px-3 py-2 rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-500/5 border border-blue-500/30 flex flex-col items-center">
+          <span className="text-[10px] uppercase tracking-wider text-blue-700 dark:text-blue-500/90 font-semibold">Last</span>
+          <span className="text-lg font-bold font-mono text-blue-700 dark:text-blue-400">
+            {lastSession ? `${Math.round(lastSession.timePerProblem)}s` : '—'}
+          </span>
+          {lastSession && (
+            <span className="text-[10px] text-muted-foreground">{lastSession.accuracy}% • {lastSession.total}Q</span>
+          )}
+        </div>
+      </div>
 
       {/* Top Row - Chart + Last Session */}
       <div className="flex flex-col lg:flex-row gap-4">
@@ -418,7 +570,7 @@ export default function StudentSpeedMode() {
         </Card>
 
         {/* Last Session Stats (30%) */}
-        <Card className="lg:w-[30%] w-full flex flex-col">
+        <Card className="hidden lg:flex lg:w-[30%] w-full flex-col">
           <CardContent className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-medium text-muted-foreground">Last Session</p>
@@ -531,93 +683,20 @@ export default function StudentSpeedMode() {
         </Card>
       </div>
 
-      {/* Session Builder Island - All in one row */}
-      <Card className="shadow-lg border-2 bg-card/80 backdrop-blur-sm">
-        <CardContent className="py-8 px-6 sm:px-12">
-          <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-6">
-            {/* Both Pickers Container - 40% total */}
-            <div className="flex items-center justify-center gap-6 w-full sm:w-[40%]">
-              <ScrollPicker
-                values={timeValues}
-                selectedValue={sessionDuration}
-                onChange={setSessionDuration}
-                label="Duration"
-              />
-              
-              <div className="w-px h-24 bg-border/30" />
-              
-              <ScrollPicker
-                values={questionValues}
-                selectedValue={questionCount}
-                onChange={setQuestionCount}
-                label="Questions"
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="hidden sm:block w-px h-32 bg-border/30" />
-            <div className="sm:hidden w-48 h-px bg-border/30" />
-
-            {/* Category Badge Selector - 60% */}
-            <div className="flex flex-col items-center w-full sm:w-[60%]">
-              <span className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Category</span>
-
-              {/* Subject Tabs */}
-              <div className="flex rounded-lg border bg-muted/40 p-0.5 mb-3">
-                {(['math', 'english'] as const).map((subj) => (
-                  <button
-                    key={subj}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSubject(subj);
-                      setSelectedCategory('all');
-                    }}
-                    className={cn(
-                      "px-4 py-1.5 text-xs font-semibold rounded-md transition-all capitalize",
-                      selectedSubject === subj
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {subj}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-2 max-h-[120px] overflow-y-auto px-2">
-                <Badge
-                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                  className={cn(
-                    "cursor-pointer px-4 py-2 text-sm transition-all",
-                    selectedCategory === 'all' 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-primary/10"
-                  )}
-                  onClick={() => setSelectedCategory('all')}
-                >
-                  All Mixed
-                </Badge>
-                
-                {(selectedSubject === 'math' ? categories?.math : categories?.english)?.map(cat => (
-                  <Badge
-                    key={cat.id}
-                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
-                    className={cn(
-                      "cursor-pointer px-4 py-2 text-sm transition-all",
-                      selectedCategory === cat.id 
-                        ? "bg-primary text-primary-foreground" 
-                        : "hover:bg-primary/10"
-                    )}
-                    onClick={() => setSelectedCategory(cat.id)}
-                  >
-                    {cat.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Desktop: Session Builder */}
+      <div className="hidden lg:block">
+        <SessionBuilder
+          sessionDuration={sessionDuration}
+          setSessionDuration={setSessionDuration}
+          questionCount={questionCount}
+          setQuestionCount={setQuestionCount}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedSubject={selectedSubject}
+          setSelectedSubject={setSelectedSubject}
+          categories={categories}
+        />
+      </div>
 
       {/* Start Button */}
       <Button 
