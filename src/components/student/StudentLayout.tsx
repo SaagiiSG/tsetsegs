@@ -168,6 +168,7 @@ function StudentLayoutContent() {
       {/* SAT Date Onboarding Modal */}
       <WelcomeOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       {student && !isTeacherOrAdmin && <LinkEmailModal />}
+      <StreakHistoryDialog open={streakDialogOpen} onOpenChange={setStreakDialogOpen} />
       
       <StudentBottomNav />
 
