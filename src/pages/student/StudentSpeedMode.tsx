@@ -219,7 +219,9 @@ export default function StudentSpeedMode() {
         };
       });
     },
-    enabled: !!student?.id
+    enabled: !!student?.id,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Fetch stats (best score + total sessions)
@@ -252,7 +254,9 @@ export default function StudentSpeedMode() {
       
       return { bestScore: best, totalSessions: sessions.length };
     },
-    enabled: !!student?.id
+    enabled: !!student?.id,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Fetch ALL speed sessions for history drawer
@@ -285,7 +289,9 @@ export default function StudentSpeedMode() {
         };
       });
     },
-    enabled: !!student?.id
+    enabled: !!student?.id,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const [historyOpen, setHistoryOpen] = useState(false);
