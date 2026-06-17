@@ -3,7 +3,7 @@ import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Flame } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
@@ -25,6 +25,10 @@ import { PracticeQuickFab } from './practice/PracticeQuickFab';
 import { GestureHintOverlay } from './practice/GestureHintOverlay';
 import { useSwipe } from '@/hooks/useSwipe';
 import { StreakCelebrationListener } from './StreakCelebrationListener';
+import { useStudentStreak } from '@/hooks/useStudentStreak';
+import { StreakHistoryDialog } from './StreakHistoryDialog';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -33,7 +37,10 @@ function StudentLayoutContent() {
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const courses = useStudentCourses();
+  const { streak } = useStudentStreak();
+  const currentStreak = streak?.current_streak ?? 0;
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
@@ -115,19 +122,42 @@ function StudentLayoutContent() {
             <SidebarTrigger />
             <span className="font-semibold text-xs md:text-sm">SAT Practice</span>
           </div>
-          <div 
-            className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
-            style={{ 
-              backgroundColor: `${TIER_COLORS[tier]}20`,
-              color: TIER_COLORS[tier],
-              border: `1.5px solid ${TIER_COLORS[tier]}40`
-            }}
-          >
+          <div className="flex items-center gap-2">
+            {/* Mobile streak counter */}
+            <button
+              type="button"
+              onClick={() => setStreakDialogOpen(true)}
+              title={currentStreak > 0 ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono transition-all hover:scale-105 active:scale-95 md:hidden",
+                currentStreak > 0
+                  ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
+                  : "bg-muted text-muted-foreground border border-border"
+              )}
+            >
+              <motion.span
+                animate={currentStreak > 0 ? { scale: [1, 1.15, 1] } : {}}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="inline-flex"
+              >
+                <Flame className={cn("w-3.5 h-3.5", currentStreak > 0 ? "fill-orange-500/40" : "")} />
+              </motion.span>
+              {currentStreak}
+            </button>
             <div 
-              className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
-              style={{ backgroundColor: TIER_COLORS[tier] }}
-            />
-            {TIER_DISPLAY_NAMES[tier]}
+              className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
+              style={{ 
+                backgroundColor: `${TIER_COLORS[tier]}20`,
+                color: TIER_COLORS[tier],
+                border: `1.5px solid ${TIER_COLORS[tier]}40`
+              }}
+            >
+              <div 
+                className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
+                style={{ backgroundColor: TIER_COLORS[tier] }}
+              />
+              {TIER_DISPLAY_NAMES[tier]}
+            </div>
           </div>
           <PracticeQuickFab compact />
         </div>
@@ -138,6 +168,7 @@ function StudentLayoutContent() {
       {/* SAT Date Onboarding Modal */}
       <WelcomeOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       {student && !isTeacherOrAdmin && <LinkEmailModal />}
+      <StreakHistoryDialog open={streakDialogOpen} onOpenChange={setStreakDialogOpen} />
       
       <StudentBottomNav />
 
