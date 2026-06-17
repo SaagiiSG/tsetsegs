@@ -331,8 +331,15 @@ export default function StudentSpeedSession() {
     queryClient.invalidateQueries({ queryKey: ['total-points'] });
     queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
     queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
-    navigate('/practice/speed');
   };
+
+  // Auto-save once when the session ends (timer expires, last question answered, or End pressed)
+  useEffect(() => {
+    if (sessionComplete && !hasFinishedRef.current) {
+      handleFinish();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionComplete]);
 
   if (isLoading) {
     return (
