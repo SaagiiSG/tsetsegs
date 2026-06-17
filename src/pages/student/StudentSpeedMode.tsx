@@ -221,6 +221,7 @@ export default function StudentSpeedMode() {
     },
     enabled: !!student?.id,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
@@ -256,6 +257,7 @@ export default function StudentSpeedMode() {
     },
     enabled: !!student?.id,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
@@ -291,6 +293,7 @@ export default function StudentSpeedMode() {
     },
     enabled: !!student?.id,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
