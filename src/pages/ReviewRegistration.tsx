@@ -175,6 +175,8 @@ export default function ReviewRegistration() {
       hasTakenSat: false,
       previousSatScore: undefined,
       plannedSatDate: "",
+      previousIeltsScore: undefined,
+      plannedIeltsDate: "",
     },
   });
 
