@@ -3,7 +3,7 @@ import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Flame } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
@@ -25,6 +25,10 @@ import { PracticeQuickFab } from './practice/PracticeQuickFab';
 import { GestureHintOverlay } from './practice/GestureHintOverlay';
 import { useSwipe } from '@/hooks/useSwipe';
 import { StreakCelebrationListener } from './StreakCelebrationListener';
+import { useStudentStreak } from '@/hooks/useStudentStreak';
+import { StreakHistoryDialog } from './StreakHistoryDialog';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
