@@ -401,7 +401,7 @@ export default function StudentSpeedSession() {
               <Button variant="outline" onClick={() => navigate('/practice/speed')} className="flex-1">
                 <Zap className="h-4 w-4 mr-2" />Try Again
               </Button>
-              <Button onClick={() => navigate('/practice/dashboard')} className="flex-1">
+              <Button onClick={() => navigate('/practice/speed')} className="flex-1">
                 <Home className="h-4 w-4 mr-2" />Dashboard
               </Button>
             </div>
