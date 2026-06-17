@@ -456,9 +456,64 @@ export default function StudentPractice() {
       <Card className="bg-gradient-to-br from-card via-card to-muted/30 shadow-lg border-2">
         <CardContent className="p-2 md:p-4 space-y-2 md:space-y-4">
           {/* Subject & Question Set Row */}
-          <div className="flex flex-wrap items-center gap-1.5 md:gap-3">
-            {/* Subject Toggle */}
-            <div className="flex rounded-lg border bg-muted/50 p-0.5 md:p-1">
+          {/* MOBILE: Subject dropdown + horizontal scroll set picker */}
+          <div className="flex md:hidden items-center gap-2">
+            <Select
+              value={subject}
+              onValueChange={(v) => {
+                setSubject(v as Subject);
+                setSelectedCategory(null);
+                setSelectedSubtopic(null);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[120px] shrink-0 font-semibold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="math">
+                  <span className="flex items-center gap-2"><Target className="h-3.5 w-3.5" /> Math</span>
+                </SelectItem>
+                <SelectItem value="english">
+                  <span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5" /> English</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {subject === 'math' ? (
+              <ScrollArea className="flex-1">
+                <div className="flex gap-1.5 pb-1">
+                  {([
+                    { key: '68', label: `68 (${questionCounts?.set68 || 0})` },
+                    { key: 'CB', label: `CB (${questionCounts?.cb || 0})` },
+                    { key: '150', label: `150 (${questionCounts?.set150 || 0})` },
+                  ] as { key: QuestionSet; label: string }[]).map((s) => (
+                    <Button
+                      key={s.key}
+                      variant={questionSet === s.key ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setQuestionSet(s.key);
+                        setSelectedCategory(null);
+                        setSelectedSubtopic(null);
+                      }}
+                      className="h-9 rounded-full px-4 text-xs font-semibold shrink-0"
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" className="hidden" />
+              </ScrollArea>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                {questionCounts?.english || 0} questions
+              </Badge>
+            )}
+          </div>
+
+          {/* DESKTOP: original button toggles */}
+          <div className="hidden md:flex flex-wrap items-center gap-3">
+            <div className="flex rounded-lg border bg-muted/50 p-1">
               <Button
                 variant={subject === 'math' ? 'default' : 'ghost'}
                 size="sm"
@@ -467,9 +522,9 @@ export default function StudentPractice() {
                   setSelectedCategory(null);
                   setSelectedSubtopic(null);
                 }}
-                className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                className="gap-2 h-9 text-sm px-3"
               >
-                <Target className="h-3 w-3 md:h-4 md:w-4" />
+                <Target className="h-4 w-4" />
                 Math
               </Button>
               <Button
@@ -480,16 +535,15 @@ export default function StudentPractice() {
                   setSelectedCategory(null);
                   setSelectedSubtopic(null);
                 }}
-                className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                className="gap-2 h-9 text-sm px-3"
               >
-                <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                <FileText className="h-4 w-4" />
                 English
               </Button>
             </div>
 
-            {/* Question Set Toggle (Math only) */}
             {subject === 'math' && (
-              <div className="flex rounded-lg border bg-muted/50 p-0.5 md:p-1">
+              <div className="flex rounded-lg border bg-muted/50 p-1">
                 <Button
                   variant={questionSet === '68' ? 'default' : 'ghost'}
                   size="sm"
@@ -498,9 +552,9 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
+                  className="gap-2 h-9 text-sm px-3"
                 >
-                  <BookOpen className="h-3 w-3 md:h-4 md:w-4 hidden md:block" />
+                  <BookOpen className="h-4 w-4" />
                   68 ({questionCounts?.set68 || 0})
                 </Button>
                 <Button
@@ -511,7 +565,7 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
+                  className="gap-2 h-9 text-sm px-3"
                 >
                   CB ({questionCounts?.cb || 0})
                 </Button>
@@ -523,7 +577,7 @@ export default function StudentPractice() {
                     setSelectedCategory(null);
                     setSelectedSubtopic(null);
                   }}
-                  className="gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm px-1.5 md:px-3"
+                  className="gap-2 h-9 text-sm px-3"
                 >
                   150 ({questionCounts?.set150 || 0})
                 </Button>
@@ -531,11 +585,12 @@ export default function StudentPractice() {
             )}
 
             {subject === 'english' && (
-              <Badge variant="outline" className="text-xs md:text-sm">
+              <Badge variant="outline" className="text-sm">
                 {questionCounts?.english || 0} questions
               </Badge>
             )}
           </div>
+
 
           {/* Overall Progress Bar */}
           <div className="space-y-1 md:space-y-2">
