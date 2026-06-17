@@ -187,6 +187,7 @@ const App = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
+                    <Route path="booking" element={<StudentBooking />} />
 
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
