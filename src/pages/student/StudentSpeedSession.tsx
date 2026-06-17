@@ -113,6 +113,7 @@ export default function StudentSpeedSession() {
   const [questionElapsed, setQuestionElapsed] = useState(0);
   const pendingEnrollmentSnapshot = useRef<SprintEnrollmentSnapshot | null>(null);
   const pendingEnrollmentPoints = useRef<number>(0);
+  const hasFinishedRef = useRef(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   const { data: questions, isLoading } = useQuery({
@@ -288,6 +289,10 @@ export default function StudentSpeedSession() {
   };
 
   const handleFinish = async () => {
+    if (hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+    if (!sessionComplete) setSessionComplete(true);
+
     const correctCount = results.filter(r => r.correct).length;
     const totalTime = results.reduce((sum, r) => sum + r.timeSpent, 0);
     const totalTimeSeconds = Math.round(totalTime / 1000);
@@ -326,8 +331,15 @@ export default function StudentSpeedSession() {
     queryClient.invalidateQueries({ queryKey: ['total-points'] });
     queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
     queryClient.invalidateQueries({ queryKey: ['performance-stats'] });
-    navigate('/practice/speed');
   };
+
+  // Auto-save once when the session ends (timer expires, last question answered, or End pressed)
+  useEffect(() => {
+    if (sessionComplete && !hasFinishedRef.current) {
+      handleFinish();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionComplete]);
 
   if (isLoading) {
     return (
@@ -524,7 +536,7 @@ export default function StudentSpeedSession() {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
-                  <Button variant="outline" onClick={handleFinish}>End</Button>
+                  <Button variant="outline" onClick={() => setSessionComplete(true)} disabled={hasFinishedRef.current}>End</Button>
                 </div>
               </CardContent>
             </Card>
