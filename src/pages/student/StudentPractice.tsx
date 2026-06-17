@@ -706,8 +706,15 @@ export default function StudentPractice() {
             <CardContent className="p-1.5 md:p-2">
               {/* MOBILE: horizontal scroll of squarish category cards */}
               <div className="md:hidden">
-                <ScrollArea className="w-full">
-                  <div className="flex gap-2 pb-2">
+                <div
+                  className="overflow-x-auto"
+                  style={{
+                    WebkitOverflowScrolling: 'touch',
+                    scrollSnapType: 'x mandatory',
+                    scrollbarWidth: 'none',
+                  }}
+                >
+                  <div className="flex gap-2 pb-2 pr-4">
                     {categoryTree.map(cat => {
                       const active = selectedCategory === cat.id;
                       const shortName = cat.name
@@ -725,6 +732,7 @@ export default function StudentPractice() {
                             "shrink-0 w-24 h-24 rounded-2xl border-2 p-2 flex flex-col items-start justify-between text-left transition-all active:scale-95",
                             active ? "border-primary bg-primary/10" : "border-border bg-card"
                           )}
+                          style={{ scrollSnapAlign: 'start' }}
                         >
                           <span className="text-[11px] font-bold leading-tight line-clamp-2">{shortName}</span>
                           <div className="w-full space-y-1">
@@ -735,8 +743,7 @@ export default function StudentPractice() {
                       );
                     })}
                   </div>
-                  <ScrollBar orientation="horizontal" className="hidden" />
-                </ScrollArea>
+                </div>
               </div>
 
               {/* DESKTOP: collapsible tree */}
