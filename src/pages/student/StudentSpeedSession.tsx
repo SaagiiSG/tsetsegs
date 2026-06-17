@@ -299,7 +299,10 @@ export default function StudentSpeedSession() {
     const avgTimePerQuestion = results.length > 0 ? totalTime / results.length / 1000 : 0;
     const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
 
-    logActivity('speed_mode_complete', { total: results.length, correct: correctCount, duration, maxQuestions, avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10 });
+    await logActivity('speed_mode_complete', { total: results.length, correct: correctCount, duration, maxQuestions, avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10 });
+    queryClient.invalidateQueries({ queryKey: ['speed-history'] });
+    queryClient.invalidateQueries({ queryKey: ['speed-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['all-speed-sessions'] });
 
     if (student?.id) {
       updateStudentStreak(student.id).catch(() => {});
