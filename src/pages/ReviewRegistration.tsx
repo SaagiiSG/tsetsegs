@@ -68,7 +68,36 @@ const generateSATDates = () => {
   return dates;
 };
 
+// Generate IELTS test dates (all 12 months, current and next year)
+const generateIELTSDates = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const monthLabels = [
+    "1-р сар", "2-р сар", "3-р сар", "4-р сар",
+    "5-р сар", "6-р сар", "7-р сар", "8-р сар",
+    "9-р сар", "10-р сар", "11-р сар", "12-р сар",
+  ];
+
+  const dates: { value: string; label: string }[] = [];
+
+  [currentYear, currentYear + 1].forEach(year => {
+    monthLabels.forEach((label, monthIdx) => {
+      if (year > currentYear || (year === currentYear && monthIdx >= currentMonth)) {
+        dates.push({
+          value: `${year}-${String(monthIdx + 1).padStart(2, '0')}`,
+          label: `${year} оны ${label}`,
+        });
+      }
+    });
+  });
+
+  return dates;
+};
+
 const SAT_TEST_DATES = generateSATDates();
+const IELTS_TEST_DATES = generateIELTSDates();
 
 // Step 2: Registration form schema
 const registrationSchema = z.object({
