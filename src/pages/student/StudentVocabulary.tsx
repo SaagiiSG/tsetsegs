@@ -32,7 +32,7 @@ const StudentVocabulary = () => {
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [isShuffled, setIsShuffled] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [vocabType, setVocabType] = useState<VocabType>('english');
+  const [vocabType, setVocabType] = useState<VocabType>('math');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Fetch all vocabulary from database
@@ -279,9 +279,9 @@ const StudentVocabulary = () => {
           )}
 
           {/* Progress Bar + Vocab Type Toggle */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
             {/* Progress Section */}
-            <div className="flex-1 w-full space-y-2">
+            <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Progress</span>
                 <span className="font-medium">{learnedInCurrentType} / {totalWords} ({progressPercent}%)</span>
@@ -290,12 +290,15 @@ const StudentVocabulary = () => {
             </div>
 
             {/* Vocab Type Toggle */}
-            <div className="flex rounded-lg border bg-muted p-1 shrink-0">
+            <div className="flex rounded-xl border-2 border-border bg-background p-1 shrink-0 shadow-sm">
               <Button
                 variant={vocabType === 'english' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleVocabTypeChange('english')}
-                className="px-4"
+                className={cn(
+                  "px-5 rounded-lg font-bold text-sm transition-all",
+                  vocabType === 'english' && "shadow-md"
+                )}
               >
                 English
               </Button>
@@ -303,7 +306,10 @@ const StudentVocabulary = () => {
                 variant={vocabType === 'math' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleVocabTypeChange('math')}
-                className="px-4"
+                className={cn(
+                  "px-5 rounded-lg font-bold text-sm transition-all",
+                  vocabType === 'math' && "shadow-md"
+                )}
               >
                 Math
               </Button>
