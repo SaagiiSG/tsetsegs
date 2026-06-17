@@ -701,19 +701,6 @@ export default function StudentPractice() {
               <div className="md:hidden">
                 <ScrollArea className="w-full">
                   <div className="flex gap-2 pb-2">
-                    <button
-                      onClick={clearSelection}
-                      className={cn(
-                        "shrink-0 w-24 h-24 rounded-2xl border-2 p-2 flex flex-col items-start justify-between text-left transition-all active:scale-95",
-                        !selectedCategory ? "border-primary bg-primary/10" : "border-border bg-card"
-                      )}
-                    >
-                      <span className="text-[11px] font-bold leading-tight">All</span>
-                      <div className="w-full space-y-1">
-                        <Progress value={progressPercent} className="h-1" />
-                        <span className="text-[10px] text-muted-foreground">{completedCount}/{totalQuestions}</span>
-                      </div>
-                    </button>
                     {categoryTree.map(cat => {
                       const active = selectedCategory === cat.id;
                       const shortName = cat.name
