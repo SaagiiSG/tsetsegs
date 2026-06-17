@@ -32,7 +32,7 @@ const StudentVocabulary = () => {
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [isShuffled, setIsShuffled] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [vocabType, setVocabType] = useState<VocabType>('english');
+  const [vocabType, setVocabType] = useState<VocabType>('math');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Fetch all vocabulary from database
