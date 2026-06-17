@@ -383,6 +383,8 @@ export default function ReviewRegistration() {
     }
   };
 
+  const isIELTS = batchInfo?.course_type === 'IELTS';
+
   if (step === "success") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -393,7 +395,7 @@ export default function ReviewRegistration() {
             </div>
             <CardTitle className="text-2xl">Бүртгэл амжилттай!</CardTitle>
             <CardDescription>
-              SAT хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
+              {isIELTS ? 'IELTS' : 'SAT'} хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -409,7 +411,7 @@ export default function ReviewRegistration() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {batchInfo ? `${batchInfo.batch_name || 'SAT анги'}-д нэгдэх` : 'SAT бүртгэл'}
+            {batchInfo ? `${batchInfo.batch_name || (isIELTS ? 'IELTS анги' : 'SAT анги')}-д нэгдэх` : 'SAT бүртгэл'}
           </CardTitle>
           <CardDescription>
             {step === "code"
