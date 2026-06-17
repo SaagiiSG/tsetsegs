@@ -289,6 +289,10 @@ export default function StudentSpeedSession() {
   };
 
   const handleFinish = async () => {
+    if (hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+    if (!sessionComplete) setSessionComplete(true);
+
     const correctCount = results.filter(r => r.correct).length;
     const totalTime = results.reduce((sum, r) => sum + r.timeSpent, 0);
     const totalTimeSeconds = Math.round(totalTime / 1000);
