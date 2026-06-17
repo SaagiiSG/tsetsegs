@@ -755,7 +755,7 @@ export default function ReviewRegistration() {
                 </RadioGroup>
               </div>
 
-              {/* Previous Score (conditional, SAT only) */}
+              {/* Previous Score (conditional, SAT or IELTS) */}
               {hasTakenSat && !isIELTS && (
                 <div className="space-y-2">
                   <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
@@ -785,8 +785,38 @@ export default function ReviewRegistration() {
                 </div>
               )}
 
-              {/* Planned SAT Date (SAT only) */}
-              {!isIELTS && (
+              {hasTakenSat && isIELTS && (
+                <div className="space-y-2">
+                  <Label htmlFor="previousIeltsScore">Өмнөх IELTS оноо (Band) <span className="text-muted-foreground font-normal">(Previous Band Score)</span></Label>
+                  <Input
+                    id="previousIeltsScore"
+                    type="number"
+                    placeholder="жишээ нь: 6.5"
+                    min={0}
+                    max={9}
+                    step={0.5}
+                    className={
+                      registrationForm.formState.errors.previousIeltsScore
+                        ? "border-destructive"
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        registrationForm.setValue("previousIeltsScore", val);
+                      }
+                    }}
+                  />
+                  {registrationForm.formState.errors.previousIeltsScore && (
+                    <p className="text-sm text-destructive">
+                      IELTS оноо 0-9 хооронд байх ёстой
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Planned Test Date (SAT or IELTS) */}
+              {!isIELTS ? (
                 <div className="space-y-2">
                   <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
                   <Select
@@ -797,6 +827,24 @@ export default function ReviewRegistration() {
                     </SelectTrigger>
                     <SelectContent>
                       {SAT_TEST_DATES.map((date) => (
+                        <SelectItem key={date.value} value={date.value}>
+                          {date.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Та хэзээ IELTS өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned IELTS Date)</span></Label>
+                  <Select
+                    onValueChange={(value) => registrationForm.setValue("plannedIeltsDate", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Сар сонгоно уу..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {IELTS_TEST_DATES.map((date) => (
                         <SelectItem key={date.value} value={date.value}>
                           {date.label}
                         </SelectItem>
