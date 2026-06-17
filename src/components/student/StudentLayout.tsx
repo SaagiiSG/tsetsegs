@@ -37,7 +37,10 @@ function StudentLayoutContent() {
   const { tier } = useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const courses = useStudentCourses();
+  const { streak } = useStudentStreak();
+  const currentStreak = streak?.current_streak ?? 0;
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
