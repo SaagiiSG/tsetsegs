@@ -135,6 +135,8 @@ const registrationSchema = z.object({
   hasTakenSat: z.boolean().default(false),
   previousSatScore: z.number().min(400).max(1600).optional(),
   plannedSatDate: z.string().optional(),
+  previousIeltsScore: z.number().min(0).max(9).optional(),
+  plannedIeltsDate: z.string().optional(),
 });
 
 type CodeFormData = z.infer<typeof codeSchema>;
