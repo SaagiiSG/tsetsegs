@@ -122,7 +122,7 @@ export default function ReviewRegistration() {
   const [submitCooldown, setSubmitCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
-  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
+  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null; course_type: string | null } | null>(null);
 
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
@@ -189,7 +189,7 @@ export default function ReviewRegistration() {
     (async () => {
       const { data, error } = await supabase
         .from("batches")
-        .select("id, batch_name, teacher")
+        .select("id, batch_name, teacher, course_type")
         .eq("id", batchParam)
         .single();
       if (error || !data) {
@@ -383,6 +383,8 @@ export default function ReviewRegistration() {
     }
   };
 
+  const isIELTS = batchInfo?.course_type === 'IELTS';
+
   if (step === "success") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -393,7 +395,7 @@ export default function ReviewRegistration() {
             </div>
             <CardTitle className="text-2xl">Бүртгэл амжилттай!</CardTitle>
             <CardDescription>
-              SAT хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
+              {isIELTS ? 'IELTS' : 'SAT'} хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -409,7 +411,7 @@ export default function ReviewRegistration() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {batchInfo ? `${batchInfo.batch_name || 'SAT анги'}-д нэгдэх` : 'SAT бүртгэл'}
+            {batchInfo ? `${batchInfo.batch_name || (isIELTS ? 'IELTS анги' : 'SAT анги')}-д нэгдэх` : 'SAT бүртгэл'}
           </CardTitle>
           <CardDescription>
             {step === "code"
@@ -696,9 +698,13 @@ export default function ReviewRegistration() {
                 </div>
               )}
 
-              {/* SAT Experience */}
+              {/* Exam Experience (SAT or IELTS based on course type) */}
               <div className="space-y-2">
-                <Label>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></Label>
+                <Label>
+                  {isIELTS
+                    ? <>Та өмнө нь IELTS шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken IELTS before?)</span></>
+                    : <>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></>}
+                </Label>
                 <RadioGroup
                   defaultValue="no"
                   onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
@@ -715,8 +721,8 @@ export default function ReviewRegistration() {
                 </RadioGroup>
               </div>
 
-              {/* Previous SAT Score (conditional) */}
-              {hasTakenSat && (
+              {/* Previous Score (conditional, SAT only) */}
+              {hasTakenSat && !isIELTS && (
                 <div className="space-y-2">
                   <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
                   <Input
@@ -745,24 +751,26 @@ export default function ReviewRegistration() {
                 </div>
               )}
 
-              {/* Planned SAT Date */}
-              <div className="space-y-2">
-                <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
-                <Select
-                  onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Огноо сонгоно уу..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SAT_TEST_DATES.map((date) => (
-                      <SelectItem key={date.value} value={date.value}>
-                        {date.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Planned SAT Date (SAT only) */}
+              {!isIELTS && (
+                <div className="space-y-2">
+                  <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
+                  <Select
+                    onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Огноо сонгоно уу..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SAT_TEST_DATES.map((date) => (
+                        <SelectItem key={date.value} value={date.value}>
+                          {date.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <Button type="submit" className="w-full" disabled={isSubmitting || submitCooldown}>
                 {isSubmitting ? (

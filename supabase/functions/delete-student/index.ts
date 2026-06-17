@@ -82,7 +82,10 @@ serve(async (req) => {
         'student_sessions', 'student_activity_logs', 'point_transactions',
         'featured_badges', 'question_flags', 'student_question_notes',
         'security_alerts', 'bug_reports', 'seat_bookings',
-        'student_sprint_rankings', 'booking_bans'
+        'student_sprint_rankings', 'booking_bans',
+        'student_streaks', 'student_review_queue', 'student_vocabulary_progress',
+        'password_reset_codes', 'student_email_links', 'announcement_reads',
+        'desmos_usage_events'
       ]
 
       for (const table of tables) {
@@ -91,6 +94,10 @@ serve(async (req) => {
 
       await supabaseAdmin.from('student_accounts').delete().eq('id', accountId)
     }
+
+    // Null out SMS history references (preserve history, don't delete logs)
+    await supabaseAdmin.from('sms_logs').update({ student_id: null }).eq('student_id', studentId)
+    await supabaseAdmin.from('sms_inbox').update({ matched_student_id: null }).eq('matched_student_id', studentId)
 
     await supabaseAdmin.from('attendance').delete().eq('student_id', studentId)
     await supabaseAdmin.from('homework').delete().eq('student_id', studentId)
