@@ -257,6 +257,7 @@ export default function StudentSpeedMode() {
     },
     enabled: !!student?.id,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
