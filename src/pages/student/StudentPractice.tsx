@@ -480,7 +480,14 @@ export default function StudentPractice() {
             </Select>
 
             {subject === 'math' ? (
-              <ScrollArea className="flex-1">
+              <div
+                className="flex-1 overflow-x-auto"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  scrollSnapType: 'x mandatory',
+                  scrollbarWidth: 'none',
+                }}
+              >
                 <div className="flex gap-1.5 pb-1">
                   {([
                     { key: '68', label: `68 (${questionCounts?.set68 || 0})` },
@@ -497,13 +504,13 @@ export default function StudentPractice() {
                         setSelectedSubtopic(null);
                       }}
                       className="h-9 rounded-full px-4 text-xs font-semibold shrink-0"
+                      style={{ scrollSnapAlign: 'start' }}
                     >
                       {s.label}
                     </Button>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" className="hidden" />
-              </ScrollArea>
+              </div>
             ) : (
               <Badge variant="outline" className="text-xs">
                 {questionCounts?.english || 0} questions
