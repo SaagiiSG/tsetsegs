@@ -122,19 +122,42 @@ function StudentLayoutContent() {
             <SidebarTrigger />
             <span className="font-semibold text-xs md:text-sm">SAT Practice</span>
           </div>
-          <div 
-            className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
-            style={{ 
-              backgroundColor: `${TIER_COLORS[tier]}20`,
-              color: TIER_COLORS[tier],
-              border: `1.5px solid ${TIER_COLORS[tier]}40`
-            }}
-          >
+          <div className="flex items-center gap-2">
+            {/* Mobile streak counter */}
+            <button
+              type="button"
+              onClick={() => setStreakDialogOpen(true)}
+              title={currentStreak > 0 ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono transition-all hover:scale-105 active:scale-95 md:hidden",
+                currentStreak > 0
+                  ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
+                  : "bg-muted text-muted-foreground border border-border"
+              )}
+            >
+              <motion.span
+                animate={currentStreak > 0 ? { scale: [1, 1.15, 1] } : {}}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="inline-flex"
+              >
+                <Flame className={cn("w-3.5 h-3.5", currentStreak > 0 ? "fill-orange-500/40" : "")} />
+              </motion.span>
+              {currentStreak}
+            </button>
             <div 
-              className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
-              style={{ backgroundColor: TIER_COLORS[tier] }}
-            />
-            {TIER_DISPLAY_NAMES[tier]}
+              className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
+              style={{ 
+                backgroundColor: `${TIER_COLORS[tier]}20`,
+                color: TIER_COLORS[tier],
+                border: `1.5px solid ${TIER_COLORS[tier]}40`
+              }}
+            >
+              <div 
+                className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
+                style={{ backgroundColor: TIER_COLORS[tier] }}
+              />
+              {TIER_DISPLAY_NAMES[tier]}
+            </div>
           </div>
           <PracticeQuickFab compact />
         </div>
