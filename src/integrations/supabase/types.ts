@@ -3270,6 +3270,7 @@ export type Database = {
           name: string
           parent_phone: string | null
           phone: string
+          previous_ielts_score: number | null
           previous_sat_score: number | null
           review_teacher: string | null
           sat_test_month: string | null
@@ -3295,6 +3296,7 @@ export type Database = {
           name: string
           parent_phone?: string | null
           phone: string
+          previous_ielts_score?: number | null
           previous_sat_score?: number | null
           review_teacher?: string | null
           sat_test_month?: string | null
@@ -3320,6 +3322,7 @@ export type Database = {
           name?: string
           parent_phone?: string | null
           phone?: string
+          previous_ielts_score?: number | null
           previous_sat_score?: number | null
           review_teacher?: string | null
           sat_test_month?: string | null
