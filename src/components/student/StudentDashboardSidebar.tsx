@@ -104,6 +104,7 @@ export function StudentDashboardSidebar() {
   );
 
   return (
+    <>
     <Sidebar collapsible="offcanvas" variant="floating" className="border-r-0">
       <SidebarHeader className="border-b">
         <div className={cn(
@@ -333,5 +334,7 @@ export function StudentDashboardSidebar() {
         </Button>
       </SidebarFooter>
     </Sidebar>
+    <StreakHistoryDialog open={streakDialogOpen} onOpenChange={setStreakDialogOpen} />
+    </>
   );
 }
