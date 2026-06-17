@@ -122,7 +122,7 @@ export default function ReviewRegistration() {
   const [submitCooldown, setSubmitCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
-  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null } | null>(null);
+  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null; course_type: string | null } | null>(null);
 
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
@@ -189,7 +189,7 @@ export default function ReviewRegistration() {
     (async () => {
       const { data, error } = await supabase
         .from("batches")
-        .select("id, batch_name, teacher")
+        .select("id, batch_name, teacher, course_type")
         .eq("id", batchParam)
         .single();
       if (error || !data) {
