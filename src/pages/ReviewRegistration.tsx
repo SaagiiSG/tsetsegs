@@ -698,9 +698,13 @@ export default function ReviewRegistration() {
                 </div>
               )}
 
-              {/* SAT Experience */}
+              {/* Exam Experience (SAT or IELTS based on course type) */}
               <div className="space-y-2">
-                <Label>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></Label>
+                <Label>
+                  {isIELTS
+                    ? <>Та өмнө нь IELTS шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken IELTS before?)</span></>
+                    : <>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></>}
+                </Label>
                 <RadioGroup
                   defaultValue="no"
                   onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
@@ -717,8 +721,8 @@ export default function ReviewRegistration() {
                 </RadioGroup>
               </div>
 
-              {/* Previous SAT Score (conditional) */}
-              {hasTakenSat && (
+              {/* Previous Score (conditional, SAT only) */}
+              {hasTakenSat && !isIELTS && (
                 <div className="space-y-2">
                   <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
                   <Input
@@ -747,24 +751,26 @@ export default function ReviewRegistration() {
                 </div>
               )}
 
-              {/* Planned SAT Date */}
-              <div className="space-y-2">
-                <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
-                <Select
-                  onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Огноо сонгоно уу..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SAT_TEST_DATES.map((date) => (
-                      <SelectItem key={date.value} value={date.value}>
-                        {date.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Planned SAT Date (SAT only) */}
+              {!isIELTS && (
+                <div className="space-y-2">
+                  <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
+                  <Select
+                    onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Огноо сонгоно уу..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SAT_TEST_DATES.map((date) => (
+                        <SelectItem key={date.value} value={date.value}>
+                          {date.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <Button type="submit" className="w-full" disabled={isSubmitting || submitCooldown}>
                 {isSubmitting ? (
