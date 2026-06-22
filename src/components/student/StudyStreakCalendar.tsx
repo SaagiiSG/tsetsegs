@@ -13,7 +13,7 @@ const STREAK_MILESTONES = [
 ];
 
 export const StudyStreakCalendar = () => {
-  const { streak, activityDays, isLoading } = useStudentStreak();
+  const { streak, activityDays, isLoading, isStreakActive } = useStudentStreak();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
