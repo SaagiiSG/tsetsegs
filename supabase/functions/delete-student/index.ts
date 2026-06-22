@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function requireAdmin(req: Request, supabaseAdmin: any): Promise<Response | null> {
+async function requireAdminOrTeacher(req: Request, supabaseAdmin: any): Promise<Response | null> {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -16,10 +16,11 @@ async function requireAdmin(req: Request, supabaseAdmin: any): Promise<Response 
   if (userErr || !userData?.user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
-  const { data: role } = await supabaseAdmin.from('user_roles')
-    .select('role').eq('user_id', userData.user.id).eq('role', 'admin').maybeSingle()
-  if (!role) {
-    return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const { data: roles } = await supabaseAdmin.from('user_roles')
+    .select('role').eq('user_id', userData.user.id)
+  const allowed = (roles ?? []).some((r: any) => r.role === 'admin' || r.role === 'teacher')
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Admin or teacher access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
   return null
 }
