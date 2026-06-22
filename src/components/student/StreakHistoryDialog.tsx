@@ -9,7 +9,7 @@ interface StreakHistoryDialogProps {
 }
 
 export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogProps) {
-  const { streak } = useStudentStreak();
+  const { streak, isStreakActive } = useStudentStreak();
   const current = streak?.current_streak ?? 0;
 
   return (
