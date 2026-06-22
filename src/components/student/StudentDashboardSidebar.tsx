@@ -127,20 +127,20 @@ export function StudentDashboardSidebar() {
               <button
                 type="button"
                 onClick={() => setStreakDialogOpen(true)}
-                title={currentStreak > 0 ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
+                title={isStreakActive ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
                 className={cn(
                   "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold font-mono transition-all hover:scale-105 active:scale-95 shrink-0",
-                  currentStreak > 0
+                  isStreakActive
                     ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
                     : "bg-muted text-muted-foreground border border-border"
                 )}
               >
                 <motion.span
-                  animate={currentStreak > 0 ? { scale: [1, 1.15, 1] } : {}}
+                  animate={isStreakActive ? { scale: [1, 1.15, 1] } : {}}
                   transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                   className="inline-flex"
                 >
-                  <Flame className={cn("w-3.5 h-3.5", currentStreak > 0 ? "fill-orange-500/40" : "")} />
+                  <Flame className={cn("w-3.5 h-3.5", isStreakActive ? "fill-orange-500/40" : "grayscale opacity-50")} />
                 </motion.span>
                 {currentStreak}
               </button>
