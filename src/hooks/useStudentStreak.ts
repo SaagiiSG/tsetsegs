@@ -288,6 +288,7 @@ export const useStudentStreak = () => {
     streak,
     isLoading,
     error,
+    isStreakActive,
     activityDays: activityDays || [],
     updateStreak: updateStreakMutation.mutate,
     isUpdating: updateStreakMutation.isPending,
