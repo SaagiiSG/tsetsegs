@@ -59,7 +59,7 @@ export const StudyStreakCalendar = () => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-500" />
+            <Flame className={`w-5 h-5 ${isStreakActive ? "text-orange-500" : "text-muted-foreground grayscale opacity-50"}`} />
             Study Streak
           </CardTitle>
           
