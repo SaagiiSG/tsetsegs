@@ -37,7 +37,7 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const authFail = await requireAdmin(req, supabaseAdmin)
+    const authFail = await requireAdminOrTeacher(req, supabaseAdmin)
     if (authFail) return authFail
 
     const { studentId, batchId } = await req.json()
