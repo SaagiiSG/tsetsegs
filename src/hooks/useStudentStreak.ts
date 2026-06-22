@@ -171,6 +171,13 @@ export const useStudentStreak = () => {
     enabled: !!studentId,
   });
 
+  const isStreakActive = (() => {
+    if (!streak?.last_activity_date) return false;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    return streak.last_activity_date === today || streak.last_activity_date === yesterday;
+  })();
+
   // Mutation to update streak when student practices
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
