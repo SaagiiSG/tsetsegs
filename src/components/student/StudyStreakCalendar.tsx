@@ -71,9 +71,9 @@ export const StudyStreakCalendar = () => {
           >
             <Badge 
               variant="secondary" 
-              className="text-lg px-3 py-1 bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30"
+              className={`text-lg px-3 py-1 border ${isStreakActive ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30" : "bg-muted border-border text-muted-foreground"}`}
             >
-              <Flame className="w-4 h-4 mr-1 text-orange-500" />
+              <Flame className={`w-4 h-4 mr-1 ${isStreakActive ? "text-orange-500" : "text-muted-foreground grayscale opacity-50"}`} />
               {streak?.current_streak || 0} days
             </Badge>
           </motion.div>
