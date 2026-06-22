@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay, subDays } from "date-fns";
 
 /**
  * Standalone function to update streak for a student (usable outside React components).
@@ -171,6 +171,13 @@ export const useStudentStreak = () => {
     enabled: !!studentId,
   });
 
+  const isStreakActive = (() => {
+    if (!streak?.last_activity_date) return false;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    return streak.last_activity_date === today || streak.last_activity_date === yesterday;
+  })();
+
   // Mutation to update streak when student practices
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
@@ -281,6 +288,7 @@ export const useStudentStreak = () => {
     streak,
     isLoading,
     error,
+    isStreakActive,
     activityDays: activityDays || [],
     updateStreak: updateStreakMutation.mutate,
     isUpdating: updateStreakMutation.isPending,

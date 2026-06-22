@@ -9,7 +9,7 @@ interface StreakHistoryDialogProps {
 }
 
 export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogProps) {
-  const { streak } = useStudentStreak();
+  const { streak, isStreakActive } = useStudentStreak();
   const current = streak?.current_streak ?? 0;
 
   return (
@@ -17,8 +17,8 @@ export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogP
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-500" />
-            {current > 0 ? `${current}-day streak` : 'Start your streak today'}
+            <Flame className={`w-5 h-5 ${isStreakActive ? "text-orange-500" : "text-muted-foreground grayscale opacity-50"}`} />
+            {isStreakActive ? `${current}-day streak` : 'Start your streak today'}
           </DialogTitle>
         </DialogHeader>
         <StudyStreakCalendar />
