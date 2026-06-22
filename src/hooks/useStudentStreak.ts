@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay, subDays } from "date-fns";
 
 /**
  * Standalone function to update streak for a student (usable outside React components).
