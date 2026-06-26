@@ -197,23 +197,45 @@ export const StudyStreakCalendar = () => {
               const showBadgeOnDay = isMilestone;
               const dayNum = format(day, "d");
 
-              const tooltip = isMilestone
-                ? `${dayNum} · ${meta?.badgeName ?? "Milestone"} (Day ${meta?.streakDay}${awardsFreezer ? " + freezer" : ""})${isProjected ? " — upcoming" : ""}`
+              const tooltipContent = isMilestone
+                ? (
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    <div>
+                      <p className="font-semibold">{meta?.badgeName}</p>
+                      <p className="text-xs text-muted-foreground">Day {meta?.streakDay} streak{awardsFreezer ? " + Streak Freezer" : ""}{isProjected ? " (upcoming)" : ""}</p>
+                    </div>
+                  </div>
+                )
                 : awardsFreezer && isProjected
-                  ? `${dayNum} · Streak freezer (Day ${meta?.streakDay}) — upcoming`
+                  ? (
+                    <div className="flex items-center gap-2">
+                      <Snowflake className="w-4 h-4 text-sky-500" />
+                      <div>
+                        <p className="font-semibold">Streak Freezer</p>
+                        <p className="text-xs text-muted-foreground">Day {meta?.streakDay} (upcoming)</p>
+                      </div>
+                    </div>
+                  )
                   : isFreezerUsedDay
-                    ? `${dayNum} · Freezer used here`
+                    ? (
+                      <div className="flex items-center gap-2">
+                        <Snowflake className="w-4 h-4 text-sky-500" />
+                        <p className="font-semibold">Freezer used here</p>
+                      </div>
+                    )
                     : isActive
-                      ? `${dayNum} · Day ${meta?.streakDay} of streak`
-                      : undefined;
+                      ? (
+                        <p className="font-semibold">Day {meta?.streakDay} of streak</p>
+                      )
+                      : null;
 
-              return (
+              const cell = (
                 <motion.div
                   key={day.toISOString()}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.01 }}
-                  title={tooltip}
                   className={`
                     aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative overflow-hidden
                     ${isProjected && isMilestone
@@ -292,6 +314,21 @@ export const StudyStreakCalendar = () => {
                   )}
                 </motion.div>
               );
+
+              if (tooltipContent) {
+                return (
+                  <Tooltip key={day.toISOString()}>
+                    <TooltipTrigger asChild>
+                      {cell}
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      {tooltipContent}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return cell;
             })}
           </div>
 
