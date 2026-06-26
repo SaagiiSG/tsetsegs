@@ -29,8 +29,8 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
 
   return (
-    <Sidebar className={cn("border-r-0", open ? "w-60" : "w-14")} collapsible="icon">
-      <SidebarContent className="pt-4 bg-sidebar">
+    <Sidebar className={cn("border-r-0 flex flex-col", open ? "w-60" : "w-14")} collapsible="icon">
+      <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto">
         {/* Logo and Title */}
         <motion.div 
           className="px-3 pb-4 mb-2"
