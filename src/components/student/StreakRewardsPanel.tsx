@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { Snowflake, Flame, Lock, Sparkles, Zap } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Snowflake, Flame, Lock, Sparkles, Zap, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStudentStreak, STREAK_MILESTONES, computeDailyStreakXp } from "@/hooks/useStudentStreak";
-import { format, parseISO, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 
 export function StreakRewardsPanel() {
   const { streak, freezersAvailable, milestonesAchieved, nextMilestone, isStreakActive } = useStudentStreak();
@@ -11,10 +10,17 @@ export function StreakRewardsPanel() {
   const today = format(new Date(), "yyyy-MM-dd");
   const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
 
+  const practicedToday = streak?.last_activity_date === today;
   const earnedXpToday = streak?.last_daily_xp_date === today ? computeDailyStreakXp(current) : 0;
   const nextDayXp = computeDailyStreakXp(current + 1);
 
   const freezerJustUsed = streak?.freezer_last_used_date === yesterday;
+
+  // Did today's check-in hit a milestone? (current streak landed on a milestone day today)
+  const milestoneEarnedToday = practicedToday
+    ? STREAK_MILESTONES.find((m) => m.days === current) ?? null
+    : null;
+  const freezerEarnedToday = practicedToday && current > 0 && current % 7 === 0;
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
