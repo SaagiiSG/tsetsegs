@@ -370,7 +370,7 @@ export const useStudentStreak = () => {
   const activityDayMeta = (() => {
     const days = (activityDays || []).slice().sort(); // ascending
     const meta: Record<string, { streakDay: number; isMilestone: boolean; awardsFreezer: boolean }> = {};
-    const milestoneSet = new Set(STREAK_MILESTONES.map((m) => m.days));
+    const milestoneSet = new Set<number>(STREAK_MILESTONES.map((m) => m.days));
     let run = 0;
     let prev: string | null = null;
     for (const d of days) {
