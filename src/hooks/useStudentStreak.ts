@@ -367,10 +367,20 @@ export const useStudentStreak = () => {
   });
 
   // Compute per-day streak position + milestone/freezer markers for calendar
+  // Includes past actual activity days AND projected future days from the current run.
+  type DayMeta = {
+    streakDay: number;
+    isMilestone: boolean;
+    awardsFreezer: boolean;
+    projected?: boolean;
+    badgeName?: string;
+  };
   const activityDayMeta = (() => {
     const days = (activityDays || []).slice().sort(); // ascending
-    const meta: Record<string, { streakDay: number; isMilestone: boolean; awardsFreezer: boolean }> = {};
-    const milestoneSet = new Set<number>(STREAK_MILESTONES.map((m) => m.days));
+    const meta: Record<string, DayMeta> = {};
+    const milestoneByDay = new Map<number, { badgeName: string; awardsFreezer: boolean }>(
+      STREAK_MILESTONES.map((m) => [m.days, { badgeName: m.badgeName, awardsFreezer: m.awardsFreezer }])
+    );
     let run = 0;
     let prev: string | null = null;
     for (const d of days) {
@@ -380,12 +390,44 @@ export const useStudentStreak = () => {
       } else {
         run = 1;
       }
+      const m = milestoneByDay.get(run);
       meta[d] = {
         streakDay: run,
-        isMilestone: milestoneSet.has(run),
+        isMilestone: !!m,
         awardsFreezer: run % 7 === 0,
+        badgeName: m?.badgeName,
       };
       prev = d;
+    }
+
+    // Future projection from the active run so students can SEE upcoming rewards
+    if (streak?.last_activity_date && (streak.current_streak ?? 0) > 0) {
+      const last = parseISO(streak.last_activity_date);
+      const today = startOfDay(new Date());
+      const yesterday = subDays(today, 1);
+      const stillAlive = last >= yesterday; // streak not broken yet
+      if (stillAlive) {
+        const longest = streak.longest_streak ?? 0;
+        for (let i = 1; i <= 35; i++) {
+          const d = addDays(last, i);
+          const dStr = format(d, "yyyy-MM-dd");
+          if (meta[dStr]) continue;
+          const projectedDay = streak.current_streak + i;
+          const milestoneDef = milestoneByDay.get(projectedDay);
+          const flagKey = MILESTONE_FLAG_MAP[projectedDay as 3 | 7 | 10 | 14 | 15 | 21];
+          const alreadyAchieved = flagKey ? (streak as any)[flagKey] === true : false;
+          const isMilestone = !!milestoneDef && !alreadyAchieved;
+          const awardsFreezer = projectedDay % 7 === 0 && projectedDay > longest;
+          if (!isMilestone && !awardsFreezer) continue; // only project reward days
+          meta[dStr] = {
+            streakDay: projectedDay,
+            isMilestone,
+            awardsFreezer,
+            projected: true,
+            badgeName: milestoneDef?.badgeName,
+          };
+        }
+      }
     }
     return meta;
   })();
