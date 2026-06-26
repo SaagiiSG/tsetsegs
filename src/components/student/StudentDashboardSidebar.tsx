@@ -67,7 +67,7 @@ export function StudentDashboardSidebar() {
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const { data: annData } = useStudentAnnouncements();
-  const { streak, isStreakActive } = useStudentStreak();
+  const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const unread = annData?.unreadCount ?? 0;
   const currentStreak = streak?.current_streak ?? 0;
 
