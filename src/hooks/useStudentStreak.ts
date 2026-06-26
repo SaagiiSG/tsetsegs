@@ -366,6 +366,30 @@ export const useStudentStreak = () => {
     enabled: !!studentId,
   });
 
+  // Compute per-day streak position + milestone/freezer markers for calendar
+  const activityDayMeta = (() => {
+    const days = (activityDays || []).slice().sort(); // ascending
+    const meta: Record<string, { streakDay: number; isMilestone: boolean; awardsFreezer: boolean }> = {};
+    const milestoneSet = new Set(STREAK_MILESTONES.map((m) => m.days));
+    let run = 0;
+    let prev: string | null = null;
+    for (const d of days) {
+      if (prev) {
+        const diff = differenceInDays(parseISO(d), parseISO(prev));
+        run = diff === 1 ? run + 1 : 1;
+      } else {
+        run = 1;
+      }
+      meta[d] = {
+        streakDay: run,
+        isMilestone: milestoneSet.has(run),
+        awardsFreezer: run % 7 === 0,
+      };
+      prev = d;
+    }
+    return meta;
+  })();
+
   return {
     streak,
     isLoading,
@@ -375,6 +399,7 @@ export const useStudentStreak = () => {
     milestonesAchieved,
     nextMilestone,
     activityDays: activityDays || [],
+    activityDayMeta,
     updateStreak: updateStreakMutation.mutate,
     isUpdating: updateStreakMutation.isPending,
   };
