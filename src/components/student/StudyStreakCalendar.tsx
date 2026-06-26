@@ -56,6 +56,7 @@ export const StudyStreakCalendar = () => {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <Card className="bg-card border-border overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
