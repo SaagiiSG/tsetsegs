@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { DashboardStats } from '@/components/admin/DashboardStats';
@@ -25,7 +24,7 @@ import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
-import { LogOut, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
 
