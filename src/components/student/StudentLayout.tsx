@@ -39,7 +39,7 @@ function StudentLayoutContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const courses = useStudentCourses();
-  const { streak, isStreakActive } = useStudentStreak();
+  const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
