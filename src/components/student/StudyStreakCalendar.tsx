@@ -235,25 +235,27 @@ export const StudyStreakCalendar = () => {
                       <span className={`absolute top-0.5 left-1 text-[9px] font-mono leading-none ${isProjected ? "opacity-70" : "text-white/80"}`}>
                         {dayNum}
                       </span>
-                      <motion.div
-                        initial={{ scale: 0, rotate: -20 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: "spring", stiffness: 260, damping: 14 }}
-                      >
-                        <Award className={`w-5 h-5 ${isProjected ? "text-amber-500" : "text-white drop-shadow"}`} />
-                      </motion.div>
+                      <div className="flex items-center gap-1">
+                        <motion.div
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 260, damping: 14 }}
+                        >
+                          <Award className={`w-5 h-5 ${isProjected ? "text-amber-500" : "text-white drop-shadow"}`} />
+                        </motion.div>
+                        {awardsFreezer && (
+                          <motion.div
+                            initial={{ scale: 0, rotate: 20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+                          >
+                            <Snowflake className={`w-4 h-4 ${isProjected ? "text-sky-500" : "text-sky-200 drop-shadow"}`} />
+                          </motion.div>
+                        )}
+                      </div>
                       <span className={`text-[8px] font-bold uppercase tracking-tight leading-none mt-0.5 truncate max-w-full px-0.5 ${isProjected ? "" : "text-white/90"}`}>
                         {meta?.badgeName?.split(" ")[0]}
                       </span>
-                      {awardsFreezer && (
-                        <motion.div
-                          initial={{ scale: 0, rotate: 20 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
-                        >
-                          <Snowflake className={`w-4 h-4 ${isProjected ? "text-sky-500" : "text-sky-200 drop-shadow"}`} />
-                        </motion.div>
-                      )}
                     </>
                   ) : isProjected && awardsFreezer ? (
                     <>
