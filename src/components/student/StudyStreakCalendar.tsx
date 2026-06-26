@@ -191,7 +191,20 @@ export const StudyStreakCalendar = () => {
               const meta = activityDayMeta?.[dateStr];
               const isMilestone = !!meta?.isMilestone;
               const awardsFreezer = !!meta?.awardsFreezer;
+              const isProjected = !!meta?.projected;
               const isFreezerUsedDay = streak?.freezer_last_used_date === dateStr;
+              const showBadgeOnDay = isMilestone;
+              const dayNum = format(day, "d");
+
+              const tooltip = isMilestone
+                ? `${dayNum} · ${meta?.badgeName ?? "Milestone"} (Day ${meta?.streakDay}${awardsFreezer ? " + freezer" : ""})${isProjected ? " — upcoming" : ""}`
+                : awardsFreezer && isProjected
+                  ? `${dayNum} · Streak freezer (Day ${meta?.streakDay}) — upcoming`
+                  : isFreezerUsedDay
+                    ? `${dayNum} · Freezer used here`
+                    : isActive
+                      ? `${dayNum} · Day ${meta?.streakDay} of streak`
+                      : undefined;
 
               return (
                 <motion.div
@@ -199,58 +212,74 @@ export const StudyStreakCalendar = () => {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.01 }}
-                  title={
-                    isMilestone
-                      ? `Day ${meta?.streakDay} — milestone reward`
-                      : isFreezerUsedDay
-                        ? "Freezer used here"
-                        : isActive
-                          ? `Day ${meta?.streakDay} of streak`
-                          : undefined
-                  }
+                  title={tooltip}
                   className={`
-                    aspect-square rounded-lg flex items-center justify-center text-sm relative
-                    ${isMilestone
-                      ? "bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white font-bold shadow-lg shadow-amber-500/40 ring-1 ring-amber-300"
-                      : isActive
-                        ? "bg-gradient-to-br from-orange-500 to-red-500 text-white font-semibold shadow-lg shadow-orange-500/30"
-                        : isFreezerUsedDay
-                          ? "bg-sky-500/20 border border-sky-400/40 text-sky-700 dark:text-sky-300"
-                          : "bg-muted/30 text-muted-foreground"
+                    aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative overflow-hidden
+                    ${isProjected && isMilestone
+                      ? "border-2 border-dashed border-amber-400/70 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                      : isProjected && awardsFreezer
+                        ? "border-2 border-dashed border-sky-400/70 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                        : isMilestone
+                          ? "bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white font-bold shadow-lg shadow-amber-500/40 ring-1 ring-amber-300"
+                          : isActive
+                            ? "bg-gradient-to-br from-orange-500 to-red-500 text-white font-semibold shadow-lg shadow-orange-500/30"
+                            : isFreezerUsedDay
+                              ? "bg-sky-500/20 border border-sky-400/40 text-sky-700 dark:text-sky-300"
+                              : "bg-muted/30 text-muted-foreground"
                     }
                     ${isTodayDate ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
                   `}
                 >
-                  {format(day, "d")}
-                  {isMilestone && (
-                    <motion.div
-                      initial={{ scale: 0, rotate: -30 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      className="absolute -top-1.5 -right-1.5 rounded-full bg-white p-0.5 shadow"
-                    >
-                      <Award className="w-3 h-3 text-amber-500" />
-                    </motion.div>
-                  )}
-                  {awardsFreezer && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow"
-                    >
-                      <Snowflake className="w-2.5 h-2.5 text-sky-500" />
-                    </motion.div>
-                  )}
-                  {isFreezerUsedDay && !isActive && (
-                    <Snowflake className="w-3 h-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sky-500 opacity-70" />
-                  )}
-                  {isActive && !isMilestone && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1"
-                    >
-                      <Sparkles className="w-3 h-3 text-yellow-400" />
-                    </motion.div>
+                  {showBadgeOnDay ? (
+                    <>
+                      <span className={`absolute top-0.5 left-1 text-[9px] font-mono leading-none ${isProjected ? "opacity-70" : "text-white/80"}`}>
+                        {dayNum}
+                      </span>
+                      <motion.div
+                        initial={{ scale: 0, rotate: -20 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 14 }}
+                      >
+                        <Award className={`w-5 h-5 ${isProjected ? "text-amber-500" : "text-white drop-shadow"}`} />
+                      </motion.div>
+                      <span className={`text-[8px] font-bold uppercase tracking-tight leading-none mt-0.5 truncate max-w-full px-0.5 ${isProjected ? "" : "text-white/90"}`}>
+                        {meta?.badgeName?.split(" ")[0]}
+                      </span>
+                      {awardsFreezer && (
+                        <Snowflake className={`w-2.5 h-2.5 absolute bottom-0.5 right-0.5 ${isProjected ? "text-sky-500" : "text-sky-200"}`} />
+                      )}
+                    </>
+                  ) : isProjected && awardsFreezer ? (
+                    <>
+                      <span className="absolute top-0.5 left-1 text-[9px] font-mono leading-none opacity-70">{dayNum}</span>
+                      <Snowflake className="w-5 h-5 text-sky-500" />
+                      <span className="text-[8px] font-bold uppercase tracking-tight leading-none mt-0.5">Freezer</span>
+                    </>
+                  ) : (
+                    <>
+                      {dayNum}
+                      {awardsFreezer && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow"
+                        >
+                          <Snowflake className="w-2.5 h-2.5 text-sky-500" />
+                        </motion.div>
+                      )}
+                      {isFreezerUsedDay && !isActive && (
+                        <Snowflake className="w-3 h-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sky-500 opacity-70" />
+                      )}
+                      {isActive && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1"
+                        >
+                          <Sparkles className="w-3 h-3 text-yellow-400" />
+                        </motion.div>
+                      )}
+                    </>
                   )}
                 </motion.div>
               );
