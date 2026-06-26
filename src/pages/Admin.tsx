@@ -92,12 +92,6 @@ const Admin = () => {
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={signOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
           </div>
         </header>
 
