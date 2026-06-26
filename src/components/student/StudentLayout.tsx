@@ -144,6 +144,17 @@ function StudentLayoutContent() {
               </motion.span>
               {currentStreak}
             </button>
+            {freezersAvailable > 0 && (
+              <button
+                type="button"
+                onClick={() => setStreakDialogOpen(true)}
+                title={`${freezersAvailable} streak freezer${freezersAvailable === 1 ? '' : 's'}`}
+                className="md:hidden flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold font-mono bg-gradient-to-br from-sky-400/20 to-blue-500/20 text-sky-600 dark:text-sky-300 border border-sky-400/30 hover:scale-105 active:scale-95 transition-all"
+              >
+                <Snowflake className="w-3.5 h-3.5" />
+                {freezersAvailable}
+              </button>
+            )}
             <div 
               className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
               style={{ 
