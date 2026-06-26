@@ -3,7 +3,7 @@ import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Loader2, Flame } from 'lucide-react';
+import { Loader2, Flame, Snowflake } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
