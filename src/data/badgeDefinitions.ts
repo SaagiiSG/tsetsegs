@@ -524,6 +524,57 @@ export const badgeDefinitions: BadgeDefinition[] = [
   
   // Streak Badges - Motivate daily practice
   {
+    id: 'spark',
+    name: 'Spark',
+    description: 'Reach a 3-day study streak',
+    rarity: 'common',
+    pointValue: 30,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [{ type: 'streak_days', target: 3, label: '3-day streak' }]
+  },
+  {
+    id: 'double-digits',
+    name: 'Double Digits',
+    description: 'Reach a 10-day study streak',
+    rarity: 'uncommon',
+    pointValue: 100,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [{ type: 'streak_days', target: 10, label: '10-day streak' }]
+  },
+  {
+    id: 'fortnight-flame',
+    name: 'Fortnight Flame',
+    description: 'Reach a 14-day study streak',
+    rarity: 'rare',
+    pointValue: 140,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [{ type: 'streak_days', target: 14, label: '14-day streak' }]
+  },
+  {
+    id: 'half-month-hero',
+    name: 'Half Month Hero',
+    description: 'Reach a 15-day study streak',
+    rarity: 'rare',
+    pointValue: 150,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [{ type: 'streak_days', target: 15, label: '15-day streak' }]
+  },
+  {
+    id: 'three-week-inferno',
+    name: 'Three Week Inferno',
+    description: 'Reach a 21-day study streak',
+    rarity: 'epic',
+    pointValue: 210,
+    iconName: 'Flame',
+    category: 'streak',
+    requirements: [{ type: 'streak_days', target: 21, label: '21-day streak' }]
+  },
+
+  {
     id: 'week-warrior',
     name: 'Week Warrior',
     description: 'Maintain a 7-day study streak',
