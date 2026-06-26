@@ -1,7 +1,9 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -23,10 +26,11 @@ import { menuSections } from "@/components/admin/menuSections";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
+  const { signOut } = useAuth();
 
   return (
-    <Sidebar className={cn("border-r-0", open ? "w-60" : "w-14")} collapsible="icon">
-      <SidebarContent className="pt-4 bg-sidebar">
+    <Sidebar className={cn("border-r-0 flex flex-col", open ? "w-60" : "w-14")} collapsible="icon">
+      <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto">
         {/* Logo and Title */}
         <motion.div 
           className="px-3 pb-4 mb-2"
@@ -163,6 +167,32 @@ export function AdminSidebar() {
           </motion.div>
         ))}
       </SidebarContent>
+
+      <SidebarFooter className="p-2 border-t border-border/50 bg-sidebar">
+        <Button
+          variant="ghost"
+          onClick={signOut}
+          className={cn(
+            "w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            !open && "justify-center px-0"
+          )}
+        >
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <AnimatePresence mode="wait">
+            {open && (
+              <motion.span
+                className="text-sm font-medium"
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -5 }}
+                transition={{ duration: 0.15 }}
+              >
+                Sign Out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
