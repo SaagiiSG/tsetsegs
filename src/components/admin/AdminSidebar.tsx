@@ -167,6 +167,32 @@ export function AdminSidebar() {
           </motion.div>
         ))}
       </SidebarContent>
+
+      <SidebarFooter className="p-2 border-t border-border/50 bg-sidebar">
+        <Button
+          variant="ghost"
+          onClick={signOut}
+          className={cn(
+            "w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            !open && "justify-center px-0"
+          )}
+        >
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <AnimatePresence mode="wait">
+            {open && (
+              <motion.span
+                className="text-sm font-medium"
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -5 }}
+                transition={{ duration: 0.15 }}
+              >
+                Sign Out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
