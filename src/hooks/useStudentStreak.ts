@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
-import { format, differenceInDays, parseISO, startOfDay, subDays } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay, subDays, addDays } from "date-fns";
 
 // Milestone ladder — every milestone earns a badge; 7/14/21 also award a freezer.
 export const STREAK_MILESTONES = [
