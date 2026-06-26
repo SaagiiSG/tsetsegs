@@ -30,7 +30,7 @@ import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
