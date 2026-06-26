@@ -256,6 +256,22 @@ export const StudyStreakCalendar = () => {
               );
             })}
           </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-sm bg-gradient-to-br from-orange-500 to-red-500" />
+              Practiced
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Award className="w-3 h-3 text-amber-500" />
+              Milestone badge
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Snowflake className="w-3 h-3 text-sky-500" />
+              Freezer day
+            </span>
+          </div>
         </div>
 
         {/* Achieved milestones */}
