@@ -9,7 +9,7 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame, Snowflake
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
