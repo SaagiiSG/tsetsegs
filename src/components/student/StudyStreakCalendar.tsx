@@ -246,7 +246,13 @@ export const StudyStreakCalendar = () => {
                         {meta?.badgeName?.split(" ")[0]}
                       </span>
                       {awardsFreezer && (
-                        <Snowflake className={`w-2.5 h-2.5 absolute bottom-0.5 right-0.5 ${isProjected ? "text-sky-500" : "text-sky-200"}`} />
+                        <motion.div
+                          initial={{ scale: 0, rotate: 20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+                        >
+                          <Snowflake className={`w-4 h-4 ${isProjected ? "text-sky-500" : "text-sky-200 drop-shadow"}`} />
+                        </motion.div>
                       )}
                     </>
                   ) : isProjected && awardsFreezer ? (
