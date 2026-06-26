@@ -300,6 +300,10 @@ export const StudyStreakCalendar = () => {
               <Snowflake className="w-3 h-3 text-sky-500" />
               Freezer day
             </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-sm border-2 border-dashed border-amber-400" />
+              Upcoming reward
+            </span>
           </div>
         </div>
 
