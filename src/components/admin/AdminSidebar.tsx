@@ -1,7 +1,9 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -23,6 +26,7 @@ import { menuSections } from "@/components/admin/menuSections";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
+  const { signOut } = useAuth();
 
   return (
     <Sidebar className={cn("border-r-0", open ? "w-60" : "w-14")} collapsible="icon">
