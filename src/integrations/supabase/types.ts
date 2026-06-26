@@ -3151,9 +3151,18 @@ export type Database = {
         Row: {
           created_at: string
           current_streak: number
+          freezer_last_used_date: string | null
+          freezers_available: number
+          freezers_earned_total: number
           id: string
           last_activity_date: string | null
+          last_daily_xp_date: string | null
           longest_streak: number
+          milestone_10_achieved: boolean
+          milestone_14_achieved: boolean
+          milestone_15_achieved: boolean
+          milestone_21_achieved: boolean
+          milestone_3_achieved: boolean
           streak_100_achieved: boolean
           streak_30_achieved: boolean
           streak_7_achieved: boolean
@@ -3165,9 +3174,18 @@ export type Database = {
         Insert: {
           created_at?: string
           current_streak?: number
+          freezer_last_used_date?: string | null
+          freezers_available?: number
+          freezers_earned_total?: number
           id?: string
           last_activity_date?: string | null
+          last_daily_xp_date?: string | null
           longest_streak?: number
+          milestone_10_achieved?: boolean
+          milestone_14_achieved?: boolean
+          milestone_15_achieved?: boolean
+          milestone_21_achieved?: boolean
+          milestone_3_achieved?: boolean
           streak_100_achieved?: boolean
           streak_30_achieved?: boolean
           streak_7_achieved?: boolean
@@ -3179,9 +3197,18 @@ export type Database = {
         Update: {
           created_at?: string
           current_streak?: number
+          freezer_last_used_date?: string | null
+          freezers_available?: number
+          freezers_earned_total?: number
           id?: string
           last_activity_date?: string | null
+          last_daily_xp_date?: string | null
           longest_streak?: number
+          milestone_10_achieved?: boolean
+          milestone_14_achieved?: boolean
+          milestone_15_achieved?: boolean
+          milestone_21_achieved?: boolean
+          milestone_3_achieved?: boolean
           streak_100_achieved?: boolean
           streak_30_achieved?: boolean
           streak_7_achieved?: boolean

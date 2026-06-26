@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StreakExtendedToast } from './StreakExtendedToast';
+import type { StreakExtendedDetail } from '@/hooks/useStudentStreak';
 
 export const STREAK_EXTENDED_EVENT = 'streak:extended';
-
-export interface StreakExtendedDetail {
-  newStreak: number;
-  isNew: boolean;
-}
 
 export function StreakCelebrationListener() {
   const [active, setActive] = useState<StreakExtendedDetail | null>(null);
@@ -31,6 +27,10 @@ export function StreakCelebrationListener() {
       open={!!active}
       streak={active.newStreak}
       isNew={active.isNew}
+      xpEarned={active.xpEarned}
+      freezerEarned={active.freezerEarned}
+      freezerUsed={active.freezerUsed}
+      milestonesUnlocked={active.milestonesUnlocked}
       onClose={() => setActive(null)}
     />
   );

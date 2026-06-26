@@ -9,7 +9,7 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame
+  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame, Snowflake
 } from 'lucide-react';
 import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ export function StudentDashboardSidebar() {
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const { data: annData } = useStudentAnnouncements();
-  const { streak, isStreakActive } = useStudentStreak();
+  const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const unread = annData?.unreadCount ?? 0;
   const currentStreak = streak?.current_streak ?? 0;
 
@@ -144,6 +144,17 @@ export function StudentDashboardSidebar() {
                 </motion.span>
                 {currentStreak}
               </button>
+              {freezersAvailable > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStreakDialogOpen(true)}
+                  title={`${freezersAvailable} streak freezer${freezersAvailable === 1 ? '' : 's'}`}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold font-mono bg-gradient-to-br from-sky-400/20 to-blue-500/20 text-sky-600 dark:text-sky-300 border border-sky-400/30 hover:scale-105 active:scale-95 transition-all shrink-0"
+                >
+                  <Snowflake className="w-3.5 h-3.5" />
+                  {freezersAvailable}
+                </button>
+              )}
             </motion.div>
           )}
         </div>
