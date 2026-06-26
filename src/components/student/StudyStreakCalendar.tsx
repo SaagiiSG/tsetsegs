@@ -379,6 +379,7 @@ export const StudyStreakCalendar = () => {
         )}
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 };
 
