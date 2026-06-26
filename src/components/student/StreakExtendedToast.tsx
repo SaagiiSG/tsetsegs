@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Flame, Sparkles } from 'lucide-react';
+import { Flame, Sparkles, Snowflake, Zap, Award } from 'lucide-react';
 
 interface StreakExtendedToastProps {
   open: boolean;
   streak: number;
   isNew?: boolean;
+  xpEarned?: number;
+  freezerEarned?: boolean;
+  freezerUsed?: boolean;
+  milestonesUnlocked?: { days: number; badgeName: string; awardsFreezer: boolean }[];
   onClose: () => void;
 }
 
-export function StreakExtendedToast({ open, streak, isNew, onClose }: StreakExtendedToastProps) {
+export function StreakExtendedToast({
+  open, streak, isNew, xpEarned = 0, freezerEarned, freezerUsed, milestonesUnlocked = [], onClose,
+}: StreakExtendedToastProps) {
   const [visible, setVisible] = useState(open);
 
   useEffect(() => {
@@ -18,7 +24,7 @@ export function StreakExtendedToast({ open, streak, isNew, onClose }: StreakExte
     const t = setTimeout(() => {
       setVisible(false);
       setTimeout(onClose, 300);
-    }, 2800);
+    }, 3400);
     return () => clearTimeout(t);
   }, [open, onClose]);
 
@@ -44,7 +50,6 @@ export function StreakExtendedToast({ open, streak, isNew, onClose }: StreakExte
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
             className="relative rounded-3xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-8 md:p-10 text-center shadow-2xl shadow-orange-500/40 max-w-sm mx-4"
           >
-            {/* Sparkle ring */}
             {[...Array(8)].map((_, i) => {
               const angle = (i / 8) * Math.PI * 2;
               const radius = 110;
@@ -101,14 +106,65 @@ export function StreakExtendedToast({ open, streak, isNew, onClose }: StreakExte
               {streak === 1 ? 'day' : 'days'} in a row
             </p>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="mt-4 text-white/80 text-xs"
-            >
-              Come back tomorrow to keep it going.
-            </motion.p>
+            {/* Rewards stack */}
+            <div className="mt-4 space-y-1.5">
+              {xpEarned > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-white font-bold font-mono text-sm"
+                >
+                  <Zap className="w-4 h-4 fill-yellow-300 text-yellow-300" />
+                  +{xpEarned} XP
+                </motion.div>
+              )}
+              {freezerUsed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="flex items-center justify-center gap-1.5 text-white text-xs font-semibold"
+                >
+                  <Snowflake className="w-3.5 h-3.5" />
+                  Freezer used — yesterday covered
+                </motion.div>
+              )}
+              {freezerEarned && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-400/30 border border-sky-200/40 text-white font-bold text-xs"
+                >
+                  <Snowflake className="w-3.5 h-3.5" />
+                  +1 Streak Freezer
+                </motion.div>
+              )}
+              {milestonesUnlocked.map((m, idx) => (
+                <motion.div
+                  key={m.days}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 + idx * 0.1 }}
+                  className="flex items-center justify-center gap-1.5 text-white text-xs font-semibold"
+                >
+                  <Award className="w-3.5 h-3.5 text-yellow-200" />
+                  Badge unlocked: {m.badgeName}
+                </motion.div>
+              ))}
+            </div>
+
+            {milestonesUnlocked.length === 0 && !freezerEarned && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="mt-3 text-white/80 text-xs"
+              >
+                Come back tomorrow to keep it going.
+              </motion.p>
+            )}
           </motion.div>
         </motion.div>
       )}
