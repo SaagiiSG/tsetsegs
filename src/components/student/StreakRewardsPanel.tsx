@@ -78,6 +78,45 @@ export function StreakRewardsPanel() {
         </motion.div>
       )}
 
+      {/* Today's haul — visible every day the student logs practice */}
+      {practicedToday && (earnedXpToday > 0 || milestoneEarnedToday || freezerEarnedToday) && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-lg border border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-amber-500/10 to-red-500/10 p-3 space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Today's reward
+            </p>
+            <span className="text-[10px] font-mono text-muted-foreground">Day {current}</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {earnedXpToday > 0 && (
+              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-300 text-xs font-bold font-mono">
+                <Zap className="w-3.5 h-3.5 fill-amber-500" />
+                +{earnedXpToday} XP
+              </div>
+            )}
+            {freezerEarnedToday && (
+              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-700 dark:text-sky-300 text-xs font-bold">
+                <Snowflake className="w-3.5 h-3.5" />
+                +1 Freezer
+              </div>
+            )}
+            {milestoneEarnedToday && (
+              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/20 border border-orange-500/40 text-orange-700 dark:text-orange-300 text-xs font-bold">
+                <Award className="w-3.5 h-3.5" />
+                Badge: {milestoneEarnedToday.badgeName}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+
       {/* Milestone ladder */}
       <div>
         <div className="flex items-center justify-between mb-2">
