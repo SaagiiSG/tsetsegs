@@ -15,6 +15,7 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CourseSwitcher } from './CourseSwitcher';
+import { SidebarRankBox } from './SidebarRankBox';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
