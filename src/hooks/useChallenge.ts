@@ -212,27 +212,36 @@ export async function createChallenge(
     ready_at: new Date().toISOString(),
   });
 
-  // 4. Insert invited friends as participants (they'll mark themselves ready)
+  // 4. Insert invited friends as participants (skip any already in an active challenge)
   if (args.invited_account_ids.length > 0) {
-    // fetch their display names
-    const { data: accts } = await supabase
-      .from('student_accounts')
-      .select('id, phone_number')
-      .in('id', args.invited_account_ids);
-    const phones = (accts ?? []).map((a: any) => a.phone_number);
-    const { data: studs } = await supabase
-      .from('students')
-      .select('first_name, last_name, phone')
-      .in('phone', phones);
-    const nameByPhone = new Map<string, string>();
-    (studs ?? []).forEach((s: any) => nameByPhone.set(s.phone, `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim()));
-    const rows = (accts ?? []).map((a: any) => ({
-      challenge_id: ch.id,
-      student_account_id: a.id,
-      display_name: nameByPhone.get(a.phone_number) || a.phone_number,
-    }));
-    if (rows.length > 0) {
-      await supabase.from('challenge_participants').insert(rows);
+    const { data: busy } = await supabase
+      .from('challenge_participants')
+      .select('student_account_id, challenges!inner(status)')
+      .in('student_account_id', args.invited_account_ids)
+      .in('challenges.status', ['lobby', 'active']);
+    const busySet = new Set((busy ?? []).map((b: any) => b.student_account_id));
+    const availableIds = args.invited_account_ids.filter((id) => !busySet.has(id));
+
+    if (availableIds.length > 0) {
+      const { data: accts } = await supabase
+        .from('student_accounts')
+        .select('id, phone_number')
+        .in('id', availableIds);
+      const phones = (accts ?? []).map((a: any) => a.phone_number);
+      const { data: studs } = await supabase
+        .from('students')
+        .select('first_name, last_name, phone')
+        .in('phone', phones);
+      const nameByPhone = new Map<string, string>();
+      (studs ?? []).forEach((s: any) => nameByPhone.set(s.phone, `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim()));
+      const rows = (accts ?? []).map((a: any) => ({
+        challenge_id: ch.id,
+        student_account_id: a.id,
+        display_name: nameByPhone.get(a.phone_number) || a.phone_number,
+      }));
+      if (rows.length > 0) {
+        await supabase.from('challenge_participants').insert(rows);
+      }
     }
   }
 
