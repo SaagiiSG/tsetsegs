@@ -51,8 +51,9 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
 
   if (isLoading || !prediction || prediction.calibrationLocked) return null;
 
-  // ---------- Locked state ----------
+  // ---------- Locked state (drawer only) ----------
   if (!unlocked) {
+    if (mode !== 'drawer') return null;
     const pct = Math.min(100, Math.round((distinct / UNLOCK_AT) * 100));
     return (
       <Card className="border-dashed border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-transparent">
@@ -83,6 +84,9 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
       </Card>
     );
   }
+
+  // ---------- Unlocked state (dashboard only) ----------
+  if (mode !== 'dashboard') return null;
 
   // ---------- Unlocked state ----------
   const { latest } = prediction.simulation!;
