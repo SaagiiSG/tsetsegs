@@ -24,6 +24,8 @@ export interface ScorePredictionResult {
     variancePenalty: number;
   };
   hasBaseline: boolean;
+  // Total distinct questions the student has solved on the platform.
+  distinctSolved: number;
   // Simulation engine — teacher/admin facing only. Students never see this.
   simulation?: {
     latest: SimulationResult;
