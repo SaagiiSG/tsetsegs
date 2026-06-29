@@ -57,6 +57,13 @@ import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 
+// IELTS Prep Portal
+import { IELTSLayout } from "./components/ielts/IELTSLayout";
+import IELTSDashboardHome from "./pages/ielts/IELTSDashboardHome";
+import ChooseCourse from "./pages/ChooseCourse";
+
+
+
 
 // Registration Pages
 import ReviewRegistration from "./pages/ReviewRegistration";
@@ -198,6 +205,16 @@ const App = () => (
                   </Route>
                   {/* Bluebook test-taking - outside StudentLayout for full screen */}
                   <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
+
+                  {/* Course chooser (dual-enrolled students) */}
+                  <Route path="/choose-course" element={<ChooseCourse />} />
+
+                  {/* IELTS Prep Portal */}
+                  <Route path="/ielts" element={<IELTSLayout />}>
+                    <Route index element={<Navigate to="/ielts/dashboard" replace />} />
+                    <Route path="dashboard" element={<IELTSDashboardHome />} />
+                  </Route>
+                  
                   
                   <Route path="/student/:id" element={<StudentReveal />} />
                   <Route path="/student/share/:shareToken" element={<StudentShareProfile />} />
