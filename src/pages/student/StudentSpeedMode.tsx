@@ -334,15 +334,16 @@ export default function StudentSpeedMode() {
         };
       });
 
-      // Last 7 days history (oldest → newest for chart)
-      const weekAgoMs = subDays(new Date(), 7).getTime();
+      // Keep up to 30 days; range filter applied client-side from the chart toggle.
+      const thirtyAgoMs = subDays(new Date(), 30).getTime();
       const history = normalized
-        .filter((n) => new Date(n.createdAt).getTime() >= weekAgoMs)
+        .filter((n) => new Date(n.createdAt).getTime() >= thirtyAgoMs)
         .slice()
         .reverse()
         .map((n) => ({
-          date: format(new Date(n.createdAt), 'EEE'),
-          fullDate: format(new Date(n.createdAt), 'MMM d'),
+          createdAt: n.createdAt,
+          date: format(new Date(n.createdAt), 'MMM d'),
+          dateShort: format(new Date(n.createdAt), 'EEE'),
           total: n.total,
           correct: n.correct,
           accuracy: n.accuracy,
@@ -379,6 +380,18 @@ export default function StudentSpeedMode() {
   const allSessions = speedData?.all;
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [chartRange, setChartRange] = useState<7 | 14 | 30>(7);
+
+  const chartHistory = useMemo(() => {
+    if (!speedHistory?.length) return [];
+    const cutoff = subDays(new Date(), chartRange).getTime();
+    return speedHistory
+      .filter((h) => new Date(h.createdAt).getTime() >= cutoff)
+      .map((h) => ({
+        ...h,
+        date: chartRange === 7 ? h.dateShort : h.date,
+      }));
+  }, [speedHistory, chartRange]);
 
   const lastSession = useMemo(() => {
     if (!speedHistory?.length) return null;
@@ -486,13 +499,101 @@ export default function StudentSpeedMode() {
         {/* Area Chart (70%) */}
         <Card className="lg:w-[70%] w-full">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Last 7 Days Performance</CardTitle>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <CardTitle className="text-base">
+                {chartRange === 7 ? 'Last 7 Days' : chartRange === 14 ? 'Last 14 Days' : 'Last 30 Days'} Performance
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex rounded-lg border bg-muted/40 p-0.5">
+                  {([7, 14, 30] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setChartRange(r)}
+                      className={cn(
+                        "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+                        chartRange === r
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {r}d
+                    </button>
+                  ))}
+                </div>
+                <Drawer open={historyOpen} onOpenChange={setHistoryOpen} direction="right">
+                  <DrawerTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                      <History className="h-3.5 w-3.5" />
+                      History
+                    </Button>
+                  </DrawerTrigger>
+                  <DrawerContent className="fixed right-0 top-0 bottom-0 left-auto h-full w-full sm:w-[400px] rounded-l-[10px] rounded-r-none mt-0">
+                    <DrawerHeader>
+                      <DrawerTitle className="flex items-center gap-2">
+                        <History className="h-5 w-5" />
+                        Speed Session History
+                      </DrawerTitle>
+                      <DrawerDescription>
+                        All your completed speed practice sessions
+                      </DrawerDescription>
+                    </DrawerHeader>
+                    <ScrollArea className="flex-1 px-4">
+                      <div className="space-y-3 pb-4">
+                        {allSessions && allSessions.length > 0 ? (
+                          allSessions.map((session, i) => {
+                            const rating = getPerformanceRating(session.avgTime);
+                            return (
+                              <div
+                                key={i}
+                                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className={cn("p-2 rounded-lg", rating.bg)}>
+                                    <Clock className={cn("h-5 w-5", rating.color)} />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{session.date}</p>
+                                    <p className="text-xs text-muted-foreground">{session.time}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-6 text-right">
+                                  <div>
+                                    <p className="text-sm font-medium">{session.total} questions</p>
+                                    <p className="text-xs text-muted-foreground">{session.accuracy}% accuracy</p>
+                                  </div>
+                                  <div className="min-w-[70px]">
+                                    <p className={cn("text-lg font-bold", rating.color)}>{session.avgTime}s</p>
+                                    <p className="text-xs text-muted-foreground">per problem</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-12 text-muted-foreground">
+                            <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                            <p>No sessions yet</p>
+                            <p className="text-sm">Complete a speed session to see it here</p>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                    <DrawerFooter>
+                      <DrawerClose asChild>
+                        <Button variant="outline">Close</Button>
+                      </DrawerClose>
+                    </DrawerFooter>
+                  </DrawerContent>
+                </Drawer>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            {speedHistory && speedHistory.length > 0 ? (
+            {chartHistory && chartHistory.length > 0 ? (
               <ChartContainer config={chartConfig} className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={speedHistory} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <AreaChart data={chartHistory} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -500,25 +601,25 @@ export default function StudentSpeedMode() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                     />
-                    <YAxis 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
+                    <YAxis
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                       width={30}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="timePerProblem" 
-                      stroke="hsl(var(--primary))" 
+                    <Area
+                      type="monotone"
+                      dataKey="timePerProblem"
+                      stroke="hsl(var(--primary))"
                       strokeWidth={2}
-                      fill="url(#timeGradient)" 
+                      fill="url(#timeGradient)"
                       name="Time/Problem (s)"
                     />
                   </AreaChart>
@@ -528,7 +629,7 @@ export default function StudentSpeedMode() {
               <div className="h-48 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No sessions in the last 7 days</p>
+                  <p className="text-sm">No sessions in the last {chartRange} days</p>
                   <p className="text-xs">Complete sessions to see your progress</p>
                 </div>
               </div>
@@ -541,72 +642,8 @@ export default function StudentSpeedMode() {
           <CardContent className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-medium text-muted-foreground">Last Session</p>
-              <Drawer open={historyOpen} onOpenChange={setHistoryOpen} direction="right">
-                <DrawerTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-                    <History className="h-3.5 w-3.5" />
-                    History
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent className="fixed right-0 top-0 bottom-0 left-auto h-full w-[400px] rounded-l-[10px] rounded-r-none mt-0">
-                  <DrawerHeader>
-                    <DrawerTitle className="flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      Speed Session History
-                    </DrawerTitle>
-                    <DrawerDescription>
-                      All your completed speed practice sessions
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <ScrollArea className="flex-1 px-4">
-                    <div className="space-y-3 pb-4">
-                      {allSessions && allSessions.length > 0 ? (
-                        allSessions.map((session, i) => {
-                          const rating = getPerformanceRating(session.avgTime);
-                          return (
-                            <div 
-                              key={i} 
-                              className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className={cn("p-2 rounded-lg", rating.bg)}>
-                                  <Clock className={cn("h-5 w-5", rating.color)} />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{session.date}</p>
-                                  <p className="text-xs text-muted-foreground">{session.time}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-6 text-right">
-                                <div>
-                                  <p className="text-sm font-medium">{session.total} questions</p>
-                                  <p className="text-xs text-muted-foreground">{session.accuracy}% accuracy</p>
-                                </div>
-                                <div className="min-w-[70px]">
-                                  <p className={cn("text-lg font-bold", rating.color)}>{session.avgTime}s</p>
-                                  <p className="text-xs text-muted-foreground">per problem</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                          <p>No sessions yet</p>
-                          <p className="text-sm">Complete a speed session to see it here</p>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                  <DrawerFooter>
-                    <DrawerClose asChild>
-                      <Button variant="outline">Close</Button>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
             </div>
+
             
             <div className="flex-1 flex flex-col items-center justify-center">
               {lastSession ? (
