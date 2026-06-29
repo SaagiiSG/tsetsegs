@@ -58,9 +58,14 @@ export default function ChallengesHome() {
               <p className="text-sm text-muted-foreground">Race your friends. First to the line wins.</p>
             </div>
           </div>
-          <Button onClick={() => openNewChallenge()} disabled={drawerOpen}>
-            <Swords className="h-4 w-4" /> New challenge
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => openNewChallenge()} disabled={drawerOpen}>
+              <Swords className="h-4 w-4" /> New challenge
+            </Button>
+            <Button variant="outline" onClick={() => setAddOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Add friend
+            </Button>
+          </div>
         </header>
 
         <Tabs defaultValue="active">
@@ -163,7 +168,23 @@ export default function ChallengesHome() {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <div className="p-5">
+        <div className="p-5 space-y-4">
+          {drawerOpen && accepted.length === 0 && (
+            <Card className="p-4 flex items-center justify-between gap-3 border-dashed bg-muted/30">
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <UserPlus className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">No friends yet</div>
+                  <div className="text-xs text-muted-foreground">Add a friend to challenge them head-to-head.</div>
+                </div>
+              </div>
+              <Button size="sm" onClick={() => setAddOpen(true)}>
+                <UserPlus className="h-4 w-4" /> Add
+              </Button>
+            </Card>
+          )}
           {drawerOpen && (
             <NewChallengeForm
               preselectFriend={preselectFriend}
