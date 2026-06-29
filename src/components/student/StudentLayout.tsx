@@ -36,7 +36,7 @@ function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
   const { user: teacherUser, teacherName, isLoading: teacherLoading } = useTeacherAuth();
   const { isAdmin, isLoading: adminLoading } = useAuth();
-  const { tier } = useStudentTier();
+  useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
