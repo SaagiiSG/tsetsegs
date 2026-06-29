@@ -334,15 +334,16 @@ export default function StudentSpeedMode() {
         };
       });
 
-      // Last 7 days history (oldest → newest for chart)
-      const weekAgoMs = subDays(new Date(), 7).getTime();
+      // Keep up to 30 days; range filter applied client-side from the chart toggle.
+      const thirtyAgoMs = subDays(new Date(), 30).getTime();
       const history = normalized
-        .filter((n) => new Date(n.createdAt).getTime() >= weekAgoMs)
+        .filter((n) => new Date(n.createdAt).getTime() >= thirtyAgoMs)
         .slice()
         .reverse()
         .map((n) => ({
-          date: format(new Date(n.createdAt), 'EEE'),
-          fullDate: format(new Date(n.createdAt), 'MMM d'),
+          createdAt: n.createdAt,
+          date: format(new Date(n.createdAt), 'MMM d'),
+          dateShort: format(new Date(n.createdAt), 'EEE'),
           total: n.total,
           correct: n.correct,
           accuracy: n.accuracy,
