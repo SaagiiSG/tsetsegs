@@ -16,6 +16,7 @@ import { WeaknessIsland } from '@/components/student/dashboard/WeaknessIsland';
 import { SpeedIsland } from '@/components/student/dashboard/SpeedIsland';
 import { MasteryHexagon } from '@/components/student/dashboard/MasteryHexagon';
 import { QuickVocabQuiz } from '@/components/student/dashboard/QuickVocabQuiz';
+import { StudentSatSimulationCard } from '@/components/student/dashboard/StudentSatSimulationCard';
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
@@ -147,6 +148,15 @@ export default function StudentDashboardHome() {
           <SpeedIsland />
         </motion.div>
       </div>
+
+      {/* SAT Simulation Engine — locked until 440 questions */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+      >
+        <StudentSatSimulationCard />
+      </motion.div>
 
       {/* Row 3: 50/50 hexagon + vocab */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">

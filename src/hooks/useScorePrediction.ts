@@ -24,6 +24,8 @@ export interface ScorePredictionResult {
     variancePenalty: number;
   };
   hasBaseline: boolean;
+  // Total distinct questions the student has solved on the platform.
+  distinctSolved: number;
   // Simulation engine — teacher/admin facing only. Students never see this.
   simulation?: {
     latest: SimulationResult;
@@ -237,8 +239,9 @@ export function useScorePrediction(studentId: string | undefined) {
             practiceAdj: 0, variancePenalty: 0,
           },
           hasBaseline: false,
+          distinctSolved: calibrationLocked.solved,
           calibrationLocked,
-        };
+        } as ScorePredictionResult;
       }
 
       // Fetch platform attempts if student account exists
@@ -428,6 +431,7 @@ export function useScorePrediction(studentId: string | undefined) {
           variancePenalty,
         },
         hasBaseline,
+        distinctSolved: simAttemptsNewestFirst.length,
         simulation: simHistory.length > 0 && simBlend != null ? {
           latest: simHistory[0],
           history: simHistory,
