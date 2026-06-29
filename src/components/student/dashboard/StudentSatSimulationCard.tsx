@@ -8,12 +8,17 @@ import { useScorePrediction } from "@/hooks/useScorePrediction";
 
 const UNLOCK_AT = 440;
 
+interface Props {
+  /** 'dashboard' shows only when unlocked. 'drawer' shows only the locked progress card. */
+  mode?: 'dashboard' | 'drawer';
+}
+
 /**
  * Student-facing SAT simulation card.
- * Locked until the student has solved 440 distinct questions.
- * Once unlocked, shows the latest sim score + a one-week "New!" pulse.
+ * - On the dashboard: only renders once unlocked (≥440 distinct questions).
+ * - In the announcement drawer: only renders the locked progress card.
  */
-export function StudentSatSimulationCard() {
+export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   const { student } = useStudentAuth();
   const studentId = student?.linked_student?.id ?? student?.linked_student_id ?? undefined;
   const { data: prediction, isLoading } = useScorePrediction(studentId);
@@ -46,8 +51,9 @@ export function StudentSatSimulationCard() {
 
   if (isLoading || !prediction || prediction.calibrationLocked) return null;
 
-  // ---------- Locked state ----------
+  // ---------- Locked state (drawer only) ----------
   if (!unlocked) {
+    if (mode !== 'drawer') return null;
     const pct = Math.min(100, Math.round((distinct / UNLOCK_AT) * 100));
     return (
       <Card className="border-dashed border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-transparent">
@@ -78,6 +84,9 @@ export function StudentSatSimulationCard() {
       </Card>
     );
   }
+
+  // ---------- Unlocked state (dashboard only) ----------
+  if (mode !== 'dashboard') return null;
 
   // ---------- Unlocked state ----------
   const { latest } = prediction.simulation!;
