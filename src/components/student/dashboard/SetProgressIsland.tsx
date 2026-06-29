@@ -68,7 +68,7 @@ export function SetProgressIsland() {
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
             Question Sets
           </div>
-          <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4 min-h-[200px]">
+          <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4 min-h-[240px]">
             {rows.map((r) => {
               const Icon = r.icon;
               return (
