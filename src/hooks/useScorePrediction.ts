@@ -243,11 +243,13 @@ export function useScorePrediction(studentId: string | undefined) {
 
       // Fetch platform attempts if student account exists
       let attempts: any[] = [];
+      let simAttemptsNewestFirst: SimAttempt[] = [];
       if (studentAccountRes.data?.id) {
         const { data: attemptsData } = await supabase
           .from('student_attempts')
-          .select('is_correct, time_spent_seconds, question_id')
-          .eq('student_account_id', studentAccountRes.data.id);
+          .select('is_correct, time_spent_seconds, question_id, attempted_at')
+          .eq('student_account_id', studentAccountRes.data.id)
+          .order('attempted_at', { ascending: false });
 
         if (attemptsData && attemptsData.length > 0) {
           const questionIds = [...new Set(attemptsData.map(a => a.question_id))];
@@ -266,8 +268,25 @@ export function useScorePrediction(studentId: string | undefined) {
             ...a,
             difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
+
+          // Distinct (most-recent attempt per question), newest first — sim input
+          simAttemptsNewestFirst = dedupeDistinctNewestFirst(
+            attempts.map((a) => ({
+              is_correct: a.is_correct,
+              time_spent_seconds: a.time_spent_seconds,
+              difficulty_level: a.difficulty_level,
+              question_id: a.question_id,
+              attempted_at: a.attempted_at,
+            }))
+          );
         }
       }
+
+      // Build simulation history (latest up to 3, sliding every 10 questions)
+      const simHistory = buildSimHistory(simAttemptsNewestFirst, 3);
+      const simBlend = blendSimHistory(simHistory);
+
+
 
 
 
