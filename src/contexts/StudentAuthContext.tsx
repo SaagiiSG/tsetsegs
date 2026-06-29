@@ -210,14 +210,14 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     try {
       const sessionId = localStorage.getItem('student_session_id');
       const studentId = localStorage.getItem('student_id');
-      
+
       if (!sessionId || !studentId) {
         setIsLoading(false);
         return;
       }
 
-      // Verify session is still valid
-      const { data: session, error } = await supabase
+      // Try to fetch the stored session first.
+      const { data: session } = await supabase
         .from('student_sessions')
         .select('*')
         .eq('id', sessionId)
@@ -225,14 +225,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         .gt('expires_at', new Date().toISOString())
         .maybeSingle();
 
-      if (error || !session) {
-        localStorage.removeItem('student_session_id');
-        localStorage.removeItem('student_id');
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch student account with linked student info
+      // Always fetch the student account so we can fingerprint-check before dropping them.
       const { data: studentAccount, error: accountError } = await supabase
         .from('student_accounts')
         .select('*')
@@ -246,12 +239,49 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Check if account is blocked
+      // Account blocked → hard logout regardless of hardware.
       if (studentAccount.is_blocked) {
         localStorage.removeItem('student_session_id');
         localStorage.removeItem('student_id');
         setIsLoading(false);
         return;
+      }
+
+      // If session was killed (e.g. by another login), only kick the user out
+      // when this isn't the same hardware. Same-fingerprint = silent re-issue.
+      let activeSessionId = session?.id ?? null;
+      if (!session) {
+        const currentFp = generateFingerprint();
+        const storedFp = (studentAccount as any).device_fingerprint as string | null;
+        if (storedFp && storedFp === currentFp) {
+          const deviceId = await getDeviceIdAsync();
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 35);
+          const { data: revived } = await supabase
+            .from('student_sessions')
+            .upsert({
+              student_account_id: studentAccount.id,
+              device_id: deviceId,
+              login_timestamp: new Date().toISOString(),
+              expires_at: expiresAt.toISOString(),
+              is_active: true,
+              user_agent: navigator.userAgent,
+            }, { onConflict: 'student_account_id,device_id' })
+            .select()
+            .single();
+          if (revived?.id) {
+            activeSessionId = revived.id;
+            localStorage.setItem('student_session_id', revived.id);
+          }
+        }
+
+        if (!activeSessionId) {
+          // Different hardware — log them out.
+          localStorage.removeItem('student_session_id');
+          localStorage.removeItem('student_id');
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Fetch ALL student records matching this phone (with batch course_type), then pick SAT as primary.
