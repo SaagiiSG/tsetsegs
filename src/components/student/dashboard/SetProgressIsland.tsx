@@ -24,7 +24,7 @@ const SETS = [
     label: '150 Hard',
     title: '150 Hard',
     desc: 'High-difficulty SAT math training. Hardest of the hardest.',
-    color: 'hsl(0, 84%, 60%)', // coral
+    color: '#ef4444', // red-500
     route: '/practice/dashboard',
     icon: Layers,
   },
@@ -33,7 +33,7 @@ const SETS = [
     label: 'CB 1074',
     title: 'CollegeBoard 1074',
     desc: 'Full official CollegeBoard question bank — every released question.',
-    color: 'hsl(231, 80%, 60%)', // indigo
+    color: '#1e40af', // deep blue
     route: '/practice/dashboard',
     icon: BookOpen,
   },
