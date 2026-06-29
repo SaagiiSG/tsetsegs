@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
 import { ScorePredictionCard } from "@/components/teacher/ScorePredictionCard";
+import { SatSimulationPanel } from "@/components/teacher/SatSimulationPanel";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
