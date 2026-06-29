@@ -28,6 +28,7 @@ import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
