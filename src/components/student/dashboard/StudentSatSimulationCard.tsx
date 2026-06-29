@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Lock, Sparkles } from "lucide-react";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
 import { useScorePrediction } from "@/hooks/useScorePrediction";
+import { supabase } from "@/integrations/supabase/client";
 
 const UNLOCK_AT = 440;
 
@@ -20,10 +22,24 @@ interface Props {
  */
 export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   const { student } = useStudentAuth();
+  const accountId = student?.id;
   const studentId = student?.linked_student?.id ?? student?.linked_student_id ?? undefined;
   const { data: prediction, isLoading } = useScorePrediction(studentId);
+  const { data: drawerSolved = 0 } = useQuery({
+    queryKey: ['sat-simulation-drawer-progress', accountId],
+    enabled: mode === 'drawer' && !!accountId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', accountId!)
+        .limit(5000);
+      return new Set((data ?? []).map((row: any) => row.question_id)).size;
+    },
+    staleTime: 60 * 1000,
+  });
 
-  const distinct = prediction?.distinctSolved ?? 0;
+  const distinct = mode === 'drawer' ? (prediction?.distinctSolved ?? drawerSolved) : (prediction?.distinctSolved ?? 0);
   const unlocked = distinct >= UNLOCK_AT && !!prediction?.simulation;
 
   // One-time "New!" pulse for 7 days after first unlock — stored per student
@@ -49,13 +65,9 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
 
   const isFresh = unlockedAt ? Date.now() - unlockedAt < 7 * 24 * 60 * 60 * 1000 : false;
 
-  if (isLoading || !prediction) return null;
-  // Calibration-locked students still see the 440 progress card in the drawer
-  if (prediction.calibrationLocked && mode !== 'drawer') return null;
-
   // ---------- Locked state (drawer only) ----------
-  if (!unlocked) {
-    if (mode !== 'drawer') return null;
+  if (mode === 'drawer') {
+    if (!student || distinct >= UNLOCK_AT) return null;
     const pct = Math.min(100, Math.round((distinct / UNLOCK_AT) * 100));
     return (
       <Card className="border-dashed border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-transparent">
@@ -88,7 +100,7 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   }
 
   // ---------- Unlocked state (dashboard only) ----------
-  if (mode !== 'dashboard') return null;
+  if (isLoading || !prediction || prediction.calibrationLocked || !unlocked) return null;
 
   // ---------- Unlocked state ----------
   const { latest } = prediction.simulation!;
