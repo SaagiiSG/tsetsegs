@@ -2781,9 +2781,14 @@ export type Database = {
           blocked_at: string | null
           blocked_reason: string | null
           created_at: string
+          daily_goal_hard: number
+          daily_goal_medium: number
+          daily_goal_set_at: string | null
+          daily_goal_speed: number
           device_fingerprint: string | null
           device_registered_at: string | null
           email_link_prompted_at: string | null
+          goal_intensity: string | null
           id: string
           is_active: boolean
           is_blocked: boolean | null
@@ -2805,9 +2810,14 @@ export type Database = {
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
+          daily_goal_hard?: number
+          daily_goal_medium?: number
+          daily_goal_set_at?: string | null
+          daily_goal_speed?: number
           device_fingerprint?: string | null
           device_registered_at?: string | null
           email_link_prompted_at?: string | null
+          goal_intensity?: string | null
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
@@ -2829,9 +2839,14 @@ export type Database = {
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
+          daily_goal_hard?: number
+          daily_goal_medium?: number
+          daily_goal_set_at?: string | null
+          daily_goal_speed?: number
           device_fingerprint?: string | null
           device_registered_at?: string | null
           email_link_prompted_at?: string | null
+          goal_intensity?: string | null
           id?: string
           is_active?: boolean
           is_blocked?: boolean | null
