@@ -24,7 +24,7 @@ const SETS = [
     label: '150 Hard',
     title: '150 Hard',
     desc: 'High-difficulty SAT math training. Hardest of the hardest.',
-    color: 'hsl(0, 84%, 60%)', // coral
+    color: '#ef4444', // red-500
     route: '/practice/dashboard',
     icon: Layers,
   },
