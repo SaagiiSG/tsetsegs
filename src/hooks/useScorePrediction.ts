@@ -243,12 +243,6 @@ export function useScorePrediction(studentId: string | undefined) {
           calibrationLocked,
         } as ScorePredictionResult;
       }
-      // dummy to keep diff localized — removed below
-      if (false as any) ({
-          hasBaseline: false,
-          calibrationLocked,
-        };
-      }
 
       // Fetch platform attempts if student account exists
       let attempts: any[] = [];
