@@ -338,13 +338,31 @@ export function useScorePrediction(studentId: string | undefined) {
       } else if (tests.length === 1) {
         baseScore = tests[0].score!;
       } else {
-        // No baseline — use hard accuracy lookup (now actually works after case fix)
-        const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
-        const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
-        const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
-        baseScore = getBaseFromHardAccuracy(hardAcc);
-        halfRange = 25;
+        // No baseline yet
+        if (simBlend != null) {
+          // Sim takes over as the base when we have no real practice tests.
+          baseScore = simBlend;
+        } else {
+          // Fallback — no tests AND no sim (under 44 distinct questions).
+          const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
+          const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
+          const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
+          baseScore = getBaseFromHardAccuracy(hardAcc);
+        }
       }
+
+      // Blend sim into base when both real tests AND sim exist.
+      // Real tests dominate; sim is a smoothing signal.
+      let simBlendWeight = 0;
+      if (simBlend != null && tests.length > 0) {
+        if (tests.length >= 3) simBlendWeight = 0.15;
+        else simBlendWeight = 0.30; // 1-2 tests → sim gets a bigger voice
+        baseScore = baseScore * (1 - simBlendWeight) + simBlend * simBlendWeight;
+      } else if (simBlend != null && tests.length === 0) {
+        // Sim fully drove the base
+        simBlendWeight = 1.0;
+      }
+
 
       // Trend bonus — reward sustained upward trajectory across last 4 tests
       if (tests.length >= 4) {
