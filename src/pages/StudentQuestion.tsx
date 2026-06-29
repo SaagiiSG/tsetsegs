@@ -834,6 +834,12 @@ export default function StudentQuestion() {
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
               <Badge variant="secondary">{question.category?.name}</Badge>
+              {(question as any).difficulty_level && (
+                <Badge variant="outline" className="gap-1.5">
+                  <DifficultyDots level={(question as any).difficulty_level} />
+                  <span className="text-xs capitalize">{(question as any).difficulty_level}</span>
+                </Badge>
+              )}
               {allQuestions && (
                 <span className="text-xs text-muted-foreground">
                   ({currentQuestionIndex + 1}/{allQuestions.length})
