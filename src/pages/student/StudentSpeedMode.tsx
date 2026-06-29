@@ -308,13 +308,16 @@ export default function StudentSpeedMode() {
     queryFn: async () => {
       if (!student?.id) return { history: [], stats: { bestScore: null as { accuracy: number; avgTime: number } | null, totalSessions: 0 }, all: [] };
 
-      const { data: sessions } = await supabase
+      const sinceIso = subDays(new Date(), 30).toISOString();
+      const { data: sessions, error: sessErr } = await supabase
         .from('student_activity_logs')
         .select('metadata, created_at')
         .eq('student_account_id', student.id)
         .eq('activity_type', 'speed_mode_complete')
+        .gte('created_at', sinceIso)
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(200);
+      if (sessErr) console.error('speed sessions fetch failed', sessErr);
 
       if (!sessions?.length) return { history: [], stats: { bestScore: null, totalSessions: 0 }, all: [] };
 

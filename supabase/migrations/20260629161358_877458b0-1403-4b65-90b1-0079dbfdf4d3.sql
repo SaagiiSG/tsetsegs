@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_student_activity_logs_student_type_created ON public.student_activity_logs (student_account_id, activity_type, created_at DESC);
