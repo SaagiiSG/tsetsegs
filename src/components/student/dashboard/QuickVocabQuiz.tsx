@@ -70,7 +70,7 @@ export function QuickVocabQuiz() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col gap-3"
             >
-              <SelectorRow
+              <SelectorRow<Mode>
                 label="Mode"
                 value={mode}
                 onChange={setMode}
@@ -80,7 +80,7 @@ export function QuickVocabQuiz() {
                   { value: 'mn_to_eng', label: 'MN → EN' },
                 ]}
               />
-              <SelectorRow
+              <SelectorRow<Source>
                 label="Source"
                 value={source}
                 onChange={setSource}
@@ -90,10 +90,10 @@ export function QuickVocabQuiz() {
                   { value: 'all', label: 'All' },
                 ]}
               />
-              <SelectorRow
+              <SelectorRow<Length>
                 label="Length"
                 value={length}
-                onChange={(v) => setLength(Number(v) as Length)}
+                onChange={(v) => setLength(v as Length)}
                 options={[
                   { value: 5, label: '5' },
                   { value: 10, label: '10' },
