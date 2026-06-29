@@ -34,6 +34,11 @@ export function StudentSatSimulationCard() {
       const now = Date.now();
       localStorage.setItem(lsKey, String(now));
       setUnlockedAt(now);
+      toast.success("SAT Simulation Engine unlocked!", {
+        description: "You've solved 440 questions. Your live simulated SAT score is now on your dashboard.",
+        duration: 8000,
+        icon: "🎯",
+      });
     }
   }, [unlocked, lsKey]);
 
