@@ -739,6 +739,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
     localStorage.removeItem('student_session_id');
     localStorage.removeItem('student_id');
+    localStorage.removeItem('preferred_course');
     setStudent(null);
     resetAuthFlow();
   };
