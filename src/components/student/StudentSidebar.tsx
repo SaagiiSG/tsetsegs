@@ -1,12 +1,13 @@
 import { NavLink } from '@/components/NavLink';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { 
-  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked, Armchair, Bug, Flag
+  BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages, Sparkles, BookMarked, Armchair, Bug, Flag, Swords
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+const baseNavItems = [
   { to: '/practice/dashboard', icon: BookOpen, label: 'Practice' },
   { to: '/practice/smart', icon: Sparkles, label: 'Smart Practice' },
   { to: '/practice/reading', icon: BookMarked, label: 'Reading' },
@@ -24,6 +25,11 @@ const navItems = [
 
 export function StudentSidebar() {
   const { student, logout } = useStudentAuth();
+  const { isEnabled } = useFeatureFlags();
+  const challengesItem = { to: '/practice/challenges', icon: Swords, label: 'Challenges' };
+  const navItems = isEnabled('mini_challenges')
+    ? [...baseNavItems.slice(0, 8), challengesItem, ...baseNavItems.slice(8)]
+    : baseNavItems;
 
   const studentName = student?.linked_student 
     ? `${student.linked_student.first_name}${student.linked_student.last_name ? ' ' + student.linked_student.last_name.charAt(0) + '.' : ''}`

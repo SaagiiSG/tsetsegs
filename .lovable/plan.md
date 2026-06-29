@@ -1,73 +1,110 @@
-# Course-aware login + new IELTS prep section
 
-Today, every student lands on `/practice` (SAT). IELTS-only students get blocked by `IELTSPracticeNotice`, and dual-enrolled (SAT + IELTS) students are silently funneled into SAT — which is also where the bug they're hitting lives. We'll split the login routing by course type and stand up an `/ielts` shell so IELTS students have a real home.
+# SAT Mini Challenges
+
+A new student-only feature where SAT students add friends by phone and race them live in 1v1 or up to 5-player matches. IELTS students are excluded for now (they don't have the practice engine).
 
 ## User flow
 
 ```text
-Enter phone
-      │
-      ▼
-Lookup student records by phone
-      │
- ┌────┴──────────────────────────────────┐
- │ SAT only         │ IELTS only         │ Both SAT + IELTS
- ▼                  ▼                    ▼
-Password ──► /practice   Password ──► /ielts   Password
-                                              │
-                                              ▼
-                                  Course chooser screen
-                                  (SAT card | IELTS card)
-                                              │
-                          Remember choice ────┤
-                                              ▼
-                              /practice  or  /ielts
+Friends tab
+  Add friend by phone  ──▶  request pending  ──▶  friend accepts
+                                                       │
+                                                       ▼
+                                          friends list (online dot)
+
+Challenge a friend (or group of up to 5)
+  1. Host picks: format + subject + question set + target
+  2. Invites go out (in-app + a small toast/badge)
+  3. Lobby — everyone marks "ready"
+  4. Host starts → live race screen with leaderboard
+  5. First to hit goal wins → results screen, rematch button
 ```
 
-Inside both sections, the header gets a small "Switch course" button (only visible to dual-enrolled students) that flips them to the other section without logging out and updates the remembered choice.
+## Formats (host picks one)
 
-## What we'll build
+| Format            | Host configures                       | Win condition                          |
+| ----------------- | ------------------------------------- | -------------------------------------- |
+| First to N points | target = 100 / 500 / 1000             | First player to reach target           |
+| First to N correct| target = 10 / 25 / 50 / 100           | First player to N correct answers      |
+| Time sprint       | duration = 5 or 10 min                | Most correct when timer hits 0         |
+| Fixed set race    | size = 10 or 20 questions             | Lowest total time (must finish all)    |
 
-1. **Course detection at phone step** — `checkPhone` already finds the student; extend it to also return `courseTypes: ('SAT' | 'IELTS')[]` by joining `students → batches.course_type`. Store it alongside `pendingStudentAccount` so the next step knows where to send the user.
+All formats use the existing question pool, filtered by subject (Math / English) and set (68, CollegeBoard, 150 Hard, English, All) — same options as Live Practice.
 
-2. **Routing after login**
-   - SAT only → `/practice/dashboard` (unchanged).
-   - IELTS only → `/ielts/dashboard` (new).
-   - Both → `/choose-course` (new), which writes `localStorage.preferred_course` and navigates. On subsequent logins we skip the chooser and go straight to the remembered course.
-   - Replace the current `<Navigate to="/practice/dashboard" />` in `StudentPortal` with a small helper that reads course list + preferred choice.
+## Scoring (points format)
 
-3. **Fix the dual-enrolled crash** — Audit happens as part of step 1/2. The likely culprit is `useStudentCourses`/`IELTSPracticeNotice` interplay or the SAT-only assumptions in `StudentLayout` (`isIELTSOnly` gate). With dual students now routed correctly, we'll also harden `StudentLayout` so a dual student visiting `/practice` is never bounced to the IELTS notice, and add an error boundary around the dashboard so any future surprise renders a friendly fallback instead of a blank screen.
+Reuse the same per-question point logic students already see in regular practice (difficulty + speed). Keeps it familiar and prevents grinding easy questions for cheap points.
 
-4. **New `/ielts` shell**
-   - `IELTSLayout` — mirrors `StudentLayout` structure (sidebar + header + outlet) but trimmed: no SAT-specific widgets (no Desmos snap listener, no SAT streak/tier badges for now).
-   - `IELTSSidebar` — single "Dashboard" item to start; placeholder items (Practice, Vocabulary, etc.) marked "Coming soon" and disabled.
-   - `IELTSDashboardHome` — welcome card with the student's name + batch, and a "Coming soon" panel describing what's planned. Reuses existing announcements card if the student has IELTS announcements (no new schema).
-   - Route guard: only students whose course list contains `'IELTS'` can enter `/ielts/*`; SAT-only students get redirected to `/practice`.
+## Friends model
 
-5. **Course chooser page** (`/choose-course`)
-   - Two large cards: "SAT Practice" and "IELTS Prep" with subtitle + icon, matching the brand (coral pink / deep indigo, Chillax headings).
-   - Clicking a card sets `localStorage.preferred_course = 'sat' | 'ielts'` and navigates.
-   - Accessible to logged-in dual students only; SAT-only/IELTS-only students are auto-redirected.
+- Mutual: send request → other accepts → both see each other.
+- Search by phone only (no name search — privacy + matches how login works).
+- Blocked-phone list so a student can stop receiving requests from someone.
+- Friends list shows online status (last_seen within 2 min) so you know who you can challenge live.
 
-6. **In-app course switcher**
-   - Small header button in both `StudentLayout` and `IELTSLayout`, shown only when `linked_students` contains both course types. Updates `preferred_course` and navigates to the other section's dashboard. No logout, no re-auth.
+## Where it lives in the app
 
-## Technical notes
+- New sidebar item under Practice: **Challenges** (`/practice/challenges`)
+- Sub-routes:
+  - `/practice/challenges` — friends list + active/pending invites
+  - `/practice/challenges/new` — format/subject/set/target picker + friend selector
+  - `/practice/challenges/:id/lobby` — ready-up screen
+  - `/practice/challenges/:id/play` — live race
+  - `/practice/challenges/:id/results` — final standings + rematch
+- A small notification badge on the sidebar item when an invite or friend request is waiting.
 
-- **Files touched / added**
-  - `src/contexts/StudentAuthContext.tsx` — add `courseTypes` to pending state; expose `preferredCourse` getter/setter backed by `localStorage`; small helper `getPostLoginRoute()`.
-  - `src/pages/StudentPortal.tsx` — replace hard-coded `/practice/dashboard` redirect with the helper.
-  - `src/App.tsx` — register `/ielts/*` and `/choose-course` routes.
-  - `src/pages/ChooseCourse.tsx` *(new)*.
-  - `src/components/ielts/IELTSLayout.tsx` *(new)*.
-  - `src/components/ielts/IELTSSidebar.tsx` *(new)*.
-  - `src/pages/ielts/IELTSDashboardHome.tsx` *(new)*.
-  - `src/components/student/StudentLayout.tsx` — drop the `isIELTSOnly` redirect (now handled upstream), add CourseSwitcher button.
-  - `src/components/student/IELTSPracticeNotice.tsx` — keep as a safety net but link to `/ielts` instead of being a dead-end.
-  - `src/hooks/useStudentCourses.ts` — already returns `hasSAT/hasIELTS/isBoth`; reuse as-is, add a tiny `usePreferredCourse()` hook for the switcher.
+## Out of scope for v1
 
-- **No schema changes.** All course detection uses existing `students.batch_id → batches.course_type`. The IELTS shell has no new tables yet — we'll add them when scope expands beyond the shell.
+- Async / "play when you're free" challenges (live only this round)
+- Cross-course challenges (SAT vs IELTS)
+- Public matchmaking against strangers
+- Tournament brackets, seasons, dedicated leaderboards
+- Wagering points / tier-affecting outcomes — challenges are purely social, don't move the student's regular tier/points
+- IELTS students (button hidden for IELTS-only accounts; dual-enrolled see it only inside the SAT section)
 
-- **Backwards compatibility.** Existing SAT-only students see zero change: same login, same redirect, same dashboard. IELTS-only students who were previously blocked at the SAT notice now land on `/ielts/dashboard`. Dual students stop crashing because they never hit the SAT-only render path that the current bug lives in.
+---
 
-- **Out of scope (call out so we don't drift):** real IELTS practice content, IELTS-specific badges/streaks, IELTS attendance views, separate password flows. Today is the shell + routing.
+## Technical section
+
+**New tables** (all RLS-gated to the student's own `student_account_id`):
+
+- `student_friendships` — `(requester_id, addressee_id, status: pending|accepted|blocked, created_at, responded_at)`. Unique on the unordered pair.
+- `challenges` — `(id, host_account_id, format, subject, question_set, target_value, duration_seconds, status: lobby|active|finished|cancelled, started_at, finished_at, winner_account_id)`
+- `challenge_participants` — `(challenge_id, student_account_id, joined_at, ready_at, score, correct_count, total_time_ms, finished_at, place)`
+- `challenge_questions` — `(challenge_id, question_id, order_index)` — pre-shuffled pool the race draws from (same set for everyone in the race; each player advances through it independently).
+- `challenge_attempts` — `(challenge_id, student_account_id, question_id, is_correct, time_ms, points_awarded, attempted_at)` — kept separate from `student_attempts` so challenge play doesn't pollute regular practice analytics, streaks, tier, or badges.
+
+**GRANTs**: `authenticated` gets select/insert/update on all five; `service_role` full; no `anon`. RLS: participants can read their own challenge rows + sibling participants in the same challenge; only the host can update challenge status; only the participant can write their own attempts.
+
+**Realtime**: enable `supabase_realtime` publication for `challenges`, `challenge_participants`, and `challenge_attempts` so the lobby and race leaderboard update live (subscribe inside `useEffect`, teardown on unmount — per project rules).
+
+**Server-side win detection**: a trigger on `challenge_attempts` recomputes the participant's score/correct/time, then if the win condition is met sets `challenges.status = 'finished'`, `winner_account_id`, and assigns `place` to everyone. Keeps clients from cheating.
+
+**Presence**: reuse `student_accounts.last_seen_at` (already updated on activity) for the online dot — no new infra.
+
+**Reusable pieces**:
+- Question fetch + render: reuse `StudentQuestion` viewer in a "challenge mode" wrapper that posts to `challenge_attempts` instead of `student_attempts`.
+- Lobby/leaderboard UI: model on `LiveLobby` / `LiveLeaderboard` from teacher Live Practice.
+- Format/subject/set picker: model on `LivePracticeContent` setup screen.
+
+**New files** (sketch):
+- `src/pages/student/challenges/ChallengesHome.tsx`
+- `src/pages/student/challenges/NewChallenge.tsx`
+- `src/pages/student/challenges/ChallengeLobby.tsx`
+- `src/pages/student/challenges/ChallengePlay.tsx`
+- `src/pages/student/challenges/ChallengeResults.tsx`
+- `src/components/student/challenges/FriendsList.tsx`
+- `src/components/student/challenges/AddFriendDialog.tsx`
+- `src/components/student/challenges/PendingInvites.tsx`
+- `src/components/student/challenges/LiveLeaderboard.tsx`
+- `src/hooks/useFriends.ts`, `useChallenge.ts`, `useChallengeRealtime.ts`
+- `src/lib/challengeScoring.ts` (mirror existing per-question point formula)
+
+**Edits**:
+- `src/App.tsx` — register `/practice/challenges/*` routes
+- `src/components/student/StudentSidebar.tsx` — add Challenges item (SAT only) with unread badge
+- `src/lib/courseRouting.ts` — hide for IELTS-only
+
+**Feature flag**: gate the whole feature behind a `mini_challenges` flag in `feature_flags` so we can ship dark and turn on per cohort.
+
+**Not changed**: existing practice tables, tier, badges, streaks, leaderboard. Challenges are a separate sandbox.
