@@ -149,6 +149,15 @@ export default function StudentDashboardHome() {
         </motion.div>
       </div>
 
+      {/* SAT Simulation Engine — locked until 440 questions */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+      >
+        <StudentSatSimulationCard />
+      </motion.div>
+
       {/* Row 3: 50/50 hexagon + vocab */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <motion.div
