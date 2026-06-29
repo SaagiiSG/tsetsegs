@@ -67,6 +67,10 @@ export function StudentDashboardSidebar() {
   const [learningOpen, setLearningOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
+  const { isEnabled } = useFeatureFlags();
+  const learningItemsResolved: NavItem[] = isEnabled('mini_challenges')
+    ? [...learningItems, { to: '/practice/challenges', icon: Swords, label: 'Challenges' }]
+    : learningItems;
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
 
