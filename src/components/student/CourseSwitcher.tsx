@@ -30,13 +30,16 @@ export function CourseSwitcher({ current, className }: { current: CourseType; cl
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="sm"
       onClick={handleSwitch}
-      className={cn("h-7 md:h-8 gap-1.5 text-[11px] md:text-xs px-2 md:px-2.5", className)}
+      className={cn(
+        "gap-1.5 text-xs opacity-90 hover:opacity-100 hover:bg-muted/50 text-foreground",
+        className
+      )}
       title={`Switch to ${otherLabel}`}
     >
-      <Repeat className="h-3.5 w-3.5" />
+      <Repeat className="h-4 w-4" />
       <span className="hidden sm:inline">Switch to</span> {otherLabel}
     </Button>
   );
