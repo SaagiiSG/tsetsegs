@@ -49,7 +49,9 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
 
   const isFresh = unlockedAt ? Date.now() - unlockedAt < 7 * 24 * 60 * 60 * 1000 : false;
 
-  if (isLoading || !prediction || prediction.calibrationLocked) return null;
+  if (isLoading || !prediction) return null;
+  // Calibration-locked students still see the 440 progress card in the drawer
+  if (prediction.calibrationLocked && mode !== 'drawer') return null;
 
   // ---------- Locked state (drawer only) ----------
   if (!unlocked) {
