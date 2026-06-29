@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CALIBRATION_REQUIRED } from "./useCalibrationProgress";
+import {
+  buildSimHistory,
+  blendSimHistory,
+  dedupeDistinctNewestFirst,
+  type SimulationResult,
+  type SimAttempt,
+} from "@/lib/satSimulation";
 
 export interface ScorePredictionResult {
   predictedRange: [number, number];
@@ -17,6 +24,14 @@ export interface ScorePredictionResult {
     variancePenalty: number;
   };
   hasBaseline: boolean;
+  // Simulation engine — teacher/admin facing only. Students never see this.
+  simulation?: {
+    latest: SimulationResult;
+    history: SimulationResult[];      // newest first, up to 3
+    blendedScore: number;             // confidence-weighted avg
+    blendWeight: number;              // 0..1 weight of sim in base score
+    practiceTestCount: number;        // how many real tests fed the base
+  };
   // When set, the student hasn't finished calibration yet — UI should show
   // a locked card and the underlying prediction values are not meaningful.
   calibrationLocked?: {
@@ -228,11 +243,13 @@ export function useScorePrediction(studentId: string | undefined) {
 
       // Fetch platform attempts if student account exists
       let attempts: any[] = [];
+      let simAttemptsNewestFirst: SimAttempt[] = [];
       if (studentAccountRes.data?.id) {
         const { data: attemptsData } = await supabase
           .from('student_attempts')
-          .select('is_correct, time_spent_seconds, question_id')
-          .eq('student_account_id', studentAccountRes.data.id);
+          .select('is_correct, time_spent_seconds, question_id, attempted_at')
+          .eq('student_account_id', studentAccountRes.data.id)
+          .order('attempted_at', { ascending: false });
 
         if (attemptsData && attemptsData.length > 0) {
           const questionIds = [...new Set(attemptsData.map(a => a.question_id))];
@@ -251,8 +268,25 @@ export function useScorePrediction(studentId: string | undefined) {
             ...a,
             difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
+
+          // Distinct (most-recent attempt per question), newest first — sim input
+          simAttemptsNewestFirst = dedupeDistinctNewestFirst(
+            attempts.map((a) => ({
+              is_correct: a.is_correct,
+              time_spent_seconds: a.time_spent_seconds,
+              difficulty_level: a.difficulty_level,
+              question_id: a.question_id,
+              attempted_at: a.attempted_at,
+            }))
+          );
         }
       }
+
+      // Build simulation history (latest up to 3, sliding every 10 questions)
+      const simHistory = buildSimHistory(simAttemptsNewestFirst, 3);
+      const simBlend = blendSimHistory(simHistory);
+
+
 
 
 
@@ -304,13 +338,31 @@ export function useScorePrediction(studentId: string | undefined) {
       } else if (tests.length === 1) {
         baseScore = tests[0].score!;
       } else {
-        // No baseline — use hard accuracy lookup (now actually works after case fix)
-        const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
-        const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
-        const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
-        baseScore = getBaseFromHardAccuracy(hardAcc);
-        halfRange = 25;
+        // No baseline yet
+        if (simBlend != null) {
+          // Sim takes over as the base when we have no real practice tests.
+          baseScore = simBlend;
+        } else {
+          // Fallback — no tests AND no sim (under 44 distinct questions).
+          const hardAttempts = attempts.filter(a => isHard(a.difficulty_level));
+          const hardCorrect = hardAttempts.filter(a => a.is_correct).length;
+          const hardAcc = hardAttempts.length > 0 ? (hardCorrect / hardAttempts.length) * 100 : 0;
+          baseScore = getBaseFromHardAccuracy(hardAcc);
+        }
       }
+
+      // Blend sim into base when both real tests AND sim exist.
+      // Real tests dominate; sim is a smoothing signal.
+      let simBlendWeight = 0;
+      if (simBlend != null && tests.length > 0) {
+        if (tests.length >= 3) simBlendWeight = 0.15;
+        else simBlendWeight = 0.30; // 1-2 tests → sim gets a bigger voice
+        baseScore = baseScore * (1 - simBlendWeight) + simBlend * simBlendWeight;
+      } else if (simBlend != null && tests.length === 0) {
+        // Sim fully drove the base
+        simBlendWeight = 1.0;
+      }
+
 
       // Trend bonus — reward sustained upward trajectory across last 4 tests
       if (tests.length >= 4) {
@@ -344,20 +396,22 @@ export function useScorePrediction(studentId: string | undefined) {
         baseScore + attendanceAdj + homeworkAdj + practiceAdj + variancePenalty + trendBonus
       )));
 
-      // Tighter range for high-confidence students
-      if (tests.length >= 5 && hardAccuracy >= 65 && attemptVolume >= 300) {
-        const dStd = downsideStdev(tests.slice(0, 5).map(t => t.score!));
-        halfRange = Math.max(12, Math.min(Math.round(dStd * 0.35), 20));
-      }
-
       // Confidence — downgrade when downside variance is high
       let confidence: 'high' | 'medium' | 'low' = 'low';
       if (hasBaseline && tests.length >= 3 && attemptVolume >= 100) {
         confidence = Math.abs(variancePenalty) > 15 ? 'medium' : 'high';
       } else if (hasBaseline) {
         confidence = 'medium';
+      } else if (simHistory.length >= 2) {
+        // Sim-only base: borrow some confidence from sim quality + volume
+        const goodSims = simHistory.filter(s => s.confidence !== 'low').length;
+        if (goodSims >= 2 && attemptVolume >= 100) confidence = 'medium';
       }
 
+      // Buffer: ±15 floor for high confidence, up to ±20 for low.
+      if (confidence === 'high') halfRange = 15;
+      else if (confidence === 'medium') halfRange = 17;
+      else halfRange = 20;
 
       return {
         predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],
@@ -374,7 +428,15 @@ export function useScorePrediction(studentId: string | undefined) {
           variancePenalty,
         },
         hasBaseline,
+        simulation: simHistory.length > 0 && simBlend != null ? {
+          latest: simHistory[0],
+          history: simHistory,
+          blendedScore: Math.round(simBlend),
+          blendWeight: simBlendWeight,
+          practiceTestCount: tests.length,
+        } : undefined,
       };
+
     },
     enabled: !!studentId,
     staleTime: 5 * 60 * 1000,

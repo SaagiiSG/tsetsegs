@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import StudentQuestionProgress from "@/components/teacher/StudentQuestionProgress";
 import { ScorePredictionCard } from "@/components/teacher/ScorePredictionCard";
+import { SatSimulationPanel } from "@/components/teacher/SatSimulationPanel";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -619,10 +620,12 @@ export default function TeacherStudentProfile() {
 
         {/* Score Prediction */}
         {batch.course_type === 'SAT' && (
-          <div className="mb-6">
+          <div className="mb-6 grid gap-3 md:grid-cols-2">
             <ScorePredictionCard studentId={student.id} />
+            <SatSimulationPanel studentId={student.id} />
           </div>
         )}
+
 
         {/* Quick Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
