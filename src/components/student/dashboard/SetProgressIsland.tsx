@@ -78,35 +78,36 @@ export function SetProgressIsland() {
                       type="button"
                       whileHover={{ y: -2 }}
                       onClick={() => navigate(r.route)}
-                      className="group relative flex flex-col items-center justify-end rounded-xl border bg-card/40 p-2 sm:p-3 overflow-hidden hover:shadow-md hover:border-primary/40 transition-all"
+                      className="group relative flex items-stretch gap-2 sm:gap-3 rounded-xl border bg-card/40 p-2 sm:p-3 overflow-hidden hover:shadow-md hover:border-primary/40 transition-all text-left"
                       aria-label={`${r.title}, ${r.counts.pct} percent complete`}
                     >
-                      {/* upward-filling bar */}
-                      <div className="absolute inset-x-2 bottom-2 top-10 rounded-md overflow-hidden bg-muted/40">
+                      {/* LEFT: label + count stacked */}
+                      <div className="flex flex-col justify-between flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <Icon className="h-4 w-4 flex-shrink-0" style={{ color: r.color }} />
+                          <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-foreground/90 truncate">
+                            {r.label}
+                          </span>
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="font-mono font-bold text-lg sm:text-xl leading-none" style={{ color: r.color }}>
+                            {isLoading ? '—' : `${r.counts.completed}`}
+                            <span className="text-muted-foreground text-sm font-normal">/{r.counts.total}</span>
+                          </div>
+                          <div className="text-[10px] font-mono text-muted-foreground">
+                            {r.counts.pct}% complete
+                          </div>
+                        </div>
+                      </div>
+                      {/* RIGHT: vertical progress bar */}
+                      <div className="relative w-3 sm:w-4 rounded-full overflow-hidden bg-muted/50 flex-shrink-0">
                         <motion.div
                           initial={{ height: 0 }}
                           animate={{ height: `${Math.min(100, r.counts.pct)}%` }}
                           transition={{ duration: 1, ease: 'easeOut' }}
-                          className="absolute inset-x-0 bottom-0"
+                          className="absolute inset-x-0 bottom-0 rounded-full"
                           style={{ background: `linear-gradient(180deg, ${r.color}cc 0%, ${r.color} 100%)` }}
                         />
-                        {/* percentage text inside */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <span className="font-mono font-bold text-base sm:text-lg text-white mix-blend-difference">
-                            {r.counts.pct}%
-                          </span>
-                        </div>
-                      </div>
-                      {/* icon + label header */}
-                      <div className="relative z-10 flex flex-col items-center gap-1 pointer-events-none w-full mb-auto">
-                        <Icon className="h-4 w-4" style={{ color: r.color }} />
-                        <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-foreground/80">
-                          {r.label}
-                        </span>
-                      </div>
-                      {/* count footer */}
-                      <div className="relative z-10 text-[10px] sm:text-xs font-mono text-muted-foreground pt-1">
-                        {isLoading ? '—' : `${r.counts.completed}/${r.counts.total}`}
                       </div>
                     </motion.button>
                   </PopoverTrigger>

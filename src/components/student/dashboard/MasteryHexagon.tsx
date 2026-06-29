@@ -20,21 +20,16 @@ export function MasteryHexagon() {
     queryFn: async (): Promise<Axis[]> => {
       if (!student?.id) return [];
 
-      // 1. Math questions for accuracy by category + speed
-      const { data: mathQuestions } = await supabase
-        .from('questions')
-        .select('id, subtopic, question_categories(name)')
-        .ilike('subject', 'math')
-        .eq('is_active', true);
-
-      const mathIds = mathQuestions?.map((q) => q.id) ?? [];
-
-      // attempts (we need correctness + time)
+      // Pull student's math attempts WITH the joined question (saves us from
+      // hitting the 1000-row default cap on the questions table).
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, time_spent_seconds, attempt_number')
+        .select('question_id, is_correct, time_spent_seconds, attempt_number, attempted_at, questions!inner(id, subject, subtopic, is_active, question_categories(name))')
         .eq('student_account_id', student.id)
-        .in('question_id', mathIds.length ? mathIds : ['00000000-0000-0000-0000-000000000000']);
+        .eq('questions.is_active', true)
+        .ilike('questions.subject', 'math')
+        .order('attempted_at', { ascending: true })
+        .limit(5000);
 
       const buckets = {
         'Advanced Math': { c: 0, t: 0 },
@@ -44,33 +39,28 @@ export function MasteryHexagon() {
       };
 
       const classify = (q: any): keyof typeof buckets => {
-        const cat = (q.question_categories?.name || '').toLowerCase();
-        const sub = (q.subtopic || '').toLowerCase();
+        const cat = (q?.question_categories?.name || '').toLowerCase();
+        const sub = (q?.subtopic || '').toLowerCase();
         if (cat.includes('advanced') || sub.match(/advanced|quadratic|polynomial|exponential|function|nonlinear/)) return 'Advanced Math';
         if (cat.includes('geometry') || cat.includes('trig') || sub.match(/geometry|trig|circle|angle|triangle|area|volume/)) return 'Geo & Trig';
         if (cat.includes('problem') || cat.includes('data') || sub.match(/data|problem|ratio|percent|probability|statistics/)) return 'Problem Solving';
         return 'Algebra';
       };
 
-      const qById = new Map<string, any>();
-      mathQuestions?.forEach((q) => qById.set(q.id, q));
-
       // first attempt per question for accuracy
       const seen = new Set<string>();
-      attempts?.forEach((a) => {
+      (attempts || []).forEach((a: any) => {
         if (seen.has(a.question_id)) return;
         seen.add(a.question_id);
-        const q = qById.get(a.question_id);
-        if (!q) return;
-        const b = buckets[classify(q)];
+        const b = buckets[classify(a.questions)];
         b.t++;
         if (a.is_correct) b.c++;
       });
 
       // speed: avg time on correct first attempts; target 20s = 100
       const times = (attempts || [])
-        .filter((a) => a.is_correct && a.attempt_number === 1 && a.time_spent_seconds)
-        .map((a) => a.time_spent_seconds as number);
+        .filter((a: any) => a.is_correct && a.attempt_number === 1 && a.time_spent_seconds)
+        .map((a: any) => a.time_spent_seconds as number);
       const avgTime = times.length ? times.reduce((x, y) => x + y, 0) / times.length : 0;
       const speedScore = times.length === 0
         ? 0

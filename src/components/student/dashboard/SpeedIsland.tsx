@@ -122,9 +122,9 @@ export function SpeedIsland() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 h-[calc(100%-2.5rem)]">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 h-[calc(100%-2.5rem)]">
           {/* LEFT: stats + last sessions */}
-          <div className="flex flex-col gap-3 min-h-0">
+          <div className="md:col-span-2 flex flex-col gap-3 min-h-0">
             <div className="grid grid-cols-2 gap-2">
               <Stat
                 icon={<Timer className="h-3.5 w-3.5" />}
@@ -167,7 +167,7 @@ export function SpeedIsland() {
           </div>
 
           {/* RIGHT: graph + quick start (group enables hover button) */}
-          <div className="group/right relative flex flex-col min-h-0">
+          <div className="md:col-span-3 group/right relative flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-1.5">
               <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Speed trend
