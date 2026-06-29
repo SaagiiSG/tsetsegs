@@ -19,6 +19,7 @@ import {
   markAnnouncementRead,
 } from '@/hooks/useStudentAnnouncements';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { StudentSatSimulationCard } from '@/components/student/dashboard/StudentSatSimulationCard';
 
 export function AnnouncementBell() {
   const { student } = useStudentAuth();
