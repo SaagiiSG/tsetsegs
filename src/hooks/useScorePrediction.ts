@@ -396,20 +396,22 @@ export function useScorePrediction(studentId: string | undefined) {
         baseScore + attendanceAdj + homeworkAdj + practiceAdj + variancePenalty + trendBonus
       )));
 
-      // Tighter range for high-confidence students
-      if (tests.length >= 5 && hardAccuracy >= 65 && attemptVolume >= 300) {
-        const dStd = downsideStdev(tests.slice(0, 5).map(t => t.score!));
-        halfRange = Math.max(12, Math.min(Math.round(dStd * 0.35), 20));
-      }
-
       // Confidence — downgrade when downside variance is high
       let confidence: 'high' | 'medium' | 'low' = 'low';
       if (hasBaseline && tests.length >= 3 && attemptVolume >= 100) {
         confidence = Math.abs(variancePenalty) > 15 ? 'medium' : 'high';
       } else if (hasBaseline) {
         confidence = 'medium';
+      } else if (simHistory.length >= 2) {
+        // Sim-only base: borrow some confidence from sim quality + volume
+        const goodSims = simHistory.filter(s => s.confidence !== 'low').length;
+        if (goodSims >= 2 && attemptVolume >= 100) confidence = 'medium';
       }
 
+      // Buffer: ±15 floor for high confidence, up to ±20 for low.
+      if (confidence === 'high') halfRange = 15;
+      else if (confidence === 'medium') halfRange = 17;
+      else halfRange = 20;
 
       return {
         predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],
@@ -426,7 +428,15 @@ export function useScorePrediction(studentId: string | undefined) {
           variancePenalty,
         },
         hasBaseline,
+        simulation: simHistory.length > 0 && simBlend != null ? {
+          latest: simHistory[0],
+          history: simHistory,
+          blendedScore: Math.round(simBlend),
+          blendWeight: simBlendWeight,
+          practiceTestCount: tests.length,
+        } : undefined,
       };
+
     },
     enabled: !!studentId,
     staleTime: 5 * 60 * 1000,
