@@ -15,7 +15,7 @@ const SETS = [
     label: '68',
     title: '68 Foundational',
     desc: 'The original 68 must-know SAT math questions, drilled to mastery.',
-    color: 'hsl(180, 85%, 45%)', // teal
+    color: '#22d3ee', // cyan-400
     route: '/practice/dashboard',
     icon: Target,
   },
