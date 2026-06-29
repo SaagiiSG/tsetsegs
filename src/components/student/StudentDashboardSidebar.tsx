@@ -12,6 +12,9 @@ import {
   ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords
 } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useStudentTier } from '@/hooks/useStudentTier';
+import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
+import { CourseSwitcher } from './CourseSwitcher';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -68,6 +71,7 @@ export function StudentDashboardSidebar() {
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const { isEnabled } = useFeatureFlags();
+  const { tier } = useStudentTier();
   const learningItemsResolved: NavItem[] = isEnabled('mini_challenges')
     ? [...learningItems, { to: '/practice/challenges', icon: Swords, label: 'Challenges' }]
     : learningItems;
@@ -126,6 +130,20 @@ export function StudentDashboardSidebar() {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate text-sm">{studentName}</h2>
                 <p className="text-xs text-muted-foreground">SAT Practice</p>
+                <div 
+                  className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                  style={{ 
+                    backgroundColor: `${TIER_COLORS[tier]}20`,
+                    color: TIER_COLORS[tier],
+                    border: `1.5px solid ${TIER_COLORS[tier]}40`
+                  }}
+                >
+                  <div 
+                    className="w-1.5 h-1.5 rounded-full" 
+                    style={{ backgroundColor: TIER_COLORS[tier] }}
+                  />
+                  {TIER_DISPLAY_NAMES[tier]}
+                </div>
               </div>
               <button
                 type="button"
@@ -282,6 +300,11 @@ export function StudentDashboardSidebar() {
             <SidebarMenu>
               {accountItems.map(renderNavItem)}
             </SidebarMenu>
+            {open && (
+              <div className="px-2 pt-1">
+                <CourseSwitcher current="SAT" className="w-full justify-start h-9 text-xs" />
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
         {/* Check-in Widget */}

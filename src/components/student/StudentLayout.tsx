@@ -9,13 +9,11 @@ import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
 import { LinkEmailModal } from './LinkEmailModal';
 import { IELTSPracticeNotice } from './IELTSPracticeNotice';
-import { CourseSwitcher } from './CourseSwitcher';
 import { getEnrolledCourses } from '@/lib/courseRouting';
 import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
-import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
 import { useLocation } from 'react-router-dom';
 import {
@@ -37,7 +35,7 @@ function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
   const { user: teacherUser, teacherName, isLoading: teacherLoading } = useTeacherAuth();
   const { isAdmin, isLoading: adminLoading } = useAuth();
-  const { tier } = useStudentTier();
+  useStudentTier();
   const { setOpenMobile, setOpen } = useSidebar();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
@@ -167,23 +165,8 @@ function StudentLayoutContent() {
               </button>
             )}
             <AnnouncementBell />
-            <CourseSwitcher current="SAT" />
-            <div 
-              className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
-              style={{ 
-                backgroundColor: `${TIER_COLORS[tier]}20`,
-                color: TIER_COLORS[tier],
-                border: `1.5px solid ${TIER_COLORS[tier]}40`
-              }}
-            >
-              <div 
-                className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full" 
-                style={{ backgroundColor: TIER_COLORS[tier] }}
-              />
-              {TIER_DISPLAY_NAMES[tier]}
-            </div>
+            <PracticeQuickFab compact />
           </div>
-          <PracticeQuickFab compact />
         </div>
         
         <Outlet />
