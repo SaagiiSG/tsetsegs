@@ -239,6 +239,13 @@ export function useScorePrediction(studentId: string | undefined) {
             practiceAdj: 0, variancePenalty: 0,
           },
           hasBaseline: false,
+          distinctSolved: calibrationLocked.solved,
+          calibrationLocked,
+        } as ScorePredictionResult;
+      }
+      // dummy to keep diff localized — removed below
+      if (false as any) ({
+          hasBaseline: false,
           calibrationLocked,
         };
       }
