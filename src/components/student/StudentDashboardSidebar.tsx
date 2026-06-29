@@ -243,9 +243,7 @@ export function StudentDashboardSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
           {open && (
-            <div className="px-2">
-              <SidebarRankBox />
-            </div>
+            <SidebarRankBox className="rounded-l-none" />
           )}
         </SidebarGroup>
 
