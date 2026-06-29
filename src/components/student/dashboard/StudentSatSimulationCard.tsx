@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Lock, Sparkles } from "lucide-react";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
 import { useScorePrediction } from "@/hooks/useScorePrediction";
+import { supabase } from "@/integrations/supabase/client";
 
 const UNLOCK_AT = 440;
 
@@ -20,10 +22,24 @@ interface Props {
  */
 export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   const { student } = useStudentAuth();
+  const accountId = student?.id;
   const studentId = student?.linked_student?.id ?? student?.linked_student_id ?? undefined;
   const { data: prediction, isLoading } = useScorePrediction(studentId);
+  const { data: drawerSolved = 0 } = useQuery({
+    queryKey: ['sat-simulation-drawer-progress', accountId],
+    enabled: mode === 'drawer' && !!accountId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('student_attempts')
+        .select('question_id')
+        .eq('student_account_id', accountId!)
+        .limit(5000);
+      return new Set((data ?? []).map((row: any) => row.question_id)).size;
+    },
+    staleTime: 60 * 1000,
+  });
 
-  const distinct = prediction?.distinctSolved ?? 0;
+  const distinct = mode === 'drawer' ? (prediction?.distinctSolved ?? drawerSolved) : (prediction?.distinctSolved ?? 0);
   const unlocked = distinct >= UNLOCK_AT && !!prediction?.simulation;
 
   // One-time "New!" pulse for 7 days after first unlock — stored per student
@@ -49,19 +65,15 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
 
   const isFresh = unlockedAt ? Date.now() - unlockedAt < 7 * 24 * 60 * 60 * 1000 : false;
 
-  if (isLoading || !prediction) return null;
-  // Calibration-locked students still see the 440 progress card in the drawer
-  if (prediction.calibrationLocked && mode !== 'drawer') return null;
-
   // ---------- Locked state (drawer only) ----------
-  if (!unlocked) {
-    if (mode !== 'drawer') return null;
+  if (mode === 'drawer') {
+    if (!student || distinct >= UNLOCK_AT) return null;
     const pct = Math.min(100, Math.round((distinct / UNLOCK_AT) * 100));
     return (
-      <Card className="border-dashed border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-transparent">
+      <Card className="border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lock className="h-4 w-4 text-indigo-500" />
+            <Lock className="h-4 w-4 text-primary" />
             <div className="text-sm font-semibold">SAT Simulation Engine</div>
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">
               Locked
@@ -74,7 +86,7 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
           <div className="flex items-center gap-2">
             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all"
+                className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -88,30 +100,30 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   }
 
   // ---------- Unlocked state (dashboard only) ----------
-  if (mode !== 'dashboard') return null;
+  if (isLoading || !prediction || prediction.calibrationLocked || !unlocked) return null;
 
   // ---------- Unlocked state ----------
   const { latest } = prediction.simulation!;
   const confLabel = latest.confidence === "high" ? "High confidence" : latest.confidence === "med" ? "Medium" : "Low confidence";
 
   return (
-    <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/[0.06] to-transparent relative overflow-hidden">
+    <Card className="border-primary/30 bg-gradient-to-br from-primary/[0.06] to-transparent relative overflow-hidden">
       {isFresh && (
-        <div className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500 text-white animate-pulse">
+        <div className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground animate-pulse">
           <Sparkles className="h-2.5 w-2.5" />
           NEW
         </div>
       )}
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Activity className="h-4 w-4 text-indigo-500" />
+          <Activity className="h-4 w-4 text-primary" />
           <div className="text-sm font-semibold">SAT Simulation</div>
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">
             {confLabel}
           </Badge>
         </div>
         <div className="flex items-baseline gap-2 mb-1">
-          <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 leading-none">
+          <div className="text-4xl font-bold text-primary leading-none">
             {latest.simScore}
           </div>
           <div className="text-[11px] text-muted-foreground">/ 800</div>
