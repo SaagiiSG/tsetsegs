@@ -83,11 +83,14 @@ export function SetProgressIsland() {
                     >
                       {/* LEFT: label + count stacked */}
                       <div className="flex flex-col justify-between flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <Icon className="h-4 w-4 flex-shrink-0" style={{ color: r.color }} />
-                          <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-foreground/90 truncate">
-                            {r.label}
-                          </span>
+                        <div className="flex items-center gap-1.5 w-full justify-between">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Icon className="h-4 w-4 flex-shrink-0" style={{ color: r.color }} />
+                            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-foreground/90 truncate">
+                              {r.label}
+                            </span>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: r.color }} />
                         </div>
                         <div className="space-y-0.5">
                           <div className="font-mono font-bold text-lg sm:text-xl leading-none" style={{ color: r.color }}>
