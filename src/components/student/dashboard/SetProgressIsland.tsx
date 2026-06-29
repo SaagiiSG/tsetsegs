@@ -78,7 +78,7 @@ export function SetProgressIsland() {
                       type="button"
                       whileHover={{ y: -2 }}
                       onClick={() => navigate(r.route)}
-                      className="group relative flex items-stretch gap-2 sm:gap-3 rounded-xl border bg-card/40 p-2 sm:p-3 overflow-hidden hover:shadow-md hover:border-primary/40 transition-all text-left"
+                      className="group relative h-full w-full flex items-stretch gap-2 sm:gap-3 rounded-xl border bg-card/40 p-2 sm:p-3 overflow-hidden hover:shadow-md hover:border-primary/40 transition-all text-left"
                       aria-label={`${r.title}, ${r.counts.pct} percent complete`}
                     >
                       {/* LEFT: label + count stacked */}
