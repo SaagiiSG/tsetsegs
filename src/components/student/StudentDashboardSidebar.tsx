@@ -130,6 +130,20 @@ export function StudentDashboardSidebar() {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate text-sm">{studentName}</h2>
                 <p className="text-xs text-muted-foreground">SAT Practice</p>
+                <div 
+                  className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                  style={{ 
+                    backgroundColor: `${TIER_COLORS[tier]}20`,
+                    color: TIER_COLORS[tier],
+                    border: `1.5px solid ${TIER_COLORS[tier]}40`
+                  }}
+                >
+                  <div 
+                    className="w-1.5 h-1.5 rounded-full" 
+                    style={{ backgroundColor: TIER_COLORS[tier] }}
+                  />
+                  {TIER_DISPLAY_NAMES[tier]}
+                </div>
               </div>
               <button
                 type="button"
