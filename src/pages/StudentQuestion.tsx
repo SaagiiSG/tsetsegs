@@ -28,6 +28,7 @@ import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -834,6 +835,12 @@ export default function StudentQuestion() {
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
               <Badge variant="secondary">{question.category?.name}</Badge>
+              {(question as any).difficulty_level && (
+                <Badge variant="outline" className="gap-1.5">
+                  <DifficultyDots level={(question as any).difficulty_level} />
+                  <span className="text-xs capitalize">{(question as any).difficulty_level}</span>
+                </Badge>
+              )}
               {allQuestions && (
                 <span className="text-xs text-muted-foreground">
                   ({currentQuestionIndex + 1}/{allQuestions.length})

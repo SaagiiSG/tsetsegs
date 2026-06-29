@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
+import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
 type QuestionSet = '68' | 'CB' | '150';
 type Subject = 'math' | 'english';
@@ -33,6 +34,7 @@ const PRACTICE_QUESTION_SELECT = `
   subtopic,
   is_original,
   parent_question_id,
+  difficulty_level,
   category:question_categories(id, name)
 `;
 
@@ -906,7 +908,12 @@ export default function StudentPractice() {
                           >
                             <CardContent className="p-2 space-y-1">
                               <div className="flex items-center justify-between">
-                                <span className="font-mono font-bold text-xs">{simpleId}</span>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-mono font-bold text-xs">{simpleId}</span>
+                                  {question.difficulty_level && (
+                                    <DifficultyDots level={question.difficulty_level} />
+                                  )}
+                                </div>
                                 <div className="flex items-center gap-0.5">
                                   {notesSet.has(question.id) && (
                                     <StickyNote className="h-3 w-3 text-amber-500" />
@@ -922,6 +929,7 @@ export default function StudentPractice() {
                                   )}
                                 </div>
                               </div>
+
                               <Badge 
                                 variant="outline" 
                                 className={cn(
