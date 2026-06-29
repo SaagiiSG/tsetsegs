@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -106,8 +106,24 @@ const ENGLISH_CATEGORIES = [
 export default function StudentPractice() {
   const { student, logActivity } = useStudentAuth();
   const navigate = useNavigate();
-  const [questionSet, setQuestionSet] = useState<QuestionSet>('68');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSetParam = (searchParams.get('set') || '').toUpperCase();
+  const initialSet: QuestionSet =
+    initialSetParam === '150' ? '150' :
+    initialSetParam === 'CB' ? 'CB' :
+    initialSetParam === '68' ? '68' : '68';
+  const [questionSet, setQuestionSet] = useState<QuestionSet>(initialSet);
   const [subject, setSubject] = useState<Subject>('math');
+
+  // Clear ?set= once consumed so future toggles aren't overridden
+  useEffect(() => {
+    if (searchParams.get('set')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('set');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
