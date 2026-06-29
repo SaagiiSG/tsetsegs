@@ -167,7 +167,7 @@ export function SpeedIsland() {
           </div>
 
           {/* RIGHT: graph + quick start (group enables hover button) */}
-          <div className="group/right relative flex flex-col min-h-0">
+          <div className="md:col-span-3 group/right relative flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-1.5">
               <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Speed trend
