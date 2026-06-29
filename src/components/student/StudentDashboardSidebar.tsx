@@ -243,7 +243,7 @@ export function StudentDashboardSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {learningItems.map(renderNavItem)}
+                  {learningItemsResolved.map(renderNavItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>
