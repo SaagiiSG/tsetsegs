@@ -380,6 +380,18 @@ export default function StudentSpeedMode() {
   const allSessions = speedData?.all;
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [chartRange, setChartRange] = useState<7 | 14 | 30>(7);
+
+  const chartHistory = useMemo(() => {
+    if (!speedHistory?.length) return [];
+    const cutoff = subDays(new Date(), chartRange).getTime();
+    return speedHistory
+      .filter((h) => new Date(h.createdAt).getTime() >= cutoff)
+      .map((h) => ({
+        ...h,
+        date: chartRange === 7 ? h.dateShort : h.date,
+      }));
+  }, [speedHistory, chartRange]);
 
   const lastSession = useMemo(() => {
     if (!speedHistory?.length) return null;
