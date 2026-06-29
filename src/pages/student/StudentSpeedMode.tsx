@@ -642,72 +642,8 @@ export default function StudentSpeedMode() {
           <CardContent className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-medium text-muted-foreground">Last Session</p>
-              <Drawer open={historyOpen} onOpenChange={setHistoryOpen} direction="right">
-                <DrawerTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-                    <History className="h-3.5 w-3.5" />
-                    History
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent className="fixed right-0 top-0 bottom-0 left-auto h-full w-[400px] rounded-l-[10px] rounded-r-none mt-0">
-                  <DrawerHeader>
-                    <DrawerTitle className="flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      Speed Session History
-                    </DrawerTitle>
-                    <DrawerDescription>
-                      All your completed speed practice sessions
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <ScrollArea className="flex-1 px-4">
-                    <div className="space-y-3 pb-4">
-                      {allSessions && allSessions.length > 0 ? (
-                        allSessions.map((session, i) => {
-                          const rating = getPerformanceRating(session.avgTime);
-                          return (
-                            <div 
-                              key={i} 
-                              className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className={cn("p-2 rounded-lg", rating.bg)}>
-                                  <Clock className={cn("h-5 w-5", rating.color)} />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{session.date}</p>
-                                  <p className="text-xs text-muted-foreground">{session.time}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-6 text-right">
-                                <div>
-                                  <p className="text-sm font-medium">{session.total} questions</p>
-                                  <p className="text-xs text-muted-foreground">{session.accuracy}% accuracy</p>
-                                </div>
-                                <div className="min-w-[70px]">
-                                  <p className={cn("text-lg font-bold", rating.color)}>{session.avgTime}s</p>
-                                  <p className="text-xs text-muted-foreground">per problem</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                          <p>No sessions yet</p>
-                          <p className="text-sm">Complete a speed session to see it here</p>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                  <DrawerFooter>
-                    <DrawerClose asChild>
-                      <Button variant="outline">Close</Button>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
             </div>
+
             
             <div className="flex-1 flex flex-col items-center justify-center">
               {lastSession ? (
