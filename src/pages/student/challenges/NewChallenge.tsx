@@ -4,7 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Hash, Clock, Zap, Users, Swords } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Hash, Clock, Zap, Users, Swords, Trophy, Target, Timer, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFriends } from '@/hooks/useFriends';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -27,6 +34,7 @@ export default function NewChallenge() {
   const [duration, setDuration] = useState(300);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
 
   useEffect(() => {
     if (preselectFriend) setSelected(new Set([preselectFriend]));
@@ -92,19 +100,55 @@ export default function NewChallenge() {
             <label className="text-sm font-medium flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" /> Format
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(FORMAT_LABELS) as Format[]).map((f) => (
-                <Button
-                  key={f}
-                  variant={format === f ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFormat(f)}
-                  className="h-auto py-3 flex flex-col items-start"
-                >
-                  <span className="font-semibold">{FORMAT_LABELS[f]}</span>
+            <Dialog open={formatDialogOpen} onOpenChange={setFormatDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-between h-auto py-3">
+                  <span className="font-semibold">{FORMAT_LABELS[format]}</span>
+                  <span className="text-xs text-muted-foreground">Tap to change</span>
                 </Button>
-              ))}
-            </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Swords className="h-5 w-5 text-primary" />
+                    Choose challenge format
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-3 pt-2">
+                  {(Object.keys(FORMAT_LABELS) as Format[]).map((f) => {
+                    const descs: Record<Format, string> = {
+                      first_to_points: 'Race to reach a point target first.',
+                      first_to_correct: 'Race to answer N questions correctly.',
+                      time_sprint: 'Answer as many as you can before time runs out.',
+                      fixed_set: 'Everyone gets the same set — fastest wins.',
+                    };
+                    const icons: Record<Format, React.ReactNode> = {
+                      first_to_points: <Trophy className="h-5 w-5" />,
+                      first_to_correct: <Target className="h-5 w-5" />,
+                      time_sprint: <Timer className="h-5 w-5" />,
+                      fixed_set: <Layers className="h-5 w-5" />,
+                    };
+                    return (
+                      <Button
+                        key={f}
+                        variant={format === f ? 'default' : 'outline'}
+                        onClick={() => {
+                          setFormat(f);
+                          setFormatDialogOpen(false);
+                        }}
+                        className="h-auto py-4 justify-start gap-3 text-left"
+                      >
+                        <span className="shrink-0">{icons[f]}</span>
+                        <div className="flex flex-col items-start">
+                          <span className="font-semibold">{FORMAT_LABELS[f]}</span>
+                          <span className="text-xs opacity-80 font-normal">{descs[f]}</span>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
