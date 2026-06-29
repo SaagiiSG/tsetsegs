@@ -124,7 +124,7 @@ export function SpeedIsland() {
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 h-[calc(100%-2.5rem)]">
           {/* LEFT: stats + last sessions */}
-          <div className="flex flex-col gap-3 min-h-0">
+          <div className="md:col-span-2 flex flex-col gap-3 min-h-0">
             <div className="grid grid-cols-2 gap-2">
               <Stat
                 icon={<Timer className="h-3.5 w-3.5" />}
