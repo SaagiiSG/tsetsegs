@@ -34,6 +34,7 @@ export default function NewChallenge() {
   const [duration, setDuration] = useState(300);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
 
   useEffect(() => {
     if (preselectFriend) setSelected(new Set([preselectFriend]));
