@@ -33,6 +33,7 @@ const PRACTICE_QUESTION_SELECT = `
   subtopic,
   is_original,
   parent_question_id,
+  difficulty_level,
   category:question_categories(id, name)
 `;
 
