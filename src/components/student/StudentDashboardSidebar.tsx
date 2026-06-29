@@ -242,7 +242,13 @@ export function StudentDashboardSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+          {open && (
+            <div className="px-2">
+              <SidebarRankBox />
+            </div>
+          )}
         </SidebarGroup>
+
 
         {/* Learning Section */}
         <Collapsible open={learningOpen} onOpenChange={setLearningOpen}>
