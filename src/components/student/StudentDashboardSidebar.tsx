@@ -11,7 +11,7 @@ import {
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
   ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake
 } from 'lucide-react';
-import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
