@@ -300,6 +300,11 @@ export function StudentDashboardSidebar() {
             <SidebarMenu>
               {accountItems.map(renderNavItem)}
             </SidebarMenu>
+            {open && (
+              <div className="px-2 pt-1">
+                <CourseSwitcher current="SAT" className="w-full justify-start h-9 text-xs" />
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
         {/* Check-in Widget */}
