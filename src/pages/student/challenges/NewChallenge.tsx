@@ -4,7 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Hash, Clock, Zap, Users, Swords } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Hash, Clock, Zap, Users, Swords, Trophy, Target, Timer, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFriends } from '@/hooks/useFriends';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
