@@ -70,10 +70,10 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
     if (!student || distinct >= UNLOCK_AT) return null;
     const pct = Math.min(100, Math.round((distinct / UNLOCK_AT) * 100));
     return (
-      <Card className="border-dashed border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-transparent">
+      <Card className="border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lock className="h-4 w-4 text-indigo-500" />
+            <Lock className="h-4 w-4 text-primary" />
             <div className="text-sm font-semibold">SAT Simulation Engine</div>
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">
               Locked
@@ -86,7 +86,7 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
           <div className="flex items-center gap-2">
             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all"
+                className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -107,23 +107,23 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   const confLabel = latest.confidence === "high" ? "High confidence" : latest.confidence === "med" ? "Medium" : "Low confidence";
 
   return (
-    <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/[0.06] to-transparent relative overflow-hidden">
+    <Card className="border-primary/30 bg-gradient-to-br from-primary/[0.06] to-transparent relative overflow-hidden">
       {isFresh && (
-        <div className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500 text-white animate-pulse">
+        <div className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground animate-pulse">
           <Sparkles className="h-2.5 w-2.5" />
           NEW
         </div>
       )}
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Activity className="h-4 w-4 text-indigo-500" />
+          <Activity className="h-4 w-4 text-primary" />
           <div className="text-sm font-semibold">SAT Simulation</div>
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">
             {confLabel}
           </Badge>
         </div>
         <div className="flex items-baseline gap-2 mb-1">
-          <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 leading-none">
+          <div className="text-4xl font-bold text-primary leading-none">
             {latest.simScore}
           </div>
           <div className="text-[11px] text-muted-foreground">/ 800</div>
