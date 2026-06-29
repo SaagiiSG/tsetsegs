@@ -81,7 +81,10 @@ export function AnnouncementBell() {
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          <div className="p-4">
+          <div className="p-4 space-y-4">
+            {!current && (
+              <StudentSatSimulationCard mode="drawer" />
+            )}
             {current ? (
               <div className="space-y-4">
                 <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="-ml-2">
