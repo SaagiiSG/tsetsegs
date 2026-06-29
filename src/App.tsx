@@ -57,6 +57,13 @@ import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 
+// Mini Challenges
+import ChallengesHome from "./pages/student/challenges/ChallengesHome";
+import NewChallenge from "./pages/student/challenges/NewChallenge";
+import ChallengeLobby from "./pages/student/challenges/ChallengeLobby";
+import ChallengePlay from "./pages/student/challenges/ChallengePlay";
+import ChallengeResults from "./pages/student/challenges/ChallengeResults";
+
 // IELTS Prep Portal
 import { IELTSLayout } from "./components/ielts/IELTSLayout";
 import IELTSDashboardHome from "./pages/ielts/IELTSDashboardHome";
@@ -195,6 +202,11 @@ const App = () => (
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="booking" element={<StudentBooking />} />
+                    <Route path="challenges" element={<ChallengesHome />} />
+                    <Route path="challenges/new" element={<NewChallenge />} />
+                    <Route path="challenges/:id/lobby" element={<ChallengeLobby />} />
+                    <Route path="challenges/:id/play" element={<ChallengePlay />} />
+                    <Route path="challenges/:id/results" element={<ChallengeResults />} />
 
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />
