@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
+import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
 type QuestionSet = '68' | 'CB' | '150';
 type Subject = 'math' | 'english';
