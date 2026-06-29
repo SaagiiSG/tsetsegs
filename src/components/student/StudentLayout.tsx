@@ -31,6 +31,7 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { AnnouncementBell } from './AnnouncementBell';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
