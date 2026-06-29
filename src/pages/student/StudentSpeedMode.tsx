@@ -302,114 +302,81 @@ export default function StudentSpeedMode() {
     enabled: !!student
   });
 
-  // Fetch speed session history (last 7 days)
-  const { data: speedHistory } = useQuery({
-    queryKey: ['speed-history', student?.id],
+  // Fetch all speed sessions ONCE, derive the three views from it. Cached for 60s.
+  const { data: speedData } = useQuery({
+    queryKey: ['speed-sessions-all', student?.id],
     queryFn: async () => {
-      if (!student?.id) return [];
-      const weekAgo = subDays(new Date(), 7);
-      
+      if (!student?.id) return { history: [], stats: { bestScore: null as { accuracy: number; avgTime: number } | null, totalSessions: 0 }, all: [] };
+
       const { data: sessions } = await supabase
         .from('student_activity_logs')
         .select('metadata, created_at')
         .eq('student_account_id', student.id)
         .eq('activity_type', 'speed_mode_complete')
-        .gte('created_at', weekAgo.toISOString())
-        .order('created_at', { ascending: true });
-      
-      if (!sessions?.length) return [];
+        .order('created_at', { ascending: false })
+        .limit(500);
 
-      return sessions.map(s => {
-        const meta = s.metadata as { total?: number; correct?: number; avgTimePerQuestion?: number } | null;
-        const total = meta?.total || 0;
-        const correct = meta?.correct || 0;
-        return {
-          date: format(new Date(s.created_at), 'EEE'),
-          fullDate: format(new Date(s.created_at), 'MMM d'),
-          total,
-          correct,
-          accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
-          timePerProblem: meta?.avgTimePerQuestion || 0
-        };
-      });
-    },
-    enabled: !!student?.id,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  });
+      if (!sessions?.length) return { history: [], stats: { bestScore: null, totalSessions: 0 }, all: [] };
 
-  // Fetch stats (best score + total sessions)
-  const { data: stats } = useQuery({
-    queryKey: ['speed-stats', student?.id],
-    queryFn: async () => {
-      if (!student?.id) return { bestScore: null, totalSessions: 0 };
-      
-      const { data: completedSessions } = await supabase
-        .from('student_activity_logs')
-        .select('metadata')
-        .eq('student_account_id', student.id)
-        .eq('activity_type', 'speed_mode_complete');
-      
-      if (!completedSessions?.length) return { bestScore: null, totalSessions: 0 };
-      
-      const sessions = completedSessions.map(s => {
-        const meta = s.metadata as { total?: number; correct?: number; avgTimePerQuestion?: number } | null;
-        const total = meta?.total || 0;
-        const correct = meta?.correct || 0;
-        return {
-          accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
-          avgTime: meta?.avgTimePerQuestion || 0
-        };
-      });
-      
-      const best = sessions.reduce((prev, curr) => 
-        curr.accuracy > prev.accuracy ? curr : prev
-      , sessions[0]);
-      
-      return { bestScore: best, totalSessions: sessions.length };
-    },
-    enabled: !!student?.id,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  });
-
-  // Fetch ALL speed sessions for history drawer
-  const { data: allSessions } = useQuery({
-    queryKey: ['all-speed-sessions', student?.id],
-    queryFn: async () => {
-      if (!student?.id) return [];
-      
-      const { data: sessions } = await supabase
-        .from('student_activity_logs')
-        .select('metadata, created_at')
-        .eq('student_account_id', student.id)
-        .eq('activity_type', 'speed_mode_complete')
-        .order('created_at', { ascending: false });
-      
-      if (!sessions?.length) return [];
-
-      return sessions.map(s => {
+      // Normalize once
+      const normalized = sessions.map((s) => {
         const meta = s.metadata as { total?: number; correct?: number; avgTimePerQuestion?: number; duration?: number } | null;
         const total = meta?.total || 0;
         const correct = meta?.correct || 0;
+        const avgTime = meta?.avgTimePerQuestion || 0;
         return {
-          date: format(parseISO(s.created_at), 'MMM d, yyyy'),
-          time: format(parseISO(s.created_at), 'h:mm a'),
+          createdAt: s.created_at,
           total,
           correct,
           accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
-          avgTime: Math.round(meta?.avgTimePerQuestion || 0),
-          duration: meta?.duration || 0
+          avgTime,
+          duration: meta?.duration || 0,
         };
       });
+
+      // Last 7 days history (oldest → newest for chart)
+      const weekAgoMs = subDays(new Date(), 7).getTime();
+      const history = normalized
+        .filter((n) => new Date(n.createdAt).getTime() >= weekAgoMs)
+        .slice()
+        .reverse()
+        .map((n) => ({
+          date: format(new Date(n.createdAt), 'EEE'),
+          fullDate: format(new Date(n.createdAt), 'MMM d'),
+          total: n.total,
+          correct: n.correct,
+          accuracy: n.accuracy,
+          timePerProblem: n.avgTime,
+        }));
+
+      // Stats: best by accuracy across all sessions
+      const best = normalized.reduce((prev, curr) => (curr.accuracy > prev.accuracy ? curr : prev), normalized[0]);
+      const stats = {
+        bestScore: { accuracy: best.accuracy, avgTime: best.avgTime },
+        totalSessions: normalized.length,
+      };
+
+      // Full history list for drawer
+      const all = normalized.map((n) => ({
+        date: format(parseISO(n.createdAt), 'MMM d, yyyy'),
+        time: format(parseISO(n.createdAt), 'h:mm a'),
+        total: n.total,
+        correct: n.correct,
+        accuracy: n.accuracy,
+        avgTime: Math.round(n.avgTime),
+        duration: n.duration,
+      }));
+
+      return { history, stats, all };
     },
     enabled: !!student?.id,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
+
+  const speedHistory = speedData?.history;
+  const stats = speedData?.stats;
+  const allSessions = speedData?.all;
 
   const [historyOpen, setHistoryOpen] = useState(false);
 

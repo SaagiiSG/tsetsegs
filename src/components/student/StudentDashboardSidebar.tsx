@@ -9,9 +9,9 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Megaphone, Flag, Flame, Snowflake
+  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake
 } from 'lucide-react';
-import { useStudentAnnouncements } from '@/hooks/useStudentAnnouncements';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -66,9 +66,7 @@ export function StudentDashboardSidebar() {
   const [learningOpen, setLearningOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
-  const { data: annData } = useStudentAnnouncements();
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
-  const unread = annData?.unreadCount ?? 0;
   const currentStreak = streak?.current_streak ?? 0;
 
   const studentName = student?.linked_student 
@@ -216,45 +214,6 @@ export function StudentDashboardSidebar() {
                     <Trophy className="h-4 w-4" />
                   </motion.div>
                   {open && <span className="ml-2">Leaderboard</span>}
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <NavLink
-                  to="/practice/announcements"
-                  className={cn(
-                    "hover:bg-muted/50 transition-all duration-200 group/item relative",
-                    open ? "" : "justify-center"
-                  )}
-                  activeClassName="bg-primary/10 text-primary font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
-                >
-                  <motion.span 
-                    className="active-dot absolute left-1.5 w-1.5 h-1.5 rounded-full bg-primary opacity-0 scale-0 transition-all duration-200"
-                    layoutId="studentActiveDot"
-                  />
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    className="relative"
-                  >
-                    <Megaphone className="h-4 w-4" />
-                    {unread > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                        {unread > 9 ? '9+' : unread}
-                      </span>
-                    )}
-                  </motion.div>
-                  {open && (
-                    <span className="ml-2 flex items-center gap-2">
-                      Announcements
-                      {unread > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                          {unread}
-                        </span>
-                      )}
-                    </span>
-                  )}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

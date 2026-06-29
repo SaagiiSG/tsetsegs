@@ -31,6 +31,7 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { AnnouncementBell } from './AnnouncementBell';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -165,6 +166,7 @@ function StudentLayoutContent() {
                 {freezersAvailable}
               </button>
             )}
+            <AnnouncementBell />
             <CourseSwitcher current="SAT" />
             <div 
               className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
