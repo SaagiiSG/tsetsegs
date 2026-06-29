@@ -431,6 +431,7 @@ export function useScorePrediction(studentId: string | undefined) {
           variancePenalty,
         },
         hasBaseline,
+        distinctSolved: simAttemptsNewestFirst.length,
         simulation: simHistory.length > 0 && simBlend != null ? {
           latest: simHistory[0],
           history: simHistory,
