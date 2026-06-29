@@ -58,9 +58,14 @@ export default function ChallengesHome() {
               <p className="text-sm text-muted-foreground">Race your friends. First to the line wins.</p>
             </div>
           </div>
-          <Button onClick={() => openNewChallenge()} disabled={drawerOpen}>
-            <Swords className="h-4 w-4" /> New challenge
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => openNewChallenge()} disabled={drawerOpen}>
+              <Swords className="h-4 w-4" /> New challenge
+            </Button>
+            <Button variant="outline" onClick={() => setAddOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Add friend
+            </Button>
+          </div>
         </header>
 
         <Tabs defaultValue="active">
