@@ -619,10 +619,12 @@ export default function TeacherStudentProfile() {
 
         {/* Score Prediction */}
         {batch.course_type === 'SAT' && (
-          <div className="mb-6">
+          <div className="mb-6 grid gap-3 md:grid-cols-2">
             <ScorePredictionCard studentId={student.id} />
+            <SatSimulationPanel studentId={student.id} />
           </div>
         )}
+
 
         {/* Quick Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
