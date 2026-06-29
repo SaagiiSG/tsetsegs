@@ -16,7 +16,7 @@ const SETS = [
     title: '68 Foundational',
     desc: 'The original 68 must-know SAT math questions, drilled to mastery.',
     color: '#22d3ee', // cyan-400
-    route: '/practice/dashboard',
+    route: '/practice/dashboard?set=68',
     icon: Target,
   },
   {
@@ -25,7 +25,7 @@ const SETS = [
     title: '150 Hard',
     desc: 'High-difficulty SAT math training. Hardest of the hardest.',
     color: '#ef4444', // red-500
-    route: '/practice/dashboard',
+    route: '/practice/dashboard?set=150',
     icon: Layers,
   },
   {
@@ -34,7 +34,7 @@ const SETS = [
     title: 'CollegeBoard 1074',
     desc: 'Full official CollegeBoard question bank — every released question.',
     color: '#1e40af', // deep blue
-    route: '/practice/dashboard',
+    route: '/practice/dashboard?set=CB',
     icon: BookOpen,
   },
 ];
