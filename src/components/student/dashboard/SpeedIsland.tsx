@@ -122,7 +122,7 @@ export function SpeedIsland() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 h-[calc(100%-2.5rem)]">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 h-[calc(100%-2.5rem)]">
           {/* LEFT: stats + last sessions */}
           <div className="flex flex-col gap-3 min-h-0">
             <div className="grid grid-cols-2 gap-2">
