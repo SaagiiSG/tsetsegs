@@ -15,6 +15,7 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CourseSwitcher } from './CourseSwitcher';
+import { SidebarRankBox } from './SidebarRankBox';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -241,7 +242,13 @@ export function StudentDashboardSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+          {open && (
+            <div className="px-2">
+              <SidebarRankBox />
+            </div>
+          )}
         </SidebarGroup>
+
 
         {/* Learning Section */}
         <Collapsible open={learningOpen} onOpenChange={setLearningOpen}>

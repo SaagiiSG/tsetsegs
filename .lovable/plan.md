@@ -1,110 +1,151 @@
 
-# SAT Mini Challenges
+# SAT Dashboard Redesign
 
-A new student-only feature where SAT students add friends by phone and race them live in 1v1 or up to 5-player matches. IELTS students are excluded for now (they don't have the practice engine).
-
-## User flow
-
-```text
-Friends tab
-  Add friend by phone  ──▶  request pending  ──▶  friend accepts
-                                                       │
-                                                       ▼
-                                          friends list (online dot)
-
-Challenge a friend (or group of up to 5)
-  1. Host picks: format + subject + question set + target
-  2. Invites go out (in-app + a small toast/badge)
-  3. Lobby — everyone marks "ready"
-  4. Host starts → live race screen with leaderboard
-  5. First to hit goal wins → results screen, rematch button
-```
-
-## Formats (host picks one)
-
-| Format            | Host configures                       | Win condition                          |
-| ----------------- | ------------------------------------- | -------------------------------------- |
-| First to N points | target = 100 / 500 / 1000             | First player to reach target           |
-| First to N correct| target = 10 / 25 / 50 / 100           | First player to N correct answers      |
-| Time sprint       | duration = 5 or 10 min                | Most correct when timer hits 0         |
-| Fixed set race    | size = 10 or 20 questions             | Lowest total time (must finish all)    |
-
-All formats use the existing question pool, filtered by subject (Math / English) and set (68, CollegeBoard, 150 Hard, English, All) — same options as Live Practice.
-
-## Scoring (points format)
-
-Reuse the same per-question point logic students already see in regular practice (difficulty + speed). Keeps it familiar and prevents grinding easy questions for cheap points.
-
-## Friends model
-
-- Mutual: send request → other accepts → both see each other.
-- Search by phone only (no name search — privacy + matches how login works).
-- Blocked-phone list so a student can stop receiving requests from someone.
-- Friends list shows online status (last_seen within 2 min) so you know who you can challenge live.
-
-## Where it lives in the app
-
-- New sidebar item under Practice: **Challenges** (`/practice/challenges`)
-- Sub-routes:
-  - `/practice/challenges` — friends list + active/pending invites
-  - `/practice/challenges/new` — format/subject/set/target picker + friend selector
-  - `/practice/challenges/:id/lobby` — ready-up screen
-  - `/practice/challenges/:id/play` — live race
-  - `/practice/challenges/:id/results` — final standings + rematch
-- A small notification badge on the sidebar item when an invite or friend request is waiting.
-
-## Out of scope for v1
-
-- Async / "play when you're free" challenges (live only this round)
-- Cross-course challenges (SAT vs IELTS)
-- Public matchmaking against strangers
-- Tournament brackets, seasons, dedicated leaderboards
-- Wagering points / tier-affecting outcomes — challenges are purely social, don't move the student's regular tier/points
-- IELTS students (button hidden for IELTS-only accounts; dual-enrolled see it only inside the SAT section)
+A full rebuild of `/practice/home` (`StudentDashboardHome.tsx`) into three rows, plus a small sidebar addition and a one-time goal-setting flow.
 
 ---
 
-## Technical section
+## 1. Sidebar — rank box under Leaderboard
 
-**New tables** (all RLS-gated to the student's own `student_account_id`):
+In `StudentDashboardSidebar.tsx`, directly under the Leaderboard nav item, add a small card:
 
-- `student_friendships` — `(requester_id, addressee_id, status: pending|accepted|blocked, created_at, responded_at)`. Unique on the unordered pair.
-- `challenges` — `(id, host_account_id, format, subject, question_set, target_value, duration_seconds, status: lobby|active|finished|cancelled, started_at, finished_at, winner_account_id)`
-- `challenge_participants` — `(challenge_id, student_account_id, joined_at, ready_at, score, correct_count, total_time_ms, finished_at, place)`
-- `challenge_questions` — `(challenge_id, question_id, order_index)` — pre-shuffled pool the race draws from (same set for everyone in the race; each player advances through it independently).
-- `challenge_attempts` — `(challenge_id, student_account_id, question_id, is_correct, time_ms, points_awarded, attempted_at)` — kept separate from `student_attempts` so challenge play doesn't pollute regular practice analytics, streaks, tier, or badges.
+```
+┌─────────────────────┐
+│ 🏆 Leaderboard      │   ← existing button
+├─────────────────────┤
+│  Position    #14    │   ← new compact box, clickable → /practice/leaderboard
+└─────────────────────┘
+```
 
-**GRANTs**: `authenticated` gets select/insert/update on all five; `service_role` full; no `anon`. RLS: participants can read their own challenge rows + sibling participants in the same challenge; only the host can update challenge status; only the participant can write their own attempts.
+- Shows current **sprint group rank** (from `student_sprint_rankings` for the active sprint, scoped to the student's group).
+- Subtle styling like the streak/freezer pills already in the header.
+- Hidden when sidebar is collapsed.
+- Clicking navigates to `/practice/leaderboard`.
 
-**Realtime**: enable `supabase_realtime` publication for `challenges`, `challenge_participants`, and `challenge_attempts` so the lobby and race leaderboard update live (subscribe inside `useEffect`, teardown on unmount — per project rules).
+---
 
-**Server-side win detection**: a trigger on `challenge_attempts` recomputes the participant's score/correct/time, then if the win condition is met sets `challenges.status = 'finished'`, `winner_account_id`, and assigns `place` to everyone. Keeps clients from cheating.
+## 2. One-time goal-setting flow
 
-**Presence**: reuse `student_accounts.last_seen_at` (already updated on activity) for the online dot — no new infra.
+A modal that runs once on first dashboard visit, re-openable from a small ⚙️ on the daily ring.
 
-**Reusable pieces**:
-- Question fetch + render: reuse `StudentQuestion` viewer in a "challenge mode" wrapper that posts to `challenge_attempts` instead of `student_attempts`.
-- Lobby/leaderboard UI: model on `LiveLobby` / `LiveLeaderboard` from teacher Live Practice.
-- Format/subject/set picker: model on `LivePracticeContent` setup screen.
+Steps:
+1. **SAT date** — date picker (prefill from `student_accounts.sat_test_date` if set).
+2. **Intensity** — three cards: `Intense`, `Gradual`, `With the flow`.
+3. **Computed ring preview** — show the three goals derived from days-until-SAT × intensity, with inline +/- tweak, then "Save".
 
-**New files** (sketch):
-- `src/pages/student/challenges/ChallengesHome.tsx`
-- `src/pages/student/challenges/NewChallenge.tsx`
-- `src/pages/student/challenges/ChallengeLobby.tsx`
-- `src/pages/student/challenges/ChallengePlay.tsx`
-- `src/pages/student/challenges/ChallengeResults.tsx`
-- `src/components/student/challenges/FriendsList.tsx`
-- `src/components/student/challenges/AddFriendDialog.tsx`
-- `src/components/student/challenges/PendingInvites.tsx`
-- `src/components/student/challenges/LiveLeaderboard.tsx`
-- `src/hooks/useFriends.ts`, `useChallenge.ts`, `useChallengeRealtime.ts`
-- `src/lib/challengeScoring.ts` (mirror existing per-question point formula)
+Defaults if skipped: **2 speed sessions / 5 hard / 10 medium** per day.
 
-**Edits**:
-- `src/App.tsx` — register `/practice/challenges/*` routes
-- `src/components/student/StudentSidebar.tsx` — add Challenges item (SAT only) with unread badge
-- `src/lib/courseRouting.ts` — hide for IELTS-only
+Computation (rough):
+- Intense: 3 speed / 8 hard / 15 medium
+- Gradual: 2 speed / 5 hard / 10 medium (default)
+- With the flow: 1 speed / 3 hard / 6 medium
+- Scaled up ~25% when SAT is < 30 days away, down ~25% when > 120 days.
 
-**Feature flag**: gate the whole feature behind a `mini_challenges` flag in `feature_flags` so we can ship dark and turn on per cohort.
+Persistence: new columns on `student_accounts` — `daily_goal_speed`, `daily_goal_hard`, `daily_goal_medium`, `daily_goal_set_at`, `goal_intensity`.
 
-**Not changed**: existing practice tables, tier, badges, streaks, leaderboard. Challenges are a separate sandbox.
+---
+
+## 3. Row 1 — 25 / 75
+
+### Left 25% — Daily Completion Ring (Apple Fitness style)
+Square card with three concentric rings:
+- **Outer** — Speed sessions completed today / goal (default 2)
+- **Middle** — Hard questions correct today / goal (5)
+- **Inner** — Medium questions correct today / goal (10)
+
+"Today" = local-day window. Data: `student_sessions` for speed count, `student_attempts` joined to `questions.difficulty` for hard/medium counts (first-correct per question, today only). Small ⚙️ corner re-opens the goal flow.
+
+### Right 75% — Question Set Island
+Three vertical sections side-by-side, each its own progress bar filling upward:
+
+```
+┌──────────────────────────────────────── [ 📊 Big Ring ] ┐
+│   68           150 Hard         CB 1074                 │
+│  ▓▓▓            ▓▓▓▓             ▓▓                     │
+│  ▓▓▓            ▓▓▓▓             ▓▓                     │
+│  ▓▓▓            ▓▓▓▓             ▓▓                     │
+│  42/68          90/150            612/1074              │
+└─────────────────────────────────────────────────────────┘
+```
+
+- Hover on a section → popover preview of that practice set (title, % complete, last attempted, "Open" button → respective practice route).
+- Top-right button opens a dialog with one **big Apple-style ring**:
+  - Outer = CB 1074, Middle = 150 Hard, Inner = 68
+  - Each = distinct correct / total in set.
+
+---
+
+## 4. Row 2 — 40 / 60
+
+### Left 40% — Weakness Island
+Lifted from the analytics page's weakness component (top 3–5 weakest topics by accuracy, with mini bars and "Practice this" link per row).
+
+### Right 60% — Speed Island (reimagined)
+Split into left + right halves:
+
+**Left half**
+- Top: Avg current speed (s/question) + Avg accuracy (last 10 sessions), big numbers.
+- Bottom: Last sessions preview — compact list of 3 most recent speed sessions (date, time/q, accuracy).
+
+**Right half**
+- Line graph of speed-per-session with **7d / 14d / 30d** selector (reuses the selector from the speed-mode work we already did).
+- On hover anywhere over the right half: a "Quick start" button surfaces, pre-filled with the last session's settings; click → `/practice/speed/session` with those params.
+
+---
+
+## 5. Row 3 — 50 / 50
+
+### Left 50% — Mastery Hexagon
+Radar/hexagon chart with 6 axes:
+1. Advanced Math (accuracy %)
+2. Algebra (accuracy %)
+3. Problem Solving & Data Analysis (accuracy %)
+4. Geometry & Trig (accuracy %)
+5. Speed (normalized: target 20s/q → 100%, scales linearly)
+6. Vocab (math vocab completion % from `student_vocabulary_progress`)
+
+### Right 50% — Quick Vocab Quiz (customizable)
+Card with a "Start" button and three selectors:
+- **Length**: 5 / 10 / 20 words
+- **Mode**: Flashcards · Definition→Word · Word→Definition · Sentence fill-in
+- **Source**: All · Due for review · Weakest · Recently missed
+
+Selections persist in localStorage so the next quiz uses last settings. Clicking Start launches an inline quiz overlay (no route change) so the student stays on the dashboard.
+
+---
+
+## Technical Section
+
+### Files to create
+- `src/components/student/dashboard/DailyRing.tsx` — three-ring SVG, today's progress.
+- `src/components/student/dashboard/GoalSetupDialog.tsx` — 3-step flow.
+- `src/components/student/dashboard/SetProgressIsland.tsx` — 68 / 150 / CB bars + popovers + big-ring dialog.
+- `src/components/student/dashboard/BigCompletionRingDialog.tsx`.
+- `src/components/student/dashboard/SpeedIsland.tsx` — reimagined card with 7/14/30 selector.
+- `src/components/student/dashboard/MasteryHexagon.tsx` — radar via recharts.
+- `src/components/student/dashboard/QuickVocabQuiz.tsx` — selectors + inline quiz.
+- `src/components/student/SidebarRankBox.tsx` — sprint rank pill.
+- `src/hooks/useDailyGoals.ts` — read/write `daily_goal_*` on `student_accounts`.
+- `src/hooks/useDailyProgress.ts` — counts of today's speed sessions + hard/medium correct.
+- `src/hooks/useSetProgress.ts` — distinct-correct counts for the three sets.
+
+### Files to edit
+- `src/pages/student/StudentDashboardHome.tsx` — full layout rewrite (3 rows, grid-12).
+- `src/components/student/StudentDashboardSidebar.tsx` — add `SidebarRankBox` under Leaderboard item.
+- Lift `WeaknessIsland` out of the stats page into a shared component if it isn't already, then reuse.
+
+### Schema migration (one migration)
+```sql
+ALTER TABLE public.student_accounts
+  ADD COLUMN IF NOT EXISTS daily_goal_speed   integer NOT NULL DEFAULT 2,
+  ADD COLUMN IF NOT EXISTS daily_goal_hard    integer NOT NULL DEFAULT 5,
+  ADD COLUMN IF NOT EXISTS daily_goal_medium  integer NOT NULL DEFAULT 10,
+  ADD COLUMN IF NOT EXISTS goal_intensity     text,
+  ADD COLUMN IF NOT EXISTS daily_goal_set_at  timestamptz;
+```
+No new tables, no new policies needed (existing `student_accounts` RLS already covers self-update).
+
+### Notes
+- All data fetched via existing supabase client + hooks pattern; new hooks follow the shape of `useStudentStreak`.
+- Mobile: rows stack vertically; ring stays square; set-island bars become horizontal; hexagon and vocab quiz stack.
+- No business-logic changes to speed mode, practice, or vocab beyond reading existing data.
