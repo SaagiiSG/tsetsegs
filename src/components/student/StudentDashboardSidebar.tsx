@@ -9,8 +9,9 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake
+  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords
 } from 'lucide-react';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
