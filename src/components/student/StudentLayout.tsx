@@ -9,6 +9,8 @@ import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
 import { LinkEmailModal } from './LinkEmailModal';
 import { IELTSPracticeNotice } from './IELTSPracticeNotice';
+import { CourseSwitcher } from './CourseSwitcher';
+import { getEnrolledCourses } from '@/lib/courseRouting';
 import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
