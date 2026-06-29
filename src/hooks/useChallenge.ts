@@ -163,6 +163,16 @@ export async function createChallenge(
   hostDisplayName: string,
   args: CreateChallengeArgs,
 ): Promise<{ id: string | null; error: string | null }> {
+  // 0. Enforce one active challenge per student (host)
+  const { data: existing } = await supabase
+    .from('challenge_participants')
+    .select('challenge_id, challenges!inner(status)')
+    .eq('student_account_id', hostAccountId)
+    .in('challenges.status', ['lobby', 'active']);
+  if (existing && existing.length > 0) {
+    return { id: null, error: 'You already have an active challenge. Finish or cancel it first.' };
+  }
+
   // 1. Build question pool
   let poolIds: string[] = [];
   try {
