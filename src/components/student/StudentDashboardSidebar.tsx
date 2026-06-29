@@ -9,8 +9,9 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake
+  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords
 } from 'lucide-react';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -66,6 +67,10 @@ export function StudentDashboardSidebar() {
   const [learningOpen, setLearningOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
+  const { isEnabled } = useFeatureFlags();
+  const learningItemsResolved: NavItem[] = isEnabled('mini_challenges')
+    ? [...learningItems, { to: '/practice/challenges', icon: Swords, label: 'Challenges' }]
+    : learningItems;
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
 
@@ -238,7 +243,7 @@ export function StudentDashboardSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {learningItems.map(renderNavItem)}
+                  {learningItemsResolved.map(renderNavItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>
