@@ -742,6 +742,220 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_attempts: {
+        Row: {
+          attempted_at: string
+          challenge_id: string
+          id: string
+          is_correct: boolean
+          points_awarded: number
+          question_id: string
+          student_account_id: string
+          time_ms: number
+        }
+        Insert: {
+          attempted_at?: string
+          challenge_id: string
+          id?: string
+          is_correct: boolean
+          points_awarded?: number
+          question_id: string
+          student_account_id: string
+          time_ms?: number
+        }
+        Update: {
+          attempted_at?: string
+          challenge_id?: string
+          id?: string
+          is_correct?: boolean
+          points_awarded?: number
+          question_id?: string
+          student_account_id?: string
+          time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_attempts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_participants: {
+        Row: {
+          attempted_count: number
+          challenge_id: string
+          correct_count: number
+          display_name: string | null
+          finished_at: string | null
+          id: string
+          joined_at: string
+          place: number | null
+          ready_at: string | null
+          score: number
+          student_account_id: string
+          total_time_ms: number
+        }
+        Insert: {
+          attempted_count?: number
+          challenge_id: string
+          correct_count?: number
+          display_name?: string | null
+          finished_at?: string | null
+          id?: string
+          joined_at?: string
+          place?: number | null
+          ready_at?: string | null
+          score?: number
+          student_account_id: string
+          total_time_ms?: number
+        }
+        Update: {
+          attempted_count?: number
+          challenge_id?: string
+          correct_count?: number
+          display_name?: string | null
+          finished_at?: string | null
+          id?: string
+          joined_at?: string
+          place?: number | null
+          ready_at?: string | null
+          score?: number
+          student_account_id?: string
+          total_time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_participants_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_questions: {
+        Row: {
+          challenge_id: string
+          id: string
+          order_index: number
+          question_id: string
+        }
+        Insert: {
+          challenge_id: string
+          id?: string
+          order_index: number
+          question_id: string
+        }
+        Update: {
+          challenge_id?: string
+          id?: string
+          order_index?: number
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_questions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          finished_at: string | null
+          format: Database["public"]["Enums"]["challenge_format"]
+          host_account_id: string
+          id: string
+          max_players: number
+          question_set: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          subject: string
+          target_value: number | null
+          winner_account_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          finished_at?: string | null
+          format: Database["public"]["Enums"]["challenge_format"]
+          host_account_id: string
+          id?: string
+          max_players?: number
+          question_set: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["challenge_status"]
+          subject: string
+          target_value?: number | null
+          winner_account_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          finished_at?: string | null
+          format?: Database["public"]["Enums"]["challenge_format"]
+          host_account_id?: string
+          id?: string
+          max_players?: number
+          question_set?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["challenge_status"]
+          subject?: string
+          target_value?: number | null
+          winner_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_host_account_id_fkey"
+            columns: ["host_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_winner_account_id_fkey"
+            columns: ["winner_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       closing_report_settings: {
         Row: {
           body: string
@@ -2829,6 +3043,48 @@ export type Database = {
           },
         ]
       }
+      student_friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["friendship_status"]
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["friendship_status"]
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["friendship_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_notes: {
         Row: {
           batch_id: string
@@ -3574,6 +3830,10 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      is_challenge_participant: {
+        Args: { _account_id: string; _challenge_id: string }
+        Returns: boolean
+      }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
@@ -3633,7 +3893,14 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "teacher" | "student"
       attendance_status: "present" | "absent" | "sick" | "late" | "excused"
+      challenge_format:
+        | "first_to_points"
+        | "first_to_correct"
+        | "time_sprint"
+        | "fixed_set"
+      challenge_status: "lobby" | "active" | "finished" | "cancelled"
       course_type: "SAT" | "IELTS"
+      friendship_status: "pending" | "accepted" | "blocked"
       room_number: "1105" | "905"
       teacher_name: "Saran-Ochir" | "Altan-Erdene" | "Manlai"
     }
@@ -3765,7 +4032,15 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "teacher", "student"],
       attendance_status: ["present", "absent", "sick", "late", "excused"],
+      challenge_format: [
+        "first_to_points",
+        "first_to_correct",
+        "time_sprint",
+        "fixed_set",
+      ],
+      challenge_status: ["lobby", "active", "finished", "cancelled"],
       course_type: ["SAT", "IELTS"],
+      friendship_status: ["pending", "accepted", "blocked"],
       room_number: ["1105", "905"],
       teacher_name: ["Saran-Ochir", "Altan-Erdene", "Manlai"],
     },
