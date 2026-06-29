@@ -15,7 +15,6 @@ import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useStudentTier } from '@/hooks/useStudentTier';
-import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { CALCULATOR_SNAP_EVENT, SnapSide } from './DesmosCalculator';
 import { useLocation } from 'react-router-dom';
 import {
