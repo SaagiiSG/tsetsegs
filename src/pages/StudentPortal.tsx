@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Phone, BookOpen, GraduationCap, Loader2, Lock, ArrowLeft, Eye, EyeOff, CheckCircle2, User, Clock } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
+import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 
@@ -55,9 +56,9 @@ export default function StudentPortal() {
     resetAuthFlow 
   } = useStudentAuth();
 
-  // Redirect if already logged in
+  // Redirect if already logged in — course-aware
   if (student) {
-    return <Navigate to="/practice/dashboard" replace />;
+    return <Navigate to={getPostLoginRoute(student.linked_students)} replace />;
   }
 
   if (authLoading) {

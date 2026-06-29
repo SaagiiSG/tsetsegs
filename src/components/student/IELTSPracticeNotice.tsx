@@ -1,11 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { GraduationCap, LogOut } from 'lucide-react';
+import { Languages, LogOut, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /**
- * Shown when an IELTS-only student lands on the SAT practice section.
- * Practice content (questions, speed mode, leaderboard, stats) is SAT-only.
+ * Safety-net fallback when an IELTS-only student somehow lands on the SAT
+ * practice section. Normal flow now routes them to /ielts directly.
  */
 export function IELTSPracticeNotice() {
   const { logout } = useStudentAuth();
@@ -16,22 +17,21 @@ export function IELTSPracticeNotice() {
         <CardHeader className="text-center space-y-3">
           <div className="flex justify-center">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <GraduationCap className="h-8 w-8 text-primary" />
+              <Languages className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Practice section is SAT-only</CardTitle>
+          <CardTitle className="text-2xl">Head to IELTS Prep</CardTitle>
           <CardDescription>
-            Энэ хэсэг нь зөвхөн SAT суралцагчдад зориулагдсан. Та IELTS ангид бүртгэлтэй
-            байна. Хэрэв та SAT-д бүртгэлтэй боловч энэ мессеж харагдсан бол багштайгаа
-            холбогдоно уу.
+            Та IELTS ангид бүртгэлтэй байна. IELTS бэлтгэлийн хэсэг рүү үргэлжлүүлнэ үү.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground text-center">
-            The SAT practice portal (questions, speed mode, leaderboard, stats) is only
-            available to SAT students. If you think this is a mistake, please contact
-            your teacher.
-          </p>
+          <Button asChild className="w-full">
+            <Link to="/ielts/dashboard">
+              Open IELTS Prep
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
           <Button variant="outline" className="w-full" onClick={logout}>
             <LogOut className="h-4 w-4 mr-2" />
             Log out
@@ -41,3 +41,4 @@ export function IELTSPracticeNotice() {
     </div>
   );
 }
+

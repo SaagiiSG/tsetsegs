@@ -9,6 +9,8 @@ import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
 import { LinkEmailModal } from './LinkEmailModal';
 import { IELTSPracticeNotice } from './IELTSPracticeNotice';
+import { CourseSwitcher } from './CourseSwitcher';
+import { getEnrolledCourses } from '@/lib/courseRouting';
 import { useStudentCourses } from '@/hooks/useStudentCourses';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -101,10 +103,18 @@ function StudentLayoutContent() {
     return <Navigate to="/practice" replace />;
   }
 
-  // SAT-only gate: IELTS-only students cannot access the practice portal.
-  // Teachers/admins viewing a student bypass this gate.
-  if (student && !isTeacherOrAdmin && !courses.loading && courses.isIELTSOnly) {
-    return <IELTSPracticeNotice />;
+  // Course routing: IELTS-only students belong in /ielts, not the SAT portal.
+  // Teachers/admins viewing a student bypass this gate. Dual-enrolled students
+  // are allowed here (they can switch via the header CourseSwitcher).
+  if (student && !isTeacherOrAdmin) {
+    const enrolled = getEnrolledCourses(student.linked_students);
+    if (enrolled.isIELTSOnly) {
+      return <Navigate to="/ielts/dashboard" replace />;
+    }
+    // Fallback safety net: legacy IELTS-only data without linked_students populated.
+    if (!enrolled.hasSAT && !courses.loading && courses.isIELTSOnly) {
+      return <IELTSPracticeNotice />;
+    }
   }
 
   return (
@@ -155,6 +165,7 @@ function StudentLayoutContent() {
                 {freezersAvailable}
               </button>
             )}
+            <CourseSwitcher current="SAT" />
             <div 
               className="flex items-center gap-1 px-2 py-0.5 md:gap-1.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wide"
               style={{ 
