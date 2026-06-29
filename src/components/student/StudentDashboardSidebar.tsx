@@ -71,6 +71,7 @@ export function StudentDashboardSidebar() {
   const [toolsOpen, setToolsOpen] = useState(true);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const { isEnabled } = useFeatureFlags();
+  const { tier } = useStudentTier();
   const learningItemsResolved: NavItem[] = isEnabled('mini_challenges')
     ? [...learningItems, { to: '/practice/challenges', icon: Swords, label: 'Challenges' }]
     : learningItems;
