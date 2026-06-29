@@ -33,7 +33,7 @@ const SETS = [
     label: 'CB 1074',
     title: 'CollegeBoard 1074',
     desc: 'Full official CollegeBoard question bank — every released question.',
-    color: 'hsl(231, 80%, 60%)', // indigo
+    color: '#1e40af', // deep blue
     route: '/practice/dashboard',
     icon: BookOpen,
   },
