@@ -16,6 +16,7 @@ import { WeaknessIsland } from '@/components/student/dashboard/WeaknessIsland';
 import { SpeedIsland } from '@/components/student/dashboard/SpeedIsland';
 import { MasteryHexagon } from '@/components/student/dashboard/MasteryHexagon';
 import { QuickVocabQuiz } from '@/components/student/dashboard/QuickVocabQuiz';
+import { StudentSatSimulationCard } from '@/components/student/dashboard/StudentSatSimulationCard';
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
