@@ -9,6 +9,7 @@ interface DailyRingProps {
   hard: { current: number; goal: number };
   medium: { current: number; goal: number };
   onEditGoals?: () => void;
+  onShowHistory?: () => void;
   size?: number;
 }
 
