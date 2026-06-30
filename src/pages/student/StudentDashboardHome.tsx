@@ -184,6 +184,9 @@ export default function StudentDashboardHome() {
       {/* Goal setup dialog */}
       <GoalSetupDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen} />
 
+      {/* Streak history dialog */}
+      <StreakHistoryDialog open={streakHistoryOpen} onOpenChange={setStreakHistoryOpen} />
+
       {/* Closing report dialog */}
       {batchCompleted && closingReportData && (
         <Dialog open={showClosingReport} onOpenChange={setShowClosingReport}>
