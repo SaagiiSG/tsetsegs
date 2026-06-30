@@ -32,6 +32,7 @@ export default function StudentDashboardHome() {
 
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [showClosingReport, setShowClosingReport] = useState(false);
+  const [streakHistoryOpen, setStreakHistoryOpen] = useState(false);
 
   // Auto-open goal setup on first visit
   useEffect(() => {
