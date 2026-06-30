@@ -119,6 +119,7 @@ export default function StudentDashboardHome() {
             hard={{ current: progress?.hard ?? 0, goal: goals.hard }}
             medium={{ current: progress?.medium ?? 0, goal: goals.medium }}
             onEditGoals={() => setGoalDialogOpen(true)}
+            onShowHistory={() => setStreakHistoryOpen(true)}
           />
         </motion.div>
         <motion.div
