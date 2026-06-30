@@ -68,7 +68,17 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
   const allDone = speedPct >= 1 && hardPct >= 1 && medPct >= 1;
 
   return (
-    <Card className="h-full relative overflow-hidden">
+    <Card
+      className={cn(
+        'h-full relative overflow-hidden',
+        onShowHistory && 'cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      )}
+      onClick={onShowHistory ? () => onShowHistory() : undefined}
+      role={onShowHistory ? 'button' : undefined}
+      tabIndex={onShowHistory ? 0 : undefined}
+      onKeyDown={onShowHistory ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowHistory(); } } : undefined}
+      aria-label={onShowHistory ? 'View streak history' : undefined}
+    >
       {onEditGoals && (
         <Button
           variant="ghost"
