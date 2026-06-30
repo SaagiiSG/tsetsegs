@@ -83,7 +83,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
         <Button
           variant="ghost"
           size="icon"
-          onClick={onEditGoals}
+          onClick={(e) => { e.stopPropagation(); onEditGoals(); }}
           className="absolute top-2 right-2 h-8 w-8 z-10 text-muted-foreground hover:text-foreground"
           aria-label="Edit daily goals"
         >
