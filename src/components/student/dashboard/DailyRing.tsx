@@ -9,6 +9,7 @@ interface DailyRingProps {
   hard: { current: number; goal: number };
   medium: { current: number; goal: number };
   onEditGoals?: () => void;
+  onShowHistory?: () => void;
   size?: number;
 }
 
@@ -51,7 +52,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, size = 220 }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220 }: DailyRingProps) {
   const cx = size / 2;
   const cy = size / 2;
   const stroke = Math.round(size * 0.085);
@@ -67,12 +68,22 @@ export function DailyRing({ speed, hard, medium, onEditGoals, size = 220 }: Dail
   const allDone = speedPct >= 1 && hardPct >= 1 && medPct >= 1;
 
   return (
-    <Card className="h-full relative overflow-hidden">
+    <Card
+      className={cn(
+        'h-full relative overflow-hidden',
+        onShowHistory && 'cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      )}
+      onClick={onShowHistory ? () => onShowHistory() : undefined}
+      role={onShowHistory ? 'button' : undefined}
+      tabIndex={onShowHistory ? 0 : undefined}
+      onKeyDown={onShowHistory ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowHistory(); } } : undefined}
+      aria-label={onShowHistory ? 'View streak history' : undefined}
+    >
       {onEditGoals && (
         <Button
           variant="ghost"
           size="icon"
-          onClick={onEditGoals}
+          onClick={(e) => { e.stopPropagation(); onEditGoals(); }}
           className="absolute top-2 right-2 h-8 w-8 z-10 text-muted-foreground hover:text-foreground"
           aria-label="Edit daily goals"
         >

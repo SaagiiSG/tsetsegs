@@ -17,6 +17,7 @@ import { SpeedIsland } from '@/components/student/dashboard/SpeedIsland';
 import { MasteryHexagon } from '@/components/student/dashboard/MasteryHexagon';
 import { QuickVocabQuiz } from '@/components/student/dashboard/QuickVocabQuiz';
 import { StudentSatSimulationCard } from '@/components/student/dashboard/StudentSatSimulationCard';
+import { StreakHistoryDialog } from '@/components/student/StreakHistoryDialog';
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
@@ -31,6 +32,7 @@ export default function StudentDashboardHome() {
 
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [showClosingReport, setShowClosingReport] = useState(false);
+  const [streakHistoryOpen, setStreakHistoryOpen] = useState(false);
 
   // Auto-open goal setup on first visit
   useEffect(() => {
@@ -117,6 +119,7 @@ export default function StudentDashboardHome() {
             hard={{ current: progress?.hard ?? 0, goal: goals.hard }}
             medium={{ current: progress?.medium ?? 0, goal: goals.medium }}
             onEditGoals={() => setGoalDialogOpen(true)}
+            onShowHistory={() => setStreakHistoryOpen(true)}
           />
         </motion.div>
         <motion.div
@@ -180,6 +183,9 @@ export default function StudentDashboardHome() {
 
       {/* Goal setup dialog */}
       <GoalSetupDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen} />
+
+      {/* Streak history dialog */}
+      <StreakHistoryDialog open={streakHistoryOpen} onOpenChange={setStreakHistoryOpen} />
 
       {/* Closing report dialog */}
       {batchCompleted && closingReportData && (
