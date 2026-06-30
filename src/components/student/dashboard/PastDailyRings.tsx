@@ -78,7 +78,7 @@ export function PastDailyRings() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Past 30 days
+            Past 7 days
           </h3>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
@@ -93,42 +93,44 @@ export function PastDailyRings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 sm:grid-cols-10 gap-2">
-          {days.map((d) => {
-            const date = parseISO(d.date);
-            const today = isToday(date);
-            const sp = goals.speed > 0 ? d.speed / goals.speed : 0;
-            const hp = goals.hard > 0 ? d.hard / goals.hard : 0;
-            const mp = goals.medium > 0 ? d.medium / goals.medium : 0;
-            const allDone = sp >= 1 && hp >= 1 && mp >= 1;
-            const empty = d.speed === 0 && d.hard === 0 && d.medium === 0;
+        <div className="overflow-x-auto -mx-2 px-2 pb-2 scrollbar-thin">
+          <div className="flex gap-2 min-w-min">
+            {days.map((d) => {
+              const date = parseISO(d.date);
+              const today = isToday(date);
+              const sp = goals.speed > 0 ? d.speed / goals.speed : 0;
+              const hp = goals.hard > 0 ? d.hard / goals.hard : 0;
+              const mp = goals.medium > 0 ? d.medium / goals.medium : 0;
+              const allDone = sp >= 1 && hp >= 1 && mp >= 1;
+              const empty = d.speed === 0 && d.hard === 0 && d.medium === 0;
 
-            return (
-              <Tooltip key={d.date}>
-                <TooltipTrigger asChild>
-                  <div
-                    className={`
-                      flex flex-col items-center gap-1 p-1.5 rounded-lg
-                      ${today ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
-                      ${allDone ? 'bg-gradient-to-br from-orange-500/15 to-amber-500/10' : empty ? 'opacity-50' : ''}
-                    `}
-                  >
-                    <MiniRing speedPct={sp} hardPct={hp} mediumPct={mp} />
-                    <span className="text-[9px] font-mono text-muted-foreground leading-none">
-                      {format(date, 'MMM d')}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  <p className="font-semibold mb-1">{format(date, 'EEE, MMM d')}</p>
-                  <p><span style={{ color: COLORS.speed }}>●</span> Speed: {d.speed}/{goals.speed}</p>
-                  <p><span style={{ color: COLORS.hard }}>●</span> Hard: {d.hard}/{goals.hard}</p>
-                  <p><span style={{ color: COLORS.medium }}>●</span> Medium: {d.medium}/{goals.medium}</p>
-                  {allDone && <p className="text-amber-500 font-semibold mt-1">All goals crushed 🔥</p>}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+              return (
+                <Tooltip key={d.date}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`
+                        flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg w-[72px]
+                        ${today ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
+                        ${allDone ? 'bg-gradient-to-br from-orange-500/15 to-amber-500/10' : empty ? 'opacity-50' : 'bg-muted/30'}
+                      `}
+                    >
+                      <MiniRing size={56} speedPct={sp} hardPct={hp} mediumPct={mp} />
+                      <span className="text-[10px] font-mono text-muted-foreground leading-none">
+                        {format(date, 'MMM d')}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    <p className="font-semibold mb-1">{format(date, 'EEE, MMM d')}</p>
+                    <p><span style={{ color: COLORS.speed }}>●</span> Speed: {d.speed}/{goals.speed}</p>
+                    <p><span style={{ color: COLORS.hard }}>●</span> Hard: {d.hard}/{goals.hard}</p>
+                    <p><span style={{ color: COLORS.medium }}>●</span> Medium: {d.medium}/{goals.medium}</p>
+                    {allDone && <p className="text-amber-500 font-semibold mt-1">All goals crushed 🔥</p>}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
         </div>
       </div>
     </TooltipProvider>
