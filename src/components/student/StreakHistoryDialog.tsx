@@ -3,6 +3,7 @@ import { Flame } from 'lucide-react';
 import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { StudyStreakCalendar } from './StudyStreakCalendar';
 import { StreakRewardsPanel } from './StreakRewardsPanel';
+import { PastDailyRings } from './dashboard/PastDailyRings';
 
 interface StreakHistoryDialogProps {
   open: boolean;
@@ -22,7 +23,8 @@ export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogP
             {isStreakActive ? `${current}-day streak` : 'Start your streak today'}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <PastDailyRings />
           <StreakRewardsPanel />
           <StudyStreakCalendar />
           <p className="text-xs text-center text-muted-foreground">
@@ -33,3 +35,4 @@ export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogP
     </Dialog>
   );
 }
+
