@@ -52,7 +52,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, size = 220 }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220 }: DailyRingProps) {
   const cx = size / 2;
   const cy = size / 2;
   const stroke = Math.round(size * 0.085);
