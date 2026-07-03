@@ -792,7 +792,7 @@ export default function StudentQuestion() {
                 <div className="flex items-center gap-2">
                   <Button onClick={() => { setSubmitted(false); setIsCorrect(false); setSelectedAnswer(null); setFillAnswer(''); }} variant="outline" className="gap-1.5">
                     <RotateCcw className="h-3.5 w-3.5" />
-                    I need to wrap the text in a span with hidden md:inline
+                    <span className="hidden md:inline">Practice Again</span>
                   </Button>
                   {currentVariationIndex < practiceQuestions.length - 1 && (
                     <Button onClick={handleNextVariation}>
