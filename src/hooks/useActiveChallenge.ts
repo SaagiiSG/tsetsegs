@@ -71,42 +71,45 @@ export function useActiveChallenge() {
     fetchActive();
   }, [fetchActive]);
 
-  // Realtime: refetch on any change to my participant rows or challenges I'm in
+  // Realtime: refetch on any change to participants / challenges / attempts
   useEffect(() => {
     if (!student?.id) return;
     const channel = supabase
       .channel(`active-challenge-${student.id}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'challenge_participants',
-          filter: `student_account_id=eq.${student.id}`,
-        },
+        { event: '*', schema: 'public', table: 'challenge_participants' },
         () => fetchActive(),
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'challenges' },
-        (payload) => {
-          const ch = payload.new as Challenge;
-          setState((s) => {
-            // If it's our current challenge, patch it inline for snappy updates
-            if (s.challenge && ch.id === s.challenge.id) {
-              return { ...s, challenge: ch };
-            }
-            return s;
-          });
-          // Also refetch to catch status transitions (finished/cancelled)
-          fetchActive();
-        },
+        { event: '*', schema: 'public', table: 'challenges' },
+        () => fetchActive(),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'challenge_attempts' },
+        () => fetchActive(),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, [student?.id, fetchActive]);
+
+  // Instant local refresh when this student records an ambient attempt
+  useEffect(() => {
+    const handler = () => fetchActive();
+    window.addEventListener('challenge:attempt-recorded', handler);
+    return () => window.removeEventListener('challenge:attempt-recorded', handler);
+  }, [fetchActive]);
+
+  // Polling fallback while a challenge is active (covers dropped sockets)
+  useEffect(() => {
+    if (state.challenge?.status !== 'active') return;
+    const t = setInterval(fetchActive, 4000);
+    return () => clearInterval(t);
+  }, [state.challenge?.status, fetchActive]);
 
   return { ...state, refresh: fetchActive };
 }

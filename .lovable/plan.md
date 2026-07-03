@@ -1,43 +1,15 @@
-# Ambient Challenge Tracking
+## HUD not updating in real time — fix
 
-Shift challenges from a dedicated play page to a background goal that fills up as the student practices normally.
+Backend confirms data is landing (participant score = 306, correct_count = 2 after the two answers), so the DB trigger works. Realtime is enabled and REPLICA IDENTITY is FULL on all three challenge tables. The failure is on the client subscription side — most likely the `student_account_id` filter isn't delivering trigger-driven UPDATEs reliably, or the channel is set up before the participant row exists.
 
-## Behavior
+### Fix in `src/hooks/useActiveChallenge.ts`
+1. Drop the `student_account_id` filter on the `challenge_participants` subscription. Subscribe to `*` events on `challenge_participants` and `challenges` with no filter, and let the handler refetch. Cheap — refetch is 2 tiny queries.
+2. Also `.on` `INSERT` on `challenge_attempts` and refetch — gives immediate feedback the instant the attempt lands, independent of the trigger's UPDATE broadcast.
+3. Add a lightweight polling fallback: while `state.challenge?.status === 'active'`, `setInterval(fetchActive, 4000)`. Guarantees the HUD converges even if the socket drops.
 
-- When a challenge is `active` and its format is `first_to_points`, `first_to_correct`, or `time_sprint`, the student stays on `/practice` (or `/english-practice`). Every regular question they answer also counts toward the challenge.
-- The existing `ActiveChallengeHUD` at the top of the screen remains the live scoreboard — progress bar, opponent status, and a "View" button that opens the lobby/leaderboard sheet instead of `ChallengePlay`.
-- `fixed_set` keeps using `ChallengePlay` (it needs a fixed shared pool — can't be tracked from ambient practice).
-- Subject gate: math challenges only count math practice attempts; english challenges only count english practice attempts.
+### Fix in `src/lib/challengeAmbient.ts`
+After the successful `challenge_attempts` insert, dispatch a `window` custom event `challenge:attempt-recorded`. `useActiveChallenge` listens for it and calls `fetchActive()` immediately — this makes the local student's HUD tick up instantly without waiting for the round-trip.
 
-## Implementation
-
-### 1. Shared helper `src/lib/challengeAmbient.ts`
-`recordAmbientChallengeAttempt({ studentId, subject, questionId, isCorrect, timeMs, difficulty })`
-- Look up the student's single `active` challenge whose `subject` matches and whose `format ∈ {first_to_points, first_to_correct, time_sprint}`.
-- Compute points with existing `calculatePoints`.
-- Insert into `challenge_attempts`. The DB trigger `process_challenge_attempt` already updates participant score/correct_count and finishes the challenge when the target is hit.
-- No-op if no eligible challenge, or if this `(challenge_id, question_id, student_account_id)` already has an attempt (avoid double-count on retries).
-
-### 2. Hook the practice attempt sites
-Call the helper right after every existing `student_attempts` insert on these paths:
-- `src/pages/StudentQuestion.tsx` (math practice question)
-- `src/pages/student/StudentEnglishQuestion.tsx` (english practice question)
-- `src/pages/student/StudentReadingModule.tsx` (english passage set)
-- `src/pages/student/StudentSpeedSession.tsx` — skip (speed mode has its own rules)
-
-Fire-and-forget so it never blocks the UI.
-
-### 3. Route change on challenge start
-- `ChallengeLobby.tsx`: when host starts a `first_to_points | first_to_correct | time_sprint` challenge, navigate participants to `/practice` (math) or `/english-practice` (english) instead of `/practice/challenges/:id`.
-- `ChallengePlay.tsx`: for those three formats, immediately redirect to the matching practice page (keeps deep links working). `fixed_set` still renders `ChallengePlay` as today.
-
-### 4. HUD "View" behavior
-`ActiveChallengeHUD`: change the Resume button to open a `Sheet` with the live leaderboard (reuse the leaderboard block from `ChallengePlay`) instead of navigating to `/practice/challenges/:id`. Existing time-sprint countdown stays visible in the HUD.
-
-### 5. Results
-When the trigger flips `status='finished'`, the HUD's realtime subscription already fires. Auto-navigate to `/practice/challenges/:id/results` on that transition (one-time, guarded by a ref).
-
-## Out of scope
-- No schema/RLS changes — `challenge_attempts` already accepts these inserts.
-- No changes to `fixed_set` gameplay, scoring formula, or lobby flow.
-- No changes to English/Reading scoring rules.
+### Out of scope
+- No schema, RLS, publication, or scoring changes.
+- No changes to the leaderboard sheet, lobby, or `ChallengePlay`.
