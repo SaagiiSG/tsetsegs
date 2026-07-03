@@ -31,6 +31,7 @@ import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
+import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -188,6 +189,8 @@ function StudentLayoutContent() {
       <GestureHintOverlay />
       <GlobalEdgeSwipeUp />
       <StreakCelebrationListener />
+      <ActiveChallengeHUD />
+
       
       {/* Security overlay */}
       <div 

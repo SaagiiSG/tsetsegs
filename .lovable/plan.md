@@ -1,49 +1,42 @@
-## Goal
-On iPad-sized viewports, replace the sidebar with a floating dock that surfaces the 5 most-used destinations plus a "More" button that reveals the full navigation.
+# Challenges: Desmos + Cross-Platform Active Challenge HUD
 
-## Breakpoint scope
-- Mobile (<768px): keep existing `StudentBottomNav`.
-- iPad (≥768px and <1280px, i.e. `md` up to `xl`): new floating dock, sidebar hidden.
-- Desktop (≥1280px `xl`): keep existing `StudentDashboardSidebar`.
+Two connected changes so a live challenge feels present everywhere the student goes, not walled off inside `/practice/challenges`.
 
-Reason: existing bottom nav already claims mobile; iPad portrait (768) and landscape (1024) both fall in md/lg. Desktop keeps the richer sidebar.
+## 1. Desmos calculator inside ChallengePlay
 
-## New component: `StudentIPadDock`
-Location: `src/components/student/StudentIPadDock.tsx`
+- In `src/pages/student/challenges/ChallengePlay.tsx`, mount `<DesmosCalculator />` when `challenge.subject === 'math'` (mirrors how `StudentPractice.tsx` gates it).
+- Reuses the existing floating draggable calculator — no new component, same snap zones and behavior students already know from practice.
+- English challenges: no calculator (matches practice behavior).
 
-Visual:
-- Floating pill, `fixed bottom-6 left-1/2 -translate-x-1/2 z-40`, `hidden md:flex xl:hidden`.
-- Rounded-full glass container: `bg-card/80 backdrop-blur-xl border border-border/60 shadow-2xl px-2 py-2 gap-1`.
-- Each item: 56×56 rounded-2xl button, icon 22px, tiny label under icon on hover/active. Active item gets `bg-primary/15 text-primary` and a soft glow.
-- Uses `NavLink`/`useLocation` for active state, matches sidebar's active logic (`pathname === to || startsWith(to + '/')`).
-- Framer Motion: subtle scale on hover/tap, spring pop-in on mount.
+## 2. Global "Active Challenge" HUD
 
-Primary items (in order):
-1. Dashboard → `/practice/home`
-2. Practice → `/practice/dashboard`
-3. Speed → `/practice/speed`
-4. Leaderboard → `/practice/leaderboard`
-5. Challenges → `/practice/challenges`
-6. More (three-dot icon `MoreHorizontal`) → opens sheet
+Right now the goal/leaderboard only exists on `ChallengePlay`. If a student leaves that page to look at the dashboard, leaderboard, or a practice question, the challenge disappears from view. We'll surface it everywhere via a small persistent bar mounted in `StudentLayout`.
 
-"More" behavior:
-- Opens a shadcn `Sheet` from the bottom containing the full sidebar nav (Learning, Community, Account groups) sourced from the same items array used in `StudentDashboardSidebar`. Refactor: extract the nav-items arrays from `StudentDashboardSidebar.tsx` into `src/components/student/nav/studentNavItems.ts` so both the sidebar and the dock's More sheet share one source of truth.
-- Sheet items are grouped with labels, use `NavLink`, and close the sheet on navigate.
+### Where it lives
+- New hook `useActiveChallenge()` in `src/hooks/useActiveChallenge.ts`:
+  - Finds the current student's `challenge_participants` row where the joined `challenges.status = 'active'` (limit 1, most recent).
+  - Subscribes to realtime updates on both `challenges` and `challenge_participants` (same channels `useChallenge` already uses) so score/target/status stay live.
+  - Returns `{ challenge, myPart, progressPct, targetText, timeRemaining }`.
+- New component `src/components/student/challenges/ActiveChallengeHUD.tsx`:
+  - Fixed, compact pill anchored top-center on desktop, just below the top edge on mobile (respects existing bottom nav / iPad dock spacing — same safe-area logic as `StreakCelebrationListener`).
+  - Shows: challenge subject icon, opponent name(s) or "vs 3", live progress bar, `targetText` (e.g. `12 / 20 ✓`, `340 / 500 pts`, `0:47 left`), and a "Resume" button that routes to `/practice/challenges/:id/play`.
+  - Hidden automatically while the student is already on `/practice/challenges/:id/play` (avoid duplicate with in-page leaderboard).
+  - Auto-dismisses when challenge flips to `finished` / `cancelled`; if `finished`, briefly morphs into a "See results" CTA for ~10s then disappears.
+- Mount `<ActiveChallengeHUD />` inside `StudentLayoutContent` in `src/components/student/StudentLayout.tsx`, next to `StreakCelebrationListener`, so it appears on dashboard, practice, speed, leaderboard, badges, etc.
 
-## Layout wiring
-File: `src/components/student/StudentLayout.tsx`
-- Import and render `<StudentIPadDock />` alongside `<StudentBottomNav />`.
-- Hide the sidebar on iPad: wrap `<StudentDashboardSidebar />` in a `<div className="hidden xl:contents">` (or apply `hidden xl:block` inside the sidebar root). Since `Sidebar` from shadcn manages its own root, easier path: wrap in `<div className="hidden xl:block">`.
-- Hide the header `SidebarTrigger` on iPad range too (`hidden xl:inline-flex`) since there is no sidebar to toggle there.
-- Add bottom padding to `<main>` on iPad so the dock never covers content: change `pb-16 md:pb-0` to `pb-16 md:pb-24 xl:pb-0`.
+### Behavior details
+- Only one active challenge shown at a time (schema already effectively enforces this via challenge lifecycle).
+- Clicking the HUD navigates to `ChallengePlay`; the calculator stays available there via change #1.
+- HUD is read-only — no answering from it. It's a status + shortcut.
+- No DB or schema changes required.
 
-## Files
-- Add: `src/components/student/StudentIPadDock.tsx`
-- Add: `src/components/student/nav/studentNavItems.ts` (shared nav items)
-- Edit: `src/components/student/StudentDashboardSidebar.tsx` — import items from shared file, wrap render (or leave and rely on layout wrapper); keep behavior identical on desktop.
-- Edit: `src/components/student/StudentLayout.tsx` — mount dock, hide sidebar + trigger below `xl`, adjust main padding.
+## Files touched
+- `src/pages/student/challenges/ChallengePlay.tsx` — mount `DesmosCalculator` for math.
+- `src/hooks/useActiveChallenge.ts` — new hook.
+- `src/components/student/challenges/ActiveChallengeHUD.tsx` — new component.
+- `src/components/student/StudentLayout.tsx` — mount the HUD once, layout-wide.
 
 ## Out of scope
-- No changes to mobile bottom nav.
-- No changes to routes, auth, or sidebar contents on desktop.
-- No changes to the FAB / command sheet.
+- Notifications when challenged (already handled elsewhere / separate ask).
+- Answering questions from the HUD.
+- Changing challenge scoring, formats, or DB schema.

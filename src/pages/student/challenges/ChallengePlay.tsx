@@ -10,6 +10,7 @@ import { calculatePoints } from '@/lib/challengeScoring';
 import { MathText } from '@/components/MathText';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 
 interface QuestionRow {
   id: string;
@@ -234,6 +235,8 @@ export default function ChallengePlay() {
           <Loader2 className="h-6 w-6 mx-auto animate-spin opacity-60" />
         </Card>
       )}
+
+      {challenge.subject === 'math' && <DesmosCalculator />}
     </div>
   );
 }
