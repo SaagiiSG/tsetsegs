@@ -35,7 +35,8 @@ export function LevelProgressCard({
         <div className="flex items-center gap-4 md:gap-6">
           {/* Circular progress */}
           <div className="relative w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
-            <svg className="w-full h-full transform -rotate-90">
+            <svg viewBox="0 0 112 112" className="w-full h-full transform -rotate-90">
+
               {/* Background circle */}
               <circle
                 cx="56"
