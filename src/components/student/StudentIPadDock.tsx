@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, animate, PanInfo } from 'framer-motion';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
@@ -81,41 +81,88 @@ function DockButton({ item }: { item: DockItem }) {
       aria-label={item.label}
       title={item.label}
     >
-      <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.12, y: -2 }}>
+      <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.12 }}>
         <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.4 : 2} />
       </motion.div>
     </NavLink>
   );
 }
 
+type DockEdge = 'bottom' | 'left' | 'right';
+
+const EDGE_STYLES: Record<DockEdge, React.CSSProperties> = {
+  bottom: { bottom: 16, left: '50%', top: 'auto', right: 'auto', translateX: '-50%', translateY: 0 },
+  left:   { left: 16, top: '50%', bottom: 'auto', right: 'auto', translateX: 0, translateY: '-50%' },
+  right:  { right: 16, top: '50%', bottom: 'auto', left: 'auto', translateX: 0, translateY: '-50%' },
+};
+
+const SPRING = { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.8 };
+
 export function StudentIPadDock() {
   const [moreOpen, setMoreOpen] = useState(false);
+  const [edge, setEdge] = useState<DockEdge>('bottom');
   const { logout } = useStudentAuth();
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const isVertical = edge !== 'bottom';
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const px = info.point.x;
+    const py = info.point.y;
+
+    let next: DockEdge = edge;
+    const nearLeft = px < w * 0.22;
+    const nearRight = px > w * 0.78;
+    const nearBottom = py > h * 0.7;
+
+    if (nearLeft && !nearBottom) next = 'left';
+    else if (nearRight && !nearBottom) next = 'right';
+    else next = 'bottom';
+
+    // Spring the drag offset back to 0 so the layout anchor takes over smoothly.
+    animate(x, 0, SPRING);
+    animate(y, 0, SPRING);
+    setEdge(next);
+  };
 
   return (
     <div
-      className="hidden md:flex xl:hidden fixed inset-x-0 bottom-4 z-40 justify-center pointer-events-none"
-      aria-label="Primary navigation container"
+      className="hidden md:block xl:hidden fixed inset-0 z-40 pointer-events-none"
+      aria-hidden={false}
     >
       <motion.nav
-        initial={{ y: 60, opacity: 0, scale: 0.9 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 24, delay: 0.15 }}
+        layout
+        transition={SPRING}
         drag
         dragMomentum={false}
-        dragElastic={0.18}
-        dragTransition={{ bounceStiffness: 320, bounceDamping: 22 }}
-        dragConstraints={{ top: -600, bottom: 16, left: -320, right: 320 }}
-        whileDrag={{ scale: 1.04, cursor: 'grabbing' }}
+        dragElastic={0.25}
+        onDragEnd={handleDragEnd}
+        whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
+        style={{ position: 'absolute', x, y, ...EDGE_STYLES[edge] }}
         className="pointer-events-auto touch-none cursor-grab active:cursor-grabbing select-none"
         aria-label="Primary navigation"
       >
-        <div className="flex items-center gap-1 px-2 py-2 rounded-[28px] bg-card/80 backdrop-blur-xl border border-border/60 shadow-2xl">
+        <motion.div
+          layout
+          transition={SPRING}
+          className={cn(
+            'flex items-center gap-1 p-2 bg-card/80 backdrop-blur-xl border border-border/60 shadow-2xl',
+            isVertical ? 'flex-col rounded-[28px]' : 'flex-row rounded-[28px]'
+          )}
+        >
           {primaryItems.map((item) => (
             <DockButton key={item.to} item={item} />
           ))}
 
-          <div className="w-px h-7 bg-border/70 mx-1" />
+          <div
+            className={cn(
+              'bg-border/70',
+              isVertical ? 'h-px w-7 my-1' : 'w-px h-7 mx-1'
+            )}
+          />
 
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger asChild>
@@ -130,68 +177,68 @@ export function StudentIPadDock() {
                 aria-label="More navigation"
                 title="More"
               >
-                <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.12, y: -2 }}>
+                <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.12 }}>
                   <MoreHorizontal className="h-[22px] w-[22px]" />
                 </motion.div>
               </button>
             </SheetTrigger>
 
-          <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
-            <SheetHeader className="text-left">
-              <SheetTitle>Navigation</SheetTitle>
-            </SheetHeader>
+            <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
+              <SheetHeader className="text-left">
+                <SheetTitle>Navigation</SheetTitle>
+              </SheetHeader>
 
-            <div className="mt-4 space-y-6 pb-6">
-              {moreGroups.map((group) => (
-                <div key={group.label}>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
-                    {group.label}
-                  </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          end={item.end}
-                          onClick={() => setMoreOpen(false)}
-                          className={({ isActive }) =>
-                            cn(
-                              'flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border transition-all',
-                              isActive
-                                ? 'bg-primary/10 text-primary border-primary/30'
-                                : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/60'
-                            )
-                          }
-                        >
-                          <Icon className="h-5 w-5" />
-                          <span className="text-xs font-medium">{item.label}</span>
-                        </NavLink>
-                      );
-                    })}
+              <div className="mt-4 space-y-6 pb-6">
+                {moreGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
+                      {group.label}
+                    </p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.end}
+                            onClick={() => setMoreOpen(false)}
+                            className={({ isActive }) =>
+                              cn(
+                                'flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border transition-all',
+                                isActive
+                                  ? 'bg-primary/10 text-primary border-primary/30'
+                                  : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/60'
+                              )
+                            }
+                          >
+                            <Icon className="h-5 w-5" />
+                            <span className="text-xs font-medium">{item.label}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              <div className="pt-2 border-t space-y-2">
-                <CourseSwitcher current="SAT" className="w-full justify-start" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMoreOpen(false);
-                    logout();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
+                <div className="pt-2 border-t space-y-2">
+                  <CourseSwitcher current="SAT" className="w-full justify-start" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-        </div>
+            </SheetContent>
+          </Sheet>
+        </motion.div>
       </motion.nav>
     </div>
   );
