@@ -161,13 +161,14 @@ export function ProfileHeader({
             </Badge>
           )}
           <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-muted-foreground">
-              <span>Lvl {level}</span>
-              <span>{pointsToNextLevel.toLocaleString()} pts to next</span>
-              <span>Lvl {level + 1}</span>
+            <div className="flex justify-between items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="flex-shrink-0">Lvl {level}</span>
+              <span className="truncate text-center">{pointsToNextLevel.toLocaleString()} pts to next</span>
+              <span className="flex-shrink-0">Lvl {level + 1}</span>
             </div>
             <Progress value={levelProgress} className="h-1.5" />
           </div>
+
           {(lastLogin || createdAt) && (
             <div className="flex justify-between text-[10px] text-muted-foreground pt-1">
               {lastLogin && <span>Seen {format(new Date(lastLogin), 'MMM d')}</span>}
