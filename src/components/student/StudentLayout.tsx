@@ -5,6 +5,7 @@ import { CheckInWidget } from './CheckInWidget';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2, Flame, Snowflake } from 'lucide-react';
 import { StudentDashboardSidebar } from './StudentDashboardSidebar';
+import { StudentIPadDock } from './StudentIPadDock';
 import { StudentBottomNav } from './StudentBottomNav';
 import { WelcomeOnboardingModal } from './WelcomeOnboardingModal';
 import { LinkEmailModal } from './LinkEmailModal';
