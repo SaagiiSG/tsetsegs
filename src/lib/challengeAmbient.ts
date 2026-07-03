@@ -57,6 +57,11 @@ export async function recordAmbientChallengeAttempt(args: AmbientArgs): Promise<
       time_ms: timeMs,
       points_awarded: points,
     });
+
+    // Nudge the HUD to refresh immediately
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('challenge:attempt-recorded', { detail: { challengeId } }));
+    }
   } catch {
     // swallow — ambient tracking must never block practice
   }
