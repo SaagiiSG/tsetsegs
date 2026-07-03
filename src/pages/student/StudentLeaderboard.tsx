@@ -256,18 +256,18 @@ export default function StudentLeaderboard() {
   const noActiveSprint = !activeSprint && !isLoading;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 select-none">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6 select-none">
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-2"
+        className="space-y-1 md:space-y-2"
       >
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-amber-500" />
+        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <Trophy className="h-5 w-5 md:h-6 md:w-6 text-amber-500" />
           Leaderboard
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-xs md:text-sm text-muted-foreground">
           Compete with other students and climb the ranks
         </p>
       </motion.div>
@@ -276,23 +276,23 @@ export default function StudentLeaderboard() {
 
       {/* Tabs - always show, but Current Sprint tab content changes based on active sprint */}
       <Tabs defaultValue={noActiveSprint ? "alltime" : "current"} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="current" className="gap-1 sm:gap-2 text-xs sm:text-sm">
-            <Users className="h-4 w-4" />
+        <TabsList className="grid w-full grid-cols-4 mb-3 md:mb-4 h-auto">
+          <TabsTrigger value="current" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3">
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Current Sprint</span>
             <span className="sm:hidden">Sprint</span>
           </TabsTrigger>
-          <TabsTrigger value="alltime" className="gap-1 sm:gap-2 text-xs sm:text-sm">
-            <Crown className="h-4 w-4" />
+          <TabsTrigger value="alltime" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3">
+            <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>All-Time</span>
           </TabsTrigger>
-          <TabsTrigger value="myrank" className="gap-1 sm:gap-2 text-xs sm:text-sm">
-            <BarChart3 className="h-4 w-4" />
+          <TabsTrigger value="myrank" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3">
+            <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">My Rank</span>
             <span className="sm:hidden">Rank</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-1 sm:gap-2 text-xs sm:text-sm">
-            <History className="h-4 w-4" />
+          <TabsTrigger value="history" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3">
+            <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>History</span>
           </TabsTrigger>
         </TabsList>
