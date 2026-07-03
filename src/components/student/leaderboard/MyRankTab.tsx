@@ -60,11 +60,11 @@ export function MyRankTab({
         animate={{ opacity: 1, scale: 1 }}
       >
         <Card className="border-2" style={{ borderColor: tierColor }}>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
+          <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+            <div className="text-center space-y-3 sm:space-y-4">
               {/* Rank Circle */}
               <motion.div
-                className="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-white text-3xl font-bold"
+                className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold"
                 style={{ backgroundColor: tierColor }}
                 animate={{ 
                   boxShadow: [
@@ -79,19 +79,19 @@ export function MyRankTab({
               </motion.div>
 
               <div>
-                <p className="text-2xl font-bold">{currentEntry.username}</p>
-                <p className="text-muted-foreground">
+                <p className="text-lg sm:text-2xl font-bold truncate">{currentEntry.username}</p>
+                <p className="text-xs sm:text-base text-muted-foreground">
                   Level {currentEntry.level} • <span className="capitalize">{currentEntry.currentTier}</span>
                 </p>
               </div>
 
-              <div className="text-4xl font-bold text-primary">
+              <div className="text-2xl sm:text-4xl font-bold text-primary">
                 {currentEntry.totalPoints.toLocaleString()} pts
               </div>
 
               {/* Status Badge */}
               <div className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+                "inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm",
                 currentEntry.isAdvancing 
                   ? "bg-green-500/10 text-green-500" 
                   : currentEntry.isAtRisk 
@@ -100,17 +100,17 @@ export function MyRankTab({
               )}>
                 {currentEntry.isAdvancing ? (
                   <>
-                    <ArrowUp className="h-4 w-4" />
+                    <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>Advancing to {getNextTier(currentEntry.currentTier)}</span>
                   </>
                 ) : currentEntry.isAtRisk ? (
                   <>
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>At Risk - {pointsToAdvance} pts to advance</span>
                   </>
                 ) : (
                   <>
-                    <Target className="h-4 w-4" />
+                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>{pointsToAdvance?.toLocaleString()} pts needed to advance</span>
                   </>
                 )}
@@ -121,34 +121,34 @@ export function MyRankTab({
       </motion.div>
 
       {/* Progress Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Target className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+              <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               To Advance
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <p className="text-lg sm:text-2xl font-bold">
               {pointsToAdvance === 0 ? '✓ Secured' : `${pointsToAdvance?.toLocaleString()} pts`}
             </p>
-            <Progress value={progressToAdvance} className="mt-2 h-2" />
+            <Progress value={progressToAdvance} className="mt-2 h-1.5 sm:h-2" />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+              <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               To #1 + Badge
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <p className="text-lg sm:text-2xl font-bold">
               {pointsToTop1 === 0 ? '🏆 You\'re #1!' : `${pointsToTop1?.toLocaleString()} pts`}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {currentEntry.currentTier.charAt(0).toUpperCase() + currentEntry.currentTier.slice(1)} badge
             </p>
           </CardContent>
