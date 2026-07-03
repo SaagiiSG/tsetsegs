@@ -32,9 +32,9 @@ export function LevelProgressCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
           {/* Circular progress */}
-          <div className="relative w-28 h-28 flex-shrink-0">
+          <div className="relative w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
             <svg className="w-full h-full transform -rotate-90">
               {/* Background circle */}
               <circle

@@ -85,19 +85,19 @@ export function ActivityHeatmap({
   return (
     <Card className="bg-card/50 backdrop-blur border-border/50">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Calendar className="w-5 h-5 text-primary" />
             Activity
           </CardTitle>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3 text-xs md:text-sm">
+            <div className="flex items-center gap-1">
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="font-bold">{currentStreak}</span>
-              <span className="text-muted-foreground">day streak</span>
+              <span className="text-muted-foreground">day</span>
             </div>
             <div className="text-muted-foreground">
-              Best: <span className="font-bold text-foreground">{longestStreak}</span> days
+              Best: <span className="font-bold text-foreground">{longestStreak}</span>
             </div>
           </div>
         </div>
@@ -150,9 +150,9 @@ export function ActivityHeatmap({
         </TooltipProvider>
 
         {/* Legend */}
-        <div className="flex items-center justify-between mt-3 text-xs">
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-3 text-[11px] md:text-xs">
           <span className="text-muted-foreground">
-            {totalActiveDays} active days in the past year
+            {totalActiveDays} active days · past year
           </span>
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">Less</span>

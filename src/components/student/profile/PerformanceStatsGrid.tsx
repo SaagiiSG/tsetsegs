@@ -17,18 +17,18 @@ interface StatCardProps {
 function StatCard({ title, icon, iconBg, stats }: StatCardProps) {
   return (
     <Card className="bg-card/50 backdrop-blur border-border/50">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", iconBg)}>
+      <CardContent className="p-3 md:p-4">
+        <div className="flex items-center gap-2 mb-2 md:mb-3">
+          <div className={cn("w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center", iconBg)}>
             {icon}
           </div>
-          <h3 className="font-semibold">{title}</h3>
+          <h3 className="font-semibold text-sm md:text-base truncate">{title}</h3>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5 md:space-y-2">
           {stats.map((stat, idx) => (
-            <div key={idx} className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{stat.label}</span>
-              <span className="font-medium flex items-center gap-1">
+            <div key={idx} className="flex justify-between items-center gap-2">
+              <span className="text-[11px] md:text-sm text-muted-foreground truncate">{stat.label}</span>
+              <span className="text-xs md:text-sm font-medium flex items-center gap-1 flex-shrink-0 tabular-nums">
                 {stat.value}
                 {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-emerald-500" />}
                 {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-red-500" />}
@@ -45,7 +45,7 @@ export function PerformanceStatsGrid({ stats }: PerformanceStatsGridProps) {
   if (!stats) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3 md:gap-4">
       <StatCard
         title="Questions"
         icon={<Brain className="w-4 h-4 text-blue-400" />}
