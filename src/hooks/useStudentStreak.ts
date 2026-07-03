@@ -259,10 +259,27 @@ function dispatchStreakExtended(detail: StreakExtendedDetail) {
   if (typeof window === "undefined") return;
   try {
     window.dispatchEvent(new CustomEvent("streak:extended", { detail }));
+    // Remember the current run so we can detect silent breaks in future sessions
+    localStorage.setItem("last-known-streak", String(detail.newStreak));
   } catch {
     /* noop */
   }
 }
+
+export const STREAK_BROKEN_EVENT = "streak:broken";
+export interface StreakBrokenDetail {
+  lostStreak: number;
+}
+function dispatchStreakBroken(detail: StreakBrokenDetail) {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new CustomEvent(STREAK_BROKEN_EVENT, { detail }));
+    localStorage.setItem("last-known-streak", "0");
+  } catch {
+    /* noop */
+  }
+}
+
 
 interface StudentStreak {
   id: string;
