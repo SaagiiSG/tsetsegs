@@ -206,36 +206,36 @@ export function MyRankTab({
       {/* Comparison */}
       {(playerAbove || playerBelow) && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Nearby Players</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-6">
+            <CardTitle className="text-sm sm:text-base">Nearby Players</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
             {playerAbove && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground">#{playerAbove.rank}</span>
-                  <span>{playerAbove.username}</span>
+              <div className="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="text-muted-foreground text-sm shrink-0">#{playerAbove.rank}</span>
+                  <span className="truncate text-sm sm:text-base">{playerAbove.username}</span>
                 </div>
-                <span className="text-sm text-green-500">
-                  +{(playerAbove.totalPoints - currentEntry.totalPoints).toLocaleString()} ahead
+                <span className="text-xs sm:text-sm text-green-500 shrink-0">
+                  +{(playerAbove.totalPoints - currentEntry.totalPoints).toLocaleString()}
                 </span>
               </div>
             )}
-            <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-primary">#{currentEntry.rank}</span>
-                <span className="font-medium">{currentEntry.username} (You)</span>
+            <div className="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <span className="font-bold text-primary text-sm shrink-0">#{currentEntry.rank}</span>
+                <span className="font-medium truncate text-sm sm:text-base">{currentEntry.username} (You)</span>
               </div>
-              <span className="font-bold">{currentEntry.totalPoints.toLocaleString()} pts</span>
+              <span className="font-bold text-sm sm:text-base shrink-0">{currentEntry.totalPoints.toLocaleString()} pts</span>
             </div>
             {playerBelow && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground">#{playerBelow.rank}</span>
-                  <span>{playerBelow.username}</span>
+              <div className="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="text-muted-foreground text-sm shrink-0">#{playerBelow.rank}</span>
+                  <span className="truncate text-sm sm:text-base">{playerBelow.username}</span>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {(currentEntry.totalPoints - playerBelow.totalPoints).toLocaleString()} behind
+                <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                  -{(currentEntry.totalPoints - playerBelow.totalPoints).toLocaleString()}
                 </span>
               </div>
             )}
