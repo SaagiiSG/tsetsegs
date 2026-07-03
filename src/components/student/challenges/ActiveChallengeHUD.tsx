@@ -81,14 +81,70 @@ export function ActiveChallengeHUD() {
   if (!visible || !challenge) return null;
 
   const SubjectIcon = challenge.subject === 'math' ? Calculator : BookOpen;
-  const opponentLabel =
-    opponents.length === 0
-      ? 'Solo'
-      : opponents.length === 1
-      ? opponents[0]
-      : `${opponents[0]} +${opponents.length - 1}`;
-
   const isFixedSet = challenge.format === 'fixed_set';
+
+  // Pick the metric used for ranking + display, per format
+  const metricOf = (p: { score: number; correct_count: number; attempted_count: number }) => {
+    if (challenge.format === 'first_to_correct') return p.correct_count;
+    if (challenge.format === 'fixed_set') return p.attempted_count;
+    return p.score; // first_to_points, time_sprint
+  };
+  const unit =
+    challenge.format === 'first_to_correct' ? '✓' : challenge.format === 'fixed_set' ? 'q' : 'pts';
+
+  const myMetric = myPart ? metricOf(myPart) : 0;
+  const mySelf = { id: 'me', name: 'You', metric: myMetric, isMe: true };
+  const allRanked = [
+    mySelf,
+    ...opponents.map((o) => ({ id: o.id, name: o.name, metric: metricOf(o), isMe: false })),
+  ].sort((a, b) => b.metric - a.metric);
+  const leader = allRanked[0];
+  const second = allRanked[1];
+  const opponentLine = (() => {
+    if (opponents.length === 0) return null;
+    if (opponents.length === 1) {
+      const opp = opponents[0];
+      const oppMetric = metricOf(opp);
+      const diff = myMetric - oppMetric;
+      const leading = diff > 0 ? 'you' : diff < 0 ? 'opp' : 'tie';
+      return (
+        <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-95 leading-none">
+          <span className="truncate max-w-[26vw] md:max-w-[140px]">{opp.name}</span>
+          <span className="tabular-nums opacity-80">{oppMetric}</span>
+          <span className="opacity-60">·</span>
+          {leading === 'tie' ? (
+            <span className="opacity-90">Tied</span>
+          ) : (
+            <span
+              className={cn(
+                'inline-flex items-center gap-0.5 font-semibold px-1.5 py-0.5 rounded-full',
+                leading === 'you' ? 'bg-emerald-400/25 text-emerald-50' : 'bg-red-400/25 text-red-50',
+              )}
+            >
+              {leading === 'you' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {leading === 'you' ? `You +${diff}` : `-${Math.abs(diff)}`}
+            </span>
+          )}
+        </div>
+      );
+    }
+    // 3+ players
+    const gap = second ? leader.metric - second.metric : leader.metric;
+    return (
+      <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-95 leading-none">
+        <Crown className="w-3 h-3 text-amber-200" />
+        <span className="truncate max-w-[28vw] md:max-w-[150px]">
+          {leader.isMe ? 'You lead' : leader.name}
+        </span>
+        <span className="tabular-nums opacity-80">
+          {leader.metric} {unit}
+        </span>
+        {second && (
+          <span className="opacity-80">· +{gap} ahead</span>
+        )}
+      </div>
+    );
+  })();
 
   return (
     <>
@@ -132,18 +188,16 @@ export function ActiveChallengeHUD() {
           <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
               <SubjectIcon className="w-3 h-3" />
-              <span className="truncate max-w-[38vw] md:max-w-[220px]">{opponentLabel}</span>
               {participantsCount > 2 && (
-                <span className="inline-flex items-center gap-0.5 opacity-80">
+                <span className="inline-flex items-center gap-0.5 opacity-90">
                   <Users className="w-3 h-3" />
                   {participantsCount}
                 </span>
               )}
+              <span className="tabular-nums opacity-90">{targetText}</span>
             </div>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-bold tabular-nums text-sm leading-none">{targetText}</span>
-            </div>
-            <div className="mt-1.5 h-1 w-40 md:w-48 rounded-full bg-white/20 overflow-hidden">
+            {opponentLine}
+            <div className="mt-1.5 h-1 w-44 md:w-56 rounded-full bg-white/20 overflow-hidden">
               <motion.div
                 className="h-full bg-white rounded-full"
                 initial={false}
@@ -152,6 +206,7 @@ export function ActiveChallengeHUD() {
               />
             </div>
           </div>
+
 
           <span className="ml-1 inline-flex items-center gap-1 pl-2 pr-3 py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
             <Trophy className="w-3 h-3" />
