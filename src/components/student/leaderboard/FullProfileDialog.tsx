@@ -24,22 +24,30 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:w-[90vw] lg:w-[75vw] xl:w-[60vw] max-w-none max-h-[95vh] sm:max-h-[90vh] p-0">
-        <DialogHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b">
-          <DialogTitle className="text-base sm:text-lg pr-6 truncate">
+      <DialogContent
+        className="
+          gap-0 p-0 border-0 sm:border
+          w-screen h-[100dvh] max-w-none rounded-none
+          sm:w-[90vw] sm:h-auto sm:max-h-[90vh] sm:rounded-lg
+          lg:w-[75vw] xl:w-[60vw]
+          flex flex-col overflow-hidden
+        "
+      >
+        <DialogHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 text-left">
+          <DialogTitle className="text-base sm:text-lg pr-8 truncate">
             {username || profile.username}'s Profile
           </DialogTitle>
         </DialogHeader>
-        
-        <ScrollArea className="max-h-[calc(95vh-64px)] sm:max-h-[calc(90vh-80px)]">
+
+        <ScrollArea className="flex-1 min-h-0 w-full">
           {profile.isLoading ? (
-            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 w-full max-w-full">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-32 w-full" />
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 w-full max-w-full overflow-x-hidden">
               {/* Profile Header */}
               <ProfileHeader
                 username={profile.username}
@@ -69,7 +77,7 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
               />
 
               {/* Level Progress & Rank History */}
-              <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <LevelProgressCard
                   level={profile.level}
                   totalPoints={profile.totalPoints}
