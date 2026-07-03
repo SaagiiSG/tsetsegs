@@ -766,7 +766,7 @@ export default function StudentQuestion() {
             subject={question?.subject || 'math'}
           />
           {allQuestions && (
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="hidden md:inline text-sm font-medium text-muted-foreground">
               {currentQuestionIndex + 1} of {allQuestions.length}
             </span>
           )}
