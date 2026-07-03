@@ -17,6 +17,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, ChevronDown, ChevronLe
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
+import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
 import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -198,7 +199,17 @@ export default function StudentEnglishQuestion() {
         });
       
       if (error) throw error;
-      
+
+      // Ambient challenge tracking (fire-and-forget)
+      recordAmbientChallengeAttempt({
+        studentId: student.id,
+        subject: 'english',
+        questionId,
+        isCorrect: correct,
+        timeMs: timeSpent * 1000,
+        difficulty: (question as any).difficulty_level,
+      });
+
       logActivity('english_question_attempt', {
         question_id: questionId,
         answer,

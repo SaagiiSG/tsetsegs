@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -198,6 +199,16 @@ export default function StudentReadingModule() {
       answer_submitted: selectedAnswer,
       is_correct: isCorrect,
       attempt_number: 1,
+    });
+
+    // Ambient challenge tracking (fire-and-forget)
+    recordAmbientChallengeAttempt({
+      studentId: student.id,
+      subject: 'english',
+      questionId: currentQuestion.id,
+      isCorrect,
+      timeMs: 30_000,
+      difficulty: (currentQuestion as any).difficulty_level,
     });
     
     // Update session answers
