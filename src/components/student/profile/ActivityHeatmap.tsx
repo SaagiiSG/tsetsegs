@@ -150,9 +150,9 @@ export function ActivityHeatmap({
         </TooltipProvider>
 
         {/* Legend */}
-        <div className="flex items-center justify-between mt-3 text-xs">
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-3 text-[11px] md:text-xs">
           <span className="text-muted-foreground">
-            {totalActiveDays} active days in the past year
+            {totalActiveDays} active days · past year
           </span>
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">Less</span>
