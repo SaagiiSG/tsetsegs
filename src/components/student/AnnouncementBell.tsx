@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Megaphone, ArrowLeft } from 'lucide-react';
+import { Bell, Megaphone, ArrowLeft, UserPlus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,13 +12,14 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   useStudentAnnouncements,
   markAnnouncementRead,
 } from '@/hooks/useStudentAnnouncements';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useFriends } from '@/hooks/useFriends';
 import { StudentSatSimulationCard } from '@/components/student/dashboard/StudentSatSimulationCard';
 
 export function AnnouncementBell() {
