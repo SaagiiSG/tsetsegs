@@ -89,7 +89,7 @@ export default function StudentProfile() {
       />
 
       {/* Level Progress & Rank History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <LevelProgressCard
           level={level}
           totalPoints={totalPoints}
