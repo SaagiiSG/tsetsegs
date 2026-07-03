@@ -117,11 +117,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
 
       {/* Leaderboard */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">All-Time Rankings</CardTitle>
-          <p className="text-xs text-muted-foreground">Tap a player to view their full profile</p>
+        <CardHeader className="pb-2 p-3 sm:p-6">
+          <CardTitle className="text-sm sm:text-base">All-Time Rankings</CardTitle>
+          <p className="text-[11px] sm:text-xs text-muted-foreground">Tap a player to view their full profile</p>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 p-2 sm:p-6 pt-0 sm:pt-0">
           {leaderboard.length > 0 ? (
             <TooltipProvider delayDuration={300}>
               {leaderboard.slice(0, 50).map((entry, index) => {
@@ -137,57 +137,57 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTab
                         transition={{ delay: index * 0.02 }}
                         onClick={() => handleProfileClick(entry)}
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg border transition-all",
+                          "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border transition-all",
                           isCurrentUser && "bg-primary/10 border-primary/30",
                           index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30",
                           !isCurrentUser && "cursor-pointer hover:bg-muted/50 hover:scale-[1.01] active:scale-[0.99]"
                         )}
                       >
                         {/* Rank */}
-                        <div className="w-8 flex justify-center">
+                        <div className="w-6 sm:w-8 flex justify-center shrink-0">
                           {index === 0 ? (
-                            <Crown className="h-5 w-5 text-amber-500" />
+                            <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
                           ) : (
-                            <span className="font-bold text-muted-foreground">{index + 1}</span>
+                            <span className="font-bold text-sm sm:text-base text-muted-foreground">{index + 1}</span>
                           )}
                         </div>
 
                         {/* Avatar */}
-                        <Avatar className="h-10 w-10 border-2" style={{ borderColor: tierColor }}>
-                          <AvatarFallback className={cn(isCurrentUser && "bg-primary text-primary-foreground")}>
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 shrink-0" style={{ borderColor: tierColor }}>
+                          <AvatarFallback className={cn("text-xs sm:text-sm", isCurrentUser && "bg-primary text-primary-foreground")}>
                             {entry.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={cn("font-medium truncate", isCurrentUser && "text-primary")}>
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <p className={cn("font-medium truncate text-sm sm:text-base", isCurrentUser && "text-primary")}>
                               {entry.username}
                             </p>
                             {isCurrentUser && (
-                              <Badge variant="secondary" className="text-xs">You</Badge>
+                              <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">You</Badge>
                             )}
                             {entry.isRubyLegend && (
-                              <Badge className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs gap-1">
-                                <Star className="h-3 w-3 fill-current" />
+                              <Badge className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] sm:text-xs px-1.5 py-0 gap-1">
+                                <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
                                 Legend
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Level {entry.level}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                            <span>L{entry.level}</span>
                             <span>•</span>
-                            <span className="capitalize" style={{ color: tierColor }}>
+                            <span className="capitalize truncate" style={{ color: tierColor }}>
                               Peak: {entry.highestTier}
                             </span>
                           </div>
                         </div>
 
                         {/* Points */}
-                        <div className="text-right">
-                          <p className="font-bold">{entry.totalPoints.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">total pts</p>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-sm sm:text-base leading-tight">{entry.totalPoints.toLocaleString()}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">total pts</p>
                         </div>
                       </motion.div>
                     </TooltipTrigger>
