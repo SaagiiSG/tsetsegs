@@ -65,45 +65,63 @@ export function useStudentProfile() {
   const { currentUserEntry, currentUserAllTime, activeSprint } = useLeaderboard();
   const { tier: currentTierFromHook } = useStudentTier();
 
-  // Fetch total points
+  // Fetch total points (paginated — Supabase caps un-ranged selects at 1000 rows)
   const { data: totalPoints } = useQuery({
     queryKey: ['total-points', student?.id],
     queryFn: async () => {
       if (!student?.id) return 0;
 
-      const { data, error } = await supabase
-        .from('point_transactions')
-        .select('points')
-        .eq('student_account_id', student.id);
-
-      if (error) throw error;
-      return data?.reduce((sum, t) => sum + t.points, 0) || 0;
+      let sum = 0;
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('point_transactions')
+          .select('points')
+          .eq('student_account_id', student.id)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        sum += data.reduce((s, t) => s + t.points, 0);
+        if (data.length < pageSize) break;
+        page++;
+      }
+      return sum;
     },
     enabled: !!student?.id,
     refetchOnWindowFocus: true,
     staleTime: 30000
   });
 
-  // Fetch activity heatmap (last 365 days)
+  // Fetch activity heatmap (last 365 days, paginated)
   const { data: activityHeatmap } = useQuery({
     queryKey: ['activity-heatmap', student?.id],
     queryFn: async (): Promise<ActivityDay[]> => {
       if (!student?.id) return [];
 
       const startDate = subDays(new Date(), 365);
-      
-      const { data: transactions, error } = await supabase
-        .from('point_transactions')
-        .select('points, created_at')
-        .eq('student_account_id', student.id)
-        .gte('created_at', startDate.toISOString());
 
-      if (error) throw error;
+      let transactions: { points: number; created_at: string }[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('point_transactions')
+          .select('points, created_at')
+          .eq('student_account_id', student.id)
+          .gte('created_at', startDate.toISOString())
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        transactions = transactions.concat(data);
+        if (data.length < pageSize) break;
+        page++;
+      }
 
       // Group by date
       const byDate: Record<string, { points: number; count: number }> = {};
       
-      transactions?.forEach(t => {
+      transactions.forEach(t => {
         const date = format(parseISO(t.created_at), 'yyyy-MM-dd');
         if (!byDate[date]) {
           byDate[date] = { points: 0, count: 0 };
