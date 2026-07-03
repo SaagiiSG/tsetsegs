@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
@@ -115,9 +116,13 @@ export async function updateStudentStreak(
         freezerLastUsedDate = yesterday;
         freezerUsed = true;
       } else if (daysSince > 1) {
+        const lost = streak.current_streak;
         newCurrentStreak = 1;
         newStreakStartDate = today;
         isNew = true;
+        if (lost >= 2) {
+          dispatchStreakBroken({ lostStreak: lost });
+        }
       }
     } else {
       newCurrentStreak = 1;
@@ -255,10 +260,27 @@ function dispatchStreakExtended(detail: StreakExtendedDetail) {
   if (typeof window === "undefined") return;
   try {
     window.dispatchEvent(new CustomEvent("streak:extended", { detail }));
+    // Remember the current run so we can detect silent breaks in future sessions
+    localStorage.setItem("last-known-streak", String(detail.newStreak));
   } catch {
     /* noop */
   }
 }
+
+export const STREAK_BROKEN_EVENT = "streak:broken";
+export interface StreakBrokenDetail {
+  lostStreak: number;
+}
+function dispatchStreakBroken(detail: StreakBrokenDetail) {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new CustomEvent(STREAK_BROKEN_EVENT, { detail }));
+    localStorage.setItem("last-known-streak", "0");
+  } catch {
+    /* noop */
+  }
+}
+
 
 interface StudentStreak {
   id: string;
@@ -322,6 +344,37 @@ export const useStudentStreak = () => {
     const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
     return streak.last_activity_date === today || streak.last_activity_date === yesterday;
   })();
+
+  // Silent-break detection: user opened the app after their streak died without
+  // any practice update firing. Fires once per session per student.
+  useEffect(() => {
+    if (!studentId || !streak?.last_activity_date) return;
+    const lastKnown = Number(localStorage.getItem("last-known-streak") ?? "0");
+    const currentRun = streak.current_streak ?? 0;
+    const daysSince = differenceInDays(
+      startOfDay(new Date()),
+      startOfDay(parseISO(streak.last_activity_date))
+    );
+    const freezerCanSave = (streak.freezers_available ?? 0) > 0 && daysSince === 2;
+    const isDead = daysSince > 1 && !freezerCanSave;
+
+    if (isDead && lastKnown >= 2) {
+      const sessionKey = `streak-broken-shown:${studentId}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "1");
+        const lostStreak = Math.max(lastKnown, currentRun);
+        window.dispatchEvent(
+          new CustomEvent(STREAK_BROKEN_EVENT, { detail: { lostStreak } })
+        );
+        localStorage.setItem("last-known-streak", "0");
+      }
+    } else if (currentRun >= 1) {
+      // Keep baseline fresh
+      localStorage.setItem("last-known-streak", String(currentRun));
+    }
+  }, [studentId, streak?.last_activity_date, streak?.current_streak, streak?.freezers_available]);
+
+
 
   const freezersAvailable = streak?.freezers_available ?? 0;
 

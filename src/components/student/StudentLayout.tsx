@@ -26,6 +26,7 @@ import { PracticeQuickFab } from './practice/PracticeQuickFab';
 import { GestureHintOverlay } from './practice/GestureHintOverlay';
 import { useSwipe } from '@/hooks/useSwipe';
 import { StreakCelebrationListener } from './StreakCelebrationListener';
+import { StreakBrokenOverlay } from './StreakBrokenOverlay';
 import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
@@ -189,7 +190,9 @@ function StudentLayoutContent() {
       <GestureHintOverlay />
       <GlobalEdgeSwipeUp />
       <StreakCelebrationListener />
+      <StreakBrokenOverlay />
       <ActiveChallengeHUD />
+
 
       
       {/* Security overlay */}
