@@ -166,7 +166,7 @@ export function ActiveChallengeHUD() {
           className={cn(
             'fixed left-1/2 -translate-x-1/2 z-40',
             'top-[calc(env(safe-area-inset-top,0px)+68px)] md:top-[calc(env(safe-area-inset-top,0px)+76px)]',
-            'group flex items-center gap-3 pl-3 pr-2 py-2 rounded-full',
+            'group flex items-center gap-2 md:gap-3 pl-2.5 md:pl-3 pr-1.5 md:pr-2 py-1.5 md:py-2 rounded-full',
             'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
             'shadow-2xl shadow-primary/30 backdrop-blur-xl',
             'border border-white/15',
@@ -187,7 +187,7 @@ export function ActiveChallengeHUD() {
 
           <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
-              <SubjectIcon className="w-3 h-3" />
+              <SubjectIcon className="w-3 h-3 hidden md:inline" />
               {participantsCount > 2 && (
                 <span className="inline-flex items-center gap-0.5 opacity-90">
                   <Users className="w-3 h-3" />
@@ -197,7 +197,7 @@ export function ActiveChallengeHUD() {
               <span className="tabular-nums opacity-90">{targetText}</span>
             </div>
             {opponentLine}
-            <div className="mt-1.5 h-1 w-44 md:w-56 rounded-full bg-white/20 overflow-hidden">
+            <div className="mt-1 h-0.5 md:h-1 w-28 md:w-56 rounded-full bg-white/20 overflow-hidden">
               <motion.div
                 className="h-full bg-white rounded-full"
                 initial={false}
@@ -207,10 +207,9 @@ export function ActiveChallengeHUD() {
             </div>
           </div>
 
-
-          <span className="ml-1 inline-flex items-center gap-1 pl-2 pr-3 py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="ml-0.5 md:ml-1 inline-flex items-center gap-1 pl-1.5 md:pl-2 pr-2 md:pr-3 py-1 md:py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
             <Trophy className="w-3 h-3" />
-            {isFixedSet ? 'Play' : 'View'}
+            <span className="hidden md:inline">{isFixedSet ? 'Play' : 'View'}</span>
           </span>
         </motion.button>
       </AnimatePresence>
