@@ -182,12 +182,12 @@ function TimeUnit({ value, label, isLive }: { value: number; label: string; isLi
         initial={isLive ? { scale: 1.05 } : { scale: 1.1, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={isLive ? { duration: 0.15 } : undefined}
-        className="text-4xl sm:text-6xl font-black tabular-nums tracking-tighter"
+        className="text-2xl sm:text-6xl font-black tabular-nums tracking-tighter"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {String(value).padStart(2, '0')}
       </motion.span>
-      <p className="text-[9px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-1">{label}</p>
+      <p className="text-[8px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-0.5 sm:mt-1">{label}</p>
     </div>
   );
 }
