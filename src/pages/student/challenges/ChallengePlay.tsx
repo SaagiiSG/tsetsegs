@@ -113,7 +113,7 @@ export default function ChallengePlay() {
       setPicked(choice);
       const isCorrect = choice.trim().toUpperCase() === (question.answer ?? '').trim().toUpperCase();
       const timeMs = Date.now() - startedAtRef.current;
-      const points = calculatePoints(isCorrect, question.difficulty_level, timeMs);
+      const points = calculatePoints(isCorrect, 1);
       setFeedback(isCorrect ? 'correct' : 'wrong');
 
       await supabase.from('challenge_attempts').insert({

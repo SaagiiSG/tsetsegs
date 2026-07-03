@@ -208,7 +208,7 @@ export default function StudentReadingModule() {
       questionId: currentQuestion.id,
       isCorrect,
       timeMs: 30_000,
-      difficulty: (currentQuestion as any).difficulty_level,
+      attemptNumber: 1,
     });
     
     // Update session answers
