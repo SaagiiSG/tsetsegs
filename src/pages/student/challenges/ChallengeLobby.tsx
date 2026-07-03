@@ -19,13 +19,20 @@ export default function ChallengeLobby() {
   const allReady = participants.length >= 2 && participants.every((p) => p.ready_at);
 
   useEffect(() => {
-    if (challenge?.status === 'active') navigate(`/practice/challenges/${id}/play`);
+    if (challenge?.status === 'active') {
+      if (challenge.format === 'fixed_set') {
+        navigate(`/practice/challenges/${id}/play`);
+      } else {
+        // Ambient formats: student practices normally, HUD tracks progress
+        navigate(challenge.subject === 'english' ? '/english-practice' : '/practice');
+      }
+    }
     if (challenge?.status === 'finished') navigate(`/practice/challenges/${id}/results`);
     if (challenge?.status === 'cancelled') {
       toast('Challenge cancelled');
       navigate('/practice/challenges');
     }
-  }, [challenge?.status, id, navigate]);
+  }, [challenge?.status, challenge?.format, challenge?.subject, id, navigate]);
 
   if (!challenge) {
     return <div className="container max-w-xl py-10 text-center text-muted-foreground">Loading lobby…</div>;

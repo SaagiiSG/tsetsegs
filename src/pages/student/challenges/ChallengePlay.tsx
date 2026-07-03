@@ -72,7 +72,11 @@ export default function ChallengePlay() {
       toast('Challenge cancelled');
       navigate('/practice/challenges');
     }
-  }, [challenge?.status, id, navigate]);
+    // Ambient formats are tracked from regular practice — bounce out of the play screen
+    if (challenge.status === 'active' && challenge.format !== 'fixed_set') {
+      navigate(challenge.subject === 'english' ? '/english-practice' : '/practice', { replace: true });
+    }
+  }, [challenge?.status, challenge?.format, challenge?.subject, id, navigate]);
 
   // Time sprint countdown
   const [remaining, setRemaining] = useState<number>(0);
