@@ -150,8 +150,8 @@ export function StudentIPadDock() {
           layout
           transition={SPRING}
           className={cn(
-            'flex items-center gap-1 p-2 bg-card/80 backdrop-blur-xl border border-border/60 shadow-2xl',
-            isVertical ? 'flex-col rounded-[28px]' : 'flex-row rounded-[28px]'
+            'flex items-center gap-0.5 p-1.5 rounded-2xl bg-card/85 backdrop-blur-xl border border-border/60 shadow-xl',
+            isVertical ? 'flex-col' : 'flex-row'
           )}
         >
           {primaryItems.map((item) => (
@@ -160,8 +160,8 @@ export function StudentIPadDock() {
 
           <div
             className={cn(
-              'bg-border/70',
-              isVertical ? 'h-px w-7 my-1' : 'w-px h-7 mx-1'
+              'bg-border/60',
+              isVertical ? 'h-px w-6 my-0.5' : 'w-px h-6 mx-0.5'
             )}
           />
 
@@ -170,7 +170,7 @@ export function StudentIPadDock() {
               <button
                 type="button"
                 className={cn(
-                  'flex items-center justify-center w-12 h-12 rounded-2xl transition-colors',
+                  'flex items-center justify-center w-11 h-11 rounded-xl transition-colors',
                   moreOpen
                     ? 'bg-primary/15 text-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
