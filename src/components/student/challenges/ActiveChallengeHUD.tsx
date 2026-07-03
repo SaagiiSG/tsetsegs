@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sword, Calculator, BookOpen, Users, Trophy, Crown } from 'lucide-react';
+import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
