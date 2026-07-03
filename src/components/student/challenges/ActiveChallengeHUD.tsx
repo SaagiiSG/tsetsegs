@@ -433,7 +433,7 @@ function ChallengeLeaderboardSheet({
             )}
           </div>
         </div>
-      </Sheet>
+      </SheetContent>
     </Sheet>
   );
 }
