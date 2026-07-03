@@ -92,19 +92,28 @@ export function useOtherStudentProfile(userId: string | null) {
     enabled: !!userId
   });
 
-  // Fetch total points
+  // Fetch total points (paginated — Supabase caps un-ranged selects at 1000 rows)
   const { data: totalPoints } = useQuery({
     queryKey: ['other-student-total-points', userId],
     queryFn: async () => {
       if (!userId) return 0;
 
-      const { data, error } = await supabase
-        .from('point_transactions')
-        .select('points')
-        .eq('student_account_id', userId);
-
-      if (error) throw error;
-      return data?.reduce((sum, t) => sum + t.points, 0) || 0;
+      let sum = 0;
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('point_transactions')
+          .select('points')
+          .eq('student_account_id', userId)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        sum += data.reduce((s, t) => s + t.points, 0);
+        if (data.length < pageSize) break;
+        page++;
+      }
+      return sum;
     },
     enabled: !!userId
   });
@@ -129,26 +138,35 @@ export function useOtherStudentProfile(userId: string | null) {
     enabled: !!userId
   });
 
-  // Fetch activity heatmap (last 365 days)
+  // Fetch activity heatmap (last 365 days, paginated)
   const { data: activityHeatmap } = useQuery({
     queryKey: ['other-student-activity-heatmap', userId],
     queryFn: async (): Promise<ActivityDay[]> => {
       if (!userId) return [];
 
       const startDate = subDays(new Date(), 365);
-      
-      const { data: transactions, error } = await supabase
-        .from('point_transactions')
-        .select('points, created_at')
-        .eq('student_account_id', userId)
-        .gte('created_at', startDate.toISOString());
 
-      if (error) throw error;
+      let transactions: { points: number; created_at: string }[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('point_transactions')
+          .select('points, created_at')
+          .eq('student_account_id', userId)
+          .gte('created_at', startDate.toISOString())
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        transactions = transactions.concat(data);
+        if (data.length < pageSize) break;
+        page++;
+      }
 
       // Group by date
       const byDate: Record<string, { points: number; count: number }> = {};
       
-      transactions?.forEach(t => {
+      transactions.forEach(t => {
         const date = format(parseISO(t.created_at), 'yyyy-MM-dd');
         if (!byDate[date]) {
           byDate[date] = { points: 0, count: 0 };

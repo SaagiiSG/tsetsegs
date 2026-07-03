@@ -24,20 +24,22 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[60vw] max-w-none max-h-[90vh] p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle>{username || profile.username}'s Profile</DialogTitle>
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-[90vw] lg:w-[75vw] xl:w-[60vw] max-w-none max-h-[95vh] sm:max-h-[90vh] p-0">
+        <DialogHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b">
+          <DialogTitle className="text-base sm:text-lg pr-6 truncate">
+            {username || profile.username}'s Profile
+          </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[calc(90vh-80px)]">
+        <ScrollArea className="max-h-[calc(95vh-64px)] sm:max-h-[calc(90vh-80px)]">
           {profile.isLoading ? (
-            <div className="space-y-6 p-6">
+            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-32 w-full" />
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <div className="space-y-6 p-6">
+            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
               {/* Profile Header */}
               <ProfileHeader
                 username={profile.username}
