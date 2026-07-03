@@ -65,7 +65,7 @@ export function SprintTimer({ sprint, currentUserRanking, onSprintEnd }: SprintT
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border-2 bg-gradient-to-br from-card via-card to-background p-6 space-y-6 relative overflow-hidden"
+      className="rounded-2xl border-2 bg-gradient-to-br from-card via-card to-background p-3 sm:p-6 space-y-4 sm:space-y-6 relative overflow-hidden"
     >
       {/* Background glow effect */}
       <div 
@@ -76,49 +76,49 @@ export function SprintTimer({ sprint, currentUserRanking, onSprintEnd }: SprintT
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between relative z-10 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div 
-            className="p-2 rounded-xl"
+            className="p-1.5 sm:p-2 rounded-xl shrink-0"
             style={{ backgroundColor: `${tierColor}30` }}
           >
-            <Flame className="h-6 w-6" style={{ color: tierColor }} />
+            <Flame className="h-4 w-4 sm:h-6 sm:w-6" style={{ color: tierColor }} />
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
               Season {sprint.seasonNumber}
             </p>
-            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <h2 className="text-sm sm:text-xl font-bold tracking-tight flex items-center gap-1.5 sm:gap-2 truncate">
               <span style={{ color: tierColor }}>
                 {TIER_DISPLAY_NAMES[currentUserRanking?.currentTier as TierType] || 'Unranked'}
               </span>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground text-xs sm:text-xl">
                 Sprint ({sprint.sprintNumber}/3)
               </span>
             </h2>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Ends in</p>
-          <p className="text-sm font-medium">{sprint.daysRemaining} days</p>
+        <div className="text-right shrink-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Ends in</p>
+          <p className="text-xs sm:text-sm font-medium">{sprint.daysRemaining} days</p>
         </div>
       </div>
 
       {/* Giant Countdown */}
-      <div className="flex items-center justify-center gap-1 sm:gap-3 relative z-10">
+      <div className="flex items-center justify-center gap-0.5 sm:gap-3 relative z-10">
         <TimeUnit value={sprint.daysRemaining} label="DAYS" />
-        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <span className="text-2xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
         <TimeUnit value={sprint.hoursRemaining} label="HRS" />
-        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <span className="text-2xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
         <TimeUnit value={sprint.minutesRemaining} label="MIN" />
-        <span className="text-3xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
+        <span className="text-2xl sm:text-5xl font-black text-muted-foreground/50 font-mono">:</span>
         <TimeUnit value={secondsRemaining} label="SEC" isLive />
       </div>
 
       {/* Progress bar */}
-      <div className="space-y-2 relative z-10">
-        <Progress value={progressPercent} className="h-2" />
-        <div className="flex justify-between text-xs text-muted-foreground">
+      <div className="space-y-1.5 sm:space-y-2 relative z-10">
+        <Progress value={progressPercent} className="h-1.5 sm:h-2" />
+        <div className="flex justify-between text-[10px] sm:text-xs text-muted-foreground">
           <span>Day {daysElapsed + 1} of {totalDuration}</span>
           <span>{Math.round(100 - progressPercent)}% remaining</span>
         </div>
@@ -130,25 +130,25 @@ export function SprintTimer({ sprint, currentUserRanking, onSprintEnd }: SprintT
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="relative z-10 rounded-xl p-4 border-2"
+          className="relative z-10 rounded-xl p-3 sm:p-4 border-2"
           style={{ 
             borderColor: tierColor,
             background: `linear-gradient(135deg, ${tierColor}15, transparent)`
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
               <div 
-                className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black"
+                className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-lg sm:text-2xl font-black shrink-0"
                 style={{ backgroundColor: `${tierColor}30`, color: tierColor }}
               >
                 #{currentUserRanking.rank}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Your Rank</p>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">Your Rank</p>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                   <span 
-                    className="text-lg font-bold"
+                    className="text-sm sm:text-lg font-bold"
                     style={{ color: tierColor }}
                   >
                     {TIER_DISPLAY_NAMES[currentUserRanking.currentTier as TierType] || 'Unranked'}
@@ -157,15 +157,15 @@ export function SprintTimer({ sprint, currentUserRanking, onSprintEnd }: SprintT
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold">{currentUserRanking.totalPoints.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">points</p>
+            <div className="text-right shrink-0">
+              <p className="text-lg sm:text-2xl font-bold">{currentUserRanking.totalPoints.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">points</p>
             </div>
           </div>
           {currentUserRanking.isTop1 && (
-            <div className="mt-3 flex items-center gap-2 text-amber-500">
-              <Trophy className="h-4 w-4" />
-              <span className="text-sm font-medium">Sprint Leader!</span>
+            <div className="mt-2 sm:mt-3 flex items-center gap-2 text-amber-500">
+              <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm font-medium">Sprint Leader!</span>
             </div>
           )}
         </motion.div>
@@ -182,12 +182,12 @@ function TimeUnit({ value, label, isLive }: { value: number; label: string; isLi
         initial={isLive ? { scale: 1.05 } : { scale: 1.1, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={isLive ? { duration: 0.15 } : undefined}
-        className="text-4xl sm:text-6xl font-black tabular-nums tracking-tighter"
+        className="text-2xl sm:text-6xl font-black tabular-nums tracking-tighter"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {String(value).padStart(2, '0')}
       </motion.span>
-      <p className="text-[9px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-1">{label}</p>
+      <p className="text-[8px] sm:text-xs text-muted-foreground font-bold tracking-widest mt-0.5 sm:mt-1">{label}</p>
     </div>
   );
 }
