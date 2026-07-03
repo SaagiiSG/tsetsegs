@@ -21,6 +21,7 @@ import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/compone
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
+import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
 import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -414,6 +415,16 @@ export default function StudentQuestion() {
 
       // Update study streak (fire-and-forget)
       updateStudentStreak(student.id).catch(() => {});
+
+      // Ambient challenge tracking (fire-and-forget)
+      recordAmbientChallengeAttempt({
+        studentId: student.id,
+        subject: 'math',
+        questionId: currentQuestion.id,
+        isCorrect: correct,
+        timeMs: timeSpent * 1000,
+        difficulty: (currentQuestion as any).difficulty_level,
+      });
 
       // Log activity
       logActivity('question_attempt', {
