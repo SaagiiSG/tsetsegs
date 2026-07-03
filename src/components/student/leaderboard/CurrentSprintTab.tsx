@@ -49,26 +49,26 @@ export function CurrentSprintTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
 
       <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Your Sprint Competitors</CardTitle>
+        <CardHeader className="pb-2 p-3 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm sm:text-base">Your Sprint Competitors</CardTitle>
             {groupInfo && groupInfo.totalGroups > 1 && (
-              <Badge variant="outline" className="font-normal">
-                Group {groupInfo.groupNumber} of {groupInfo.totalGroups}
+              <Badge variant="outline" className="font-normal text-[10px] sm:text-xs shrink-0">
+                Group {groupInfo.groupNumber}/{groupInfo.totalGroups}
               </Badge>
             )}
           </div>
           {groupInfo && (
-            <p className="text-xs text-muted-foreground mt-1">
-              You compete against up to 40 students in your group. Tap a competitor to view their full profile!
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
+              Compete against up to 40 students. Tap a competitor to view their full profile.
             </p>
           )}
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 p-2 sm:p-6 pt-0 sm:pt-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
