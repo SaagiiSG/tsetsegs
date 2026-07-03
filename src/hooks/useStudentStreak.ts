@@ -115,9 +115,13 @@ export async function updateStudentStreak(
         freezerLastUsedDate = yesterday;
         freezerUsed = true;
       } else if (daysSince > 1) {
+        const lost = streak.current_streak;
         newCurrentStreak = 1;
         newStreakStartDate = today;
         isNew = true;
+        if (lost >= 2) {
+          dispatchStreakBroken({ lostStreak: lost });
+        }
       }
     } else {
       newCurrentStreak = 1;
