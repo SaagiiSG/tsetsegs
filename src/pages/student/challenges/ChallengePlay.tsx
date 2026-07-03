@@ -234,6 +234,8 @@ export default function ChallengePlay() {
         <Card className="p-10 text-center">
           <Loader2 className="h-6 w-6 mx-auto animate-spin opacity-60" />
         </Card>
+      )}
+
       {challenge.subject === 'math' && <DesmosCalculator />}
     </div>
   );
