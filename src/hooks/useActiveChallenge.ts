@@ -3,11 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import type { Challenge, Participant } from './useChallenge';
 
+export interface HUDOpponent {
+  id: string;
+  name: string;
+  score: number;
+  correct_count: number;
+  attempted_count: number;
+}
+
 interface ActiveChallengeState {
   challenge: Challenge | null;
   myPart: Participant | null;
   participantsCount: number;
-  opponents: string[];
+  opponents: HUDOpponent[];
   loading: boolean;
 }
 
@@ -51,12 +59,26 @@ export function useActiveChallenge() {
 
     const { data: allParts } = await supabase
       .from('challenge_participants')
-      .select('display_name, student_account_id')
+      .select('id, display_name, student_account_id, score, correct_count, attempted_count')
       .eq('challenge_id', challenge.id);
 
-    const opponents = (allParts ?? [])
+    const opponents: HUDOpponent[] = (allParts ?? [])
       .filter((p: any) => p.student_account_id !== student.id)
-      .map((p: any) => p.display_name || 'Player');
+      .map((p: any) => ({
+        id: p.student_account_id,
+        name: p.display_name || 'Player',
+        score: p.score ?? 0,
+        correct_count: p.correct_count ?? 0,
+        attempted_count: p.attempted_count ?? 0,
+      }));
+
+    setState({
+      challenge,
+      myPart,
+      participantsCount: allParts?.length ?? 1,
+      opponents,
+      loading: false,
+    });
 
     setState({
       challenge,
