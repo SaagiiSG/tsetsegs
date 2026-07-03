@@ -265,13 +265,25 @@ export default function StudentPractice() {
     queryKey: ['student-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
-        .eq('student_account_id', student.id)
-        .range(0, 9999);
-      if (error) throw error;
-      return data;
+      // Paginate to fetch ALL attempts — heavy users can exceed the 1k default
+      // and any fixed range cap, which caused solved cards to appear unsolved.
+      const pageSize = 1000;
+      let from = 0;
+      const all: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from('student_attempts')
+          .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
+          .eq('student_account_id', student.id)
+          .order('attempted_at', { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
     enabled: !!student
   });
