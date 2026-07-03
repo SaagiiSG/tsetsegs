@@ -93,7 +93,7 @@ export function PastDailyRings() {
           </div>
         </div>
 
-        <div className="w-full max-w-full overflow-x-auto overflow-y-hidden -mx-2 px-2 pb-2 scrollbar-thin">
+        <div className="w-full max-w-full overflow-x-auto overflow-y-hidden -mx-2 px-2 pb-2 scrollbar-hide">
           <div className="flex gap-2 w-max">
             {days.map((d) => {
               const date = parseISO(d.date);
