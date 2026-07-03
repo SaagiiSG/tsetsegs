@@ -157,14 +157,14 @@ export function MyRankTab({
 
       {/* Point Graph */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+        <CardHeader className="pb-2 p-3 sm:p-6">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Sprint Progress
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-48">
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+          <div className="h-36 sm:h-48 -ml-2 sm:ml-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={pointHistory}>
                 <defs>
