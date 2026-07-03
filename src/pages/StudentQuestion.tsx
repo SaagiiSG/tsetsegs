@@ -423,7 +423,7 @@ export default function StudentQuestion() {
         questionId: currentQuestion.id,
         isCorrect: correct,
         timeMs: timeSpent * 1000,
-        difficulty: (currentQuestion as any).difficulty_level,
+        attemptNumber,
       });
 
       // Log activity

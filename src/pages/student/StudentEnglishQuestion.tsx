@@ -207,7 +207,7 @@ export default function StudentEnglishQuestion() {
         questionId,
         isCorrect: correct,
         timeMs: timeSpent * 1000,
-        difficulty: (question as any).difficulty_level,
+        attemptNumber,
       });
 
       logActivity('english_question_attempt', {
