@@ -191,7 +191,8 @@ export function StudentIPadDock() {
             </div>
           </SheetContent>
         </Sheet>
-      </div>
-    </motion.nav>
+        </div>
+      </motion.nav>
+    </div>
   );
 }
