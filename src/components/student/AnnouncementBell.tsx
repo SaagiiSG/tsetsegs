@@ -25,11 +25,14 @@ import { StudentSatSimulationCard } from '@/components/student/dashboard/Student
 export function AnnouncementBell() {
   const { student } = useStudentAuth();
   const { data, refetch, isLoading } = useStudentAnnouncements();
+  const { incoming, respond } = useFriends();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
 
   const items = data?.items ?? [];
-  const unread = data?.unreadCount ?? 0;
+  const announcementUnread = data?.unreadCount ?? 0;
+  const requestCount = incoming.length;
+  const totalUnread = announcementUnread + requestCount;
   const current = items.find((i) => i.id === selected) ?? null;
 
   const openItem = async (id: string) => {
@@ -39,6 +42,15 @@ export function AnnouncementBell() {
       refetch();
     }
   };
+
+  const tooltip =
+    announcementUnread > 0 && requestCount > 0
+      ? `${announcementUnread} new · ${requestCount} friend request${requestCount === 1 ? '' : 's'}`
+      : requestCount > 0
+      ? `${requestCount} friend request${requestCount === 1 ? '' : 's'}`
+      : announcementUnread > 0
+      ? `${announcementUnread} new announcement${announcementUnread === 1 ? '' : 's'}`
+      : 'Announcements';
 
   return (
     <Sheet
@@ -51,17 +63,17 @@ export function AnnouncementBell() {
       <SheetTrigger asChild>
         <button
           type="button"
-          title={unread > 0 ? `${unread} new announcement${unread === 1 ? '' : 's'}` : 'Announcements'}
+          title={tooltip}
           className="relative inline-flex items-center justify-center h-8 w-8 md:h-9 md:w-9 rounded-full border border-border bg-card/60 hover:bg-muted transition-colors"
         >
           <Bell className="h-4 w-4 text-foreground" />
-          {unread > 0 && (
+          {totalUnread > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow"
             >
-              {unread > 9 ? '9+' : unread}
+              {totalUnread > 9 ? '9+' : totalUnread}
             </motion.span>
           )}
         </button>
