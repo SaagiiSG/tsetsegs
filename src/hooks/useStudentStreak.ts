@@ -344,6 +344,37 @@ export const useStudentStreak = () => {
     return streak.last_activity_date === today || streak.last_activity_date === yesterday;
   })();
 
+  // Silent-break detection: user opened the app after their streak died without
+  // any practice update firing. Fires once per session per student.
+  useEffect(() => {
+    if (!studentId || !streak?.last_activity_date) return;
+    const lastKnown = Number(localStorage.getItem("last-known-streak") ?? "0");
+    const currentRun = streak.current_streak ?? 0;
+    const daysSince = differenceInDays(
+      startOfDay(new Date()),
+      startOfDay(parseISO(streak.last_activity_date))
+    );
+    const freezerCanSave = (streak.freezers_available ?? 0) > 0 && daysSince === 2;
+    const isDead = daysSince > 1 && !freezerCanSave;
+
+    if (isDead && lastKnown >= 2) {
+      const sessionKey = `streak-broken-shown:${studentId}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "1");
+        const lostStreak = Math.max(lastKnown, currentRun);
+        window.dispatchEvent(
+          new CustomEvent(STREAK_BROKEN_EVENT, { detail: { lostStreak } })
+        );
+        localStorage.setItem("last-known-streak", "0");
+      }
+    } else if (currentRun >= 1) {
+      // Keep baseline fresh
+      localStorage.setItem("last-known-streak", String(currentRun));
+    }
+  }, [studentId, streak?.last_activity_date, streak?.current_streak, streak?.freezers_available]);
+
+
+
   const freezersAvailable = streak?.freezers_available ?? 0;
 
   const milestonesAchieved = STREAK_MILESTONES.map((m) => ({
