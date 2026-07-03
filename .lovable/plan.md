@@ -1,59 +1,43 @@
-# Streak-Break Devastation Animation + Friend Request Notifications
+# Ambient Challenge Tracking
 
-## 1. Devastating streak-break animation
+Shift challenges from a dedicated play page to a background goal that fills up as the student practices normally.
 
-### Detection
-Right now the streak system only fires `streak:extended`. We need a `streak:broken` signal.
+## Behavior
 
-- Add `dispatchStreakBroken({ lostStreak })` inside `src/hooks/useStudentStreak.ts` (`updateStudentStreak`) in the existing `daysSince > 1` branch where `newCurrentStreak = 1; isNew = true;` — dispatch with `streak.current_streak` (the run that just died) if it was ≥ 2 and no freezer saved it.
-- Also handle "app opened after the streak silently died" (student hasn't practiced yet, so no update runs):
-  - In `useStudentStreak`, when `streak` loads, compute `isSilentlyBroken` = `last_activity_date` exists, previous `current_streak >= 2`, `differenceInDays(today, last_activity_date) > 1`, and (`freezers_available === 0` or diff > 2).
-  - Track `sessionStorage['streak-broken-shown:<studentId>']` so it only fires once per session per student, and only if the previous stored `current_streak` in `localStorage['last-known-streak:<studentId>']` was ≥ 2.
-- Every successful `dispatchStreakExtended` also writes the new streak into `localStorage['last-known-streak:<studentId>']` so the "silent break" branch has a baseline.
+- When a challenge is `active` and its format is `first_to_points`, `first_to_correct`, or `time_sprint`, the student stays on `/practice` (or `/english-practice`). Every regular question they answer also counts toward the challenge.
+- The existing `ActiveChallengeHUD` at the top of the screen remains the live scoreboard — progress bar, opponent status, and a "View" button that opens the lobby/leaderboard sheet instead of `ChallengePlay`.
+- `fixed_set` keeps using `ChallengePlay` (it needs a fixed shared pool — can't be tracked from ambient practice).
+- Subject gate: math challenges only count math practice attempts; english challenges only count english practice attempts.
 
-### New event + listener
-- Constant `STREAK_BROKEN_EVENT = 'streak:broken'` (colocated with `STREAK_EXTENDED_EVENT`).
-- New component `src/components/student/StreakBrokenOverlay.tsx`:
-  - Listens for `streak:broken` and mounts a full-screen fixed overlay (z-[80]).
-  - Sequence (framer-motion, ~3.5s total, dismissable by tap or auto-close):
-    1. **Frame collapse** — 4 dark bars slide in from each edge (top/right/bottom/left) then close inward like a shutter, dimming the viewport to near-black with a red vignette.
-    2. **Screen shake** — the overlay content shakes for ~600ms with a heavy easing curve; subtle desaturation filter applied to `document.body` for the duration then reverted.
-    3. **Flame shatter** — a large centered `<Flame>` icon, orange, ignites for ~400ms, then desaturates to grey, then splits into 6-8 SVG shards (pre-defined polygon paths in an inline SVG). Shards fly outward with rotation + gravity easing, fade to 0.
-    4. **Ember fallout** — small grey particle dots drift downward for ~1.2s.
-    5. **Message reveal** — "Streak broken" headline + "You lost your **N-day** streak" + faint "Start again today" subline + a single "Start over" button that closes the overlay and navigates to `/practice`.
-  - Uses hardcoded coral/red gradient + neutral greys — no new tokens needed.
-  - Respects `prefers-reduced-motion`: falls back to a simple fade with the message and no shake/shatter.
-  - One haptic buzz via `navigator.vibrate([80, 40, 200])` if available.
-- Mount `<StreakBrokenOverlay />` in `StudentLayoutContent` next to `StreakCelebrationListener`.
+## Implementation
 
-### Guards
-- Never fires while a teacher/admin is impersonating a student (same `isTeacherOrAdmin` check as onboarding modal in `StudentLayout`).
-- Never fires for a first-time user with no history.
+### 1. Shared helper `src/lib/challengeAmbient.ts`
+`recordAmbientChallengeAttempt({ studentId, subject, questionId, isCorrect, timeMs, difficulty })`
+- Look up the student's single `active` challenge whose `subject` matches and whose `format ∈ {first_to_points, first_to_correct, time_sprint}`.
+- Compute points with existing `calculatePoints`.
+- Insert into `challenge_attempts`. The DB trigger `process_challenge_attempt` already updates participant score/correct_count and finishes the challenge when the target is hit.
+- No-op if no eligible challenge, or if this `(challenge_id, question_id, student_account_id)` already has an attempt (avoid double-count on retries).
 
-## 2. Friend request notifications in the announcement bell
+### 2. Hook the practice attempt sites
+Call the helper right after every existing `student_attempts` insert on these paths:
+- `src/pages/StudentQuestion.tsx` (math practice question)
+- `src/pages/student/StudentEnglishQuestion.tsx` (english practice question)
+- `src/pages/student/StudentReadingModule.tsx` (english passage set)
+- `src/pages/student/StudentSpeedSession.tsx` — skip (speed mode has its own rules)
 
-Right now incoming friend requests live only on `/practice/challenges` Friends tab.
+Fire-and-forget so it never blocks the UI.
 
-### Bell drawer changes (`src/components/student/AnnouncementBell.tsx`)
-- Consume `useFriends()` → `incoming`, `respond`.
-- **Unread badge** on the bell button = `announcementUnread + incoming.length` (still capped at `9+`). Tooltip becomes "X new · Y friend requests" when both exist.
-- Inside the sheet content, above the announcements list (and above `StudentSatSimulationCard` when no announcement is opened), render a new **"Friend requests"** section:
-  - Header row: `UserPlus` icon + "Friend requests" + count chip.
-  - One row per incoming request showing display name (fallback: phone), with **Accept** (primary) and **Decline** (ghost) buttons that call `respond(r.id, true/false)` and optimistically remove the row.
-  - Hidden entirely when `incoming.length === 0`.
-- When there are friend requests but no announcements, the "No announcements yet" empty state is suppressed (requests count as content).
+### 3. Route change on challenge start
+- `ChallengeLobby.tsx`: when host starts a `first_to_points | first_to_correct | time_sprint` challenge, navigate participants to `/practice` (math) or `/english-practice` (english) instead of `/practice/challenges/:id`.
+- `ChallengePlay.tsx`: for those three formats, immediately redirect to the matching practice page (keeps deep links working). `fixed_set` still renders `ChallengePlay` as today.
 
-### Extras
-- If the drawer is closed and a new incoming request arrives (realtime already handled in `useFriends`), the bell badge count updates automatically via the hook re-fetching.
-- No route changes, no schema changes.
+### 4. HUD "View" behavior
+`ActiveChallengeHUD`: change the Resume button to open a `Sheet` with the live leaderboard (reuse the leaderboard block from `ChallengePlay`) instead of navigating to `/practice/challenges/:id`. Existing time-sprint countdown stays visible in the HUD.
 
-## Files touched
-- `src/hooks/useStudentStreak.ts` — add `dispatchStreakBroken`, silent-break detection, localStorage baseline tracking.
-- `src/components/student/StreakBrokenOverlay.tsx` — new full-screen devastation animation.
-- `src/components/student/StudentLayout.tsx` — mount the overlay.
-- `src/components/student/AnnouncementBell.tsx` — friend requests section + combined unread badge.
+### 5. Results
+When the trigger flips `status='finished'`, the HUD's realtime subscription already fires. Auto-navigate to `/practice/challenges/:id/results` on that transition (one-time, guarded by a ref).
 
 ## Out of scope
-- No push notifications (browser/mobile).
-- No changes to the challenges/friends page itself.
-- No new DB columns or realtime channels.
+- No schema/RLS changes — `challenge_attempts` already accepts these inserts.
+- No changes to `fixed_set` gameplay, scoring formula, or lobby flow.
+- No changes to English/Reading scoring rules.
