@@ -112,7 +112,7 @@ export default function StudentDashboardHome() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="lg:col-span-3 aspect-square lg:aspect-auto lg:min-h-[320px]"
+          className="lg:col-span-3 aspect-square md:aspect-[4/3] lg:aspect-auto lg:min-h-[320px] md:max-h-[420px]"
         >
           <DailyRing
             speed={{ current: progress?.speed ?? 0, goal: goals.speed }}

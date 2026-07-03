@@ -94,8 +94,8 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground self-start">
           Today's Goal
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <div className="flex-1 flex items-center justify-center w-full">
+          <svg className="w-full h-full max-h-[260px]" viewBox={`0 0 ${size} ${size}`}>
             <Ring cx={cx} cy={cy} radius={rOuter} stroke={stroke} color={RING_COLORS.speed} pct={speedPct} />
             <Ring cx={cx} cy={cy} radius={rMid} stroke={stroke} color={RING_COLORS.hard} pct={hardPct} />
             <Ring cx={cx} cy={cy} radius={rInner} stroke={stroke} color={RING_COLORS.medium} pct={medPct} />
