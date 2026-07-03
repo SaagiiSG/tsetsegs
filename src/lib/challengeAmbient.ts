@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { calculatePoints, type Difficulty } from './challengeScoring';
+import { calculatePoints } from './challengeScoring';
 
 interface AmbientArgs {
   studentId: string;
@@ -7,7 +7,7 @@ interface AmbientArgs {
   questionId: string;
   isCorrect: boolean;
   timeMs: number;
-  difficulty?: Difficulty;
+  attemptNumber: number;
 }
 
 /**
