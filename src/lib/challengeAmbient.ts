@@ -20,7 +20,7 @@ interface AmbientArgs {
  */
 export async function recordAmbientChallengeAttempt(args: AmbientArgs): Promise<void> {
   try {
-    const { studentId, subject, questionId, isCorrect, timeMs, difficulty } = args;
+    const { studentId, subject, questionId, isCorrect, timeMs, attemptNumber } = args;
     if (!studentId || !questionId) return;
 
     // Find an active, ambient-tracked challenge for this student + subject
@@ -47,7 +47,7 @@ export async function recordAmbientChallengeAttempt(args: AmbientArgs): Promise<
       .limit(1);
     if (existing && existing.length > 0) return;
 
-    const points = calculatePoints(isCorrect, difficulty ?? 'medium', timeMs);
+    const points = calculatePoints(isCorrect, attemptNumber);
 
     await supabase.from('challenge_attempts').insert({
       challenge_id: challengeId,
