@@ -71,23 +71,19 @@ function DockButton({ item }: { item: DockItem }) {
     <NavLink
       to={item.to}
       end={item.end}
+      draggable={false}
       className={cn(
-        'group relative flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all',
+        'group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-colors',
         active
           ? 'bg-primary/15 text-primary shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)]'
           : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
       )}
       aria-label={item.label}
+      title={item.label}
     >
-      <motion.div whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.08 }}>
+      <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.12, y: -2 }}>
         <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.4 : 2} />
       </motion.div>
-      <span className={cn(
-        'text-[9px] font-medium leading-none tracking-tight',
-        active ? 'opacity-100' : 'opacity-70'
-      )}>
-        {item.label}
-      </span>
     </NavLink>
   );
 }
