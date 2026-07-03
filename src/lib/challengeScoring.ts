@@ -1,30 +1,16 @@
-// Points formula for Mini Challenges.
-// Keeps it simple, deterministic, and weighted by difficulty + speed.
-// Mirrors the *feel* of the regular practice scoring without coupling to it.
+// Mini Challenge scoring — mirrors regular practice:
+// 1st correct = 10, 2nd = 5, 3rd = 2, 4th+ = 0. Wrong = 0.
 
 export type Difficulty = 'easy' | 'medium' | 'hard' | string | null | undefined;
 
-const BASE_POINTS: Record<string, number> = {
-  easy: 80,
-  medium: 130,
-  hard: 220,
-};
-
-const DEFAULT_BASE = 130;
-const TARGET_TIME_MS = 45_000; // beyond this, speed bonus is 0
-
-export function calculatePoints(
-  isCorrect: boolean,
-  difficulty: Difficulty,
-  timeMs: number,
-): number {
+export function calculatePoints(isCorrect: boolean, attemptNumber: number): number {
   if (!isCorrect) return 0;
-  const key = (difficulty ?? '').toString().toLowerCase();
-  const base = BASE_POINTS[key] ?? DEFAULT_BASE;
-  const speedFactor = Math.max(0, 1 - timeMs / TARGET_TIME_MS);
-  const speedBonus = Math.round(base * speedFactor * 0.6);
-  return Math.round(base * 0.6) + speedBonus;
+  if (attemptNumber <= 1) return 10;
+  if (attemptNumber === 2) return 5;
+  if (attemptNumber === 3) return 2;
+  return 0;
 }
+
 
 export const QUESTION_SETS = [
   { value: '68', label: '68 Problems' },
