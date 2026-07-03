@@ -766,7 +766,7 @@ export default function StudentQuestion() {
             subject={question?.subject || 'math'}
           />
           {allQuestions && (
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="hidden md:inline text-sm font-medium text-muted-foreground">
               {currentQuestionIndex + 1} of {allQuestions.length}
             </span>
           )}
@@ -792,7 +792,7 @@ export default function StudentQuestion() {
                 <div className="flex items-center gap-2">
                   <Button onClick={() => { setSubmitted(false); setIsCorrect(false); setSelectedAnswer(null); setFillAnswer(''); }} variant="outline" className="gap-1.5">
                     <RotateCcw className="h-3.5 w-3.5" />
-                    Practice Again
+                    <span className="hidden md:inline">Practice Again</span>
                   </Button>
                   {currentVariationIndex < practiceQuestions.length - 1 && (
                     <Button onClick={handleNextVariation}>
