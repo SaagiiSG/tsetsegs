@@ -73,7 +73,7 @@ function DockButton({ item }: { item: DockItem }) {
       end={item.end}
       draggable={false}
       className={cn(
-        'group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-colors',
+        'group relative flex items-center justify-center w-11 h-11 rounded-xl transition-colors',
         active
           ? 'bg-primary/15 text-primary shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)]'
           : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
