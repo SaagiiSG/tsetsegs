@@ -10,6 +10,7 @@ import { calculatePoints } from '@/lib/challengeScoring';
 import { MathText } from '@/components/MathText';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DesmosCalculator } from '@/components/student/DesmosCalculator';
 
 interface QuestionRow {
   id: string;
