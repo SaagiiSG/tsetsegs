@@ -181,6 +181,7 @@ function StudentLayoutContent() {
       <StreakHistoryDialog open={streakDialogOpen} onOpenChange={setStreakDialogOpen} />
       
       <StudentBottomNav />
+      <StudentIPadDock />
 
       {/* iOS-style quick command sheet (⌘K, swipe-up, FAB) */}
       <PracticeCommandSheet />
