@@ -189,7 +189,9 @@ function StudentLayoutContent() {
       <GestureHintOverlay />
       <GlobalEdgeSwipeUp />
       <StreakCelebrationListener />
+      <StreakBrokenOverlay />
       <ActiveChallengeHUD />
+
 
       
       {/* Security overlay */}
