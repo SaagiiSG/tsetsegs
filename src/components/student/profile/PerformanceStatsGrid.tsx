@@ -45,7 +45,7 @@ export function PerformanceStatsGrid({ stats }: PerformanceStatsGridProps) {
   if (!stats) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3 md:gap-4">
       <StatCard
         title="Questions"
         icon={<Brain className="w-4 h-4 text-blue-400" />}
