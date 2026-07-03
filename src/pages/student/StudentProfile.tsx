@@ -50,7 +50,7 @@ export default function StudentProfile() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-4 md:p-6">
+      <div className="space-y-4 md:space-y-6 p-3 md:p-6">
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -59,7 +59,7 @@ export default function StudentProfile() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 pb-24 md:pb-6">
+    <div className="space-y-4 md:space-y-6 p-3 md:p-6 pb-24 md:pb-6">
       {/* Profile Header */}
       <ProfileHeader
         username={username}
