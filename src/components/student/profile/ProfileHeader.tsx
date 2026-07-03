@@ -77,12 +77,13 @@ export function ProfileHeader({
               {currentTier}
             </Badge>
           </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-2xl font-bold leading-none" style={{ color: tierColor }}>
+          <div className="text-right flex-shrink-0 min-w-0">
+            <p className="text-xl font-bold leading-none tabular-nums truncate" style={{ color: tierColor }}>
               {totalPoints.toLocaleString()}
             </p>
             <p className="text-[10px] text-muted-foreground mt-1">Total Points</p>
           </div>
+
         </div>
 
         {/* Desktop avatar */}
