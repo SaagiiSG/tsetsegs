@@ -90,10 +90,10 @@ function DockButton({ item }: { item: DockItem }) {
 
 type DockEdge = 'bottom' | 'left' | 'right';
 
-const EDGE_STYLES: Record<DockEdge, React.CSSProperties> = {
-  bottom: { bottom: 16, left: '50%', top: 'auto', right: 'auto', translateX: '-50%', translateY: 0 },
-  left:   { left: 16, top: '50%', bottom: 'auto', right: 'auto', translateX: 0, translateY: '-50%' },
-  right:  { right: 16, top: '50%', bottom: 'auto', left: 'auto', translateX: 0, translateY: '-50%' },
+const EDGE_ALIGN: Record<DockEdge, string> = {
+  bottom: 'items-end justify-center pb-4',
+  left: 'items-center justify-start pl-4',
+  right: 'items-center justify-end pr-4',
 };
 
 const SPRING = { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.8 };
@@ -113,16 +113,15 @@ export function StudentIPadDock() {
     const px = info.point.x;
     const py = info.point.y;
 
-    let next: DockEdge = edge;
+    let next: DockEdge = 'bottom';
     const nearLeft = px < w * 0.22;
     const nearRight = px > w * 0.78;
     const nearBottom = py > h * 0.7;
 
     if (nearLeft && !nearBottom) next = 'left';
     else if (nearRight && !nearBottom) next = 'right';
-    else next = 'bottom';
 
-    // Spring the drag offset back to 0 so the layout anchor takes over smoothly.
+    // Spring the drag offset back to 0 so the flex anchor takes over smoothly.
     animate(x, 0, SPRING);
     animate(y, 0, SPRING);
     setEdge(next);
@@ -130,8 +129,10 @@ export function StudentIPadDock() {
 
   return (
     <div
-      className="hidden md:block xl:hidden fixed inset-0 z-40 pointer-events-none"
-      aria-hidden={false}
+      className={cn(
+        'hidden md:flex xl:hidden fixed inset-0 z-40 pointer-events-none transition-[padding] duration-300',
+        EDGE_ALIGN[edge]
+      )}
     >
       <motion.nav
         layout
@@ -141,7 +142,7 @@ export function StudentIPadDock() {
         dragElastic={0.25}
         onDragEnd={handleDragEnd}
         whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
-        style={{ position: 'absolute', x, y, ...EDGE_STYLES[edge] }}
+        style={{ x, y }}
         className="pointer-events-auto touch-none cursor-grab active:cursor-grabbing select-none"
         aria-label="Primary navigation"
       >
