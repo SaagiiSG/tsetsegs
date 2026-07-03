@@ -35,7 +35,10 @@ export function BadgeProgressSection({ inProgressBadges, onBadgeClick }: BadgePr
           // Get the most relevant requirement progress
           const requirements = badge.badge.requirements;
           const firstReq = requirements[0];
-          const currentProgress = badge.requirementsProgress[firstReq?.type] || 0;
+          const rawProgress = badge.requirementsProgress[firstReq?.type] as unknown;
+          const currentProgress = typeof rawProgress === 'object' && rawProgress !== null
+            ? ((rawProgress as { current?: number }).current ?? 0)
+            : (typeof rawProgress === 'number' ? rawProgress : 0);
 
           return (
             <motion.div
