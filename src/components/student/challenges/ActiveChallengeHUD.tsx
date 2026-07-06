@@ -154,7 +154,6 @@ export function ActiveChallengeHUD() {
     };
   }, [visible, anchor, collapsed]);
 
-
   const { targetText, progressPct } = useMemo(() => {
     if (!challenge) return { targetText: '', progressPct: 0 };
     if (challenge.format === 'first_to_points' && challenge.target_value) {
