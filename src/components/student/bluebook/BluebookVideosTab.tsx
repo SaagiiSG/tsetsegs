@@ -157,7 +157,25 @@ export function BluebookVideosTab() {
               Pick a practice test to watch full walkthroughs.
             </p>
           </div>
-          <Badge variant="secondary" className="tabular-nums">{totalVideos} videos</Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            <Select value="" onValueChange={(v) => v && setSelectedTestId(v)}>
+              <SelectTrigger className="h-9 w-[200px] capitalize">
+                <SelectValue placeholder="Jump to test…" />
+              </SelectTrigger>
+              <SelectContent>
+                {tests.map((t) => {
+                  const label = t.testNumber != null ? `Practice Test ${t.testNumber}` : t.name;
+                  const total = t.modules.reduce((a, m) => a + m.videoCount, 0);
+                  return (
+                    <SelectItem key={t.id} value={t.id} className="capitalize">
+                      {label} <span className="text-muted-foreground ml-1 tabular-nums">· {total}</span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="tabular-nums">{totalVideos} videos</Badge>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
