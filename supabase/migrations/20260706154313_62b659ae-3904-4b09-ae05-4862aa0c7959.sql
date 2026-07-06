@@ -1,0 +1,3 @@
+UPDATE public.questions
+SET question_text = 'A small business owner budgets \$3,600 to purchase timber each year. The owner must purchase a minimum of 345 slats of timber each year to maintain the discounted pricing. If the owner pays \$7.25 to purchase each slat of pine pulpwood and \$24.75 to purchase each slat of pine sawtimber, what is the maximum number of slats of pine sawtimber the owner can purchase to stay within the budget and maintain the discounted pricing?'
+WHERE question_id = 'EXT0546';
