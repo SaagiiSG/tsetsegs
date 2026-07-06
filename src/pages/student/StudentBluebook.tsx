@@ -14,8 +14,9 @@ import { toast } from 'sonner';
 import { 
   BookOpen, Clock, PlayCircle, CheckCircle2, 
   FileText, AlertCircle, Trophy, Calculator, Filter,
-  RotateCcw, Eye
+  RotateCcw, Eye, Video
 } from 'lucide-react';
+import BluebookVideosTab from '@/components/student/bluebook/BluebookVideosTab';
 
 interface BluebookTest {
   id: string;
@@ -576,7 +577,7 @@ export default function StudentBluebook() {
         </Card>
       ) : (
         <Tabs defaultValue="math" className="w-full">
-          <TabsList className="grid w-full max-w-[400px] grid-cols-3">
+          <TabsList className="grid w-full max-w-[560px] grid-cols-4">
             <TabsTrigger value="math" className="gap-1.5 text-sm">
               <Calculator className="h-4 w-4" />
               <span className="hidden sm:inline">Math</span>
@@ -603,6 +604,10 @@ export default function StudentBluebook() {
                   {fullTests.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="videos" className="gap-1.5 text-sm">
+              <Video className="h-4 w-4" />
+              <span className="hidden sm:inline">Videos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -655,6 +660,10 @@ export default function StudentBluebook() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="videos" className="mt-4">
+            <BluebookVideosTab />
           </TabsContent>
         </Tabs>
       )}

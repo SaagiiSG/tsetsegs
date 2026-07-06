@@ -14,8 +14,11 @@ type AnchorAlign = 'start' | 'center' | 'end';
 interface Anchor { side: AnchorSide; align: AnchorAlign }
 
 const DEFAULT_ANCHOR: Anchor = { side: 'top', align: 'center' };
-const ANCHOR_KEY = 'challenge-hud-anchor-v1';
-const COLLAPSED_KEY = 'challenge-hud-collapsed-v1';
+// v2 bump: forces users who had a stale collapsed/hidden state from v1 to
+// see a fresh, visible HUD (top-center, expanded). Uses localStorage to
+// match the rest of the app's persistence.
+const ANCHOR_KEY = 'challenge-hud-anchor-v2';
+const COLLAPSED_KEY = 'challenge-hud-collapsed-v2';
 const EDGE_PAD = 12; // px from viewport edge
 const TOP_OFFSET = 68; // stay clear of top header on mobile
 
@@ -240,7 +243,7 @@ export function ActiveChallengeHUD() {
           initial={{ y: -60, opacity: 0 }}
           exit={{ y: -60, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{ position: 'fixed', zIndex: 40, touchAction: 'none', ...anchorStyle(anchor) }}
+          style={{ position: 'fixed', zIndex: 60, touchAction: 'none', ...anchorStyle(anchor) }}
           className={cn(
             'select-none',
             dragging && 'cursor-grabbing',
@@ -250,7 +253,7 @@ export function ActiveChallengeHUD() {
             // Collapsed: small icon-only puck, still draggable via grip / long-press
             <div
               className={cn(
-                'flex items-center gap-1 pl-1 pr-1 py-1 rounded-full',
+                'flex items-center gap-1 pl-1 pr-1 py-1 rounded-full min-w-[44px] min-h-[44px]',
                 'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
                 'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
               )}
@@ -266,14 +269,15 @@ export function ActiveChallengeHUD() {
               <button
                 type="button"
                 onClick={handlePrimaryClick}
-                aria-label="Open challenge"
+                onDoubleClick={() => { setCollapsed(false); setAnchor(DEFAULT_ANCHOR); }}
+                aria-label="Open challenge (double-tap to expand)"
                 className="relative flex items-center justify-center p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition"
               >
                 <motion.span
                   aria-hidden
-                  className="absolute inset-0 rounded-full bg-white/25"
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                  className="absolute inset-0 rounded-full bg-white/30"
+                  animate={{ scale: [1, 1.8, 1], opacity: [0.7, 0, 0.7] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
                 />
                 <Sword className="w-4 h-4 relative" />
               </button>

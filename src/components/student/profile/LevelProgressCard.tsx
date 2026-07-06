@@ -32,9 +32,9 @@ export function LevelProgressCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
           {/* Circular progress */}
-          <div className="relative w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
+          <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0">
             <svg viewBox="0 0 112 112" className="w-full h-full transform -rotate-90">
 
               {/* Background circle */}
@@ -69,22 +69,22 @@ export function LevelProgressCard({
             </svg>
             {/* Level number in center */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+              <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
                 {level}
               </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Level</span>
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider">Level</span>
             </div>
           </div>
 
           {/* Level details */}
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
             <div>
               <div className="flex items-center gap-1 mb-1">
-                <p className="text-sm text-muted-foreground">Points to Level {level + 1}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Points to Level {level + 1}</p>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <Info className="w-3 h-3 text-muted-foreground" />
+                      <Info className="w-3 h-3 text-muted-foreground shrink-0" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p className="text-xs">Level Formula: 200 + 50 × 2^(level-1)</p>
@@ -93,7 +93,7 @@ export function LevelProgressCard({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="text-2xl font-bold">{pointsToNextLevel.toLocaleString()} pts</p>
+              <p className="text-xl sm:text-2xl font-bold tabular-nums">{pointsToNextLevel.toLocaleString()} pts</p>
             </div>
 
             {/* Progress bar */}

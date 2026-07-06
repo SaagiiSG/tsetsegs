@@ -28,26 +28,26 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
         className="
           gap-0 p-0 border-0 sm:border
           w-screen h-[100dvh] max-w-none rounded-none
-          sm:w-[90vw] sm:h-auto sm:max-h-[90vh] sm:rounded-lg
-          lg:w-[75vw] xl:w-[60vw]
+          sm:w-[92vw] sm:h-auto sm:max-h-[92vh] sm:rounded-lg
+          lg:w-[80vw] xl:w-[64vw]
           flex flex-col overflow-hidden
         "
       >
-        <DialogHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 text-left">
-          <DialogTitle className="text-base sm:text-lg pr-8 truncate">
+        <DialogHeader className="px-4 sm:px-6 py-3 border-b shrink-0 text-left bg-background/95 backdrop-blur sticky top-0 z-10">
+          <DialogTitle className="text-base sm:text-lg pr-10 truncate">
             {username || profile.username}'s Profile
           </DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1 min-h-0 w-full">
           {profile.isLoading ? (
-            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 w-full max-w-full">
+            <div className="space-y-3 sm:space-y-6 p-3 sm:p-6 w-full max-w-full">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-32 w-full" />
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 w-full max-w-full overflow-x-hidden">
+            <div className="space-y-3 sm:space-y-6 p-2.5 sm:p-6 w-full max-w-full overflow-x-hidden">
               {/* Profile Header */}
               <ProfileHeader
                 username={profile.username}
@@ -62,13 +62,15 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
                 lastLogin={profile.lastLogin}
               />
 
-              {/* Activity Heatmap */}
-              <ActivityHeatmap
-                activityData={profile.activityHeatmap}
-                currentStreak={profile.performanceStats?.currentStreak || 0}
-                longestStreak={profile.performanceStats?.longestStreak || 0}
-                totalActiveDays={profile.performanceStats?.totalActiveDays || 0}
-              />
+              {/* Activity Heatmap - scrolls horizontally on narrow screens */}
+              <div className="-mx-0.5 overflow-x-auto sm:overflow-visible">
+                <ActivityHeatmap
+                  activityData={profile.activityHeatmap}
+                  currentStreak={profile.performanceStats?.currentStreak || 0}
+                  longestStreak={profile.performanceStats?.longestStreak || 0}
+                  totalActiveDays={profile.performanceStats?.totalActiveDays || 0}
+                />
+              </div>
 
               {/* Featured Badges (Read-only) */}
               <FeaturedBadgesReadOnly
@@ -77,7 +79,7 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
               />
 
               {/* Level Progress & Rank History */}
-              <div className="grid grid-cols-1 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 gap-3 sm:gap-6">
                 <LevelProgressCard
                   level={profile.level}
                   totalPoints={profile.totalPoints}
