@@ -253,6 +253,11 @@ export function ActiveChallengeHUD() {
     else setSheetOpen(true);
   };
 
+  const resetHud = () => {
+    setAnchor(DEFAULT_ANCHOR);
+    setCollapsed(false);
+  };
+
   return (
     <>
       <AnimatePresence>
