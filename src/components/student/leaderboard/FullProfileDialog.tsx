@@ -33,11 +33,12 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
           flex flex-col overflow-hidden
         "
       >
-        <DialogHeader className="px-4 sm:px-6 py-3 border-b shrink-0 text-left bg-background/95 backdrop-blur sticky top-0 z-10">
-          <DialogTitle className="text-base sm:text-lg pr-10 truncate">
+        <DialogHeader className="px-3 sm:px-6 py-2.5 sm:py-3 border-b shrink-0 text-left bg-background/95 backdrop-blur sticky top-0 z-10">
+          <DialogTitle className="text-sm sm:text-lg pr-10 truncate">
             {username || profile.username}'s Profile
           </DialogTitle>
         </DialogHeader>
+
 
         <ScrollArea className="flex-1 min-h-0 w-full">
           {profile.isLoading ? (
@@ -47,7 +48,7 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-6 p-2.5 sm:p-6 w-full max-w-full overflow-x-hidden">
+            <div className="space-y-3 sm:space-y-6 p-2 sm:p-6 w-full max-w-full overflow-x-hidden [&_*]:min-w-0">
               {/* Profile Header */}
               <ProfileHeader
                 username={profile.username}
