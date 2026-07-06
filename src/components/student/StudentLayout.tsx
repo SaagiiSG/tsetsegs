@@ -199,6 +199,7 @@ function StudentLayoutContent() {
       <StreakCelebrationListener />
       <StreakBrokenOverlay />
       <ActiveChallengeHUD />
+      <TourOverlay />
 
 
       
