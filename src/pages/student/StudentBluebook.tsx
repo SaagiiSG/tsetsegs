@@ -594,9 +594,10 @@ export default function StudentBluebook() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="videos" className="gap-1.5 text-sm">
+          <TabsTrigger value="videos" data-tour="bluebook-videos-tab" className="gap-1.5 text-sm relative">
             <Video className="h-4 w-4" />
             <span className="hidden sm:inline">Videos</span>
+            <span className="absolute -top-0.5 -right-0.5 text-[8px] font-bold uppercase tracking-wider text-primary bg-primary/15 rounded px-1">NEW</span>
           </TabsTrigger>
         </TabsList>
 
