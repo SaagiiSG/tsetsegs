@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlayCircle, AlertCircle, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -215,21 +216,37 @@ export function BluebookVideosTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSelectedTestId(null)}
-          className="gap-1 -ml-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          All tests
-        </Button>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="capitalize">{testLabel}</Badge>
-          <Badge variant="secondary" className="tabular-nums">
-            {currentIdx >= 0 ? currentIdx + 1 : 0} / {playlist.length}
-          </Badge>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedTestId(null)}
+            className="gap-1 -ml-2 shrink-0"
+            aria-label="Back to all tests"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">All tests</span>
+          </Button>
+          <Select value={selectedTest.id} onValueChange={(v) => setSelectedTestId(v)}>
+            <SelectTrigger className="h-9 w-full sm:w-[220px] capitalize">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {tests.map((t) => {
+                const label = t.testNumber != null ? `Practice Test ${t.testNumber}` : t.name;
+                const total = t.modules.reduce((a, m) => a + m.videoCount, 0);
+                return (
+                  <SelectItem key={t.id} value={t.id} className="capitalize">
+                    {label} <span className="text-muted-foreground ml-1 tabular-nums">· {total}</span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
+        <Badge variant="secondary" className="tabular-nums shrink-0">
+          {currentIdx >= 0 ? currentIdx + 1 : 0} / {playlist.length}
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
