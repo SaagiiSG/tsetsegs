@@ -88,6 +88,7 @@ export default function StudentDashboardHome() {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
+        data-tour="home-greeting"
         className="flex items-end justify-between gap-3 flex-wrap"
       >
         <div>
@@ -112,6 +113,7 @@ export default function StudentDashboardHome() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
+          data-tour="daily-ring"
           className="md:col-span-4 lg:col-span-3 aspect-square sm:aspect-[4/3] md:aspect-auto md:min-h-[320px] md:max-h-[420px]"
         >
           <DailyRing

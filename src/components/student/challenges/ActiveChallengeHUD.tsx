@@ -275,6 +275,7 @@ export function ActiveChallengeHUD() {
           exit={{ y: -60, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           style={{ position: 'fixed', zIndex: 60, touchAction: 'none', ...anchorStyle(anchor) }}
+          data-tour="challenge-hud"
           className={cn(
             'select-none',
             dragging && 'cursor-grabbing',
@@ -406,6 +407,7 @@ export function ActiveChallengeHUD() {
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={resetHud}
+            data-tour="challenge-hud-reset"
             className={cn(
               'fixed bottom-6 left-1/2 -translate-x-1/2 z-[70]',
               'flex items-center gap-1.5 px-3 py-2 rounded-full',

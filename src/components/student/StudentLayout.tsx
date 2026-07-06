@@ -33,6 +33,9 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
+import { TourProvider } from './onboarding/TourProvider';
+import { TourOverlay } from './onboarding/TourOverlay';
+import { HelpButton } from './onboarding/HelpButton';
 
 function StudentLayoutContent() {
   const { student, isLoading: studentLoading } = useStudentAuth();
@@ -140,6 +143,7 @@ function StudentLayoutContent() {
             {/* Mobile streak counter */}
             <button
               type="button"
+              data-tour="streak-chip"
               onClick={() => setStreakDialogOpen(true)}
               title={isStreakActive ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
               className={cn(
@@ -170,7 +174,10 @@ function StudentLayoutContent() {
               </button>
             )}
             <AnnouncementBell />
-            <PracticeQuickFab compact />
+            <span data-tour="quick-fab" className="inline-flex">
+              <PracticeQuickFab compact />
+            </span>
+            <HelpButton />
           </div>
         </div>
         
@@ -192,6 +199,7 @@ function StudentLayoutContent() {
       <StreakCelebrationListener />
       <StreakBrokenOverlay />
       <ActiveChallengeHUD />
+      <TourOverlay />
 
 
       
@@ -227,7 +235,9 @@ export function StudentLayout() {
   return (
     <SidebarProvider>
       <PracticeCommandSheetProvider>
-        <StudentLayoutContent />
+        <TourProvider>
+          <StudentLayoutContent />
+        </TourProvider>
       </PracticeCommandSheetProvider>
     </SidebarProvider>
   );

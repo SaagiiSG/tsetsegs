@@ -157,7 +157,7 @@ export function BluebookVideosTab() {
               Pick a practice test to watch full walkthroughs.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0" data-tour="bluebook-test-select">
             <Select value="" onValueChange={(v) => v && setSelectedTestId(v)}>
               <SelectTrigger className="h-9 w-[200px] capitalize">
                 <SelectValue placeholder="Jump to test…" />
@@ -267,7 +267,7 @@ export function BluebookVideosTab() {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
+      <div data-tour="bluebook-player" className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
         {/* Player column */}
         <div className="space-y-3 min-w-0">
           <div className="rounded-lg overflow-hidden border bg-black">
