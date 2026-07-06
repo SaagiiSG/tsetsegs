@@ -104,30 +104,6 @@ export function ActiveChallengeHUD() {
   useEffect(() => saveAnchor(anchor), [anchor]);
   useEffect(() => saveCollapsed(collapsed), [collapsed]);
 
-  // Detect when the HUD is off-screen (e.g. stale anchor after rotation/resize)
-  // and expose a small reset action so mobile users can bring it back instantly.
-  useEffect(() => {
-    if (!visible) return;
-    const check = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const margin = 20;
-      const off = rect.right < margin || rect.left > vw - margin || rect.bottom < margin || rect.top > vh - margin;
-      setIsOffScreen(off);
-    };
-    check();
-    const id = setInterval(check, 1000);
-    const onResize = () => check();
-    window.addEventListener('resize', onResize);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [visible, anchor, collapsed]);
-
   // Hide on the fixed_set play screen itself
   const onPlayScreen = challenge ? pathname === `/practice/challenges/${challenge.id}/play` : false;
   const onChallengesPage = pathname.startsWith('/practice/challenges');
