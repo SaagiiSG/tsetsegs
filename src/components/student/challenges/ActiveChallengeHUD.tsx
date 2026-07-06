@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useAnimation, useDragControls } from 'framer-motion';
-import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, GripVertical, Minimize2, Maximize2 } from 'lucide-react';
+import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, GripVertical, Minimize2, Maximize2, RotateCcw } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
