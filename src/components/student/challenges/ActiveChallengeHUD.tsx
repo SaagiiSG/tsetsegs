@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useAnimation, useDragControls } from 'framer-motion';
-import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, GripVertical, Minimize2, Maximize2 } from 'lucide-react';
+import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, GripVertical, Minimize2, Maximize2, RotateCcw } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -95,6 +95,7 @@ export function ActiveChallengeHUD() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor>(() => loadAnchor());
   const [collapsed, setCollapsed] = useState<boolean>(() => loadCollapsed());
+  const [isOffScreen, setIsOffScreen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragControls = useDragControls();
@@ -128,6 +129,30 @@ export function ActiveChallengeHUD() {
   }, [challenge?.format, challenge?.started_at, challenge?.id]);
 
   const visible = !!challenge && !onPlayScreen && !onChallengesPage;
+
+  // Detect when the HUD is off-screen (e.g. stale anchor after rotation/resize)
+  // and expose a small reset action so mobile users can bring it back instantly.
+  useEffect(() => {
+    if (!visible) return;
+    const check = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const margin = 20;
+      const off = rect.right < margin || rect.left > vw - margin || rect.bottom < margin || rect.top > vh - margin;
+      setIsOffScreen(off);
+    };
+    check();
+    const id = setInterval(check, 1000);
+    const onResize = () => check();
+    window.addEventListener('resize', onResize);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [visible, anchor, collapsed]);
 
   const { targetText, progressPct } = useMemo(() => {
     if (!challenge) return { targetText: '', progressPct: 0 };
@@ -225,6 +250,11 @@ export function ActiveChallengeHUD() {
     if (dragging) return; // ignore synthetic click right after drag
     if (isFixedSet) navigate(`/practice/challenges/${challenge.id}/play`);
     else setSheetOpen(true);
+  };
+
+  const resetHud = () => {
+    setAnchor(DEFAULT_ANCHOR);
+    setCollapsed(false);
   };
 
   return (
@@ -366,6 +396,29 @@ export function ActiveChallengeHUD() {
             </div>
           )}
         </motion.div>
+
+        {isOffScreen && (
+          <motion.button
+            key="reset-hud"
+            type="button"
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onClick={resetHud}
+            className={cn(
+              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[70]',
+              'flex items-center gap-1.5 px-3 py-2 rounded-full',
+              'bg-primary text-primary-foreground shadow-2xl shadow-primary/30',
+              'border border-white/15 backdrop-blur-xl',
+              'text-xs font-semibold tracking-wide select-none',
+              'active:scale-95 transition-transform'
+            )}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset HUD
+          </motion.button>
+        )}
       </AnimatePresence>
 
       <ChallengeLeaderboardSheet
