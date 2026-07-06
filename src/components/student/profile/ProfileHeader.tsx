@@ -46,7 +46,7 @@ export function ProfileHeader({
   const tierColor = TIER_COLORS[currentTier];
 
   return (
-    <Card className="p-4 md:p-6 bg-card/50 backdrop-blur border-border/50">
+    <Card className="p-3 sm:p-4 md:p-6 bg-card/50 backdrop-blur border-border/50 overflow-hidden">
       <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
         {/* Mobile top row: avatar + name + points */}
         <div className="flex md:hidden items-center gap-3 w-full">

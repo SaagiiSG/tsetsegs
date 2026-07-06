@@ -17,8 +17,9 @@ const DEFAULT_ANCHOR: Anchor = { side: 'top', align: 'center' };
 // v2 bump: forces users who had a stale collapsed/hidden state from v1 to
 // see a fresh, visible HUD (top-center, expanded). Uses localStorage to
 // match the rest of the app's persistence.
-const ANCHOR_KEY = 'challenge-hud-anchor-v2';
-const COLLAPSED_KEY = 'challenge-hud-collapsed-v2';
+const ANCHOR_KEY = 'challenge-hud-anchor-v3';
+const COLLAPSED_KEY = 'challenge-hud-collapsed-v3';
+
 const EDGE_PAD = 12; // px from viewport edge
 const TOP_OFFSET = 68; // stay clear of top header on mobile
 

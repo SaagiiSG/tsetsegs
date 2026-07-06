@@ -564,109 +564,98 @@ export default function StudentBluebook() {
         </div>
       </div>
 
-      {/* Tests Tabs */}
-      {!tests || tests.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Tests Available</h3>
-            <p className="text-muted-foreground text-center">
-              Practice tests will appear here when published.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs defaultValue="math" className="w-full">
-          <TabsList className="grid w-full max-w-[560px] grid-cols-4">
-            <TabsTrigger value="math" className="gap-1.5 text-sm">
-              <Calculator className="h-4 w-4" />
-              <span className="hidden sm:inline">Math</span>
-              {mathTests && mathTests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {mathTests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="english" className="gap-1.5 text-sm">
-              <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">English</span>
-              {englishTests && englishTests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {englishTests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="full" className="gap-1.5 text-sm">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Full</span>
-              {fullTests && fullTests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {fullTests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="videos" className="gap-1.5 text-sm">
-              <Video className="h-4 w-4" />
-              <span className="hidden sm:inline">Videos</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="math" className="mt-4">
-            {mathTests && mathTests.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mathTests.map(renderTestCard)}
-              </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <Calculator className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-center">
-                    No math tests match your filters.
-                  </p>
-                </CardContent>
-              </Card>
+      {/* Tests Tabs — always render so Videos tab is reachable even when no tests published */}
+      <Tabs defaultValue={tests && tests.length > 0 ? 'math' : 'videos'} className="w-full">
+        <TabsList className="grid w-full max-w-[560px] grid-cols-4">
+          <TabsTrigger value="math" className="gap-1.5 text-sm">
+            <Calculator className="h-4 w-4" />
+            <span className="hidden sm:inline">Math</span>
+            {mathTests && mathTests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {mathTests.length}
+              </Badge>
             )}
-          </TabsContent>
-
-          <TabsContent value="english" className="mt-4">
-            {englishTests && englishTests.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {englishTests.map(renderTestCard)}
-              </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <BookOpen className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-center">
-                    No English tests match your filters.
-                  </p>
-                </CardContent>
-              </Card>
+          </TabsTrigger>
+          <TabsTrigger value="english" className="gap-1.5 text-sm">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">English</span>
+            {englishTests && englishTests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {englishTests.length}
+              </Badge>
             )}
-          </TabsContent>
-
-          <TabsContent value="full" className="mt-4">
-            {fullTests && fullTests.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {fullTests.map(renderTestCard)}
-              </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <FileText className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-center">
-                    No full-length tests match your filters.
-                  </p>
-                </CardContent>
-              </Card>
+          </TabsTrigger>
+          <TabsTrigger value="full" className="gap-1.5 text-sm">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Full</span>
+            {fullTests && fullTests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {fullTests.length}
+              </Badge>
             )}
-          </TabsContent>
+          </TabsTrigger>
+          <TabsTrigger value="videos" className="gap-1.5 text-sm">
+            <Video className="h-4 w-4" />
+            <span className="hidden sm:inline">Videos</span>
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="videos" className="mt-4">
-            <BluebookVideosTab />
-          </TabsContent>
-        </Tabs>
-      )}
+        <TabsContent value="math" className="mt-4">
+          {mathTests && mathTests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mathTests.map(renderTestCard)}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <Calculator className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-center">
+                  No math tests match your filters.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="english" className="mt-4">
+          {englishTests && englishTests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {englishTests.map(renderTestCard)}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <BookOpen className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-center">
+                  No English tests match your filters.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="full" className="mt-4">
+          {fullTests && fullTests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {fullTests.map(renderTestCard)}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-center">
+                  No full-length tests match your filters.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="videos" className="mt-4">
+          <BluebookVideosTab />
+        </TabsContent>
+      </Tabs>
+
     </div>
   );
 }
