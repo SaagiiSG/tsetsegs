@@ -235,7 +235,9 @@ export function StudentLayout() {
   return (
     <SidebarProvider>
       <PracticeCommandSheetProvider>
-        <StudentLayoutContent />
+        <TourProvider>
+          <StudentLayoutContent />
+        </TourProvider>
       </PracticeCommandSheetProvider>
     </SidebarProvider>
   );
