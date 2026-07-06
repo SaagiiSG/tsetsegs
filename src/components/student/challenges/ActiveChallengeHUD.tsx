@@ -130,6 +130,31 @@ export function ActiveChallengeHUD() {
 
   const visible = !!challenge && !onPlayScreen && !onChallengesPage;
 
+  // Detect when the HUD is off-screen (e.g. stale anchor after rotation/resize)
+  // and expose a small reset action so mobile users can bring it back instantly.
+  useEffect(() => {
+    if (!visible) return;
+    const check = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const margin = 20;
+      const off = rect.right < margin || rect.left > vw - margin || rect.bottom < margin || rect.top > vh - margin;
+      setIsOffScreen(off);
+    };
+    check();
+    const id = setInterval(check, 1000);
+    const onResize = () => check();
+    window.addEventListener('resize', onResize);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [visible, anchor, collapsed]);
+
+
   const { targetText, progressPct } = useMemo(() => {
     if (!challenge) return { targetText: '', progressPct: 0 };
     if (challenge.format === 'first_to_points' && challenge.target_value) {
