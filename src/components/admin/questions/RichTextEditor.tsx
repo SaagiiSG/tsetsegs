@@ -297,7 +297,31 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
         <Textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            // Slash-command trigger: typing "/math " (or "/math\n") opens the
+            // MathQuill popover and strips the trigger from the value. The
+            // stored string format is unchanged — on Insert we splice
+            // `$...$` at the caret exactly as clicking the Math button does.
+            const caret = e.target.selectionStart ?? next.length;
+            const before = next.slice(0, caret);
+            const triggerMatch = before.match(/\/math[ \n]$/i);
+            if (triggerMatch) {
+              const stripped = before.slice(0, -triggerMatch[0].length) + next.slice(caret);
+              onChange(stripped);
+              const newCaret = before.length - triggerMatch[0].length;
+              // Restore caret after the strip so Insert lands in the right spot.
+              setTimeout(() => {
+                if (textareaRef.current) {
+                  textareaRef.current.focus();
+                  textareaRef.current.setSelectionRange(newCaret, newCaret);
+                }
+                setMathPopoverOpen(true);
+              }, 0);
+              return;
+            }
+            onChange(next);
+          }}
           placeholder={placeholder}
           className={className}
           style={{ minHeight }}
@@ -306,7 +330,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
 
       {/* Help text */}
       <p className="text-xs text-muted-foreground">
-        Use **bold**, *italic*, ^superscript^, ~subscript~. Click "Math" for Desmos-style math input.
+        Use **bold**, *italic*, ^superscript^, ~subscript~. Type <code className="px-1 py-0.5 rounded bg-muted font-mono">/math</code> + space or click "Math" for Desmos-style math input.
       </p>
     </div>
   );
