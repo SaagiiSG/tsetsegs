@@ -397,6 +397,29 @@ export function ActiveChallengeHUD() {
             </div>
           )}
         </motion.div>
+
+        {isOffScreen && (
+          <motion.button
+            key="reset-hud"
+            type="button"
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onClick={resetHud}
+            className={cn(
+              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[70]',
+              'flex items-center gap-1.5 px-3 py-2 rounded-full',
+              'bg-primary text-primary-foreground shadow-2xl shadow-primary/30',
+              'border border-white/15 backdrop-blur-xl',
+              'text-xs font-semibold tracking-wide select-none',
+              'active:scale-95 transition-transform'
+            )}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset HUD
+          </motion.button>
+        )}
       </AnimatePresence>
 
       <ChallengeLeaderboardSheet
