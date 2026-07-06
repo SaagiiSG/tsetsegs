@@ -95,6 +95,7 @@ export function ActiveChallengeHUD() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor>(() => loadAnchor());
   const [collapsed, setCollapsed] = useState<boolean>(() => loadCollapsed());
+  const [isOffScreen, setIsOffScreen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragControls = useDragControls();
