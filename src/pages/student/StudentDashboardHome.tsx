@@ -107,12 +107,12 @@ export default function StudentDashboardHome() {
       </motion.div>
 
       {/* Row 1: 25% ring + 75% set progress */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="lg:col-span-3 aspect-square md:aspect-[4/3] lg:aspect-auto lg:min-h-[320px] md:max-h-[420px]"
+          className="md:col-span-4 lg:col-span-3 aspect-square sm:aspect-[4/3] md:aspect-auto md:min-h-[320px] md:max-h-[420px]"
         >
           <DailyRing
             speed={{ current: progress?.speed ?? 0, goal: goals.speed }}
@@ -126,7 +126,7 @@ export default function StudentDashboardHome() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-9 lg:min-h-[320px]"
+          className="md:col-span-8 lg:col-span-9 md:min-h-[320px]"
         >
           <SetProgressIsland />
         </motion.div>
