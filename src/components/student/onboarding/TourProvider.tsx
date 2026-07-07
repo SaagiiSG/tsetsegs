@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { TOUR_RELEASE, TourDefinition, findTourForRoute } from './tourSteps';
+import { TOUR_RELEASE, TOURS, TourDefinition, findTourForRoute } from './tourSteps';
 
 interface TourContextValue {
   activeTour: TourDefinition | null;
@@ -15,6 +15,12 @@ interface TourContextValue {
   seenForCurrentRoute: boolean;
   acknowledgeFeature: (featureId: string) => void;
   isFeatureAcknowledged: (featureId: string) => boolean;
+  /** True once the student has finished all /practice tours for this release. */
+  allToursCompleted: boolean;
+  /** Persistently mark every tour as done — future auto-starts are suppressed. */
+  markAllToursCompleted: () => void;
+  /** Clear the completion flag + per-tour seen state (Help button can re-enable tours). */
+  resetAllTours: () => void;
 }
 
 const TourContext = createContext<TourContextValue | null>(null);
@@ -25,6 +31,7 @@ function seenKey(tourKey: string) {
 function featureKey(featureId: string) {
   return `practice:new:${TOUR_RELEASE}:${featureId}`;
 }
+const COMPLETED_KEY = `practice:tour:${TOUR_RELEASE}:completed`;
 
 function isSeen(tourKey: string) {
   try {
@@ -38,12 +45,26 @@ function markSeen(tourKey: string) {
     localStorage.setItem(seenKey(tourKey), '1');
   } catch { /* noop */ }
 }
+function readCompleted() {
+  try { return localStorage.getItem(COMPLETED_KEY) === '1'; } catch { return false; }
+}
+function writeCompleted(v: boolean) {
+  try {
+    if (v) localStorage.setItem(COMPLETED_KEY, '1');
+    else localStorage.removeItem(COMPLETED_KEY);
+  } catch { /* noop */ }
+}
+/** True when every registered tour has been seen at least once. */
+function allTourKeysSeen() {
+  return TOURS.every((t) => isSeen(t.key));
+}
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const [activeTour, setActiveTour] = useState<TourDefinition | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [ackTick, setAckTick] = useState(0); // re-render bump when features are acked
+  const [allToursCompleted, setAllToursCompleted] = useState<boolean>(() => readCompleted());
   const autoStartedRef = useRef<Set<string>>(new Set());
 
   const acknowledgeFeature = useCallback((featureId: string) => {
@@ -64,7 +85,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   }, [ackTick]);
 
   const start = useCallback((tour: TourDefinition, opts?: { force?: boolean }) => {
-    if (!opts?.force && isSeen(tour.key)) return;
+    if (!opts?.force && (isSeen(tour.key) || readCompleted())) return;
     setActiveTour(tour);
     setStepIndex(0);
   }, []);
@@ -77,6 +98,11 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         if (s.featureId) {
           try { localStorage.setItem(featureKey(s.featureId), '1'); } catch { /* noop */ }
         }
+      }
+      // Persist the global "done with onboarding" flag once every tour is seen.
+      if (allTourKeysSeen()) {
+        writeCompleted(true);
+        setAllToursCompleted(true);
       }
     }
     setActiveTour(null);
@@ -109,8 +135,26 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     return tour ? isSeen(tour.key) : true;
   }, [pathname]);
 
-  // Auto-start once per route per release.
+  const markAllToursCompleted = useCallback(() => {
+    for (const t of TOURS) markSeen(t.key);
+    writeCompleted(true);
+    setAllToursCompleted(true);
+    setActiveTour(null);
+    setStepIndex(0);
+  }, []);
+
+  const resetAllTours = useCallback(() => {
+    try {
+      for (const t of TOURS) localStorage.removeItem(seenKey(t.key));
+      localStorage.removeItem(COMPLETED_KEY);
+    } catch { /* noop */ }
+    autoStartedRef.current.clear();
+    setAllToursCompleted(false);
+  }, []);
+
+  // Auto-start once per route per release — suppressed once onboarding is completed.
   useEffect(() => {
+    if (allToursCompleted) return;
     const tour = findTourForRoute(pathname);
     if (!tour) return;
     if (autoStartedRef.current.has(tour.key)) return;
@@ -122,7 +166,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       setStepIndex(0);
     }, 600);
     return () => window.clearTimeout(t);
-  }, [pathname]);
+  }, [pathname, allToursCompleted]);
 
   const value = useMemo<TourContextValue>(() => ({
     activeTour,
@@ -135,7 +179,10 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     seenForCurrentRoute,
     acknowledgeFeature,
     isFeatureAcknowledged,
-  }), [activeTour, stepIndex, start, next, back, end, startForCurrentRoute, seenForCurrentRoute, acknowledgeFeature, isFeatureAcknowledged]);
+    allToursCompleted,
+    markAllToursCompleted,
+    resetAllTours,
+  }), [activeTour, stepIndex, start, next, back, end, startForCurrentRoute, seenForCurrentRoute, acknowledgeFeature, isFeatureAcknowledged, allToursCompleted, markAllToursCompleted, resetAllTours]);
 
   return <TourContext.Provider value={value}>{children}</TourContext.Provider>;
 }
