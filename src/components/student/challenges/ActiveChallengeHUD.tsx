@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, PanInfo } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion, PanInfo } from 'framer-motion';
 import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
@@ -342,125 +342,160 @@ export function ActiveChallengeHUD() {
 
   return (
     <>
-      <AnimatePresence mode="wait" initial={false}>
-        {state.open ? (
-          <motion.div
-            key="hud-open"
-            ref={openEl}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            drag
-            dragMomentum={false}
-            dragElastic={0.15}
-            onDragEnd={onOpenDragEnd}
-            data-tour="challenge-hud"
-            style={{
-              position: 'fixed',
-              top: state.openY,
-              left: state.openX,
-              zIndex: 120,
-              touchAction: 'none',
-            }}
-            className={cn(
-              'group flex items-center gap-1.5 md:gap-2 pl-2 md:pl-3 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full select-none',
-              'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
-              'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
-              'max-w-[92vw] cursor-grab active:cursor-grabbing',
-            )}
-          >
-            {/* Grabber */}
-            <div className="flex items-center justify-center pr-1.5 border-r border-white/15">
-              <div className="w-1 h-4 rounded-full bg-white/40" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handlePrimaryClick}
-              aria-label="View active challenge"
-              className="flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
+      <LayoutGroup id="challenge-hud">
+        <AnimatePresence initial={false}>
+          {state.open ? (
+            <motion.div
+              key="hud-open"
+              layoutId="challenge-hud-body"
+              ref={openEl}
+              initial={false}
+              transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.9 }}
+              drag
+              dragMomentum={false}
+              dragElastic={0.15}
+              onDragEnd={onOpenDragEnd}
+              data-tour="challenge-hud"
+              style={{
+                position: 'fixed',
+                top: state.openY,
+                left: state.openX,
+                zIndex: 120,
+                touchAction: 'none',
+                originX: 0.5,
+                originY: 0.5,
+              }}
+              className={cn(
+                'group flex items-center gap-1.5 md:gap-2 pl-2 md:pl-3 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full select-none',
+                'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
+                'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
+                'max-w-[92vw] cursor-grab active:cursor-grabbing',
+              )}
             >
-              <span className="relative flex items-center justify-center">
-                <motion.span
-                  aria-hidden
-                  className="absolute inset-0 rounded-full bg-white/25"
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
-                />
-                <Sword className="w-4 h-4 relative" />
-              </span>
+              {/* Grabber */}
+              <motion.div layout="position" className="flex items-center justify-center pr-1.5 border-r border-white/15">
+                <div className="w-1 h-4 rounded-full bg-white/40" />
+              </motion.div>
 
-              <div className="flex flex-col items-start min-w-0">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
-                  <SubjectIcon className="w-3 h-3 hidden md:inline" />
-                  {participantsCount > 2 && (
-                    <span className="inline-flex items-center gap-0.5 opacity-90">
-                      <Users className="w-3 h-3" />
-                      {participantsCount}
-                    </span>
-                  )}
-                  <span className="tabular-nums opacity-90">{targetText}</span>
-                </div>
-                {opponentLine}
-                <div className="mt-1 h-0.5 md:h-1 w-24 md:w-56 rounded-full bg-white/20 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-white rounded-full"
-                    initial={false}
-                    animate={{ width: `${progressPct}%` }}
-                    transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+              <motion.button
+                layout="position"
+                type="button"
+                onClick={handlePrimaryClick}
+                aria-label="View active challenge"
+                className="flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
+              >
+                <span className="relative flex items-center justify-center">
+                  <motion.span
+                    aria-hidden
+                    className="absolute inset-0 rounded-full bg-white/25"
+                    animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
                   />
+                  <Sword className="w-4 h-4 relative" />
+                </span>
+
+                <div className="flex flex-col items-start min-w-0">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
+                    <SubjectIcon className="w-3 h-3 hidden md:inline" />
+                    {participantsCount > 2 && (
+                      <span className="inline-flex items-center gap-0.5 opacity-90">
+                        <Users className="w-3 h-3" />
+                        {participantsCount}
+                      </span>
+                    )}
+                    <span className="tabular-nums opacity-90">{targetText}</span>
+                  </div>
+                  {opponentLine}
+                  <div className="mt-1 h-0.5 md:h-1 w-24 md:w-56 rounded-full bg-white/20 overflow-hidden">
+                    <motion.div
+                      className="h-full bg-white rounded-full"
+                      initial={false}
+                      animate={{ width: `${progressPct}%` }}
+                      transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <span className="ml-0.5 md:ml-1 inline-flex items-center gap-1 pl-1.5 md:pl-2 pr-2 md:pr-3 py-1 md:py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
-                <Trophy className="w-3 h-3" />
-                <span className="hidden md:inline">{isFixedSet ? 'Play' : 'View'}</span>
-              </span>
-            </button>
+                <span className="ml-0.5 md:ml-1 inline-flex items-center gap-1 pl-1.5 md:pl-2 pr-2 md:pr-3 py-1 md:py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
+                  <Trophy className="w-3 h-3" />
+                  <span className="hidden md:inline">{isFixedSet ? 'Play' : 'View'}</span>
+                </span>
+              </motion.button>
 
-            <button
+              <motion.button
+                layout="position"
+                type="button"
+                onClick={collapseFromButton}
+                aria-label="Collapse HUD"
+                className="p-1.5 rounded-full hover:bg-white/15 active:bg-white/25"
+              >
+                <X className="w-3.5 h-3.5" />
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.button
+              key={`hud-puller-${state.edge}`}
+              layoutId="challenge-hud-body"
+              ref={pullerEl}
               type="button"
-              onClick={collapseFromButton}
-              aria-label="Collapse HUD"
-              className="p-1.5 rounded-full hover:bg-white/15 active:bg-white/25"
+              initial={false}
+              transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.9 }}
+              drag
+              dragMomentum={false}
+              dragElastic={0.9}
+              onDrag={(_, info) => {
+                // Live pull-out: when the user drags perpendicular to the edge past
+                // the threshold WHILE STILL DRAGGING, flip to open so the shared
+                // layoutId morph animates the tab stretching into the full HUD in
+                // real time (iOS-style physical pull).
+                const { edge } = state;
+                const perpendicular =
+                  edge === 'top' ? info.offset.y :
+                  edge === 'bottom' ? -info.offset.y :
+                  edge === 'left' ? info.offset.x :
+                  -info.offset.x;
+                if (perpendicular > PULL_THRESHOLD) {
+                  const el = pullerEl.current;
+                  if (!el) return;
+                  const rect = el.getBoundingClientRect();
+                  const cx = rect.left + rect.width / 2;
+                  const cy = rect.top + rect.height / 2;
+                  const est = { w: 340, h: 60 };
+                  let openX = cx - est.w / 2;
+                  let openY = cy - est.h / 2;
+                  if (edge === 'top') openY = EDGE_PAD;
+                  if (edge === 'bottom') openY = viewport.h - est.h - EDGE_PAD;
+                  if (edge === 'left') openX = EDGE_PAD;
+                  if (edge === 'right') openX = viewport.w - est.w - EDGE_PAD;
+                  openX = clamp(openX, EDGE_PAD, viewport.w - est.w - EDGE_PAD);
+                  openY = clamp(openY, EDGE_PAD, viewport.h - est.h - EDGE_PAD);
+                  setState((s) => (s.open ? s : { ...s, open: true, openX, openY }));
+                }
+              }}
+              onDragEnd={onPullerDragEnd}
+              onClick={(e) => {
+                e.stopPropagation();
+                setState((s) => ({ ...s, open: true }));
+              }}
+              aria-label="Expand active challenge HUD"
+              data-tour="challenge-hud"
+              style={{
+                position: 'fixed',
+                zIndex: 120,
+                touchAction: 'none',
+                originX: 0.5,
+                originY: 0.5,
+                ...pullerPos(),
+              }}
+              className={cn(pullerShape, 'select-none')}
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </motion.div>
-        ) : (
-          <motion.button
-            key={`hud-puller-${state.edge}`}
-            ref={pullerEl}
-            type="button"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            drag
-            dragMomentum={false}
-            dragElastic={0.4}
-            onDragEnd={onPullerDragEnd}
-            onClick={(e) => {
-              // Only treat as click if not part of a drag (framer suppresses click after drag)
-              e.stopPropagation();
-              setState((s) => ({ ...s, open: true }));
-            }}
-            aria-label="Expand active challenge HUD"
-            data-tour="challenge-hud"
-            style={{
-              position: 'fixed',
-              zIndex: 120,
-              touchAction: 'none',
-              ...pullerPos(),
-            }}
-            className={cn(pullerShape, 'select-none')}
-          >
-            {handleBar}
-            {pullerLabel}
-          </motion.button>
-        )}
-      </AnimatePresence>
+              {handleBar}
+              {pullerLabel}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </LayoutGroup>
+
 
       <ChallengeLeaderboardSheet
         open={sheetOpen}
