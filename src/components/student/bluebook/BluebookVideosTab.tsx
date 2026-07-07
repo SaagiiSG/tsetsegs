@@ -30,7 +30,7 @@ function VideoWatermark({ text }: { text: string }) {
               top: `${20 + r * 30}%`,
               left: `${15 + c * 55}%`,
               transform: 'rotate(-22deg)',
-              color: 'rgba(255,255,255,0.35)',
+              color: 'rgba(255,255,255,0.18)',
               textShadow: '0 0 2px rgba(0,0,0,0.9)',
             }}
           >
@@ -42,22 +42,41 @@ function VideoWatermark({ text }: { text: string }) {
   );
 }
 
-/** Dense, viewport-covering watermark shown while a video is playing. */
+/** Viewport-covering watermark shown while a video is playing. */
 function FullPageWatermark({ text }: { text: string }) {
+  const [grid, setGrid] = useState(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1280;
+    if (w < 640) return { rows: 3, cols: 3 };
+    if (w < 1024) return { rows: 4, cols: 3 };
+    return { rows: 5, cols: 4 };
+  });
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w < 640) setGrid({ rows: 3, cols: 3 });
+      else if (w < 1024) setGrid({ rows: 4, cols: 3 });
+      else setGrid({ rows: 5, cols: 4 });
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   const watermarks = useMemo(() => {
     const items = [];
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < grid.rows; row++) {
+      for (let col = 0; col < grid.cols; col++) {
         items.push({
           id: `${row}-${col}`,
-          top: `${8 + row * 16}%`,
-          left: `${5 + col * 25 + (row % 2) * 12}%`,
+          top: `${10 + row * (80 / grid.rows)}%`,
+          left: `${5 + col * (90 / grid.cols) + (row % 2) * (45 / grid.cols)}%`,
           rotation: -30 + ((row + col) % 2) * 15,
         });
       }
     }
     return items;
-  }, []);
+  }, [grid]);
 
   return (
     <div
@@ -73,7 +92,7 @@ function FullPageWatermark({ text }: { text: string }) {
             top: pos.top,
             left: pos.left,
             transform: `rotate(${pos.rotation}deg)`,
-            color: 'rgba(255,255,255,0.40)',
+            color: 'rgba(255,255,255,0.20)',
             textShadow: '0 0 2px rgba(0,0,0,0.85)',
           }}
         >
