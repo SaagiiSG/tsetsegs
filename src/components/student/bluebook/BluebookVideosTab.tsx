@@ -30,7 +30,7 @@ function VideoWatermark({ text }: { text: string }) {
               top: `${20 + r * 30}%`,
               left: `${15 + c * 55}%`,
               transform: 'rotate(-22deg)',
-              color: 'rgba(255,255,255,0.35)',
+              color: 'rgba(255,255,255,0.18)',
               textShadow: '0 0 2px rgba(0,0,0,0.9)',
             }}
           >
