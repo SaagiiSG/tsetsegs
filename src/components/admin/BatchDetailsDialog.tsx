@@ -123,7 +123,7 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
   };
 
   const openSmsDialog = () => {
-    const body = getBatchSmsTemplate(batch);
+    const body = inlineSmsBody || getBatchSmsTemplate(batch);
     const { segments, encoding } = estimateSegments(body);
     setSmsPreview({ segments, encoding, body });
     setSmsResults(null);
