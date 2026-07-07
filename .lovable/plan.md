@@ -1,55 +1,64 @@
-# HUD: free drag + collapse to any of 4 edges
 
-Rework the Active Challenge HUD so it can be dragged anywhere on screen, and when collapsed it docks to the nearest edge (top / bottom / left / right) as a small puller tab oriented for that edge.
+## 1. Redirect to the created batch
 
-## Behavior
+After a successful batch creation in `CreateBatchForm.tsx`, navigate to the All Batches page with the new batch pre-opened.
 
-**When open (full pill):**
-- Fully draggable in 2D across the viewport (not constrained to top edge).
-- Position clamped inside the viewport with edge padding so it never leaves the screen.
-- Swipe/flick toward the nearest edge → collapses to a puller docked to that edge at the drop location.
-- Tap × or double-tap grabber → collapses to nearest edge (based on current position).
-- Position persisted (edge + offset along that edge) in localStorage.
+- Use `useNavigate()` → `navigate('/admin/batches?batch=<new-id>')`.
+- `BatchesView.tsx` already reads `?batch=` from the URL and auto-opens `BatchDetailsDialog` for that batch, so no changes needed there.
+- Remove the now-unused form reset (or keep it — either way we leave the page).
 
-**When collapsed (puller tab):**
-- Docks flush to one of 4 edges: top / bottom / left / right.
-- Puller shape adapts to edge:
-  - top → rounded-bottom tab, horizontal handle bar, pull DOWN to open
-  - bottom → rounded-top tab, horizontal handle bar, pull UP to open
-  - left → rounded-right tab, vertical handle bar, pull RIGHT to open
-  - right → rounded-left tab, vertical handle bar, pull LEFT to open
-- Draggable along its edge to reposition (slides left/right for top/bottom edges, up/down for left/right edges).
-- Pull perpendicular to the edge (past a small threshold) OR tap → expands back to full HUD at the docked location.
-- Small pulse/glow animation to hint interactivity.
+## 2. Admin-triggered SMS blast via Twilio
 
-## Snap logic
+Add a **"Send SMS to all students"** button inside `BatchDetailsDialog` (visible per batch). Clicking it:
 
-On drag end (open state):
-- Compute center of HUD relative to viewport.
-- Distance to each of the 4 edges → nearest edge wins.
-- If distance to any edge is below a "dock threshold" (e.g. 60px) OR flick velocity points toward that edge → collapse to that edge.
-- Otherwise stay open at the dropped (clamped) position.
+1. Opens a confirmation showing: recipient count, message preview (from the existing `getSmsTemplate(batch)` in `BatchesView.tsx`), and estimated cost.
+2. On confirm, calls a new edge function `send-batch-sms` which:
+   - Verifies caller is an `admin` (JWT + `has_role`).
+   - Loads the batch + its students (phones).
+   - Normalizes each phone to E.164 `+976XXXXXXXX` using the existing `normalize_mn_phone` DB function.
+   - Sends via Twilio using **Messaging Service SID** (`TWILIO_MESSAGING_SERVICE_SID` already set) — this is Twilio's routing service that picks the best sender/route across all Mongolian carriers (Mobicom, Unitel, Skytel, G-Mobile).
+   - Logs each send into `sms_logs` (already exists) with status, error, message SID.
+   - Returns per-student results (sent / failed / skipped-invalid-phone).
+3. UI shows a per-student result list and a summary toast. Button is disabled while sending; guarded against double-sends with a `sending` state.
 
-On drag end (puller state):
-- If perpendicular offset > threshold or velocity toward interior → expand.
-- Else re-snap along the same edge at the new parallel offset.
+The template used is the same one already defined in `getSmsTemplate` — we'll extract it into `src/lib/smsTemplates.ts` so both the copy button and the edge function share the same source (edge function re-implements it in Deno since it can't import from `src/`, but text stays identical).
 
-## Persistence
+## 3. Cost check — 300 messages on $7.65 is NOT enough
 
-Single localStorage key `challenge-hud-state-v2` storing:
-```
-{ open: boolean, edge: 'top'|'bottom'|'left'|'right', offset: number, openX: number, openY: number }
-```
-- `edge` + `offset` used when collapsed.
-- `openX/openY` used when open (as pixel offsets from top-left, clamped on load in case viewport shrank).
-- `challenge-hud:reset` event resets to `{ open: true, edge: 'top', offset: 0.5, openX: centered, openY: 12 }`.
+Twilio pricing to Mongolia (as of 2026):
+- Outbound SMS to Mongolia: **~$0.0808 per segment**.
+- Mongolian Cyrillic text is sent as **UCS-2**, so each segment is only **67 characters** (not 160).
+- The SAT/IELTS templates in `getSmsTemplate` are ~450–700 Cyrillic chars → **7–10 segments per message**.
 
-## Files
+Rough estimate for 300 recipients:
+- Average ~8 segments × 300 msgs × $0.0808 ≈ **$194**.
+- Even a short 1-segment ASCII message: 300 × $0.0808 ≈ **$24**.
 
-- `src/components/student/challenges/ActiveChallengeHUD.tsx` — rewrite the container/positioning + puller variants. Content of the open pill (progress bar, opponent line, Play/View button, leaderboard sheet trigger) stays the same. `ChallengeLeaderboardSheet` untouched.
+**$7.65 covers at most ~30–95 short messages, or ~10 full-template messages.** Recommend either:
+- Top up Twilio balance to ~$200+ before sending all 12 batches, or
+- Send a much shorter message (link only), or
+- Send in smaller waves and top up as needed.
 
-## Notes
+The UI will show the estimated segment count + cost before the admin confirms, so no surprise charges.
 
-- Use framer-motion `drag` with `dragConstraints` set to a ref of a full-viewport bounding box, not `{top:0,bottom:0}`, so the HUD truly moves.
-- Clamp position on window resize (listener) so the HUD stays visible after rotation.
-- Keep z-index at 120 (above bluebook watermark).
+## Technical section
+
+**Files to edit**
+- `src/components/admin/CreateBatchForm.tsx` — add `useNavigate`, replace `onSuccess()` with `navigate('/admin/batches?batch=' + batch.id)`. Return the batch id to caller too.
+- `src/components/admin/BatchDetailsDialog.tsx` — add "Send SMS to all students" button + confirm dialog + results panel.
+- `src/lib/smsTemplates.ts` — new file, exports `getBatchSmsTemplate(batch)` (moved from `BatchesView.tsx`). `BatchesView` imports from here.
+
+**New edge function** `supabase/functions/send-batch-sms/index.ts`
+- CORS, JWT verify, `has_role(uid, 'admin')` check.
+- Input: `{ batch_id: string, dry_run?: boolean }` (Zod validated).
+- Loads batch + students, normalizes phones.
+- If `dry_run`: returns segment count + recipient count only.
+- Otherwise: for each valid phone, POST `x-www-form-urlencoded` to `https://connector-gateway.lovable.dev/twilio/Messages.json` with `To`, `MessagingServiceSid=$TWILIO_MESSAGING_SERVICE_SID`, `Body`. Uses `Authorization: Bearer $LOVABLE_API_KEY` + `X-Connection-Api-Key: $TWILIO_API_KEY`.
+- Writes result to `public.sms_logs`.
+- Returns `{ sent, failed, skipped, results: [...] }`.
+
+**Segment estimator (client + server)**
+- If body contains any non-GSM-7 char → UCS-2, 70 chars/segment (67 when concatenated).
+- Else GSM-7, 160 chars/segment (153 when concatenated).
+
+**No DB migration needed** — `sms_logs`, `normalize_mn_phone`, and Twilio secrets already exist.
