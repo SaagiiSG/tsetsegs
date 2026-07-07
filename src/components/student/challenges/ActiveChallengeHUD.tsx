@@ -118,12 +118,9 @@ export function ActiveChallengeHUD() {
     return () => window.removeEventListener('challenge-hud:reset', onReset);
   }, []);
 
-  // Hide on the fixed_set play screen itself
+  // Hide only on the fixed_set play screen (the play UI already shows progress).
+  // Everywhere else — including lobby, results, and challenges list — the HUD stays visible.
   const onPlayScreen = challenge ? pathname === `/practice/challenges/${challenge.id}/play` : false;
-  // Hide on challenge sub-routes (lobby/play/results), but keep the HUD visible on the
-  // main /practice/challenges list so the "Reset HUD" button gives visible feedback.
-  const onChallengesSubRoute =
-    pathname.startsWith('/practice/challenges/') && pathname !== '/practice/challenges';
 
   // Auto-navigate to results when the active challenge flips to finished
   const finishedRef = useRef<string | null>(null);
