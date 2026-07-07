@@ -22,7 +22,7 @@ function getRect(sel: string): Rect | null {
 }
 
 export function TourOverlay() {
-  const { activeTour, stepIndex, next, back, end } = useTour();
+  const { activeTour, stepIndex, next, back, end, markAllToursCompleted } = useTour();
   const [rect, setRect] = useState<Rect | null>(null);
   const [tick, setTick] = useState(0); // triggers re-measure on resize/scroll
 
