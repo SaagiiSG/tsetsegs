@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, Save } from 'lucide-react';
+import { Users, Save, MessageSquare, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { BatchStudentsTable } from './BatchStudentsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { getBatchSmsTemplate, estimateSegments, MN_SMS_PRICE_PER_SEGMENT } from '@/lib/smsTemplates';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const SCHEDULES = [
   "Даваа/Лхагва/Баасан 16:40-18:30 (Math) + Бямба 14:10-16:10 (English - үнэгүй)",
