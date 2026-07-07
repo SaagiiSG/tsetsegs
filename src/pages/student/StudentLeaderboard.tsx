@@ -4,7 +4,6 @@ import { Trophy, Users, Crown, BarChart3, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
-import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   CurrentSprintTab, 
@@ -103,21 +102,6 @@ export default function StudentLeaderboard() {
     setIsFinalizingSprint(true);
 
     try {
-      // First, mark the sprint as inactive
-      await supabase
-        .from('sprints')
-        .update({ is_active: false })
-        .eq('id', sprintId);
-
-      // Call finalize-sprint edge function
-      const { error } = await supabase.functions.invoke('finalize-sprint', {
-        body: { sprintId }
-      });
-
-      if (error) {
-        console.error('Failed to finalize sprint:', error);
-      }
-
       // Refetch leaderboard data
       await refetchLeaderboard();
 

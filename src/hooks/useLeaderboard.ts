@@ -205,37 +205,6 @@ export function useLeaderboard(selectedTier?: TierType) {
     }
   });
 
-  // Trigger sprint finalization when viewing ended sprints (one-time check)
-  useQuery({
-    queryKey: ['finalize-sprint-check', lastEndedSprint?.id],
-    enabled: !!lastEndedSprint?.id && !activeSprint,
-    staleTime: Infinity,
-    queryFn: async () => {
-      if (!lastEndedSprint?.id) return null;
-
-      // Check if sprint has been finalized
-      const { data: rankings } = await supabase
-        .from('student_sprint_rankings')
-        .select('final_rank')
-        .eq('sprint_id', lastEndedSprint.id)
-        .not('final_rank', 'is', null)
-        .limit(1);
-
-      // If not finalized, trigger the edge function
-      if (!rankings || rankings.length === 0) {
-        try {
-          await supabase.functions.invoke('finalize-sprint', {
-            body: { sprintId: lastEndedSprint.id }
-          });
-        } catch (e) {
-          console.error('Failed to finalize sprint:', e);
-        }
-      }
-
-      return true;
-    }
-  });
-
   // NOTE: Sprint enrollment is no longer triggered by viewing the leaderboard.
   // Students enroll the first time they solve a question correctly during the
   // active sprint — see src/lib/sprintEnrollment.ts.
