@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils';
 
 /** Diagonal, repeated watermark overlay for video piracy deterrence. */
 function VideoWatermark({ text }: { text: string }) {
-  const rows = Array.from({ length: 6 });
-  const cols = Array.from({ length: 4 });
+  const rows = Array.from({ length: 3 });
+  const cols = Array.from({ length: 2 });
   return (
     <div
       aria-hidden
@@ -27,10 +27,10 @@ function VideoWatermark({ text }: { text: string }) {
             key={`${r}-${c}`}
             className="absolute whitespace-nowrap text-[11px] sm:text-xs font-semibold tracking-wider"
             style={{
-              top: `${8 + r * 16}%`,
-              left: `${-5 + c * 30}%`,
+              top: `${20 + r * 30}%`,
+              left: `${15 + c * 55}%`,
               transform: 'rotate(-22deg)',
-              color: 'rgba(255,255,255,0.28)',
+              color: 'rgba(255,255,255,0.22)',
               textShadow: '0 1px 2px rgba(0,0,0,0.55)',
             }}
           >
