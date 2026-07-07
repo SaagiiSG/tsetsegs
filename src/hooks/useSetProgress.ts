@@ -80,7 +80,7 @@ export function useSetProgress() {
       const [s68, s150, cb] = await Promise.all([
         countSet(student.id, '68'),
         countSet(student.id, 'SATMathTraining800'),
-        countSet(student.id, { exclude: ['68', 'SATMathTraining800'] }),
+        countSet(student.id, { exclude: ['68', 'SATMathTraining800'], subject: 'math' }),
       ]);
       return { s68, s150, cb };
     },
