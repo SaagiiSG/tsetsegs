@@ -104,6 +104,20 @@ export function ActiveChallengeHUD() {
   useEffect(() => saveAnchor(anchor), [anchor]);
   useEffect(() => saveCollapsed(collapsed), [collapsed]);
 
+  // Allow external UI (e.g. Challenges page button) to reset the HUD position
+  useEffect(() => {
+    const onReset = () => {
+      setAnchor(DEFAULT_ANCHOR);
+      setCollapsed(false);
+      try {
+        localStorage.removeItem(ANCHOR_KEY);
+        localStorage.removeItem(COLLAPSED_KEY);
+      } catch { /* noop */ }
+    };
+    window.addEventListener('challenge-hud:reset', onReset);
+    return () => window.removeEventListener('challenge-hud:reset', onReset);
+  }, []);
+
   // Hide on the fixed_set play screen itself
   const onPlayScreen = challenge ? pathname === `/practice/challenges/${challenge.id}/play` : false;
   const onChallengesPage = pathname.startsWith('/practice/challenges');

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,37 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlayCircle, AlertCircle, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+/** Diagonal, repeated watermark overlay for video piracy deterrence. */
+function VideoWatermark({ text }: { text: string }) {
+  const rows = Array.from({ length: 6 });
+  const cols = Array.from({ length: 4 });
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden z-10 select-none mix-blend-overlay"
+      style={{ userSelect: 'none' }}
+    >
+      {rows.map((_, r) =>
+        cols.map((_, c) => (
+          <span
+            key={`${r}-${c}`}
+            className="absolute whitespace-nowrap text-[11px] sm:text-xs font-semibold tracking-wider"
+            style={{
+              top: `${8 + r * 16}%`,
+              left: `${-5 + c * 30}%`,
+              transform: 'rotate(-22deg)',
+              color: 'rgba(255,255,255,0.28)',
+              textShadow: '0 1px 2px rgba(0,0,0,0.55)',
+            }}
+          >
+            {text}
+          </span>
+        )),
+      )}
+    </div>
+  );
+}
 
 interface DriveVideo {
   id: string;
@@ -42,6 +74,13 @@ interface PlaylistEntry {
 }
 
 export function BluebookVideosTab() {
+  const { student } = useStudentAuth();
+  const linked = student?.linked_student;
+  const studentName = linked
+    ? `${linked.first_name} ${linked.last_name || ''}`.trim()
+    : student?.phone_number || '';
+  const watermarkText = [studentName, student?.phone_number].filter(Boolean).join(' · ');
+
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
@@ -271,7 +310,7 @@ export function BluebookVideosTab() {
         {/* Player column */}
         <div className="space-y-3 min-w-0">
           <div className="rounded-lg overflow-hidden border bg-black">
-            <div className="aspect-video">
+            <div className="relative aspect-video">
               {currentEntry ? (
                 <iframe
                   key={currentEntry.video.id}
@@ -286,6 +325,7 @@ export function BluebookVideosTab() {
                   <Video className="h-10 w-10" />
                 </div>
               )}
+              {watermarkText && <VideoWatermark text={watermarkText} />}
             </div>
           </div>
 
