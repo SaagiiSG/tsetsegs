@@ -145,7 +145,7 @@ export function ActiveChallengeHUD() {
     return () => clearInterval(t);
   }, [challenge?.format, challenge?.started_at, challenge?.id]);
 
-  const visible = !!challenge && !onPlayScreen && !onChallengesPage;
+  const visible = !!challenge && !onPlayScreen && !onChallengesSubRoute;
 
   // Detect when the HUD is off-screen (e.g. stale anchor after rotation/resize)
   // and expose a small reset action so mobile users can bring it back instantly.
