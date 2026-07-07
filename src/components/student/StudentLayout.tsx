@@ -32,6 +32,7 @@ import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
+import { StreakAndRankBar } from './StreakAndRankBar';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
 import { TourProvider } from './onboarding/TourProvider';
 import { TourOverlay } from './onboarding/TourOverlay';
