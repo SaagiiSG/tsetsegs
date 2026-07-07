@@ -86,7 +86,11 @@ export function BluebookVideosTab() {
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Pause any playing video when the selected video changes or the component unmounts.
+  // Pause the video only when this component fully unmounts.
+  // Do NOT depend on currentVideoId: the <video> uses `key={video.id}` so it
+  // is remounted on change, and by the time this cleanup runs the ref already
+  // points to the NEW element — stripping its src would leave the player stuck
+  // at 0:00 with no duration.
   useEffect(() => {
     return () => {
       const v = videoRef.current;
@@ -96,7 +100,8 @@ export function BluebookVideosTab() {
         v.load();
       }
     };
-  }, [currentVideoId]);
+  }, []);
+
 
 
   const { data, isLoading, error } = useQuery<VideosPayload>({
