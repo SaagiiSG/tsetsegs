@@ -310,7 +310,7 @@ export function BluebookVideosTab() {
         {/* Player column */}
         <div className="space-y-3 min-w-0">
           <div className="rounded-lg overflow-hidden border bg-black">
-            <div className="aspect-video">
+            <div className="relative aspect-video">
               {currentEntry ? (
                 <iframe
                   key={currentEntry.video.id}
@@ -325,6 +325,7 @@ export function BluebookVideosTab() {
                   <Video className="h-10 w-10" />
                 </div>
               )}
+              {watermarkText && <VideoWatermark text={watermarkText} />}
             </div>
           </div>
 
