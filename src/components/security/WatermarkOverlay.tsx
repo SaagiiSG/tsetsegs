@@ -17,8 +17,21 @@ export function WatermarkOverlay() {
     const handleFullscreenChange = () => {
       const node = rootRef.current;
       if (!node) return;
-      const fsEl = (document.fullscreenElement ||
+      let fsEl = (document.fullscreenElement ||
         (document as any).webkitFullscreenElement) as HTMLElement | null;
+
+      // A bare <video> in fullscreen cannot render DOM children. Escalate to
+      // its parent wrapper so we can overlay the watermark on top.
+      if (fsEl && fsEl.tagName === 'VIDEO' && fsEl.parentElement) {
+        const parent = fsEl.parentElement;
+        (document.exitFullscreen?.() || Promise.resolve())
+          .then(() => {
+            (parent.requestFullscreen?.() ||
+              (parent as any).webkitRequestFullscreen?.())
+          })
+          .catch(() => {});
+        return;
+      }
 
       if (fsEl) {
         if (!originalParentRef.current) {
