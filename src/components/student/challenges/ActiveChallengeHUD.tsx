@@ -9,7 +9,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { cn } from '@/lib/utils';
 
 const OPEN_KEY = 'challenge-hud-open-v1';
+const ALIGN_KEY = 'challenge-hud-align-v1';
 const TOP_OFFSET = 12; // clear of top edge
+
+type Align = 'start' | 'center' | 'end';
 
 function loadOpen(): boolean {
   try {
@@ -20,6 +23,21 @@ function loadOpen(): boolean {
 }
 function saveOpen(v: boolean) {
   try { localStorage.setItem(OPEN_KEY, v ? '1' : '0'); } catch { /* noop */ }
+}
+function loadAlign(): Align {
+  try {
+    const raw = localStorage.getItem(ALIGN_KEY);
+    if (raw === 'start' || raw === 'end' || raw === 'center') return raw;
+  } catch { /* noop */ }
+  return 'center';
+}
+function saveAlign(a: Align) {
+  try { localStorage.setItem(ALIGN_KEY, a); } catch { /* noop */ }
+}
+function alignStyle(a: Align): React.CSSProperties {
+  if (a === 'start') return { left: 12, right: 'auto', transform: 'none' };
+  if (a === 'end') return { right: 12, left: 'auto', transform: 'none' };
+  return { left: '50%', right: 'auto', transform: 'translateX(-50%)' };
 }
 
 export function ActiveChallengeHUD() {
