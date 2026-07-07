@@ -74,6 +74,13 @@ interface PlaylistEntry {
 }
 
 export function BluebookVideosTab() {
+  const { student } = useStudentAuth();
+  const linked = student?.linked_student;
+  const studentName = linked
+    ? `${linked.first_name} ${linked.last_name || ''}`.trim()
+    : student?.phone_number || '';
+  const watermarkText = [studentName, student?.phone_number].filter(Boolean).join(' · ');
+
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
