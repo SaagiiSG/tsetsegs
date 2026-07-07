@@ -565,7 +565,7 @@ export default function StudentBluebook() {
       </div>
 
       {/* Tests Tabs — always render so Videos tab is reachable even when no tests published */}
-      <Tabs defaultValue={tests && tests.length > 0 ? 'math' : 'videos'} className="w-full">
+      <Tabs defaultValue="videos" className="w-full">
         <TabsList className="grid w-full max-w-[560px] grid-cols-4">
           <TabsTrigger value="math" className="gap-1.5 text-sm">
             <Calculator className="h-4 w-4" />
