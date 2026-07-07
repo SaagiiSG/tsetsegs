@@ -288,7 +288,7 @@ export function ActiveChallengeHUD() {
           initial={{ y: -60, opacity: 0 }}
           exit={{ y: -60, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{ position: 'fixed', zIndex: 60, touchAction: 'none', ...anchorStyle(anchor) }}
+          style={{ position: 'fixed', zIndex: 120, touchAction: 'none', ...anchorStyle(anchor) }}
           data-tour="challenge-hud"
           className={cn(
             'select-none',
