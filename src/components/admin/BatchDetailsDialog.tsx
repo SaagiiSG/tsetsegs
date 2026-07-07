@@ -207,26 +207,29 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
 
               <div className="space-y-2">
                 <Label>Schedule</Label>
-                <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={SCHEDULES.includes(selectedSchedule) ? selectedSchedule : '__custom__'} onValueChange={(v) => v !== '__custom__' && setSelectedSchedule(v)}>
+                  <SelectTrigger><SelectValue placeholder="Select preset (optional)" /></SelectTrigger>
                   <SelectContent>
+                    {!SCHEDULES.includes(selectedSchedule) && selectedSchedule && (
+                      <SelectItem value="__custom__">Custom (from create form)</SelectItem>
+                    )}
                     {SCHEDULES.map((schedule, idx) => (
                       <SelectItem key={idx} value={schedule}>{schedule}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <textarea
+                  value={selectedSchedule}
+                  onChange={(e) => setSelectedSchedule(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Schedule text as shown to students"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Room</Label>
-                <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ROOMS.map((room) => (
-                      <SelectItem key={room} value={room}>{room}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} placeholder="e.g. 1114, 1105, 905, Online" />
               </div>
 
               <div className="space-y-2">
