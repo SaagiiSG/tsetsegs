@@ -88,21 +88,36 @@ export default function ChallengesHome() {
               </Card>
             ) : (
               active.map(({ challenge, participants }) => (
-                <Card
-                  key={challenge.id}
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/40"
-                  onClick={() => goToChallenge(challenge.id, challenge.status)}
-                >
-                  <div>
-                    <div className="font-semibold">{FORMAT_LABELS[challenge.format]}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {challenge.subject.toUpperCase()} • {challenge.question_set} •{' '}
-                      {challenge.target_value ? `target ${challenge.target_value}` : `${challenge.duration_seconds}s`} •{' '}
-                      {participants} player{participants > 1 ? 's' : ''}
+                <div key={challenge.id} className="flex items-stretch gap-2">
+                  <Card
+                    className="flex-1 p-4 flex items-center justify-between cursor-pointer hover:bg-muted/40"
+                    onClick={() => goToChallenge(challenge.id, challenge.status)}
+                  >
+                    <div>
+                      <div className="font-semibold">{FORMAT_LABELS[challenge.format]}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {challenge.subject.toUpperCase()} • {challenge.question_set} •{' '}
+                        {challenge.target_value ? `target ${challenge.target_value}` : `${challenge.duration_seconds}s`} •{' '}
+                        {participants} player{participants > 1 ? 's' : ''}
+                      </div>
                     </div>
-                  </div>
-                  <Badge variant={challenge.status === 'active' ? 'default' : 'secondary'}>{challenge.status}</Badge>
-                </Card>
+                    <Badge variant={challenge.status === 'active' ? 'default' : 'secondary'}>{challenge.status}</Badge>
+                  </Card>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 h-auto gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.dispatchEvent(new Event('challenge-hud:reset'));
+                      toast.success('HUD reset — will reappear at top center');
+                    }}
+                    title="Reset the floating challenge HUD position"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span className="hidden sm:inline">Reset HUD</span>
+                  </Button>
+                </div>
               ))
             )}
           </TabsContent>
