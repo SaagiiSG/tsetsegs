@@ -54,6 +54,12 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsResults, setSmsResults] = useState<any>(null);
+  const [smsPreview, setSmsPreview] = useState<{ segments: number; encoding: string; body: string } | null>(null);
+  const { toast } = useToast();
+
   useEffect(() => {
     if (open && batch) {
       fetchTeachers();
