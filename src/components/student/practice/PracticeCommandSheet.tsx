@@ -38,6 +38,7 @@ const QUICK_ROUTES: QuickRoute[] = [
   { path: '/practice/smart', label: 'Smart Practice', icon: Star, group: 'jump' },
   { path: '/practice/vocabulary', label: 'Vocabulary', icon: Languages, group: 'jump' },
   { path: '/practice/leaderboard', label: 'Leaderboard', icon: Trophy, group: 'jump' },
+  { path: '/practice/challenges', label: 'Challenges', icon: Swords, hint: 'Race your friends', group: 'jump' },
   { path: '/practice/booking', label: 'Book a Seat', icon: Armchair, group: 'tools' },
   { path: '/practice/stats', label: 'Statistics', icon: BarChart3, group: 'tools' },
   { path: '/practice/badges', label: 'Badges', icon: Star, group: 'tools' },
