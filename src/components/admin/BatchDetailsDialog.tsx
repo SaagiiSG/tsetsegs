@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { getBatchSmsTemplate, estimateSegments, MN_SMS_PRICE_PER_SEGMENT } from '@/lib/smsTemplates';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const SCHEDULES = [
   "Даваа/Лхагва/Баасан 16:40-18:30 (Math) + Бямба 14:10-16:10 (English - үнэгүй)",
@@ -176,88 +177,145 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
               </div>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Teacher{batch.course_type === 'IELTS' ? 's' : ''}</Label>
-                {batch.course_type === 'IELTS' ? (
-                  <div className="space-y-2">
-                    {teachers.map((teacher) => (
-                      <label key={teacher.name} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedTeachers.includes(teacher.name)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedTeachers([...selectedTeachers, teacher.name]);
-                            } else {
-                              setSelectedTeachers(selectedTeachers.filter(n => n !== teacher.name));
-                            }
-                          }}
-                          className="w-4 h-4"
-                        />
-                        <span>{teacher.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="details">Batch Info</TabsTrigger>
+                <TabsTrigger value="sms">
+                  <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                  SMS ({studentCount})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-4 mt-0">
+                <div className="space-y-2">
+                  <Label>Teacher{batch.course_type === 'IELTS' ? 's' : ''}</Label>
+                  {batch.course_type === 'IELTS' ? (
+                    <div className="space-y-2">
                       {teachers.map((teacher) => (
-                        <SelectItem key={teacher.name} value={teacher.name}>{teacher.name}</SelectItem>
+                        <label key={teacher.name} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedTeachers.includes(teacher.name)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTeachers([...selectedTeachers, teacher.name]);
+                              } else {
+                                setSelectedTeachers(selectedTeachers.filter(n => n !== teacher.name));
+                              }
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span>{teacher.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.name} value={teacher.name}>{teacher.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Schedule</Label>
+                  <Select value={SCHEDULES.includes(selectedSchedule) ? selectedSchedule : '__custom__'} onValueChange={(v) => v !== '__custom__' && setSelectedSchedule(v)}>
+                    <SelectTrigger><SelectValue placeholder="Select preset (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      {!SCHEDULES.includes(selectedSchedule) && selectedSchedule && (
+                        <SelectItem value="__custom__">Custom (from create form)</SelectItem>
+                      )}
+                      {SCHEDULES.map((schedule, idx) => (
+                        <SelectItem key={idx} value={schedule}>{schedule}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
+                  <textarea
+                    value={selectedSchedule}
+                    onChange={(e) => setSelectedSchedule(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="Schedule text as shown to students"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Schedule</Label>
-                <Select value={SCHEDULES.includes(selectedSchedule) ? selectedSchedule : '__custom__'} onValueChange={(v) => v !== '__custom__' && setSelectedSchedule(v)}>
-                  <SelectTrigger><SelectValue placeholder="Select preset (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    {!SCHEDULES.includes(selectedSchedule) && selectedSchedule && (
-                      <SelectItem value="__custom__">Custom (from create form)</SelectItem>
-                    )}
-                    {SCHEDULES.map((schedule, idx) => (
-                      <SelectItem key={idx} value={schedule}>{schedule}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <textarea
-                  value={selectedSchedule}
-                  onChange={(e) => setSelectedSchedule(e.target.value)}
-                  rows={2}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Schedule text as shown to students"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label>Room</Label>
+                  <Input value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} placeholder="e.g. 1114, 1105, 905, Online" />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Room</Label>
-                <Input value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} placeholder="e.g. 1114, 1105, 905, Online" />
-              </div>
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </div>
+                <div className="space-y-2">
+                  <Label>Facebook Group Link</Label>
+                  <Input value={fbGroupLink} onChange={(e) => setFbGroupLink(e.target.value)} placeholder="https://facebook.com/groups/..." />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Facebook Group Link</Label>
-                <Input value={fbGroupLink} onChange={(e) => setFbGroupLink(e.target.value)} placeholder="https://facebook.com/groups/..." />
-              </div>
+                <Button onClick={handleSave} disabled={isSaving} className="w-full">
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </TabsContent>
 
-              <Button onClick={handleSave} disabled={isSaving} className="w-full">
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <TabsContent value="sms" className="space-y-4 mt-0">
+                <div className="rounded-md border p-3 bg-muted/30 text-xs space-y-1">
+                  <div>Sent via Twilio Messaging Service — routes across Mobicom, Unitel, Skytel, G-Mobile.</div>
+                  <div className="text-muted-foreground">This exact text will be delivered to every student in this batch.</div>
+                </div>
 
-              <Button onClick={openSmsDialog} variant="secondary" className="w-full">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Send intro SMS to all students
-              </Button>
-            </div>
+                <div className="space-y-2">
+                  <Label>SMS message (editable)</Label>
+                  <textarea
+                    value={inlineSmsBody}
+                    onChange={(e) => setInlineSmsBody(e.target.value)}
+                    rows={14}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono"
+                    placeholder="Message students will receive"
+                  />
+                  {(() => {
+                    const est = estimateSegments(inlineSmsBody);
+                    const cost = est.segments * studentCount * MN_SMS_PRICE_PER_SEGMENT;
+                    return (
+                      <div className="grid grid-cols-4 gap-2 text-xs">
+                        <div className="rounded-md border p-2">
+                          <div className="text-muted-foreground">Chars</div>
+                          <div className="font-semibold">{inlineSmsBody.length}</div>
+                        </div>
+                        <div className="rounded-md border p-2">
+                          <div className="text-muted-foreground">Encoding</div>
+                          <div className="font-semibold">{est.encoding}</div>
+                        </div>
+                        <div className="rounded-md border p-2">
+                          <div className="text-muted-foreground">Segments</div>
+                          <div className="font-semibold">{est.segments}</div>
+                        </div>
+                        <div className="rounded-md border p-2">
+                          <div className="text-muted-foreground">Est. cost</div>
+                          <div className="font-semibold">${cost.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setInlineSmsBody(getBatchSmsTemplate(batch))} className="flex-1">
+                    Reset to template
+                  </Button>
+                  <Button onClick={openSmsDialog} className="flex-1">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Send to {studentCount} student{studentCount !== 1 ? 's' : ''}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Side - Students */}
