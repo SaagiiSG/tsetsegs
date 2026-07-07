@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -46,9 +46,10 @@ interface DriveVideo {
   id: string;
   name: string;
   thumbnailUrl: string | null;
-  embedUrl: string;
+  streamUrl: string;
   modifiedTime: string | null;
 }
+
 interface DriveModule {
   id: string;
   name: string;
@@ -83,6 +84,20 @@ export function BluebookVideosTab() {
 
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Pause any playing video when the selected video changes or the component unmounts.
+  useEffect(() => {
+    return () => {
+      const v = videoRef.current;
+      if (v) {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+      }
+    };
+  }, [currentVideoId]);
+
 
   const { data, isLoading, error } = useQuery<VideosPayload>({
     queryKey: ['bluebook-explanation-videos'],
@@ -312,13 +327,17 @@ export function BluebookVideosTab() {
           <div className="rounded-lg overflow-hidden border bg-black">
             <div className="relative aspect-video">
               {currentEntry ? (
-                <iframe
+                <video
                   key={currentEntry.video.id}
-                  src={currentEntry.video.embedUrl}
+                  ref={videoRef}
+                  src={currentEntry.video.streamUrl}
+                  poster={currentEntry.video.thumbnailUrl ?? undefined}
                   className="w-full h-full"
-                  allow="autoplay; encrypted-media; fullscreen"
-                  allowFullScreen
-                  title={`Explanation video ${currentEntry.video.name}`}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  controlsList="nodownload"
+                  onContextMenu={(e) => e.preventDefault()}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
@@ -328,6 +347,7 @@ export function BluebookVideosTab() {
               {watermarkText && <VideoWatermark text={watermarkText} />}
             </div>
           </div>
+
 
           {currentEntry && (
             <div className="space-y-2">

@@ -63,7 +63,32 @@ function naturalSort(a: string, b: string) {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 }
 
-async function buildTree() {
+async function hmacHex(secret: string, message: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// 6h token — comfortably covers a study session while still expiring.
+const TOKEN_TTL_MS = 6 * 60 * 60 * 1000;
+
+async function buildStreamUrl(fileId: string, projectRef: string): Promise<string> {
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!secret) throw new Error("signing secret unavailable");
+  const exp = Date.now() + TOKEN_TTL_MS;
+  const sig = await hmacHex(secret, `${fileId}.${exp}`);
+  return `https://${projectRef}.supabase.co/functions/v1/stream-bluebook-video?id=${encodeURIComponent(fileId)}&exp=${exp}&sig=${sig}`;
+}
+
+async function buildTree(projectRef: string) {
   const testFolders = (await listChildren(ROOT_FOLDER_ID, "id,name,mimeType"))
     .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
     .sort((a, b) => naturalSort(a.name, b.name));
@@ -82,13 +107,14 @@ async function buildTree() {
             .filter((f) => f.mimeType.startsWith("video/"))
             .sort((a, b) => naturalSort(a.name, b.name));
 
-          const videos = files.map((v) => ({
+          const videos = await Promise.all(files.map(async (v) => ({
             id: v.id,
             name: v.name,
             thumbnailUrl: v.thumbnailLink ? v.thumbnailLink.replace(/=s\d+$/, "=s400") : null,
-            embedUrl: `https://drive.google.com/file/d/${v.id}/preview`,
+            // streamUrl proxies through our edge function — Drive is never exposed to the browser.
+            streamUrl: await buildStreamUrl(v.id, projectRef),
             modifiedTime: v.modifiedTime ?? null,
-          }));
+          })));
 
           return {
             id: mf.id,
@@ -112,20 +138,26 @@ async function buildTree() {
   return { tests, generatedAt: new Date().toISOString() };
 }
 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const projectRef = supabaseUrl.replace(/^https?:\/\//, "").split(".")[0];
+    if (!projectRef) throw new Error("SUPABASE_URL not set");
+
     if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
       return new Response(JSON.stringify(cache.payload), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const payload = await buildTree();
+    const payload = await buildTree(projectRef);
     cache = { at: Date.now(), payload };
+
 
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
