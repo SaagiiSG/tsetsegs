@@ -96,10 +96,15 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
         ? selectedTeachers.join(', ')
         : selectedTeacher;
 
+      // Regenerate batch_name to reflect current teacher (so teacher portal cards show the correct name)
+      const d = new Date(startDate);
+      const regeneratedName = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+
       const { error } = await supabase
         .from('batches')
         .update({
           teacher: teacherValue,
+          batch_name: regeneratedName,
           schedule: selectedSchedule,
           room: selectedRoom,
           start_date: startDate,
