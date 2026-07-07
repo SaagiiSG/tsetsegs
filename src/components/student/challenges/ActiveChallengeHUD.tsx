@@ -9,7 +9,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { cn } from '@/lib/utils';
 
 const OPEN_KEY = 'challenge-hud-open-v1';
+const ALIGN_KEY = 'challenge-hud-align-v1';
 const TOP_OFFSET = 12; // clear of top edge
+
+type Align = 'start' | 'center' | 'end';
 
 function loadOpen(): boolean {
   try {
@@ -21,6 +24,21 @@ function loadOpen(): boolean {
 function saveOpen(v: boolean) {
   try { localStorage.setItem(OPEN_KEY, v ? '1' : '0'); } catch { /* noop */ }
 }
+function loadAlign(): Align {
+  try {
+    const raw = localStorage.getItem(ALIGN_KEY);
+    if (raw === 'start' || raw === 'end' || raw === 'center') return raw;
+  } catch { /* noop */ }
+  return 'center';
+}
+function saveAlign(a: Align) {
+  try { localStorage.setItem(ALIGN_KEY, a); } catch { /* noop */ }
+}
+function alignStyle(a: Align): React.CSSProperties {
+  if (a === 'start') return { left: 12, right: 'auto', transform: 'none' };
+  if (a === 'end') return { right: 12, left: 'auto', transform: 'none' };
+  return { left: '50%', right: 'auto', transform: 'translateX(-50%)' };
+}
 
 export function ActiveChallengeHUD() {
   const { challenge, myPart, opponents, participantsCount } = useActiveChallenge();
@@ -29,12 +47,14 @@ export function ActiveChallengeHUD() {
   const { pathname } = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [open, setOpen] = useState<boolean>(() => loadOpen());
+  const [align, setAlign] = useState<Align>(() => loadAlign());
 
   useEffect(() => saveOpen(open), [open]);
+  useEffect(() => saveAlign(align), [align]);
 
   // Allow external UI (Challenges page button) to reset/open the HUD
   useEffect(() => {
-    const onReset = () => setOpen(true);
+    const onReset = () => { setOpen(true); setAlign('center'); };
     window.addEventListener('challenge-hud:reset', onReset);
     return () => window.removeEventListener('challenge-hud:reset', onReset);
   }, []);
@@ -146,35 +166,52 @@ export function ActiveChallengeHUD() {
     else setSheetOpen(true);
   };
 
-  // iOS-style: drag DOWN on the puller to open, drag UP on the HUD to close.
-  const onPullerDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 20 || info.velocity.y > 200) setOpen(true);
+  // Snap to the nearest of 3 top slots based on the final drop x-position
+  const snapAlignFromDrop = (clientX: number): Align => {
+    const vw = window.innerWidth;
+    const r = clientX / vw;
+    if (r < 0.33) return 'start';
+    if (r > 0.66) return 'end';
+    return 'center';
   };
+
+  // iOS-style: puller → drag DOWN to open, drag SIDEWAYS to snap horizontally.
+  const onPullerDragEnd = (_: unknown, info: PanInfo) => {
+    const openIntent = info.offset.y > 20 || info.velocity.y > 200;
+    const horizontalIntent = Math.abs(info.offset.x) > 40 && Math.abs(info.offset.x) > Math.abs(info.offset.y);
+    if (horizontalIntent) setAlign(snapAlignFromDrop(info.point.x));
+    else if (openIntent) setOpen(true);
+  };
+  // HUD open → drag UP to close, drag SIDEWAYS to snap horizontally.
   const onHudDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y < -20 || info.velocity.y < -200) setOpen(false);
+    const closeIntent = info.offset.y < -20 || info.velocity.y < -200;
+    const horizontalIntent = Math.abs(info.offset.x) > 40 && Math.abs(info.offset.x) > Math.abs(info.offset.y);
+    if (horizontalIntent) setAlign(snapAlignFromDrop(info.point.x));
+    else if (closeIntent) setOpen(false);
   };
 
   return (
     <>
       <div
-        className="fixed left-1/2 -translate-x-1/2 select-none"
+        className="fixed select-none"
         style={{
           top: `calc(env(safe-area-inset-top,0px) + ${TOP_OFFSET}px)`,
           zIndex: 120,
           touchAction: 'none',
+          ...alignStyle(align),
         }}
       >
         <AnimatePresence mode="wait" initial={false}>
           {open ? (
             <motion.div
-              key="hud-open"
+              key={`hud-open-${align}`}
               initial={{ y: -40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              animate={{ y: 0, x: 0, opacity: 1 }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0.6, bottom: 0 }}
+              drag
+              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+              dragElastic={{ top: 0.6, bottom: 0, left: 0.4, right: 0.4 }}
               dragMomentum={false}
               onDragEnd={onHudDragEnd}
               data-tour="challenge-hud"
@@ -246,15 +283,15 @@ export function ActiveChallengeHUD() {
             </motion.div>
           ) : (
             <motion.button
-              key="hud-puller"
+              key={`hud-puller-${align}`}
               type="button"
               initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              animate={{ y: 0, x: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.6 }}
+              drag
+              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+              dragElastic={{ top: 0, bottom: 0.6, left: 0.4, right: 0.4 }}
               dragMomentum={false}
               onDragEnd={onPullerDragEnd}
               onClick={() => setOpen(true)}
