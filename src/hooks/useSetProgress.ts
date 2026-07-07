@@ -16,13 +16,34 @@ export interface SetProgress {
 
 const empty = (): SetCounts => ({ total: 0, completed: 0, pct: 0 });
 
-async function countSet(studentAccountId: string, questionSet: string): Promise<SetCounts> {
-  const { data: qs } = await supabase
-    .from('questions')
-    .select('id')
-    .eq('question_set', questionSet)
-    .eq('is_active', true);
-  const ids = qs?.map((q) => q.id) ?? [];
+async function countSet(
+  studentAccountId: string,
+  questionSet: string | { exclude: string[] },
+): Promise<SetCounts> {
+  // Collect ALL matching question ids (Supabase caps rows at ~1000 per request),
+  // so we page through until we have everything.
+  const ids: string[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let q = supabase
+      .from('questions')
+      .select('id')
+      .eq('is_active', true)
+      .range(from, from + pageSize - 1);
+    if (typeof questionSet === 'string') {
+      q = q.eq('question_set', questionSet);
+    } else {
+      // "CB" bucket: every active question EXCEPT the two standalone sets.
+      q = q.not('question_set', 'in', `(${questionSet.exclude.map((s) => `"${s}"`).join(',')})`);
+    }
+    const { data, error } = await q;
+    if (error || !data) break;
+    ids.push(...data.map((d) => d.id));
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
   if (ids.length === 0) return empty();
 
   // Chunk for safety (Postgres `in` accepts large lists but be conservative)
