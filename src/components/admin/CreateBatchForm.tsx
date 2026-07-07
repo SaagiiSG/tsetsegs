@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +41,7 @@ interface CreateBatchFormProps {
 }
 
 export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
+  const navigate = useNavigate();
   const [studentList, setStudentList] = useState('');
   const [teacher, setTeacher] = useState('');
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
@@ -237,19 +239,8 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
         description: `Batch created with ${students.length} students`
       });
 
-      // Reset form
-      setStudentList('');
-      setTeacher('');
-      setSelectedTeachers([]);
-      setRoom('');
-      setStartDate('');
-      setFbGroupLink('');
-      setCourseType('SAT');
-      setMathSchedule([]);
-      setEnglishSchedule([]);
-      setLegacySchedule('');
-      
       onSuccess();
+      navigate(`/admin/batches?batch=${batch.id}`);
     } catch (error: any) {
       toast({
         title: "Error",
