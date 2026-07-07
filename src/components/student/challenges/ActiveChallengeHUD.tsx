@@ -1,90 +1,25 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, useAnimation, useDragControls } from 'framer-motion';
-import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, GripVertical, Minimize2, Maximize2, RotateCcw } from 'lucide-react';
+import { AnimatePresence, motion, PanInfo } from 'framer-motion';
+import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-// 8 anchor points: 4 corners + 4 edge-centers
-type AnchorSide = 'top' | 'bottom' | 'left' | 'right';
-type AnchorAlign = 'start' | 'center' | 'end';
-interface Anchor { side: AnchorSide; align: AnchorAlign }
+const OPEN_KEY = 'challenge-hud-open-v1';
+const TOP_OFFSET = 12; // clear of top edge
 
-const DEFAULT_ANCHOR: Anchor = { side: 'top', align: 'center' };
-// v2 bump: forces users who had a stale collapsed/hidden state from v1 to
-// see a fresh, visible HUD (top-center, expanded). Uses localStorage to
-// match the rest of the app's persistence.
-const ANCHOR_KEY = 'challenge-hud-anchor-v5';
-const COLLAPSED_KEY = 'challenge-hud-collapsed-v5';
-
-const EDGE_PAD = 12; // px from viewport edge
-const TOP_OFFSET = 68; // stay clear of top header on mobile
-
-function loadAnchor(): Anchor {
+function loadOpen(): boolean {
   try {
-    const raw = localStorage.getItem(ANCHOR_KEY);
-    if (!raw) return DEFAULT_ANCHOR;
-    const p = JSON.parse(raw);
-    if (p?.side && p?.align) return p;
-  } catch { /* noop */ }
-  return DEFAULT_ANCHOR;
+    const raw = localStorage.getItem(OPEN_KEY);
+    if (raw === null) return true; // default: open
+    return raw === '1';
+  } catch { return true; }
 }
-function saveAnchor(a: Anchor) {
-  try { localStorage.setItem(ANCHOR_KEY, JSON.stringify(a)); } catch { /* noop */ }
-}
-function loadCollapsed(): boolean {
-  try { return localStorage.getItem(COLLAPSED_KEY) === '1'; } catch { return false; }
-}
-function saveCollapsed(v: boolean) {
-  try { localStorage.setItem(COLLAPSED_KEY, v ? '1' : '0'); } catch { /* noop */ }
-}
-
-// Snap dropped position to nearest of 8 anchors based on center point in viewport.
-function nearestAnchor(cx: number, cy: number, vw: number, vh: number): Anchor {
-  // Horizontal align: 3 buckets
-  const hx = cx / vw;
-  const hAlign: AnchorAlign = hx < 0.33 ? 'start' : hx > 0.66 ? 'end' : 'center';
-  const vy = cy / vh;
-  const vAlign: AnchorAlign = vy < 0.33 ? 'start' : vy > 0.66 ? 'end' : 'center';
-
-  // Decide which side to dock. If it's a corner (both extreme), pick top/bottom.
-  // If clearly near a vertical edge, dock left/right. Otherwise top/bottom.
-  const distTop = cy;
-  const distBottom = vh - cy;
-  const distLeft = cx;
-  const distRight = vw - cx;
-  const minDist = Math.min(distTop, distBottom, distLeft, distRight);
-
-  if (minDist === distTop) return { side: 'top', align: hAlign };
-  if (minDist === distBottom) return { side: 'bottom', align: hAlign };
-  if (minDist === distLeft) return { side: 'left', align: vAlign };
-  return { side: 'right', align: vAlign };
-}
-
-function anchorStyle(a: Anchor): React.CSSProperties {
-  const s: React.CSSProperties = {};
-  const isSideEdge = a.side === 'left' || a.side === 'right';
-  const isTopBottom = a.side === 'top' || a.side === 'bottom';
-
-  if (a.side === 'top') s.top = `calc(env(safe-area-inset-top,0px) + ${TOP_OFFSET}px)`;
-  if (a.side === 'bottom') s.bottom = `calc(env(safe-area-inset-bottom,0px) + ${EDGE_PAD}px)`;
-  if (a.side === 'left') s.left = `${EDGE_PAD}px`;
-  if (a.side === 'right') s.right = `${EDGE_PAD}px`;
-
-  if (isTopBottom) {
-    if (a.align === 'start') s.left = `${EDGE_PAD}px`;
-    else if (a.align === 'end') s.right = `${EDGE_PAD}px`;
-    else { s.left = '50%'; s.transform = 'translateX(-50%)'; }
-  }
-  if (isSideEdge) {
-    if (a.align === 'start') s.top = `calc(env(safe-area-inset-top,0px) + ${TOP_OFFSET}px)`;
-    else if (a.align === 'end') s.bottom = `calc(env(safe-area-inset-bottom,0px) + ${EDGE_PAD}px)`;
-    else { s.top = '50%'; s.transform = 'translateY(-50%)'; }
-  }
-  return s;
+function saveOpen(v: boolean) {
+  try { localStorage.setItem(OPEN_KEY, v ? '1' : '0'); } catch { /* noop */ }
 }
 
 export function ActiveChallengeHUD() {
@@ -93,40 +28,17 @@ export function ActiveChallengeHUD() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [anchor, setAnchor] = useState<Anchor>(() => loadAnchor());
-  const [collapsed, setCollapsed] = useState<boolean>(() => loadCollapsed());
-  const [isOffScreen, setIsOffScreen] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const dragControls = useDragControls();
-  const dragAnim = useAnimation();
+  const [open, setOpen] = useState<boolean>(() => loadOpen());
 
-  useEffect(() => saveAnchor(anchor), [anchor]);
-  useEffect(() => saveCollapsed(collapsed), [collapsed]);
+  useEffect(() => saveOpen(open), [open]);
 
-  // Ensure the motion controls resolve to a visible state on mount / anchor change.
-  // Without this, `animate={dragAnim}` stays at the `initial` (y:-60, opacity:0)
-  // because controls only fire when `.start()` is called.
+  // Allow external UI (Challenges page button) to reset/open the HUD
   useEffect(() => {
-    dragAnim.start({ x: 0, y: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 30 } });
-  }, [dragAnim, anchor.side, anchor.align, collapsed]);
-
-  // Allow external UI (e.g. Challenges page button) to reset the HUD position
-  useEffect(() => {
-    const onReset = () => {
-      setAnchor(DEFAULT_ANCHOR);
-      setCollapsed(false);
-      try {
-        localStorage.removeItem(ANCHOR_KEY);
-        localStorage.removeItem(COLLAPSED_KEY);
-      } catch { /* noop */ }
-    };
+    const onReset = () => setOpen(true);
     window.addEventListener('challenge-hud:reset', onReset);
     return () => window.removeEventListener('challenge-hud:reset', onReset);
   }, []);
 
-  // Hide only on the fixed_set play screen (the play UI already shows progress).
-  // Everywhere else — including lobby, results, and challenges list — the HUD stays visible.
   const onPlayScreen = challenge ? pathname === `/practice/challenges/${challenge.id}/play` : false;
 
   // Auto-navigate to results when the active challenge flips to finished
@@ -151,30 +63,6 @@ export function ActiveChallengeHUD() {
 
   const visible = !!challenge && !onPlayScreen;
 
-  // Detect when the HUD is off-screen (e.g. stale anchor after rotation/resize)
-  // and expose a small reset action so mobile users can bring it back instantly.
-  useEffect(() => {
-    if (!visible) return;
-    const check = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const margin = 20;
-      const off = rect.right < margin || rect.left > vw - margin || rect.bottom < margin || rect.top > vh - margin;
-      setIsOffScreen(off);
-    };
-    check();
-    const id = setInterval(check, 1000);
-    const onResize = () => check();
-    window.addEventListener('resize', onResize);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [visible, anchor, collapsed]);
-
   const { targetText, progressPct } = useMemo(() => {
     if (!challenge) return { targetText: '', progressPct: 0 };
     if (challenge.format === 'first_to_points' && challenge.target_value) {
@@ -198,20 +86,6 @@ export function ActiveChallengeHUD() {
     }
     return { targetText: '', progressPct: 0 };
   }, [challenge, myPart, now]);
-
-  const handleDragEnd = useCallback(async () => {
-    const el = containerRef.current;
-    if (!el) { setDragging(false); return; }
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const next = nearestAnchor(cx, cy, window.innerWidth, window.innerHeight);
-    // Animate the drag offset back to 0, then update anchor so element re-renders at new position.
-    await dragAnim.start({ x: 0, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } });
-    setAnchor(next);
-    // small delay to clear the drag flag so click handler doesn't fire from the release
-    setTimeout(() => setDragging(false), 60);
-  }, [dragAnim]);
 
   if (!visible || !challenge) return null;
 
@@ -268,105 +142,59 @@ export function ActiveChallengeHUD() {
   })();
 
   const handlePrimaryClick = () => {
-    if (dragging) return; // ignore synthetic click right after drag
     if (isFixedSet) navigate(`/practice/challenges/${challenge.id}/play`);
     else setSheetOpen(true);
   };
 
-  const resetHud = () => {
-    setAnchor(DEFAULT_ANCHOR);
-    setCollapsed(false);
+  // iOS-style: drag DOWN on the puller to open, drag UP on the HUD to close.
+  const onPullerDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y > 20 || info.velocity.y > 200) setOpen(true);
+  };
+  const onHudDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y < -20 || info.velocity.y < -200) setOpen(false);
   };
 
   return (
     <>
-      <AnimatePresence>
-        <motion.div
-          key={`${challenge.id}-${anchor.side}-${anchor.align}`}
-          ref={containerRef}
-          drag
-          dragMomentum={false}
-          dragElastic={0.15}
-          dragControls={dragControls}
-          dragListener={false}
-          onDragStart={() => setDragging(true)}
-          onDragEnd={handleDragEnd}
-          animate={dragAnim}
-          initial={{ y: -60, opacity: 0 }}
-          exit={{ y: -60, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{ position: 'fixed', zIndex: 120, touchAction: 'none', ...anchorStyle(anchor) }}
-          data-tour="challenge-hud"
-          className={cn(
-            'select-none',
-            dragging && 'cursor-grabbing',
-          )}
-        >
-          {collapsed ? (
-            // Collapsed: small icon-only puck, still draggable via grip / long-press
-            <div
+      <div
+        className="fixed left-1/2 -translate-x-1/2 select-none"
+        style={{
+          top: `calc(env(safe-area-inset-top,0px) + ${TOP_OFFSET}px)`,
+          zIndex: 120,
+          touchAction: 'none',
+        }}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {open ? (
+            <motion.div
+              key="hud-open"
+              initial={{ y: -40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -40, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0.6, bottom: 0 }}
+              dragMomentum={false}
+              onDragEnd={onHudDragEnd}
+              data-tour="challenge-hud"
               className={cn(
-                'flex items-center gap-1 pl-1 pr-1 py-1 rounded-full min-w-[44px] min-h-[44px]',
+                'group flex items-center gap-1.5 md:gap-2 pl-2 md:pl-3 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full',
                 'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
                 'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
+                'max-w-[92vw] cursor-grab active:cursor-grabbing',
               )}
             >
-              <button
-                type="button"
-                aria-label="Drag HUD"
-                onPointerDown={(e) => dragControls.start(e)}
-                className="p-1 rounded-full hover:bg-white/15 active:bg-white/25 cursor-grab active:cursor-grabbing touch-none"
-              >
-                <GripVertical className="w-3.5 h-3.5 opacity-80" />
-              </button>
-              <button
-                type="button"
-                onClick={handlePrimaryClick}
-                onDoubleClick={() => { setCollapsed(false); setAnchor(DEFAULT_ANCHOR); }}
-                aria-label="Open challenge (double-tap to expand)"
-                className="relative flex items-center justify-center p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition"
-              >
-                <motion.span
-                  aria-hidden
-                  className="absolute inset-0 rounded-full bg-white/30"
-                  animate={{ scale: [1, 1.8, 1], opacity: [0.7, 0, 0.7] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-                />
-                <Sword className="w-4 h-4 relative" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setCollapsed(false)}
-                aria-label="Expand HUD"
-                className="p-1 rounded-full hover:bg-white/15 active:bg-white/25"
-              >
-                <Maximize2 className="w-3 h-3" />
-              </button>
-            </div>
-          ) : (
-            <div
-              className={cn(
-                'group flex items-center gap-1.5 md:gap-2 pl-1 md:pl-1.5 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full',
-                'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
-                'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
-                'max-w-[92vw]',
-              )}
-            >
-              {/* Drag handle */}
-              <button
-                type="button"
-                aria-label="Drag HUD"
-                onPointerDown={(e) => dragControls.start(e)}
-                className="p-1 -mr-0.5 rounded-full hover:bg-white/15 active:bg-white/25 cursor-grab active:cursor-grabbing touch-none"
-              >
-                <GripVertical className="w-3.5 h-3.5 opacity-70" />
-              </button>
+              {/* Grabber pill (iOS style) */}
+              <div className="flex items-center justify-center pr-1.5 border-r border-white/15">
+                <div className="w-1 h-4 rounded-full bg-white/40" />
+              </div>
 
               <button
                 type="button"
                 onClick={handlePrimaryClick}
                 aria-label="View active challenge"
-                className="group flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
+                className="flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
               >
                 <span className="relative flex items-center justify-center">
                   <motion.span
@@ -406,43 +234,48 @@ export function ActiveChallengeHUD() {
                 </span>
               </button>
 
-              {/* Collapse */}
+              {/* Close (iOS-style ×) */}
               <button
                 type="button"
-                onClick={() => setCollapsed(true)}
-                aria-label="Collapse HUD"
-                className="p-1 rounded-full hover:bg-white/15 active:bg-white/25"
+                onClick={() => setOpen(false)}
+                aria-label="Hide HUD"
+                className="p-1.5 rounded-full hover:bg-white/15 active:bg-white/25"
               >
-                <Minimize2 className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
-            </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="hud-puller"
+              type="button"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.6 }}
+              dragMomentum={false}
+              onDragEnd={onPullerDragEnd}
+              onClick={() => setOpen(true)}
+              aria-label="Show active challenge HUD (pull down to expand)"
+              data-tour="challenge-hud"
+              className={cn(
+                'flex flex-col items-center gap-1 px-6 py-1.5 rounded-b-2xl rounded-t-none',
+                'bg-gradient-to-b from-primary/95 to-primary/85 text-primary-foreground',
+                'shadow-lg shadow-primary/25 backdrop-blur-xl border border-t-0 border-white/15',
+                'cursor-grab active:cursor-grabbing',
+              )}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/60" />
+              <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-90">
+                <Sword className="w-2.5 h-2.5" />
+                <span>Live</span>
+              </div>
+            </motion.button>
           )}
-        </motion.div>
-
-        {isOffScreen && (
-          <motion.button
-            key="reset-hud"
-            type="button"
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            onClick={resetHud}
-            data-tour="challenge-hud-reset"
-            className={cn(
-              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[125]',
-              'flex items-center gap-1.5 px-3 py-2 rounded-full',
-              'bg-primary text-primary-foreground shadow-2xl shadow-primary/30',
-              'border border-white/15 backdrop-blur-xl',
-              'text-xs font-semibold tracking-wide select-none',
-              'active:scale-95 transition-transform'
-            )}
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Reset HUD
-          </motion.button>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
 
       <ChallengeLeaderboardSheet
         open={sheetOpen}
