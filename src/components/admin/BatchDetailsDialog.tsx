@@ -127,11 +127,17 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
     setSmsOpen(true);
   };
 
+  const updateSmsBody = (body: string) => {
+    const { segments, encoding } = estimateSegments(body);
+    setSmsPreview({ segments, encoding, body });
+  };
+
   const handleSendSms = async () => {
+    if (!smsPreview) return;
     setSmsSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-batch-sms', {
-        body: { batch_id: batch.id },
+        body: { batch_id: batch.id, body: smsPreview.body },
       });
       if (error) throw error;
       setSmsResults(data);
@@ -207,26 +213,29 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
 
               <div className="space-y-2">
                 <Label>Schedule</Label>
-                <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={SCHEDULES.includes(selectedSchedule) ? selectedSchedule : '__custom__'} onValueChange={(v) => v !== '__custom__' && setSelectedSchedule(v)}>
+                  <SelectTrigger><SelectValue placeholder="Select preset (optional)" /></SelectTrigger>
                   <SelectContent>
+                    {!SCHEDULES.includes(selectedSchedule) && selectedSchedule && (
+                      <SelectItem value="__custom__">Custom (from create form)</SelectItem>
+                    )}
                     {SCHEDULES.map((schedule, idx) => (
                       <SelectItem key={idx} value={schedule}>{schedule}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <textarea
+                  value={selectedSchedule}
+                  onChange={(e) => setSelectedSchedule(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Schedule text as shown to students"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Room</Label>
-                <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ROOMS.map((room) => (
-                      <SelectItem key={room} value={room}>{room}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} placeholder="e.g. 1114, 1105, 905, Online" />
               </div>
 
               <div className="space-y-2">
@@ -293,10 +302,14 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Message preview</Label>
-                <ScrollArea className="h-48 rounded-md border p-3 mt-1">
-                  <pre className="whitespace-pre-wrap text-xs font-mono">{smsPreview.body}</pre>
-                </ScrollArea>
+                <Label className="text-xs">Message (editable — this exact text will be sent)</Label>
+                <textarea
+                  value={smsPreview.body}
+                  onChange={(e) => updateSmsBody(e.target.value)}
+                  rows={10}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">{smsPreview.body.length} chars · {smsPreview.encoding}</p>
               </div>
             </div>
           )}
