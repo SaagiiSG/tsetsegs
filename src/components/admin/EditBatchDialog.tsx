@@ -396,11 +396,16 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       const teacherValue = batch.course_type === 'IELTS'
         ? selectedTeachers.join(', ')
         : selectedTeacher;
-      
+
+      // Regenerate batch_name so teacher portal cards reflect the current teacher
+      const d = new Date(startDate);
+      const regeneratedName = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+
       const { error } = await supabase
         .from('batches')
         .update({
           teacher: teacherValue,
+          batch_name: regeneratedName,
           schedule: selectedSchedule,
           room: selectedRoom,
           start_date: startDate,
