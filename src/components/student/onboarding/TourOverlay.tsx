@@ -214,13 +214,24 @@ export function TourOverlay() {
         )}
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={end}
-            className="text-xs text-muted-foreground hover:text-foreground px-1"
-          >
-            Skip
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={end}
+              className="text-xs text-muted-foreground hover:text-foreground px-1"
+            >
+              Skip
+            </button>
+            <span className="text-muted-foreground/40 text-xs">·</span>
+            <button
+              type="button"
+              onClick={markAllToursCompleted}
+              className="text-xs text-muted-foreground hover:text-foreground px-1"
+              title="Don't show any /practice tour again"
+            >
+              Skip all
+            </button>
+          </div>
           <div className="flex items-center gap-1.5">
             {stepIndex > 0 && (
               <button
