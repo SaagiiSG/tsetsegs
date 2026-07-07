@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/command';
 import {
   PlayCircle, BookOpen, Zap, Brain, BarChart3, Trophy, Languages, Armchair,
-  User, Settings, FileText, Calculator, Bookmark, Home, RotateCcw, Star,
+  User, Settings, FileText, Calculator, Bookmark, Home, RotateCcw, Star, Swords,
 } from 'lucide-react';
 import { usePracticeCommandSheet } from './PracticeCommandSheetContext';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
