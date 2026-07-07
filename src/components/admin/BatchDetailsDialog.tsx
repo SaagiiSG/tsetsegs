@@ -243,6 +243,11 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
                 <Save className="w-4 h-4 mr-2" />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
+
+              <Button onClick={openSmsDialog} variant="secondary" className="w-full">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Send intro SMS to all students
+              </Button>
             </div>
           </div>
 
@@ -260,6 +265,89 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
           </div>
         </div>
       </DialogContent>
+
+      {/* SMS Blast Dialog */}
+      <Dialog open={smsOpen} onOpenChange={(o) => !smsSending && setSmsOpen(o)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Send intro SMS to {studentCount} student{studentCount !== 1 ? 's' : ''}</DialogTitle>
+            <DialogDescription>
+              Sent via Twilio Messaging Service — routes across Mobicom, Unitel, Skytel, G-Mobile.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!smsResults && smsPreview && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Recipients</div>
+                  <div className="text-lg font-semibold">{studentCount}</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Segments / msg</div>
+                  <div className="text-lg font-semibold">{smsPreview.segments} <span className="text-xs font-normal text-muted-foreground">({smsPreview.encoding})</span></div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Est. cost (USD)</div>
+                  <div className="text-lg font-semibold">${(smsPreview.segments * studentCount * MN_SMS_PRICE_PER_SEGMENT).toFixed(2)}</div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Message preview</Label>
+                <ScrollArea className="h-48 rounded-md border p-3 mt-1">
+                  <pre className="whitespace-pre-wrap text-xs font-mono">{smsPreview.body}</pre>
+                </ScrollArea>
+              </div>
+            </div>
+          )}
+
+          {smsResults && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Sent</div>
+                  <div className="text-lg font-semibold text-green-600">{smsResults.sent}</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Failed</div>
+                  <div className="text-lg font-semibold text-red-600">{smsResults.failed}</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-muted-foreground text-xs">Skipped</div>
+                  <div className="text-lg font-semibold text-yellow-600">{smsResults.skipped}</div>
+                </div>
+              </div>
+              <ScrollArea className="h-64 rounded-md border">
+                <div className="divide-y">
+                  {smsResults.results?.map((r: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-2 text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {r.ok ? <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" /> : <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />}
+                        <span className="truncate">{r.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{r.phone}</span>
+                      </div>
+                      {!r.ok && <span className="text-xs text-red-600 truncate ml-2">{r.error}</span>}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          <DialogFooter>
+            {!smsResults ? (
+              <>
+                <Button variant="outline" onClick={() => setSmsOpen(false)} disabled={smsSending}>Cancel</Button>
+                <Button onClick={handleSendSms} disabled={smsSending}>
+                  {smsSending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</> : <><MessageSquare className="w-4 h-4 mr-2" />Send now</>}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setSmsOpen(false)}>Close</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
