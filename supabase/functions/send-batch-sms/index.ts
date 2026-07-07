@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const batchId: string | undefined = body?.batch_id;
     const dryRun: boolean = !!body?.dry_run;
+    const bodyOverride: string | undefined = typeof body?.body === 'string' && body.body.trim() ? body.body : undefined;
     if (!batchId || typeof batchId !== 'string') {
       return new Response(JSON.stringify({ error: 'batch_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
       id: s.id, name: s.name, raw: s.phone, phone: normalizePhone(s.phone),
     }));
 
-    const template = getBatchSmsTemplate(batch);
+    const template = bodyOverride ?? getBatchSmsTemplate(batch);
     const segments = estimateSegments(template);
     const valid = recipients.filter((r) => r.phone);
     const invalid = recipients.filter((r) => !r.phone);
