@@ -34,7 +34,7 @@ const SCHEDULES = [
   "Даваа-Пүрэв 14:10-16:10 (Math) + Баасан 14:10-16:10 (English - үнэгүй) [Holiday]",
 ];
 
-const ROOMS = ["1105", "905", "Online"];
+const ROOMS = ["1114 (11th floor)", "1105 (11th floor)", "1011 (10th floor)", "905 (9th floor)", "Online"];
 
 interface BatchDetailsDialogProps {
   batch: any;
