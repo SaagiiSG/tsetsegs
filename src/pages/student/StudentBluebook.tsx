@@ -16,7 +16,7 @@ import {
   FileText, AlertCircle, Trophy, Calculator, Filter,
   RotateCcw, Eye, Video
 } from 'lucide-react';
-import BluebookVideosTab from '@/components/student/bluebook/BluebookVideosTab';
+import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
 
 interface BluebookTest {
   id: string;
