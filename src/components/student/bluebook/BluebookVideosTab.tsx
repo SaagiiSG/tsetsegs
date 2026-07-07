@@ -84,6 +84,20 @@ export function BluebookVideosTab() {
 
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Pause any playing video when the selected video changes or the component unmounts.
+  useEffect(() => {
+    return () => {
+      const v = videoRef.current;
+      if (v) {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+      }
+    };
+  }, [currentVideoId]);
+
 
   const { data, isLoading, error } = useQuery<VideosPayload>({
     queryKey: ['bluebook-explanation-videos'],
