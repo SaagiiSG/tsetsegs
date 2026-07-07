@@ -104,6 +104,13 @@ export function ActiveChallengeHUD() {
   useEffect(() => saveAnchor(anchor), [anchor]);
   useEffect(() => saveCollapsed(collapsed), [collapsed]);
 
+  // Ensure the motion controls resolve to a visible state on mount / anchor change.
+  // Without this, `animate={dragAnim}` stays at the `initial` (y:-60, opacity:0)
+  // because controls only fire when `.start()` is called.
+  useEffect(() => {
+    dragAnim.start({ x: 0, y: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 30 } });
+  }, [dragAnim, anchor.side, anchor.align, collapsed]);
+
   // Allow external UI (e.g. Challenges page button) to reset the HUD position
   useEffect(() => {
     const onReset = () => {
