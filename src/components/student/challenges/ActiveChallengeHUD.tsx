@@ -283,15 +283,15 @@ export function ActiveChallengeHUD() {
             </motion.div>
           ) : (
             <motion.button
-              key="hud-puller"
+              key={`hud-puller-${align}`}
               type="button"
               initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              animate={{ y: 0, x: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.6 }}
+              drag
+              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+              dragElastic={{ top: 0, bottom: 0.6, left: 0.4, right: 0.4 }}
               dragMomentum={false}
               onDragEnd={onPullerDragEnd}
               onClick={() => setOpen(true)}
