@@ -18,7 +18,7 @@ function VideoWatermark({ text }: { text: string }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden z-10 select-none mix-blend-overlay"
+      className="pointer-events-none absolute inset-0 overflow-hidden z-10 select-none mix-blend-difference"
       style={{ userSelect: 'none' }}
     >
       {rows.map((_, r) =>
@@ -30,14 +30,56 @@ function VideoWatermark({ text }: { text: string }) {
               top: `${20 + r * 30}%`,
               left: `${15 + c * 55}%`,
               transform: 'rotate(-22deg)',
-              color: 'rgba(255,255,255,0.22)',
-              textShadow: '0 1px 2px rgba(0,0,0,0.55)',
+              color: 'rgba(255,255,255,0.35)',
+              textShadow: '0 0 2px rgba(0,0,0,0.9)',
             }}
           >
             {text}
           </span>
         )),
       )}
+    </div>
+  );
+}
+
+/** Dense, viewport-covering watermark shown while a video is playing. */
+function FullPageWatermark({ text }: { text: string }) {
+  const watermarks = useMemo(() => {
+    const items = [];
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 4; col++) {
+        items.push({
+          id: `${row}-${col}`,
+          top: `${8 + row * 16}%`,
+          left: `${5 + col * 25 + (row % 2) * 12}%`,
+          rotation: -30 + ((row + col) % 2) * 15,
+        });
+      }
+    }
+    return items;
+  }, []);
+
+  return (
+    <div
+      aria-hidden
+      className="fixed inset-0 pointer-events-none z-[100] overflow-hidden select-none mix-blend-difference"
+      style={{ userSelect: 'none' }}
+    >
+      {watermarks.map((pos) => (
+        <span
+          key={pos.id}
+          className="absolute whitespace-nowrap text-xs sm:text-sm font-semibold tracking-widest"
+          style={{
+            top: pos.top,
+            left: pos.left,
+            transform: `rotate(${pos.rotation}deg)`,
+            color: 'rgba(255,255,255,0.40)',
+            textShadow: '0 0 2px rgba(0,0,0,0.85)',
+          }}
+        >
+          {text}
+        </span>
+      ))}
     </div>
   );
 }
@@ -292,6 +334,8 @@ export function BluebookVideosTab() {
 
   return (
     <div className="space-y-3">
+      {watermarkText && <FullPageWatermark text={watermarkText} />}
+
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <Button
