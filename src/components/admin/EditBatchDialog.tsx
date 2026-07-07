@@ -37,7 +37,7 @@ const SCHEDULES = [
   "Даваа-Пүрэв 14:10-16:10 (Math) + Баасан 14:10-16:10 (English - үнэгүй) [Holiday]",
 ];
 
-const ROOMS = ["1105", "905", "Online"];
+const ROOMS = ["1114 (11th floor)", "1105 (11th floor)", "1011 (10th floor)", "905 (9th floor)", "Online"];
 
 const studentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -396,11 +396,16 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       const teacherValue = batch.course_type === 'IELTS'
         ? selectedTeachers.join(', ')
         : selectedTeacher;
-      
+
+      // Regenerate batch_name so teacher portal cards reflect the current teacher
+      const d = new Date(startDate);
+      const regeneratedName = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+
       const { error } = await supabase
         .from('batches')
         .update({
           teacher: teacherValue,
+          batch_name: regeneratedName,
           schedule: selectedSchedule,
           room: selectedRoom,
           start_date: startDate,

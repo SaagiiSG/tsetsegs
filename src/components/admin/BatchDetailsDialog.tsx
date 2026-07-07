@@ -34,7 +34,7 @@ const SCHEDULES = [
   "Даваа-Пүрэв 14:10-16:10 (Math) + Баасан 14:10-16:10 (English - үнэгүй) [Holiday]",
 ];
 
-const ROOMS = ["1105", "905", "Online"];
+const ROOMS = ["1114 (11th floor)", "1105 (11th floor)", "1011 (10th floor)", "905 (9th floor)", "Online"];
 
 interface BatchDetailsDialogProps {
   batch: any;
@@ -96,10 +96,15 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
         ? selectedTeachers.join(', ')
         : selectedTeacher;
 
+      // Regenerate batch_name to reflect current teacher (so teacher portal cards show the correct name)
+      const d = new Date(startDate);
+      const regeneratedName = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+
       const { error } = await supabase
         .from('batches')
         .update({
           teacher: teacherValue,
+          batch_name: regeneratedName,
           schedule: selectedSchedule,
           room: selectedRoom,
           start_date: startDate,
