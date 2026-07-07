@@ -423,7 +423,7 @@ export function ActiveChallengeHUD() {
             onClick={resetHud}
             data-tour="challenge-hud-reset"
             className={cn(
-              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[70]',
+              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[125]',
               'flex items-center gap-1.5 px-3 py-2 rounded-full',
               'bg-primary text-primary-foreground shadow-2xl shadow-primary/30',
               'border border-white/15 backdrop-blur-xl',
