@@ -31,11 +31,93 @@ const videoCorsHeaders = {
   ].join(", "),
 };
 
+interface StreamSource {
+  url: string;
+  contentType: string | null;
+  expiresAt: number;
+}
+
+const transcodeCache = new Map<string, StreamSource>();
+const TRANSCODE_MIN_TTL_MS = 60 * 1000;
+
+const TRANSCODE_PREFERENCE = ["22", "18", "37"]; // 720p, 360p, then 1080p if needed. All are H.264 MP4.
+
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...videoCorsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function appendSignatureParams(rawUrl: string, params: URLSearchParams): string {
+  const out = new URL(rawUrl);
+  const signature = params.get("sig") ?? params.get("signature");
+  if (signature && !out.searchParams.has("signature") && !out.searchParams.has("sig")) {
+    out.searchParams.set("signature", signature);
+  }
+  return out.toString();
+}
+
+function parseStreamMap(streamMap: string): StreamSource[] {
+  const candidates: Array<StreamSource & { itag: string }> = [];
+
+  for (const item of streamMap.split(",")) {
+    if (!item.trim()) continue;
+
+    // Modern Drive response: itag=22&url=...&type=video/mp4...
+    if (item.includes("url=")) {
+      const params = new URLSearchParams(item);
+      const itag = params.get("itag") ?? "";
+      const rawUrl = params.get("url");
+      const contentType = params.get("type");
+      if (!rawUrl || !itag) continue;
+      if (contentType && (!contentType.includes("video/mp4") || !contentType.includes("avc1"))) continue;
+
+      const sourceUrl = appendSignatureParams(rawUrl, params);
+      const expiresAt = Number(new URL(sourceUrl).searchParams.get("expire") ?? "0") * 1000;
+      candidates.push({ url: sourceUrl, contentType, expiresAt, itag });
+      continue;
+    }
+
+    // Legacy Drive response: 22|https://...videoplayback...
+    const pipeIdx = item.indexOf("|");
+    if (pipeIdx > 0) {
+      const itag = item.slice(0, pipeIdx);
+      const sourceUrl = item.slice(pipeIdx + 1);
+      const expiresAt = Number(new URL(sourceUrl).searchParams.get("expire") ?? "0") * 1000;
+      candidates.push({ url: sourceUrl, contentType: "video/mp4", expiresAt, itag });
+    }
+  }
+
+  return candidates.sort((a, b) => {
+    const ai = TRANSCODE_PREFERENCE.indexOf(a.itag);
+    const bi = TRANSCODE_PREFERENCE.indexOf(b.itag);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+}
+
+async function resolvePlayableSource(fileId: string): Promise<StreamSource | null> {
+  const cached = transcodeCache.get(fileId);
+  if (cached && cached.expiresAt - Date.now() > TRANSCODE_MIN_TTL_MS) return cached;
+
+  const infoUrl = `https://drive.google.com/get_video_info?docid=${encodeURIComponent(fileId)}&el=embedded&hl=en_US`;
+  const infoRes = await fetch(infoUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "text/plain,*/*",
+    },
+  });
+  if (!infoRes.ok) return null;
+
+  const info = new URLSearchParams(await infoRes.text());
+  if (info.get("status") !== "ok") return null;
+
+  const streamMap = info.get("url_encoded_fmt_stream_map") || info.get("fmt_stream_map") || "";
+  const [source] = parseStreamMap(streamMap);
+  if (!source?.url) return null;
+
+  transcodeCache.set(fileId, source);
+  return source;
 }
 
 async function hmacHex(secret: string, message: string): Promise<string> {
@@ -91,22 +173,38 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "bad signature" }, 401);
     }
 
+    // Drive's raw original files may be HEVC/H.265, which Chrome/Android often
+    // reports as MEDIA_ERR_SRC_NOT_SUPPORTED. Proxy Drive's browser transcode
+    // instead; it is still hidden behind this signed endpoint, but is H.264 MP4.
+    const playableSource = await resolvePlayableSource(id);
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     const driveKey = Deno.env.get("GOOGLE_DRIVE_API_KEY");
-    if (!lovableKey || !driveKey) throw new Error("Drive connector not configured");
+
+    const upstreamUrl = playableSource?.url
+      ?? `${GATEWAY}/files/${encodeURIComponent(id)}?alt=media`;
+
+    const upstreamHeaders: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0",
+    };
+    if (!playableSource) {
+      if (!lovableKey || !driveKey) throw new Error("Drive connector not configured");
+      upstreamHeaders.Authorization = `Bearer ${lovableKey}`;
+      upstreamHeaders["X-Connection-Api-Key"] = driveKey;
+    }
 
     // Forward the Range header so seeking / progressive playback works on mobile.
-    const upstreamHeaders: Record<string, string> = {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": driveKey,
-    };
     const range = req.headers.get("Range");
     if (range) upstreamHeaders["Range"] = range;
 
-    const upstream = await fetch(`${GATEWAY}/files/${encodeURIComponent(id)}?alt=media`, {
-      method: req.method,
-      headers: upstreamHeaders,
-    });
+    let upstream = await fetch(upstreamUrl, { method: req.method, headers: upstreamHeaders });
+
+    if ((upstream.status === 403 || upstream.status === 404) && playableSource) {
+      transcodeCache.delete(id);
+      const freshSource = await resolvePlayableSource(id);
+      if (freshSource?.url && freshSource.url !== playableSource.url) {
+        upstream = await fetch(freshSource.url, { method: req.method, headers: upstreamHeaders });
+      }
+    }
 
     if (!upstream.ok && upstream.status !== 206) {
       const body = await upstream.text();
@@ -128,6 +226,7 @@ Deno.serve(async (req) => {
       const v = upstream.headers.get(h);
       if (v) passHeaders.set(h, v);
     }
+    if (playableSource?.contentType) passHeaders.set("content-type", playableSource.contentType);
     if (!passHeaders.has("content-type")) passHeaders.set("content-type", "video/mp4");
     if (!passHeaders.has("accept-ranges")) passHeaders.set("accept-ranges", "bytes");
 
@@ -142,7 +241,7 @@ Deno.serve(async (req) => {
     // Force inline so the browser plays instead of downloading.
     passHeaders.set("content-disposition", "inline");
 
-    return new Response(upstream.body, {
+    return new Response(req.method === "HEAD" ? null : upstream.body, {
       status: upstream.status,
       headers: passHeaders,
     });
