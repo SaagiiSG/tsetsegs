@@ -8,6 +8,36 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive/drive/v3";
 
+const videoCorsHeaders = {
+  ...corsHeaders,
+  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+  "Access-Control-Allow-Headers": [
+    "authorization",
+    "x-client-info",
+    "apikey",
+    "content-type",
+    "range",
+    "if-none-match",
+    "if-modified-since",
+  ].join(", "),
+  "Access-Control-Expose-Headers": [
+    "Accept-Ranges",
+    "Content-Range",
+    "Content-Length",
+    "Content-Type",
+    "ETag",
+    "Last-Modified",
+    "Cache-Control",
+  ].join(", "),
+};
+
+function jsonResponse(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...videoCorsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -31,7 +61,11 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: videoCorsHeaders });
+  }
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return jsonResponse({ error: "method not allowed" }, 405);
   }
 
   try {
@@ -41,18 +75,12 @@ Deno.serve(async (req) => {
     const sig = url.searchParams.get("sig");
 
     if (!id || !exp || !sig) {
-      return new Response(JSON.stringify({ error: "missing params" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "missing params" }, 400);
     }
 
     const expMs = Number(exp);
     if (!Number.isFinite(expMs) || Date.now() > expMs) {
-      return new Response(JSON.stringify({ error: "link expired" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "link expired" }, 401);
     }
 
     const signingSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -60,10 +88,7 @@ Deno.serve(async (req) => {
 
     const expected = await hmacHex(signingSecret, `${id}.${exp}`);
     if (!timingSafeEqual(expected, sig)) {
-      return new Response(JSON.stringify({ error: "bad signature" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "bad signature" }, 401);
     }
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
@@ -79,28 +104,40 @@ Deno.serve(async (req) => {
     if (range) upstreamHeaders["Range"] = range;
 
     const upstream = await fetch(`${GATEWAY}/files/${encodeURIComponent(id)}?alt=media`, {
-      method: "GET",
+      method: req.method,
       headers: upstreamHeaders,
     });
 
     if (!upstream.ok && upstream.status !== 206) {
       const body = await upstream.text();
       console.error(`Drive stream failed [${upstream.status}]: ${body}`);
-      return new Response(
-        JSON.stringify({ error: "upstream", status: upstream.status, details: body }),
-        { status: upstream.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ error: "upstream", status: upstream.status, details: body }, upstream.status);
     }
 
     // Pass through streaming headers so the browser can seek.
-    const passHeaders = new Headers({ ...corsHeaders });
-    const forward = ["content-type", "content-length", "content-range", "accept-ranges", "last-modified", "etag"];
+    const passHeaders = new Headers({ ...videoCorsHeaders });
+    const forward = [
+      "content-type",
+      "content-length",
+      "content-range",
+      "accept-ranges",
+      "last-modified",
+      "etag",
+    ];
     for (const h of forward) {
       const v = upstream.headers.get(h);
       if (v) passHeaders.set(h, v);
     }
     if (!passHeaders.has("content-type")) passHeaders.set("content-type", "video/mp4");
     if (!passHeaders.has("accept-ranges")) passHeaders.set("accept-ranges", "bytes");
+
+    // If the upstream honors a Range request but omits Accept-Ranges, keep the
+    // exact upstream Content-Range/Length and only add the seekability marker.
+    const contentRange = passHeaders.get("content-range");
+    if (upstream.status === 206 && !contentRange) {
+      console.warn("Range request returned 206 without Content-Range");
+    }
+
     passHeaders.set("cache-control", "private, max-age=3600");
     // Force inline so the browser plays instead of downloading.
     passHeaders.set("content-disposition", "inline");
@@ -111,9 +148,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("stream-bluebook-video error:", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });
