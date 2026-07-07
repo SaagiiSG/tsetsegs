@@ -145,14 +145,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const projectRef = supabaseUrl.replace(/^https?:\/\//, "").split(".")[0];
+    if (!projectRef) throw new Error("SUPABASE_URL not set");
+
     if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
       return new Response(JSON.stringify(cache.payload), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const payload = await buildTree();
+    const payload = await buildTree(projectRef);
     cache = { at: Date.now(), payload };
+
 
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
