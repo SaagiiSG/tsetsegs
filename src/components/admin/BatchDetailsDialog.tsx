@@ -119,6 +119,34 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const openSmsDialog = () => {
+    const body = getBatchSmsTemplate(batch);
+    const { segments, encoding } = estimateSegments(body);
+    setSmsPreview({ segments, encoding, body });
+    setSmsResults(null);
+    setSmsOpen(true);
+  };
+
+  const handleSendSms = async () => {
+    setSmsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-batch-sms', {
+        body: { batch_id: batch.id },
+      });
+      if (error) throw error;
+      setSmsResults(data);
+      toast({
+        title: 'SMS blast complete',
+        description: `Sent ${data.sent} · Failed ${data.failed} · Skipped ${data.skipped}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Failed to send SMS', description: e.message, variant: 'destructive' });
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 overflow-hidden">
