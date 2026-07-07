@@ -404,7 +404,8 @@ export function BluebookVideosTab() {
                   controls
                   playsInline
                   preload="metadata"
-                  controlsList="nodownload"
+                  controlsList="nodownload nofullscreen"
+                  disablePictureInPicture
                   onContextMenu={(e) => e.preventDefault()}
                 />
               ) : (
