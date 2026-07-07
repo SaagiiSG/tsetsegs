@@ -48,22 +48,27 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Admin auth check
+    // Admin auth check — use getClaims (signing-keys compatible)
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (userErr || !userData?.user) {
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error('getClaims failed:', claimsErr)
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
+    const userId = claimsData.claims.sub as string
     const { data: adminRole } = await supabase.from('user_roles')
-      .select('role').eq('user_id', userData.user.id).eq('role', 'admin').maybeSingle()
+      .select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle()
     if (!adminRole) {
       return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
     let sprintId = body.sprintId
+
     let sprintNumber: number | null = null
     let seasonNumber: number | null = null
 
