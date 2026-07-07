@@ -18,7 +18,7 @@ const empty = (): SetCounts => ({ total: 0, completed: 0, pct: 0 });
 
 async function countSet(
   studentAccountId: string,
-  questionSet: string | { exclude: string[] },
+  questionSet: string | { exclude: string[]; subject?: 'math' | 'english' },
 ): Promise<SetCounts> {
   // Collect ALL matching question ids (Supabase caps rows at ~1000 per request),
   // so we page through until we have everything.
@@ -35,8 +35,10 @@ async function countSet(
     if (typeof questionSet === 'string') {
       q = q.eq('question_set', questionSet);
     } else {
-      // "CB" bucket: every active question EXCEPT the two standalone sets.
+      // "CB" bucket: every active question EXCEPT the two standalone sets,
+      // optionally scoped to a single subject (math-only for the CB tile).
       q = q.not('question_set', 'in', `(${questionSet.exclude.map((s) => `"${s}"`).join(',')})`);
+      if (questionSet.subject) q = q.eq('subject', questionSet.subject);
     }
     const { data, error } = await q;
     if (error || !data) break;
