@@ -302,10 +302,14 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Message preview</Label>
-                <ScrollArea className="h-48 rounded-md border p-3 mt-1">
-                  <pre className="whitespace-pre-wrap text-xs font-mono">{smsPreview.body}</pre>
-                </ScrollArea>
+                <Label className="text-xs">Message (editable — this exact text will be sent)</Label>
+                <textarea
+                  value={smsPreview.body}
+                  onChange={(e) => updateSmsBody(e.target.value)}
+                  rows={10}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">{smsPreview.body.length} chars · {smsPreview.encoding}</p>
               </div>
             </div>
           )}
