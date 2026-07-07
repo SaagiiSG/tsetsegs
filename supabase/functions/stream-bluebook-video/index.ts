@@ -92,38 +92,25 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "bad signature" }, 401);
     }
 
-    // Drive's raw original files may be HEVC/H.265, which Chrome/Android often
-    // reports as MEDIA_ERR_SRC_NOT_SUPPORTED. Proxy Drive's browser transcode
-    // instead; it is still hidden behind this signed endpoint, but is H.264 MP4.
-    const playableSource = await resolvePlayableSource(id);
+    // Proxy the original file via the authenticated Drive API. Teachers upload
+    // H.264 MP4s directly, so no transcode is needed — and Drive's public
+    // "get_video_info" preview endpoint returns short/broken streams that most
+    // browsers reject with MEDIA_ERR_SRC_NOT_SUPPORTED.
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     const driveKey = Deno.env.get("GOOGLE_DRIVE_API_KEY");
+    if (!lovableKey || !driveKey) throw new Error("Drive connector not configured");
 
-    const upstreamUrl = playableSource?.url
-      ?? `${GATEWAY}/files/${encodeURIComponent(id)}?alt=media`;
-
+    const upstreamUrl = `${GATEWAY}/files/${encodeURIComponent(id)}?alt=media`;
     const upstreamHeaders: Record<string, string> = {
-      "User-Agent": "Mozilla/5.0",
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": driveKey,
     };
-    if (!playableSource) {
-      if (!lovableKey || !driveKey) throw new Error("Drive connector not configured");
-      upstreamHeaders.Authorization = `Bearer ${lovableKey}`;
-      upstreamHeaders["X-Connection-Api-Key"] = driveKey;
-    }
 
     // Forward the Range header so seeking / progressive playback works on mobile.
     const range = req.headers.get("Range");
     if (range) upstreamHeaders["Range"] = range;
 
-    let upstream = await fetch(upstreamUrl, { method: req.method, headers: upstreamHeaders });
-
-    if ((upstream.status === 403 || upstream.status === 404) && playableSource) {
-      transcodeCache.delete(id);
-      const freshSource = await resolvePlayableSource(id);
-      if (freshSource?.url && freshSource.url !== playableSource.url) {
-        upstream = await fetch(freshSource.url, { method: req.method, headers: upstreamHeaders });
-      }
-    }
+    const upstream = await fetch(upstreamUrl, { method: req.method, headers: upstreamHeaders });
 
     if (!upstream.ok && upstream.status !== 206) {
       const body = await upstream.text();
@@ -145,9 +132,14 @@ Deno.serve(async (req) => {
       const v = upstream.headers.get(h);
       if (v) passHeaders.set(h, v);
     }
-    if (playableSource?.contentType) passHeaders.set("content-type", playableSource.contentType);
-    if (!passHeaders.has("content-type")) passHeaders.set("content-type", "video/mp4");
+    // Drive often returns application/octet-stream; force video/mp4 so the
+    // <video> element actually attempts to decode instead of downloading.
+    const upstreamCT = passHeaders.get("content-type") ?? "";
+    if (!upstreamCT.startsWith("video/") && !upstreamCT.startsWith("audio/")) {
+      passHeaders.set("content-type", "video/mp4");
+    }
     if (!passHeaders.has("accept-ranges")) passHeaders.set("accept-ranges", "bytes");
+
 
     // If the upstream honors a Range request but omits Accept-Ranges, keep the
     // exact upstream Content-Range/Length and only add the seekability marker.
