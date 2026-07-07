@@ -59,6 +59,7 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
   const [smsSending, setSmsSending] = useState(false);
   const [smsResults, setSmsResults] = useState<any>(null);
   const [smsPreview, setSmsPreview] = useState<{ segments: number; encoding: string; body: string } | null>(null);
+  const [inlineSmsBody, setInlineSmsBody] = useState('');
 
   useEffect(() => {
     if (open && batch) {
@@ -71,6 +72,7 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
       setSelectedRoom(batch.room || '');
       setStartDate(batch.start_date || '');
       setFbGroupLink(batch.fb_group_link || '');
+      setInlineSmsBody(getBatchSmsTemplate(batch));
     }
   }, [open, batch]);
 
