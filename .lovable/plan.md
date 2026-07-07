@@ -1,23 +1,55 @@
-I’ll fix the video stream endpoint so native HTML5 video can read metadata, buffer, and seek reliably.
+# HUD: free drag + collapse to any of 4 edges
 
-Plan:
-1. Update `stream-bluebook-video` CORS responses
-   - Allow `GET`, `HEAD`, and `OPTIONS`.
-   - Allow request headers needed by video elements, especially `Range`.
-   - Expose playback headers back to the browser: `Content-Range`, `Accept-Ranges`, `Content-Length`, `Content-Type`, `ETag`, and `Last-Modified`.
-   - Apply the same headers to success and error responses.
+Rework the Active Challenge HUD so it can be dragged anywhere on screen, and when collapsed it docks to the nearest edge (top / bottom / left / right) as a small puller tab oriented for that edge.
 
-2. Harden byte-range handling
-   - Forward the browser `Range` request upstream.
-   - Preserve valid upstream `206 Partial Content` responses with exact `Content-Range` and partial `Content-Length`.
-   - Return `206` for partial responses and `200` for full responses.
-   - Support `HEAD` so browsers can probe metadata without downloading the full file.
-   - Normalize/fallback missing playback headers so the video player can display duration when possible.
+## Behavior
 
-3. Fix environment URL generation if needed
-   - Ensure `list-bluebook-videos` generates stream URLs against the current backend functions origin instead of a hardcoded backend URL pattern, so preview/custom domains don’t hit CORS or auth edge cases.
+**When open (full pill):**
+- Fully draggable in 2D across the viewport (not constrained to top edge).
+- Position clamped inside the viewport with edge padding so it never leaves the screen.
+- Swipe/flick toward the nearest edge → collapses to a puller docked to that edge at the drop location.
+- Tap × or double-tap grabber → collapses to nearest edge (based on current position).
+- Position persisted (edge + offset along that edge) in localStorage.
 
-4. Verify with targeted checks
-   - Call the stream endpoint with `Range: bytes=0-1` and confirm `206`, `Content-Range`, `Content-Length: 2`, and `Accept-Ranges: bytes`.
-   - Confirm preflight/OPTIONS includes the required CORS headers.
-   - Confirm the video element receives metadata and can show duration.
+**When collapsed (puller tab):**
+- Docks flush to one of 4 edges: top / bottom / left / right.
+- Puller shape adapts to edge:
+  - top → rounded-bottom tab, horizontal handle bar, pull DOWN to open
+  - bottom → rounded-top tab, horizontal handle bar, pull UP to open
+  - left → rounded-right tab, vertical handle bar, pull RIGHT to open
+  - right → rounded-left tab, vertical handle bar, pull LEFT to open
+- Draggable along its edge to reposition (slides left/right for top/bottom edges, up/down for left/right edges).
+- Pull perpendicular to the edge (past a small threshold) OR tap → expands back to full HUD at the docked location.
+- Small pulse/glow animation to hint interactivity.
+
+## Snap logic
+
+On drag end (open state):
+- Compute center of HUD relative to viewport.
+- Distance to each of the 4 edges → nearest edge wins.
+- If distance to any edge is below a "dock threshold" (e.g. 60px) OR flick velocity points toward that edge → collapse to that edge.
+- Otherwise stay open at the dropped (clamped) position.
+
+On drag end (puller state):
+- If perpendicular offset > threshold or velocity toward interior → expand.
+- Else re-snap along the same edge at the new parallel offset.
+
+## Persistence
+
+Single localStorage key `challenge-hud-state-v2` storing:
+```
+{ open: boolean, edge: 'top'|'bottom'|'left'|'right', offset: number, openX: number, openY: number }
+```
+- `edge` + `offset` used when collapsed.
+- `openX/openY` used when open (as pixel offsets from top-left, clamped on load in case viewport shrank).
+- `challenge-hud:reset` event resets to `{ open: true, edge: 'top', offset: 0.5, openX: centered, openY: 12 }`.
+
+## Files
+
+- `src/components/student/challenges/ActiveChallengeHUD.tsx` — rewrite the container/positioning + puller variants. Content of the open pill (progress bar, opponent line, Play/View button, leaderboard sheet trigger) stays the same. `ChallengeLeaderboardSheet` untouched.
+
+## Notes
+
+- Use framer-motion `drag` with `dragConstraints` set to a ref of a full-viewport bounding box, not `{top:0,bottom:0}`, so the HUD truly moves.
+- Clamp position on window resize (listener) so the HUD stays visible after rotation.
+- Keep z-index at 120 (above bluebook watermark).

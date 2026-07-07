@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, PanInfo } from 'framer-motion';
 import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, X } from 'lucide-react';
@@ -8,36 +8,58 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-const OPEN_KEY = 'challenge-hud-open-v1';
-const ALIGN_KEY = 'challenge-hud-align-v1';
-const TOP_OFFSET = 12; // clear of top edge
+type Edge = 'top' | 'bottom' | 'left' | 'right';
+interface HUDState {
+  open: boolean;
+  edge: Edge;
+  /** 0..1 offset along the edge (used when collapsed) */
+  offset: number;
+  /** pixel position when open */
+  openX: number;
+  openY: number;
+}
 
-type Align = 'start' | 'center' | 'end';
+const STATE_KEY = 'challenge-hud-state-v2';
+const EDGE_PAD = 12;
+const DOCK_THRESHOLD = 60; // px from edge → auto-dock on drop
+const PULL_THRESHOLD = 28; // px perpendicular pull → expand puller
+const VEL_THRESHOLD = 350;
 
-function loadOpen(): boolean {
+const defaultState = (): HUDState => ({
+  open: true,
+  edge: 'top',
+  offset: 0.5,
+  openX: typeof window !== 'undefined' ? Math.max(EDGE_PAD, window.innerWidth / 2 - 180) : 200,
+  openY: EDGE_PAD,
+});
+
+function loadState(): HUDState {
   try {
-    const raw = localStorage.getItem(OPEN_KEY);
-    if (raw === null) return true; // default: open
-    return raw === '1';
-  } catch { return true; }
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return defaultState();
+    const p = JSON.parse(raw) as Partial<HUDState>;
+    return { ...defaultState(), ...p };
+  } catch { return defaultState(); }
 }
-function saveOpen(v: boolean) {
-  try { localStorage.setItem(OPEN_KEY, v ? '1' : '0'); } catch { /* noop */ }
+function saveState(s: HUDState) {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch { /* noop */ }
 }
-function loadAlign(): Align {
-  try {
-    const raw = localStorage.getItem(ALIGN_KEY);
-    if (raw === 'start' || raw === 'end' || raw === 'center') return raw;
-  } catch { /* noop */ }
-  return 'center';
-}
-function saveAlign(a: Align) {
-  try { localStorage.setItem(ALIGN_KEY, a); } catch { /* noop */ }
-}
-function alignStyle(a: Align): React.CSSProperties {
-  if (a === 'start') return { left: 12, right: 'auto', transform: 'none' };
-  if (a === 'end') return { right: 12, left: 'auto', transform: 'none' };
-  return { left: '50%', right: 'auto', transform: 'translateX(-50%)' };
+
+function clamp(v: number, min: number, max: number) { return Math.min(Math.max(v, min), max); }
+
+function nearestEdge(cx: number, cy: number, vw: number, vh: number): { edge: Edge; dist: number } {
+  const d = {
+    top: cy,
+    bottom: vh - cy,
+    left: cx,
+    right: vw - cx,
+  } as const;
+  let best: Edge = 'top';
+  let bestDist = d.top;
+  (['bottom', 'left', 'right'] as Edge[]).forEach((e) => {
+    if (d[e] < bestDist) { best = e; bestDist = d[e]; }
+  });
+  return { edge: best, dist: bestDist };
 }
 
 export function ActiveChallengeHUD() {
@@ -46,34 +68,42 @@ export function ActiveChallengeHUD() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [open, setOpen] = useState<boolean>(() => loadOpen());
-  const [align, setAlign] = useState<Align>(() => loadAlign());
+  const [state, setState] = useState<HUDState>(() => loadState());
+  const [viewport, setViewport] = useState(() => ({
+    w: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    h: typeof window !== 'undefined' ? window.innerHeight : 768,
+  }));
+  const openEl = useRef<HTMLDivElement | null>(null);
+  const pullerEl = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => saveOpen(open), [open]);
-  useEffect(() => saveAlign(align), [align]);
+  useEffect(() => saveState(state), [state]);
 
-  // Allow external UI (Challenges page button) to reset/open the HUD
+  // Track viewport
   useEffect(() => {
-    const onReset = () => { setOpen(true); setAlign('center'); };
+    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Reset event
+  useEffect(() => {
+    const onReset = () => setState(defaultState());
     window.addEventListener('challenge-hud:reset', onReset);
     return () => window.removeEventListener('challenge-hud:reset', onReset);
   }, []);
 
   const onPlayScreen = challenge ? pathname === `/practice/challenges/${challenge.id}/play` : false;
 
-  // Auto-navigate to results when the active challenge flips to finished
+  // Auto-navigate to results
   const finishedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!challenge) return;
     if ((challenge.status === 'finished' || challenge.status === 'cancelled') && finishedRef.current !== challenge.id) {
       finishedRef.current = challenge.id;
-      if (challenge.status === 'finished') {
-        navigate(`/practice/challenges/${challenge.id}/results`);
-      }
+      if (challenge.status === 'finished') navigate(`/practice/challenges/${challenge.id}/results`);
     }
   }, [challenge?.status, challenge?.id, navigate]);
 
-  // Time-sprint tick
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!challenge || challenge.format !== 'time_sprint' || !challenge.started_at) return;
@@ -82,6 +112,21 @@ export function ActiveChallengeHUD() {
   }, [challenge?.format, challenge?.started_at, challenge?.id]);
 
   const visible = !!challenge && !onPlayScreen;
+
+  // Clamp open position when viewport changes / on mount
+  useLayoutEffect(() => {
+    if (!state.open) return;
+    const el = openEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const maxX = Math.max(EDGE_PAD, viewport.w - rect.width - EDGE_PAD);
+    const maxY = Math.max(EDGE_PAD, viewport.h - rect.height - EDGE_PAD);
+    const nx = clamp(state.openX, EDGE_PAD, maxX);
+    const ny = clamp(state.openY, EDGE_PAD, maxY);
+    if (nx !== state.openX || ny !== state.openY) {
+      setState((s) => ({ ...s, openX: nx, openY: ny }));
+    }
+  }, [viewport.w, viewport.h, state.open]);
 
   const { targetText, progressPct } = useMemo(() => {
     if (!challenge) return { targetText: '', progressPct: 0 };
@@ -106,6 +151,104 @@ export function ActiveChallengeHUD() {
     }
     return { targetText: '', progressPct: 0 };
   }, [challenge, myPart, now]);
+
+  // Puller pixel position based on edge + offset
+  const pullerPos = useCallback((): React.CSSProperties => {
+    const { edge, offset } = state;
+    if (edge === 'top' || edge === 'bottom') {
+      const x = clamp(offset * viewport.w, EDGE_PAD + 40, viewport.w - EDGE_PAD - 40);
+      const s: React.CSSProperties = { left: x, transform: 'translateX(-50%)' };
+      if (edge === 'top') s.top = 0;
+      else s.bottom = 0;
+      return s;
+    }
+    const y = clamp(offset * viewport.h, EDGE_PAD + 40, viewport.h - EDGE_PAD - 40);
+    const s: React.CSSProperties = { top: y, transform: 'translateY(-50%)' };
+    if (edge === 'left') s.left = 0;
+    else s.right = 0;
+    return s;
+  }, [state, viewport]);
+
+  const collapseToEdge = useCallback((cx: number, cy: number, edge?: Edge) => {
+    const { edge: nearest } = nearestEdge(cx, cy, viewport.w, viewport.h);
+    const finalEdge: Edge = edge ?? nearest;
+    const offset = (finalEdge === 'top' || finalEdge === 'bottom')
+      ? clamp(cx / viewport.w, 0.05, 0.95)
+      : clamp(cy / viewport.h, 0.05, 0.95);
+    setState((s) => ({ ...s, open: false, edge: finalEdge, offset }));
+  }, [viewport]);
+
+  const onOpenDragEnd = useCallback((_: unknown, info: PanInfo) => {
+    const el = openEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    // Flick detection toward an edge
+    const { vx, vy } = { vx: info.velocity.x, vy: info.velocity.y };
+    const flickEdge: Edge | null =
+      Math.abs(vy) > VEL_THRESHOLD && Math.abs(vy) > Math.abs(vx)
+        ? (vy < 0 ? 'top' : 'bottom')
+        : Math.abs(vx) > VEL_THRESHOLD
+          ? (vx < 0 ? 'left' : 'right')
+          : null;
+
+    const { edge, dist } = nearestEdge(cx, cy, viewport.w, viewport.h);
+    if (flickEdge) return collapseToEdge(cx, cy, flickEdge);
+    if (dist < DOCK_THRESHOLD) return collapseToEdge(cx, cy, edge);
+
+    // Otherwise: clamp and stay open at new position
+    const maxX = Math.max(EDGE_PAD, viewport.w - rect.width - EDGE_PAD);
+    const maxY = Math.max(EDGE_PAD, viewport.h - rect.height - EDGE_PAD);
+    setState((s) => ({
+      ...s,
+      openX: clamp(rect.left, EDGE_PAD, maxX),
+      openY: clamp(rect.top, EDGE_PAD, maxY),
+    }));
+  }, [viewport, collapseToEdge]);
+
+  const onPullerDragEnd = useCallback((_: unknown, info: PanInfo) => {
+    const el = pullerEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const { edge } = state;
+
+    // Perpendicular pull → open
+    const perpendicular =
+      edge === 'top' ? info.offset.y :
+      edge === 'bottom' ? -info.offset.y :
+      edge === 'left' ? info.offset.x :
+      -info.offset.x;
+    const perpendicularV =
+      edge === 'top' ? info.velocity.y :
+      edge === 'bottom' ? -info.velocity.y :
+      edge === 'left' ? info.velocity.x :
+      -info.velocity.x;
+
+    if (perpendicular > PULL_THRESHOLD || perpendicularV > VEL_THRESHOLD) {
+      // open at the puller location, positioned so the pill roughly appears from that edge
+      let openX = state.openX;
+      let openY = state.openY;
+      const est = { w: 320, h: 60 };
+      if (edge === 'top') { openX = cx - est.w / 2; openY = EDGE_PAD; }
+      else if (edge === 'bottom') { openX = cx - est.w / 2; openY = viewport.h - est.h - EDGE_PAD; }
+      else if (edge === 'left') { openX = EDGE_PAD; openY = cy - est.h / 2; }
+      else { openX = viewport.w - est.w - EDGE_PAD; openY = cy - est.h / 2; }
+      openX = clamp(openX, EDGE_PAD, viewport.w - est.w - EDGE_PAD);
+      openY = clamp(openY, EDGE_PAD, viewport.h - est.h - EDGE_PAD);
+      setState((s) => ({ ...s, open: true, openX, openY }));
+      return;
+    }
+
+    // Otherwise re-snap along the same edge at the parallel offset
+    const offset = (edge === 'top' || edge === 'bottom')
+      ? clamp(cx / viewport.w, 0.05, 0.95)
+      : clamp(cy / viewport.h, 0.05, 0.95);
+    setState((s) => ({ ...s, offset }));
+  }, [state, viewport]);
 
   if (!visible || !challenge) return null;
 
@@ -166,153 +309,158 @@ export function ActiveChallengeHUD() {
     else setSheetOpen(true);
   };
 
-  // Snap to the nearest of 3 top slots based on the final drop x-position
-  const snapAlignFromDrop = (clientX: number): Align => {
-    const vw = window.innerWidth;
-    const r = clientX / vw;
-    if (r < 0.33) return 'start';
-    if (r > 0.66) return 'end';
-    return 'center';
+  const collapseFromButton = () => {
+    const el = openEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    collapseToEdge(rect.left + rect.width / 2, rect.top + rect.height / 2);
   };
 
-  // iOS-style: puller → drag DOWN to open, drag SIDEWAYS to snap horizontally.
-  const onPullerDragEnd = (_: unknown, info: PanInfo) => {
-    const openIntent = info.offset.y > 20 || info.velocity.y > 200;
-    const horizontalIntent = Math.abs(info.offset.x) > 40 && Math.abs(info.offset.x) > Math.abs(info.offset.y);
-    if (horizontalIntent) setAlign(snapAlignFromDrop(info.point.x));
-    else if (openIntent) setOpen(true);
-  };
-  // HUD open → drag UP to close, drag SIDEWAYS to snap horizontally.
-  const onHudDragEnd = (_: unknown, info: PanInfo) => {
-    const closeIntent = info.offset.y < -20 || info.velocity.y < -200;
-    const horizontalIntent = Math.abs(info.offset.x) > 40 && Math.abs(info.offset.x) > Math.abs(info.offset.y);
-    if (horizontalIntent) setAlign(snapAlignFromDrop(info.point.x));
-    else if (closeIntent) setOpen(false);
-  };
+  // Puller variants per edge
+  const pullerShape = (() => {
+    const { edge } = state;
+    const base = 'flex items-center justify-center bg-gradient-to-b from-primary/95 to-primary/85 text-primary-foreground shadow-lg shadow-primary/25 backdrop-blur-xl border border-white/15 cursor-grab active:cursor-grabbing';
+    if (edge === 'top') return `${base} flex-col gap-1 px-6 py-1.5 rounded-b-2xl border-t-0`;
+    if (edge === 'bottom') return `${base} flex-col-reverse gap-1 px-6 py-1.5 rounded-t-2xl border-b-0`;
+    if (edge === 'left') return `${base} flex-row gap-1 px-1.5 py-6 rounded-r-2xl border-l-0`;
+    return `${base} flex-row-reverse gap-1 px-1.5 py-6 rounded-l-2xl border-r-0`;
+  })();
+
+  const handleBar = (state.edge === 'top' || state.edge === 'bottom')
+    ? <div className="w-10 h-1 rounded-full bg-white/60" />
+    : <div className="h-10 w-1 rounded-full bg-white/60" />;
+
+  const pullerLabel = (
+    <div className={cn(
+      'flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-90',
+      (state.edge === 'left' || state.edge === 'right') && 'flex-col gap-0.5 [writing-mode:vertical-rl]',
+    )}>
+      <Sword className="w-2.5 h-2.5" />
+      <span>Live</span>
+    </div>
+  );
 
   return (
     <>
-      <div
-        className="fixed select-none"
-        style={{
-          top: `calc(env(safe-area-inset-top,0px) + ${TOP_OFFSET}px)`,
-          zIndex: 120,
-          touchAction: 'none',
-          ...alignStyle(align),
-        }}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          {open ? (
-            <motion.div
-              key={`hud-open-${align}`}
-              initial={{ y: -40, opacity: 0 }}
-              animate={{ y: 0, x: 0, opacity: 1 }}
-              exit={{ y: -40, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              drag
-              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-              dragElastic={{ top: 0.6, bottom: 0, left: 0.4, right: 0.4 }}
-              dragMomentum={false}
-              onDragEnd={onHudDragEnd}
-              data-tour="challenge-hud"
-              className={cn(
-                'group flex items-center gap-1.5 md:gap-2 pl-2 md:pl-3 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full',
-                'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
-                'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
-                'max-w-[92vw] cursor-grab active:cursor-grabbing',
-              )}
-            >
-              {/* Grabber pill (iOS style) */}
-              <div className="flex items-center justify-center pr-1.5 border-r border-white/15">
-                <div className="w-1 h-4 rounded-full bg-white/40" />
-              </div>
+      <AnimatePresence mode="wait" initial={false}>
+        {state.open ? (
+          <motion.div
+            key="hud-open"
+            ref={openEl}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            drag
+            dragMomentum={false}
+            dragElastic={0.15}
+            onDragEnd={onOpenDragEnd}
+            data-tour="challenge-hud"
+            style={{
+              position: 'fixed',
+              top: state.openY,
+              left: state.openX,
+              zIndex: 120,
+              touchAction: 'none',
+            }}
+            className={cn(
+              'group flex items-center gap-1.5 md:gap-2 pl-2 md:pl-3 pr-1 md:pr-1.5 py-1 md:py-1.5 rounded-full select-none',
+              'bg-gradient-to-r from-primary/95 to-primary text-primary-foreground',
+              'shadow-2xl shadow-primary/30 backdrop-blur-xl border border-white/15',
+              'max-w-[92vw] cursor-grab active:cursor-grabbing',
+            )}
+          >
+            {/* Grabber */}
+            <div className="flex items-center justify-center pr-1.5 border-r border-white/15">
+              <div className="w-1 h-4 rounded-full bg-white/40" />
+            </div>
 
-              <button
-                type="button"
-                onClick={handlePrimaryClick}
-                aria-label="View active challenge"
-                className="flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
-              >
-                <span className="relative flex items-center justify-center">
-                  <motion.span
-                    aria-hidden
-                    className="absolute inset-0 rounded-full bg-white/25"
-                    animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
-                  />
-                  <Sword className="w-4 h-4 relative" />
-                </span>
-
-                <div className="flex flex-col items-start min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
-                    <SubjectIcon className="w-3 h-3 hidden md:inline" />
-                    {participantsCount > 2 && (
-                      <span className="inline-flex items-center gap-0.5 opacity-90">
-                        <Users className="w-3 h-3" />
-                        {participantsCount}
-                      </span>
-                    )}
-                    <span className="tabular-nums opacity-90">{targetText}</span>
-                  </div>
-                  {opponentLine}
-                  <div className="mt-1 h-0.5 md:h-1 w-24 md:w-56 rounded-full bg-white/20 overflow-hidden">
-                    <motion.div
-                      className="h-full bg-white rounded-full"
-                      initial={false}
-                      animate={{ width: `${progressPct}%` }}
-                      transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                    />
-                  </div>
-                </div>
-
-                <span className="ml-0.5 md:ml-1 inline-flex items-center gap-1 pl-1.5 md:pl-2 pr-2 md:pr-3 py-1 md:py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
-                  <Trophy className="w-3 h-3" />
-                  <span className="hidden md:inline">{isFixedSet ? 'Play' : 'View'}</span>
-                </span>
-              </button>
-
-              {/* Close (iOS-style ×) */}
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Hide HUD"
-                className="p-1.5 rounded-full hover:bg-white/15 active:bg-white/25"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </motion.div>
-          ) : (
-            <motion.button
-              key={`hud-puller-${align}`}
+            <button
               type="button"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, x: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              drag
-              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-              dragElastic={{ top: 0, bottom: 0.6, left: 0.4, right: 0.4 }}
-              dragMomentum={false}
-              onDragEnd={onPullerDragEnd}
-              onClick={() => setOpen(true)}
-              aria-label="Show active challenge HUD (pull down to expand)"
-              data-tour="challenge-hud"
-              className={cn(
-                'flex flex-col items-center gap-1 px-6 py-1.5 rounded-b-2xl rounded-t-none',
-                'bg-gradient-to-b from-primary/95 to-primary/85 text-primary-foreground',
-                'shadow-lg shadow-primary/25 backdrop-blur-xl border border-t-0 border-white/15',
-                'cursor-grab active:cursor-grabbing',
-              )}
+              onClick={handlePrimaryClick}
+              aria-label="View active challenge"
+              className="flex items-center gap-2 md:gap-3 pl-1 md:pl-1.5 pr-1.5 md:pr-2 py-0.5 md:py-1 rounded-full hover:bg-white/10 active:scale-[0.98] transition"
             >
-              <div className="w-10 h-1 rounded-full bg-white/60" />
-              <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-90">
-                <Sword className="w-2.5 h-2.5" />
-                <span>Live</span>
+              <span className="relative flex items-center justify-center">
+                <motion.span
+                  aria-hidden
+                  className="absolute inset-0 rounded-full bg-white/25"
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                />
+                <Sword className="w-4 h-4 relative" />
+              </span>
+
+              <div className="flex flex-col items-start min-w-0">
+                <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 leading-none">
+                  <SubjectIcon className="w-3 h-3 hidden md:inline" />
+                  {participantsCount > 2 && (
+                    <span className="inline-flex items-center gap-0.5 opacity-90">
+                      <Users className="w-3 h-3" />
+                      {participantsCount}
+                    </span>
+                  )}
+                  <span className="tabular-nums opacity-90">{targetText}</span>
+                </div>
+                {opponentLine}
+                <div className="mt-1 h-0.5 md:h-1 w-24 md:w-56 rounded-full bg-white/20 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-white rounded-full"
+                    initial={false}
+                    animate={{ width: `${progressPct}%` }}
+                    transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                  />
+                </div>
               </div>
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
+
+              <span className="ml-0.5 md:ml-1 inline-flex items-center gap-1 pl-1.5 md:pl-2 pr-2 md:pr-3 py-1 md:py-1.5 rounded-full bg-white/15 text-[11px] font-semibold uppercase tracking-wide">
+                <Trophy className="w-3 h-3" />
+                <span className="hidden md:inline">{isFixedSet ? 'Play' : 'View'}</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={collapseFromButton}
+              aria-label="Collapse HUD"
+              className="p-1.5 rounded-full hover:bg-white/15 active:bg-white/25"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        ) : (
+          <motion.button
+            key={`hud-puller-${state.edge}`}
+            ref={pullerEl}
+            type="button"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            drag
+            dragMomentum={false}
+            dragElastic={0.4}
+            onDragEnd={onPullerDragEnd}
+            onClick={(e) => {
+              // Only treat as click if not part of a drag (framer suppresses click after drag)
+              e.stopPropagation();
+              setState((s) => ({ ...s, open: true }));
+            }}
+            aria-label="Expand active challenge HUD"
+            data-tour="challenge-hud"
+            style={{
+              position: 'fixed',
+              zIndex: 120,
+              touchAction: 'none',
+              ...pullerPos(),
+            }}
+            className={cn(pullerShape, 'select-none')}
+          >
+            {handleBar}
+            {pullerLabel}
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <ChallengeLeaderboardSheet
         open={sheetOpen}
