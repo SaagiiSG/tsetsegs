@@ -140,6 +140,12 @@ function StudentLayoutContent() {
             <SidebarTrigger className="hidden xl:inline-flex" />
             <span className="font-semibold text-xs md:text-sm">SAT Practice</span>
           </div>
+
+          {/* Streak + rank bar centered whenever the iPad dock is visible */}
+          <div className="hidden md:flex xl:hidden">
+            <StreakAndRankBar onStreakClick={() => setStreakDialogOpen(true)} />
+          </div>
+
           <div className="flex items-center gap-2">
             {/* Mobile streak counter */}
             <button
