@@ -46,9 +46,10 @@ interface DriveVideo {
   id: string;
   name: string;
   thumbnailUrl: string | null;
-  embedUrl: string;
+  streamUrl: string;
   modifiedTime: string | null;
 }
+
 interface DriveModule {
   id: string;
   name: string;
