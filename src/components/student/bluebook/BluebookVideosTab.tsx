@@ -313,13 +313,17 @@ export function BluebookVideosTab() {
           <div className="rounded-lg overflow-hidden border bg-black">
             <div className="relative aspect-video">
               {currentEntry ? (
-                <iframe
+                <video
                   key={currentEntry.video.id}
-                  src={currentEntry.video.embedUrl}
+                  ref={videoRef}
+                  src={currentEntry.video.streamUrl}
+                  poster={currentEntry.video.thumbnailUrl ?? undefined}
                   className="w-full h-full"
-                  allow="autoplay; encrypted-media; fullscreen"
-                  allowFullScreen
-                  title={`Explanation video ${currentEntry.video.name}`}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  controlsList="nodownload"
+                  onContextMenu={(e) => e.preventDefault()}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
@@ -329,6 +333,7 @@ export function BluebookVideosTab() {
               {watermarkText && <VideoWatermark text={watermarkText} />}
             </div>
           </div>
+
 
           {currentEntry && (
             <div className="space-y-2">
