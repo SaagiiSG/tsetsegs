@@ -127,11 +127,17 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
     setSmsOpen(true);
   };
 
+  const updateSmsBody = (body: string) => {
+    const { segments, encoding } = estimateSegments(body);
+    setSmsPreview({ segments, encoding, body });
+  };
+
   const handleSendSms = async () => {
+    if (!smsPreview) return;
     setSmsSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-batch-sms', {
-        body: { batch_id: batch.id },
+        body: { batch_id: batch.id, body: smsPreview.body },
       });
       if (error) throw error;
       setSmsResults(data);
