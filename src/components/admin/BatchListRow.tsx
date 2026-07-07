@@ -88,7 +88,10 @@ export function BatchListRow({
   };
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-muted/50 rounded-lg transition-colors group min-w-0">
+    <div
+      onClick={onEdit}
+      className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-muted/50 rounded-lg transition-colors group min-w-0 cursor-pointer"
+    >
       {/* Course badge */}
       <Badge
         className="font-semibold text-[10px] sm:text-xs shrink-0 w-11 sm:w-12 justify-center"
@@ -123,7 +126,7 @@ export function BatchListRow({
 
       {/* 3-dot menu — always visible on mobile, hover on desktop */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="icon"
@@ -132,7 +135,7 @@ export function BatchListRow({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="z-50 bg-popover">
+        <DropdownMenuContent align="end" className="z-50 bg-popover" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem onClick={onEdit}>
             <Pencil className="w-4 h-4 mr-2" />
             Edit Batch
