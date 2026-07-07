@@ -47,12 +47,14 @@ export function ActiveChallengeHUD() {
   const { pathname } = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [open, setOpen] = useState<boolean>(() => loadOpen());
+  const [align, setAlign] = useState<Align>(() => loadAlign());
 
   useEffect(() => saveOpen(open), [open]);
+  useEffect(() => saveAlign(align), [align]);
 
   // Allow external UI (Challenges page button) to reset/open the HUD
   useEffect(() => {
-    const onReset = () => setOpen(true);
+    const onReset = () => { setOpen(true); setAlign('center'); };
     window.addEventListener('challenge-hud:reset', onReset);
     return () => window.removeEventListener('challenge-hud:reset', onReset);
   }, []);
