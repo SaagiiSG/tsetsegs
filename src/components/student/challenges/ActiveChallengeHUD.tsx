@@ -17,8 +17,8 @@ const DEFAULT_ANCHOR: Anchor = { side: 'top', align: 'center' };
 // v2 bump: forces users who had a stale collapsed/hidden state from v1 to
 // see a fresh, visible HUD (top-center, expanded). Uses localStorage to
 // match the rest of the app's persistence.
-const ANCHOR_KEY = 'challenge-hud-anchor-v4';
-const COLLAPSED_KEY = 'challenge-hud-collapsed-v4';
+const ANCHOR_KEY = 'challenge-hud-anchor-v5';
+const COLLAPSED_KEY = 'challenge-hud-collapsed-v5';
 
 const EDGE_PAD = 12; // px from viewport edge
 const TOP_OFFSET = 68; // stay clear of top header on mobile
@@ -288,7 +288,7 @@ export function ActiveChallengeHUD() {
           initial={{ y: -60, opacity: 0 }}
           exit={{ y: -60, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{ position: 'fixed', zIndex: 60, touchAction: 'none', ...anchorStyle(anchor) }}
+          style={{ position: 'fixed', zIndex: 120, touchAction: 'none', ...anchorStyle(anchor) }}
           data-tour="challenge-hud"
           className={cn(
             'select-none',
@@ -423,7 +423,7 @@ export function ActiveChallengeHUD() {
             onClick={resetHud}
             data-tour="challenge-hud-reset"
             className={cn(
-              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[70]',
+              'fixed bottom-6 left-1/2 -translate-x-1/2 z-[125]',
               'flex items-center gap-1.5 px-3 py-2 rounded-full',
               'bg-primary text-primary-foreground shadow-2xl shadow-primary/30',
               'border border-white/15 backdrop-blur-xl',
