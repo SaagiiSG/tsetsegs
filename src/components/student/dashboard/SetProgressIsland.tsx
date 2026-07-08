@@ -145,7 +145,7 @@ export function SetProgressIsland() {
         onOpenChange={setBigOpen}
         s68={progress?.s68 ?? { total: 68, completed: 0, pct: 0 }}
         s150={progress?.s150 ?? { total: 150, completed: 0, pct: 0 }}
-        cb={progress?.cb ?? { total: 1074, completed: 0, pct: 0 }}
+        cb={progress?.cb ?? { total: 0, completed: 0, pct: 0 }}
       />
     </>
   );
