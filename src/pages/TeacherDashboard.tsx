@@ -40,7 +40,8 @@ const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense", "practice
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
-  const [batches, setBatches] = useState<Batch[]>([]);
+  const [allBatches, setAllBatches] = useState<Batch[]>([]);
+  const [completionMap, setCompletionMap] = useState<Record<string, boolean>>({});
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [switchedStudents, setSwitchedStudents] = useState<Record<string, SwitchedStudentInfo[]>>({});
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
@@ -66,7 +67,7 @@ export default function TeacherDashboard() {
       console.log("Fetching batches...");
       fetchBatches();
     }
-  }, [teacherName, authLoading, selectedIntake]);
+  }, [teacherName, authLoading]);
 
   // Real-time subscription for new student registrations
   useEffect(() => {
@@ -121,19 +122,13 @@ export default function TeacherDashboard() {
         console.error("Error fetching completion status:", completionError);
       }
 
-      const completionMap: Record<string, boolean> = {};
+      const cMap: Record<string, boolean> = {};
       completionData?.forEach((item: { batch_id: string; is_completed: boolean }) => {
-        completionMap[item.batch_id] = item.is_completed;
+        cMap[item.batch_id] = item.is_completed;
       });
 
-      let filteredBatches = batchesData || [];
-      if (selectedIntake === "current") {
-        filteredBatches = filteredBatches.filter(b => !completionMap[b.id]);
-      } else if (selectedIntake === "previous") {
-        filteredBatches = filteredBatches.filter(b => completionMap[b.id]);
-      }
-
-      setBatches(filteredBatches);
+      setAllBatches(batchesData || []);
+      setCompletionMap(cMap);
 
       const { data: countsData, error: countsError } = await supabase.rpc("get_batch_student_counts", {
         teacher_name: teacherName,
@@ -149,8 +144,8 @@ export default function TeacherDashboard() {
         setStudentCounts(counts);
       }
 
-      if (filteredBatches.length > 0) {
-        await fetchSwitchedStudents(filteredBatches);
+      if (batchesData && batchesData.length > 0) {
+        await fetchSwitchedStudents(batchesData);
       }
     } catch (error: any) {
       console.error("Error fetching batches:", error);
