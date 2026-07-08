@@ -30,8 +30,8 @@ const SETS = [
   },
   {
     key: 'cb' as const,
-    label: 'CB 1074',
-    title: 'CollegeBoard 1074',
+    label: 'CB',
+    title: 'CollegeBoard',
     desc: 'Full official CollegeBoard question bank — every released question.',
     color: '#1e40af', // deep blue
     route: '/practice/dashboard?set=CB',
