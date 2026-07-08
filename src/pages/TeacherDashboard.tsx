@@ -282,18 +282,25 @@ export default function TeacherDashboard() {
     ];
   }, []);
 
+  const batches = useMemo(() => {
+    if (selectedIntake === "current") {
+      return allBatches.filter(b => !completionMap[b.id]);
+    }
+    if (selectedIntake === "previous") {
+      return allBatches.filter(b => completionMap[b.id]);
+    }
+    return allBatches;
+  }, [allBatches, completionMap, selectedIntake]);
+
   const groupedBatches = useMemo(() => {
     if (selectedIntake !== "all") {
       return { ungrouped: batches };
     }
-    
     const groups: Record<string, typeof batches> = {};
     batches.forEach(batch => {
       const date = new Date(batch.start_date);
       const key = `${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
+      if (!groups[key]) groups[key] = [];
       groups[key].push(batch);
     });
     return groups;
