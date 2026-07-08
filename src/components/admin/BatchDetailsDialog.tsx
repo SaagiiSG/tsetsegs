@@ -96,20 +96,25 @@ export function BatchDetailsDialog({ batch, studentCount, open, onOpenChange, on
         ? selectedTeachers.join(', ')
         : selectedTeacher;
 
-      // Regenerate batch_name to reflect current teacher (so teacher portal cards show the correct name)
-      const d = new Date(startDate);
-      const regeneratedName = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+      // Only regenerate batch_name when teacher or start date actually changed,
+      // so admins editing unrelated fields don't clobber a customized name.
+      const teacherChanged = teacherValue !== (batch.teacher || '');
+      const dateChanged = startDate !== batch.start_date;
+      const updatePayload: Record<string, unknown> = {
+        teacher: teacherValue,
+        schedule: selectedSchedule,
+        room: selectedRoom,
+        start_date: startDate,
+        fb_group_link: fbGroupLink,
+      };
+      if (teacherChanged || dateChanged) {
+        const d = new Date(startDate);
+        updatePayload.batch_name = `(${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()} Intake) - ${teacherValue}`;
+      }
 
       const { error } = await supabase
         .from('batches')
-        .update({
-          teacher: teacherValue,
-          batch_name: regeneratedName,
-          schedule: selectedSchedule,
-          room: selectedRoom,
-          start_date: startDate,
-          fb_group_link: fbGroupLink,
-        })
+        .update(updatePayload)
         .eq('id', batch.id);
 
       if (error) throw error;
