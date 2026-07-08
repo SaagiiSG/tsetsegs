@@ -47,7 +47,7 @@ export function SetProgressIsland() {
   const rows = [
     { ...SETS[0], counts: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
     { ...SETS[1], counts: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
-    { ...SETS[2], counts: progress?.cb ?? { total: 1074, completed: 0, pct: 0 } },
+    { ...SETS[2], counts: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
   ];
 
   return (
