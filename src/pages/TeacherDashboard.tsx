@@ -444,7 +444,7 @@ export default function TeacherDashboard() {
           <div className="flex justify-center py-6 md:py-12">
             <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary"></div>
           </div>
-        ) : batches.length === 0 ? (
+        ) : allBatches.length === 0 ? (
           <Card>
             <CardContent className="py-6 md:py-12 text-center text-muted-foreground text-xs md:text-sm">
               No classes assigned yet
@@ -453,10 +453,7 @@ export default function TeacherDashboard() {
         ) : (
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center gap-2 p-2 md:p-3 bg-card rounded-lg border">
-              <Select
-                value={selectedIntake}
-                onValueChange={setSelectedIntake}
-              >
+              <Select value={selectedIntake} onValueChange={setSelectedIntake}>
                 <SelectTrigger className="h-8 md:h-9 text-xs md:text-sm flex-1">
                   <SelectValue placeholder="Select intake" />
                 </SelectTrigger>
@@ -473,49 +470,58 @@ export default function TeacherDashboard() {
               </span>
             </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedIntake}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {selectedIntake === "all" ? (
-                  <div className="space-y-4">
-                    {Object.entries(groupedBatches).map(([monthYear, monthBatches], groupIndex) => (
-                      monthYear !== "ungrouped" && (
-                        <motion.div 
-                          key={monthYear} 
-                          className="space-y-2"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: groupIndex * 0.1 }}
-                        >
-                          <h4 className="text-xs md:text-sm font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur-sm py-1">
-                            {monthYear}
-                          </h4>
-                          <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {monthBatches.map((batch, index) => (
-                              <BatchCard key={batch.id} batch={batch} index={index} />
-                            ))}
-                          </div>
-                        </motion.div>
-                      )
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {batches.map((batch, index) => (
-                      <BatchCard key={batch.id} batch={batch} index={index} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            {batches.length === 0 ? (
+              <Card>
+                <CardContent className="py-6 md:py-12 text-center text-muted-foreground text-xs md:text-sm">
+                  No {selectedIntake === "current" ? "active" : selectedIntake === "previous" ? "completed" : ""} classes
+                </CardContent>
+              </Card>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedIntake}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {selectedIntake === "all" ? (
+                    <div className="space-y-4">
+                      {Object.entries(groupedBatches).map(([monthYear, monthBatches], groupIndex) => (
+                        monthYear !== "ungrouped" && (
+                          <motion.div 
+                            key={monthYear} 
+                            className="space-y-2"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: groupIndex * 0.1 }}
+                          >
+                            <h4 className="text-xs md:text-sm font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur-sm py-1">
+                              {monthYear}
+                            </h4>
+                            <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                              {monthBatches.map((batch, index) => (
+                                <BatchCard key={batch.id} batch={batch} index={index} />
+                              ))}
+                            </div>
+                          </motion.div>
+                        )
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {batches.map((batch, index) => (
+                        <BatchCard key={batch.id} batch={batch} index={index} />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            )}
           </div>
         )}
       </TabsContent>
+
 
       <TabsContent value="students">
         <Card className="p-4 md:p-6">
