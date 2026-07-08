@@ -30,8 +30,8 @@ const SETS = [
   },
   {
     key: 'cb' as const,
-    label: 'CB 1074',
-    title: 'CollegeBoard 1074',
+    label: 'CB',
+    title: 'CollegeBoard',
     desc: 'Full official CollegeBoard question bank — every released question.',
     color: '#1e40af', // deep blue
     route: '/practice/dashboard?set=CB',
@@ -47,7 +47,7 @@ export function SetProgressIsland() {
   const rows = [
     { ...SETS[0], counts: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
     { ...SETS[1], counts: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
-    { ...SETS[2], counts: progress?.cb ?? { total: 1074, completed: 0, pct: 0 } },
+    { ...SETS[2], counts: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
   ];
 
   return (
@@ -145,7 +145,7 @@ export function SetProgressIsland() {
         onOpenChange={setBigOpen}
         s68={progress?.s68 ?? { total: 68, completed: 0, pct: 0 }}
         s150={progress?.s150 ?? { total: 150, completed: 0, pct: 0 }}
-        cb={progress?.cb ?? { total: 1074, completed: 0, pct: 0 }}
+        cb={progress?.cb ?? { total: 0, completed: 0, pct: 0 }}
       />
     </>
   );
