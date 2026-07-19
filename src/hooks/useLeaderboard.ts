@@ -427,6 +427,7 @@ export function useLeaderboard(selectedTier?: TierType) {
       });
 
       return studentIds
+        .filter(id => visibleIds.has(id))
         .map(id => {
           const account = accounts?.find(a => a.id === id);
           const linkedStudent = account?.linked_student as { first_name: string; last_name: string } | null;
