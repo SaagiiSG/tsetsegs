@@ -49,9 +49,42 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
 
   if (!hasData) {
     return (
-      <div className="mt-5 rounded-2xl border border-dashed border-border/60 p-4 text-center">
-        <BarChart3 className="h-5 w-5 mx-auto text-muted-foreground/60 mb-1.5" />
-        <p className="text-xs text-muted-foreground">Not enough practice data yet</p>
+      <div className="mt-5 space-y-3 opacity-70">
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Math domains · last 30 days
+          </div>
+          <span className="text-[11px] text-muted-foreground tabular-nums">needs more data</span>
+        </div>
+
+        <div className="space-y-1.5">
+          {(["algebra", "advanced", "data", "geometry"] as DomainKey[]).map((k) => (
+            <div key={k} className="flex items-center gap-2">
+              <span className="w-32 shrink-0 text-xs text-muted-foreground/70 truncate">{DOMAIN_LABEL[k]}</span>
+              <div className="relative flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-muted-foreground/20 rounded-full" style={{ width: "8%" }} />
+              </div>
+              <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground/70">—</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> Strong
+            </div>
+            <div className="text-xs font-medium text-muted-foreground/60 truncate mt-0.5">—</div>
+            <div className="text-[10px] text-muted-foreground/50 tabular-nums">—</div>
+          </div>
+          <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1">
+              <Target className="h-3 w-3" /> Focus
+            </div>
+            <div className="text-xs font-medium text-muted-foreground/60 truncate mt-0.5">—</div>
+            <div className="text-[10px] text-muted-foreground/50 tabular-nums">—</div>
+          </div>
+        </div>
       </div>
     );
   }
