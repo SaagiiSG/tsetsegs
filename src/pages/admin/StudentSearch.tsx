@@ -94,6 +94,7 @@ export default function StudentSearch() {
           created_at,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
+        .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
 
