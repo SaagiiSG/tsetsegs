@@ -132,9 +132,9 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
         </div>
 
         {/* Actions — pinned to bottom */}
-        <div className="mt-auto pt-6 flex flex-wrap gap-2">
+        <div className="mt-6 md:mt-auto md:pt-6 flex items-center gap-2">
           <Button
-            className="flex-1 min-w-[140px] rounded-full"
+            className="flex-1 rounded-full"
             onClick={() => {
               haptic("light");
               navigate(`/teacher/students/${batch.id}`);
@@ -144,7 +144,7 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           </Button>
           <Button
             variant="outline"
-            className="rounded-full"
+            className="flex-1 rounded-full"
             onClick={() => {
               haptic("light");
               navigate(`/teacher/analytics/${batch.id}`);
@@ -152,14 +152,14 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           >
             <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Analytics
           </Button>
-          <Button variant="outline" size="icon" className="rounded-full" onClick={() => onShowQR(batch)}>
+          <Button variant="outline" size="icon" className="rounded-full shrink-0" onClick={() => onShowQR(batch)}>
             <QrCode className="h-3.5 w-3.5" />
           </Button>
           {m.isCompleted && (
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full"
+              className="rounded-full shrink-0"
               onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}
             >
               <Flower2 className="h-3.5 w-3.5" />
