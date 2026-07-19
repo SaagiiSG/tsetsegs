@@ -189,10 +189,6 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
   );
 }
 
-    </motion.div>
-  );
-}
-
 function MetricBar({ label, value, tone }: { label: string; value: number; tone: "primary" | "accent" }) {
   const color = tone === "primary" ? "text-primary" : "text-accent-foreground";
   return (
