@@ -61,18 +61,28 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
   }, [activeIndex, batches.length]);
 
   return (
-    <div className="relative">
+    <div className="relative w-screen left-1/2 -translate-x-1/2">
       {/* Smooth iOS-style edge fades — softer on mobile so cards don’t look cut off */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-r from-background via-background/40 to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-l from-background via-background/40 to-transparent" />
 
       <div
         ref={ref}
-        className="flex items-center gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ scrollSnapType: "x mandatory", overscrollBehaviorX: "contain" }}
+        className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity md:snap-proximity py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{
+          overscrollBehaviorX: "contain",
+          WebkitOverflowScrolling: "touch",
+          scrollBehavior: "smooth",
+        }}
       >
         {batches.map((b, i) => (
-          <div key={b.id} data-card data-index={i} className="flex items-center" style={{ scrollSnapAlign: "center", scrollSnapStop: "always" }}>
+          <div
+            key={b.id}
+            data-card
+            data-index={i}
+            className="flex items-center"
+            style={{ scrollSnapAlign: "center", scrollSnapStop: "normal" }}
+          >
             <ClassCardBig
               batch={b}
               index={i}
