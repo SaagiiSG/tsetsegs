@@ -2202,34 +2202,64 @@ export type Database = {
         Row: {
           batch_id: string | null
           created_at: string
+          english_level: string | null
+          first_name: string | null
           full_name: string
+          grade: string | null
+          has_taken_test: boolean | null
           id: string
+          last_name: string | null
+          math_level: string | null
           parent_name: string | null
+          parent_phone: string | null
           phone_number: string
+          planned_test_date: string | null
+          previous_score: number | null
           reviewed_at: string | null
           reviewed_by: string | null
+          school: string | null
           status: string
         }
         Insert: {
           batch_id?: string | null
           created_at?: string
+          english_level?: string | null
+          first_name?: string | null
           full_name: string
+          grade?: string | null
+          has_taken_test?: boolean | null
           id?: string
+          last_name?: string | null
+          math_level?: string | null
           parent_name?: string | null
+          parent_phone?: string | null
           phone_number: string
+          planned_test_date?: string | null
+          previous_score?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          school?: string | null
           status?: string
         }
         Update: {
           batch_id?: string | null
           created_at?: string
+          english_level?: string | null
+          first_name?: string | null
           full_name?: string
+          grade?: string | null
+          has_taken_test?: boolean | null
           id?: string
+          last_name?: string | null
+          math_level?: string | null
           parent_name?: string | null
+          parent_phone?: string | null
           phone_number?: string
+          planned_test_date?: string | null
+          previous_score?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          school?: string | null
           status?: string
         }
         Relationships: [

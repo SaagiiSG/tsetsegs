@@ -1,64 +1,46 @@
+## Goal
+Transform the single-page QR registration form (`/student-register?...`) into a friendly, multi-step onboarding sequence in Mongolian (with English translations), adapting to whether the batch is a SAT or IELTS course.
 
-## 1. Redirect to the created batch
+## New sequence (one screen per step, with Back/Next + progress bar)
 
-After a successful batch creation in `CreateBatchForm.tsx`, navigate to the All Batches page with the new batch pre-opened.
+1. **Welcome** — "Тавтай морил, Tsetsegs SAT Prep!" / "Welcome to Tsetsegs" + teacher name pulled from the batch (e.g. "Багш: Enguun"). Big Next button.
+2. **Name** — First name + Last name (labels bilingual: "Нэр / First name", "Овог / Last name").
+3. **Phone numbers** — Student phone (8 digits, "Утасны дугаар / Phone number") + Parent phone ("Эцэг эхийн утас / Parent phone"). Parent name stays here too (already collected today).
+4. **School & Grade** — Grade dropdown (7–12) + School name text field.
+5. **Level** —
+   - SAT batches: Math level + English level (Beginner / Intermediate / Advanced).
+   - IELTS batches: English level only.
+6. **Prior test experience** — "Та өмнө нь SAT/IELTS өгсөн үү?" Yes / No.
+   - If **Yes** → next screen: previous score input + planned next test date (month/year).
+   - If **No** → next screen: planned first test date (month/year).
+7. **Finish** — "Амжилт хүсье! / Good luck on your journey" + return-to-login button. Submit happens here.
 
-- Use `useNavigate()` → `navigate('/admin/batches?batch=<new-id>')`.
-- `BatchesView.tsx` already reads `?batch=` from the URL and auto-opens `BatchDetailsDialog` for that batch, so no changes needed there.
-- Remove the now-unused form reset (or keep it — either way we leave the page).
+## Course-type awareness
+- The QR link already carries a batch (`unique_link_id`). Load the batch once on mount; use `course_type` to decide SAT vs IELTS wording and whether to show the Math-level step.
+- Show teacher name on the Welcome screen from `batches.teacher`.
 
-## 2. Admin-triggered SMS blast via Twilio
+## Data model
+Add nullable columns to `registration_requests` so the extra answers persist and reviewers can see them:
+- `first_name`, `last_name`, `parent_phone`, `grade`, `school`, `math_level`, `english_level`, `has_taken_test` (bool), `previous_score` (int), `planned_test_date` (text, "YYYY-MM").
+- Keep existing `full_name` populated as `first_name + ' ' + last_name` for backward compatibility with the review screens.
+- Migration includes the required GRANTs (already granted on this table; re-assert to be safe).
 
-Add a **"Send SMS to all students"** button inside `BatchDetailsDialog` (visible per batch). Clicking it:
+Reviewer screens (`ReviewRegistration`, `ReviewRegistrationAdmin`, `teacher/ReviewRegistrationContent`) get a small read-only "Details" section showing the new fields — no workflow changes.
 
-1. Opens a confirmation showing: recipient count, message preview (from the existing `getSmsTemplate(batch)` in `BatchesView.tsx`), and estimated cost.
-2. On confirm, calls a new edge function `send-batch-sms` which:
-   - Verifies caller is an `admin` (JWT + `has_role`).
-   - Loads the batch + its students (phones).
-   - Normalizes each phone to E.164 `+976XXXXXXXX` using the existing `normalize_mn_phone` DB function.
-   - Sends via Twilio using **Messaging Service SID** (`TWILIO_MESSAGING_SERVICE_SID` already set) — this is Twilio's routing service that picks the best sender/route across all Mongolian carriers (Mobicom, Unitel, Skytel, G-Mobile).
-   - Logs each send into `sms_logs` (already exists) with status, error, message SID.
-   - Returns per-student results (sent / failed / skipped-invalid-phone).
-3. UI shows a per-student result list and a summary toast. Button is disabled while sending; guarded against double-sends with a `sending` state.
+## Files to change
+- `src/pages/StudentRegistration.tsx` — rewrite as a stepper (local `step` state 0–6, shared `formData`, per-step validation, progress bar, Back/Next, bilingual labels, course-type branching).
+- New: `src/components/registration/steps/*` — one small component per step to keep the page readable (`WelcomeStep`, `NameStep`, `PhoneStep`, `SchoolStep`, `LevelStep`, `PriorTestStep`, `FutureTestStep`, `FinishStep`).
+- New migration: add the columns above to `registration_requests`.
+- Light additions to the three Review\* files to render the new fields.
 
-The template used is the same one already defined in `getSmsTemplate` — we'll extract it into `src/lib/smsTemplates.ts` so both the copy button and the edge function share the same source (edge function re-implements it in Deno since it can't import from `src/`, but text stays identical).
+## UX details
+- Progress bar at top ("Алхам 3 / 7").
+- Enter key advances; Back preserves data.
+- All validation happens per step so users can't advance with bad input; final submit only fires on the Finish step.
+- Existing "already registered / already pending / rejected" states remain and short-circuit at Step 3 (phone) once the phone is entered, so we don't waste the user's time filling later steps.
+- Keep the current gradient background + GraduationCap header for brand consistency.
 
-## 3. Cost check — 300 messages on $7.65 is NOT enough
-
-Twilio pricing to Mongolia (as of 2026):
-- Outbound SMS to Mongolia: **~$0.0808 per segment**.
-- Mongolian Cyrillic text is sent as **UCS-2**, so each segment is only **67 characters** (not 160).
-- The SAT/IELTS templates in `getSmsTemplate` are ~450–700 Cyrillic chars → **7–10 segments per message**.
-
-Rough estimate for 300 recipients:
-- Average ~8 segments × 300 msgs × $0.0808 ≈ **$194**.
-- Even a short 1-segment ASCII message: 300 × $0.0808 ≈ **$24**.
-
-**$7.65 covers at most ~30–95 short messages, or ~10 full-template messages.** Recommend either:
-- Top up Twilio balance to ~$200+ before sending all 12 batches, or
-- Send a much shorter message (link only), or
-- Send in smaller waves and top up as needed.
-
-The UI will show the estimated segment count + cost before the admin confirms, so no surprise charges.
-
-## Technical section
-
-**Files to edit**
-- `src/components/admin/CreateBatchForm.tsx` — add `useNavigate`, replace `onSuccess()` with `navigate('/admin/batches?batch=' + batch.id)`. Return the batch id to caller too.
-- `src/components/admin/BatchDetailsDialog.tsx` — add "Send SMS to all students" button + confirm dialog + results panel.
-- `src/lib/smsTemplates.ts` — new file, exports `getBatchSmsTemplate(batch)` (moved from `BatchesView.tsx`). `BatchesView` imports from here.
-
-**New edge function** `supabase/functions/send-batch-sms/index.ts`
-- CORS, JWT verify, `has_role(uid, 'admin')` check.
-- Input: `{ batch_id: string, dry_run?: boolean }` (Zod validated).
-- Loads batch + students, normalizes phones.
-- If `dry_run`: returns segment count + recipient count only.
-- Otherwise: for each valid phone, POST `x-www-form-urlencoded` to `https://connector-gateway.lovable.dev/twilio/Messages.json` with `To`, `MessagingServiceSid=$TWILIO_MESSAGING_SERVICE_SID`, `Body`. Uses `Authorization: Bearer $LOVABLE_API_KEY` + `X-Connection-Api-Key: $TWILIO_API_KEY`.
-- Writes result to `public.sms_logs`.
-- Returns `{ sent, failed, skipped, results: [...] }`.
-
-**Segment estimator (client + server)**
-- If body contains any non-GSM-7 char → UCS-2, 70 chars/segment (67 when concatenated).
-- Else GSM-7, 160 chars/segment (153 when concatenated).
-
-**No DB migration needed** — `sms_logs`, `normalize_mn_phone`, and Twilio secrets already exist.
+## Out of scope
+- No changes to teacher/admin approval logic itself.
+- No changes to how batches are created or how QR links are generated.
+- No SMS trigger changes.
