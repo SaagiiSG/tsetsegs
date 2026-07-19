@@ -205,6 +205,7 @@ function TopicCard({
 
 // ─── Session ──────────────────────────────────────────────────────────
 function SessionCard({
+  sessionNumber,
   title,
   pct,
   doneCount,
@@ -212,7 +213,9 @@ function SessionCard({
   topics,
   checkedSet,
   onToggle,
+  onStart,
 }: {
+  sessionNumber: number;
   title: string;
   pct: number;
   doneCount: number;
@@ -220,6 +223,7 @@ function SessionCard({
   topics: ChecklistTopic[];
   checkedSet: Set<string>;
   onToggle: (key: string, v: boolean) => void;
+  onStart?: (sessionNumber: number) => void;
 }) {
   const [open, setOpen] = useState(false);
   const complete = doneCount === totalCount && totalCount > 0;
@@ -228,24 +232,41 @@ function SessionCard({
       "rounded-2xl border bg-card/60 backdrop-blur",
       complete && "border-emerald-500/40 bg-emerald-500/5"
     )}>
-      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left">
-        <span className={cn(
-          "shrink-0 h-9 w-9 rounded-full grid place-items-center",
-          complete ? "bg-emerald-500 text-white" : "bg-primary/10 text-primary"
-        )}>
-          {complete ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-        </span>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold truncate">{title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <Progress value={pct} className="h-1 flex-1" />
-            <span className="text-[10px] text-muted-foreground tabular-nums w-12 text-right">{doneCount}/{totalCount}</span>
+      <div className="w-full flex items-center gap-3 px-3.5 py-3">
+        <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+          <span className={cn(
+            "shrink-0 h-9 w-9 rounded-full grid place-items-center",
+            complete ? "bg-emerald-500 text-white" : "bg-primary/10 text-primary"
+          )}>
+            {complete ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+          </span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold truncate">{title}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <Progress value={pct} className="h-1 flex-1" />
+              <span className="text-[10px] text-muted-foreground tabular-nums w-12 text-right">{doneCount}/{totalCount}</span>
+            </div>
           </div>
-        </div>
-        <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-muted-foreground shrink-0">
-          <ChevronDown className="h-4 w-4" />
-        </motion.span>
-      </button>
+        </button>
+        {onStart && (
+          <Button
+            size="sm"
+            className="h-8 rounded-full gap-1 px-3 shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStart(sessionNumber);
+            }}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Start
+          </Button>
+        )}
+        <button onClick={() => setOpen((v) => !v)} className="shrink-0 text-muted-foreground p-1" aria-label="Expand">
+          <motion.span animate={{ rotate: open ? 180 : 0 }} className="inline-block">
+            <ChevronDown className="h-4 w-4" />
+          </motion.span>
+        </button>
+      </div>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
