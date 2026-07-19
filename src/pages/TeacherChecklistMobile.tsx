@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChecklistView } from "@/components/teacher/checklist/ChecklistView";
+import { ClassPickerDialog } from "@/components/teacher/checklist/ClassPickerDialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default function TeacherChecklistMobile() {
   const { batchId } = useParams<{ batchId?: string }>();
   const navigate = useNavigate();
+  const [pickerFor, setPickerFor] = useState<number | null>(null);
 
   const { data: batch } = useQuery({
     queryKey: ["checklist-batch", batchId],
@@ -24,7 +27,15 @@ export default function TeacherChecklistMobile() {
 
   const title = batchId
     ? batch?.nickname || batch?.batch_name || "Class"
-    : "Global checklist";
+    : "Handbook";
+
+  const handleStart = (sessionNumber: number) => {
+    if (batchId) {
+      navigate(`/teacher/session/${batchId}/${sessionNumber}`);
+    } else {
+      setPickerFor(sessionNumber);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -38,8 +49,19 @@ export default function TeacherChecklistMobile() {
         </div>
       </div>
       <div className="flex-1">
-        <ChecklistView batchId={batchId ?? null} />
+        <ChecklistView batchId={batchId ?? null} onStartSession={handleStart} />
       </div>
+
+      <ClassPickerDialog
+        open={pickerFor !== null}
+        onOpenChange={(v) => !v && setPickerFor(null)}
+        title={`Start Session ${pickerFor ?? ""} · pick a class`}
+        onPick={(pickedBatchId) => {
+          const s = pickerFor;
+          setPickerFor(null);
+          if (s !== null) navigate(`/teacher/session/${pickedBatchId}/${s}`);
+        }}
+      />
     </div>
   );
 }
