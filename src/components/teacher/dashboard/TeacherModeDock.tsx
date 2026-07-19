@@ -6,22 +6,32 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 
 export type DashboardMode = "dashboard" | "analytics" | "practice";
-type DockEdge = "bottom" | "top" | "left" | "right";
+type DockAnchor =
+  | "bottom" | "top" | "left" | "right"
+  | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
-const EDGE_ALIGN: Record<DockEdge, string> = {
+const ANCHOR_ALIGN: Record<DockAnchor, string> = {
   bottom: "items-end justify-center pb-4",
   top: "items-start justify-center pt-4",
   left: "items-center justify-start pl-4",
   right: "items-center justify-end pr-4",
+  "top-left": "items-start justify-start pt-4 pl-4",
+  "top-right": "items-start justify-end pt-4 pr-4",
+  "bottom-left": "items-end justify-start pb-4 pl-4",
+  "bottom-right": "items-end justify-end pb-4 pr-4",
 };
 
+const VERTICAL_ANCHORS: DockAnchor[] = ["left", "right"];
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26, mass: 0.8 };
-const EDGE_KEY = "teacher:mode-dock:edge:v1";
+const EDGE_KEY = "teacher:mode-dock:edge:v2";
+const VALID = new Set<DockAnchor>([
+  "bottom","top","left","right","top-left","top-right","bottom-left","bottom-right"
+]);
 
-function loadEdge(): DockEdge {
+function loadAnchor(): DockAnchor {
   if (typeof window === "undefined") return "bottom";
-  const v = window.localStorage.getItem(EDGE_KEY);
-  return v === "left" || v === "right" || v === "top" || v === "bottom" ? v : "bottom";
+  const v = window.localStorage.getItem(EDGE_KEY) as DockAnchor | null;
+  return v && VALID.has(v) ? v : "bottom";
 }
 
 interface Props {
@@ -31,12 +41,12 @@ interface Props {
 }
 
 export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props) {
-  const [edge, setEdge] = useState<DockEdge>(() => loadEdge());
+  const [anchor, setAnchor] = useState<DockAnchor>(() => loadAnchor());
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const controls = useDragControls();
 
-  const isVertical = edge === "left" || edge === "right";
+  const isVertical = VERTICAL_ANCHORS.includes(anchor);
   const GripIcon = isVertical ? GripHorizontal : GripVertical;
 
   const navItems = [
@@ -48,23 +58,38 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const dists: Record<DockEdge, number> = {
-      left: info.point.x / w,
-      right: 1 - info.point.x / w,
-      top: info.point.y / h,
-      bottom: 1 - info.point.y / h,
-    };
-    const next = (Object.keys(dists) as DockEdge[]).reduce((a, b) =>
-      dists[a] < dists[b] ? a : b
-    );
+    const px = info.point.x;
+    const py = info.point.y;
+    const cornerMargin = 0.22; // if within 22% of both axes → corner
+    const nearLeft = px < w * cornerMargin;
+    const nearRight = px > w * (1 - cornerMargin);
+    const nearTop = py < h * cornerMargin;
+    const nearBottom = py > h * (1 - cornerMargin);
+
+    let next: DockAnchor;
+    if (nearTop && nearLeft) next = "top-left";
+    else if (nearTop && nearRight) next = "top-right";
+    else if (nearBottom && nearLeft) next = "bottom-left";
+    else if (nearBottom && nearRight) next = "bottom-right";
+    else {
+      const dists: Record<"left"|"right"|"top"|"bottom", number> = {
+        left: px / w,
+        right: 1 - px / w,
+        top: py / h,
+        bottom: 1 - py / h,
+      };
+      next = (Object.keys(dists) as Array<"left"|"right"|"top"|"bottom">)
+        .reduce((a, b) => (dists[a] < dists[b] ? a : b));
+    }
+
     animate(x, 0, SPRING);
     animate(y, 0, SPRING);
-    setEdge(next);
+    setAnchor(next);
     try { window.localStorage.setItem(EDGE_KEY, next); } catch { /* noop */ }
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 pointer-events-none flex transition-[padding] duration-300", EDGE_ALIGN[edge])}>
+    <div className={cn("fixed inset-0 z-50 pointer-events-none flex transition-[padding] duration-300", ANCHOR_ALIGN[anchor])}>
       <motion.div
         layout
         transition={SPRING}
@@ -122,7 +147,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
             return isVertical ? (
               <Tooltip key={mode}>
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                <TooltipContent side={edge === "left" ? "right" : "left"}>{label}</TooltipContent>
+                <TooltipContent side={anchor === "left" ? "right" : "left"}>{label}</TooltipContent>
               </Tooltip>
             ) : (
               <div key={mode}>{btn}</div>
