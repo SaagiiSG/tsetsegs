@@ -2826,6 +2826,7 @@ export type Database = {
           is_active: boolean
           is_blocked: boolean | null
           is_dev_account: boolean | null
+          is_ghost: boolean
           last_login: string | null
           linked_student_id: string | null
           onboarding_completed: boolean | null
@@ -2855,6 +2856,7 @@ export type Database = {
           is_active?: boolean
           is_blocked?: boolean | null
           is_dev_account?: boolean | null
+          is_ghost?: boolean
           last_login?: string | null
           linked_student_id?: string | null
           onboarding_completed?: boolean | null
@@ -2884,6 +2886,7 @@ export type Database = {
           is_active?: boolean
           is_blocked?: boolean | null
           is_dev_account?: boolean | null
+          is_ghost?: boolean
           last_login?: string | null
           linked_student_id?: string | null
           onboarding_completed?: boolean | null
@@ -3595,6 +3598,7 @@ export type Database = {
           grade: string | null
           has_taken_sat: boolean | null
           id: string
+          is_ghost: boolean
           is_review_student: boolean | null
           last_name: string | null
           math_level: string | null
@@ -3621,6 +3625,7 @@ export type Database = {
           grade?: string | null
           has_taken_sat?: boolean | null
           id?: string
+          is_ghost?: boolean
           is_review_student?: boolean | null
           last_name?: string | null
           math_level?: string | null
@@ -3647,6 +3652,7 @@ export type Database = {
           grade?: string | null
           has_taken_sat?: boolean | null
           id?: string
+          is_ghost?: boolean
           is_review_student?: boolean | null
           last_name?: string | null
           math_level?: string | null

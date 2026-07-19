@@ -1,47 +1,53 @@
-## 1. iPad carousel: reliable one-card-per-swipe
+## Goal
+Create a hidden "ghost" student account (phone `88000000`, password `Uujim123@`) that can log in and use the platform like a real student, but never surfaces in any listing: leaderboards, admin student search, teacher class rosters/analytics, batch overviews, friends discovery, challenge lobbies, announcements audiences, sprint monitor, etc.
 
-**Current problem:** On iPad, small/short swipes leave the carousel "between" cards and need a second flick. Long swipes work because native inertia carries far enough for CSS snap to grab the next card.
+## Approach
+Add a single `is_ghost boolean default false` flag on both `students` and `student_accounts`, then filter it out anywhere the app lists students. The ghost still exists for the logged-in user themselves — we only hide it from *other* people's views.
 
-**Root cause:** We rely purely on CSS `scroll-snap` (`snap-proximity`). On iPadOS trackpad + short thumb swipes, momentum decays before the next snap point is reached, so it snaps back to the current card. `snap-mandatory` fixes short swipes but broke long/wheel scrolls (the previous complaint).
+Using a dedicated `is_ghost` (rather than reusing `is_dev_account`, which currently only bypasses the 30-day device lock) keeps the two behaviors independent.
 
-**Fix — JS-assisted snapping (the pattern iOS uses):**
-- Keep CSS `snap-x snap-proximity` for visual alignment.
-- Add a `scrollend` / debounced `scroll` listener on the track. When the user stops scrolling:
-  1. Measure current `scrollLeft` vs each card's center.
-  2. Determine intent: if the user moved more than ~15% of a card width from the previous active card in a given direction, advance by exactly one card in that direction; otherwise snap back.
-  3. Programmatically `scrollTo({ left: targetCenter, behavior: "smooth" })` — always landing exactly on one card.
-- Track last-known `scrollLeft` + timestamp to compute swipe velocity; any swipe with velocity above a small threshold advances one card even if displacement is tiny.
-- Use `pointerdown` to record the "swipe start" scrollLeft so intent is measured per gesture, not per frame.
-- Debounce the snap decision (~90ms after scroll stops) to avoid fighting the user mid-gesture.
-- Keep `overscroll-behavior-x: contain` and remove `scrollSnapStop` entirely (JS handles stopping).
+## Steps
 
-Result: any swipe — thumb flick, trackpad nudge, or long drag — resolves to exactly the next/previous card, smoothly.
+### 1. Schema migration
+- `ALTER TABLE public.students ADD COLUMN is_ghost boolean NOT NULL DEFAULT false;`
+- `ALTER TABLE public.student_accounts ADD COLUMN is_ghost boolean NOT NULL DEFAULT false;`
+- Partial index on each for fast exclusion.
 
-## 2. Fill the card's empty middle with an analytics preview
+### 2. Seed the ghost record (via insert tool)
+- Insert into `students`: name "Ghost", phone `88000000`, `is_ghost=true`, `batch_id=NULL`, generated `unique_link_id`. (Nullable batch keeps it out of any batch roster.)
+- Insert into `student_accounts`: `phone_number='88000000'`, `password_hash = crypt('Uujim123@', gen_salt('bf',10))`, `password_set_at=now()`, `is_ghost=true`, `is_dev_account=true` (bypass device lock so you can log in from anywhere), `linked_student_id` = the ghost student row.
 
-The current card ends around "Needs attention" and leaves a large blank stretch before the action bar. Fill it with a **compact per-batch analytics preview** that mirrors the full analytics page, so the card feels informative at a glance.
+### 3. Filter ghost out of all listings
+Add `.eq('is_ghost', false)` (or SQL `WHERE is_ghost = false`) to the queries in these files. The ghost's own session queries (StudentAuthContext load-self, own profile, own progress) are keyed by `id`/`auth_user_id`, so they keep working untouched.
 
-**New `ClassCardAnalyticsPreview` component** (rendered between "Needs attention" and the action bar, only when there is vertical room — i.e. `md:` and up where the card is `70vh`):
+Student-facing:
+- `src/hooks/useLeaderboard.ts` — global + friends leaderboard
+- `src/hooks/useFriends.ts` — friend suggestions/search
+- `src/hooks/useChallenge.ts` — participant/opponent lookups
+- `src/pages/student/StudentShareProfile.tsx` and `src/hooks/useOtherStudentProfile.ts` — public profile fetches
+- `src/pages/student/challenges/*` — lobby/opponent lists (via useChallenge)
 
-- Reuses `useTeacherMathAnalytics({ batchIds: [batch.id] })` scoped to the single class.
-- Shows:
-  - **Domain overview**: a small horizontal bar (or 4 mini bars) for the 4 SAT Math domains (Algebra, Advanced Math, Problem-Solving & Data, Geometry & Trig) with accuracy %.
-  - **1 strong topic** + **1 focus topic** as chips (from the same "strong/weakest" logic used on the full page).
-  - **Questions attempted (last 7d)** as a small stat.
-- Skeleton state while loading; graceful "Not enough data yet" empty state.
-- The existing **Analytics** button in the action bar continues to open the full page for drill-down.
+Admin-facing:
+- `src/pages/admin/StudentSearch.tsx` — both `fetchAllStudents` count/list and `performSearch`
+- `src/components/admin/StudentAccountsManagement.tsx`
+- `src/components/admin/RegistrationQueue.tsx` (only if it reads students)
+- `src/pages/admin/SprintMonitor.tsx`, `AdminBatchAnalytics.tsx`, `AdminAnnouncements.tsx` audience counts
+- `src/hooks/useAdminDashboard.ts`, `useAdminAnalytics.ts`
+- `src/components/admin/BatchStudentsTable.tsx`, `BatchOverview.tsx`, `EditBatchDialog.tsx`, `CreateBatchForm.tsx`
 
-On mobile (`< md`) the preview is hidden to keep the card compact; the action bar stays close to content as it does today.
+Teacher-facing:
+- `src/hooks/useTeacherDashboardData.ts` (student list preview, counts)
+- `src/hooks/useTeacherMathAnalytics.ts`
+- `src/pages/TeacherAllStudents.tsx`, `TeacherClassAttendance.tsx`, `TeacherClassAnalytics.tsx`, `TeacherStudentCards.tsx`, `TeacherStudentProfile.tsx`, `teacher/TeacherClassWrapped.tsx`
 
-## Technical notes
+DB-level: `get_batch_student_counts` and `get_batch_completion_status` — update to exclude ghosts.
 
-- Files touched:
-  - `src/components/teacher/dashboard/ClassCarousel.tsx` — JS-assisted snap logic; remove `scrollSnapStop`.
-  - `src/components/teacher/dashboard/ClassCardBig.tsx` — insert preview slot; keep `md:h-[70vh]` so preview fills the gap.
-  - `src/components/teacher/dashboard/ClassCardAnalyticsPreview.tsx` — new, thin wrapper around `useTeacherMathAnalytics` for a single batch.
-- No backend or hook changes required; `useTeacherMathAnalytics` already accepts a batches array.
-- No changes to routes or the full `TeacherMathAnalytics` page.
+### 4. Verification
+- Log in with `88000000` / `Uujim123@` → student dashboard loads.
+- Admin Student Search: total count unchanged (excluding ghost), search "88000000" returns nothing.
+- Teacher dashboard: ghost not in any class card or roster.
+- Leaderboard: ghost absent even if it earns points.
 
-## Open question
-
-Do you want the preview to be **read-only visuals** (bars + chips), or should chips be **clickable** and deep-link into the full analytics page pre-focused on that domain/topic? Default plan is read-only visuals with the existing "Analytics" button doing navigation.
+## Notes
+- Ghost has no `batch_id`, so it won't appear in batch-scoped queries even before filtering — but we still add the flag filter as defense-in-depth in case it's assigned to a batch later.
+- If you ever want to promote the ghost to a normal account, flip `is_ghost=false` on both rows.
