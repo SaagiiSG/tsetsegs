@@ -32,6 +32,7 @@ export default function TeacherDashboard() {
   const [slideDirection, setSlideDirection] = useState(0);
   const [qrBatch, setQrBatch] = useState<DashboardBatch | null>(null);
   const [renameBatch, setRenameBatch] = useState<DashboardBatch | null>(null);
+  const [globalChecklistOpen, setGlobalChecklistOpen] = useState(false);
   const navigate = useNavigate();
   const haptic = useHaptics();
 
