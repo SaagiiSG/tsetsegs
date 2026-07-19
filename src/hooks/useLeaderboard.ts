@@ -253,12 +253,14 @@ export function useLeaderboard(selectedTier?: TierType) {
           student_accounts!inner (
             id,
             phone_number,
+            is_ghost,
             linked_student:students(first_name, last_name)
           )
         `)
         .eq('sprint_id', activeSprint.id)
         .eq('current_tier', tierToQuery)
         .eq('group_number', userGroupNumber)
+        .eq('student_accounts.is_ghost', false)
         .order('total_points', { ascending: false });
 
       const { data: rankings, error } = await query;
