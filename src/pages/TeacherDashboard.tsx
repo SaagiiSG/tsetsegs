@@ -17,6 +17,7 @@ import { useTeacherDashboardData, type DashboardBatch } from "@/hooks/useTeacher
 import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
+import { TeacherModeDock } from "@/components/teacher/dashboard/TeacherModeDock";
 import { useHaptics } from "@/hooks/useHaptics";
 
 type DashboardMode = "dashboard" | "analytics" | "practice";
