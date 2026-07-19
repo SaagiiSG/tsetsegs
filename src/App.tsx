@@ -29,6 +29,7 @@ import TeacherClassAttendance from "./pages/TeacherClassAttendance";
 import TeacherStudentCards from "./pages/TeacherStudentCards";
 import TeacherSettings from "./pages/TeacherSettings";
 import TeacherClassWrapped from "./pages/teacher/TeacherClassWrapped";
+import TeacherChecklistMobile from "./pages/TeacherChecklistMobile";
 
 // Student Practice Portal Pages
 import { StudentLayout } from "./components/student/StudentLayout";
