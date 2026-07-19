@@ -121,9 +121,10 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
 
 
         {/* Analytics preview — fills the mid-card space on tablet/desktop */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex flex-1 min-h-0 mt-5">
           {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
         </div>
+
 
       </Card>
     </motion.div>
