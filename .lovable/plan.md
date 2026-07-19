@@ -1,96 +1,66 @@
-## Teacher Dashboard Redo
+## 1. Carousel layout polish (`ClassCarousel.tsx`, `ClassCardBig.tsx`)
 
-Rebuild `/teacher/dashboard` around a horizontal-snap carousel of big, information-rich class cards. Remove the top tab strip entirely; keep the class filter (Active / Completed / All). Add class nicknames and iOS-style motion throughout.
+- Vertically center cards inside the scroll viewport (`items-center`, min-height that matches the empty dashboard area so cards sit mid-screen, not glued to the top).
+- Cards go from ~60% width to **75%** of the viewport width (with a sensible min/max so they still feel right on desktop and iPad).
+- Fix the left/right nav buttons getting clipped: move them out of `overflow-hidden` — either render them as siblings of the scroll viewport with `absolute` positioning and add horizontal padding to the parent so they have room to sit outside the card edge, or increase the outer wrapper padding so the buttons live inside the safe area.
+- Remove every emoji from the card (e.g. the "✨" in TOP ATTENDANCE, "✨" in "All good") and swap to Lucide icons (`Sparkles`, `CheckCircle2`, `AlertTriangle`, `MapPin`, `Calendar`, etc.) already used elsewhere in the project.
 
-### 1. Remove old chrome
+## 2. Teacher dock: swap Review + Intense for Analytics
 
-- Delete the `Tabs` strip (Classes / Students / Alerts) from `src/pages/TeacherDashboard.tsx`.
-- Drop the `StudentAlertsTab` and `StudentSearchCommand` embeds; those tabs go away as requested.
-- Keep header: teacher name, ⚙️ settings, sign-out. Keep the filter `Select` (Active / Completed / All).
+In `TeacherDashboard.tsx` mode dock:
 
-### 2. Class nickname (rename in a dialog)
+- Remove the **Review** and **Intense** entries.
+- Keep **Dashboard** and **Practice**.
+- Add **Analytics** (icon: `BarChart3` or `TrendingUp`) that routes to a new mode/page rendering the Teacher Analytics view described below.
+- No emojis in labels — icons only.
 
-DB migration on `public.batches`:
-- Add `nickname text` (nullable).
+## 3. New page: Teacher Math Analytics
 
-Card header shows `nickname || batch_name`. A small ✏️ icon on each card opens a `RenameClassDialog` with:
-- Input for nickname (max ~40 chars), Save / Clear buttons.
-- Save updates `batches.nickname`; Clear sets it to `null` (falls back to auto name).
-- Optimistic update via React Query, toast on success.
+**Route/mode:** `analytics` mode inside `TeacherDashboard`, rendering `<TeacherMathAnalytics />` (new file `src/components/teacher/analytics/TeacherMathAnalytics.tsx`).
 
-### 3. Big horizontal class cards
+**Scope filters (top of page):**
+- **Class picker** — defaults to "All active classes", lists each active batch owned by the logged-in teacher (via `teacherName ILIKE` on `batches.teacher`, same as existing dashboard).
+- **Time window toggle** — 7 days / 30 days / All-time.
+- Both controls persist to `localStorage` per teacher.
 
-New component `src/components/teacher/dashboard/ClassCardBig.tsx`.
+**Data source:**
+- Students: all `students.batch_id` in the selected batch(es) owned by this teacher.
+- Attempts: `student_attempts` joined to `student_accounts.linked_student_id` for those students, joined to `questions` for `subtopic` / `skill` / `subject='math'` grouping.
+- Only math for now — English deferred.
 
-Layout — each card is ~60% of viewport width on desktop (min 520px, max 780px), full-width on mobile:
+**Topic grain:** SAT math **subtopics** (`questions.subtopic`, ~20 buckets like "Linear equations in one variable", "Nonlinear functions", "Circles"). Falls back to `skill` where subtopic is null.
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│ Nickname / Batch name              ✏️   👥 24 students │
-│ MWF · 16:40–18:30  ▾                                    │
-│ Room 1011 · Started Jan 12, 2026                        │
-├─────────────────────────────────────────────────────────┤
-│ Attendance 87%   ▓▓▓▓▓▓▓▓░░   Homework 74%  ▓▓▓▓▓▓▓░░░ │
-│ Avg score 68%      ↗ +6 this week                       │
-├─────────────────────────────────────────────────────────┤
-│ ⭐ Most improved:  Bat-Erdene (+120), Sarnai (+95) …    │
-│ ⚠️ Needs attention: 3  ›  (chips of names)              │
-├─────────────────────────────────────────────────────────┤
-│ [ Students ]  [ Analytics ]  [ QR ]  [ Wrapped* ]       │
-└─────────────────────────────────────────────────────────┘
-```
+**Three sections, in this order:**
 
-Expandable schedule: closed shows compact day glyphs (`MWF 16:40–18:30`); tap the ▾ to expand into per-day lines with animated height.
+1. **Go harder here (weakest topics)**
+   - Ranked list of subtopics by lowest class accuracy on first attempts.
+   - Requires a minimum sample (e.g. ≥ 10 attempts across the class) so a topic with 2 attempts doesn't dominate.
+   - Row shows: subtopic name, accuracy %, attempts count, tiny sparkline of last 4 weeks, class-size context ("14/22 students tried"), expand chevron.
+   - Expanding a row reveals the students dragging it down: name + their accuracy on that subtopic, sorted worst first. Each student row links to their existing profile.
+   - Row action: **"Practice in class"** button → opens Teacher Practice Hub filtered to that subtopic.
 
-*Wrapped button only when the batch is completed.
+2. **Biggest recent drops**
+   - Subtopics where accuracy in the current window is meaningfully lower than the prior equal-length window (min sample in both windows).
+   - Row shows: subtopic name, prior % → current %, delta (red down-arrow), attempts. Same expand + Practice actions as above.
 
-### 4. "Needs attention" rule
+3. **Safe to skim (strongest topics)**
+   - Ranked list of subtopics with highest accuracy and enough attempts. Read-only, no drill-in needed — just gives teachers permission to move fast.
 
-A student is flagged when BOTH are true in the current week window:
-- Missed at least 1 session (attendance status = absent) in the last 7 days.
-- Has at least 1 incomplete homework assignment.
+**Empty / low-data state:**
+- If a class has < some threshold of attempts, show "Not enough practice data yet — students need more attempts before insights are meaningful" with a link to nudge the class.
 
-Compute in a single query per dashboard load, group by `batch_id`, cache in React Query. Show count + up to 3 name chips; tap chip → `/teacher/students/:batchId?focus=<studentId>`.
+**Loading:** skeleton rows, same look as the existing dashboard.
 
-Most-improved uses the last 14 days of `student_attempts` accuracy delta vs prior 14 days; take top 2.
+## 4. Technical notes
 
-### 5. Horizontal scroll carousel
+- New hook `src/hooks/useTeacherMathAnalytics.ts` — accepts `{ batchIds, windowDays }`, does the joins, returns `{ weakest, drops, strongest, studentsByTopic }`. Aggregates client-side after a single `student_attempts` fetch scoped to those account ids to keep query count low; if payload is too big for large classes we switch to an RPC.
+- Sparkline: reuse existing chart primitives (`recharts`) already in the project.
+- Practice Hub deep link: extend `TeacherPracticeHub` to read a `?subtopic=` query param on mount and preselect it.
+- All colors via existing semantic tokens (no hardcoded `text-red-*` etc.) — reuse the tier/warning tokens already in `index.css`.
+- Icons only. No emojis anywhere in the new page or the carousel edits.
 
-- Container: `overflow-x-auto snap-x snap-mandatory` with `scroll-padding` and `gap-4`.
-- Each card: `snap-center shrink-0` at responsive widths.
-- Trackpad + wheel + touch drag all work natively.
-- Add left/right chevron buttons on desktop (hidden on touch) that call `scrollBy({ left: ±cardWidth, behavior: 'smooth' })`.
-- Page dots under the carousel reflecting active card via `IntersectionObserver`.
-- When Filter = All, keep the existing month/year grouping but render each group as its own horizontal row with a sticky group header.
+## Out of scope for this turn
 
-### 6. iOS-feel motion
-
-- Global spring: `type: 'spring', stiffness: 260, damping: 30, mass: 0.9` for entrance and layout.
-- Card mount: staggered `opacity 0→1`, `y 12→0`, `scale 0.98→1` (40ms stagger).
-- Filter change: `AnimatePresence mode="popLayout"` cross-fade + slide.
-- Expandable schedule uses `motion.div` `layout` with `height: auto`.
-- Rename dialog uses sheet-style spring in and rubber-band dismiss on mobile.
-- Skeleton uses shimmer, not spinners.
-- Haptic tick (via `useHaptics`) on filter change and card tap.
-
-### 7. Data plumbing
-
-Single React Query hook `useTeacherDashboardData(teacherName)` returning per-batch:
-- studentCount, attendanceRate, homeworkRate, avgScore, weekDelta, mostImproved[], needsAttention[], scheduleParsed.
-
-Powered by parallel queries against `batches`, `students`, `attendance`, `homework_assignments`, `student_attempts`. One trip on mount + real-time subscription on `students` (already present) refetches.
-
-### 8. Files touched / added
-
-- `src/pages/TeacherDashboard.tsx` — strip tabs, mount carousel.
-- `src/components/teacher/dashboard/ClassCardBig.tsx` (new)
-- `src/components/teacher/dashboard/ClassCarousel.tsx` (new)
-- `src/components/teacher/dashboard/RenameClassDialog.tsx` (new)
-- `src/components/teacher/dashboard/ScheduleGlyph.tsx` (new; MWF/TTHS compression)
-- `src/hooks/useTeacherDashboardData.ts` (new)
-- DB migration: add `batches.nickname`.
-
-### Out of scope
-
-- No changes to student-side pages, admin dashboard, or the batch analytics page itself (still linked to via the Analytics button).
-- No new SMS or notifications.
+- English/Reading analytics (add later as a Subject toggle).
+- Bulk-nudge from a weak topic (read-only + Practice jump only for v1).
+- Any changes to the Practice or Dashboard modes beyond the dock label swap.

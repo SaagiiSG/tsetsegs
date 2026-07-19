@@ -43,13 +43,13 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative px-8 md:px-12">
       <div
         ref={ref}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 px-1 pb-3 -mx-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-center gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 py-6 min-h-[60vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {batches.map((b, i) => (
-          <div key={b.id} data-card data-index={i}>
+          <div key={b.id} data-card data-index={i} className="flex items-center">
             <ClassCardBig batch={b} index={i} onRename={onRename} onShowQR={onShowQR} />
           </div>
         ))}
@@ -61,7 +61,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
             variant="outline"
             size="icon"
             onClick={() => scrollBy(-1)}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full shadow-md z-10 bg-background/95"
+            className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 rounded-full shadow-md z-10 bg-background/95"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -69,7 +69,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
             variant="outline"
             size="icon"
             onClick={() => scrollBy(1)}
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full shadow-md z-10 bg-background/95"
+            className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 rounded-full shadow-md z-10 bg-background/95"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -92,3 +92,4 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     </div>
   );
 }
+
