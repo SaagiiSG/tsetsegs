@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScheduleGlyph } from "./ScheduleGlyph";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
-import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
+
 
 interface Props {
   batch: DashboardBatch;
