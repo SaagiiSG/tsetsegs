@@ -93,7 +93,7 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
   const focus = data!.weakest[0];
 
   return (
-    <div className="mt-5 space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="text-[11px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1.5">
           <BarChart3 className="h-3.5 w-3.5" /> Math domains · last 30 days
