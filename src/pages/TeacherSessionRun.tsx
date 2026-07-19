@@ -14,14 +14,16 @@ import { useHaptics } from "@/hooks/useHaptics";
 import { cn } from "@/lib/utils";
 
 // ── Timer persistence ─────────────────────────────────────────────
-// Stores per (teacher, batch, session, topic) → { elapsedSec, runningStartedAt }
 interface TimerState {
   elapsedSec: number;
   startedAt: number | null; // epoch ms while running, null when paused
 }
 
-const storageKey = (teacherId: string, batchId: string, sessionNumber: number, topicKey: string) =>
+const timerKey = (teacherId: string, batchId: string, sessionNumber: number, topicKey: string) =>
   `teacher:session-run:${teacherId}:${batchId}:${sessionNumber}:${topicKey}`;
+
+const activeKey = (teacherId: string, batchId: string, sessionNumber: number) =>
+  `teacher:session-run:${teacherId}:${batchId}:${sessionNumber}:__active`;
 
 function loadTimer(key: string): TimerState {
   try {
@@ -90,12 +92,55 @@ export default function TeacherSessionRun() {
   const done = items.filter((i) => checkedSet.has(i.key)).length;
   const overallPct = items.length === 0 ? 0 : Math.round((done / items.length) * 100);
 
+  // ── Session-wide active topic (auto-flow) ────────────────────────
+  const sessActiveKey = activeKey(teacherId, batchId ?? "no-batch", sessionNumber);
+  const [activeTopicKey, setActiveTopicKey] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(sessActiveKey);
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (activeTopicKey) localStorage.setItem(sessActiveKey, activeTopicKey);
+      else localStorage.removeItem(sessActiveKey);
+    } catch {}
+  }, [activeTopicKey, sessActiveKey]);
+
   // Tick every second so all live timers refresh
   const [, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((n) => (n + 1) % 1_000_000), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Track prior checked count per topic so we can detect "first check of a new topic".
+  const priorDoneRef = useRef<Record<string, number>>({});
+  useEffect(() => {
+    // Initialize on first render — don't trigger auto-switch on mount
+    if (Object.keys(priorDoneRef.current).length === 0) {
+      topics.forEach((t) => {
+        priorDoneRef.current[t.key] = t.items.filter((i) => checkedSet.has(i.key)).length;
+      });
+      return;
+    }
+    // Detect a topic that just got its FIRST check
+    for (const t of topics) {
+      const nowDone = t.items.filter((i) => checkedSet.has(i.key)).length;
+      const prev = priorDoneRef.current[t.key] ?? 0;
+      if (prev === 0 && nowDone > 0 && t.key !== activeTopicKey) {
+        // Auto-flow: switch active topic to this one (pauses previous timer)
+        setActiveTopicKey(t.key);
+        haptic("medium");
+        break;
+      }
+    }
+    // Update snapshot
+    topics.forEach((t) => {
+      priorDoneRef.current[t.key] = t.items.filter((i) => checkedSet.has(i.key)).length;
+    });
+  }, [checkedSet, topics, activeTopicKey, haptic]);
 
   if (!session) {
     return (
@@ -150,6 +195,10 @@ export default function TeacherSessionRun() {
             batchId={batchId ?? "no-batch"}
             sessionNumber={sessionNumber}
             checkedSet={checkedSet}
+            isActive={activeTopicKey === topic.key}
+            onSetActive={(active) => {
+              setActiveTopicKey(active ? topic.key : null);
+            }}
             onToggle={(k, v) => {
               haptic(v ? "medium" : "light");
               toggle(k, v);
@@ -167,6 +216,8 @@ function TopicRunCard({
   batchId,
   sessionNumber,
   checkedSet,
+  isActive,
+  onSetActive,
   onToggle,
 }: {
   topic: ChecklistTopic;
@@ -174,16 +225,29 @@ function TopicRunCard({
   batchId: string;
   sessionNumber: number;
   checkedSet: Set<string>;
+  isActive: boolean;
+  onSetActive: (active: boolean) => void;
   onToggle: (key: string, v: boolean) => void;
 }) {
-  const key = storageKey(teacherId, batchId, sessionNumber, topic.key);
+  const key = timerKey(teacherId, batchId, sessionNumber, topic.key);
   const [state, setState] = useState<TimerState>(() => loadTimer(key));
   const [open, setOpen] = useState(true);
   const haptic = useHaptics();
 
-  // If a previous run left it "running", keep it running across mounts.
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  // Sync running state with `isActive` (session-wide active topic).
+  useEffect(() => {
+    setState((prev) => {
+      const running = prev.startedAt !== null;
+      if (isActive && !running) {
+        return { ...prev, startedAt: Date.now() };
+      }
+      if (!isActive && running) {
+        const extra = Math.floor((Date.now() - (prev.startedAt as number)) / 1000);
+        return { elapsedSec: prev.elapsedSec + extra, startedAt: null };
+      }
+      return prev;
+    });
+  }, [isActive]);
 
   // Persist on change
   useEffect(() => {
@@ -201,19 +265,13 @@ function TopicRunCard({
 
   const startPause = () => {
     haptic("medium");
-    setState((prev) => {
-      if (prev.startedAt !== null) {
-        // pausing
-        const extra = Math.floor((Date.now() - prev.startedAt) / 1000);
-        return { elapsedSec: prev.elapsedSec + extra, startedAt: null };
-      }
-      return { ...prev, startedAt: Date.now() };
-    });
+    onSetActive(!isActive);
   };
 
   const reset = () => {
     haptic("light");
     setState({ elapsedSec: 0, startedAt: null });
+    if (isActive) onSetActive(false);
   };
 
   return (
