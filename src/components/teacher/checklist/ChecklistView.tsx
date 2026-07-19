@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, CheckCircle2, Circle, Clock, ListChecks, CalendarDays } from "lucide-react";
+import { ChevronDown, CheckCircle2, Circle, Clock, ListChecks, CalendarDays, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -13,11 +14,15 @@ interface Props {
   batchId: string | null;
   title?: string;
   compact?: boolean; // desktop preview vs full-mobile
+  /** Called when the teacher taps "Start" on a session card. */
+  onStartSession?: (sessionNumber: number) => void;
+  /** Initial tab. Defaults to "sessions". */
+  defaultView?: "topics" | "sessions";
 }
 
-export function ChecklistView({ batchId, title, compact = false }: Props) {
+export function ChecklistView({ batchId, title, compact = false, onStartSession, defaultView = "sessions" }: Props) {
   const { checkedSet, toggle, loading } = useTeachingChecklist(batchId);
-  const [view, setView] = useState<"topics" | "sessions">("topics");
+  const [view, setView] = useState<"topics" | "sessions">(defaultView);
   const haptic = useHaptics();
 
   const totalItems = useMemo(
