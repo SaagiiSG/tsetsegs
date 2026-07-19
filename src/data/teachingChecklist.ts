@@ -210,16 +210,15 @@ export interface SessionDef {
 }
 
 export const SESSIONS: SessionDef[] = [
-  { number: 1, title: "Session 1 — Foundations", topicNumbers: [1, 2, 3] },
-  { number: 2, title: "Session 2 — Equations & Functions", topicNumbers: [4, 5] },
-  { number: 3, title: "Session 3 — Lines & Linearity", topicNumbers: [6, 7] },
-  { number: 4, title: "Session 4 — Percent & Exponentials", topicNumbers: [8, 9] },
-  { number: 5, title: "Session 5 — Quadratics", topicNumbers: [12, 16] },
-  { number: 6, title: "Session 6 — Systems & Inequalities", topicNumbers: [13, 14, 15] },
-  { number: 7, title: "Session 7 — Geometry I", topicNumbers: [17, 18] },
-  { number: 8, title: "Session 8 — Circles & Trig", topicNumbers: [19, 20, 21] },
-  { number: 9, title: "Session 9 — Volume & Data", topicNumbers: [22, 23] },
-  { number: 10, title: "Session 10 — Probability & Stats", topicNumbers: [24, 25, 26] },
+  { number: 1, title: "Session 1", topicNumbers: [1, 2, 3] },
+  { number: 2, title: "Session 2", topicNumbers: [4, 5, 15] },
+  { number: 4, title: "Session 4", topicNumbers: [6, 7] },
+  { number: 6, title: "Session 6", topicNumbers: [12, 16, 13] },
+  { number: 7, title: "Session 7", topicNumbers: [8, 9, 14] },
+  { number: 8, title: "Session 8", topicNumbers: [17, 20, 24] },
+  { number: 9, title: "Session 9", topicNumbers: [19, 20, 23] },
+  { number: 10, title: "Session 10", topicNumbers: [21, 22, 25, 26] },
 ];
+
 
 export const ALL_ITEM_KEYS: string[] = TEACHING_TOPICS.flatMap((t) => t.items.map((i) => i.key));
