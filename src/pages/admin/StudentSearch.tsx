@@ -174,6 +174,7 @@ export default function StudentSearch() {
             batch:batches(id, batch_name, course_type, teacher, start_date)
           `)
           .or(`first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`)
+          .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
         data = result.data;
