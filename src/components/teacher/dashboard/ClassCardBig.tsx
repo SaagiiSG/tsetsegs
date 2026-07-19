@@ -152,16 +152,6 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           >
             <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Analytics
           </Button>
-          <Button
-            variant="outline"
-            className="rounded-full"
-            onClick={() => {
-              haptic("light");
-              setChecklistOpen(true);
-            }}
-          >
-            <ClipboardList className="h-3.5 w-3.5 mr-1.5" /> Teaching SOP
-          </Button>
           <Button variant="outline" size="icon" className="rounded-full" onClick={() => onShowQR(batch)}>
             <QrCode className="h-3.5 w-3.5" />
           </Button>
@@ -177,14 +167,8 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           )}
         </div>
       </Card>
-
-      <ChecklistLauncherDialog
-        open={checklistOpen}
-        onOpenChange={setChecklistOpen}
-        batchId={batch.id}
-        title={displayName}
-      />
     </motion.div>
+
   );
 }
 
