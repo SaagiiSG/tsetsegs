@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion, useMotionValue, useDragControls, animate, PanInfo } from "framer-motion";
-import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, GripVertical, GripHorizontal } from "lucide-react";
+import { motion, useMotionValue, animate, PanInfo, AnimatePresence } from "framer-motion";
+import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const ANCHOR_ALIGN: Record<DockAnchor, string> = {
 };
 
 const VERTICAL_ANCHORS: DockAnchor[] = ["left", "right"];
+const CORNER_ANCHORS: DockAnchor[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26, mass: 0.8 };
 const EDGE_KEY = "teacher:mode-dock:edge:v2";
 const VALID = new Set<DockAnchor>([
@@ -42,12 +43,13 @@ interface Props {
 
 export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props) {
   const [anchor, setAnchor] = useState<DockAnchor>(() => loadAnchor());
+  const [expanded, setExpanded] = useState(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const controls = useDragControls();
 
   const isVertical = VERTICAL_ANCHORS.includes(anchor);
-  const GripIcon = isVertical ? GripHorizontal : GripVertical;
+  const isCorner = CORNER_ANCHORS.includes(anchor);
+  const showButtons = !isCorner || expanded;
 
   const navItems = [
     { mode: "dashboard" as const, icon: LayoutDashboard, label: "Dashboard" },
@@ -60,7 +62,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
     const h = window.innerHeight;
     const px = info.point.x;
     const py = info.point.y;
-    const cornerMargin = 0.22; // if within 22% of both axes → corner
+    const cornerMargin = 0.22;
     const nearLeft = px < w * cornerMargin;
     const nearRight = px > w * (1 - cornerMargin);
     const nearTop = py < h * cornerMargin;
@@ -85,6 +87,8 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
     animate(x, 0, SPRING);
     animate(y, 0, SPRING);
     setAnchor(next);
+    // Auto-collapse when snapped to a corner
+    if (CORNER_ANCHORS.includes(next)) setExpanded(false);
     try { window.localStorage.setItem(EDGE_KEY, next); } catch { /* noop */ }
   };
 
@@ -96,75 +100,104 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
         drag
         dragMomentum={false}
         dragElastic={0.15}
-        dragListener={false}
-        dragControls={controls}
         onDragEnd={handleDragEnd}
-        whileDrag={{ scale: 1.05 }}
-        style={{ x, y }}
+        whileDrag={{ scale: 1.05, cursor: "grabbing" }}
+        style={{ x, y, touchAction: "none" }}
         className={cn(
-          "pointer-events-auto select-none flex items-center gap-2",
+          "pointer-events-auto select-none flex items-center gap-2 cursor-grab active:cursor-grabbing",
           isVertical ? "flex-col" : "flex-row"
         )}
       >
-        {/* Grip handle — iPadOS style, the only drag surface */}
-        <button
-          type="button"
-          onPointerDown={(e) => controls.start(e)}
-          aria-label="Drag dock"
-          title="Drag to reposition"
-          className={cn(
-            "touch-none cursor-grab active:cursor-grabbing rounded-full bg-card/95 backdrop-blur-sm border shadow-lg text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center",
-            isVertical ? "w-11 h-6" : "h-11 w-6"
+        <AnimatePresence mode="wait" initial={false}>
+          {isCorner && !expanded ? (
+            <motion.button
+              key="collapsed"
+              layout
+              type="button"
+              onClick={() => setExpanded(true)}
+              aria-label="Expand dock"
+              className="h-11 w-11 rounded-full bg-card/95 backdrop-blur-sm border shadow-lg flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={SPRING}
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </motion.button>
+          ) : (
+            <motion.div
+              key="expanded"
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={SPRING}
+              className={cn(
+                "flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1",
+                isVertical ? "flex-col" : "flex-row"
+              )}
+            >
+              {navItems.map(({ mode, icon: Icon, label }) => {
+                const active = activeMode === mode;
+                const btn = (
+                  <Button
+                    variant={active ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "h-9 rounded-full gap-2 text-xs transition-all",
+                      isVertical ? "px-3 md:w-9 md:px-0" : "px-3"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange(mode);
+                    }}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className={isVertical ? "hidden" : "hidden sm:inline"}>{label}</span>
+                  </Button>
+                );
+                return isVertical ? (
+                  <Tooltip key={mode}>
+                    <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                    <TooltipContent side={anchor === "left" ? "right" : "left"}>{label}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div key={mode}>{btn}</div>
+                );
+              })}
+              {isCorner && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpanded(false);
+                  }}
+                  aria-label="Collapse dock"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              )}
+            </motion.div>
           )}
-        >
-          <GripIcon className="h-4 w-4" />
-        </button>
+        </AnimatePresence>
 
-        <motion.div
-          layout
-          transition={SPRING}
-          className={cn(
-            "flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1",
-            isVertical ? "flex-col" : "flex-row"
-          )}
-        >
-          {navItems.map(({ mode, icon: Icon, label }) => {
-            const active = activeMode === mode;
-            const btn = (
-              <Button
-                variant={active ? "default" : "ghost"}
-                size="sm"
-                className={cn(
-                  "h-9 rounded-full gap-2 text-xs transition-all",
-                  isVertical ? "px-3 md:w-9 md:px-0" : "px-3"
-                )}
-                onClick={() => onChange(mode)}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className={isVertical ? "hidden" : "hidden sm:inline"}>{label}</span>
-              </Button>
-            );
-            return isVertical ? (
-              <Tooltip key={mode}>
-                <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                <TooltipContent side={anchor === "left" ? "right" : "left"}>{label}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <div key={mode}>{btn}</div>
-            );
-          })}
-        </motion.div>
-
-        {/* Mobile-only handbook shortcut */}
-        <Button
-          variant="default"
-          size="icon"
-          className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
-          onClick={onOpenHandbook}
-          aria-label="Open handbook on this phone"
-        >
-          <BookOpen className="h-5 w-5" />
-        </Button>
+        {/* Mobile-only handbook shortcut (hidden when collapsed in corner) */}
+        {showButtons && (
+          <Button
+            variant="default"
+            size="icon"
+            className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenHandbook();
+            }}
+            aria-label="Open handbook on this phone"
+          >
+            <BookOpen className="h-5 w-5" />
+          </Button>
+        )}
       </motion.div>
     </div>
   );
