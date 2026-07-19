@@ -88,24 +88,32 @@ function DockButton({ item }: { item: DockItem }) {
   );
 }
 
-type DockEdge = 'bottom' | 'left' | 'right';
+type DockEdge = 'bottom' | 'left' | 'right' | 'top';
 
 const EDGE_ALIGN: Record<DockEdge, string> = {
   bottom: 'items-end justify-center pb-4',
+  top: 'items-start justify-center pt-4',
   left: 'items-center justify-start pl-4',
   right: 'items-center justify-end pr-4',
 };
 
 const SPRING = { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.8 };
+const EDGE_STORAGE_KEY = 'student:ipad-dock:edge:v2';
+
+function loadEdge(): DockEdge {
+  if (typeof window === 'undefined') return 'bottom';
+  const v = window.localStorage.getItem(EDGE_STORAGE_KEY);
+  return v === 'left' || v === 'right' || v === 'top' || v === 'bottom' ? v : 'bottom';
+}
 
 export function StudentIPadDock() {
   const [moreOpen, setMoreOpen] = useState(false);
-  const [edge, setEdge] = useState<DockEdge>('bottom');
+  const [edge, setEdge] = useState<DockEdge>(() => loadEdge());
   const { logout } = useStudentAuth();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const isVertical = edge !== 'bottom';
+  const isVertical = edge === 'left' || edge === 'right';
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const w = window.innerWidth;
@@ -113,18 +121,21 @@ export function StudentIPadDock() {
     const px = info.point.x;
     const py = info.point.y;
 
-    let next: DockEdge = 'bottom';
-    const nearLeft = px < w * 0.22;
-    const nearRight = px > w * 0.78;
-    const nearBottom = py > h * 0.7;
+    // Snap to the nearest edge by normalized distance.
+    const dists: Record<DockEdge, number> = {
+      left: px / w,
+      right: 1 - px / w,
+      top: py / h,
+      bottom: 1 - py / h,
+    };
+    const next = (Object.keys(dists) as DockEdge[]).reduce((a, b) =>
+      dists[a] < dists[b] ? a : b
+    );
 
-    if (nearLeft && !nearBottom) next = 'left';
-    else if (nearRight && !nearBottom) next = 'right';
-
-    // Spring the drag offset back to 0 so the flex anchor takes over smoothly.
     animate(x, 0, SPRING);
     animate(y, 0, SPRING);
     setEdge(next);
+    try { window.localStorage.setItem(EDGE_STORAGE_KEY, next); } catch {}
   };
 
   return (
