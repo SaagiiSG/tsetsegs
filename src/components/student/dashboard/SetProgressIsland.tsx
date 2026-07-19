@@ -1,13 +1,52 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Target, Layers, BookOpen, Maximize2, ArrowRight } from 'lucide-react';
+import { Target, Layers, BookOpen, Maximize2, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useSetProgress } from '@/hooks/useSetProgress';
+import { useSetProgress, type SetCounts } from '@/hooks/useSetProgress';
 import { BigCompletionRingDialog } from './BigCompletionRingDialog';
+
+/**
+ * Expected total contracts for each tile. `null` means "no fixed contract,
+ * accept any positive computed total". If a computed total disagrees with
+ * its contract we warn once per key and render the safe fallback value
+ * (so students never see a nonsensical "X / 0" or "X / 42" mystery total).
+ */
+const EXPECTED_TOTALS: Record<'68' | '150' | 'cb', { fixed: number | null; min: number; fallback: number }> = {
+  '68': { fixed: 68, min: 68, fallback: 68 },
+  '150': { fixed: 150, min: 150, fallback: 150 },
+  cb: { fixed: null, min: 1000, fallback: 0 },
+};
+
+function validateCounts(key: '68' | '150' | 'cb', counts: SetCounts): { ok: boolean; safe: SetCounts; reason?: string } {
+  const spec = EXPECTED_TOTALS[key];
+  if (spec.fixed != null && counts.total !== spec.fixed) {
+    return {
+      ok: false,
+      reason: `expected exactly ${spec.fixed}, got ${counts.total}`,
+      safe: { ...counts, total: spec.fallback, pct: spec.fallback > 0 ? Math.round((counts.completed / spec.fallback) * 100) : 0 },
+    };
+  }
+  if (spec.fixed == null && counts.total > 0 && counts.total < spec.min) {
+    return {
+      ok: false,
+      reason: `computed total ${counts.total} below sanity floor ${spec.min}`,
+      safe: counts,
+    };
+  }
+  if (counts.completed > counts.total && counts.total > 0) {
+    return {
+      ok: false,
+      reason: `completed ${counts.completed} > total ${counts.total}`,
+      safe: { ...counts, completed: counts.total, pct: 100 },
+    };
+  }
+  return { ok: true, safe: counts };
+}
 
 const SETS = [
   {
