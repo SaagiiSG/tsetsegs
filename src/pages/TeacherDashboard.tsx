@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList, Camera } from "lucide-react";
+import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList, BookOpen } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
@@ -318,7 +318,7 @@ export default function TeacherDashboard() {
                   }}
                   aria-label="Open handbook on this phone"
                 >
-                  <Camera className="h-5 w-5" />
+                  <BookOpen className="h-5 w-5" />
                 </Button>
               </motion.div>
             </div>

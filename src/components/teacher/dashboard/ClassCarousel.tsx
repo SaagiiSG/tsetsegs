@@ -62,9 +62,9 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
   return (
     <div className="relative">
-      {/* Fade masks — sit outside the scroll container so arrows can float over them */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-24 z-20 bg-gradient-to-r from-background via-background/70 to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-24 z-20 bg-gradient-to-l from-background via-background/70 to-transparent" />
+      {/* Smooth iOS-style edge fades — softer on mobile so cards don’t look cut off */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-r from-background via-background/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-l from-background via-background/40 to-transparent" />
 
       <div
         ref={ref}
