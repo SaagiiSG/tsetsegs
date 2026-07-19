@@ -132,6 +132,12 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           </Row>
         </div>
 
+
+        {/* Analytics preview — fills the mid-card space on tablet/desktop */}
+        <div className="hidden md:block">
+          {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
+        </div>
+
         {/* Actions — pinned to bottom */}
         <div className="mt-6 md:mt-auto md:pt-6 flex items-center gap-2">
           <Button
