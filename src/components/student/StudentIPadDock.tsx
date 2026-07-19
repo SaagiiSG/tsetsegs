@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion, useMotionValue, animate, PanInfo } from 'framer-motion';
+import { motion, useMotionValue, animate, useDragControls, PanInfo } from 'framer-motion';
+import { GripVertical, GripHorizontal } from 'lucide-react';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
@@ -112,6 +113,7 @@ export function StudentIPadDock() {
   const { logout } = useStudentAuth();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const dragControls = useDragControls();
 
   const isVertical = edge === 'left' || edge === 'right';
 
@@ -138,6 +140,8 @@ export function StudentIPadDock() {
     try { window.localStorage.setItem(EDGE_STORAGE_KEY, next); } catch {}
   };
 
+  const GripIcon = isVertical ? GripHorizontal : GripVertical;
+
   return (
     <div
       className={cn(
@@ -150,13 +154,33 @@ export function StudentIPadDock() {
         transition={SPRING}
         drag
         dragMomentum={false}
-        dragElastic={0.25}
+        dragElastic={0.15}
+        dragListener={false}
+        dragControls={dragControls}
         onDragEnd={handleDragEnd}
-        whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
+        whileDrag={{ scale: 1.05 }}
         style={{ x, y }}
-        className="pointer-events-auto touch-none cursor-grab active:cursor-grabbing select-none"
+        className={cn(
+          'pointer-events-auto select-none flex items-center gap-1',
+          isVertical ? 'flex-col' : 'flex-row'
+        )}
         aria-label="Primary navigation"
       >
+        {/* iPadOS-style drag handle — the ONLY drag surface, so button taps stay clean */}
+        <button
+          type="button"
+          onPointerDown={(e) => dragControls.start(e)}
+          aria-label="Drag dock"
+          title="Drag to reposition"
+          className={cn(
+            'touch-none cursor-grab active:cursor-grabbing rounded-xl bg-card/85 backdrop-blur-xl border border-border/60 shadow-xl text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center',
+            isVertical ? 'w-11 h-6' : 'h-11 w-6'
+          )}
+        >
+          <GripIcon className="h-4 w-4" />
+        </button>
+
+
         <motion.div
           layout
           transition={SPRING}

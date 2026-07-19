@@ -183,60 +183,67 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
   }, [batches.length]);
 
   return (
-    <div className="relative w-screen left-1/2 -translate-x-1/2">
-      {/* Smooth iOS-style edge fades — softer on mobile so cards don’t look cut off */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-r from-background via-background/40 to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-l from-background via-background/40 to-transparent" />
+    <div className="relative">
+      {/* Full-viewport scrollable strip (breaks out of parent width) */}
+      <div className="relative w-screen left-1/2 -translate-x-1/2">
+        {/* Smooth iOS-style edge fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-r from-background via-background/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-l from-background via-background/40 to-transparent" />
 
-      <div
-        ref={ref}
-        className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{
-          overscrollBehaviorX: "contain",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        {batches.map((b, i) => (
-          <div
-            key={b.id}
-            data-card
-            data-index={i}
-            className="flex items-center"
-            style={{ scrollSnapAlign: "center" }}
-          >
-            <ClassCardBig
-              batch={b}
-              index={i}
-              isActive={i === activeIndex}
-              onRename={onRename}
-              onShowQR={onShowQR}
-            />
-          </div>
-        ))}
+        <div
+          ref={ref}
+          className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{
+            overscrollBehaviorX: "contain",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {batches.map((b, i) => (
+            <div
+              key={b.id}
+              data-card
+              data-index={i}
+              className="flex items-center"
+              style={{ scrollSnapAlign: "center" }}
+            >
+              <ClassCardBig
+                batch={b}
+                index={i}
+                isActive={i === activeIndex}
+                onRename={onRename}
+                onShowQR={onShowQR}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {batches.length > 1 && (
         <>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => scrollByDir(-1)}
-            aria-label="Previous class"
-            className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 rounded-full shadow-lg z-30 h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => scrollByDir(1)}
-            aria-label="Next class"
-            className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 rounded-full shadow-lg z-30 h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          {/* Arrow buttons live in the PARENT-width layer so they never get clipped
+              by ancestor overflow-hidden even when the strip above is w-screen. */}
+          <div className="pointer-events-none absolute inset-0 z-30">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scrollByDir(-1)}
+              aria-label="Previous class"
+              className="pointer-events-auto hidden md:flex absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scrollByDir(1)}
+              aria-label="Next class"
+              className="pointer-events-auto hidden md:flex absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
 
-          <div className="flex justify-center gap-1.5 mt-2">
+          <div className="flex justify-center gap-1.5 mt-2 relative z-30">
             {batches.map((_, i) => (
               <motion.button
                 key={i}
