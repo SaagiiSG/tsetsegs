@@ -312,7 +312,9 @@ export default function TeacherDashboard() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center text-sm">Student Onboarding QR</DialogTitle>
-            <p className="text-xs text-muted-foreground text-center">{qrBatch?.batch_name}</p>
+            <p className="text-xs text-muted-foreground text-center">
+              {qrBatch?.nickname || qrBatch?.batch_name}
+            </p>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             <div className="bg-white p-4 rounded-xl">
