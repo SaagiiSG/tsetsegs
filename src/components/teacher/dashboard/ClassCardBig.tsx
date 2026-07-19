@@ -19,22 +19,29 @@ interface Props {
   onShowQR: (b: DashboardBatch) => void;
 }
 
-export function ClassCardBig({ batch, index, onRename, onShowQR }: Props) {
+export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR }: Props) {
   const navigate = useNavigate();
   const haptic = useHaptics();
   const m = batch.metrics;
   const displayName = batch.nickname || batch.batch_name;
+  const [checklistOpen, setChecklistOpen] = useState(false);
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.9, delay: index * 0.04 }}
-      className="snap-center shrink-0 w-[88vw] md:w-[75vw] lg:w-[75vw] xl:w-[75vw] max-w-[1100px]"
+      initial={{ opacity: 0, y: 16, scale: 0.9 }}
+      animate={{
+        opacity: isActive ? 1 : 0.55,
+        y: 0,
+        scale: isActive ? 1 : 0.9,
+        filter: isActive ? "blur(0px)" : "blur(1.5px)",
+      }}
+      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.9, delay: index * 0.03 }}
+      className="snap-center shrink-0 w-[88vw] md:w-[75vw] lg:w-[75vw] xl:w-[75vw] max-w-[1200px]"
     >
-      <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-6 bg-card/95 backdrop-blur">
+      <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-6 md:p-8 bg-card/95 backdrop-blur flex flex-col h-[82vh] md:h-[85vh]">
+
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
