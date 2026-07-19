@@ -182,6 +182,22 @@ const App = () => (
                       </TeacherProtectedRoute>
                     } 
                   />
+                  <Route
+                    path="/teacher/checklist"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherChecklistMobile />
+                      </TeacherProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teacher/checklist/:batchId"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherChecklistMobile />
+                      </TeacherProtectedRoute>
+                    }
+                  />
                   
                   {/* Student Practice Portal */}
                   <Route path="/practice" element={<StudentPortal />} />
