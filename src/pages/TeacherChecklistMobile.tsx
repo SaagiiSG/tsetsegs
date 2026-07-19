@@ -33,7 +33,7 @@ export default function TeacherChecklistMobile() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Teaching SOP</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Handbook</div>
           <div className="text-sm font-semibold truncate">{title}</div>
         </div>
       </div>

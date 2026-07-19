@@ -68,7 +68,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
       <div
         ref={ref}
-        className="flex items-center gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-6 min-h-[85vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-center gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ scrollSnapType: "x mandatory", overscrollBehaviorX: "contain" }}
       >
         {batches.map((b, i) => (

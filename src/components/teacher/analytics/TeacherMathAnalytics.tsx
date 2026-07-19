@@ -55,9 +55,14 @@ export function TeacherMathAnalytics({ batches }: Props) {
   const [win, setWin] = useState<WindowKey>(initial.win ?? "30d");
 
   const selectedBatchIds = useMemo(() => {
-    if (batchId === "all") return activeBatches.map((b) => b.id);
+    // "All-time" is a teacher-wide view: include every batch (active + completed)
+    // so it truly reflects every student assigned to this teacher.
+    if (batchId === "all") {
+      return win === "all" ? batches.map((b) => b.id) : activeBatches.map((b) => b.id);
+    }
     return [batchId];
-  }, [batchId, activeBatches]);
+  }, [batchId, win, activeBatches, batches]);
+
 
   const { data, isLoading } = useTeacherMathAnalytics({
     batchIds: selectedBatchIds,

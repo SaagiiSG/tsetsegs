@@ -26,7 +26,7 @@ export function ChecklistLauncherDialog({ open, onOpenChange, batchId, title }: 
           {/* Left — live checklist */}
           <div className="min-h-0 flex flex-col border-r">
             <DialogHeader className="px-5 pt-5 pb-2">
-              <DialogTitle className="text-base">Teaching SOP · {title}</DialogTitle>
+              <DialogTitle className="text-base">Handbook · {title}</DialogTitle>
             </DialogHeader>
             <div className="flex-1 min-h-0">
               <ChecklistView batchId={batchId} compact />
