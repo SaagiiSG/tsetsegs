@@ -330,6 +330,13 @@ export default function TeacherDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <RenameClassDialog
+        batchId={renameBatch?.id ?? null}
+        currentNickname={renameBatch?.nickname ?? null}
+        fallbackName={renameBatch?.batch_name ?? ""}
+        onOpenChange={(open) => !open && setRenameBatch(null)}
+      />
     </TooltipProvider>
   );
 }
