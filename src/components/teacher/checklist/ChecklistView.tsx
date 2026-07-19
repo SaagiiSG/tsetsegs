@@ -89,6 +89,7 @@ export function ChecklistView({ batchId, title, compact = false, onStartSession,
               return (
                 <SessionCard
                   key={s.number}
+                  sessionNumber={s.number}
                   title={s.title}
                   pct={pct}
                   doneCount={doneInSession}
@@ -99,6 +100,7 @@ export function ChecklistView({ batchId, title, compact = false, onStartSession,
                     haptic(v ? "medium" : "light");
                     toggle(k, v);
                   }}
+                  onStart={onStartSession}
                 />
               );
             })}
