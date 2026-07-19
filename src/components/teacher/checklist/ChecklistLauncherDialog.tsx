@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChecklistView } from "./ChecklistView";
+import { ClassPickerDialog } from "./ClassPickerDialog";
 import { Smartphone, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,11 +15,22 @@ interface Props {
 }
 
 export function ChecklistLauncherDialog({ open, onOpenChange, batchId, title }: Props) {
+  const navigate = useNavigate();
+  const [pickerFor, setPickerFor] = useState<number | null>(null);
   const mobilePath = batchId ? `/teacher/checklist/${batchId}` : `/teacher/checklist`;
   const mobileUrl = useMemo(() => {
     if (typeof window === "undefined") return mobilePath;
     return `${window.location.origin}${mobilePath}`;
   }, [mobilePath]);
+
+  const handleStart = (sessionNumber: number) => {
+    if (batchId) {
+      onOpenChange(false);
+      navigate(`/teacher/session/${batchId}/${sessionNumber}`);
+    } else {
+      setPickerFor(sessionNumber);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -29,7 +42,7 @@ export function ChecklistLauncherDialog({ open, onOpenChange, batchId, title }: 
               <DialogTitle className="text-base">Handbook · {title}</DialogTitle>
             </DialogHeader>
             <div className="flex-1 min-h-0">
-              <ChecklistView batchId={batchId} compact />
+              <ChecklistView batchId={batchId} compact onStartSession={handleStart} />
             </div>
           </div>
 
