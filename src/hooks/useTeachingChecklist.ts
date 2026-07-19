@@ -69,10 +69,22 @@ export function useTeachingChecklist(batchId: string | null) {
           : prev.filter((r) => r.item_key !== itemKey)
       );
       if (checked) {
-        await supabase.from("teaching_checklist_progress").upsert(
-          { teacher_id: teacherId, batch_id: batchId, item_key: itemKey, checked_at: new Date().toISOString() },
-          { onConflict: "teacher_id,batch_id,item_key" }
-        );
+        // Check if already exists to avoid unique-violation noise
+        let existQ = supabase
+          .from("teaching_checklist_progress")
+          .select("id")
+          .eq("teacher_id", teacherId)
+          .eq("item_key", itemKey)
+          .limit(1);
+        existQ = batchId ? existQ.eq("batch_id", batchId) : existQ.is("batch_id", null);
+        const { data: existing } = await existQ;
+        if (!existing || existing.length === 0) {
+          await supabase.from("teaching_checklist_progress").insert({
+            teacher_id: teacherId,
+            batch_id: batchId,
+            item_key: itemKey,
+          });
+        }
       } else {
         let del = supabase
           .from("teaching_checklist_progress")
