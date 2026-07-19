@@ -249,6 +249,10 @@ export default function ReviewRegistration() {
       if (data.teacher) {
         registrationForm.setValue("teacher", data.teacher);
       }
+      // IELTS batches don't ask for math level — default it so schema passes
+      if (data.course_type === "IELTS") {
+        registrationForm.setValue("mathLevel", "average");
+      }
     })();
   }, [batchParam]);
 
