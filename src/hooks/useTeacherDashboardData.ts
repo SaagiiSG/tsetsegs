@@ -24,6 +24,11 @@ export interface TopStudent {
   metric: number;
 }
 
+export interface DashboardStudent {
+  id: string;
+  name: string;
+}
+
 export interface BatchMetrics {
   studentCount: number;
   attendanceRate: number; // 0-100
@@ -32,6 +37,7 @@ export interface BatchMetrics {
   expectedSessions: number;
   needsAttention: NeedsAttentionStudent[];
   topStudents: TopStudent[];
+  students: DashboardStudent[];
   isCompleted: boolean;
 }
 
