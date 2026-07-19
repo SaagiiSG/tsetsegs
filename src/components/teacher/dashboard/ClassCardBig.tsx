@@ -23,7 +23,7 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
   const haptic = useHaptics();
   const m = batch.metrics;
   const displayName = batch.nickname || batch.batch_name;
-  const [checklistOpen, setChecklistOpen] = useState(false);
+  
 
   return (
     <motion.div
