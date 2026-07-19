@@ -131,27 +131,4 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
   );
 }
 
-function MetricBar({ label, value, tone }: { label: string; value: number; tone: "primary" | "accent" }) {
-  const color = tone === "primary" ? "text-primary" : "text-accent-foreground";
-  return (
-    <div>
-      <div className="flex justify-between items-baseline mb-1.5">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className={`text-sm font-semibold tabular-nums ${color}`}>{value}%</span>
-      </div>
-      <Progress value={value} className="h-1.5" />
-    </div>
-  );
-}
 
-function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2">
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[11px] uppercase tracking-wide text-muted-foreground/80 mb-1">{label}</div>
-        {children}
-      </div>
-    </div>
-  );
-}
