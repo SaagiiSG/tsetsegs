@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion, useMotionValue, animate, PanInfo } from 'framer-motion';
+import { motion, useMotionValue, animate, useDragControls, PanInfo } from 'framer-motion';
+import { GripVertical, GripHorizontal } from 'lucide-react';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
