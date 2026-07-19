@@ -121,9 +121,20 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
 
 
 
-        {/* Analytics preview — fills the mid-card space on tablet/desktop */}
-        <div className="hidden md:flex flex-1 min-h-0 mt-5">
-          {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
+        {/* Analytics preview + student list — fills the mid-card space on tablet/desktop */}
+        <div className="hidden md:flex flex-1 min-h-0 mt-5 overflow-hidden">
+          {isActive ? (
+            <div className="grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-5 w-full min-h-0">
+              <StudentListPreview
+                students={batch.metrics.students}
+                total={batch.metrics.studentCount}
+                batchId={batch.id}
+              />
+              <div className="min-h-0 overflow-y-auto">
+                <ClassCardAnalyticsPreview batchId={batch.id} />
+              </div>
+            </div>
+          ) : null}
         </div>
 
 
