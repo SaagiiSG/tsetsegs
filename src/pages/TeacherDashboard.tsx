@@ -202,7 +202,7 @@ export default function TeacherDashboard() {
 
           <StudentSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
-          <div className="[overflow-x:clip] overflow-y-visible">
+          <div className="relative">
             <AnimatePresence mode="wait" custom={slideDirection}>
               {activeMode === "dashboard" && (
                 <motion.div
