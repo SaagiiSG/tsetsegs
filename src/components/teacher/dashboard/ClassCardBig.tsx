@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { ScheduleGlyph } from "./ScheduleGlyph";
 import { ClassCardAnalyticsPreview } from "./ClassCardAnalyticsPreview";
+import { StudentListPreview } from "./StudentListPreview";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
 
@@ -38,7 +39,7 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
       }}
       exit={{ opacity: 0, y: -8, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.9, delay: index * 0.03 }}
-      className="snap-center shrink-0 w-[88vw] md:w-[75vw] lg:w-[75vw] xl:w-[75vw] max-w-[1200px]"
+      className="snap-center shrink-0 w-[92vw] md:w-[85vw] lg:w-[85vw] xl:w-[85vw] max-w-[1400px]"
     >
       <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 bg-card/95 backdrop-blur flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]">
 
@@ -120,9 +121,20 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
 
 
 
-        {/* Analytics preview — fills the mid-card space on tablet/desktop */}
-        <div className="hidden md:flex flex-1 min-h-0 mt-5">
-          {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
+        {/* Analytics preview + student list — fills the mid-card space on tablet/desktop */}
+        <div className="hidden md:flex flex-1 min-h-0 mt-5 overflow-hidden">
+          {isActive ? (
+            <div className="grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-5 w-full min-h-0">
+              <StudentListPreview
+                students={batch.metrics.students}
+                total={batch.metrics.studentCount}
+                batchId={batch.id}
+              />
+              <div className="min-h-0 overflow-y-auto">
+                <ClassCardAnalyticsPreview batchId={batch.id} />
+              </div>
+            </div>
+          ) : null}
         </div>
 
 
