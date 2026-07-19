@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { ScheduleGlyph } from "./ScheduleGlyph";
 import { ClassCardAnalyticsPreview } from "./ClassCardAnalyticsPreview";
+import { StudentListPreview } from "./StudentListPreview";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
 
