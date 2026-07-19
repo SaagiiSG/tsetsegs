@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScheduleGlyph } from "./ScheduleGlyph";
+import { ClassCardAnalyticsPreview } from "./ClassCardAnalyticsPreview";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
 
@@ -129,6 +130,12 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
               </div>
             )}
           </Row>
+        </div>
+
+
+        {/* Analytics preview — fills the mid-card space on tablet/desktop */}
+        <div className="hidden md:block">
+          {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
         </div>
 
         {/* Actions — pinned to bottom */}
