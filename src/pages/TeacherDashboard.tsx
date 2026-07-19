@@ -269,10 +269,15 @@ export default function TeacherDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 27 }}
-                className={`pointer-events-auto flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                className={`pointer-events-auto flex items-center gap-2 ${
                   isPracticeMode ? "flex-row md:flex-col" : "flex-row"
                 }`}
               >
+                <div
+                  className={`flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                    isPracticeMode ? "flex-row md:flex-col" : "flex-row"
+                  }`}
+                >
                 {navItems.map(({ mode, icon: Icon, label }) => {
                   const btn = (
                     <Button
