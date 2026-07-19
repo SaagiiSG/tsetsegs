@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScheduleGlyph } from "./ScheduleGlyph";
+import { ClassCardAnalyticsPreview } from "./ClassCardAnalyticsPreview";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
 
