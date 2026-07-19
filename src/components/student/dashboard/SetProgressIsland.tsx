@@ -152,7 +152,27 @@ export function SetProgressIsland() {
                               {r.label}
                             </span>
                           </div>
-                          <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: r.color }} />
+                          <div className="flex items-center gap-1">
+                            {r.drift && (
+                              <TooltipProvider delayDuration={100}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      role="img"
+                                      aria-label={`Total mismatch: ${r.drift}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Total mismatch — {r.drift}. Showing safe fallback.
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                            <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: r.color }} />
+                          </div>
                         </div>
                         <div className="space-y-0.5">
                           <div className="font-mono font-bold text-lg sm:text-xl leading-none" style={{ color: r.color }}>
