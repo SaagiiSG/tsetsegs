@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { Pencil, Users, MapPin, AlertTriangle, Sparkles, BarChart3, QrCode, Flower2, CheckCircle2 } from "lucide-react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useState } from "react";
+import { Pencil, Users, MapPin, AlertTriangle, Sparkles, BarChart3, QrCode, Flower2, CheckCircle2, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScheduleGlyph } from "./ScheduleGlyph";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
+import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
 
 interface Props {
   batch: DashboardBatch;
   index: number;
+  isActive?: boolean;
   onRename: (b: DashboardBatch) => void;
   onShowQR: (b: DashboardBatch) => void;
 }
