@@ -150,13 +150,17 @@ export function StudentIPadDock() {
         transition={SPRING}
         drag
         dragMomentum={false}
-        dragElastic={0.25}
+        dragElastic={0.15}
+        dragListener={false}
         onDragEnd={handleDragEnd}
-        whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
+        whileDrag={{ scale: 1.05 }}
         style={{ x, y }}
-        className="pointer-events-auto touch-none cursor-grab active:cursor-grabbing select-none"
+        className="pointer-events-auto select-none relative"
         aria-label="Primary navigation"
       >
+        {/* iPadOS-style drag handle — the ONLY drag surface, so button taps stay clean */}
+        <DragHandle isVertical={isVertical} edge={edge} />
+
         <motion.div
           layout
           transition={SPRING}
