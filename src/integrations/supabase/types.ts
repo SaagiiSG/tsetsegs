@@ -303,6 +303,7 @@ export type Database = {
           fb_group_link: string | null
           id: string
           math_schedule: Json | null
+          nickname: string | null
           room: string | null
           schedule: string
           start_date: string
@@ -317,6 +318,7 @@ export type Database = {
           fb_group_link?: string | null
           id?: string
           math_schedule?: Json | null
+          nickname?: string | null
           room?: string | null
           schedule: string
           start_date: string
@@ -331,6 +333,7 @@ export type Database = {
           fb_group_link?: string | null
           id?: string
           math_schedule?: Json | null
+          nickname?: string | null
           room?: string | null
           schedule?: string
           start_date?: string
