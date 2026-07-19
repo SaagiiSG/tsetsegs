@@ -29,7 +29,7 @@ export function ClassCardBig({ batch, index, onRename, onShowQR }: Props) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.9, delay: index * 0.04 }}
-      className="snap-center shrink-0 w-[88vw] sm:w-[560px] lg:w-[640px] xl:w-[720px]"
+      className="snap-center shrink-0 w-[88vw] md:w-[75vw] lg:w-[75vw] xl:w-[75vw] max-w-[1100px]"
     >
       <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-6 bg-card/95 backdrop-blur">
         {/* Header */}
