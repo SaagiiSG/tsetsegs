@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2 } from "lucide-react";
+import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
@@ -16,6 +16,7 @@ import { TeacherMathAnalytics } from "@/components/teacher/analytics/TeacherMath
 import { useTeacherDashboardData, type DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
+import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
 import { useHaptics } from "@/hooks/useHaptics";
 
 type DashboardMode = "dashboard" | "analytics" | "practice";
@@ -31,6 +32,7 @@ export default function TeacherDashboard() {
   const [slideDirection, setSlideDirection] = useState(0);
   const [qrBatch, setQrBatch] = useState<DashboardBatch | null>(null);
   const [renameBatch, setRenameBatch] = useState<DashboardBatch | null>(null);
+  const [globalChecklistOpen, setGlobalChecklistOpen] = useState(false);
   const navigate = useNavigate();
   const haptic = useHaptics();
 
@@ -178,6 +180,15 @@ export default function TeacherDashboard() {
                   ⌘K
                 </kbd>
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 md:h-9 md:w-9"
+                onClick={() => setGlobalChecklistOpen(true)}
+                title="Teaching SOP checklist"
+              >
+                <ClipboardList className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => navigate("/teacher/settings")}>
                 <Settings className="h-4 w-4" />
               </Button>
@@ -324,6 +335,13 @@ export default function TeacherDashboard() {
         currentNickname={renameBatch?.nickname ?? null}
         fallbackName={renameBatch?.batch_name ?? ""}
         onOpenChange={(open) => !open && setRenameBatch(null)}
+      />
+
+      <ChecklistLauncherDialog
+        open={globalChecklistOpen}
+        onOpenChange={setGlobalChecklistOpen}
+        batchId={null}
+        title="My checklist"
       />
     </TooltipProvider>
   );

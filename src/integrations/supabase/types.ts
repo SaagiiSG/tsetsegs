@@ -3728,6 +3728,47 @@ export type Database = {
         }
         Relationships: []
       }
+      teaching_checklist_progress: {
+        Row: {
+          batch_id: string | null
+          checked_at: string
+          created_at: string
+          id: string
+          item_key: string
+          note: string | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          checked_at?: string
+          created_at?: string
+          id?: string
+          item_key: string
+          note?: string | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          checked_at?: string
+          created_at?: string
+          id?: string
+          item_key?: string
+          note?: string | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teaching_checklist_progress_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

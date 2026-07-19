@@ -1,66 +1,59 @@
-## 1. Carousel layout polish (`ClassCarousel.tsx`, `ClassCardBig.tsx`)
+## 1. Teaching SOP Checklist
 
-- Vertically center cards inside the scroll viewport (`items-center`, min-height that matches the empty dashboard area so cards sit mid-screen, not glued to the top).
-- Cards go from ~60% width to **75%** of the viewport width (with a sensible min/max so they still feel right on desktop and iPad).
-- Fix the left/right nav buttons getting clipped: move them out of `overflow-hidden` — either render them as siblings of the scroll viewport with `absolute` positioning and add horizontal padding to the parent so they have room to sit outside the card edge, or increase the outer wrapper padding so the buttons live inside the safe area.
-- Remove every emoji from the card (e.g. the "✨" in TOP ATTENDANCE, "✨" in "All good") and swap to Lucide icons (`Sparkles`, `CheckCircle2`, `AlertTriangle`, `MapPin`, `Calendar`, etc.) already used elsewhere in the project.
+**Seed content.** Import the 26 topics from your Google Doc into a static file `src/data/teachingChecklist.ts` — each topic has an id, title, time estimate, and array of sub-items. I'll also define a fixed session→topics map placeholder (you'll fill the exact grouping in that file after we scaffold it).
 
-## 2. Teacher dock: swap Review + Intense for Analytics
+**Data model (per-batch progress + global template).**
+New table `teaching_checklist_progress`:
+- `teacher_id` (auth.uid), `batch_id` (nullable — null = teacher's global checklist), `item_key` (e.g. `"3.desmos-shavriin"`), `checked_at`, `note` (optional).
+- Unique on (teacher_id, batch_id, item_key).
+- RLS: teachers see/write only their own rows; admins full access.
+- Realtime enabled so desktop ↔ phone stay in sync live.
 
-In `TeacherDashboard.tsx` mode dock:
+**Desktop entry point.** On each big class card add a "Teaching SOP" button. On the dashboard header add a "My checklist" button (global mode).
 
-- Remove the **Review** and **Intense** entries.
-- Keep **Dashboard** and **Practice**.
-- Add **Analytics** (icon: `BarChart3` or `TrendingUp`) that routes to a new mode/page rendering the Teacher Analytics view described below.
-- No emojis in labels — icons only.
+**Popup (`ChecklistLauncherDialog`).**
+- Header: batch name (or "Global") + toggle **By Topic / By Session**.
+- Right pane: QR code + short URL to the mobile route (existing teacher session carries via cookie, so scanning on their logged-in phone lands straight in).
+- Left pane: live-preview of the checklist with % complete, so you can watch check-offs come in from the phone.
 
-## 3. New page: Teacher Math Analytics
+**Mobile route `/teacher/checklist/:batchId?` (also `/teacher/checklist` for global).**
+- Full-screen, one-hand friendly: sticky tab (Topics | Sessions), collapsible topic cards, big tap targets, haptics on check, autosave.
+- "By Session" view groups topics per the fixed map; a session shows aggregate progress and expands to its topics.
+- Optional per-item note field (small pencil) for teachers to jot what worked.
+- Works on desktop too (same component, responsive) so the popup can be used standalone if no phone available.
 
-**Route/mode:** `analytics` mode inside `TeacherDashboard`, rendering `<TeacherMathAnalytics />` (new file `src/components/teacher/analytics/TeacherMathAnalytics.tsx`).
+**Realtime.** Both desktop popup and phone subscribe to `teaching_checklist_progress` filtered by (teacher_id, batch_id) so a check on phone flips the box on desktop instantly.
 
-**Scope filters (top of page):**
-- **Class picker** — defaults to "All active classes", lists each active batch owned by the logged-in teacher (via `teacherName ILIKE` on `batches.teacher`, same as existing dashboard).
-- **Time window toggle** — 7 days / 30 days / All-time.
-- Both controls persist to `localStorage` per teacher.
+## 2. Class Carousel — bigger + smooth iOS feel
 
-**Data source:**
-- Students: all `students.batch_id` in the selected batch(es) owned by this teacher.
-- Attempts: `student_attempts` joined to `student_accounts.linked_student_id` for those students, joined to `questions` for `subtopic` / `skill` / `subject='math'` grouping.
-- Only math for now — English deferred.
+`ClassCardBig.tsx`
+- Height: `h-[85vh]` (near full screen, dock + top bar remain visible), width stays 75vw.
+- Internal layout re-flowed into 3 vertical sections (header/stats/needs-attention) with more breathing room now that height is larger.
+- Inactive cards scale to `0.9` + `opacity 0.6` + slight `blur-[1px]`; active card `scale 1`. Framer Motion spring `{ stiffness: 220, damping: 28 }` for natural iOS spring.
 
-**Topic grain:** SAT math **subtopics** (`questions.subtopic`, ~20 buckets like "Linear equations in one variable", "Nonlinear functions", "Circles"). Falls back to `skill` where subtopic is null.
+`ClassCarousel.tsx`
+- Wrap track in a container with left/right **fade masks** (`mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent)`) so cards dissolve into the edge instead of hard-cutting.
+- Track uses `scroll-snap-type: x mandatory` with `snap-align: center`; each item has `scroll-snap-stop: always`.
+- Track wrapped in Framer Motion `LayoutGroup`; on snap change we run `animate()` on scale/opacity of neighbors → the size change feels continuous, not stepped.
+- Arrow buttons: moved outside `overflow-hidden` region (fix current clipping), sit on top of the fade with a subtle blurred pill background.
+- Momentum: enable trackpad/touch inertial scroll; add keyboard ←/→ + swipe threshold for mouse drag.
 
-**Three sections, in this order:**
+## Files touched
 
-1. **Go harder here (weakest topics)**
-   - Ranked list of subtopics by lowest class accuracy on first attempts.
-   - Requires a minimum sample (e.g. ≥ 10 attempts across the class) so a topic with 2 attempts doesn't dominate.
-   - Row shows: subtopic name, accuracy %, attempts count, tiny sparkline of last 4 weeks, class-size context ("14/22 students tried"), expand chevron.
-   - Expanding a row reveals the students dragging it down: name + their accuracy on that subtopic, sorted worst first. Each student row links to their existing profile.
-   - Row action: **"Practice in class"** button → opens Teacher Practice Hub filtered to that subtopic.
+New:
+- `src/data/teachingChecklist.ts` (seeded from your doc)
+- `src/components/teacher/checklist/ChecklistLauncherDialog.tsx`
+- `src/components/teacher/checklist/ChecklistView.tsx` (shared desktop+mobile)
+- `src/components/teacher/checklist/SessionGroup.tsx`, `TopicRow.tsx`
+- `src/pages/TeacherChecklistMobile.tsx` + route in `App.tsx`
+- `src/hooks/useTeachingChecklist.ts` (fetch + realtime + toggle)
+- Migration: `teaching_checklist_progress` table, RLS, grants, realtime publication
 
-2. **Biggest recent drops**
-   - Subtopics where accuracy in the current window is meaningfully lower than the prior equal-length window (min sample in both windows).
-   - Row shows: subtopic name, prior % → current %, delta (red down-arrow), attempts. Same expand + Practice actions as above.
+Edited:
+- `src/components/teacher/dashboard/ClassCardBig.tsx` — height, layout, SOP button
+- `src/components/teacher/dashboard/ClassCarousel.tsx` — mask edges, spring scale, arrow positioning
+- `src/pages/TeacherDashboard.tsx` — global "My checklist" button in header
 
-3. **Safe to skim (strongest topics)**
-   - Ranked list of subtopics with highest accuracy and enough attempts. Read-only, no drill-in needed — just gives teachers permission to move fast.
+## Open item to confirm during build
 
-**Empty / low-data state:**
-- If a class has < some threshold of attempts, show "Not enough practice data yet — students need more attempts before insights are meaningful" with a link to nudge the class.
-
-**Loading:** skeleton rows, same look as the existing dashboard.
-
-## 4. Technical notes
-
-- New hook `src/hooks/useTeacherMathAnalytics.ts` — accepts `{ batchIds, windowDays }`, does the joins, returns `{ weakest, drops, strongest, studentsByTopic }`. Aggregates client-side after a single `student_attempts` fetch scoped to those account ids to keep query count low; if payload is too big for large classes we switch to an RPC.
-- Sparkline: reuse existing chart primitives (`recharts`) already in the project.
-- Practice Hub deep link: extend `TeacherPracticeHub` to read a `?subtopic=` query param on mount and preselect it.
-- All colors via existing semantic tokens (no hardcoded `text-red-*` etc.) — reuse the tier/warning tokens already in `index.css`.
-- Icons only. No emojis anywhere in the new page or the carousel edits.
-
-## Out of scope for this turn
-
-- English/Reading analytics (add later as a Subject toggle).
-- Bulk-nudge from a weak topic (read-only + Practice jump only for v1).
-- Any changes to the Practice or Dashboard modes beyond the dock label swap.
+The exact **session → topic-numbers map** (e.g. Session 1 = topics 1-2). I'll leave a clearly-marked `SESSION_MAP` constant in `teachingChecklist.ts` with a reasonable first pass based on the time estimates; you tweak the array once and both views update.

@@ -34,23 +34,52 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     return () => obs.disconnect();
   }, [batches.length]);
 
-  const scrollBy = (dir: 1 | -1) => {
+  const scrollTo = (idx: number) => {
     const el = ref.current;
     if (!el) return;
-    const first = el.querySelector<HTMLElement>("[data-card]");
-    const w = first ? first.offsetWidth + 16 : el.clientWidth * 0.8;
-    el.scrollBy({ left: dir * w, behavior: "smooth" });
+    const card = el.querySelector<HTMLElement>(`[data-index="${idx}"]`);
+    if (card) {
+      const target = card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
+      el.scrollTo({ left: target, behavior: "smooth" });
+    }
   };
 
+  const scrollByDir = (dir: 1 | -1) => {
+    const next = Math.max(0, Math.min(batches.length - 1, activeIndex + dir));
+    scrollTo(next);
+  };
+
+  // Keyboard nav
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") scrollByDir(1);
+      if (e.key === "ArrowLeft") scrollByDir(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, batches.length]);
+
   return (
-    <div className="relative px-8 md:px-12">
+    <div className="relative">
+      {/* Fade masks — sit outside the scroll container so arrows can float over them */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-24 z-20 bg-gradient-to-r from-background via-background/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-24 z-20 bg-gradient-to-l from-background via-background/70 to-transparent" />
+
       <div
         ref={ref}
-        className="flex items-center gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 py-6 min-h-[60vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-center gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-6 min-h-[85vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ scrollSnapType: "x mandatory", overscrollBehaviorX: "contain" }}
       >
         {batches.map((b, i) => (
-          <div key={b.id} data-card data-index={i} className="flex items-center">
-            <ClassCardBig batch={b} index={i} onRename={onRename} onShowQR={onShowQR} />
+          <div key={b.id} data-card data-index={i} className="flex items-center" style={{ scrollSnapAlign: "center", scrollSnapStop: "always" }}>
+            <ClassCardBig
+              batch={b}
+              index={i}
+              isActive={i === activeIndex}
+              onRename={onRename}
+              onShowQR={onShowQR}
+            />
           </div>
         ))}
       </div>
@@ -60,26 +89,30 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => scrollBy(-1)}
-            className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 rounded-full shadow-md z-10 bg-background/95"
+            onClick={() => scrollByDir(-1)}
+            aria-label="Previous class"
+            className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 rounded-full shadow-lg z-30 h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button
             variant="outline"
             size="icon"
-            onClick={() => scrollBy(1)}
-            className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 rounded-full shadow-md z-10 bg-background/95"
+            onClick={() => scrollByDir(1)}
+            aria-label="Next class"
+            className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 rounded-full shadow-lg z-30 h-11 w-11 bg-background/80 backdrop-blur border-border/70 hover:bg-background"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
 
           <div className="flex justify-center gap-1.5 mt-2">
             {batches.map((_, i) => (
-              <motion.span
+              <motion.button
                 key={i}
+                onClick={() => scrollTo(i)}
+                aria-label={`Go to class ${i + 1}`}
                 animate={{
-                  width: i === activeIndex ? 20 : 6,
+                  width: i === activeIndex ? 22 : 6,
                   opacity: i === activeIndex ? 1 : 0.35,
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -92,4 +125,3 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     </div>
   );
 }
-
