@@ -182,6 +182,20 @@ export default function ReviewRegistration() {
 
   const hasTakenSat = registrationForm.watch("hasTakenSat");
 
+  // Wizard step (used inside the "form" phase): 0 welcome, 1 name, 2 phone,
+  // 3 school+grade, 4 level, 5 prior-test, 6 score/date, 7 finish.
+  const [wizardStep, setWizardStep] = useState(0);
+  const TOTAL_WIZARD_STEPS = 8;
+
+  const goNext = async (fieldsToValidate: (keyof RegistrationFormData)[] = []) => {
+    if (fieldsToValidate.length > 0) {
+      const ok = await registrationForm.trigger(fieldsToValidate as any);
+      if (!ok) return;
+    }
+    setWizardStep((s) => Math.min(s + 1, TOTAL_WIZARD_STEPS - 1));
+  };
+  const goBack = () => setWizardStep((s) => Math.max(s - 1, 0));
+
   const startCooldown = (seconds: number) => {
     setSubmitCooldown(true);
     setCooldownSeconds(seconds);
