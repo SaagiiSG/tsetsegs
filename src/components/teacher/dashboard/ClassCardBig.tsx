@@ -96,8 +96,11 @@ export function ClassCardBig({ batch, index, onRename, onShowQR }: Props) {
             label={`Needs attention (${m.needsAttention.length})`}
           >
             {m.needsAttention.length === 0 ? (
-              <span className="text-xs text-muted-foreground">All good ✨</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> All good
+              </span>
             ) : (
+
               <div className="flex flex-wrap gap-1.5">
                 {m.needsAttention.slice(0, 3).map((s) => (
                   <button
