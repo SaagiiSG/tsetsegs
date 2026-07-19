@@ -241,10 +241,10 @@ export default function TeacherDashboard() {
           const isPracticeMode = activeMode === "practice";
           const navItems = [
             { mode: "dashboard" as const, icon: LayoutDashboard, label: "Dashboard" },
-            { mode: "review" as const, icon: QrCode, label: "Review" },
-            { mode: "intense" as const, icon: Flame, label: "Intense" },
+            { mode: "analytics" as const, icon: TrendingUp, label: "Analytics" },
             { mode: "practice" as const, icon: Gamepad2, label: "Practice" },
           ];
+
           return (
             <div
               className={`fixed z-50 pointer-events-none flex transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
