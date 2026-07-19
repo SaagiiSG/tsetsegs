@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList } from "lucide-react";
+import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList, Camera } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
@@ -269,10 +269,15 @@ export default function TeacherDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 27 }}
-                className={`pointer-events-auto flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                className={`pointer-events-auto flex items-center gap-2 ${
                   isPracticeMode ? "flex-row md:flex-col" : "flex-row"
                 }`}
               >
+                <div
+                  className={`flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
+                    isPracticeMode ? "flex-row md:flex-col" : "flex-row"
+                  }`}
+                >
                 {navItems.map(({ mode, icon: Icon, label }) => {
                   const btn = (
                     <Button
@@ -300,6 +305,21 @@ export default function TeacherDashboard() {
                     <div key={mode}>{btn}</div>
                   );
                 })}
+                </div>
+
+                {/* Mobile-only: Handbook shortcut (camera-style pill) outside main dock */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
+                  onClick={() => {
+                    haptic("light");
+                    navigate("/teacher/checklist");
+                  }}
+                  aria-label="Open handbook on this phone"
+                >
+                  <Camera className="h-5 w-5" />
+                </Button>
               </motion.div>
             </div>
           );
