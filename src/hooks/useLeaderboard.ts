@@ -398,9 +398,12 @@ export function useLeaderboard(selectedTier?: TierType) {
         .select(`
           id,
           phone_number,
+          is_ghost,
           linked_student:students(first_name, last_name)
         `)
+        .eq('is_ghost', false)
         .in('id', studentIds);
+      const visibleIds = new Set((accounts || []).map(a => a.id));
 
       // Get highest tier achieved per student
       const { data: rankings } = await supabase
