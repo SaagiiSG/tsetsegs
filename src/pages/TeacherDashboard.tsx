@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2 } from "lucide-react";
+import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2, ClipboardList } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
