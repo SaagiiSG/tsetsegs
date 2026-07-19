@@ -305,6 +305,21 @@ export default function TeacherDashboard() {
                     <div key={mode}>{btn}</div>
                   );
                 })}
+                </div>
+
+                {/* Mobile-only: Handbook shortcut (camera-style pill) outside main dock */}
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
+                  onClick={() => {
+                    haptic("light");
+                    navigate("/teacher/checklist");
+                  }}
+                  aria-label="Open handbook on this phone"
+                >
+                  <Camera className="h-5 w-5" />
+                </Button>
               </motion.div>
             </div>
           );
