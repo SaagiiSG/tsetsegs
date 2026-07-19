@@ -130,6 +130,7 @@ export function useFriends() {
         .from('student_accounts')
         .select('id')
         .eq('phone_number', (studentRow[0] as any).phone)
+        .eq('is_ghost', false)
         .maybeSingle();
       if (!acct) {
         return { error: 'That student has not signed in yet' };
