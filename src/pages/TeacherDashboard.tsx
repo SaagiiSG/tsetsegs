@@ -336,6 +336,13 @@ export default function TeacherDashboard() {
         fallbackName={renameBatch?.batch_name ?? ""}
         onOpenChange={(open) => !open && setRenameBatch(null)}
       />
+
+      <ChecklistLauncherDialog
+        open={globalChecklistOpen}
+        onOpenChange={setGlobalChecklistOpen}
+        batchId={null}
+        title="My checklist"
+      />
     </TooltipProvider>
   );
 }
