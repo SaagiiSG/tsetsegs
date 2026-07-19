@@ -116,9 +116,15 @@ export function useTeacherMathAnalytics(params: {
         .select("id, name, batch_id")
         .in("batch_id", batchIds);
       const studentList = students || [];
-      if (!studentList.length) {
-        return { weakest: [], drops: [], strongest: [], totalAttempts: 0, totalStudents: 0 };
-      }
+      const emptyResult = (totalStudents: number): AnalyticsResult => ({
+        domains: [],
+        weakest: [],
+        drops: [],
+        strongest: [],
+        totalAttempts: 0,
+        totalStudents,
+      });
+      if (!studentList.length) return emptyResult(0);
       const studentIds = studentList.map((s) => s.id);
       const nameById: Record<string, string> = {};
       studentList.forEach((s) => (nameById[s.id] = s.name));
@@ -129,9 +135,7 @@ export function useTeacherMathAnalytics(params: {
         .select("id, linked_student_id")
         .in("linked_student_id", studentIds);
       const accountList = accounts || [];
-      if (!accountList.length) {
-        return { weakest: [], drops: [], strongest: [], totalAttempts: 0, totalStudents: studentList.length };
-      }
+      if (!accountList.length) return emptyResult(studentList.length);
       const studentByAccount: Record<string, string> = {};
       accountList.forEach((a) => {
         if (a.linked_student_id) studentByAccount[a.id] = a.linked_student_id;
@@ -154,14 +158,11 @@ export function useTeacherMathAnalytics(params: {
       const { data: attempts, error: aErr } = await attemptsQ.limit(20000);
       if (aErr) throw aErr;
       const attemptList = attempts || [];
-      if (!attemptList.length) {
-        return { weakest: [], drops: [], strongest: [], totalAttempts: 0, totalStudents: studentList.length };
-      }
+      if (!attemptList.length) return emptyResult(studentList.length);
 
       // 4. Questions for topic + subject filter
       const qIds = Array.from(new Set(attemptList.map((a) => a.question_id)));
       const questionTopic: Record<string, string> = {};
-      // Chunk in 400s to stay under URL limits
       for (let i = 0; i < qIds.length; i += 400) {
         const chunk = qIds.slice(i, i + 400);
         const { data: qs } = await supabase
@@ -231,6 +232,7 @@ export function useTeacherMathAnalytics(params: {
           }));
           return {
             topic,
+            domain: classifyDomain(topic),
             attempts: b.attempts,
             correct: b.correct,
             accuracy,
@@ -243,6 +245,24 @@ export function useTeacherMathAnalytics(params: {
           };
         });
 
+      // Domain aggregates
+      const domainOrder: DomainKey[] = ["algebra", "advanced", "data", "geometry", "other"];
+      const domains: DomainStat[] = domainOrder
+        .map((key) => {
+          const inDomain = stats.filter((s) => s.domain === key);
+          const dAttempts = inDomain.reduce((n, s) => n + s.attempts, 0);
+          const dCorrect = inDomain.reduce((n, s) => n + s.correct, 0);
+          return {
+            key,
+            label: DOMAIN_LABEL[key],
+            attempts: dAttempts,
+            correct: dCorrect,
+            accuracy: dAttempts ? dCorrect / dAttempts : 0,
+            topics: inDomain.sort((a, b) => a.accuracy - b.accuracy),
+          };
+        })
+        .filter((d) => d.attempts > 0);
+
       const weakest = [...stats].sort((a, b) => a.accuracy - b.accuracy).slice(0, 8);
       const strongest = [...stats].sort((a, b) => b.accuracy - a.accuracy).slice(0, 5);
       const drops = stats
@@ -251,6 +271,7 @@ export function useTeacherMathAnalytics(params: {
         .slice(0, 6);
 
       return {
+        domains,
         weakest,
         drops,
         strongest,
@@ -258,5 +279,6 @@ export function useTeacherMathAnalytics(params: {
         totalStudents: studentList.length,
       };
     },
+
   });
 }
