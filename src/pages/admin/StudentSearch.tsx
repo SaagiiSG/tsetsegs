@@ -68,7 +68,8 @@ export default function StudentSearch() {
       // Get total count
       const { count } = await supabase
         .from('students')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('is_ghost', false);
 
       setTotalCount(count || 0);
 
@@ -93,6 +94,7 @@ export default function StudentSearch() {
           created_at,
           batch:batches(id, batch_name, course_type, teacher, start_date)
         `)
+        .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -157,6 +159,7 @@ export default function StudentSearch() {
             batch:batches(id, batch_name, course_type, teacher, start_date)
           `)
           .ilike('phone', `${cleanedQuery}%`)
+          .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
         data = result.data;
@@ -171,6 +174,7 @@ export default function StudentSearch() {
             batch:batches(id, batch_name, course_type, teacher, start_date)
           `)
           .or(`first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`)
+          .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
         data = result.data;

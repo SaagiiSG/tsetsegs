@@ -140,6 +140,7 @@ export function StudentAccountsManagement() {
       const { data: accountsData, error: accountsError } = await supabase
         .from('student_accounts')
         .select('*')
+        .eq('is_ghost', false)
         .order('last_login', { ascending: false, nullsFirst: false });
       
       if (accountsError) throw accountsError;
@@ -155,7 +156,8 @@ export function StudentAccountsManagement() {
       // Fetch students with their batch info to match by phone
       const { data: studentsData, error: studentsError } = await supabase
         .from('students')
-        .select('id, phone, first_name, last_name, batch_id, batches(batch_name, course_type)');
+        .select('id, phone, first_name, last_name, batch_id, batches(batch_name, course_type)')
+        .eq('is_ghost', false);
       
       if (studentsError) throw studentsError;
 

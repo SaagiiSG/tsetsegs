@@ -115,6 +115,7 @@ export function useFriends() {
         .from('students')
         .select('id, phone, batches(course_type)')
         .or(`phone.eq.${phone},phone.eq.${phone.replace(/-/g, '')}`)
+        .eq('is_ghost', false)
         .limit(1);
       if (!studentRow || studentRow.length === 0) {
         return { error: 'No student with that phone number' };
@@ -129,6 +130,7 @@ export function useFriends() {
         .from('student_accounts')
         .select('id')
         .eq('phone_number', (studentRow[0] as any).phone)
+        .eq('is_ghost', false)
         .maybeSingle();
       if (!acct) {
         return { error: 'That student has not signed in yet' };

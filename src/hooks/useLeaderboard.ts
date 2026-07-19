@@ -253,12 +253,14 @@ export function useLeaderboard(selectedTier?: TierType) {
           student_accounts!inner (
             id,
             phone_number,
+            is_ghost,
             linked_student:students(first_name, last_name)
           )
         `)
         .eq('sprint_id', activeSprint.id)
         .eq('current_tier', tierToQuery)
         .eq('group_number', userGroupNumber)
+        .eq('student_accounts.is_ghost', false)
         .order('total_points', { ascending: false });
 
       const { data: rankings, error } = await query;
@@ -396,9 +398,12 @@ export function useLeaderboard(selectedTier?: TierType) {
         .select(`
           id,
           phone_number,
+          is_ghost,
           linked_student:students(first_name, last_name)
         `)
+        .eq('is_ghost', false)
         .in('id', studentIds);
+      const visibleIds = new Set((accounts || []).map(a => a.id));
 
       // Get highest tier achieved per student
       const { data: rankings } = await supabase
@@ -422,6 +427,7 @@ export function useLeaderboard(selectedTier?: TierType) {
       });
 
       return studentIds
+        .filter(id => visibleIds.has(id))
         .map(id => {
           const account = accounts?.find(a => a.id === id);
           const linkedStudent = account?.linked_student as { first_name: string; last_name: string } | null;
