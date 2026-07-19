@@ -36,7 +36,7 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
 
   if (isLoading) {
     return (
-      <div className="mt-5 space-y-2 animate-pulse">
+      <div className="space-y-2 animate-pulse">
         <div className="h-3 w-24 bg-muted rounded" />
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="h-2.5 bg-muted/60 rounded-full" />
@@ -49,7 +49,7 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
 
   if (!hasData) {
     return (
-      <div className="mt-5 space-y-3 opacity-70">
+      <div className="space-y-3 opacity-70">
         <div className="flex items-center justify-between">
           <div className="text-[11px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" /> Math domains · last 30 days
