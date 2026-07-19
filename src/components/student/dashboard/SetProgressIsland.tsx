@@ -1,13 +1,52 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Target, Layers, BookOpen, Maximize2, ArrowRight } from 'lucide-react';
+import { Target, Layers, BookOpen, Maximize2, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useSetProgress } from '@/hooks/useSetProgress';
+import { useSetProgress, type SetCounts } from '@/hooks/useSetProgress';
 import { BigCompletionRingDialog } from './BigCompletionRingDialog';
+
+/**
+ * Expected total contracts for each tile. `null` means "no fixed contract,
+ * accept any positive computed total". If a computed total disagrees with
+ * its contract we warn once per key and render the safe fallback value
+ * (so students never see a nonsensical "X / 0" or "X / 42" mystery total).
+ */
+const EXPECTED_TOTALS: Record<'68' | '150' | 'cb', { fixed: number | null; min: number; fallback: number }> = {
+  '68': { fixed: 68, min: 68, fallback: 68 },
+  '150': { fixed: 150, min: 150, fallback: 150 },
+  cb: { fixed: null, min: 1000, fallback: 0 },
+};
+
+function validateCounts(key: '68' | '150' | 'cb', counts: SetCounts): { ok: boolean; safe: SetCounts; reason?: string } {
+  const spec = EXPECTED_TOTALS[key];
+  if (spec.fixed != null && counts.total !== spec.fixed) {
+    return {
+      ok: false,
+      reason: `expected exactly ${spec.fixed}, got ${counts.total}`,
+      safe: { ...counts, total: spec.fallback, pct: spec.fallback > 0 ? Math.round((counts.completed / spec.fallback) * 100) : 0 },
+    };
+  }
+  if (spec.fixed == null && counts.total > 0 && counts.total < spec.min) {
+    return {
+      ok: false,
+      reason: `computed total ${counts.total} below sanity floor ${spec.min}`,
+      safe: counts,
+    };
+  }
+  if (counts.completed > counts.total && counts.total > 0) {
+    return {
+      ok: false,
+      reason: `completed ${counts.completed} > total ${counts.total}`,
+      safe: { ...counts, completed: counts.total, pct: 100 },
+    };
+  }
+  return { ok: true, safe: counts };
+}
 
 const SETS = [
   {
@@ -44,11 +83,34 @@ export function SetProgressIsland() {
   const navigate = useNavigate();
   const [bigOpen, setBigOpen] = useState(false);
 
-  const rows = [
-    { ...SETS[0], counts: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
-    { ...SETS[1], counts: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
-    { ...SETS[2], counts: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
+  const warnedRef = useRef<Set<string>>(new Set());
+  const rawRows = [
+    { ...SETS[0], raw: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
+    { ...SETS[1], raw: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
+    { ...SETS[2], raw: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
   ];
+  const rows = useMemo(
+    () =>
+      rawRows.map((r) => {
+        const v = validateCounts(r.key, r.raw);
+        return { ...r, counts: v.safe, drift: v.ok ? null : v.reason ?? 'mismatch' };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [progress?.s68, progress?.s150, progress?.cb],
+  );
+
+  useEffect(() => {
+    if (isLoading) return;
+    rows.forEach((r) => {
+      if (r.drift && !warnedRef.current.has(r.key)) {
+        warnedRef.current.add(r.key);
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[SetProgressIsland] tile "${r.label}" total drift — ${r.drift}. Falling back to safe total ${r.counts.total}.`,
+        );
+      }
+    });
+  }, [rows, isLoading]);
 
   return (
     <>
@@ -90,7 +152,27 @@ export function SetProgressIsland() {
                               {r.label}
                             </span>
                           </div>
-                          <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: r.color }} />
+                          <div className="flex items-center gap-1">
+                            {r.drift && (
+                              <TooltipProvider delayDuration={100}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      role="img"
+                                      aria-label={`Total mismatch: ${r.drift}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Total mismatch — {r.drift}. Showing safe fallback.
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                            <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: r.color }} />
+                          </div>
                         </div>
                         <div className="space-y-0.5">
                           <div className="font-mono font-bold text-lg sm:text-xl leading-none" style={{ color: r.color }}>
