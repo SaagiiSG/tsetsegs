@@ -57,16 +57,24 @@ export function useTeacherDashboardData(teacherName: string | null) {
 
       const batchIds = batches.map((b) => b.id);
 
-      const [studentsRes, attendanceRes, homeworkRes, completionRes] = await Promise.all([
-        supabase.from("students").select("id, name, batch_id").in("batch_id", batchIds),
+      const { data: studentsData } = await supabase
+        .from("students")
+        .select("id, name, batch_id")
+        .in("batch_id", batchIds);
+      const students = studentsData || [];
+      const studentIds = students.map((s) => s.id);
+
+      const [attendanceRes, homeworkRes, completionRes] = await Promise.all([
         supabase.from("attendance").select("*").in("batch_id", batchIds),
-        supabase.from("homework").select("student_id, session_number, completed").in("batch_id" as any, batchIds).then(
-          (r) => (r.error ? supabase.from("homework").select("student_id, session_number, completed") : r)
-        ),
+        studentIds.length
+          ? supabase
+              .from("homework")
+              .select("student_id, session_number, completed")
+              .in("student_id", studentIds)
+          : Promise.resolve({ data: [] as any[] }),
         supabase.rpc("get_batch_completion_status", { teacher_name: teacherName }),
       ]);
 
-      const students = studentsRes.data || [];
       const attendance = attendanceRes.data || [];
       const homework = (homeworkRes as any).data || [];
       const completionMap: Record<string, boolean> = {};
