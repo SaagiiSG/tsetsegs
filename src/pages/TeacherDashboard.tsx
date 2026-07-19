@@ -205,9 +205,9 @@ export default function TeacherDashboard() {
                   <DashboardContent />
                 </motion.div>
               )}
-              {activeMode === "review" && (
+              {activeMode === "analytics" && (
                 <motion.div
-                  key="review"
+                  key="analytics"
                   custom={slideDirection}
                   variants={slideVariants}
                   initial="enter"
@@ -215,20 +215,7 @@ export default function TeacherDashboard() {
                   exit="exit"
                   transition={slideTransition}
                 >
-                  <ReviewRegistrationContent />
-                </motion.div>
-              )}
-              {activeMode === "intense" && (
-                <motion.div
-                  key="intense"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={slideTransition}
-                >
-                  <IntensePrepContent />
+                  <TeacherMathAnalytics batches={allBatches} />
                 </motion.div>
               )}
               {activeMode === "practice" && (
@@ -244,6 +231,7 @@ export default function TeacherDashboard() {
                   <TeacherPracticeHub />
                 </motion.div>
               )}
+
             </AnimatePresence>
           </div>
         </div>
