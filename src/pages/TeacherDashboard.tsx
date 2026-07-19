@@ -161,8 +161,8 @@ export default function TeacherDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <div className={`container mx-auto p-3 md:p-6 lg:p-8 pb-24 transition-[padding] duration-300 ${activeMode === "practice" ? "md:pl-20" : ""}`}>
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden">
+        <div className={`w-full max-w-[1600px] mx-auto p-3 md:p-6 lg:p-8 pb-24 transition-[padding] duration-300 ${activeMode === "practice" ? "md:pl-20" : ""}`}>
           <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
             <div className="min-w-0 flex-1">
               <h1 className="text-lg md:text-2xl lg:text-3xl font-bold truncate">Welcome, {teacherName}!</h1>
@@ -202,7 +202,7 @@ export default function TeacherDashboard() {
 
           <StudentSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
-          <div className="overflow-hidden">
+          <div className="relative">
             <AnimatePresence mode="wait" custom={slideDirection}>
               {activeMode === "dashboard" && (
                 <motion.div
