@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Pencil, Users, MapPin, AlertTriangle, Sparkles, BarChart3, QrCode, Flower2, CheckCircle2, ClipboardList } from "lucide-react";
+import { Pencil, Users, MapPin, AlertTriangle, Sparkles, BarChart3, QrCode, Flower2, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
