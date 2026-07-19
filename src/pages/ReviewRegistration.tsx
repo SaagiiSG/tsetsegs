@@ -510,376 +510,434 @@ export default function ReviewRegistration() {
           ) : (
             <form
               onSubmit={registrationForm.handleSubmit(handleRegistrationSubmit)}
-              className="space-y-4"
+              className="space-y-6"
             >
-              {/* First Name */}
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Өөрийн нэр <span className="text-muted-foreground font-normal">(First Name)</span></Label>
-                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Сараа</span> — паспорт дээрх өөрийн нэр</p>
-                <Input
-                  id="firstName"
-                  placeholder="Өөрийн нэрээ оруулна уу"
-                  className={
-                    registrationForm.formState.errors.firstName
-                      ? "border-destructive"
-                      : ""
-                  }
-                  {...registrationForm.register("firstName")}
-                />
-                {registrationForm.formState.errors.firstName && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.firstName.message}
-                  </p>
-                )}
+              {/* Progress bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Алхам {wizardStep + 1} / {TOTAL_WIZARD_STEPS}</span>
+                  <span>{Math.round(((wizardStep + 1) / TOTAL_WIZARD_STEPS) * 100)}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${((wizardStep + 1) / TOTAL_WIZARD_STEPS) * 100}%` }}
+                  />
+                </div>
               </div>
 
-              {/* Last Name */}
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Овог <span className="text-muted-foreground font-normal">(Last Name)</span></Label>
-                <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Болдын</span> — эцгийн нэр</p>
-                <Input
-                  id="lastName"
-                  placeholder="Эцэг/эхийн нэрээ оруулна уу"
-                  className={
-                    registrationForm.formState.errors.lastName
-                      ? "border-destructive"
-                      : ""
-                  }
-                  {...registrationForm.register("lastName")}
-                />
-                {registrationForm.formState.errors.lastName && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.lastName.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-2">
-                <Label htmlFor="phone">Утасны дугаар <span className="text-muted-foreground font-normal">(Phone)</span></Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="99112233"
-                  maxLength={8}
-                  className={
-                    registrationForm.formState.errors.phone
-                      ? "border-destructive"
-                      : ""
-                  }
-                  {...registrationForm.register("phone")}
-                />
-                {registrationForm.formState.errors.phone && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.phone.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Parent Phone */}
-              <div className="space-y-2">
-                <Label htmlFor="parentPhone">Эцэг/эхийн утасны дугаар <span className="text-muted-foreground font-normal">(Parent's Phone)</span></Label>
-                <Input
-                  id="parentPhone"
-                  type="tel"
-                  placeholder="99887766"
-                  maxLength={8}
-                  className={
-                    registrationForm.formState.errors.parentPhone
-                      ? "border-destructive"
-                      : ""
-                  }
-                  {...registrationForm.register("parentPhone")}
-                />
-                {registrationForm.formState.errors.parentPhone && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.parentPhone.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Grade */}
-              <div className="space-y-2">
-                <Label>Анги <span className="text-muted-foreground font-normal">(Grade)</span></Label>
-                <Select
-                  onValueChange={(value) => registrationForm.setValue("grade", value)}
-                >
-                  <SelectTrigger
-                    className={
-                      registrationForm.formState.errors.grade
-                        ? "border-destructive"
-                        : ""
-                    }
-                  >
-                    <SelectValue placeholder="Ангиа сонгоно уу..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["8", "9", "10", "11", "12"].map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g}-р анги
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {registrationForm.formState.errors.grade && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.grade.message}
-                  </p>
-                )}
-              </div>
-
-              {/* School Name */}
-              <div className="space-y-2">
-                <Label htmlFor="schoolName">Сургуулийн нэр <span className="text-muted-foreground font-normal">(School)</span></Label>
-                <Input
-                  id="schoolName"
-                  placeholder="Сургуулийнхаа нэрийг бичнэ үү"
-                  className={
-                    registrationForm.formState.errors.schoolName
-                      ? "border-destructive"
-                      : ""
-                  }
-                  {...registrationForm.register("schoolName")}
-                />
-                {registrationForm.formState.errors.schoolName && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.schoolName.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Math Level */}
-              <div className="space-y-2">
-                <Label>Математикийн түвшин <span className="text-muted-foreground font-normal">(Math Level)</span></Label>
-                <RadioGroup
-                  onValueChange={(value) =>
-                    registrationForm.setValue("mathLevel", value as "bad" | "average" | "good")
-                  }
-                  className={`flex gap-4 ${
-                    registrationForm.formState.errors.mathLevel
-                      ? "border border-destructive rounded-md p-2"
-                      : ""
-                  }`}
-                >
-                  {["bad", "average", "good"].map((level) => (
-                    <div key={level} className="flex items-center space-x-2">
-                      <RadioGroupItem value={level} id={`math-${level}`} />
-                      <Label htmlFor={`math-${level}`} className="cursor-pointer">
-                        {getLevelLabel(level)}
-                      </Label>
+              {/* Step 0 — Welcome */}
+              {wizardStep === 0 && (
+                <div className="space-y-4 text-center py-4">
+                  <div className="text-4xl">👋</div>
+                  <h2 className="text-2xl font-bold">
+                    Tsetsegs-т тавтай морил!
+                    <span className="block text-base font-normal text-muted-foreground mt-1">
+                      Welcome to Tsetsegs
+                    </span>
+                  </h2>
+                  {batchInfo?.teacher ? (
+                    <p className="text-muted-foreground">
+                      Таны багш: <span className="font-medium text-foreground">{batchInfo.teacher}</span>
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Дараах хэдхэн алхмын дараа {isIELTS ? "IELTS" : "SAT"}-д бэлдэж эхэлнэ.
+                    </p>
+                  )}
+                  {!batchInfo?.teacher && (
+                    <div className="space-y-2 text-left">
+                      <Label>Багшийн анги сонгох <span className="text-muted-foreground font-normal">(Teacher's Class)</span></Label>
+                      <Select onValueChange={(value) => registrationForm.setValue("teacher", value)}>
+                        <SelectTrigger
+                          className={registrationForm.formState.errors.teacher ? "border-destructive" : ""}
+                        >
+                          <SelectValue placeholder="Багш сонгоно уу..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teachers.map((teacher) => (
+                            <SelectItem key={teacher.id} value={teacher.name}>
+                              {teacher.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {registrationForm.formState.errors.teacher && (
+                        <p className="text-sm text-destructive">
+                          {registrationForm.formState.errors.teacher.message}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </RadioGroup>
-                {registrationForm.formState.errors.mathLevel && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.mathLevel.message}
-                  </p>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              {/* English Level */}
-              <div className="space-y-2">
-                <Label>Англи хэлний түвшин <span className="text-muted-foreground font-normal">(English Level)</span></Label>
-                <RadioGroup
-                  onValueChange={(value) =>
-                    registrationForm.setValue("englishLevel", value as "bad" | "average" | "good")
-                  }
-                  className={`flex gap-4 ${
-                    registrationForm.formState.errors.englishLevel
-                      ? "border border-destructive rounded-md p-2"
-                      : ""
-                  }`}
-                >
-                  {["bad", "average", "good"].map((level) => (
-                    <div key={level} className="flex items-center space-x-2">
-                      <RadioGroupItem value={level} id={`english-${level}`} />
-                      <Label htmlFor={`english-${level}`} className="cursor-pointer">
-                        {getLevelLabel(level)}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-                {registrationForm.formState.errors.englishLevel && (
-                  <p className="text-sm text-destructive">
-                    {registrationForm.formState.errors.englishLevel.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Teacher Selection - hidden when auto-set from QR/batch link */}
-              {batchInfo?.teacher ? (
-                <div className="space-y-2">
-                  <Label>Багш <span className="text-muted-foreground font-normal">(Teacher)</span></Label>
-                  <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>{batchInfo.teacher}</span>
+              {/* Step 1 — Name */}
+              {wizardStep === 1 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Таны нэр
+                    <span className="block text-sm font-normal text-muted-foreground">Your name</span>
+                  </h2>
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Өөрийн нэр <span className="text-muted-foreground font-normal">(First Name)</span></Label>
+                    <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Сараа</span> — паспорт дээрх өөрийн нэр</p>
+                    <Input
+                      id="firstName"
+                      placeholder="Өөрийн нэрээ оруулна уу"
+                      className={registrationForm.formState.errors.firstName ? "border-destructive" : ""}
+                      {...registrationForm.register("firstName")}
+                    />
+                    {registrationForm.formState.errors.firstName && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.firstName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Овог <span className="text-muted-foreground font-normal">(Last Name)</span></Label>
+                    <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Болдын</span> — эцгийн нэр</p>
+                    <Input
+                      id="lastName"
+                      placeholder="Эцэг/эхийн нэрээ оруулна уу"
+                      className={registrationForm.formState.errors.lastName ? "border-destructive" : ""}
+                      {...registrationForm.register("lastName")}
+                    />
+                    {registrationForm.formState.errors.lastName && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.lastName.message}</p>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>Багшийн анги сонгох <span className="text-muted-foreground font-normal">(Teacher's Class)</span></Label>
-                  <Select
-                    onValueChange={(value) => registrationForm.setValue("teacher", value)}
-                  >
-                    <SelectTrigger
-                      className={
-                        registrationForm.formState.errors.teacher
-                          ? "border-destructive"
-                          : ""
-                      }
+              )}
+
+              {/* Step 2 — Phones */}
+              {wizardStep === 2 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Утасны дугаар
+                    <span className="block text-sm font-normal text-muted-foreground">Phone numbers</span>
+                  </h2>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Таны утасны дугаар <span className="text-muted-foreground font-normal">(Your Phone)</span></Label>
+                    <p className="text-xs text-muted-foreground">Энэ дугаараар порталд нэвтэрнэ</p>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="99112233"
+                      maxLength={8}
+                      className={registrationForm.formState.errors.phone ? "border-destructive" : ""}
+                      {...registrationForm.register("phone")}
+                    />
+                    {registrationForm.formState.errors.phone && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.phone.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="parentPhone">Эцэг/эхийн утасны дугаар <span className="text-muted-foreground font-normal">(Parent's Phone)</span></Label>
+                    <Input
+                      id="parentPhone"
+                      type="tel"
+                      placeholder="99887766"
+                      maxLength={8}
+                      className={registrationForm.formState.errors.parentPhone ? "border-destructive" : ""}
+                      {...registrationForm.register("parentPhone")}
+                    />
+                    {registrationForm.formState.errors.parentPhone && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.parentPhone.message}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3 — School & Grade */}
+              {wizardStep === 3 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Сургууль, анги
+                    <span className="block text-sm font-normal text-muted-foreground">School & grade</span>
+                  </h2>
+                  <div className="space-y-2">
+                    <Label>Анги <span className="text-muted-foreground font-normal">(Grade)</span></Label>
+                    <Select
+                      value={registrationForm.watch("grade") || ""}
+                      onValueChange={(value) => registrationForm.setValue("grade", value, { shouldValidate: true })}
                     >
-                      <SelectValue placeholder="Багш сонгоно уу..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teachers.map((teacher) => (
-                        <SelectItem key={teacher.id} value={teacher.name}>
-                          {teacher.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {registrationForm.formState.errors.teacher && (
-                    <p className="text-sm text-destructive">
-                      {registrationForm.formState.errors.teacher.message}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Exam Experience (SAT or IELTS based on course type) */}
-              <div className="space-y-2">
-                <Label>
-                  {isIELTS
-                    ? <>Та өмнө нь IELTS шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken IELTS before?)</span></>
-                    : <>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></>}
-                </Label>
-                <RadioGroup
-                  defaultValue="no"
-                  onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="sat-no" />
-                    <Label htmlFor="sat-no" className="cursor-pointer">Үгүй</Label>
+                      <SelectTrigger className={registrationForm.formState.errors.grade ? "border-destructive" : ""}>
+                        <SelectValue placeholder="Ангиа сонгоно уу..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["8", "9", "10", "11", "12"].map((g) => (
+                          <SelectItem key={g} value={g}>{g}-р анги</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {registrationForm.formState.errors.grade && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.grade.message}</p>
+                    )}
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="sat-yes" />
-                    <Label htmlFor="sat-yes" className="cursor-pointer">Тийм</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="schoolName">Сургуулийн нэр <span className="text-muted-foreground font-normal">(School)</span></Label>
+                    <Input
+                      id="schoolName"
+                      placeholder="Сургуулийнхаа нэрийг бичнэ үү"
+                      className={registrationForm.formState.errors.schoolName ? "border-destructive" : ""}
+                      {...registrationForm.register("schoolName")}
+                    />
+                    {registrationForm.formState.errors.schoolName && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.schoolName.message}</p>
+                    )}
                   </div>
-                </RadioGroup>
-              </div>
+                </div>
+              )}
 
-              {/* Previous Score (conditional, SAT or IELTS) */}
-              {hasTakenSat && !isIELTS && (
-                <div className="space-y-2">
-                  <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
-                  <Input
-                    id="previousScore"
-                    type="number"
-                    placeholder="жишээ нь: 1200"
-                    min={400}
-                    max={1600}
-                    className={
-                      registrationForm.formState.errors.previousSatScore
-                        ? "border-destructive"
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val)) {
-                        registrationForm.setValue("previousSatScore", val);
+              {/* Step 4 — Level */}
+              {wizardStep === 4 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Өөрийн түвшин
+                    <span className="block text-sm font-normal text-muted-foreground">Your level</span>
+                  </h2>
+                  {!isIELTS && (
+                    <div className="space-y-2">
+                      <Label>Математикийн түвшин <span className="text-muted-foreground font-normal">(Math Level)</span></Label>
+                      <RadioGroup
+                        onValueChange={(value) =>
+                          registrationForm.setValue("mathLevel", value as "bad" | "average" | "good", { shouldValidate: true })
+                        }
+                        value={registrationForm.watch("mathLevel") || ""}
+                        className={`flex gap-4 ${registrationForm.formState.errors.mathLevel ? "border border-destructive rounded-md p-2" : ""}`}
+                      >
+                        {["bad", "average", "good"].map((level) => (
+                          <div key={level} className="flex items-center space-x-2">
+                            <RadioGroupItem value={level} id={`math-${level}`} />
+                            <Label htmlFor={`math-${level}`} className="cursor-pointer">
+                              {getLevelLabel(level)}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      {registrationForm.formState.errors.mathLevel && (
+                        <p className="text-sm text-destructive">{registrationForm.formState.errors.mathLevel.message}</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label>Англи хэлний түвшин <span className="text-muted-foreground font-normal">(English Level)</span></Label>
+                    <RadioGroup
+                      onValueChange={(value) =>
+                        registrationForm.setValue("englishLevel", value as "bad" | "average" | "good", { shouldValidate: true })
                       }
-                    }}
-                  />
-                  {registrationForm.formState.errors.previousSatScore && (
-                    <p className="text-sm text-destructive">
-                      Оноо 400-1600 хооронд байх ёстой
-                    </p>
+                      value={registrationForm.watch("englishLevel") || ""}
+                      className={`flex gap-4 ${registrationForm.formState.errors.englishLevel ? "border border-destructive rounded-md p-2" : ""}`}
+                    >
+                      {["bad", "average", "good"].map((level) => (
+                        <div key={level} className="flex items-center space-x-2">
+                          <RadioGroupItem value={level} id={`english-${level}`} />
+                          <Label htmlFor={`english-${level}`} className="cursor-pointer">
+                            {getLevelLabel(level)}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    {registrationForm.formState.errors.englishLevel && (
+                      <p className="text-sm text-destructive">{registrationForm.formState.errors.englishLevel.message}</p>
+                    )}
+                  </div>
+                  {/* For IELTS students, set a sane default math level so the schema passes */}
+                  {isIELTS && !registrationForm.watch("mathLevel") && (
+                    <input type="hidden" {...registrationForm.register("mathLevel")} value="average" />
                   )}
                 </div>
               )}
 
-              {hasTakenSat && isIELTS && (
-                <div className="space-y-2">
-                  <Label htmlFor="previousIeltsScore">Өмнөх IELTS оноо (Band) <span className="text-muted-foreground font-normal">(Previous Band Score)</span></Label>
-                  <Input
-                    id="previousIeltsScore"
-                    type="number"
-                    placeholder="жишээ нь: 6.5"
-                    min={0}
-                    max={9}
-                    step={0.5}
-                    className={
-                      registrationForm.formState.errors.previousIeltsScore
-                        ? "border-destructive"
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val)) {
-                        registrationForm.setValue("previousIeltsScore", val);
-                      }
-                    }}
-                  />
-                  {registrationForm.formState.errors.previousIeltsScore && (
-                    <p className="text-sm text-destructive">
-                      IELTS оноо 0-9 хооронд байх ёстой
-                    </p>
+              {/* Step 5 — Prior test experience */}
+              {wizardStep === 5 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    {isIELTS ? "IELTS туршлага" : "SAT туршлага"}
+                    <span className="block text-sm font-normal text-muted-foreground">Prior experience</span>
+                  </h2>
+                  <Label>
+                    {isIELTS
+                      ? <>Та өмнө нь IELTS шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken IELTS before?)</span></>
+                      : <>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></>}
+                  </Label>
+                  <RadioGroup
+                    value={hasTakenSat ? "yes" : "no"}
+                    onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="sat-no" />
+                      <Label htmlFor="sat-no" className="cursor-pointer">Үгүй / No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="sat-yes" />
+                      <Label htmlFor="sat-yes" className="cursor-pointer">Тийм / Yes</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
+              {/* Step 6 — Score (if taken) + Planned test date */}
+              {wizardStep === 6 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    {hasTakenSat
+                      ? (isIELTS ? "Өмнөх оноо ба дараагийн шалгалт" : "Өмнөх оноо ба дараагийн шалгалт")
+                      : "Дараагийн шалгалт"}
+                    <span className="block text-sm font-normal text-muted-foreground">
+                      {hasTakenSat ? "Previous score & next test" : "Your upcoming test"}
+                    </span>
+                  </h2>
+
+                  {hasTakenSat && !isIELTS && (
+                    <div className="space-y-2">
+                      <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
+                      <Input
+                        id="previousScore"
+                        type="number"
+                        placeholder="жишээ нь: 1200"
+                        min={400}
+                        max={1600}
+                        defaultValue={registrationForm.getValues("previousSatScore") ?? ""}
+                        className={registrationForm.formState.errors.previousSatScore ? "border-destructive" : ""}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          registrationForm.setValue("previousSatScore", isNaN(val) ? undefined : val);
+                        }}
+                      />
+                      {registrationForm.formState.errors.previousSatScore && (
+                        <p className="text-sm text-destructive">Оноо 400-1600 хооронд байх ёстой</p>
+                      )}
+                    </div>
+                  )}
+
+                  {hasTakenSat && isIELTS && (
+                    <div className="space-y-2">
+                      <Label htmlFor="previousIeltsScore">Өмнөх IELTS оноо (Band) <span className="text-muted-foreground font-normal">(Previous Band Score)</span></Label>
+                      <Input
+                        id="previousIeltsScore"
+                        type="number"
+                        placeholder="жишээ нь: 6.5"
+                        min={0}
+                        max={9}
+                        step={0.5}
+                        defaultValue={registrationForm.getValues("previousIeltsScore") ?? ""}
+                        className={registrationForm.formState.errors.previousIeltsScore ? "border-destructive" : ""}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          registrationForm.setValue("previousIeltsScore", isNaN(val) ? undefined : val);
+                        }}
+                      />
+                      {registrationForm.formState.errors.previousIeltsScore && (
+                        <p className="text-sm text-destructive">IELTS оноо 0-9 хооронд байх ёстой</p>
+                      )}
+                    </div>
+                  )}
+
+                  {!isIELTS ? (
+                    <div className="space-y-2">
+                      <Label>
+                        {hasTakenSat
+                          ? <>Дараагийн SAT-аа хэзээ өгөх вэ? <span className="text-muted-foreground font-normal">(Next SAT Date)</span></>
+                          : <>Хэзээ SAT өгөхөөр төлөвлөж байна? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></>}
+                      </Label>
+                      <Select
+                        value={registrationForm.watch("plannedSatDate") || ""}
+                        onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Огноо сонгоно уу..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SAT_TEST_DATES.map((date) => (
+                            <SelectItem key={date.value} value={date.value}>{date.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>
+                        {hasTakenSat
+                          ? <>Дараагийн IELTS-ээ хэзээ өгөх вэ? <span className="text-muted-foreground font-normal">(Next IELTS Date)</span></>
+                          : <>Хэзээ IELTS өгөхөөр төлөвлөж байна? <span className="text-muted-foreground font-normal">(Planned IELTS Date)</span></>}
+                      </Label>
+                      <Select
+                        value={registrationForm.watch("plannedIeltsDate") || ""}
+                        onValueChange={(value) => registrationForm.setValue("plannedIeltsDate", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Сар сонгоно уу..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {IELTS_TEST_DATES.map((date) => (
+                            <SelectItem key={date.value} value={date.value}>{date.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* Planned Test Date (SAT or IELTS) */}
-              {!isIELTS ? (
-                <div className="space-y-2">
-                  <Label>Та хэзээ SAT өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></Label>
-                  <Select
-                    onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Огноо сонгоно уу..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SAT_TEST_DATES.map((date) => (
-                        <SelectItem key={date.value} value={date.value}>
-                          {date.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>Та хэзээ IELTS өгөхөөр төлөвлөж байна вэ? <span className="text-muted-foreground font-normal">(Planned IELTS Date)</span></Label>
-                  <Select
-                    onValueChange={(value) => registrationForm.setValue("plannedIeltsDate", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Сар сонгоно уу..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {IELTS_TEST_DATES.map((date) => (
-                        <SelectItem key={date.value} value={date.value}>
-                          {date.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Step 7 — Finish */}
+              {wizardStep === 7 && (
+                <div className="space-y-4 text-center py-6">
+                  <div className="text-5xl">🎉</div>
+                  <h2 className="text-2xl font-bold">
+                    Амжилт хүсье!
+                    <span className="block text-base font-normal text-muted-foreground mt-1">
+                      Good luck on your journey
+                    </span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Доорх "Бүртгүүлэх" товчийг дарж бүртгэлээ дуусгана уу.
+                  </p>
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={isSubmitting || submitCooldown}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Бүртгэж байна...
-                  </>
-                ) : submitCooldown ? (
-                  `Түр хүлээнэ үү... (${cooldownSeconds}с)`
-                ) : (
-                  "Бүртгүүлэх"
+              {/* Nav buttons */}
+              <div className="flex gap-2 pt-2">
+                {wizardStep > 0 && (
+                  <Button type="button" variant="outline" className="flex-1" onClick={goBack} disabled={isSubmitting}>
+                    Буцах
+                  </Button>
                 )}
-              </Button>
+                {wizardStep < TOTAL_WIZARD_STEPS - 1 ? (
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={() => {
+                      const perStep: Record<number, (keyof RegistrationFormData)[]> = {
+                        0: batchInfo?.teacher ? [] : ["teacher"],
+                        1: ["firstName", "lastName"],
+                        2: ["phone", "parentPhone"],
+                        3: ["grade", "schoolName"],
+                        4: isIELTS ? ["englishLevel"] : ["mathLevel", "englishLevel"],
+                        5: [],
+                        6: [],
+                      };
+                      goNext(perStep[wizardStep] || []);
+                    }}
+                  >
+                    Үргэлжлүүлэх
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" className="flex-1" disabled={isSubmitting || submitCooldown}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Бүртгэж байна...
+                      </>
+                    ) : submitCooldown ? (
+                      `Түр хүлээнэ үү... (${cooldownSeconds}с)`
+                    ) : (
+                      "Бүртгүүлэх"
+                    )}
+                  </Button>
+                )}
+              </div>
             </form>
           )}
         </CardContent>
