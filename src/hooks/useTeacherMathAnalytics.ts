@@ -13,6 +13,7 @@ export interface StudentTopicStat {
 
 export interface TopicStat {
   topic: string;
+  domain: DomainKey;
   attempts: number;
   correct: number;
   accuracy: number;
@@ -24,12 +25,70 @@ export interface TopicStat {
   students: StudentTopicStat[];
 }
 
+export type DomainKey = "algebra" | "advanced" | "data" | "geometry" | "other";
+
+export interface DomainStat {
+  key: DomainKey;
+  label: string;
+  attempts: number;
+  correct: number;
+  accuracy: number;
+  topics: TopicStat[];
+}
+
 export interface AnalyticsResult {
+  domains: DomainStat[];
   weakest: TopicStat[];
   drops: TopicStat[];
   strongest: TopicStat[];
   totalAttempts: number;
   totalStudents: number;
+}
+
+export const DOMAIN_LABEL: Record<DomainKey, string> = {
+  algebra: "Algebra",
+  advanced: "Advanced Math",
+  data: "Problem-Solving & Data",
+  geometry: "Geometry & Trig",
+  other: "Other",
+};
+
+const SUBTOPIC_TO_DOMAIN: Record<string, DomainKey> = {
+  "Linear equations in one variable": "algebra",
+  "Linear equations in two variables": "algebra",
+  "Linear functions": "algebra",
+  "Linear inequalities in one or two variables": "algebra",
+  "Systems of two linear equations in two variables": "algebra",
+  "Equivalent expressions": "advanced",
+  "Nonlinear equations in one variable and systems of equations in two variables": "advanced",
+  "Nonlinear functions": "advanced",
+  "Functions": "advanced",
+  "Quadratic equations": "advanced",
+  "Solving quadratic equations": "advanced",
+  "Parabolas and Vertex Form": "advanced",
+  "Ratios, rates, proportional relationships, and units": "data",
+  "Percentages": "data",
+  "One-variable data: Distributions and measures of center and spread": "data",
+  "Two-variable data: Models and scatterplots": "data",
+  "Probability and conditional probability": "data",
+  "Inference from sample statistics and margin of error": "data",
+  "Evaluating statistical claims: Observational studies and experiments": "data",
+  "Interpreting data": "data",
+  "Interpreting relationships shown by data": "data",
+  "Area and volume": "geometry",
+  "Circles": "geometry",
+  "Lines, angles, and triangles": "geometry",
+  "Right triangles and trigonometry": "geometry",
+};
+
+function classifyDomain(topic: string): DomainKey {
+  if (SUBTOPIC_TO_DOMAIN[topic]) return SUBTOPIC_TO_DOMAIN[topic];
+  const t = topic.toLowerCase();
+  if (/(linear|inequal|system)/.test(t)) return "algebra";
+  if (/(quadratic|function|nonlinear|expression|parabola|polynomial|exponent|radical)/.test(t)) return "advanced";
+  if (/(ratio|percent|probab|data|statistic|inference|scatter|sample)/.test(t)) return "data";
+  if (/(triangle|circle|angle|area|volume|geometry|trigon)/.test(t)) return "geometry";
+  return "other";
 }
 
 const MIN_ATTEMPTS = 10;
