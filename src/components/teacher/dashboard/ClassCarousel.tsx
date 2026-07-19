@@ -192,7 +192,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
         <div
           ref={ref}
-          className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity py-6 min-h-[70vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity py-6 min-h-[62vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{
             overscrollBehaviorX: "contain",
             WebkitOverflowScrolling: "touch",
