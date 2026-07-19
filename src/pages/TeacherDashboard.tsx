@@ -17,6 +17,7 @@ import { useTeacherDashboardData, type DashboardBatch } from "@/hooks/useTeacher
 import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
+import { TeacherModeDock } from "@/components/teacher/dashboard/TeacherModeDock";
 import { useHaptics } from "@/hooks/useHaptics";
 
 type DashboardMode = "dashboard" | "analytics" | "practice";
@@ -247,83 +248,15 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        {/* Mode navigation toolbar — bottom on default modes, left dock on practice (md+) */}
-        {(() => {
-          const isPracticeMode = activeMode === "practice";
-          const navItems = [
-            { mode: "dashboard" as const, icon: LayoutDashboard, label: "Dashboard" },
-            { mode: "analytics" as const, icon: TrendingUp, label: "Analytics" },
-            { mode: "practice" as const, icon: Gamepad2, label: "Practice" },
-          ];
-
-          return (
-            <div
-              className={`fixed z-50 pointer-events-none flex transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                isPracticeMode
-                  ? "inset-x-0 bottom-4 justify-center md:inset-y-0 md:bottom-0 md:left-4 md:right-auto md:items-center md:justify-start"
-                  : "inset-x-0 bottom-4 justify-center"
-              }`}
-            >
-              <motion.div
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 27 }}
-                className={`pointer-events-auto flex items-center gap-2 ${
-                  isPracticeMode ? "flex-row md:flex-col" : "flex-row"
-                }`}
-              >
-                <div
-                  className={`flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1 ${
-                    isPracticeMode ? "flex-row md:flex-col" : "flex-row"
-                  }`}
-                >
-                {navItems.map(({ mode, icon: Icon, label }) => {
-                  const btn = (
-                    <Button
-                      variant={activeMode === mode ? "default" : "ghost"}
-                      size="sm"
-                      className={`h-9 rounded-full gap-2 text-xs transition-all ${
-                        isPracticeMode ? "px-3 md:w-9 md:px-0" : "px-3"
-                      }`}
-                      onClick={() => handleModeChange(mode)}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className={isPracticeMode ? "hidden sm:inline md:hidden" : "hidden sm:inline"}>
-                        {label}
-                      </span>
-                    </Button>
-                  );
-                  return isPracticeMode ? (
-                    <Tooltip key={mode}>
-                      <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                      <TooltipContent side="right" className="hidden md:block">
-                        {label}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <div key={mode}>{btn}</div>
-                  );
-                })}
-                </div>
-
-                {/* Mobile-only: Handbook shortcut (camera-style pill) outside main dock */}
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
-                  onClick={() => {
-                    haptic("light");
-                    navigate("/teacher/checklist");
-                  }}
-                  aria-label="Open handbook on this phone"
-                >
-                  <BookOpen className="h-5 w-5" />
-                </Button>
-              </motion.div>
-            </div>
-          );
-        })()}
+        {/* Mode navigation toolbar — draggable, snaps to any of the 4 screen edges (iPadOS-style) */}
+        <TeacherModeDock
+          activeMode={activeMode}
+          onChange={handleModeChange}
+          onOpenHandbook={() => {
+            haptic("light");
+            navigate("/teacher/checklist");
+          }}
+        />
       </div>
 
       {/* QR Code Dialog */}
