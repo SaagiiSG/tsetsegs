@@ -82,55 +82,42 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           </Badge>
         </div>
 
-        {/* Metrics */}
-        <div className="mt-5 grid grid-cols-2 gap-4">
-          <MetricBar label="Attendance" value={m.attendanceRate} tone="primary" />
-          <MetricBar label="Homework" value={m.homeworkRate} tone="accent" />
-        </div>
-
-        {/* Top / attention */}
-        <div className="mt-5 space-y-2.5">
-          {m.topStudents.length > 0 && (
-            <Row icon={<Sparkles className="h-3.5 w-3.5 text-amber-500" />} label="Top attendance">
-              <div className="flex flex-wrap gap-1.5">
-                {m.topStudents.map((s) => (
-                  <span key={s.id} className="text-xs bg-muted rounded-full px-2 py-0.5">
-                    {s.name} · {s.metric}
-                  </span>
-                ))}
-              </div>
-            </Row>
-          )}
-          <Row
-            icon={<AlertTriangle className={`h-3.5 w-3.5 ${m.needsAttention.length ? "text-orange-500" : "text-muted-foreground/50"}`} />}
-            label={`Needs attention (${m.needsAttention.length})`}
+        {/* Actions — moved to the top where attendance/attention used to live */}
+        <div className="mt-5 flex items-center gap-2">
+          <Button
+            className="flex-1 rounded-full"
+            onClick={() => {
+              haptic("light");
+              navigate(`/teacher/students/${batch.id}`);
+            }}
           >
-            {m.needsAttention.length === 0 ? (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> All good
-              </span>
-            ) : (
-
-              <div className="flex flex-wrap gap-1.5">
-                {m.needsAttention.slice(0, 3).map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      haptic("light");
-                      navigate(`/teacher/students/${batch.id}?focus=${s.id}`);
-                    }}
-                    className="text-xs bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full px-2 py-0.5 hover:bg-orange-500/20 transition-colors"
-                  >
-                    {s.name}
-                  </button>
-                ))}
-                {m.needsAttention.length > 3 && (
-                  <span className="text-xs text-muted-foreground self-center">+{m.needsAttention.length - 3}</span>
-                )}
-              </div>
-            )}
-          </Row>
+            <Users className="h-3.5 w-3.5 mr-1.5" /> Students
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 rounded-full"
+            onClick={() => {
+              haptic("light");
+              navigate(`/teacher/analytics/${batch.id}`);
+            }}
+          >
+            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Analytics
+          </Button>
+          <Button variant="outline" size="icon" className="rounded-full shrink-0" onClick={() => onShowQR(batch)}>
+            <QrCode className="h-3.5 w-3.5" />
+          </Button>
+          {m.isCompleted && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full shrink-0"
+              onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}
+            >
+              <Flower2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
+
 
 
         {/* Analytics preview — fills the mid-card space on tablet/desktop */}
