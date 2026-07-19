@@ -83,11 +83,34 @@ export function SetProgressIsland() {
   const navigate = useNavigate();
   const [bigOpen, setBigOpen] = useState(false);
 
-  const rows = [
-    { ...SETS[0], counts: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
-    { ...SETS[1], counts: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
-    { ...SETS[2], counts: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
+  const warnedRef = useRef<Set<string>>(new Set());
+  const rawRows = [
+    { ...SETS[0], raw: progress?.s68 ?? { total: 68, completed: 0, pct: 0 } },
+    { ...SETS[1], raw: progress?.s150 ?? { total: 150, completed: 0, pct: 0 } },
+    { ...SETS[2], raw: progress?.cb ?? { total: 0, completed: 0, pct: 0 } },
   ];
+  const rows = useMemo(
+    () =>
+      rawRows.map((r) => {
+        const v = validateCounts(r.key, r.raw);
+        return { ...r, counts: v.safe, drift: v.ok ? null : v.reason ?? 'mismatch' };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [progress?.s68, progress?.s150, progress?.cb],
+  );
+
+  useEffect(() => {
+    if (isLoading) return;
+    rows.forEach((r) => {
+      if (r.drift && !warnedRef.current.has(r.key)) {
+        warnedRef.current.add(r.key);
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[SetProgressIsland] tile "${r.label}" total drift — ${r.drift}. Falling back to safe total ${r.counts.total}.`,
+        );
+      }
+    });
+  }, [rows, isLoading]);
 
   return (
     <>
