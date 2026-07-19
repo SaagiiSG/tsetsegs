@@ -1,58 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle2, ChevronDown, Timer } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown } from "lucide-react";
 import { SESSIONS, TEACHING_TOPICS, type ChecklistTopic } from "@/data/teachingChecklist";
 import { useTeachingChecklist } from "@/hooks/useTeachingChecklist";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { useHaptics } from "@/hooks/useHaptics";
 import { cn } from "@/lib/utils";
-
-// ── Timer persistence ─────────────────────────────────────────────
-interface TimerState {
-  elapsedSec: number;
-  startedAt: number | null; // epoch ms while running, null when paused
-}
-
-const timerKey = (teacherId: string, batchId: string, sessionNumber: number, topicKey: string) =>
-  `teacher:session-run:${teacherId}:${batchId}:${sessionNumber}:${topicKey}`;
-
-const activeKey = (teacherId: string, batchId: string, sessionNumber: number) =>
-  `teacher:session-run:${teacherId}:${batchId}:${sessionNumber}:__active`;
-
-function loadTimer(key: string): TimerState {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return { elapsedSec: 0, startedAt: null };
-    const parsed = JSON.parse(raw) as TimerState;
-    return {
-      elapsedSec: Number(parsed.elapsedSec) || 0,
-      startedAt: parsed.startedAt ?? null,
-    };
-  } catch {
-    return { elapsedSec: 0, startedAt: null };
-  }
-}
-
-function saveTimer(key: string, s: TimerState) {
-  try {
-    localStorage.setItem(key, JSON.stringify(s));
-  } catch {}
-}
-
-function formatDuration(sec: number) {
-  const s = Math.max(0, Math.floor(sec));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const r = s % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
-  return `${m}:${String(r).padStart(2, "0")}`;
-}
 
 export default function TeacherSessionRun() {
   const { batchId, sessionNumber: sessionParam } = useParams<{ batchId: string; sessionNumber: string }>();
@@ -91,56 +50,6 @@ export default function TeacherSessionRun() {
   const items = useMemo(() => topics.flatMap((t) => t.items), [topics]);
   const done = items.filter((i) => checkedSet.has(i.key)).length;
   const overallPct = items.length === 0 ? 0 : Math.round((done / items.length) * 100);
-
-  // ── Session-wide active topic (auto-flow) ────────────────────────
-  const sessActiveKey = activeKey(teacherId, batchId ?? "no-batch", sessionNumber);
-  const [activeTopicKey, setActiveTopicKey] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(sessActiveKey);
-    } catch {
-      return null;
-    }
-  });
-  useEffect(() => {
-    try {
-      if (activeTopicKey) localStorage.setItem(sessActiveKey, activeTopicKey);
-      else localStorage.removeItem(sessActiveKey);
-    } catch {}
-  }, [activeTopicKey, sessActiveKey]);
-
-  // Tick every second so all live timers refresh
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((n) => (n + 1) % 1_000_000), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Track prior checked count per topic so we can detect "first check of a new topic".
-  const priorDoneRef = useRef<Record<string, number>>({});
-  useEffect(() => {
-    // Initialize on first render — don't trigger auto-switch on mount
-    if (Object.keys(priorDoneRef.current).length === 0) {
-      topics.forEach((t) => {
-        priorDoneRef.current[t.key] = t.items.filter((i) => checkedSet.has(i.key)).length;
-      });
-      return;
-    }
-    // Detect a topic that just got its FIRST check
-    for (const t of topics) {
-      const nowDone = t.items.filter((i) => checkedSet.has(i.key)).length;
-      const prev = priorDoneRef.current[t.key] ?? 0;
-      if (prev === 0 && nowDone > 0 && t.key !== activeTopicKey) {
-        // Auto-flow: switch active topic to this one (pauses previous timer)
-        setActiveTopicKey(t.key);
-        haptic("medium");
-        break;
-      }
-    }
-    // Update snapshot
-    topics.forEach((t) => {
-      priorDoneRef.current[t.key] = t.items.filter((i) => checkedSet.has(i.key)).length;
-    });
-  }, [checkedSet, topics, activeTopicKey, haptic]);
 
   if (!session) {
     return (
@@ -192,13 +101,7 @@ export default function TeacherSessionRun() {
             key={topic.key}
             topic={topic}
             teacherId={teacherId}
-            batchId={batchId ?? "no-batch"}
-            sessionNumber={sessionNumber}
             checkedSet={checkedSet}
-            isActive={activeTopicKey === topic.key}
-            onSetActive={(active) => {
-              setActiveTopicKey(active ? topic.key : null);
-            }}
             onToggle={(k, v) => {
               haptic(v ? "medium" : "light");
               toggle(k, v);
@@ -212,74 +115,26 @@ export default function TeacherSessionRun() {
 
 function TopicRunCard({
   topic,
-  teacherId,
-  batchId,
-  sessionNumber,
   checkedSet,
-  isActive,
-  onSetActive,
   onToggle,
 }: {
   topic: ChecklistTopic;
   teacherId: string;
-  batchId: string;
-  sessionNumber: number;
   checkedSet: Set<string>;
-  isActive: boolean;
-  onSetActive: (active: boolean) => void;
   onToggle: (key: string, v: boolean) => void;
 }) {
-  const key = timerKey(teacherId, batchId, sessionNumber, topic.key);
-  const [state, setState] = useState<TimerState>(() => loadTimer(key));
   const [open, setOpen] = useState(true);
-  const haptic = useHaptics();
-
-  // Sync running state with `isActive` (session-wide active topic).
-  useEffect(() => {
-    setState((prev) => {
-      const running = prev.startedAt !== null;
-      if (isActive && !running) {
-        return { ...prev, startedAt: Date.now() };
-      }
-      if (!isActive && running) {
-        const extra = Math.floor((Date.now() - (prev.startedAt as number)) / 1000);
-        return { elapsedSec: prev.elapsedSec + extra, startedAt: null };
-      }
-      return prev;
-    });
-  }, [isActive]);
-
-  // Persist on change
-  useEffect(() => {
-    saveTimer(key, state);
-  }, [key, state]);
-
-  const running = state.startedAt !== null;
-  const liveElapsed =
-    state.elapsedSec + (running ? Math.floor((Date.now() - (state.startedAt as number)) / 1000) : 0);
 
   const done = topic.items.filter((i) => checkedSet.has(i.key)).length;
   const total = topic.items.length;
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   const allDone = done === total && total > 0;
 
-  const startPause = () => {
-    haptic("medium");
-    onSetActive(!isActive);
-  };
-
-  const reset = () => {
-    haptic("light");
-    setState({ elapsedSec: 0, startedAt: null });
-    if (isActive) onSetActive(false);
-  };
-
   return (
     <div
       className={cn(
         "rounded-2xl border bg-card/60 backdrop-blur transition-colors",
-        allDone && "border-emerald-500/40 bg-emerald-500/5",
-        running && "border-primary/60 shadow-[0_0_0_2px_hsl(var(--primary)/0.15)]"
+        allDone && "border-emerald-500/40 bg-emerald-500/5"
       )}
     >
       <div className="flex items-center gap-3 px-3.5 py-3">
@@ -306,48 +161,9 @@ function TopicRunCard({
             </span>
           </div>
         </button>
-
-        {/* Live timer */}
-        <div className="flex items-center gap-1.5">
-          <div
-            className={cn(
-              "px-2.5 py-1 rounded-full text-xs font-mono tabular-nums border",
-              running
-                ? "bg-primary text-primary-foreground border-transparent"
-                : liveElapsed > 0
-                ? "bg-muted text-foreground border-transparent"
-                : "bg-transparent text-muted-foreground"
-            )}
-          >
-            <span className="inline-flex items-center gap-1">
-              <Timer className="h-3 w-3" />
-              {formatDuration(liveElapsed)}
-            </span>
-          </div>
-          <Button
-            size="icon"
-            variant={running ? "default" : "outline"}
-            className="h-8 w-8 rounded-full"
-            onClick={startPause}
-            aria-label={running ? "Pause" : "Start"}
-          >
-            {running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-          </Button>
-          {liveElapsed > 0 && !running && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 rounded-full"
-              onClick={reset}
-              aria-label="Reset"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-muted-foreground">
-            <ChevronDown className="h-4 w-4" />
-          </motion.span>
-        </div>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-muted-foreground">
+          <ChevronDown className="h-4 w-4" />
+        </motion.span>
       </div>
 
       <AnimatePresence initial={false}>
