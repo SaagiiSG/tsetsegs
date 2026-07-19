@@ -7,21 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, Settings, Search, QrCode, LayoutDashboard, Flame, Flower2, Gamepad2 } from "lucide-react";
+import { LogOut, Settings, Search, QrCode, LayoutDashboard, TrendingUp, Gamepad2 } from "lucide-react";
 import QRCodeComponent from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { IntensePrepContent } from "@/components/teacher/intense-prep";
 import { StudentSearchCommand } from "@/components/teacher/StudentSearchCommand";
-import { ReviewRegistrationContent } from "@/components/teacher/ReviewRegistrationContent";
 import { TeacherPracticeHub } from "@/components/teacher/practice";
+import { TeacherMathAnalytics } from "@/components/teacher/analytics/TeacherMathAnalytics";
 import { useTeacherDashboardData, type DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { useHaptics } from "@/hooks/useHaptics";
 
-type DashboardMode = "dashboard" | "review" | "intense" | "practice";
+type DashboardMode = "dashboard" | "analytics" | "practice";
 
-const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense", "practice"];
+const MODE_ORDER: DashboardMode[] = ["dashboard", "analytics", "practice"];
+
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
