@@ -84,6 +84,20 @@ export function ChecklistLauncherDialog({ open, onOpenChange, batchId, title }: 
           </div>
         </div>
       </DialogContent>
+
+      <ClassPickerDialog
+        open={pickerFor !== null}
+        onOpenChange={(v) => !v && setPickerFor(null)}
+        title={`Start Session ${pickerFor ?? ""} · pick a class`}
+        onPick={(pickedBatchId) => {
+          const s = pickerFor;
+          setPickerFor(null);
+          if (s !== null) {
+            onOpenChange(false);
+            navigate(`/teacher/session/${pickedBatchId}/${s}`);
+          }
+        }}
+      />
     </Dialog>
   );
 }
