@@ -199,6 +199,15 @@ const App = () => (
                       </TeacherProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/teacher/session/:batchId/:sessionNumber"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherSessionRun />
+                      </TeacherProtectedRoute>
+                    }
+                  />
+                  
                   
                   {/* Student Practice Portal */}
                   <Route path="/practice" element={<StudentPortal />} />
