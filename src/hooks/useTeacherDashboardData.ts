@@ -169,6 +169,7 @@ export function useTeacherDashboardData(teacherName: string | null) {
             expectedSessions,
             needsAttention,
             topStudents: topCandidates.slice(0, 2),
+            students: list.map((s) => ({ id: s.id, name: s.name })),
             isCompleted: !!completionMap[b.id],
           },
         };
