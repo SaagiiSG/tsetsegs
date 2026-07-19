@@ -19,39 +19,22 @@ import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { useHaptics } from "@/hooks/useHaptics";
 
-interface Batch {
-  id: string;
-  batch_name: string;
-  schedule: string;
-  room: string;
-  start_date: string;
-  course_type?: string;
-}
-
-interface SwitchedStudentInfo {
-  studentId: string;
-  studentName: string;
-  otherBatchName: string;
-}
-
 type DashboardMode = "dashboard" | "review" | "intense" | "practice";
 
 const MODE_ORDER: DashboardMode[] = ["dashboard", "review", "intense", "practice"];
 
 export default function TeacherDashboard() {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
-  const [allBatches, setAllBatches] = useState<Batch[]>([]);
-  const [completionMap, setCompletionMap] = useState<Record<string, boolean>>({});
-  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
-  const [switchedStudents, setSwitchedStudents] = useState<Record<string, SwitchedStudentInfo[]>>({});
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("classes");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeMode, setActiveMode] = useState<DashboardMode>("dashboard");
   const [slideDirection, setSlideDirection] = useState(0);
+  const [qrBatch, setQrBatch] = useState<DashboardBatch | null>(null);
+  const [renameBatch, setRenameBatch] = useState<DashboardBatch | null>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const haptic = useHaptics();
+
+  const { data: allBatches = [], isLoading } = useTeacherDashboardData(teacherName);
 
   // Handle mode change with direction tracking
   const handleModeChange = (newMode: DashboardMode) => {
@@ -61,499 +44,115 @@ export default function TeacherDashboard() {
     setActiveMode(newMode);
   };
 
-  useEffect(() => {
-    console.log("TeacherDashboard - authLoading:", authLoading, "teacherName:", teacherName);
-    if (!authLoading) {
-      console.log("Fetching batches...");
-      fetchBatches();
-    }
-  }, [teacherName, authLoading]);
-
-  // Real-time subscription for new student registrations
-  useEffect(() => {
-    if (!teacherName) return;
-
-    const channel = supabase
-      .channel('teacher-student-registrations')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'students',
-        },
-        () => {
-          console.log('New student registered, refreshing counts...');
-          fetchBatches();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [teacherName]);
-
-  const fetchBatches = async () => {
-    console.log("fetchBatches called, teacherName:", teacherName);
-    if (!teacherName) {
-      console.log("No teacher name, setting loading to false");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      console.log("Querying batches for teacher:", teacherName);
-
-      const { data: batchesData, error: batchesError } = await supabase
-        .from("batches")
-        .select("id, batch_name, schedule, room, start_date, course_type")
-        .ilike("teacher", `%${teacherName}%`)
-        .order("start_date", { ascending: false });
-
-      if (batchesError) throw batchesError;
-
-      const { data: completionData, error: completionError } = await supabase.rpc(
-        "get_batch_completion_status",
-        { teacher_name: teacherName }
-      );
-
-      if (completionError) {
-        console.error("Error fetching completion status:", completionError);
-      }
-
-      const cMap: Record<string, boolean> = {};
-      completionData?.forEach((item: { batch_id: string; is_completed: boolean }) => {
-        cMap[item.batch_id] = item.is_completed;
-      });
-
-      setAllBatches(batchesData || []);
-      setCompletionMap(cMap);
-
-      const { data: countsData, error: countsError } = await supabase.rpc("get_batch_student_counts", {
-        teacher_name: teacherName,
-      });
-
-      if (countsError) {
-        console.error("Error fetching student counts:", countsError);
-      } else {
-        const counts: Record<string, number> = {};
-        countsData?.forEach((item: { batch_id: string; student_count: number }) => {
-          counts[item.batch_id] = item.student_count;
-        });
-        setStudentCounts(counts);
-      }
-
-      if (batchesData && batchesData.length > 0) {
-        await fetchSwitchedStudents(batchesData);
-      }
-    } catch (error: any) {
-      console.error("Error fetching batches:", error);
-      const errorToast = getErrorToast(error, "load classes");
-      toast({
-        ...errorToast,
-        variant: "destructive",
-      });
-    } finally {
-      console.log("Setting isLoading to false");
-      setIsLoading(false);
-    }
-  };
-
-  const fetchSwitchedStudents = async (batchList: Batch[]) => {
-    try {
-      const batchIds = batchList.map(b => b.id);
-      
-      const { data: students, error: studentsError } = await supabase
-        .from("students")
-        .select("id, name, phone, batch_id")
-        .in("batch_id", batchIds);
-
-      if (studentsError) throw studentsError;
-      if (!students || students.length === 0) return;
-
-      const phoneNumbers = [...new Set(students.map(s => s.phone))];
-
-      const { data: allMatchingStudents, error: matchError } = await supabase
-        .from("students")
-        .select(`
-          id,
-          name,
-          phone,
-          batch_id,
-          batches(batch_name)
-        `)
-        .in("phone", phoneNumbers)
-        .not("batch_id", "in", `(${batchIds.join(",")})`);
-
-      if (matchError) throw matchError;
-      if (!allMatchingStudents || allMatchingStudents.length === 0) {
-        setSwitchedStudents({});
-        return;
-      }
-
-      const allStudentIds = [
-        ...students.map(s => s.id),
-        ...allMatchingStudents.map(s => s.id)
-      ];
-
-      const { data: attendanceData, error: attError } = await supabase
-        .from("attendance")
-        .select("student_id, total_attended")
-        .in("student_id", allStudentIds);
-
-      if (attError) throw attError;
-
-      const attendanceLookup: Record<string, number> = {};
-      attendanceData?.forEach(a => {
-        attendanceLookup[a.student_id] = a.total_attended || 0;
-      });
-
-      const switched: Record<string, SwitchedStudentInfo[]> = {};
-
-      students.forEach(currentStudent => {
-        const normalizedName = currentStudent.name.toLowerCase().trim();
-        const normalizedPhone = currentStudent.phone.trim();
-        
-        const matches = allMatchingStudents.filter(other => {
-          const otherName = other.name.toLowerCase().trim();
-          const otherPhone = other.phone.trim();
-          return otherName === normalizedName && otherPhone === normalizedPhone && other.batch_id;
-        });
-
-        if (matches.length > 0) {
-          let bestMatch = matches[0];
-          let bestAttendance = attendanceLookup[bestMatch.id] || 0;
-
-          matches.forEach(match => {
-            const matchAtt = attendanceLookup[match.id] || 0;
-            if (matchAtt > bestAttendance) {
-              bestMatch = match;
-              bestAttendance = matchAtt;
-            }
-          });
-
-          const currentAttendance = attendanceLookup[currentStudent.id] || 0;
-
-          if (currentAttendance < bestAttendance && currentStudent.batch_id) {
-            const batchInfo = bestMatch.batches as { batch_name: string } | null;
-            
-            if (!switched[currentStudent.batch_id]) {
-              switched[currentStudent.batch_id] = [];
-            }
-            
-            switched[currentStudent.batch_id].push({
-              studentId: currentStudent.id,
-              studentName: currentStudent.name,
-              otherBatchName: batchInfo?.batch_name || 'Another class',
-            });
-          }
-        }
-      });
-
-      setSwitchedStudents(switched);
-    } catch (error) {
-      console.error("Error fetching switched students:", error);
-    }
-  };
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/login?role=teacher");
   };
 
-  const getStudentCount = (batchId: string) => {
-    return studentCounts[batchId] || 0;
-  };
-
-  const getSwitchedCount = (batchId: string) => {
-    return switchedStudents[batchId]?.length || 0;
-  };
-
-  const isOnlineClass = (schedule: string) => {
-    return schedule.toLowerCase().includes("online");
-  };
-
-  const intakes = useMemo(() => {
-    return [
+  const intakes = useMemo(
+    () => [
       { label: "Active Classes", value: "current" },
       { label: "Completed Classes", value: "previous" },
       { label: "All Classes", value: "all" },
-    ];
-  }, []);
+    ],
+    []
+  );
 
   const batches = useMemo(() => {
-    if (selectedIntake === "current") {
-      return allBatches.filter(b => !completionMap[b.id]);
-    }
-    if (selectedIntake === "previous") {
-      return allBatches.filter(b => completionMap[b.id]);
-    }
+    if (selectedIntake === "current") return allBatches.filter((b) => !b.metrics.isCompleted);
+    if (selectedIntake === "previous") return allBatches.filter((b) => b.metrics.isCompleted);
     return allBatches;
-  }, [allBatches, completionMap, selectedIntake]);
+  }, [allBatches, selectedIntake]);
 
   const groupedBatches = useMemo(() => {
-    if (selectedIntake !== "all") {
-      return { ungrouped: batches };
-    }
-    const groups: Record<string, typeof batches> = {};
-    batches.forEach(batch => {
-      const date = new Date(batch.start_date);
-      const key = `${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(batch);
+    if (selectedIntake !== "all") return { ungrouped: batches };
+    const groups: Record<string, DashboardBatch[]> = {};
+    batches.forEach((b) => {
+      const d = new Date(b.start_date);
+      const key = `${d.toLocaleString("en-US", { month: "short" })} ${d.getFullYear()}`;
+      (groups[key] ||= []).push(b);
     });
     return groups;
   }, [batches, selectedIntake]);
 
-  // Slide animation variants
   const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? "100%" : "-100%",
-      opacity: 0
-    }),
-    center: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? "100%" : "-100%",
-      opacity: 0
-    })
+    enter: (direction: number) => ({ x: direction > 0 ? "100%" : "-100%", opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (direction: number) => ({ x: direction < 0 ? "100%" : "-100%", opacity: 0 }),
   };
+  const slideTransition = { type: "spring" as const, stiffness: 200, damping: 27, mass: 1.2 };
 
-  const slideTransition = {
-    type: "spring" as const,
-    stiffness: 200,
-    damping: 27,
-    mass: 1.2
-  };
+  const DashboardContent = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 p-2 md:p-3 bg-card/60 backdrop-blur rounded-2xl border">
+        <Select
+          value={selectedIntake}
+          onValueChange={(v) => {
+            haptic("light");
+            setSelectedIntake(v);
+          }}
+        >
+          <SelectTrigger className="h-9 rounded-xl text-sm flex-1 md:max-w-xs border-0 bg-transparent">
+            <SelectValue placeholder="Select intake" />
+          </SelectTrigger>
+          <SelectContent>
+            {intakes.map((i) => (
+              <SelectItem key={i.value} value={i.value} className="text-sm">
+                {i.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground whitespace-nowrap pr-2">
+          {batches.length} class{batches.length !== 1 ? "es" : ""}
+        </span>
+      </div>
 
-  const [qrBatch, setQrBatch] = useState<Batch | null>(null);
-
-  // Batch card component with animation
-  const BatchCard = ({ batch, index = 0 }: { batch: Batch; index?: number }) => {
-    const switchedCount = getSwitchedCount(batch.id);
-    const switchedList = switchedStudents[batch.id] || [];
-    
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2, delay: index * 0.05 }}
-      >
-        <Card className="p-3 md:p-4 hover:shadow-md transition-shadow">
-          <div className="space-y-2 md:space-y-3">
-            <div>
-              <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2">{batch.batch_name}</h3>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-3 w-3" />
-                  <span>{getStudentCount(batch.id)} students</span>
-                </div>
-                {switchedCount > 0 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1 text-warning cursor-help">
-                        <ArrowRightLeft className="h-3 w-3" />
-                        <span>{switchedCount} switched</span>
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="h-64 rounded-3xl bg-gradient-to-br from-muted/50 to-muted/20 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : batches.length === 0 ? (
+        <Card className="rounded-3xl">
+          <CardContent className="py-12 text-center text-muted-foreground text-sm">
+            No {selectedIntake === "current" ? "active" : selectedIntake === "previous" ? "completed" : ""} classes
+          </CardContent>
+        </Card>
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedIntake}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.9 }}
+          >
+            {selectedIntake === "all" ? (
+              <div className="space-y-6">
+                {Object.entries(groupedBatches).map(
+                  ([key, list]) =>
+                    key !== "ungrouped" && (
+                      <div key={key} className="space-y-2">
+                        <h4 className="text-xs font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur py-1 z-10">
+                          {key}
+                        </h4>
+                        <ClassCarousel batches={list} onRename={setRenameBatch} onShowQR={setQrBatch} />
                       </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-[280px]">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-warning">Students enrolled in another class</p>
-                        <ul className="text-xs space-y-0.5">
-                          {switchedList.slice(0, 5).map((s, i) => (
-                            <li key={i} className="text-muted-foreground">
-                              • {s.studentName} → {s.otherBatchName}
-                            </li>
-                          ))}
-                          {switchedList.length > 5 && (
-                            <li className="text-muted-foreground">
-                              ...and {switchedList.length - 5} more
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                    )
                 )}
               </div>
-            </div>
-            
-            <div className="space-y-1.5 text-xs md:text-sm">
-              <div className="flex items-start gap-1.5 text-muted-foreground">
-                <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 mt-0.5 flex-shrink-0" />
-                <span className="line-clamp-2 leading-tight">{batch.schedule}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
-                <span>
-                  {isOnlineClass(batch.schedule) ? "🌐 Online" : `Room ${batch.room}`}
-                </span>
-                <span className="text-muted-foreground/50">•</span>
-                <span>
-                  {new Date(batch.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 pt-1">
-              <Button className="flex-1 h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate(`/teacher/students/${batch.id}`)}>
-                <Users className="h-3.5 w-3.5 mr-1.5" />
-                Students
-              </Button>
-              <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => setQrBatch(batch)}>
-                <QrCode className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/analytics/${batch.id}`)}>
-                <BarChart3 className="h-3.5 w-3.5" />
-              </Button>
-              {selectedIntake === "previous" && (
-                <Button variant="outline" className="h-8 md:h-9 w-8 md:w-9 p-0" onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}>
-                  <Flower2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-    );
-  };
-
-  // Dashboard content (existing tabs)
-  const DashboardContent = () => (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
-      <TabsList className="grid w-full grid-cols-3 h-9 md:h-10">
-        <TabsTrigger value="classes" className="text-xs md:text-sm px-1.5">
-          Classes
-        </TabsTrigger>
-        <TabsTrigger value="students" className="text-xs md:text-sm px-1.5">
-          <GraduationCap className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-          <span className="hidden xs:inline">Students</span>
-        </TabsTrigger>
-        <TabsTrigger value="alerts" className="text-xs md:text-sm px-1.5">
-          <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-          <span className="hidden xs:inline">Alerts</span>
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="classes" className="space-y-3 md:space-y-4">
-        {isLoading ? (
-          <div className="flex justify-center py-6 md:py-12">
-            <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : allBatches.length === 0 ? (
-          <Card>
-            <CardContent className="py-6 md:py-12 text-center text-muted-foreground text-xs md:text-sm">
-              No classes assigned yet
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex items-center gap-2 p-2 md:p-3 bg-card rounded-lg border">
-              <Select value={selectedIntake} onValueChange={setSelectedIntake}>
-                <SelectTrigger className="h-8 md:h-9 text-xs md:text-sm flex-1">
-                  <SelectValue placeholder="Select intake" />
-                </SelectTrigger>
-                <SelectContent>
-                  {intakes.map((intake) => (
-                    <SelectItem key={intake.value} value={intake.value} className="text-xs md:text-sm">
-                      {intake.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
-                {batches.length} class{batches.length !== 1 ? "es" : ""}
-              </span>
-            </div>
-
-            {batches.length === 0 ? (
-              <Card>
-                <CardContent className="py-6 md:py-12 text-center text-muted-foreground text-xs md:text-sm">
-                  No {selectedIntake === "current" ? "active" : selectedIntake === "previous" ? "completed" : ""} classes
-                </CardContent>
-              </Card>
             ) : (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedIntake}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {selectedIntake === "all" ? (
-                    <div className="space-y-4">
-                      {Object.entries(groupedBatches).map(([monthYear, monthBatches], groupIndex) => (
-                        monthYear !== "ungrouped" && (
-                          <motion.div 
-                            key={monthYear} 
-                            className="space-y-2"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: groupIndex * 0.1 }}
-                          >
-                            <h4 className="text-xs md:text-sm font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur-sm py-1">
-                              {monthYear}
-                            </h4>
-                            <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                              {monthBatches.map((batch, index) => (
-                                <BatchCard key={batch.id} batch={batch} index={index} />
-                              ))}
-                            </div>
-                          </motion.div>
-                        )
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid gap-2.5 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {batches.map((batch, index) => (
-                        <BatchCard key={batch.id} batch={batch} index={index} />
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
+              <ClassCarousel batches={batches} onRename={setRenameBatch} onShowQR={setQrBatch} />
             )}
-          </div>
-        )}
-      </TabsContent>
-
-
-      <TabsContent value="students">
-        <Card className="p-4 md:p-6">
-          <div className="text-center space-y-3">
-            <GraduationCap className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground" />
-            <div>
-              <h3 className="text-sm md:text-base font-semibold">All Students</h3>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">View and manage students</p>
-            </div>
-            <Button className="h-8 md:h-9 text-xs md:text-sm" onClick={() => navigate("/teacher/students")}>
-              <Users className="h-3.5 w-3.5 mr-1.5" />
-              Open Directory
-            </Button>
-          </div>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="alerts">
-        <Card className="p-3 md:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <h3 className="text-sm md:text-base font-semibold">Needs Attention</h3>
-          </div>
-          {teacherName ? (
-            <StudentAlertsTab teacherName={teacherName} />
-          ) : (
-            <p className="text-muted-foreground text-center py-4 text-xs">Loading...</p>
-          )}
-        </Card>
-      </TabsContent>
-
-    </Tabs>
+          </motion.div>
+        </AnimatePresence>
+      )}
+    </div>
   );
 
 
