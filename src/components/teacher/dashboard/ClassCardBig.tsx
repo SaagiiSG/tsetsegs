@@ -125,41 +125,6 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           {isActive && <ClassCardAnalyticsPreview batchId={batch.id} />}
         </div>
 
-        {/* Actions — pinned to bottom */}
-        <div className="mt-6 md:mt-auto md:pt-6 flex items-center gap-2">
-          <Button
-            className="flex-1 rounded-full"
-            onClick={() => {
-              haptic("light");
-              navigate(`/teacher/students/${batch.id}`);
-            }}
-          >
-            <Users className="h-3.5 w-3.5 mr-1.5" /> Students
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 rounded-full"
-            onClick={() => {
-              haptic("light");
-              navigate(`/teacher/analytics/${batch.id}`);
-            }}
-          >
-            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Analytics
-          </Button>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0" onClick={() => onShowQR(batch)}>
-            <QrCode className="h-3.5 w-3.5" />
-          </Button>
-          {m.isCompleted && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full shrink-0"
-              onClick={() => navigate(`/teacher/wrapped/${batch.id}`)}
-            >
-              <Flower2 className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
       </Card>
     </motion.div>
 
