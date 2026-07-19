@@ -68,7 +68,8 @@ export default function StudentSearch() {
       // Get total count
       const { count } = await supabase
         .from('students')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('is_ghost', false);
 
       setTotalCount(count || 0);
 
