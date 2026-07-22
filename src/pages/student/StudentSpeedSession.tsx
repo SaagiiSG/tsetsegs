@@ -113,7 +113,8 @@ export default function StudentSpeedSession() {
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
-  const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number }[]>([]);
+  const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number; answer: string }[]>([]);
+  const savedSessionRef = useRef(false);
   const questionStartTime = useRef(Date.now());
   const [questionElapsed, setQuestionElapsed] = useState(0);
   const pendingEnrollmentSnapshot = useRef<SprintEnrollmentSnapshot | null>(null);
@@ -277,9 +278,10 @@ export default function StudentSpeedSession() {
     
     setIsCorrect(correct);
     setShowResult(true);
-    setResults(prev => [...prev, { correct, questionId: currentQuestion.id, timeSpent }]);
+    const submittedAnswer = timeout ? 'TIMEOUT' : selectedAnswer;
+    setResults(prev => [...prev, { correct, questionId: currentQuestion.id, timeSpent, answer: submittedAnswer }]);
 
-    submitAttempt.mutate({ questionId: currentQuestion.id, answer: timeout ? 'TIMEOUT' : selectedAnswer, correct, timeSpent });
+    submitAttempt.mutate({ questionId: currentQuestion.id, answer: submittedAnswer, correct, timeSpent });
     logActivity('speed_mode_answer', { question_id: currentQuestion.id, correct, timeout, timeSpent: Math.round(timeSpent / 1000) });
   }, [currentQuestion, selectedAnswer, showResult, logActivity, submitAttempt]);
 
