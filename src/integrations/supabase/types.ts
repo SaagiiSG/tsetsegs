@@ -2778,6 +2778,111 @@ export type Database = {
           },
         ]
       }
+      speed_session_items: {
+        Row: {
+          answer_submitted: string | null
+          created_at: string
+          id: string
+          is_correct: boolean
+          order_index: number
+          question_id: string
+          session_id: string
+          time_ms: number
+        }
+        Insert: {
+          answer_submitted?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          order_index: number
+          question_id: string
+          session_id: string
+          time_ms?: number
+        }
+        Update: {
+          answer_submitted?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          order_index?: number
+          question_id?: string
+          session_id?: string
+          time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speed_session_items_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speed_session_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "speed_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      speed_sessions: {
+        Row: {
+          category_id: string | null
+          completed_at: string | null
+          correct_count: number
+          created_at: string
+          duration_seconds: number
+          id: string
+          points_earned: number
+          started_at: string
+          student_account_id: string
+          subject: string
+          total_questions: number
+        }
+        Insert: {
+          category_id?: string | null
+          completed_at?: string | null
+          correct_count?: number
+          created_at?: string
+          duration_seconds: number
+          id?: string
+          points_earned?: number
+          started_at?: string
+          student_account_id: string
+          subject?: string
+          total_questions?: number
+        }
+        Update: {
+          category_id?: string | null
+          completed_at?: string | null
+          correct_count?: number
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          points_earned?: number
+          started_at?: string
+          student_account_id?: string
+          subject?: string
+          total_questions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speed_sessions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "question_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speed_sessions_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sprints: {
         Row: {
           created_at: string
@@ -3976,6 +4081,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      set_batch_nickname: {
+        Args: { p_batch_id: string; p_nickname: string }
+        Returns: undefined
       }
       student_owns_record: {
         Args: { phone: string; student_id: string }
