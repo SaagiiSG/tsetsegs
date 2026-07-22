@@ -30,6 +30,11 @@ interface Question {
   question_type: string;
   multiple_choice_options: Record<string, string> | null;
   category: { name: string } | null;
+  question_image_url: string | null;
+  has_figure: boolean | null;
+  figure_svg: string | null;
+  figure_type: string | null;
+  figure_description: string | null;
 }
 
 // Circular Timer SVG Component
@@ -124,6 +129,7 @@ export default function StudentSpeedSession() {
         .select(`
           id, question_id, question_text, answer, question_type,
           multiple_choice_options,
+          question_image_url, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
         `)
         .eq('is_active', true)
