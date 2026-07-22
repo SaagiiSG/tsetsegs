@@ -124,6 +124,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
     const onPointerDown = () => {
       gestureStartLeftRef.current = el.scrollLeft;
+      gestureStartIndexRef.current = nearestIndex();
+      gestureKindRef.current = "touch";
       lastScrollLeftRef.current = el.scrollLeft;
       lastScrollTimeRef.current = performance.now();
       velocityRef.current = 0;
@@ -132,6 +134,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     const onWheel = () => {
       if (gestureStartLeftRef.current === null) {
         gestureStartLeftRef.current = el.scrollLeft;
+        gestureStartIndexRef.current = nearestIndex();
+        gestureKindRef.current = "wheel";
       }
     };
 
