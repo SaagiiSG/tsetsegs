@@ -524,6 +524,23 @@ export default function StudentSpeedSession() {
                   <MathText text={currentQuestion?.question_text || ''} />
                 </div>
 
+                {/* Figure (SVG or image) */}
+                {currentQuestion?.figure_svg ? (
+                  <div
+                    className="flex justify-center py-2 [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:max-h-72"
+                    dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
+                  />
+                ) : currentQuestion?.question_image_url ? (
+                  <div className="flex justify-center py-2">
+                    <img
+                      src={currentQuestion.question_image_url}
+                      alt={currentQuestion.figure_description || 'Question figure'}
+                      className="rounded-md max-h-72 w-auto object-contain"
+                      loading="eager"
+                    />
+                  </div>
+                ) : null}
+
                 {/* Answer options */}
                 {isMultipleChoice ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
