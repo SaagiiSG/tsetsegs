@@ -19,6 +19,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
   // Gesture tracking for JS-assisted snapping
   const gestureStartLeftRef = useRef<number | null>(null);
+  const gestureStartIndexRef = useRef<number | null>(null);
+  const gestureKindRef = useRef<"touch" | "wheel" | null>(null);
   const lastScrollLeftRef = useRef(0);
   const lastScrollTimeRef = useRef(0);
   const velocityRef = useRef(0);
@@ -84,34 +86,34 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
     const cardWidth = centers[0].width;
     const startLeft = gestureStartLeftRef.current;
+    const startIndex = gestureStartIndexRef.current ?? activeIndexRef.current;
     const currentLeft = el.scrollLeft;
-    const active = activeIndexRef.current;
-    const velocity = velocityRef.current; // px/ms; sign = direction
+    const kind = gestureKindRef.current;
 
-    let targetIndex = active;
+    // Touch = higher threshold (25% of card). Wheel/trackpad = lower (15%).
+    const displacementThreshold = cardWidth * (kind === "wheel" ? 0.15 : 0.25);
 
-    // Intent from displacement
+    let targetIndex = startIndex;
+
     if (startLeft !== null) {
       const delta = currentLeft - startLeft;
-      const displacementThreshold = cardWidth * 0.15;
-      if (delta > displacementThreshold) targetIndex = active + 1;
-      else if (delta < -displacementThreshold) targetIndex = active - 1;
+      if (delta > displacementThreshold) targetIndex = startIndex + 1;
+      else if (delta < -displacementThreshold) targetIndex = startIndex - 1;
     }
 
-    // Intent from velocity (short/fast flick)
-    const velocityThreshold = 0.35; // px per ms
-    if (Math.abs(velocity) > velocityThreshold) {
-      if (velocity > 0) targetIndex = Math.max(targetIndex, active + 1);
-      else targetIndex = Math.min(targetIndex, active - 1);
-    }
+    // Only allow ±1 per gesture — never skip a card
+    targetIndex = Math.max(startIndex - 1, Math.min(startIndex + 1, targetIndex));
 
-    // If neither triggered, fall back to nearest (handles long trackpad scrolls)
-    if (targetIndex === active) {
+    // If no clear intent, fall back to nearest but clamped to ±1
+    if (targetIndex === startIndex) {
       const nearest = nearestIndex();
-      if (nearest !== active) targetIndex = nearest;
+      const clampedNearest = Math.max(startIndex - 1, Math.min(startIndex + 1, nearest));
+      if (clampedNearest !== startIndex) targetIndex = clampedNearest;
     }
 
     gestureStartLeftRef.current = null;
+    gestureStartIndexRef.current = null;
+    gestureKindRef.current = null;
     velocityRef.current = 0;
     scrollToIndex(targetIndex, true);
   }, [getCardCenters, nearestIndex, scrollToIndex]);
@@ -122,6 +124,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
 
     const onPointerDown = () => {
       gestureStartLeftRef.current = el.scrollLeft;
+      gestureStartIndexRef.current = nearestIndex();
+      gestureKindRef.current = "touch";
       lastScrollLeftRef.current = el.scrollLeft;
       lastScrollTimeRef.current = performance.now();
       velocityRef.current = 0;
@@ -130,6 +134,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     const onWheel = () => {
       if (gestureStartLeftRef.current === null) {
         gestureStartLeftRef.current = el.scrollLeft;
+        gestureStartIndexRef.current = nearestIndex();
+        gestureKindRef.current = "wheel";
       }
     };
 

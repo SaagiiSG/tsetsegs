@@ -24,10 +24,10 @@ export function RenameClassDialog({ batchId, currentNickname, fallbackName, onOp
   const save = useMutation({
     mutationFn: async (nickname: string | null) => {
       if (!batchId) return;
-      const { error } = await supabase
-        .from("batches")
-        .update({ nickname })
-        .eq("id", batchId);
+      const { error } = await supabase.rpc("set_batch_nickname", {
+        p_batch_id: batchId,
+        p_nickname: nickname,
+      });
       if (error) throw error;
     },
     onSuccess: (_d, nickname) => {

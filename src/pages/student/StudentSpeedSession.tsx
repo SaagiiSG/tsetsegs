@@ -30,6 +30,11 @@ interface Question {
   question_type: string;
   multiple_choice_options: Record<string, string> | null;
   category: { name: string } | null;
+  question_image_url: string | null;
+  has_figure: boolean | null;
+  figure_svg: string | null;
+  figure_type: string | null;
+  figure_description: string | null;
 }
 
 // Circular Timer SVG Component
@@ -108,7 +113,8 @@ export default function StudentSpeedSession() {
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
-  const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number }[]>([]);
+  const [results, setResults] = useState<{ correct: boolean; questionId: string; timeSpent: number; answer: string }[]>([]);
+  const savedSessionRef = useRef(false);
   const questionStartTime = useRef(Date.now());
   const [questionElapsed, setQuestionElapsed] = useState(0);
   const pendingEnrollmentSnapshot = useRef<SprintEnrollmentSnapshot | null>(null);
@@ -124,6 +130,7 @@ export default function StudentSpeedSession() {
         .select(`
           id, question_id, question_text, answer, question_type,
           multiple_choice_options,
+          question_image_url, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
         `)
         .eq('is_active', true)
@@ -271,9 +278,10 @@ export default function StudentSpeedSession() {
     
     setIsCorrect(correct);
     setShowResult(true);
-    setResults(prev => [...prev, { correct, questionId: currentQuestion.id, timeSpent }]);
+    const submittedAnswer = timeout ? 'TIMEOUT' : selectedAnswer;
+    setResults(prev => [...prev, { correct, questionId: currentQuestion.id, timeSpent, answer: submittedAnswer }]);
 
-    submitAttempt.mutate({ questionId: currentQuestion.id, answer: timeout ? 'TIMEOUT' : selectedAnswer, correct, timeSpent });
+    submitAttempt.mutate({ questionId: currentQuestion.id, answer: submittedAnswer, correct, timeSpent });
     logActivity('speed_mode_answer', { question_id: currentQuestion.id, correct, timeout, timeSpent: Math.round(timeSpent / 1000) });
   }, [currentQuestion, selectedAnswer, showResult, logActivity, submitAttempt]);
 
@@ -306,6 +314,47 @@ export default function StudentSpeedSession() {
 
     if (student?.id) {
       updateStudentStreak(student.id).catch(() => {});
+
+      // Persist the session + its questions so the student can review it later.
+      if (!savedSessionRef.current && results.length > 0) {
+        savedSessionRef.current = true;
+        try {
+          const pointsEarned = results.reduce((acc, r) => {
+            if (!r.correct) return acc;
+            const s = r.timeSpent / 1000;
+            return acc + (s < 10 ? 15 : s < 20 ? 10 : s < 30 ? 5 : 2);
+          }, 0);
+          const { data: newSession } = await supabase
+            .from('speed_sessions')
+            .insert({
+              student_account_id: student.id,
+              subject,
+              category_id: categoryId && categoryId !== 'all' ? categoryId : null,
+              duration_seconds: duration,
+              total_questions: results.length,
+              correct_count: correctCount,
+              points_earned: pointsEarned,
+              completed_at: new Date().toISOString(),
+            })
+            .select('id')
+            .maybeSingle();
+
+          if (newSession?.id) {
+            const items = results.map((r, idx) => ({
+              session_id: newSession.id,
+              question_id: r.questionId,
+              order_index: idx,
+              answer_submitted: r.answer,
+              is_correct: r.correct,
+              time_ms: Math.round(r.timeSpent),
+            }));
+            await supabase.from('speed_session_items').insert(items);
+          }
+        } catch (err) {
+          console.error('Failed to persist speed session history:', err);
+        }
+      }
+
       try {
         const { data: activeSprint } = await supabase.from('sprints').select('id').eq('is_active', true).maybeSingle();
         await supabase.from('point_transactions').insert({
@@ -474,6 +523,23 @@ export default function StudentSpeedSession() {
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <MathText text={currentQuestion?.question_text || ''} />
                 </div>
+
+                {/* Figure (SVG or image) */}
+                {currentQuestion?.figure_svg ? (
+                  <div
+                    className="flex justify-center py-2 [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:max-h-72"
+                    dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
+                  />
+                ) : currentQuestion?.question_image_url ? (
+                  <div className="flex justify-center py-2">
+                    <img
+                      src={currentQuestion.question_image_url}
+                      alt={currentQuestion.figure_description || 'Question figure'}
+                      className="rounded-md max-h-72 w-auto object-contain"
+                      loading="eager"
+                    />
+                  </div>
+                ) : null}
 
                 {/* Answer options */}
                 {isMultipleChoice ? (

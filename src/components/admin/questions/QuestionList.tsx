@@ -74,7 +74,11 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
       } else if (questionSet === 'english') {
         query = query.eq('subject', 'english');
       } else {
-        query = query.eq('question_set', 'CollegeBoard');
+        // CB tab: all math questions that aren't in the 68 or 150 sets
+        query = query
+          .eq('subject', 'math')
+          .neq('question_set', '68')
+          .neq('question_set', 'SATMathTraining800');
       }
 
       if (categoryFilter !== 'all') {
