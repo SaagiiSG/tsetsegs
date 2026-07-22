@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 
@@ -13,25 +13,32 @@ export function useTeachingChecklist(batchId: string | null) {
   const teacherId = user?.id ?? null;
   const [rows, setRows] = useState<ChecklistRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const initialLoadedRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
 
-  const load = useCallback(async () => {
-    if (!teacherId) return;
-    setLoading(true);
-    let q = supabase
-      .from("teaching_checklist_progress")
-      .select("item_key, checked_at, note")
-      .eq("teacher_id", teacherId);
-    q = batchId ? q.eq("batch_id", batchId) : q.is("batch_id", null);
-    const { data } = await q;
-    setRows((data as ChecklistRow[]) ?? []);
-    setLoading(false);
-  }, [teacherId, batchId]);
+  const load = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!teacherId) return;
+      if (!opts.silent) setLoading(true);
+      let q = supabase
+        .from("teaching_checklist_progress")
+        .select("item_key, checked_at, note")
+        .eq("teacher_id", teacherId);
+      q = batchId ? q.eq("batch_id", batchId) : q.is("batch_id", null);
+      const { data } = await q;
+      setRows((data as ChecklistRow[]) ?? []);
+      if (!opts.silent) setLoading(false);
+      initialLoadedRef.current = true;
+    },
+    [teacherId, batchId]
+  );
 
   useEffect(() => {
+    initialLoadedRef.current = false;
     load();
   }, [load]);
 
-  // Realtime — sync between desktop popup and phone
+  // Realtime — silent, debounced sync (no skeleton flash on every tap)
   useEffect(() => {
     if (!teacherId) return;
     const channel = supabase
@@ -46,14 +53,18 @@ export function useTeachingChecklist(batchId: string | null) {
         },
         (payload) => {
           const row = (payload.new ?? payload.old) as { batch_id: string | null } | undefined;
-          // filter for the current view (batch or global)
           const matches = batchId ? row?.batch_id === batchId : row?.batch_id === null;
-          if (matches) load();
+          if (!matches) return;
+          if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = window.setTimeout(() => {
+            load({ silent: true });
+          }, 300);
         }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
+      if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
     };
   }, [teacherId, batchId, load]);
 
@@ -69,7 +80,6 @@ export function useTeachingChecklist(batchId: string | null) {
           : prev.filter((r) => r.item_key !== itemKey)
       );
       if (checked) {
-        // Check if already exists to avoid unique-violation noise
         let existQ = supabase
           .from("teaching_checklist_progress")
           .select("id")
