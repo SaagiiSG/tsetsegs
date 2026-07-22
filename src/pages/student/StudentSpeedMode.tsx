@@ -27,6 +27,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { SpeedSessionHistoryCard } from '@/components/student/speed/SpeedSessionHistoryCard';
 
 // iOS-style scroll picker component
 interface ScrollPickerProps {
@@ -714,6 +715,9 @@ export default function StudentSpeedMode() {
         <Play className="h-5 w-5" />
         Start Session
       </Button>
+
+      {/* Persistent history of past speed sessions with per-question review */}
+      <SpeedSessionHistoryCard />
 
     </div>
   );
