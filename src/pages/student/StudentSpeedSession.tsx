@@ -314,6 +314,47 @@ export default function StudentSpeedSession() {
 
     if (student?.id) {
       updateStudentStreak(student.id).catch(() => {});
+
+      // Persist the session + its questions so the student can review it later.
+      if (!savedSessionRef.current && results.length > 0) {
+        savedSessionRef.current = true;
+        try {
+          const pointsEarned = results.reduce((acc, r) => {
+            if (!r.correct) return acc;
+            const s = r.timeSpent / 1000;
+            return acc + (s < 10 ? 15 : s < 20 ? 10 : s < 30 ? 5 : 2);
+          }, 0);
+          const { data: newSession } = await supabase
+            .from('speed_sessions')
+            .insert({
+              student_account_id: student.id,
+              subject,
+              category_id: categoryId && categoryId !== 'all' ? categoryId : null,
+              duration_seconds: duration,
+              total_questions: results.length,
+              correct_count: correctCount,
+              points_earned: pointsEarned,
+              completed_at: new Date().toISOString(),
+            })
+            .select('id')
+            .maybeSingle();
+
+          if (newSession?.id) {
+            const items = results.map((r, idx) => ({
+              session_id: newSession.id,
+              question_id: r.questionId,
+              order_index: idx,
+              answer_submitted: r.answer,
+              is_correct: r.correct,
+              time_ms: Math.round(r.timeSpent),
+            }));
+            await supabase.from('speed_session_items').insert(items);
+          }
+        } catch (err) {
+          console.error('Failed to persist speed session history:', err);
+        }
+      }
+
       try {
         const { data: activeSprint } = await supabase.from('sprints').select('id').eq('is_active', true).maybeSingle();
         await supabase.from('point_transactions').insert({
