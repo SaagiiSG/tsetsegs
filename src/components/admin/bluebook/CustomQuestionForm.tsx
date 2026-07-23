@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,26 @@ const CustomQuestionForm = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+
+  // Track the last focused text field so PDF text insertions target it
+  const lastFocusedRef = useRef<"passage" | "question" | "answer" | "option-A" | "option-B" | "option-C" | "option-D">("passage");
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (!text) return;
+      const target = lastFocusedRef.current;
+      if (target === "passage") setPassage((p) => (p ? p + " " + text : text));
+      else if (target === "question") setQuestionText((p) => (p ? p + " " + text : text));
+      else if (target === "answer") setAnswer((p) => (p ? p + " " + text : text));
+      else if (target.startsWith("option-")) {
+        const key = target.split("-")[1] as "A" | "B" | "C" | "D";
+        setOptions((prev) => ({ ...prev, [key]: prev[key] ? prev[key] + " " + text : text }));
+      }
+    };
+    window.addEventListener("reference-pdf:insert-text", handler);
+    return () => window.removeEventListener("reference-pdf:insert-text", handler);
+  }, []);
 
   const reset = () => {
     setQuestionText("");
@@ -306,6 +326,7 @@ const CustomQuestionForm = ({
           placeholder="Enter passage text if this is a reading-based question..."
           value={passage}
           onChange={(e) => setPassage(e.target.value)}
+          onFocus={() => (lastFocusedRef.current = "passage")}
           rows={3}
         />
       </div>
@@ -371,7 +392,10 @@ const CustomQuestionForm = ({
       </div>
 
       {/* Question text */}
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        onFocusCapture={() => (lastFocusedRef.current = "question")}
+      >
         <Label>Question Text *</Label>
         <RichTextEditor
           value={questionText}
@@ -417,7 +441,11 @@ const CustomQuestionForm = ({
           </div>
           <div className="space-y-3">
             {(["A", "B", "C", "D"] as const).map((letter) => (
-              <div key={letter} className="space-y-1">
+              <div
+                key={letter}
+                className="space-y-1"
+                onFocusCapture={() => (lastFocusedRef.current = `option-${letter}` as any)}
+              >
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="shrink-0">{letter}</Badge>
                 </div>
@@ -465,6 +493,7 @@ const CustomQuestionForm = ({
             placeholder="Enter the correct answer"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onFocus={() => (lastFocusedRef.current = "answer")}
           />
         )}
       </div>

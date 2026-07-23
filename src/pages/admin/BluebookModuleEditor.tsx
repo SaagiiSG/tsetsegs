@@ -28,11 +28,16 @@ import {
   RefreshCw,
   Sparkles,
   Library,
+  FileText,
+  Upload,
 } from "lucide-react";
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
 import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import ReferencePdfViewer from "@/components/admin/bluebook/ReferencePdfViewer";
+import { useReferencePdf } from "@/hooks/useReferencePdf";
+import { useRef } from "react";
 
 type ModuleRow = {
   id: string;
@@ -47,6 +52,9 @@ const BluebookModuleEditor = () => {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<"create" | "browse">("create");
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const { meta: pdfMeta, signedUrl, upload: uploadPdf, uploading } = useReferencePdf(moduleId);
 
   // Browse filters
   const [search, setSearch] = useState("");
@@ -217,10 +225,54 @@ const BluebookModuleEditor = () => {
             </p>
           </div>
         </div>
-        <Badge variant="outline" className="gap-1">
-          {currentQuestions?.length ?? 0} in module
-        </Badge>
+        <div className="flex items-center gap-2">
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) uploadPdf(f).then(() => setViewerOpen(true));
+              e.currentTarget.value = "";
+            }}
+          />
+          {pdfMeta.path ? (
+            <Button
+              variant={viewerOpen ? "secondary" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => setViewerOpen((v) => !v)}
+            >
+              <FileText className="h-4 w-4" />
+              {viewerOpen ? "Hide PDF" : "Show PDF"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={uploading}
+              onClick={() => pdfInputRef.current?.click()}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Upload reference PDF
+            </Button>
+          )}
+          <Badge variant="outline" className="gap-1">
+            {currentQuestions?.length ?? 0} in module
+          </Badge>
+        </div>
       </div>
+
+      {viewerOpen && signedUrl && (
+        <ReferencePdfViewer
+          url={signedUrl}
+          filename={pdfMeta.name}
+          onClose={() => setViewerOpen(false)}
+          onReplace={(f) => uploadPdf(f)}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-3">
         {/* Right sidebar: current module questions */}

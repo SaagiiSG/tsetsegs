@@ -518,6 +518,9 @@ export type Database = {
           difficulty: string | null
           id: string
           module_number: number
+          reference_pdf_name: string | null
+          reference_pdf_path: string | null
+          reference_pdf_uploaded_at: string | null
           section: string
           test_id: string | null
           time_limit_minutes: number
@@ -527,6 +530,9 @@ export type Database = {
           difficulty?: string | null
           id?: string
           module_number: number
+          reference_pdf_name?: string | null
+          reference_pdf_path?: string | null
+          reference_pdf_uploaded_at?: string | null
           section: string
           test_id?: string | null
           time_limit_minutes: number
@@ -536,6 +542,9 @@ export type Database = {
           difficulty?: string | null
           id?: string
           module_number?: number
+          reference_pdf_name?: string | null
+          reference_pdf_path?: string | null
+          reference_pdf_uploaded_at?: string | null
           section?: string
           test_id?: string | null
           time_limit_minutes?: number
