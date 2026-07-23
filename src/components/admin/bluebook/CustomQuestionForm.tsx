@@ -486,6 +486,7 @@ const CustomQuestionForm = ({
             placeholder="Enter the correct answer"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onFocus={() => (lastFocusedRef.current = "answer")}
           />
         )}
       </div>
