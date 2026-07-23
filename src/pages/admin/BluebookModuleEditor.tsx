@@ -251,9 +251,9 @@ const BluebookModuleEditor = () => {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
-        {/* Left: current module questions */}
-        <Card className="min-h-[60vh]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
+        {/* Right sidebar: current module questions */}
+        <Card className="min-h-[60vh] order-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between">
               <span>In this module</span>
