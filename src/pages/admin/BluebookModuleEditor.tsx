@@ -63,6 +63,7 @@ const BluebookModuleEditor = () => {
   const [filterMonth, setFilterMonth] = useState<string>("any");
   const [filterYear, setFilterYear] = useState<string>("any");
   const [filterVariant, setFilterVariant] = useState<string>("");
+  const [filterQuestionSet, setFilterQuestionSet] = useState<string>("any");
 
   const { data: moduleRow, isLoading: moduleLoading } = useQuery({
     queryKey: ["bluebook-module", moduleId],
