@@ -326,6 +326,7 @@ const CustomQuestionForm = ({
           placeholder="Enter passage text if this is a reading-based question..."
           value={passage}
           onChange={(e) => setPassage(e.target.value)}
+          onFocus={() => (lastFocusedRef.current = "passage")}
           rows={3}
         />
       </div>
