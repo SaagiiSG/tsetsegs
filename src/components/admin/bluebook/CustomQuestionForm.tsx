@@ -446,6 +446,7 @@ const CustomQuestionForm = ({
                 className="space-y-1"
                 onFocusCapture={() => (lastFocusedRef.current = `option-${letter}` as any)}
               >
+                <div className="flex items-center gap-2">
                   <Badge variant="outline" className="shrink-0">{letter}</Badge>
                 </div>
                 {mathOnlyMode ? (
