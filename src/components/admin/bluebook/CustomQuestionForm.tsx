@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Loader2, ImagePlus, X, Calculator } from "lucide-react";
+import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
+import { MathText } from "@/components/MathText";
 
 interface CustomQuestionFormProps {
   moduleId: string;
@@ -45,6 +46,7 @@ const CustomQuestionForm = ({
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
   const reset = () => {
     setQuestionText("");
@@ -172,7 +174,98 @@ const CustomQuestionForm = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Live preview */}
+      <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-accent/5">
+        <button
+          type="button"
+          onClick={() => setShowPreview((v) => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span className="flex items-center gap-1.5">
+            {showPreview ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            Live preview
+          </span>
+          <span className="text-[10px] uppercase tracking-wider">
+            {showPreview ? "Hide" : "Show"}
+          </span>
+        </button>
+        {showPreview && (
+          <div className="px-4 pb-4 pt-1 space-y-3">
+            {!questionText && !passage && !imagePreview ? (
+              <p className="text-xs text-muted-foreground italic text-center py-6">
+                Start typing below to see a live preview of your question.
+              </p>
+            ) : (
+              <>
+                {passage && (
+                  <div className="text-sm bg-background/60 rounded-md p-3 border-l-2 border-primary/40">
+                    <MathText text={passage} />
+                  </div>
+                )}
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Question"
+                    className="max-h-40 rounded-md border object-contain mx-auto"
+                  />
+                )}
+                {questionText && (
+                  <div className="text-sm font-medium">
+                    <MathText text={questionText.replace(/<[^>]+>/g, " ")} />
+                  </div>
+                )}
+                {questionType === "multiple_choice" ? (
+                  <div className="grid gap-1.5">
+                    {(["A", "B", "C", "D"] as const).map((letter) => {
+                      const isCorrect = answer === letter;
+                      const val = options[letter];
+                      return (
+                        <div
+                          key={letter}
+                          className={`flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-xs ${
+                            isCorrect
+                              ? "border-emerald-500/50 bg-emerald-500/10"
+                              : "border-border bg-background/40"
+                          }`}
+                        >
+                          <Badge
+                            variant={isCorrect ? "default" : "outline"}
+                            className={`shrink-0 h-5 w-5 p-0 flex items-center justify-center text-[10px] ${
+                              isCorrect ? "bg-emerald-600 hover:bg-emerald-600" : ""
+                            }`}
+                          >
+                            {letter}
+                          </Badge>
+                          <div className="flex-1 min-w-0">
+                            {val ? (
+                              <MathText text={val.replace(/<[^>]+>/g, " ")} />
+                            ) : (
+                              <span className="text-muted-foreground italic">empty</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">Answer: </span>
+                    {answer ? (
+                      <span className="font-mono font-semibold text-emerald-600">
+                        <MathText text={answer} />
+                      </span>
+                    ) : (
+                      <span className="italic text-muted-foreground">not set</span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Passage */}
       <div className="space-y-2">
         <Label htmlFor="passage">Passage (optional)</Label>
