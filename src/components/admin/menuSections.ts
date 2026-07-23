@@ -69,6 +69,7 @@ export const menuSections: MenuSection[] = [
     icon: Shield,
     items: [
       { title: "Team", url: "/admin/team", icon: Users },
+      { title: "Database Health", url: "/admin/database-health", icon: Database },
       { title: "Settings", url: "/admin/settings", icon: Settings },
     ],
     defaultOpen: false,
