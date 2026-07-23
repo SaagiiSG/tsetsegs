@@ -28,11 +28,16 @@ import {
   RefreshCw,
   Sparkles,
   Library,
+  FileText,
+  Upload,
 } from "lucide-react";
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
 import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import ReferencePdfViewer from "@/components/admin/bluebook/ReferencePdfViewer";
+import { useReferencePdf } from "@/hooks/useReferencePdf";
+import { useRef } from "react";
 
 type ModuleRow = {
   id: string;
