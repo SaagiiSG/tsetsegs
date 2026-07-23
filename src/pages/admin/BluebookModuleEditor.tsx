@@ -230,7 +230,7 @@ const BluebookModuleEditor = () => {
     moduleRow.section === "reading_writing" ? "Reading & Writing" : "Math";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -238,10 +238,10 @@ const BluebookModuleEditor = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-xl font-bold leading-tight">
               {sectionLabel} — Module {moduleRow.module_number}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Create custom questions for this module, or browse the existing bank.
             </p>
           </div>
@@ -251,7 +251,7 @@ const BluebookModuleEditor = () => {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-3">
         {/* Right sidebar: current module questions */}
         <Card className="min-h-[60vh] order-2">
           <CardHeader className="pb-3">
