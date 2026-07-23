@@ -122,7 +122,7 @@ const BluebookModuleEditor = () => {
       if (!subjectFilter) return [];
       let q = supabase
         .from("questions")
-        .select("id, question_id, question_text, subject, difficulty_level, question_set, passage_text, image_url, choice_a, choice_b, choice_c, choice_d, correct_answer, question_type")
+        .select("id, question_id, question_text, subject, difficulty_level, question_set, passage_text, question_image_url, multiple_choice_options, answer, question_type")
         .eq("is_active", true)
         .ilike("subject", `%${subjectFilter}%`)
         .order("question_id", { ascending: false })
@@ -363,12 +363,20 @@ const BluebookModuleEditor = () => {
                     <div className="space-y-2">
                       {pool!.map((q: any) => {
                         const added = addedQuestionIds.has(q.id);
-                        const choices = [
-                          { k: "A", v: q.choice_a },
-                          { k: "B", v: q.choice_b },
-                          { k: "C", v: q.choice_c },
-                          { k: "D", v: q.choice_d },
-                        ].filter((c) => c.v);
+                        const rawChoices = q.multiple_choice_options;
+                        let choices: { k: string; v: string }[] = [];
+                        if (Array.isArray(rawChoices)) {
+                          choices = rawChoices.map((v: any, i: number) => ({
+                            k: String.fromCharCode(65 + i),
+                            v: typeof v === "string" ? v : v?.text ?? v?.value ?? "",
+                          })).filter((c) => c.v);
+                        } else if (rawChoices && typeof rawChoices === "object") {
+                          choices = Object.entries(rawChoices).map(([k, v]: any) => ({
+                            k: k.toUpperCase(),
+                            v: typeof v === "string" ? v : v?.text ?? v?.value ?? "",
+                          })).filter((c) => c.v);
+                        }
+                        const correctAnswer = q.answer;
                         return (
                           <HoverCard key={q.id} openDelay={150} closeDelay={80}>
                             <div
@@ -419,8 +427,8 @@ const BluebookModuleEditor = () => {
                                     <MathText text={q.passage_text} />
                                   </div>
                                 )}
-                                {q.image_url && (
-                                  <img src={q.image_url} alt="" className="max-h-48 rounded border object-contain" />
+                                {q.question_image_url && (
+                                  <img src={q.question_image_url} alt="" className="max-h-48 rounded border object-contain" />
                                 )}
                                 <div className="text-sm">
                                   <MathText text={q.question_text ?? ""} />
@@ -428,7 +436,9 @@ const BluebookModuleEditor = () => {
                                 {choices.length > 0 && (
                                   <div className="space-y-1">
                                     {choices.map((c) => {
-                                      const isCorrect = q.correct_answer === c.k;
+                                      const isCorrect =
+                                        correctAnswer != null &&
+                                        String(correctAnswer).trim().toUpperCase() === c.k;
                                       return (
                                         <div
                                           key={c.k}
@@ -444,10 +454,10 @@ const BluebookModuleEditor = () => {
                                     })}
                                   </div>
                                 )}
-                                {choices.length === 0 && q.correct_answer && (
+                                {choices.length === 0 && correctAnswer && (
                                   <div className="text-xs">
                                     <span className="text-muted-foreground">Answer: </span>
-                                    <span className="font-mono font-semibold text-emerald-700">{q.correct_answer}</span>
+                                    <span className="font-mono font-semibold text-emerald-700">{String(correctAnswer)}</span>
                                   </div>
                                 )}
                               </div>
