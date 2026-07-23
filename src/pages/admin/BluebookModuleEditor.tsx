@@ -33,17 +33,6 @@ import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
 import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
 
-const MONTHS = [
-  { value: 1, label: "January" }, { value: 2, label: "February" },
-  { value: 3, label: "March" }, { value: 4, label: "April" },
-  { value: 5, label: "May" }, { value: 6, label: "June" },
-  { value: 7, label: "July" }, { value: 8, label: "August" },
-  { value: 9, label: "September" }, { value: 10, label: "October" },
-  { value: 11, label: "November" }, { value: 12, label: "December" },
-];
-
-const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
-
 type ModuleRow = {
   id: string;
   test_id: string;
@@ -60,9 +49,6 @@ const BluebookModuleEditor = () => {
 
   // Browse filters
   const [search, setSearch] = useState("");
-  const [filterMonth, setFilterMonth] = useState<string>("any");
-  const [filterYear, setFilterYear] = useState<string>("any");
-  const [filterVariant, setFilterVariant] = useState<string>("");
   const [filterQuestionSet, setFilterQuestionSet] = useState<string>("any");
 
   const { data: moduleRow, isLoading: moduleLoading } = useQuery({
@@ -103,41 +89,6 @@ const BluebookModuleEditor = () => {
     [currentQuestions]
   );
 
-  const { data: restrictedPool } = useQuery({
-    queryKey: ["bluebook-filter-pool", filterMonth, filterYear, filterVariant],
-    queryFn: async () => {
-      const noFilter =
-        filterMonth === "any" && filterYear === "any" && !filterVariant.trim();
-      if (noFilter) return null;
-
-      let testQuery = supabase.from("bluebook_tests").select("id");
-      if (filterMonth !== "any") testQuery = testQuery.eq("test_month", parseInt(filterMonth));
-      if (filterYear !== "any") testQuery = testQuery.eq("test_year", parseInt(filterYear));
-      if (filterVariant.trim()) testQuery = testQuery.ilike("variant", `%${filterVariant.trim()}%`);
-
-      const { data: tests, error: te } = await testQuery;
-      if (te) throw te;
-      const testIds = (tests ?? []).map((t) => t.id);
-      if (testIds.length === 0) return [] as string[];
-
-      const { data: mods, error: me } = await supabase
-        .from("bluebook_modules")
-        .select("id")
-        .in("test_id", testIds);
-      if (me) throw me;
-      const modIds = (mods ?? []).map((m) => m.id);
-      if (modIds.length === 0) return [] as string[];
-
-      const { data: mqs, error: qe } = await supabase
-        .from("bluebook_module_questions")
-        .select("question_id")
-        .in("module_id", modIds);
-      if (qe) throw qe;
-      return Array.from(new Set((mqs ?? []).map((r: any) => r.question_id)));
-    },
-    enabled: tab === "browse",
-  });
-
   const { data: availableQuestionSets } = useQuery({
     queryKey: ["bluebook-available-question-sets", subjectFilter],
     queryFn: async () => {
@@ -165,7 +116,6 @@ const BluebookModuleEditor = () => {
       subjectFilter,
       search,
       filterQuestionSet,
-      restrictedPool?.length ?? "all",
     ],
     queryFn: async () => {
       if (!subjectFilter) return [];
@@ -184,10 +134,6 @@ const BluebookModuleEditor = () => {
       }
       if (filterQuestionSet !== "any") {
         q = q.eq("question_set", filterQuestionSet);
-      }
-      if (Array.isArray(restrictedPool)) {
-        if (restrictedPool.length === 0) return [];
-        q = q.in("id", restrictedPool);
       }
 
       const { data, error } = await q;
@@ -226,9 +172,6 @@ const BluebookModuleEditor = () => {
   });
 
   const resetFilters = () => {
-    setFilterMonth("any");
-    setFilterYear("any");
-    setFilterVariant("");
     setFilterQuestionSet("any");
     setSearch("");
   };
@@ -372,40 +315,6 @@ const BluebookModuleEditor = () => {
                     <div className="text-sm p-2 rounded-md bg-muted/50">
                       {sectionLabel} <span className="text-muted-foreground">(locked)</span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Month</Label>
-                      <Select value={filterMonth} onValueChange={setFilterMonth}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="any">Any</SelectItem>
-                          {MONTHS.map(m => (
-                            <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Year</Label>
-                      <Select value={filterYear} onValueChange={setFilterYear}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="any">Any</SelectItem>
-                          {YEARS.map(y => (
-                            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Variant</Label>
-                    <Input
-                      placeholder="e.g. A, B, v1"
-                      value={filterVariant}
-                      onChange={(e) => setFilterVariant(e.target.value)}
-                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Question set</Label>
