@@ -392,7 +392,10 @@ const CustomQuestionForm = ({
       </div>
 
       {/* Question text */}
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        onFocusCapture={() => (lastFocusedRef.current = "question")}
+      >
         <Label>Question Text *</Label>
         <RichTextEditor
           value={questionText}
