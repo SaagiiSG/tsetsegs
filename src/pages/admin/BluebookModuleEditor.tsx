@@ -363,36 +363,96 @@ const BluebookModuleEditor = () => {
                     <div className="space-y-2">
                       {pool!.map((q: any) => {
                         const added = addedQuestionIds.has(q.id);
+                        const choices = [
+                          { k: "A", v: q.choice_a },
+                          { k: "B", v: q.choice_b },
+                          { k: "C", v: q.choice_c },
+                          { k: "D", v: q.choice_d },
+                        ].filter((c) => c.v);
                         return (
-                          <div
-                            key={q.id}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded-lg border transition-colors",
-                              added ? "bg-emerald-500/5 border-emerald-500/30" : "bg-muted/40 hover:bg-muted"
-                            )}
-                          >
-                            <span className="font-mono text-[11px] font-medium shrink-0 w-16 truncate">
-                              #{q.question_id}
-                            </span>
-                            <div className="flex-1 text-xs text-muted-foreground truncate">
-                              <MathText text={(q.question_text ?? "").slice(0, 80)} />
+                          <HoverCard key={q.id} openDelay={150} closeDelay={80}>
+                            <div
+                              className={cn(
+                                "flex items-start gap-2 p-2 rounded-lg border transition-colors",
+                                added ? "bg-emerald-500/5 border-emerald-500/30" : "bg-muted/40 hover:bg-muted"
+                              )}
+                            >
+                              <span className="font-mono text-[11px] font-medium shrink-0 w-16 truncate pt-0.5">
+                                #{q.question_id}
+                              </span>
+                              <HoverCardTrigger asChild>
+                                <div className="flex-1 text-xs text-muted-foreground line-clamp-3 cursor-help">
+                                  <MathText text={q.question_text ?? ""} />
+                                </div>
+                              </HoverCardTrigger>
+                              {added ? (
+                                <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-[10px] shrink-0">
+                                  Added
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="gap-1 h-7 shrink-0"
+                                  disabled={addMutation.isPending}
+                                  onClick={() => addMutation.mutate(q.id)}
+                                >
+                                  <Plus className="h-3 w-3" /> Add
+                                </Button>
+                              )}
                             </div>
-                            {added ? (
-                              <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-[10px]">
-                                Added
-                              </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="gap-1 h-7"
-                                disabled={addMutation.isPending}
-                                onClick={() => addMutation.mutate(q.id)}
-                              >
-                                <Plus className="h-3 w-3" /> Add
-                              </Button>
-                            )}
-                          </div>
+                            <HoverCardContent side="left" align="start" className="w-[520px] max-h-[70vh] overflow-y-auto p-4">
+                              <div className="space-y-3 text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-mono text-xs font-semibold">#{q.question_id}</span>
+                                  <div className="flex gap-1">
+                                    {q.question_set && (
+                                      <Badge variant="outline" className="text-[10px]">{q.question_set}</Badge>
+                                    )}
+                                    {q.difficulty_level && (
+                                      <Badge variant="secondary" className="text-[10px]">{q.difficulty_level}</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                {q.passage_text && (
+                                  <div className="text-xs bg-muted/50 rounded p-2 max-h-40 overflow-y-auto">
+                                    <MathText text={q.passage_text} />
+                                  </div>
+                                )}
+                                {q.image_url && (
+                                  <img src={q.image_url} alt="" className="max-h-48 rounded border object-contain" />
+                                )}
+                                <div className="text-sm">
+                                  <MathText text={q.question_text ?? ""} />
+                                </div>
+                                {choices.length > 0 && (
+                                  <div className="space-y-1">
+                                    {choices.map((c) => {
+                                      const isCorrect = q.correct_answer === c.k;
+                                      return (
+                                        <div
+                                          key={c.k}
+                                          className={cn(
+                                            "flex gap-2 text-xs rounded px-2 py-1 border",
+                                            isCorrect ? "bg-emerald-500/10 border-emerald-500/40" : "border-transparent"
+                                          )}
+                                        >
+                                          <span className="font-mono font-semibold shrink-0">{c.k}.</span>
+                                          <div className="flex-1"><MathText text={c.v} /></div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {choices.length === 0 && q.correct_answer && (
+                                  <div className="text-xs">
+                                    <span className="text-muted-foreground">Answer: </span>
+                                    <span className="font-mono font-semibold text-emerald-700">{q.correct_answer}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
                         );
                       })}
                     </div>
