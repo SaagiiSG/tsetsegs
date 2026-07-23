@@ -46,3 +46,7 @@ verify_jwt = false
 [functions.stream-bluebook-video]
 verify_jwt = false
 
+[functions.admin-db-health]
+verify_jwt = false
+
+
