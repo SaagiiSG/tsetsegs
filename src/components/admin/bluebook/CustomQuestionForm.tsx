@@ -334,9 +334,32 @@ const CustomQuestionForm = ({
             </Button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+          <label
+            onDrop={handleDrop}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+            }}
+            onPaste={handlePaste}
+            tabIndex={0}
+            className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
+              isDragging
+                ? "border-primary bg-primary/10"
+                : "hover:bg-muted/50 focus:bg-muted/50"
+            }`}
+          >
             <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">Click to upload (PNG/JPG, ≤5MB)</p>
+            <p className="text-xs text-muted-foreground">
+              {isDragging
+                ? "Drop image here"
+                : "Click, drag & drop, or paste screenshot (PNG/JPG, ≤5MB)"}
+            </p>
             <input
               type="file"
               className="hidden"
