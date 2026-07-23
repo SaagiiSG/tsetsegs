@@ -268,7 +268,7 @@ const BluebookModuleEditor = () => {
                 </div>
               ) : (currentQuestions ?? []).length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground text-sm">
-                  No questions yet — create one on the right to get started.
+                  No questions yet — use the creator on the left to add one.
                 </div>
               ) : (
                 <div className="space-y-2">
