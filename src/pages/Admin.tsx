@@ -84,24 +84,21 @@ const Admin = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-        <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className="flex w-full min-h-screen">
+          <AdminSidebar />
+          <div className="flex-1 flex flex-col min-w-0">
+            <header className="h-14 flex items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4 sticky top-0 z-10">
               <SidebarTrigger />
               {import.meta.env.DEV && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/30">
                   DEV MODE
                 </span>
               )}
-            </div>
+            </header>
+            <main className="flex-1 container mx-auto px-4 py-8">
+              {routesEl}
+            </main>
           </div>
-        </header>
-
-        <div className="flex w-full">
-          <AdminSidebar />
-          <main className="flex-1 container mx-auto px-4 py-8">
-            {routesEl}
-          </main>
         </div>
       </div>
     </SidebarProvider>

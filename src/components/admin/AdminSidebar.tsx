@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   useSidebar,
   SidebarFooter,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -29,7 +30,7 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
 
   return (
-    <Sidebar className={cn("border-r-0 flex flex-col", open ? "w-60" : "w-14")} collapsible="icon">
+    <Sidebar className="border-r-0" collapsible="icon">
       <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto">
         {/* Logo and Title */}
         <motion.div 
@@ -119,8 +120,8 @@ export function AdminSidebar() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.2, delay: itemIndex * 0.03 }}
                         >
-                          <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip={item.title}>
                               <NavLink
                                 to={item.url}
                                 end={item.end}
@@ -190,9 +191,11 @@ export function AdminSidebar() {
                 Sign Out
               </motion.span>
             )}
-          </AnimatePresence>
-        </Button>
-      </SidebarFooter>
-    </Sidebar>
+        </AnimatePresence>
+      </Button>
+    </SidebarFooter>
+
+    <SidebarRail />
+  </Sidebar>
   );
 }
