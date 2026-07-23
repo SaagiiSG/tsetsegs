@@ -363,12 +363,20 @@ const BluebookModuleEditor = () => {
                     <div className="space-y-2">
                       {pool!.map((q: any) => {
                         const added = addedQuestionIds.has(q.id);
-                        const choices = [
-                          { k: "A", v: q.choice_a },
-                          { k: "B", v: q.choice_b },
-                          { k: "C", v: q.choice_c },
-                          { k: "D", v: q.choice_d },
-                        ].filter((c) => c.v);
+                        const rawChoices = q.multiple_choice_options;
+                        let choices: { k: string; v: string }[] = [];
+                        if (Array.isArray(rawChoices)) {
+                          choices = rawChoices.map((v: any, i: number) => ({
+                            k: String.fromCharCode(65 + i),
+                            v: typeof v === "string" ? v : v?.text ?? v?.value ?? "",
+                          })).filter((c) => c.v);
+                        } else if (rawChoices && typeof rawChoices === "object") {
+                          choices = Object.entries(rawChoices).map(([k, v]: any) => ({
+                            k: k.toUpperCase(),
+                            v: typeof v === "string" ? v : v?.text ?? v?.value ?? "",
+                          })).filter((c) => c.v);
+                        }
+                        const correctAnswer = q.answer;
                         return (
                           <HoverCard key={q.id} openDelay={150} closeDelay={80}>
                             <div
