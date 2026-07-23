@@ -1,66 +1,63 @@
+## Goal
 
-## 1. Teacher dashboard carousel — middle card gets skipped on iPad
+Skip archival for now (we're at 37% disk, no emergency). Instead, give admins a self-serve **Database Health** tool inside the admin panel so you can check status any time without pinging me.
 
-**Cause:** In `ClassCarousel.tsx`, snap resolution uses a displacement threshold of `cardWidth * 0.15`. On iPad, cards are ~85vw wide, so a slow swipe from card 1 easily crosses 15% of a card width and gets forwarded past card 2 to card 3. The velocity threshold (`0.35 px/ms`) compounds this — a normal iPad flick exceeds it and adds `+1` on top of the displacement bump.
+## What it shows
 
-**Fix:**
-- Cap the intent shift to exactly `±1` from the gesture-start index (not the current active index) so a single swipe can never move two cards.
-- Track `gestureStartIndex` at pointerdown/wheel start, and derive target as `startIndex + sign(delta)` when displacement > threshold, ignoring velocity as an *additional* bump.
-- Raise displacement threshold to `cardWidth * 0.25` for pointer-based scrolls (touch), keep 0.15 for wheel/trackpad.
+A single admin page that surfaces the same metrics we just looked at, in plain language:
 
-## 2. Renaming classes doesn't persist
+- Database size (e.g. "2.60 GB")
+- Data disk usage (%) with a colored bar — green <70%, amber 70–85%, red >85%
+- Memory usage (%) with the same bar
+- Active connections (used / max)
+- Pooler clients (used / max)
+- WAL (write-ahead log) size
+- Restarts since boot, rolled-back transactions since boot, deadlocks, OOM kills
+- Cloud lifecycle status (Active / Restarting / Paused, etc.)
 
-**Root cause (verified in DB):** `public.batches` RLS only allows `admin` role to UPDATE. Teachers hit the update from `RenameClassDialog`, which returns 0 rows affected with no error — toast shows "Class renamed" but nothing is saved. On reload the original `batch_name` returns.
+Plus a **Top 15 tables by size** section (name + pretty size + row count) so you can see at a glance which tables are growing.
 
-**Fix:** Add an RLS policy allowing teachers to update `nickname` on their own batches. Since column-level RLS isn't a thing here, do it via a dedicated `SECURITY DEFINER` RPC `set_batch_nickname(p_batch_id uuid, p_nickname text)` that:
-1. Checks caller has role `teacher` or `admin`.
-2. If teacher, verifies `batches.teacher ILIKE '%' || teacher_name || '%'` (same pattern as SELECT policy).
-3. Updates only the `nickname` column.
+Each metric has a one-line plain-English explanation on hover ("WAL is the write-ahead log — Postgres's crash-recovery buffer; large values are fine unless they keep growing").
 
-Update `RenameClassDialog.tsx` to call the RPC instead of `supabase.from('batches').update(...)`.
+At the bottom: a "Last refreshed at HH:MM" timestamp and a **Refresh** button. No auto-polling (cheap to open, cheap to leave alone).
 
-## 3. Handbook mobile "light refresh every few clicks"
+## How it works
 
-**Cause:** `useTeachingChecklist.ts` subscribes to realtime `postgres_changes` on `teaching_checklist_progress`. Every checkbox toggle inserts/deletes a row → realtime fires → `load()` runs → `setLoading(true)` → `ChecklistView` swaps the whole list for skeleton placeholders (the "refresh flash"). Optimistic state is already correct, so the reload is what's flashing the UI.
+Two admin-only edge functions:
 
-**Fix:**
-- Do not toggle `setLoading(true)` on realtime-triggered reloads; only set it for the initial `load()`.
-- Skip the reload entirely when the incoming payload row already matches the optimistic state (dedupe by `item_key`).
-- Debounce the realtime handler (~250 ms) so a burst of taps collapses into one silent sync.
+1. `admin-db-health` — calls the same underlying health snapshot + cloud status, returns a JSON blob.
+2. `admin-db-table-sizes` — runs a read-only query on `pg_class` / `pg_stat_user_tables` for the top 15 tables in `public` with size + row estimate.
 
-## 4. Speed Session — missing figures + no per-session history
+Both functions:
+- Require a valid Supabase JWT
+- Verify the caller has the `admin` role via `has_role(auth.uid(), 'admin')` before returning anything
+- Return a clear 403 for non-admins
 
-**Figures cause:** `StudentSpeedSession.tsx` query selects only `id, question_id, question_text, answer, question_type, multiple_choice_options`. It never fetches `question_image_url`, `has_figure`, `figure_svg`, or `figure_type`, and the render block has no `<img>` / SVG. Questions with figures render as text-only.
+No new tables, no new secrets, no schema changes.
 
-**Figures fix:**
-- Extend the query to include `question_image_url, has_figure, figure_svg, figure_type, figure_description`.
-- Add rendering below the question text (mirror `ChallengePlay.tsx` pattern): show `figure_svg` inline when present, else `<img src={question_image_url}>` when set. Add loading state so the timer's `useEffect` doesn't start until the image reports load, to keep timing fair.
+## UI
 
-**History cause:** Nothing persists the *set* of questions per speed session — results live only in local state; only `student_attempts` and `point_transactions` get individual rows without a session grouping id.
+- New route: `/admin/database-health`
+- New sidebar entry under the admin section: **"Database Health"** with a database icon
+- Component: `src/pages/admin/DatabaseHealth.tsx`
+- Sub-components:
+  - `HealthMetricCard.tsx` — label, value, colored bar, tooltip explanation
+  - `TableSizesList.tsx` — sortable list, largest first
+- Matches the existing admin panel styling (semantic tokens, no hardcoded colors)
 
-**History fix (minimal, presentation-focused):**
-- New table `public.speed_sessions` (id, student_account_id, subject, category_id, duration, total_questions, correct_count, points_earned, started_at, completed_at) + `speed_session_items` (session_id, question_id, order_index, answer_submitted, is_correct, time_ms). GRANTs + RLS: student can read/insert their own; admins/teachers can read all.
-- At `sessionComplete`, insert the session + items in one call.
-- Add "Session details" view on the completion screen listing each question (question_id label, correct/incorrect, time, expand → `MathText` + figure) reusing the existing `MathText` component.
-- Add a small "Past speed sessions" section on `StudentSpeedMode.tsx` (latest 10) that opens the same detail view.
+## Files to add
 
-## 5. Can't find CB0011 in the admin question bank
+- `supabase/functions/admin-db-health/index.ts`
+- `supabase/functions/admin-db-table-sizes/index.ts`
+- `src/pages/admin/DatabaseHealth.tsx`
+- `src/components/admin/health/HealthMetricCard.tsx`
+- `src/components/admin/health/TableSizesList.tsx`
+- Route + sidebar entry updates in the admin layout / router
 
-**Verified in DB:** `CB0011` exists (id `da54d684-…`), `is_active=true`, `is_original=true`, but its `question_set` is `EquivalentExpressions` — not `68` and it *is* included in the CB tab's `neq('question_set','68')` count. So it's in the underlying data.
+## Out of scope (deliberately)
 
-**Likely cause:** The CB tab's `QuestionList` filters/pagination don't surface it in the visible page; there's currently no search-by-`question_id` on the admin list.
+- No archival to S3
+- No log pruning
+- No auto-alerts (can be a follow-up if you want a Slack/SMS ping when disk >85%)
 
-**Fix:** Add a search input at the top of the CB and 68 tabs that filters `questions.question_id ILIKE %term%` server-side and resets pagination, so typing `CB0011` immediately shows it.
-
-## Technical section
-
-Files to edit:
-- `src/components/teacher/dashboard/ClassCarousel.tsx` — snap logic
-- `supabase migration` — new RPC `set_batch_nickname`; new tables `speed_sessions`, `speed_session_items` with GRANTs + RLS
-- `src/components/teacher/dashboard/RenameClassDialog.tsx` — call new RPC
-- `src/hooks/useTeachingChecklist.ts` — silent realtime reloads + debounce
-- `src/pages/student/StudentSpeedSession.tsx` — fetch + render figures; persist session on completion; results view
-- `src/pages/student/StudentSpeedMode.tsx` — past sessions list
-- `src/components/admin/questions/QuestionList.tsx` (+ `QuestionBank.tsx`) — question_id search field
-
-No changes to auth, sprint, or points logic.
+That's it — a read-only observability panel so you can watch the trend yourself.
