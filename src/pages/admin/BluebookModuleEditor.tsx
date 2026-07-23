@@ -122,7 +122,7 @@ const BluebookModuleEditor = () => {
       if (!subjectFilter) return [];
       let q = supabase
         .from("questions")
-        .select("id, question_id, question_text, subject, difficulty_level, question_set")
+        .select("id, question_id, question_text, subject, difficulty_level, question_set, passage_text, image_url, choice_a, choice_b, choice_c, choice_d, correct_answer, question_type")
         .eq("is_active", true)
         .ilike("subject", `%${subjectFilter}%`)
         .order("question_id", { ascending: false })
