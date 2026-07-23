@@ -191,9 +191,11 @@ export function AdminSidebar() {
                 Sign Out
               </motion.span>
             )}
-          </AnimatePresence>
-        </Button>
-      </SidebarFooter>
-    </Sidebar>
+        </AnimatePresence>
+      </Button>
+    </SidebarFooter>
+
+    <SidebarRail />
+  </Sidebar>
   );
 }
