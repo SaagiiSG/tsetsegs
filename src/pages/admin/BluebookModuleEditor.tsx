@@ -427,8 +427,8 @@ const BluebookModuleEditor = () => {
                                     <MathText text={q.passage_text} />
                                   </div>
                                 )}
-                                {q.image_url && (
-                                  <img src={q.image_url} alt="" className="max-h-48 rounded border object-contain" />
+                                {q.question_image_url && (
+                                  <img src={q.question_image_url} alt="" className="max-h-48 rounded border object-contain" />
                                 )}
                                 <div className="text-sm">
                                   <MathText text={q.question_text ?? ""} />
@@ -436,7 +436,9 @@ const BluebookModuleEditor = () => {
                                 {choices.length > 0 && (
                                   <div className="space-y-1">
                                     {choices.map((c) => {
-                                      const isCorrect = q.correct_answer === c.k;
+                                      const isCorrect =
+                                        correctAnswer != null &&
+                                        String(correctAnswer).trim().toUpperCase() === c.k;
                                       return (
                                         <div
                                           key={c.k}
@@ -452,10 +454,10 @@ const BluebookModuleEditor = () => {
                                     })}
                                   </div>
                                 )}
-                                {choices.length === 0 && q.correct_answer && (
+                                {choices.length === 0 && correctAnswer && (
                                   <div className="text-xs">
                                     <span className="text-muted-foreground">Answer: </span>
-                                    <span className="font-mono font-semibold text-emerald-700">{q.correct_answer}</span>
+                                    <span className="font-mono font-semibold text-emerald-700">{String(correctAnswer)}</span>
                                   </div>
                                 )}
                               </div>
