@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, BookOpen, BarChart3, ListChecks } from "lucide-react";
 import BluebookTestList from "@/components/admin/bluebook/BluebookTestList";
 import BluebookTestBuilder from "@/components/admin/bluebook/BluebookTestBuilder";
+import BluebookModuleEditor from "@/pages/admin/BluebookModuleEditor";
 
 const BluebookManager = () => {
   const navigate = useNavigate();
