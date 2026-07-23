@@ -251,9 +251,9 @@ const BluebookModuleEditor = () => {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
-        {/* Left: current module questions */}
-        <Card className="min-h-[60vh]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
+        {/* Right sidebar: current module questions */}
+        <Card className="min-h-[60vh] order-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between">
               <span>In this module</span>
@@ -268,7 +268,7 @@ const BluebookModuleEditor = () => {
                 </div>
               ) : (currentQuestions ?? []).length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground text-sm">
-                  No questions yet — create one on the right to get started.
+                  No questions yet — use the creator on the left to add one.
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -307,8 +307,8 @@ const BluebookModuleEditor = () => {
           </CardContent>
         </Card>
 
-        {/* Right: Create (default) + Browse bank tabs */}
-        <Card>
+        {/* Main: Create (default) + Browse bank tabs */}
+        <Card className="order-1">
           <CardHeader className="pb-3">
             <Tabs value={tab} onValueChange={(v) => setTab(v as "create" | "browse")}>
               <TabsList className="grid grid-cols-2 w-full">
