@@ -72,6 +72,7 @@ const Admin = () => {
       <Route path="bug-reports" element={<BugReports />} />
       <Route path="announcements" element={<AdminAnnouncements />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
+      <Route path="database-health" element={<DatabaseHealth />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
   );
