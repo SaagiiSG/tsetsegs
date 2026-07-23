@@ -59,9 +59,11 @@ const CustomQuestionForm = ({
     setMathOnlyMode(false);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const ingestImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are supported");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
       return;
@@ -70,6 +72,36 @@ const CustomQuestionForm = ({
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) ingestImageFile(file);
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestImageFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          ingestImageFile(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
   };
 
   const createMutation = useMutation({
