@@ -275,8 +275,7 @@ const BluebookTestBuilder = () => {
   };
 
   const handleOpenSelector = (module: Module) => {
-    setSelectedModule(module);
-    setSelectorOpen(true);
+    navigate(`/admin/bluebook/edit/${testId}/module/${module.id}`);
   };
 
   const getModuleByConfig = (section: string, moduleNumber: number) => {
