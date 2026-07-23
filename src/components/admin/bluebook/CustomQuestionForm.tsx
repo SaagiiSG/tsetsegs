@@ -48,6 +48,26 @@ const CustomQuestionForm = ({
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
 
+  // Track the last focused text field so PDF text insertions target it
+  const lastFocusedRef = useRef<"passage" | "question" | "answer" | "option-A" | "option-B" | "option-C" | "option-D">("passage");
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (!text) return;
+      const target = lastFocusedRef.current;
+      if (target === "passage") setPassage((p) => (p ? p + " " + text : text));
+      else if (target === "question") setQuestionText((p) => (p ? p + " " + text : text));
+      else if (target === "answer") setAnswer((p) => (p ? p + " " + text : text));
+      else if (target.startsWith("option-")) {
+        const key = target.split("-")[1] as "A" | "B" | "C" | "D";
+        setOptions((prev) => ({ ...prev, [key]: prev[key] ? prev[key] + " " + text : text }));
+      }
+    };
+    window.addEventListener("reference-pdf:insert-text", handler);
+    return () => window.removeEventListener("reference-pdf:insert-text", handler);
+  }, []);
+
   const reset = () => {
     setQuestionText("");
     setAnswer("");
