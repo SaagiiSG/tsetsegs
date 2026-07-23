@@ -307,8 +307,8 @@ const BluebookModuleEditor = () => {
           </CardContent>
         </Card>
 
-        {/* Right: Create (default) + Browse bank tabs */}
-        <Card>
+        {/* Main: Create (default) + Browse bank tabs */}
+        <Card className="order-1">
           <CardHeader className="pb-3">
             <Tabs value={tab} onValueChange={(v) => setTab(v as "create" | "browse")}>
               <TabsList className="grid grid-cols-2 w-full">
