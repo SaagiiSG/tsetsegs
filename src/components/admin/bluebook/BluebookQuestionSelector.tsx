@@ -219,17 +219,20 @@ const BluebookQuestionSelector = ({
           }
         : null;
 
+      // Map UI question type to DB check-constraint value
+      const dbQuestionType = questionType === "fill_in" ? "fill_blank" : "multiple_choice";
+
       // Insert new question
       const { data: newQuestion, error: questionError } = await supabase
         .from("questions")
         .insert({
           question_id: newQuestionId,
           question_text: customQuestionText,
-          answer: customAnswer,
+          answer: customAnswer.trim(),
           passage_text: customPassage || null,
           multiple_choice_options: mcOptions,
           difficulty_level: customDifficulty,
-          question_type: questionType,
+          question_type: dbQuestionType,
           subject: subjectFilter,
           question_image_url: questionImageUrl,
           is_active: true,
@@ -260,9 +263,9 @@ const BluebookQuestionSelector = ({
       onQuestionsAdded();
       setActiveTab("existing");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating custom question:", error);
-      toast.error("Failed to create custom question");
+      toast.error(error?.message || "Failed to create custom question");
     },
   });
 
