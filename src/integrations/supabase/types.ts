@@ -3962,6 +3962,46 @@ export type Database = {
         Args: { fn_name: string; payload: Json }
         Returns: undefined
       }
+      admin_activity_stats: {
+        Args: never
+        Returns: {
+          committed: number
+          deadlocks: number
+          rolled_back: number
+          temp_bytes: number
+          temp_files: number
+        }[]
+      }
+      admin_connection_stats: {
+        Args: never
+        Returns: {
+          active: number
+          max_connections: number
+        }[]
+      }
+      admin_db_size: {
+        Args: never
+        Returns: {
+          bytes: number
+          pretty: string
+        }[]
+      }
+      admin_top_tables: {
+        Args: never
+        Returns: {
+          row_estimate: number
+          table_name: string
+          total_bytes: number
+          total_pretty: string
+        }[]
+      }
+      admin_wal_size: {
+        Args: never
+        Returns: {
+          bytes: number
+          pretty: string
+        }[]
+      }
       current_student_account_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
