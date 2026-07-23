@@ -407,6 +407,22 @@ const BluebookModuleEditor = () => {
                       onChange={(e) => setFilterVariant(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Question set</Label>
+                    <Select value={filterQuestionSet} onValueChange={setFilterQuestionSet}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Any set" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="any">Any set</SelectItem>
+                        {(availableQuestionSets ?? []).map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s.replace(/_/g, " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={resetFilters}>
                     <RefreshCw className="h-3.5 w-3.5" /> Reset
                   </Button>
