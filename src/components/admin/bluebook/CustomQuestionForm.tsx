@@ -59,9 +59,11 @@ const CustomQuestionForm = ({
     setMathOnlyMode(false);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const ingestImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are supported");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
       return;
@@ -70,6 +72,36 @@ const CustomQuestionForm = ({
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) ingestImageFile(file);
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestImageFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          ingestImageFile(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
   };
 
   const createMutation = useMutation({
@@ -302,9 +334,32 @@ const CustomQuestionForm = ({
             </Button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+          <label
+            onDrop={handleDrop}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+            }}
+            onPaste={handlePaste}
+            tabIndex={0}
+            className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
+              isDragging
+                ? "border-primary bg-primary/10"
+                : "hover:bg-muted/50 focus:bg-muted/50"
+            }`}
+          >
             <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">Click to upload (PNG/JPG, ≤5MB)</p>
+            <p className="text-xs text-muted-foreground">
+              {isDragging
+                ? "Drop image here"
+                : "Click, drag & drop, or paste screenshot (PNG/JPG, ≤5MB)"}
+            </p>
             <input
               type="file"
               className="hidden"
