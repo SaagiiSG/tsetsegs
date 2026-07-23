@@ -52,6 +52,9 @@ const BluebookModuleEditor = () => {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<"create" | "browse">("create");
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const { meta: pdfMeta, signedUrl, upload: uploadPdf, uploading } = useReferencePdf(moduleId);
 
   // Browse filters
   const [search, setSearch] = useState("");
