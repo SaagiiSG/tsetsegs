@@ -63,6 +63,7 @@ const BluebookModuleEditor = () => {
   const [filterMonth, setFilterMonth] = useState<string>("any");
   const [filterYear, setFilterYear] = useState<string>("any");
   const [filterVariant, setFilterVariant] = useState<string>("");
+  const [filterQuestionSet, setFilterQuestionSet] = useState<string>("any");
 
   const { data: moduleRow, isLoading: moduleLoading } = useQuery({
     queryKey: ["bluebook-module", moduleId],
@@ -137,18 +138,40 @@ const BluebookModuleEditor = () => {
     enabled: tab === "browse",
   });
 
+  const { data: availableQuestionSets } = useQuery({
+    queryKey: ["bluebook-available-question-sets", subjectFilter],
+    queryFn: async () => {
+      if (!subjectFilter) return [] as string[];
+      const { data, error } = await supabase
+        .from("questions")
+        .select("question_set")
+        .eq("is_active", true)
+        .ilike("subject", `%${subjectFilter}%`)
+        .not("question_set", "is", null)
+        .limit(5000);
+      if (error) throw error;
+      const sets = Array.from(
+        new Set((data ?? []).map((r: any) => r.question_set).filter(Boolean))
+      ) as string[];
+      sets.sort((a, b) => a.localeCompare(b));
+      return sets;
+    },
+    enabled: !!subjectFilter && tab === "browse",
+  });
+
   const { data: pool, isLoading: poolLoading } = useQuery({
     queryKey: [
       "bluebook-question-pool",
       subjectFilter,
       search,
+      filterQuestionSet,
       restrictedPool?.length ?? "all",
     ],
     queryFn: async () => {
       if (!subjectFilter) return [];
       let q = supabase
         .from("questions")
-        .select("id, question_id, question_text, subject, difficulty_level")
+        .select("id, question_id, question_text, subject, difficulty_level, question_set")
         .eq("is_active", true)
         .ilike("subject", `%${subjectFilter}%`)
         .order("question_id", { ascending: false })
@@ -158,6 +181,9 @@ const BluebookModuleEditor = () => {
         q = q.or(
           `question_id.ilike.%${search.trim()}%,question_text.ilike.%${search.trim()}%`
         );
+      }
+      if (filterQuestionSet !== "any") {
+        q = q.eq("question_set", filterQuestionSet);
       }
       if (Array.isArray(restrictedPool)) {
         if (restrictedPool.length === 0) return [];
@@ -203,6 +229,7 @@ const BluebookModuleEditor = () => {
     setFilterMonth("any");
     setFilterYear("any");
     setFilterVariant("");
+    setFilterQuestionSet("any");
     setSearch("");
   };
 
@@ -379,6 +406,22 @@ const BluebookModuleEditor = () => {
                       value={filterVariant}
                       onChange={(e) => setFilterVariant(e.target.value)}
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Question set</Label>
+                    <Select value={filterQuestionSet} onValueChange={setFilterQuestionSet}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Any set" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="any">Any set</SelectItem>
+                        {(availableQuestionSets ?? []).map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s.replace(/_/g, " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={resetFilters}>
                     <RefreshCw className="h-3.5 w-3.5" /> Reset
