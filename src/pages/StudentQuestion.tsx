@@ -114,27 +114,41 @@ export default function StudentQuestion() {
   });
 
   // Fetch all practice questions for navigation (excluding bluebook)
+  // NOTE: Supabase caps a single request at 1000 rows, and we have >2500
+  // active originals. Paginate so past-800 CB questions have working
+  // prev/next arrows.
   const { data: allQuestions } = useQuery({
     queryKey: ['all-practice-questions', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, question_id')
-        .eq('is_original', true)
-        .eq('is_active', true)
-        .order('question_id');
-      
-      if (error) throw error;
-      
-      // Filter out bluebook questions
-      if (bluebookQuestionIds && data) {
-        return data.filter(q => !bluebookQuestionIds.has(q.id));
+      const PAGE = 1000;
+      let from = 0;
+      const all: { id: string; question_id: string }[] = [];
+      // Hard stop at 10k just in case
+      while (from < 10000) {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('id, question_id')
+          .eq('is_original', true)
+          .eq('is_active', true)
+          .order('question_id')
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
       }
-      return data;
+
+      // Filter out bluebook questions
+      if (bluebookQuestionIds) {
+        return all.filter(q => !bluebookQuestionIds.has(q.id));
+      }
+      return all;
     },
     enabled: !!student && !!bluebookQuestionIds,
     staleTime: 5 * 60 * 1000
   });
+
 
   // Prefetch nearby questions for smooth navigation
   useEffect(() => {
