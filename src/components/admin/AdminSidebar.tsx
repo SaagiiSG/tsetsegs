@@ -120,8 +120,8 @@ export function AdminSidebar() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.2, delay: itemIndex * 0.03 }}
                         >
-                          <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild tooltip={item.title}>
                               <NavLink
                                 to={item.url}
                                 end={item.end}
