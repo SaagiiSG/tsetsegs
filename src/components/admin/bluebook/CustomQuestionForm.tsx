@@ -46,6 +46,7 @@ const CustomQuestionForm = ({
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
   const reset = () => {
     setQuestionText("");
