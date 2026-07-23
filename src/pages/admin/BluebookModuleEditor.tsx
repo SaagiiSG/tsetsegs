@@ -229,6 +229,7 @@ const BluebookModuleEditor = () => {
     setFilterMonth("any");
     setFilterYear("any");
     setFilterVariant("");
+    setFilterQuestionSet("any");
     setSearch("");
   };
 
