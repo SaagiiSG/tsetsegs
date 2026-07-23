@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -25,9 +26,12 @@ import {
   Loader2,
   Filter,
   RefreshCw,
+  Sparkles,
+  Library,
 } from "lucide-react";
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
+import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
 
 const MONTHS = [
   { value: 1, label: "January" }, { value: 2, label: "February" },
@@ -52,14 +56,14 @@ const BluebookModuleEditor = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Filters
+  const [tab, setTab] = useState<"create" | "browse">("create");
+
+  // Browse filters
   const [search, setSearch] = useState("");
   const [filterMonth, setFilterMonth] = useState<string>("any");
   const [filterYear, setFilterYear] = useState<string>("any");
   const [filterVariant, setFilterVariant] = useState<string>("");
-  const [filterDifficulty, setFilterDifficulty] = useState<string>("any");
 
-  // Load the module + its section
   const { data: moduleRow, isLoading: moduleLoading } = useQuery({
     queryKey: ["bluebook-module", moduleId],
     queryFn: async () => {
@@ -76,7 +80,6 @@ const BluebookModuleEditor = () => {
 
   const subjectFilter = moduleRow?.section === "reading_writing" ? "english" : "math";
 
-  // Current questions in this module
   const { data: currentQuestions, isLoading: currentLoading } = useQuery({
     queryKey: ["bluebook-module-questions", moduleId],
     queryFn: async () => {
@@ -99,13 +102,12 @@ const BluebookModuleEditor = () => {
     [currentQuestions]
   );
 
-  // Restrict pool by month/year/variant via join through bluebook_tests when set
   const { data: restrictedPool } = useQuery({
     queryKey: ["bluebook-filter-pool", filterMonth, filterYear, filterVariant],
     queryFn: async () => {
       const noFilter =
         filterMonth === "any" && filterYear === "any" && !filterVariant.trim();
-      if (noFilter) return null; // null = no restriction
+      if (noFilter) return null;
 
       let testQuery = supabase.from("bluebook_tests").select("id");
       if (filterMonth !== "any") testQuery = testQuery.eq("test_month", parseInt(filterMonth));
@@ -132,15 +134,14 @@ const BluebookModuleEditor = () => {
       if (qe) throw qe;
       return Array.from(new Set((mqs ?? []).map((r: any) => r.question_id)));
     },
+    enabled: tab === "browse",
   });
 
-  // Full prepared-question list (subject-scoped)
   const { data: pool, isLoading: poolLoading } = useQuery({
     queryKey: [
       "bluebook-question-pool",
       subjectFilter,
       search,
-      filterDifficulty,
       restrictedPool?.length ?? "all",
     ],
     queryFn: async () => {
@@ -153,7 +154,6 @@ const BluebookModuleEditor = () => {
         .order("question_id", { ascending: false })
         .limit(300);
 
-      if (filterDifficulty !== "any") q = q.eq("difficulty_level", filterDifficulty);
       if (search.trim()) {
         q = q.or(
           `question_id.ilike.%${search.trim()}%,question_text.ilike.%${search.trim()}%`
@@ -168,7 +168,7 @@ const BluebookModuleEditor = () => {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!subjectFilter,
+    enabled: !!subjectFilter && tab === "browse",
   });
 
   const addMutation = useMutation({
@@ -203,7 +203,6 @@ const BluebookModuleEditor = () => {
     setFilterMonth("any");
     setFilterYear("any");
     setFilterVariant("");
-    setFilterDifficulty("any");
     setSearch("");
   };
 
@@ -243,7 +242,7 @@ const BluebookModuleEditor = () => {
               {sectionLabel} — Module {moduleRow.module_number}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Add prepared questions from your bank, filtered by section / month / year / variant.
+              Create custom questions for this module, or browse the existing bank.
             </p>
           </div>
         </div>
@@ -252,195 +251,204 @@ const BluebookModuleEditor = () => {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Main: pool of prepared questions */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
+        {/* Left: current module questions */}
         <Card className="min-h-[60vh]">
-          <CardHeader className="space-y-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Prepared questions</CardTitle>
-              <Badge variant="secondary">{pool?.length ?? 0} shown</Badge>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID or text…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>In this module</span>
+              <Badge variant="secondary">{currentQuestions?.length ?? 0}</Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[55vh] pr-3">
-              {poolLoading ? (
+            <ScrollArea className="h-[65vh] pr-3">
+              {currentLoading ? (
                 <div className="space-y-2">
-                  {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                  {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
-              ) : (pool ?? []).length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground text-sm">
-                  No questions match these filters.
+              ) : (currentQuestions ?? []).length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground text-sm">
+                  No questions yet — create one on the right to get started.
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {pool!.map((q: any) => {
-                    const added = addedQuestionIds.has(q.id);
-                    return (
-                      <div
-                        key={q.id}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                          added ? "bg-emerald-500/5 border-emerald-500/30" : "bg-muted/40 hover:bg-muted"
-                        )}
-                      >
-                        <span className="font-mono text-xs font-medium shrink-0 w-20">
-                          #{q.question_id}
-                        </span>
-                        <div className="flex-1 text-sm text-muted-foreground truncate">
-                          <MathText text={(q.question_text ?? "").slice(0, 120)} />
-                        </div>
-                        {q.difficulty_level && (
-                          <Badge variant="outline" className="text-xs capitalize shrink-0">
-                            {q.difficulty_level}
-                          </Badge>
-                        )}
-                        {added ? (
-                          <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
-                            Added
-                          </Badge>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="gap-1"
-                            disabled={addMutation.isPending}
-                            onClick={() => addMutation.mutate(q.id)}
-                          >
-                            <Plus className="h-3.5 w-3.5" /> Add
-                          </Button>
-                        )}
+                  {currentQuestions!.map((mq: any, idx: number) => (
+                    <div
+                      key={mq.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group"
+                    >
+                      <span className="text-xs font-mono text-muted-foreground w-6">
+                        {idx + 1}.
+                      </span>
+                      <span className="font-mono text-xs font-medium shrink-0 w-24">
+                        #{mq.question?.question_id}
+                      </span>
+                      <div className="flex-1 text-sm text-muted-foreground truncate">
+                        <MathText text={(mq.question?.question_text ?? "").slice(0, 120)} />
                       </div>
-                    );
-                  })}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => removeMutation.mutate(mq.id)}
+                        disabled={removeMutation.isPending}
+                      >
+                        {removeMutation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        )}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </ScrollArea>
           </CardContent>
         </Card>
 
-        {/* Right sidebar: filters + current list */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Filter className="h-4 w-4" /> Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Section</Label>
-                <div className="text-sm p-2 rounded-md bg-muted/50">
-                  {sectionLabel} <span className="text-muted-foreground">(locked)</span>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Month</Label>
-                <Select value={filterMonth} onValueChange={setFilterMonth}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any month</SelectItem>
-                    {MONTHS.map(m => (
-                      <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Year</Label>
-                <Select value={filterYear} onValueChange={setFilterYear}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any year</SelectItem>
-                    {YEARS.map(y => (
-                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Variant</Label>
-                <Input
-                  placeholder="e.g. A, B, v1"
-                  value={filterVariant}
-                  onChange={(e) => setFilterVariant(e.target.value)}
+        {/* Right: Create (default) + Browse bank tabs */}
+        <Card>
+          <CardHeader className="pb-3">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "create" | "browse")}>
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="create" className="gap-2">
+                  <Sparkles className="h-4 w-4" /> Create
+                </TabsTrigger>
+                <TabsTrigger value="browse" className="gap-2">
+                  <Library className="h-4 w-4" /> Browse bank
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+          <CardContent>
+            {tab === "create" ? (
+              <ScrollArea className="h-[65vh] pr-3">
+                <CustomQuestionForm
+                  moduleId={moduleId!}
+                  section={moduleRow.section}
+                  currentCount={currentQuestions?.length ?? 0}
+                  onAdded={() => {
+                    // stay on create for rapid entry
+                  }}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Difficulty</Label>
-                <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button variant="outline" size="sm" className="w-full gap-2" onClick={resetFilters}>
-                <RefreshCw className="h-3.5 w-3.5" /> Reset filters
-              </Button>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Month / Year / Variant scope to questions used in matching Bluebook tests.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span>In this module</span>
-                <Badge variant="secondary">{currentQuestions?.length ?? 0}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[40vh] pr-2">
-                {currentLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-                  </div>
-                ) : (currentQuestions ?? []).length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-6 text-center">
-                    No questions yet — add from the list.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {currentQuestions!.map((mq: any, idx: number) => (
-                      <div key={mq.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/40 group">
-                        <span className="text-xs font-mono text-muted-foreground w-6">{idx + 1}.</span>
-                        <span className="text-xs font-mono font-medium truncate flex-1">
-                          #{mq.question?.question_id}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => removeMutation.mutate(mq.id)}
-                          disabled={removeMutation.isPending}
-                        >
-                          {removeMutation.isPending ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          )}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Filters */}
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Filter className="h-3.5 w-3.5" /> Filters
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Section</Label>
+                    <div className="text-sm p-2 rounded-md bg-muted/50">
+                      {sectionLabel} <span className="text-muted-foreground">(locked)</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Month</Label>
+                      <Select value={filterMonth} onValueChange={setFilterMonth}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any</SelectItem>
+                          {MONTHS.map(m => (
+                            <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Year</Label>
+                      <Select value={filterYear} onValueChange={setFilterYear}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any</SelectItem>
+                          {YEARS.map(y => (
+                            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Variant</Label>
+                    <Input
+                      placeholder="e.g. A, B, v1"
+                      value={filterVariant}
+                      onChange={(e) => setFilterVariant(e.target.value)}
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full gap-2" onClick={resetFilters}>
+                    <RefreshCw className="h-3.5 w-3.5" /> Reset
+                  </Button>
+                </div>
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by ID or text…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Pool list */}
+                <ScrollArea className="h-[42vh] pr-2">
+                  {poolLoading ? (
+                    <div className="space-y-2">
+                      {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                    </div>
+                  ) : (pool ?? []).length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground text-sm">
+                      No questions match these filters.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {pool!.map((q: any) => {
+                        const added = addedQuestionIds.has(q.id);
+                        return (
+                          <div
+                            key={q.id}
+                            className={cn(
+                              "flex items-center gap-2 p-2 rounded-lg border transition-colors",
+                              added ? "bg-emerald-500/5 border-emerald-500/30" : "bg-muted/40 hover:bg-muted"
+                            )}
+                          >
+                            <span className="font-mono text-[11px] font-medium shrink-0 w-16 truncate">
+                              #{q.question_id}
+                            </span>
+                            <div className="flex-1 text-xs text-muted-foreground truncate">
+                              <MathText text={(q.question_text ?? "").slice(0, 80)} />
+                            </div>
+                            {added ? (
+                              <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-[10px]">
+                                Added
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="gap-1 h-7"
+                                disabled={addMutation.isPending}
+                                onClick={() => addMutation.mutate(q.id)}
+                              >
+                                <Plus className="h-3 w-3" /> Add
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
