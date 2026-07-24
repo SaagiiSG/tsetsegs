@@ -49,4 +49,11 @@ verify_jwt = false
 [functions.admin-db-health]
 verify_jwt = false
 
+[functions.student-set-password]
+verify_jwt = false
+
+[functions.student-verify-password]
+verify_jwt = false
+
+
 

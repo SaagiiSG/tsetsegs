@@ -491,22 +491,12 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: 'Session expired. Please start over.' };
       }
 
-      // Hash the password using database function
-      const { data: hashResult, error: hashError } = await supabase
-        .rpc('hash_student_password', { password });
-
-      if (hashError) throw hashError;
-
-      // Update the student account with the password hash
-      const { error: updateError } = await supabase
-        .from('student_accounts')
-        .update({
-          password_hash: hashResult,
-          password_set_at: new Date().toISOString()
-        })
-        .eq('id', pendingStudentAccount.id);
-
-      if (updateError) throw updateError;
+      const { data, error } = await supabase.functions.invoke('student-set-password', {
+        body: { account_id: pendingStudentAccount.id, password },
+      });
+      if (error || (data && (data as any).error)) {
+        return { error: (data as any)?.error || error?.message || 'Failed to set password' };
+      }
 
       // Now complete the login
       return await completeLogin(pendingStudentAccount, true);
@@ -523,17 +513,11 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: 'Session expired. Please start over.' };
       }
 
-      // Verify password using database function
-      const { data: isValid, error: verifyError } = await supabase
-        .rpc('verify_student_password', { 
-          stored_hash: pendingStudentAccount.password_hash,
-          input_password: password 
-        });
-
-      if (verifyError) throw verifyError;
-
-      if (!isValid) {
-        return { error: 'Incorrect password. Please try again.' };
+      const { data, error } = await supabase.functions.invoke('student-verify-password', {
+        body: { account_id: pendingStudentAccount.id, password },
+      });
+      if (error || !(data as any)?.ok) {
+        return { error: (data as any)?.error || 'Incorrect password. Please try again.' };
       }
 
       // Password is correct, complete login
@@ -544,6 +528,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       return { error: err.message || 'Login failed' };
     }
   };
+
 
   const completeLogin = async (studentAccount: StudentAccount, bypassDeviceLock = false): Promise<{ error: string | null }> => {
     try {
