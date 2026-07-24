@@ -48,6 +48,21 @@ Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing required environment variables')
+    return new Response(
+      JSON.stringify({ error: 'Server configuration error' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
 
   // Enforce caller authorization (see auth note above)
   const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || ''
@@ -78,20 +93,6 @@ Deno.serve(async (req) => {
     )
   }
 
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required environment variables')
-    return new Response(
-      JSON.stringify({ error: 'Server configuration error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
-  }
 
   // Parse request body
   let templateName: string
