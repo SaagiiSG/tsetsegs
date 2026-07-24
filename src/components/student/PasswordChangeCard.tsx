@@ -43,48 +43,30 @@ export function PasswordChangeCard() {
 
     setIsLoading(true);
     try {
-      // First verify current password
-      const { data: isValid, error: verifyError } = await supabase
-        .rpc('verify_student_password', {
-          stored_hash: student.password_hash,
-          input_password: currentPassword
-        });
+      const { data, error } = await supabase.functions.invoke('student-set-password', {
+        body: {
+          account_id: student.id,
+          password: newPassword,
+          current_password: currentPassword,
+        },
+      });
 
-      if (verifyError) throw verifyError;
-
-      if (!isValid) {
+      if (error || (data && (data as any).error)) {
+        const msg = (data as any)?.error || error?.message || 'Failed to change password';
         toast({
           variant: 'destructive',
-          title: 'Incorrect password',
-          description: 'Your current password is incorrect.'
+          title: msg.toLowerCase().includes('current') ? 'Incorrect password' : 'Error',
+          description: msg,
         });
         setIsLoading(false);
         return;
       }
-
-      // Hash the new password
-      const { data: hashResult, error: hashError } = await supabase
-        .rpc('hash_student_password', { password: newPassword });
-
-      if (hashError) throw hashError;
-
-      // Update the password
-      const { error: updateError } = await supabase
-        .from('student_accounts')
-        .update({
-          password_hash: hashResult,
-          password_set_at: new Date().toISOString()
-        })
-        .eq('id', student.id);
-
-      if (updateError) throw updateError;
 
       toast({
         title: 'Password changed',
         description: 'Your password has been updated successfully.'
       });
 
-      // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -100,6 +82,7 @@ export function PasswordChangeCard() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Card>
