@@ -35,22 +35,8 @@ export function UserManagement() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch all users with their admin status
-      const { data: authUsers, error: authError } = await supabase
-        .rpc('get_all_users') as { data: Array<{ id: string; email: string; created_at: string }> | null; error: any };
-      
-      if (authError) {
-        console.error('Error fetching users:', authError);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch users. Make sure you have admin privileges.',
-          variant: 'destructive',
-        });
-        return;
-      }
 
-      // Fetch all admin roles
+      // Source of truth: the admin rows in user_roles
       const { data: adminRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -58,17 +44,27 @@ export function UserManagement() {
 
       if (rolesError) throw rolesError;
 
-      const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
+      const adminIds = (adminRoles || []).map((r) => r.user_id);
 
-      // Combine data
-      const usersWithRoles: User[] = (authUsers || []).map((authUser) => ({
-        id: authUser.id,
-        email: authUser.email,
-        created_at: authUser.created_at,
-        isAdmin: adminUserIds.has(authUser.id),
+      // Enrich with email / signup date when available (non-blocking)
+      const { data: authUsers, error: authError } = await supabase
+        .rpc('get_all_users') as { data: Array<{ id: string; email: string; created_at: string }> | null; error: any };
+
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+      }
+
+      const byId = new Map((authUsers || []).map((u) => [u.id, u]));
+
+      const adminUsers: User[] = adminIds.map((id) => ({
+        id,
+        email: byId.get(id)?.email ?? `${id.slice(0, 8)}… (email unavailable)`,
+        created_at: byId.get(id)?.created_at ?? '',
+        isAdmin: true,
       }));
 
-      setUsers(usersWithRoles.filter((u) => u.isAdmin));
+      setUsers(adminUsers);
+
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -218,7 +214,7 @@ export function UserManagement() {
                 <TableRow key={userData.id}>
                   <TableCell className="font-medium">{userData.email}</TableCell>
                   <TableCell>
-                    {new Date(userData.created_at).toLocaleDateString()}
+                    {userData.created_at ? new Date(userData.created_at).toLocaleDateString() : '—'}
                   </TableCell>
                   <TableCell>
                     {userData.isAdmin ? (
