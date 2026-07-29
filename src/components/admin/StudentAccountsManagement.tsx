@@ -196,7 +196,7 @@ export function StudentAccountsManagement() {
       const accountsWithSessions: StudentAccount[] = (accountsData || []).map(account => ({
         ...account,
         sessions: (sessionsData || []).filter(s => s.student_account_id === account.id),
-        studentInfo: studentsByPhone.get(account.phone_number)
+        studentInfo: studentsByPhone.get(normalizePhone(account.phone_number))
       }));
       
       setAccounts(accountsWithSessions);
