@@ -62,6 +62,28 @@ const CustomQuestionForm = ({
   const [draggingChoice, setDraggingChoice] = useState<Letter | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  // URLs of already-stored images (kept unless the admin clears them)
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [existingChoiceImageUrls, setExistingChoiceImageUrls] = useState<Record<Letter, string | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [editMeta, setEditMeta] = useState<{ question_id: string } | null>(null);
+
+  // Load the question being edited
+  const { data: editingQuestion, isLoading: editLoading } = useQuery({
+    queryKey: ["bluebook-edit-question", editQuestionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("*")
+        .eq("id", editQuestionId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!editQuestionId,
+  });
+
 
   // Track the last focused text field so PDF text insertions target it
   const lastFocusedRef = useRef<"passage" | "question" | "answer" | "option-A" | "option-B" | "option-C" | "option-D">("passage");
