@@ -361,6 +361,73 @@ const CustomQuestionForm = ({
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const qid = editMeta?.question_id ?? "Q";
+
+      let imageUrl: string | null = existingImageUrl;
+      if (image) {
+        const ext = image.name.split(".").pop();
+        const fileName = `${qid}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("question-images")
+          .upload(fileName, image);
+        if (upErr) throw upErr;
+        imageUrl = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
+      }
+
+      const choiceImageUrls: Record<string, string> = {};
+      if (questionType === "multiple_choice") {
+        for (const letter of ["A", "B", "C", "D"] as Letter[]) {
+          const f = choiceImages[letter];
+          if (f) {
+            const ext = f.name.split(".").pop();
+            const fileName = `${qid}-choice-${letter}-${Date.now()}.${ext}`;
+            const { error: cErr } = await supabase.storage
+              .from("question-images")
+              .upload(fileName, f);
+            if (cErr) throw cErr;
+            choiceImageUrls[letter] = supabase.storage
+              .from("question-images")
+              .getPublicUrl(fileName).data.publicUrl;
+          } else if (existingChoiceImageUrls[letter]) {
+            choiceImageUrls[letter] = existingChoiceImageUrls[letter]!;
+          }
+        }
+      }
+
+      const mcOptions =
+        questionType === "multiple_choice"
+          ? { A: options.A, B: options.B, C: options.C, D: options.D }
+          : null;
+
+      const { error } = await supabase
+        .from("questions")
+        .update({
+          question_text: questionText,
+          answer: answer.trim(),
+          passage_text: passage || null,
+          multiple_choice_options: mcOptions,
+          choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
+          question_type: questionType === "fill_in" ? "fill_blank" : "multiple_choice",
+          question_image_url: imageUrl,
+        })
+        .eq("id", editQuestionId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Question updated");
+      queryClient.invalidateQueries({ queryKey: ["bluebook-module-questions", moduleId] });
+      queryClient.invalidateQueries({ queryKey: ["bluebook-question-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["bluebook-edit-question", editQuestionId] });
+    },
+    onError: (e: any) => {
+      console.error(e);
+      toast.error(e?.message || "Failed to update question");
+    },
+  });
+
+
   const handleSubmit = () => {
     if (!questionText.trim()) {
       toast.error("Please enter question text");
