@@ -225,6 +225,16 @@ const BluebookTestList = () => {
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
+                        navigate(`preview/${test.id}`);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview as student
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
                         togglePublishMutation.mutate({
                           testId: test.id,
                           isPublished: test.is_published,

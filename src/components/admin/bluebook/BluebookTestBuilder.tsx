@@ -324,7 +324,18 @@ const BluebookTestBuilder = () => {
           </div>
         </div>
         <div className="flex gap-2">
+          {isEditing && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/admin/bluebook/preview/${testId}`)}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Preview as student
+            </Button>
+          )}
           <Button
+
             variant="outline"
             onClick={handleSave}
             disabled={isSaving}
