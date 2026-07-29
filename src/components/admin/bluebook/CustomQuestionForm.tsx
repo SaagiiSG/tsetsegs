@@ -513,7 +513,9 @@ const CustomQuestionForm = ({
               onClick={() => {
                 setImage(null);
                 setImagePreview(null);
+                setExistingImageUrl(null);
               }}
+
             >
               <X className="h-3 w-3" />
             </Button>
