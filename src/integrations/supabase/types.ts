@@ -968,6 +968,161 @@ export type Database = {
           },
         ]
       }
+      class_test_answers: {
+        Row: {
+          created_at: string
+          flagged: boolean
+          id: string
+          is_correct: boolean
+          participant_id: string
+          question_id: string
+          selected_answer: string | null
+          test_id: string
+          time_ms: number
+        }
+        Insert: {
+          created_at?: string
+          flagged?: boolean
+          id?: string
+          is_correct?: boolean
+          participant_id: string
+          question_id: string
+          selected_answer?: string | null
+          test_id: string
+          time_ms?: number
+        }
+        Update: {
+          created_at?: string
+          flagged?: boolean
+          id?: string
+          is_correct?: boolean
+          participant_id?: string
+          question_id?: string
+          selected_answer?: string | null
+          test_id?: string
+          time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_test_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "class_test_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_test_answers_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "class_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_test_participants: {
+        Row: {
+          answered_count: number
+          correct_count: number
+          display_name: string
+          focus_violations: number
+          id: string
+          joined_at: string
+          student_account_id: string
+          submitted_at: string | null
+          test_id: string
+          total_time_ms: number
+        }
+        Insert: {
+          answered_count?: number
+          correct_count?: number
+          display_name?: string
+          focus_violations?: number
+          id?: string
+          joined_at?: string
+          student_account_id: string
+          submitted_at?: string | null
+          test_id: string
+          total_time_ms?: number
+        }
+        Update: {
+          answered_count?: number
+          correct_count?: number
+          display_name?: string
+          focus_violations?: number
+          id?: string
+          joined_at?: string
+          student_account_id?: string
+          submitted_at?: string | null
+          test_id?: string
+          total_time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_test_participants_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_test_participants_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "class_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_tests: {
+        Row: {
+          batch_id: string
+          created_at: string
+          duration_seconds: number
+          finished_at: string | null
+          id: string
+          question_ids: Json
+          question_set: string
+          starts_at: string
+          status: string
+          teacher_name: string | null
+          title: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          duration_seconds?: number
+          finished_at?: string | null
+          id?: string
+          question_ids?: Json
+          question_set?: string
+          starts_at?: string
+          status?: string
+          teacher_name?: string | null
+          title?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          duration_seconds?: number
+          finished_at?: string | null
+          id?: string
+          question_ids?: Json
+          question_set?: string
+          starts_at?: string
+          status?: string
+          teacher_name?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_tests_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       closing_report_settings: {
         Row: {
           body: string
@@ -4123,6 +4278,20 @@ export type Database = {
       }
       ngee_undo_check_in: { Args: { p_booking_id: string }; Returns: boolean }
       normalize_mn_phone: { Args: { p: string }; Returns: string }
+      pick_hardest_questions: {
+        Args: {
+          p_limit?: number
+          p_min_attempts?: number
+          p_question_set?: string
+        }
+        Returns: {
+          accuracy: number
+          attempts: number
+          avg_seconds: number
+          difficulty_score: number
+          question_id: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
