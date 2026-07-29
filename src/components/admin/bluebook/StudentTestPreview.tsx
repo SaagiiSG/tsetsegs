@@ -373,11 +373,18 @@ const StudentTestPreview = () => {
             variant="outline"
             size="icon"
             className="h-10 w-10"
-            disabled={questionIndex === 0}
-            onClick={() => setQuestionIndex((i) => Math.max(0, i - 1))}
+            disabled={questionIndex === 0 && !hasPrevModule}
+            onClick={() => {
+              if (questionIndex === 0 && hasPrevModule) {
+                setModuleIndex((i) => i - 1);
+              } else {
+                setQuestionIndex((i) => Math.max(0, i - 1));
+              }
+            }}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
+
 
           <Drawer open={showDrawer} onOpenChange={setShowDrawer}>
             <DrawerTrigger asChild>
