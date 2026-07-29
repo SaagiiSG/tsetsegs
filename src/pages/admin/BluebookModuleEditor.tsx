@@ -34,7 +34,7 @@ import {
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
 import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
-import QuestionPreviewDialog from "@/components/admin/bluebook/QuestionPreviewDialog";
+import QuestionPreviewPanel from "@/components/admin/bluebook/QuestionPreviewPanel";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ReferencePdfViewer from "@/components/admin/bluebook/ReferencePdfViewer";
@@ -304,10 +304,14 @@ const BluebookModuleEditor = () => {
                       key={mq.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setPreviewQuestionId(mq.question?.id ?? null)}
+                      onClick={() => {
+                        setTab("create");
+                        setPreviewQuestionId(mq.question?.id ?? null);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
+                          setTab("create");
                           setPreviewQuestionId(mq.question?.id ?? null);
                         }
                       }}
@@ -364,14 +368,21 @@ const BluebookModuleEditor = () => {
           <CardContent>
             {tab === "create" ? (
               <ScrollArea className="h-[65vh] pr-3">
-                <CustomQuestionForm
-                  moduleId={moduleId!}
-                  section={moduleRow.section}
-                  currentCount={currentQuestions?.length ?? 0}
-                  onAdded={() => {
-                    // stay on create for rapid entry
-                  }}
-                />
+                {previewQuestionId ? (
+                  <QuestionPreviewPanel
+                    questionId={previewQuestionId}
+                    onClose={() => setPreviewQuestionId(null)}
+                  />
+                ) : (
+                  <CustomQuestionForm
+                    moduleId={moduleId!}
+                    section={moduleRow.section}
+                    currentCount={currentQuestions?.length ?? 0}
+                    onAdded={() => {
+                      // stay on create for rapid entry
+                    }}
+                  />
+                )}
               </ScrollArea>
             ) : (
               <div className="space-y-4">
@@ -543,10 +554,6 @@ const BluebookModuleEditor = () => {
         </Card>
       </div>
 
-      <QuestionPreviewDialog
-        questionId={previewQuestionId}
-        onOpenChange={(open) => !open && setPreviewQuestionId(null)}
-      />
     </div>
 
   );
