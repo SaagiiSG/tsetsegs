@@ -202,7 +202,9 @@ const CustomQuestionForm = ({
   const clearChoiceImage = (letter: Letter) => {
     setChoiceImages((p) => ({ ...p, [letter]: null }));
     setChoiceImagePreviews((p) => ({ ...p, [letter]: null }));
+    setExistingChoiceImageUrls((p) => ({ ...p, [letter]: null }));
   };
+
 
   const handleChoiceDrop = (letter: Letter) => (e: React.DragEvent) => {
     e.preventDefault();
