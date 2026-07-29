@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsDevAccount } from "@/lib/devAccount";
 import {
   CalendarDays, QrCode, FileQuestion, BookOpen, Trophy,
   Armchair, Bug, UserPlus, Users, Settings, ClipboardList, LineChart, UserCheck,
@@ -21,7 +22,7 @@ const moreItems = [
   { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
   { title: "Registration", url: "/register/admin", icon: QrCode },
   { title: "Questions", url: "/admin/questions", icon: FileQuestion },
-  { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
+  { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
   { title: "Sprints", url: "/admin/sprint-monitor", icon: Trophy },
   { title: "Sessions", url: "/admin/review-sessions", icon: Armchair },
   { title: "Bugs", url: "/admin/bug-reports", icon: Bug },
@@ -32,6 +33,7 @@ const moreItems = [
 export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const isDev = useIsDevAccount();
 
   const go = (url: string) => {
     onOpenChange(false);
@@ -46,7 +48,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
         </SheetHeader>
 
         <div className="grid grid-cols-3 gap-2 mt-4">
-          {moreItems.map((item) => {
+          {moreItems.filter((i: any) => !i.devOnly || isDev).map((item) => {
             const Icon = item.icon;
             return (
               <button

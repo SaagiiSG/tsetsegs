@@ -9,6 +9,7 @@ export type MenuItem = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   end?: boolean;
+  devOnly?: boolean;
 };
 
 export type MenuSection = {
@@ -55,7 +56,7 @@ export const menuSections: MenuSection[] = [
       { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
       { title: "Registration", url: "/register/admin", icon: QrCode },
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
-      { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen },
+      { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
       { title: "NGEE Course", url: "/admin/ngee", icon: QrCode },
