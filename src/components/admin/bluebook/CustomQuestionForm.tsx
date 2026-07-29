@@ -547,6 +547,62 @@ const CustomQuestionForm = ({
                     minHeight="56px"
                   />
                 )}
+
+                {/* Per-choice figure */}
+                {choiceImagePreviews[letter] ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={choiceImagePreviews[letter]!}
+                      alt={`Choice ${letter}`}
+                      className="max-h-32 rounded-md border object-contain"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5"
+                      onClick={() => clearChoiceImage(letter)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label
+                    onDrop={handleChoiceDrop(letter)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraggingChoice(letter);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraggingChoice(null);
+                    }}
+                    onPaste={handleChoicePaste(letter)}
+                    tabIndex={0}
+                    className={`flex items-center justify-center gap-2 w-full h-10 border border-dashed rounded-md cursor-pointer text-[11px] text-muted-foreground transition-colors outline-none ${
+                      draggingChoice === letter
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:bg-muted/50 focus:bg-muted/50"
+                    }`}
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    {draggingChoice === letter
+                      ? `Drop figure for ${letter}`
+                      : `Add figure for ${letter} (click, drop, or paste)`}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) ingestChoiceImage(letter, f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                )}
               </div>
             ))}
           </div>
