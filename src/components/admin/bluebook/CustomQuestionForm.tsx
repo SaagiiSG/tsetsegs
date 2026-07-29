@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff } from "lucide-react";
+import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
 import { MathText } from "@/components/MathText";
@@ -25,6 +25,9 @@ interface CustomQuestionFormProps {
   section: "reading_writing" | "math";
   currentCount: number;
   onAdded: () => void;
+  /** When set, the form edits this existing question instead of creating a new one */
+  editQuestionId?: string | null;
+  onCancelEdit?: () => void;
 }
 
 const CustomQuestionForm = ({
@@ -32,9 +35,13 @@ const CustomQuestionForm = ({
   section,
   currentCount,
   onAdded,
+  editQuestionId,
+  onCancelEdit,
 }: CustomQuestionFormProps) => {
   const queryClient = useQueryClient();
   const subjectFilter = section === "reading_writing" ? "english" : "math";
+  const isEditing = !!editQuestionId;
+
 
   const [questionText, setQuestionText] = useState("");
   const [answer, setAnswer] = useState("");
