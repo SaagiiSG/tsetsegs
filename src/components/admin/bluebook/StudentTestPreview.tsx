@@ -161,6 +161,10 @@ const StudentTestPreview = () => {
 
   const qId = currentQuestion?.id;
   const selected = qId ? answers[qId] : undefined;
+  const isLastQuestion = questionIndex >= moduleQuestions.length - 1;
+  const hasNextModule = !!modules && moduleIndex < modules.length - 1;
+  const hasPrevModule = moduleIndex > 0;
+
 
   return (
     <div className="-m-4 md:-m-6 flex flex-col min-h-[calc(100vh-4rem)] bg-background">
@@ -369,11 +373,18 @@ const StudentTestPreview = () => {
             variant="outline"
             size="icon"
             className="h-10 w-10"
-            disabled={questionIndex === 0}
-            onClick={() => setQuestionIndex((i) => Math.max(0, i - 1))}
+            disabled={questionIndex === 0 && !hasPrevModule}
+            onClick={() => {
+              if (questionIndex === 0 && hasPrevModule) {
+                setModuleIndex((i) => i - 1);
+              } else {
+                setQuestionIndex((i) => Math.max(0, i - 1));
+              }
+            }}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
+
 
           <Drawer open={showDrawer} onOpenChange={setShowDrawer}>
             <DrawerTrigger asChild>
@@ -419,16 +430,24 @@ const StudentTestPreview = () => {
             </DrawerContent>
           </Drawer>
 
-          <Button
-            size="icon"
-            className="h-10 w-10"
-            disabled={questionIndex >= moduleQuestions.length - 1}
-            onClick={() =>
-              setQuestionIndex((i) => Math.min(moduleQuestions.length - 1, i + 1))
-            }
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          {isLastQuestion && hasNextModule ? (
+            <Button className="gap-2" onClick={() => setModuleIndex((i) => i + 1)}>
+              Next module
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-10 w-10"
+              disabled={isLastQuestion}
+              onClick={() =>
+                setQuestionIndex((i) => Math.min(moduleQuestions.length - 1, i + 1))
+              }
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          )}
+
         </div>
       </footer>
     </div>
