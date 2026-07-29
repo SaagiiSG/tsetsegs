@@ -363,11 +363,18 @@ const CustomQuestionForm = ({
                           >
                             {letter}
                           </Badge>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 space-y-1.5">
                             {val ? (
                               <MathText text={val.replace(/<[^>]+>/g, " ")} />
-                            ) : (
+                            ) : !choiceImagePreviews[letter] ? (
                               <span className="text-muted-foreground italic">empty</span>
+                            ) : null}
+                            {choiceImagePreviews[letter] && (
+                              <img
+                                src={choiceImagePreviews[letter]!}
+                                alt={`Choice ${letter}`}
+                                className="max-h-28 rounded border object-contain"
+                              />
                             )}
                           </div>
                         </div>
