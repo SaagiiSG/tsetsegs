@@ -208,6 +208,25 @@ const CustomQuestionForm = ({
         imageUrl = publicUrl;
       }
 
+      // Upload per-choice figures
+      const choiceImageUrls: Record<string, string> = {};
+      if (questionType === "multiple_choice") {
+        for (const letter of ["A", "B", "C", "D"] as Letter[]) {
+          const f = choiceImages[letter];
+          if (!f) continue;
+          const ext = f.name.split(".").pop();
+          const fileName = `${newQid}-choice-${letter}-${Date.now()}.${ext}`;
+          const { error: cErr } = await supabase.storage
+            .from("question-images")
+            .upload(fileName, f);
+          if (cErr) throw cErr;
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("question-images").getPublicUrl(fileName);
+          choiceImageUrls[letter] = publicUrl;
+        }
+      }
+
       const mcOptions =
         questionType === "multiple_choice"
           ? { A: options.A, B: options.B, C: options.C, D: options.D }
@@ -223,6 +242,7 @@ const CustomQuestionForm = ({
           answer: answer.trim(),
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
+          choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
           difficulty_level: "medium",
           question_type: dbType,
           subject: subjectFilter,
