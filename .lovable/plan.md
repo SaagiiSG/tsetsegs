@@ -1,60 +1,61 @@
 ## Goal
 
-Let admins upload a source PDF while creating custom questions inside a bluebook module. The PDF opens in a floating, resizable, edge-snapping window with page nav, zoom, search, and select-to-copy — persisted per module so any admin editing the same module sees it auto-load.
+A new **Test** tab in the teacher dashboard's Practice section that runs a timed 22-question class test drawn from the hardest problems in the 68 set, auto-pushed to every logged-in student in the chosen class, with live monitoring and post-test analytics for the teacher and an instant score for the student.
 
-## UX
+## Teacher flow
 
-- New "Reference PDF" button in `BluebookModuleEditor` header (next to Create/Browse tabs).
-- First click → upload dropzone (drag/drop or file picker, max ~30MB).
-- Once uploaded, a floating window appears over the editor:
-  - Draggable by title bar, resizable from corners
-  - Snap zones: left half, right half, top half, bottom half (iPadOS split-view style) — highlight overlay while dragging near an edge, release to snap
-  - Minimize to a small draggable pill (like the challenge HUD), restore on click
-  - Close button clears local view state only — PDF stays saved on the module
-  - Position/size/snap state persisted in `localStorage` per admin
-- Toolbar: page prev/next, page number input, zoom −/+/fit, search (Ctrl+F opens input, highlights matches, next/prev), "Copy selection to passage" button (inserts selected PDF text into the currently focused question field: passage, prompt, or explanation)
+1. Practice → **Test** tab → "Start 68 Test".
+2. Setup dialog:
+   - Duration (preset chips 20 / 30 / 45 min + custom)
+   - Start time (Now, or in 1/5/10 min, or pick a time)
+   - Class picker (their batches)
+   - Preview of the auto-selected 22 questions (accuracy % and avg time per question shown)
+3. Confirm → test is created in `scheduled` state; teacher lands on a **live monitor** screen: who joined, who is in progress, live answered counts, focus-loss flags, countdown.
+4. When time expires (or teacher taps "End now"), the test flips to `finished` and results appear.
 
-## Storage & data
+## Student flow
 
-- New public storage bucket `module-pdfs` (RLS: admins read/write, authenticated read).
-- New columns on `bluebook_modules`:
-  - `reference_pdf_path text`
-  - `reference_pdf_name text`
-  - `reference_pdf_uploaded_at timestamptz`
-- Upload flow: `module-pdfs/{moduleId}/{uuid}.pdf` → update module row. Replace overwrites row + best-effort deletes old object.
+1. Any logged-in student whose account links to that class gets a full-screen takeover: "Your teacher started a 68 Test — starting in Xs" with a countdown.
+2. At T-0 the test opens automatically:
+   - **Mobile**: one question per screen, big tap targets, bottom sheet for the question grid, sticky slim timer.
+   - **Tablet/desktop**: two-pane layout, question grid rail, focus lock on.
+   - Free navigation: skip, flag, revisit, change answers until time is up.
+3. Subtle timer top-center; turns amber at 5 min, red at 1 min.
+4. Auto-submit on timeout; manual "Submit test" with confirm.
+5. Result screen: **X / 22**, accuracy, avg time per question, per-question correct/incorrect list (no answer reveal, per existing practice rules).
 
-## Rendering
+## Question selection
 
-- Use `pdfjs-dist` (already common; add if missing) with the worker loaded from a bundled URL — no external CDN.
-- Fetch PDF via signed URL from the bucket (or public URL since admin-only editor).
-- Render current page to a `<canvas>`; overlay a transparent text layer using pdf.js `TextLayerBuilder` output so selection + search highlighting work.
+Computed at test creation from live `student_attempts` joined to `questions` where `question_set = '68'`:
 
-## Files
+- Rank by a difficulty score combining low first-attempt accuracy and high avg `time_spent_seconds` (z-scored, weighted 60% accuracy / 40% time), minimum attempt threshold so noisy questions don't win.
+- Top 22 are snapshotted into the test row so the set is frozen for that test even if stats shift mid-test.
 
-New:
-- `src/components/admin/bluebook/ReferencePdfViewer.tsx` — floating window, drag/resize/snap, toolbar, pdf.js render + text layer + search
-- `src/components/admin/bluebook/ReferencePdfUpload.tsx` — dropzone + upload handler
-- `src/hooks/useReferencePdf.ts` — loads module row, uploads, updates path
-- `src/lib/pdfjs.ts` — pdf.js setup with local worker
+## Focus lock (tablet/desktop only)
 
-Modified:
-- `src/pages/admin/BluebookModuleEditor.tsx` — add toggle button, mount viewer, expose "insert selection" callback to `CustomQuestionForm`
-- `src/components/admin/bluebook/CustomQuestionForm.tsx` — accept `insertTextIntoActiveField` ref so the viewer's "copy to question" targets the last-focused textarea (passage/prompt/explanation)
+Reuses the existing security wrapper pattern: on tab blur / visibility change the screen blurs with a "Return to your test" overlay, a warning toast fires, and each violation is logged to the attempt row. The teacher's results view shows a flag count per student. No auto-submit.
 
-## Migration
+## Teacher results
 
-1. `create bucket module-pdfs (public=false)` via storage tool
-2. Migration:
-   - `alter table public.bluebook_modules add column reference_pdf_path text, reference_pdf_name text, reference_pdf_uploaded_at timestamptz;`
-   - RLS on `storage.objects` for bucket `module-pdfs`: select/insert/update/delete restricted to `has_role(auth.uid(),'admin')`.
+- **Overall**: class average score /22, accuracy %, avg time per question, score distribution, hardest questions for this class (per-question accuracy bars).
+- **Per student**: score, accuracy, avg speed, time used, focus-loss flags, per-question breakdown; sortable table plus a comparison against the class average.
 
-## Snap logic (technical)
+## Technical notes
 
-- Track pointer during drag; when within 40px of a screen edge, show a translucent preview rect for that half. On drop inside a zone, animate window to that rect (`left|right|top|bottom half`). Otherwise, free-position.
-- Sizes persisted: `{ mode: 'free'|'left'|'right'|'top'|'bottom'|'min', x, y, w, h }` in `localStorage` under `admin:module-pdf:viewer`.
+New tables (with GRANTs + RLS, teacher/admin write, student read-own):
 
-## Out of scope
+- `class_tests` — batch_id, teacher, title, question_ids (jsonb snapshot), duration_seconds, starts_at, status (scheduled/active/finished/cancelled), created/finished timestamps.
+- `class_test_participants` — test_id, student_account_id, joined_at, submitted_at, score, correct_count, total_time_ms, focus_violations.
+- `class_test_answers` — test_id, participant_id, question_id, selected_answer, is_correct, time_ms, flagged.
 
-- Annotations / highlighting saved back to PDF
-- Multi-PDF per module (single reference for now)
-- Mobile layout tuning beyond "it still opens"
+Realtime is enabled on `class_tests` and `class_test_participants` so the auto-push, countdown, and live monitor all react instantly.
+
+A DB function picks the hardest 22 (security definer, teacher/admin only) so the ranking runs server-side over the full attempt history rather than in the browser.
+
+Frontend:
+
+- `src/components/teacher/practice/test/` — `TeacherTestTab`, `StartTestDialog`, `TestLiveMonitor`, `TestResults` (overall + per-student).
+- `src/components/student/test/` — a global `ActiveClassTestWatcher` mounted in the student shell (so the takeover works from any page), `TestCountdownOverlay`, `ClassTestRunner` (responsive), `TestResultScreen`.
+- New tab wired into `TeacherPracticeHub` next to Browse / Live Session / Flagged.
+
+The design stays inside the existing coral/indigo token system — no new hardcoded colors.
