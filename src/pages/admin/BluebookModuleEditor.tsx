@@ -304,10 +304,14 @@ const BluebookModuleEditor = () => {
                       key={mq.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setPreviewQuestionId(mq.question?.id ?? null)}
+                      onClick={() => {
+                        setTab("create");
+                        setPreviewQuestionId(mq.question?.id ?? null);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
+                          setTab("create");
                           setPreviewQuestionId(mq.question?.id ?? null);
                         }
                       }}
