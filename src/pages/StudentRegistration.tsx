@@ -37,18 +37,26 @@ export default function StudentRegistration() {
     setIsLoading(true);
 
     try {
-      // Check if phone already exists in students table (already registered)
-      const { data: existingStudent } = await supabase
-        .from('students')
-        .select('id')
-        .eq('phone', phoneNumber)
-        .limit(1);
+      // Check if phone already exists (already registered) — normalized match
+      const { data: enrolled } = await supabase.rpc('is_enrolled_phone', { p: phoneNumber });
 
-      if (existingStudent && existingStudent.length > 0) {
+      let alreadyRegistered = enrolled === true;
+
+      if (!alreadyRegistered) {
+        const { data: existingAccount } = await supabase
+          .from('student_accounts')
+          .select('id')
+          .eq('phone_number', phoneNumber)
+          .limit(1);
+        alreadyRegistered = !!existingAccount?.length;
+      }
+
+      if (alreadyRegistered) {
         setStep('already_registered');
         setIsLoading(false);
         return;
       }
+
 
       // Check if there's already a pending request
       const { data: existingRequest } = await supabase
