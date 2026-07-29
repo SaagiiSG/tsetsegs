@@ -111,7 +111,9 @@ async function buildTree(projectRef: string) {
             id: v.id,
             name: v.name,
             thumbnailUrl: v.thumbnailLink ? v.thumbnailLink.replace(/=s\d+$/, "=s400") : null,
-            // streamUrl proxies through our edge function — Drive is never exposed to the browser.
+            // Direct Drive embed (no egress through our backend).
+            embedUrl: `https://drive.google.com/file/d/${v.id}/preview`,
+            // streamUrl proxies through our edge function — fallback only.
             streamUrl: await buildStreamUrl(v.id, projectRef),
             modifiedTime: v.modifiedTime ?? null,
           })));
