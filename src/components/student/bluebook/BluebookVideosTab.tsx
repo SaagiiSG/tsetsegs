@@ -366,19 +366,23 @@ export function BluebookVideosTab() {
           <div className="rounded-lg overflow-hidden border bg-black">
             <div className="relative aspect-video">
               {currentEntry ? (
-                <video
-                  key={currentEntry.video.id}
-                  ref={videoRef}
-                  src={currentEntry.video.streamUrl}
-                  poster={currentEntry.video.thumbnailUrl ?? undefined}
-                  className="w-full h-full"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  controlsList="nodownload nofullscreen"
-                  disablePictureInPicture
-                  onContextMenu={(e) => e.preventDefault()}
-                />
+                <>
+                  <iframe
+                    key={currentEntry.video.id}
+                    src={currentEntry.video.embedUrl ?? `https://drive.google.com/file/d/${currentEntry.video.id}/preview`}
+                    className="w-full h-full border-0"
+                    title={currentEntry.video.name}
+                    allow="autoplay"
+                    referrerPolicy="no-referrer"
+                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                  />
+                  {/* Blocks Drive's "open in new window" / popout control in the top-right */}
+                  <div
+                    aria-hidden
+                    className="absolute top-0 right-0 h-14 w-24 z-20"
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
                   <Video className="h-10 w-10" />
