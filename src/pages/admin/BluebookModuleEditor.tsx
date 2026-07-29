@@ -540,7 +540,13 @@ const BluebookModuleEditor = () => {
           </CardContent>
         </Card>
       </div>
+
+      <QuestionPreviewDialog
+        questionId={previewQuestionId}
+        onOpenChange={(open) => !open && setPreviewQuestionId(null)}
+      />
     </div>
+
   );
 };
 
