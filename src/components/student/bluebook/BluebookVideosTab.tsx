@@ -11,36 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlayCircle, AlertCircle, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Diagonal, repeated watermark overlay for video piracy deterrence. */
-function VideoWatermark({ text }: { text: string }) {
-  const rows = Array.from({ length: 3 });
-  const cols = Array.from({ length: 2 });
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden z-10 select-none mix-blend-difference"
-      style={{ userSelect: 'none' }}
-    >
-      {rows.map((_, r) =>
-        cols.map((_, c) => (
-          <span
-            key={`${r}-${c}`}
-            className="absolute whitespace-nowrap text-[11px] sm:text-xs font-semibold tracking-wider"
-            style={{
-              top: `${20 + r * 30}%`,
-              left: `${15 + c * 55}%`,
-              transform: 'rotate(-22deg)',
-              color: 'rgba(255,255,255,0.18)',
-              textShadow: '0 0 2px rgba(0,0,0,0.9)',
-            }}
-          >
-            {text}
-          </span>
-        )),
-      )}
-    </div>
-  );
-}
+
 
 /** Viewport-covering watermark shown while a video is playing. */
 function FullPageWatermark({ text }: { text: string }) {
@@ -87,13 +58,13 @@ function FullPageWatermark({ text }: { text: string }) {
       {watermarks.map((pos) => (
         <span
           key={pos.id}
-          className="absolute whitespace-nowrap text-xs sm:text-sm font-semibold tracking-widest"
+          className="absolute whitespace-nowrap text-[10px] sm:text-[11px] font-medium tracking-widest"
           style={{
             top: pos.top,
             left: pos.left,
             transform: `rotate(${pos.rotation}deg)`,
-            color: 'rgba(255,255,255,0.20)',
-            textShadow: '0 0 2px rgba(0,0,0,0.85)',
+            color: 'rgba(255,255,255,0.10)',
+            textShadow: '0 0 1px rgba(0,0,0,0.6)',
           }}
         >
           {text}
@@ -413,7 +384,7 @@ export function BluebookVideosTab() {
                   <Video className="h-10 w-10" />
                 </div>
               )}
-              {watermarkText && <VideoWatermark text={watermarkText} />}
+              
             </div>
           </div>
 
