@@ -24,10 +24,12 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { menuSections } from "@/components/admin/menuSections";
+import { useIsDevAccount } from "@/lib/devAccount";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
   const { signOut } = useAuth();
+  const isDev = useIsDevAccount();
 
   return (
     <Sidebar className="border-r-0" collapsible="icon">
@@ -113,7 +115,7 @@ export function AdminSidebar() {
                 <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {section.items.map((item, itemIndex) => (
+                      {section.items.filter((item) => !item.devOnly || isDev).map((item, itemIndex) => (
                         <motion.div
                           key={item.title}
                           initial={{ opacity: 0, x: -10 }}

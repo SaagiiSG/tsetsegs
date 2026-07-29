@@ -27,6 +27,7 @@ import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DevOnlyRoute } from '@/components/admin/DevOnlyRoute';
 import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
 
 const Admin = () => {
@@ -60,7 +61,7 @@ const Admin = () => {
       <Route path="batches" element={<BatchesView />} />
       <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
       <Route path="questions" element={<QuestionBank />} />
-      <Route path="bluebook/*" element={<BluebookManager />} />
+      <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />
       <Route path="students" element={<StudentAccountsManagement />} />
