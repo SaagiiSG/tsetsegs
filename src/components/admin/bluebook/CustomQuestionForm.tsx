@@ -811,18 +811,28 @@ const CustomQuestionForm = ({
         )}
       </div>
 
-      <Button
-        onClick={handleSubmit}
-        disabled={createMutation.isPending}
-        className="w-full gap-2"
-      >
-        {createMutation.isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
+      <div className="flex gap-2">
+        {isEditing && (
+          <Button variant="outline" className="flex-1" onClick={() => onCancelEdit?.()}>
+            Cancel
+          </Button>
         )}
-        Create & Add to Module
-      </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={createMutation.isPending || updateMutation.isPending}
+          className="flex-1 gap-2"
+        >
+          {createMutation.isPending || updateMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isEditing ? (
+            <Save className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {isEditing ? "Save changes" : "Create & Add to Module"}
+        </Button>
+      </div>
+
     </div>
   );
 };
