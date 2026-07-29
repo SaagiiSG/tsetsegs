@@ -439,18 +439,42 @@ const CustomQuestionForm = ({
     }
     if (questionType === "multiple_choice") {
       const allFilled = (["A", "B", "C", "D"] as Letter[]).every(
-        (l) => options[l].trim() || choiceImages[l]
+        (l) => options[l].trim() || choiceImages[l] || existingChoiceImageUrls[l]
       );
       if (!allFilled) {
         toast.error("Each answer choice needs text or an image");
         return;
       }
     }
-    createMutation.mutate();
+    if (isEditing) updateMutation.mutate();
+    else createMutation.mutate();
   };
+
+  if (isEditing && editLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading question…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
+      {isEditing && (
+        <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Pencil className="h-4 w-4 text-primary" />
+            <span className="font-medium">Editing</span>
+            <Badge variant="outline" className="font-mono text-[11px]">
+              #{editMeta?.question_id ?? "…"}
+            </Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => onCancelEdit?.()}>
+            Done
+          </Button>
+        </div>
+      )}
+
       {/* Live preview */}
       <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-accent/5">
         <button
