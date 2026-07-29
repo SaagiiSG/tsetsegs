@@ -368,22 +368,19 @@ const BluebookModuleEditor = () => {
           <CardContent>
             {tab === "create" ? (
               <ScrollArea className="h-[65vh] pr-3">
-                {previewQuestionId ? (
-                  <QuestionPreviewPanel
-                    questionId={previewQuestionId}
-                    onClose={() => setPreviewQuestionId(null)}
-                  />
-                ) : (
-                  <CustomQuestionForm
-                    moduleId={moduleId!}
-                    section={moduleRow.section}
-                    currentCount={currentQuestions?.length ?? 0}
-                    onAdded={() => {
-                      // stay on create for rapid entry
-                    }}
-                  />
-                )}
+                <CustomQuestionForm
+                  key={previewQuestionId ?? "new"}
+                  moduleId={moduleId!}
+                  section={moduleRow.section}
+                  currentCount={currentQuestions?.length ?? 0}
+                  editQuestionId={previewQuestionId}
+                  onCancelEdit={() => setPreviewQuestionId(null)}
+                  onAdded={() => {
+                    // stay on create for rapid entry
+                  }}
+                />
               </ScrollArea>
+
             ) : (
               <div className="space-y-4">
                 {/* Filters */}
