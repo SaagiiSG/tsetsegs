@@ -314,7 +314,13 @@ const BluebookModuleEditor = () => {
                           setPreviewQuestionId(mq.question?.id ?? null);
                         }
                       }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group cursor-pointer"
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg transition-colors group cursor-pointer",
+                        previewQuestionId === mq.question?.id
+                          ? "bg-primary/10 ring-1 ring-primary/40"
+                          : "bg-muted/40 hover:bg-muted"
+                      )}
+
                     >
                       <span className="text-xs font-mono text-muted-foreground w-6">
                         {idx + 1}.
