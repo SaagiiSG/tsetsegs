@@ -385,7 +385,7 @@ export function BluebookVideosTab() {
                   <Video className="h-10 w-10" />
                 </div>
               )}
-              {watermarkText && <VideoWatermark text={watermarkText} />}
+              
             </div>
           </div>
 
