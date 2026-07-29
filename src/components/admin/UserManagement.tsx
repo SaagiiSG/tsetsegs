@@ -68,7 +68,7 @@ export function UserManagement() {
         isAdmin: adminUserIds.has(authUser.id),
       }));
 
-      setUsers(usersWithRoles);
+      setUsers(usersWithRoles.filter((u) => u.isAdmin));
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -191,7 +191,10 @@ export function UserManagement() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>Admin Users</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Only existing admins can create new admin accounts.
+          </p>
         </CardHeader>
         <CardContent>
           <Table>
@@ -204,6 +207,13 @@ export function UserManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                    No admin users found.
+                  </TableCell>
+                </TableRow>
+              )}
               {users.map((userData) => (
                 <TableRow key={userData.id}>
                   <TableCell className="font-medium">{userData.email}</TableCell>
@@ -225,31 +235,13 @@ export function UserManagement() {
                       <span className="text-sm text-muted-foreground">You</span>
                     ) : (
                       <div className="flex gap-2">
-                        {userData.isAdmin ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openConfirmDialog(userData.id, userData.email, 'remove-admin')}
-                          >
-                            <ShieldOff className="w-4 h-4 mr-1" />
-                            Remove Admin
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => openConfirmDialog(userData.id, userData.email, 'make-admin')}
-                          >
-                            <Shield className="w-4 h-4 mr-1" />
-                            Make Admin
-                          </Button>
-                        )}
                         <Button
-                          variant="destructive"
+                          variant="outline"
                           size="sm"
-                          onClick={() => openConfirmDialog(userData.id, userData.email, 'delete-user')}
+                          onClick={() => openConfirmDialog(userData.id, userData.email, 'remove-admin')}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <ShieldOff className="w-4 h-4 mr-1" />
+                          Remove Admin
                         </Button>
                       </div>
                     )}
