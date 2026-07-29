@@ -84,22 +84,66 @@ const CustomQuestionForm = ({
     setQuestionType("multiple_choice");
     setImage(null);
     setImagePreview(null);
+    setChoiceImages({ A: null, B: null, C: null, D: null });
+    setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     setMathOnlyMode(false);
   };
 
-  const ingestImageFile = (file: File) => {
+  const validateImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are supported");
-      return;
+      return false;
     }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const ingestImageFile = (file: File) => {
+    if (!validateImageFile(file)) return;
     setImage(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const ingestChoiceImage = (letter: Letter, file: File) => {
+    if (!validateImageFile(file)) return;
+    setChoiceImages((p) => ({ ...p, [letter]: file }));
+    const reader = new FileReader();
+    reader.onloadend = () =>
+      setChoiceImagePreviews((p) => ({ ...p, [letter]: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const clearChoiceImage = (letter: Letter) => {
+    setChoiceImages((p) => ({ ...p, [letter]: null }));
+    setChoiceImagePreviews((p) => ({ ...p, [letter]: null }));
+  };
+
+  const handleChoiceDrop = (letter: Letter) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingChoice(null);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestChoiceImage(letter, file);
+  };
+
+  const handleChoicePaste = (letter: Letter) => (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          ingestChoiceImage(letter, file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
