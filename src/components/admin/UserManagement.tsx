@@ -214,7 +214,7 @@ export function UserManagement() {
                 <TableRow key={userData.id}>
                   <TableCell className="font-medium">{userData.email}</TableCell>
                   <TableCell>
-                    {new Date(userData.created_at).toLocaleDateString()}
+                    {userData.created_at ? new Date(userData.created_at).toLocaleDateString() : '—'}
                   </TableCell>
                   <TableCell>
                     {userData.isAdmin ? (
