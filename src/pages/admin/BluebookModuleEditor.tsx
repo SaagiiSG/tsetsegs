@@ -298,7 +298,16 @@ const BluebookModuleEditor = () => {
                   {currentQuestions!.map((mq: any, idx: number) => (
                     <div
                       key={mq.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setPreviewQuestionId(mq.question?.id ?? null)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setPreviewQuestionId(mq.question?.id ?? null);
+                        }
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group cursor-pointer"
                     >
                       <span className="text-xs font-mono text-muted-foreground w-6">
                         {idx + 1}.
@@ -313,7 +322,10 @@ const BluebookModuleEditor = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={() => removeMutation.mutate(mq.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMutation.mutate(mq.id);
+                        }}
                         disabled={removeMutation.isPending}
                       >
                         {removeMutation.isPending ? (
@@ -324,6 +336,7 @@ const BluebookModuleEditor = () => {
                       </Button>
                     </div>
                   ))}
+
                 </div>
               )}
             </ScrollArea>
