@@ -153,25 +153,44 @@ export function StudentAccountsManagement() {
       
       if (sessionsError) throw sessionsError;
 
-      // Fetch students with their batch info to match by phone
-      const { data: studentsData, error: studentsError } = await supabase
-        .from('students')
-        .select('id, phone, first_name, last_name, batch_id, batches(batch_name, course_type)')
-        .eq('is_ghost', false);
-      
-      if (studentsError) throw studentsError;
+      // Fetch students with their batch info to match by phone (paginated — >1000 rows)
+      const studentsData: any[] = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: studentsError } = await supabase
+          .from('students')
+          .select('id, phone, first_name, last_name, batch_id, batches(batch_name, course_type)')
+          .eq('is_ghost', false)
+          .range(from, from + PAGE - 1);
 
-      // Create a map of phone -> student info
+        if (studentsError) throw studentsError;
+        studentsData.push(...(page || []));
+        if (!page || page.length < PAGE) break;
+      }
+
+      // Create a map of normalized phone -> student info
+      const normalizePhone = (p: string | null) => {
+        const digits = (p || '').replace(/\D/g, '');
+        return digits.length > 8 ? digits.slice(-8) : digits;
+      };
       const studentsByPhone = new Map<string, StudentInfo>();
-      (studentsData || []).forEach((s: any) => {
-        studentsByPhone.set(s.phone, {
+      studentsData.forEach((s: any) => {
+        const key = normalizePhone(s.phone);
+        if (!key) return;
+        const info: StudentInfo = {
           student_id: s.id,
           first_name: s.first_name,
           last_name: s.last_name,
           batch_name: s.batches?.batch_name || null,
           course_type: s.batches?.course_type || null,
-        });
+        };
+        // Prefer records that have a batch attached
+        const existing = studentsByPhone.get(key);
+        if (!existing || (!existing.batch_name && info.batch_name)) {
+          studentsByPhone.set(key, info);
+        }
       });
+
       
       // Combine data
       const accountsWithSessions: StudentAccount[] = (accountsData || []).map(account => ({
