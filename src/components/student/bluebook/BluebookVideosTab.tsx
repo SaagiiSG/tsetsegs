@@ -58,13 +58,13 @@ function FullPageWatermark({ text }: { text: string }) {
       {watermarks.map((pos) => (
         <span
           key={pos.id}
-          className="absolute whitespace-nowrap text-xs sm:text-sm font-semibold tracking-widest"
+          className="absolute whitespace-nowrap text-[10px] sm:text-[11px] font-medium tracking-widest"
           style={{
             top: pos.top,
             left: pos.left,
             transform: `rotate(${pos.rotation}deg)`,
-            color: 'rgba(255,255,255,0.20)',
-            textShadow: '0 0 2px rgba(0,0,0,0.85)',
+            color: 'rgba(255,255,255,0.10)',
+            textShadow: '0 0 1px rgba(0,0,0,0.6)',
           }}
         >
           {text}
