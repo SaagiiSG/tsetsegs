@@ -161,6 +161,10 @@ const StudentTestPreview = () => {
 
   const qId = currentQuestion?.id;
   const selected = qId ? answers[qId] : undefined;
+  const isLastQuestion = questionIndex >= moduleQuestions.length - 1;
+  const hasNextModule = !!modules && moduleIndex < modules.length - 1;
+  const hasPrevModule = moduleIndex > 0;
+
 
   return (
     <div className="-m-4 md:-m-6 flex flex-col min-h-[calc(100vh-4rem)] bg-background">
