@@ -115,8 +115,60 @@ const CustomQuestionForm = ({
     setImagePreview(null);
     setChoiceImages({ A: null, B: null, C: null, D: null });
     setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
+    setExistingImageUrl(null);
+    setExistingChoiceImageUrls({ A: null, B: null, C: null, D: null });
+    setEditMeta(null);
     setMathOnlyMode(false);
   };
+
+  // Hydrate the form when an existing question is selected for editing
+  useEffect(() => {
+    if (!editQuestionId) {
+      reset();
+      return;
+    }
+    if (!editingQuestion) return;
+    const q = editingQuestion;
+    setEditMeta({ question_id: q.question_id });
+    setQuestionText(q.question_text ?? "");
+    setPassage(q.passage_text ?? "");
+    setAnswer(q.answer ?? "");
+    const isFill = q.question_type === "fill_blank" || q.question_type === "fill_in";
+    setQuestionType(isFill ? "fill_in" : "multiple_choice");
+
+    const raw = q.multiple_choice_options;
+    const next: Record<Letter, string> = { A: "", B: "", C: "", D: "" };
+    if (Array.isArray(raw)) {
+      raw.forEach((v: any, i: number) => {
+        const letter = String.fromCharCode(65 + i) as Letter;
+        if (next[letter] !== undefined)
+          next[letter] = typeof v === "string" ? v : v?.text ?? v?.value ?? "";
+      });
+    } else if (raw && typeof raw === "object") {
+      Object.entries(raw).forEach(([k, v]: any) => {
+        const letter = k.toUpperCase() as Letter;
+        if (next[letter] !== undefined)
+          next[letter] = typeof v === "string" ? v : v?.text ?? v?.value ?? "";
+      });
+    }
+    setOptions(next);
+
+    setImage(null);
+    setExistingImageUrl(q.question_image_url ?? null);
+    setImagePreview(q.question_image_url ?? null);
+
+    const ci = (q.choice_images ?? {}) as Record<string, string>;
+    const nextCi: Record<Letter, string | null> = { A: null, B: null, C: null, D: null };
+    Object.entries(ci).forEach(([k, v]) => {
+      const letter = k.toUpperCase() as Letter;
+      if (nextCi[letter] !== undefined) nextCi[letter] = v as string;
+    });
+    setExistingChoiceImageUrls(nextCi);
+    setChoiceImagePreviews(nextCi);
+    setChoiceImages({ A: null, B: null, C: null, D: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editQuestionId, editingQuestion]);
+
 
   const validateImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
