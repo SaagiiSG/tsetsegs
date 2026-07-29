@@ -283,7 +283,21 @@ const BluebookModuleEditor = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center justify-between">
               <span>In this module</span>
-              <Badge variant="secondary">{currentQuestions?.length ?? 0}</Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  title="New question"
+                  onClick={() => {
+                    setTab("create");
+                    setPreviewQuestionId(null);
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Badge variant="secondary">{currentQuestions?.length ?? 0}</Badge>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
