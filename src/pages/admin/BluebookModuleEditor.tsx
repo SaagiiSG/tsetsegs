@@ -34,6 +34,8 @@ import {
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
 import CustomQuestionForm from "@/components/admin/bluebook/CustomQuestionForm";
+import QuestionPreviewDialog from "@/components/admin/bluebook/QuestionPreviewDialog";
+
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ReferencePdfViewer from "@/components/admin/bluebook/ReferencePdfViewer";
 import { useReferencePdf } from "@/hooks/useReferencePdf";
@@ -52,6 +54,8 @@ const BluebookModuleEditor = () => {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<"create" | "browse">("create");
+  const [previewQuestionId, setPreviewQuestionId] = useState<string | null>(null);
+
   const [viewerOpen, setViewerOpen] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const { meta: pdfMeta, signedUrl, upload: uploadPdf, uploading } = useReferencePdf(moduleId);
@@ -298,7 +302,16 @@ const BluebookModuleEditor = () => {
                   {currentQuestions!.map((mq: any, idx: number) => (
                     <div
                       key={mq.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setPreviewQuestionId(mq.question?.id ?? null)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setPreviewQuestionId(mq.question?.id ?? null);
+                        }
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group cursor-pointer"
                     >
                       <span className="text-xs font-mono text-muted-foreground w-6">
                         {idx + 1}.
@@ -313,7 +326,10 @@ const BluebookModuleEditor = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={() => removeMutation.mutate(mq.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMutation.mutate(mq.id);
+                        }}
                         disabled={removeMutation.isPending}
                       >
                         {removeMutation.isPending ? (
@@ -324,6 +340,7 @@ const BluebookModuleEditor = () => {
                       </Button>
                     </div>
                   ))}
+
                 </div>
               )}
             </ScrollArea>
@@ -525,7 +542,13 @@ const BluebookModuleEditor = () => {
           </CardContent>
         </Card>
       </div>
+
+      <QuestionPreviewDialog
+        questionId={previewQuestionId}
+        onOpenChange={(open) => !open && setPreviewQuestionId(null)}
+      />
     </div>
+
   );
 };
 
