@@ -45,6 +45,14 @@ const CustomQuestionForm = ({
   );
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type Letter = "A" | "B" | "C" | "D";
+  const [choiceImages, setChoiceImages] = useState<Record<Letter, File | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<Letter, string | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [draggingChoice, setDraggingChoice] = useState<Letter | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
 
