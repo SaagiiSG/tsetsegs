@@ -419,16 +419,24 @@ const StudentTestPreview = () => {
             </DrawerContent>
           </Drawer>
 
-          <Button
-            size="icon"
-            className="h-10 w-10"
-            disabled={questionIndex >= moduleQuestions.length - 1}
-            onClick={() =>
-              setQuestionIndex((i) => Math.min(moduleQuestions.length - 1, i + 1))
-            }
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          {isLastQuestion && hasNextModule ? (
+            <Button className="gap-2" onClick={() => setModuleIndex((i) => i + 1)}>
+              Next module
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-10 w-10"
+              disabled={isLastQuestion}
+              onClick={() =>
+                setQuestionIndex((i) => Math.min(moduleQuestions.length - 1, i + 1))
+              }
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          )}
+
         </div>
       </footer>
     </div>
