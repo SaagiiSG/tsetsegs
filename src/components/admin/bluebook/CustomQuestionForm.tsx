@@ -288,9 +288,11 @@ const CustomQuestionForm = ({
       return;
     }
     if (questionType === "multiple_choice") {
-      const allFilled = Object.values(options).every((v) => v.trim());
+      const allFilled = (["A", "B", "C", "D"] as Letter[]).every(
+        (l) => options[l].trim() || choiceImages[l]
+      );
       if (!allFilled) {
-        toast.error("Please fill in all answer choices");
+        toast.error("Each answer choice needs text or an image");
         return;
       }
     }
