@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlayCircle, AlertCircle, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Viewport-covering watermark shown while a video is playing. */
 
 
 /** Viewport-covering watermark shown while a video is playing. */
