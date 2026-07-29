@@ -45,6 +45,14 @@ const CustomQuestionForm = ({
   );
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type Letter = "A" | "B" | "C" | "D";
+  const [choiceImages, setChoiceImages] = useState<Record<Letter, File | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<Letter, string | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [draggingChoice, setDraggingChoice] = useState<Letter | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
 
@@ -76,22 +84,66 @@ const CustomQuestionForm = ({
     setQuestionType("multiple_choice");
     setImage(null);
     setImagePreview(null);
+    setChoiceImages({ A: null, B: null, C: null, D: null });
+    setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     setMathOnlyMode(false);
   };
 
-  const ingestImageFile = (file: File) => {
+  const validateImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are supported");
-      return;
+      return false;
     }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const ingestImageFile = (file: File) => {
+    if (!validateImageFile(file)) return;
     setImage(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const ingestChoiceImage = (letter: Letter, file: File) => {
+    if (!validateImageFile(file)) return;
+    setChoiceImages((p) => ({ ...p, [letter]: file }));
+    const reader = new FileReader();
+    reader.onloadend = () =>
+      setChoiceImagePreviews((p) => ({ ...p, [letter]: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const clearChoiceImage = (letter: Letter) => {
+    setChoiceImages((p) => ({ ...p, [letter]: null }));
+    setChoiceImagePreviews((p) => ({ ...p, [letter]: null }));
+  };
+
+  const handleChoiceDrop = (letter: Letter) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingChoice(null);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestChoiceImage(letter, file);
+  };
+
+  const handleChoicePaste = (letter: Letter) => (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          ingestChoiceImage(letter, file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,6 +208,25 @@ const CustomQuestionForm = ({
         imageUrl = publicUrl;
       }
 
+      // Upload per-choice figures
+      const choiceImageUrls: Record<string, string> = {};
+      if (questionType === "multiple_choice") {
+        for (const letter of ["A", "B", "C", "D"] as Letter[]) {
+          const f = choiceImages[letter];
+          if (!f) continue;
+          const ext = f.name.split(".").pop();
+          const fileName = `${newQid}-choice-${letter}-${Date.now()}.${ext}`;
+          const { error: cErr } = await supabase.storage
+            .from("question-images")
+            .upload(fileName, f);
+          if (cErr) throw cErr;
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("question-images").getPublicUrl(fileName);
+          choiceImageUrls[letter] = publicUrl;
+        }
+      }
+
       const mcOptions =
         questionType === "multiple_choice"
           ? { A: options.A, B: options.B, C: options.C, D: options.D }
@@ -171,6 +242,7 @@ const CustomQuestionForm = ({
           answer: answer.trim(),
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
+          choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
           difficulty_level: "medium",
           question_type: dbType,
           subject: subjectFilter,
@@ -216,9 +288,11 @@ const CustomQuestionForm = ({
       return;
     }
     if (questionType === "multiple_choice") {
-      const allFilled = Object.values(options).every((v) => v.trim());
+      const allFilled = (["A", "B", "C", "D"] as Letter[]).every(
+        (l) => options[l].trim() || choiceImages[l]
+      );
       if (!allFilled) {
-        toast.error("Please fill in all answer choices");
+        toast.error("Each answer choice needs text or an image");
         return;
       }
     }
@@ -289,11 +363,18 @@ const CustomQuestionForm = ({
                           >
                             {letter}
                           </Badge>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 space-y-1.5">
                             {val ? (
                               <MathText text={val.replace(/<[^>]+>/g, " ")} />
-                            ) : (
+                            ) : !choiceImagePreviews[letter] ? (
                               <span className="text-muted-foreground italic">empty</span>
+                            ) : null}
+                            {choiceImagePreviews[letter] && (
+                              <img
+                                src={choiceImagePreviews[letter]!}
+                                alt={`Choice ${letter}`}
+                                className="max-h-28 rounded border object-contain"
+                              />
                             )}
                           </div>
                         </div>
@@ -465,6 +546,62 @@ const CustomQuestionForm = ({
                     placeholder={`Enter option ${letter}...`}
                     minHeight="56px"
                   />
+                )}
+
+                {/* Per-choice figure */}
+                {choiceImagePreviews[letter] ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={choiceImagePreviews[letter]!}
+                      alt={`Choice ${letter}`}
+                      className="max-h-32 rounded-md border object-contain"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5"
+                      onClick={() => clearChoiceImage(letter)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label
+                    onDrop={handleChoiceDrop(letter)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraggingChoice(letter);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraggingChoice(null);
+                    }}
+                    onPaste={handleChoicePaste(letter)}
+                    tabIndex={0}
+                    className={`flex items-center justify-center gap-2 w-full h-10 border border-dashed rounded-md cursor-pointer text-[11px] text-muted-foreground transition-colors outline-none ${
+                      draggingChoice === letter
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:bg-muted/50 focus:bg-muted/50"
+                    }`}
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    {draggingChoice === letter
+                      ? `Drop figure for ${letter}`
+                      : `Add figure for ${letter} (click, drop, or paste)`}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) ingestChoiceImage(letter, f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
                 )}
               </div>
             ))}
