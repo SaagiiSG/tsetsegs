@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff } from "lucide-react";
+import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
 import { MathText } from "@/components/MathText";
@@ -25,6 +25,9 @@ interface CustomQuestionFormProps {
   section: "reading_writing" | "math";
   currentCount: number;
   onAdded: () => void;
+  /** When set, the form edits this existing question instead of creating a new one */
+  editQuestionId?: string | null;
+  onCancelEdit?: () => void;
 }
 
 const CustomQuestionForm = ({
@@ -32,9 +35,13 @@ const CustomQuestionForm = ({
   section,
   currentCount,
   onAdded,
+  editQuestionId,
+  onCancelEdit,
 }: CustomQuestionFormProps) => {
   const queryClient = useQueryClient();
   const subjectFilter = section === "reading_writing" ? "english" : "math";
+  const isEditing = !!editQuestionId;
+
 
   const [questionText, setQuestionText] = useState("");
   const [answer, setAnswer] = useState("");
@@ -55,6 +62,28 @@ const CustomQuestionForm = ({
   const [draggingChoice, setDraggingChoice] = useState<Letter | null>(null);
   const [mathOnlyMode, setMathOnlyMode] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  // URLs of already-stored images (kept unless the admin clears them)
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [existingChoiceImageUrls, setExistingChoiceImageUrls] = useState<Record<Letter, string | null>>({
+    A: null, B: null, C: null, D: null,
+  });
+  const [editMeta, setEditMeta] = useState<{ question_id: string } | null>(null);
+
+  // Load the question being edited
+  const { data: editingQuestion, isLoading: editLoading } = useQuery({
+    queryKey: ["bluebook-edit-question", editQuestionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("*")
+        .eq("id", editQuestionId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!editQuestionId,
+  });
+
 
   // Track the last focused text field so PDF text insertions target it
   const lastFocusedRef = useRef<"passage" | "question" | "answer" | "option-A" | "option-B" | "option-C" | "option-D">("passage");
@@ -86,8 +115,60 @@ const CustomQuestionForm = ({
     setImagePreview(null);
     setChoiceImages({ A: null, B: null, C: null, D: null });
     setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
+    setExistingImageUrl(null);
+    setExistingChoiceImageUrls({ A: null, B: null, C: null, D: null });
+    setEditMeta(null);
     setMathOnlyMode(false);
   };
+
+  // Hydrate the form when an existing question is selected for editing
+  useEffect(() => {
+    if (!editQuestionId) {
+      reset();
+      return;
+    }
+    if (!editingQuestion) return;
+    const q = editingQuestion;
+    setEditMeta({ question_id: q.question_id });
+    setQuestionText(q.question_text ?? "");
+    setPassage(q.passage_text ?? "");
+    setAnswer(q.answer ?? "");
+    const isFill = q.question_type === "fill_blank" || q.question_type === "fill_in";
+    setQuestionType(isFill ? "fill_in" : "multiple_choice");
+
+    const raw = q.multiple_choice_options;
+    const next: Record<Letter, string> = { A: "", B: "", C: "", D: "" };
+    if (Array.isArray(raw)) {
+      raw.forEach((v: any, i: number) => {
+        const letter = String.fromCharCode(65 + i) as Letter;
+        if (next[letter] !== undefined)
+          next[letter] = typeof v === "string" ? v : v?.text ?? v?.value ?? "";
+      });
+    } else if (raw && typeof raw === "object") {
+      Object.entries(raw).forEach(([k, v]: any) => {
+        const letter = k.toUpperCase() as Letter;
+        if (next[letter] !== undefined)
+          next[letter] = typeof v === "string" ? v : v?.text ?? v?.value ?? "";
+      });
+    }
+    setOptions(next);
+
+    setImage(null);
+    setExistingImageUrl(q.question_image_url ?? null);
+    setImagePreview(q.question_image_url ?? null);
+
+    const ci = (q.choice_images ?? {}) as Record<string, string>;
+    const nextCi: Record<Letter, string | null> = { A: null, B: null, C: null, D: null };
+    Object.entries(ci).forEach(([k, v]) => {
+      const letter = k.toUpperCase() as Letter;
+      if (nextCi[letter] !== undefined) nextCi[letter] = v as string;
+    });
+    setExistingChoiceImageUrls(nextCi);
+    setChoiceImagePreviews(nextCi);
+    setChoiceImages({ A: null, B: null, C: null, D: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editQuestionId, editingQuestion]);
+
 
   const validateImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -121,7 +202,9 @@ const CustomQuestionForm = ({
   const clearChoiceImage = (letter: Letter) => {
     setChoiceImages((p) => ({ ...p, [letter]: null }));
     setChoiceImagePreviews((p) => ({ ...p, [letter]: null }));
+    setExistingChoiceImageUrls((p) => ({ ...p, [letter]: null }));
   };
+
 
   const handleChoiceDrop = (letter: Letter) => (e: React.DragEvent) => {
     e.preventDefault();
@@ -278,6 +361,73 @@ const CustomQuestionForm = ({
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const qid = editMeta?.question_id ?? "Q";
+
+      let imageUrl: string | null = existingImageUrl;
+      if (image) {
+        const ext = image.name.split(".").pop();
+        const fileName = `${qid}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("question-images")
+          .upload(fileName, image);
+        if (upErr) throw upErr;
+        imageUrl = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
+      }
+
+      const choiceImageUrls: Record<string, string> = {};
+      if (questionType === "multiple_choice") {
+        for (const letter of ["A", "B", "C", "D"] as Letter[]) {
+          const f = choiceImages[letter];
+          if (f) {
+            const ext = f.name.split(".").pop();
+            const fileName = `${qid}-choice-${letter}-${Date.now()}.${ext}`;
+            const { error: cErr } = await supabase.storage
+              .from("question-images")
+              .upload(fileName, f);
+            if (cErr) throw cErr;
+            choiceImageUrls[letter] = supabase.storage
+              .from("question-images")
+              .getPublicUrl(fileName).data.publicUrl;
+          } else if (existingChoiceImageUrls[letter]) {
+            choiceImageUrls[letter] = existingChoiceImageUrls[letter]!;
+          }
+        }
+      }
+
+      const mcOptions =
+        questionType === "multiple_choice"
+          ? { A: options.A, B: options.B, C: options.C, D: options.D }
+          : null;
+
+      const { error } = await supabase
+        .from("questions")
+        .update({
+          question_text: questionText,
+          answer: answer.trim(),
+          passage_text: passage || null,
+          multiple_choice_options: mcOptions,
+          choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
+          question_type: questionType === "fill_in" ? "fill_blank" : "multiple_choice",
+          question_image_url: imageUrl,
+        })
+        .eq("id", editQuestionId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Question updated");
+      queryClient.invalidateQueries({ queryKey: ["bluebook-module-questions", moduleId] });
+      queryClient.invalidateQueries({ queryKey: ["bluebook-question-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["bluebook-edit-question", editQuestionId] });
+    },
+    onError: (e: any) => {
+      console.error(e);
+      toast.error(e?.message || "Failed to update question");
+    },
+  });
+
+
   const handleSubmit = () => {
     if (!questionText.trim()) {
       toast.error("Please enter question text");
@@ -289,18 +439,42 @@ const CustomQuestionForm = ({
     }
     if (questionType === "multiple_choice") {
       const allFilled = (["A", "B", "C", "D"] as Letter[]).every(
-        (l) => options[l].trim() || choiceImages[l]
+        (l) => options[l].trim() || choiceImages[l] || existingChoiceImageUrls[l]
       );
       if (!allFilled) {
         toast.error("Each answer choice needs text or an image");
         return;
       }
     }
-    createMutation.mutate();
+    if (isEditing) updateMutation.mutate();
+    else createMutation.mutate();
   };
+
+  if (isEditing && editLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading question…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
+      {isEditing && (
+        <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Pencil className="h-4 w-4 text-primary" />
+            <span className="font-medium">Editing</span>
+            <Badge variant="outline" className="font-mono text-[11px]">
+              #{editMeta?.question_id ?? "…"}
+            </Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => onCancelEdit?.()}>
+            Done
+          </Button>
+        </div>
+      )}
+
       {/* Live preview */}
       <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-accent/5">
         <button
@@ -430,7 +604,9 @@ const CustomQuestionForm = ({
               onClick={() => {
                 setImage(null);
                 setImagePreview(null);
+                setExistingImageUrl(null);
               }}
+
             >
               <X className="h-3 w-3" />
             </Button>
@@ -635,18 +811,28 @@ const CustomQuestionForm = ({
         )}
       </div>
 
-      <Button
-        onClick={handleSubmit}
-        disabled={createMutation.isPending}
-        className="w-full gap-2"
-      >
-        {createMutation.isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
+      <div className="flex gap-2">
+        {isEditing && (
+          <Button variant="outline" className="flex-1" onClick={() => onCancelEdit?.()}>
+            Cancel
+          </Button>
         )}
-        Create & Add to Module
-      </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={createMutation.isPending || updateMutation.isPending}
+          className="flex-1 gap-2"
+        >
+          {createMutation.isPending || updateMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isEditing ? (
+            <Save className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {isEditing ? "Save changes" : "Create & Add to Module"}
+        </Button>
+      </div>
+
     </div>
   );
 };
