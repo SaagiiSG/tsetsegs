@@ -39,7 +39,16 @@ function normalizeFill(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
 }
 
-export function ClassTestRunner({ test }: { test: ClassTest }) {
+export function ClassTestRunner({
+  test,
+  ended = false,
+  onExit,
+}: {
+  test: ClassTest;
+  /** Teacher ended the test early or the clock expired — force-submit and show the score. */
+  ended?: boolean;
+  onExit?: () => void;
+}) {
   const { student } = useStudentAuth();
   const isMobile = useIsMobile();
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
