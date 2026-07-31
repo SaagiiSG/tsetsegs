@@ -136,6 +136,11 @@ export function ClassTestRunner({
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions, answers]);
 
+  // Teacher ended the test early: submit whatever the student has so they still get a score.
+  useEffect(() => {
+    if (ended && !submitted) submitTest(true);
+  }, [ended, submitted, submitTest]);
+
   useEffect(() => {
     const t = setInterval(() => {
       const r = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
@@ -144,6 +149,7 @@ export function ClassTestRunner({
     }, 500);
     return () => clearInterval(t);
   }, [endsAt, submitted, submitTest]);
+
 
   /* ---------- focus lock (tablet / desktop only) ---------- */
   useEffect(() => {
