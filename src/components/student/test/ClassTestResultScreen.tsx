@@ -86,7 +86,7 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
         <p className="text-xs text-muted-foreground">
           Your teacher will go through the solutions in class.
         </p>
-        <Button className="w-full" onClick={() => window.location.reload()}>
+        <Button className="w-full" onClick={() => (onExit ? onExit() : window.location.reload())}>
           Back to practice
         </Button>
       </div>
