@@ -225,8 +225,17 @@ export function ClassTestRunner({
   };
 
   if (submitted) {
-    return <ClassTestResultScreen test={test} participantId={participantId} questions={questions} answers={answers} />;
+    return (
+      <ClassTestResultScreen
+        test={test}
+        participantId={participantId}
+        questions={questions}
+        answers={answers}
+        onExit={onExit}
+      />
+    );
   }
+
 
   if (questions.length === 0) {
     return (
