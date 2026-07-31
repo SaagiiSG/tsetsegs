@@ -20,9 +20,10 @@ interface Props {
   participantId: string | null;
   questions: QuestionLike[];
   answers: Record<string, string>;
+  onExit?: () => void;
 }
 
-export function ClassTestResultScreen({ test, questions, answers }: Props) {
+export function ClassTestResultScreen({ test, questions, answers, onExit }: Props) {
   const results = useMemo(
     () =>
       questions.map((q, i) => {
