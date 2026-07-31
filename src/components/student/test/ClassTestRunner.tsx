@@ -39,7 +39,16 @@ function normalizeFill(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
 }
 
-export function ClassTestRunner({ test }: { test: ClassTest }) {
+export function ClassTestRunner({
+  test,
+  ended = false,
+  onExit,
+}: {
+  test: ClassTest;
+  /** Teacher ended the test early or the clock expired — force-submit and show the score. */
+  ended?: boolean;
+  onExit?: () => void;
+}) {
   const { student } = useStudentAuth();
   const isMobile = useIsMobile();
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
@@ -127,6 +136,11 @@ export function ClassTestRunner({ test }: { test: ClassTest }) {
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions, answers]);
 
+  // Teacher ended the test early: submit whatever the student has so they still get a score.
+  useEffect(() => {
+    if (ended && !submitted) submitTest(true);
+  }, [ended, submitted, submitTest]);
+
   useEffect(() => {
     const t = setInterval(() => {
       const r = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
@@ -135,6 +149,7 @@ export function ClassTestRunner({ test }: { test: ClassTest }) {
     }, 500);
     return () => clearInterval(t);
   }, [endsAt, submitted, submitTest]);
+
 
   /* ---------- focus lock (tablet / desktop only) ---------- */
   useEffect(() => {
@@ -210,8 +225,17 @@ export function ClassTestRunner({ test }: { test: ClassTest }) {
   };
 
   if (submitted) {
-    return <ClassTestResultScreen test={test} participantId={participantId} questions={questions} answers={answers} />;
+    return (
+      <ClassTestResultScreen
+        test={test}
+        participantId={participantId}
+        questions={questions}
+        answers={answers}
+        onExit={onExit}
+      />
+    );
   }
+
 
   if (questions.length === 0) {
     return (

@@ -20,9 +20,10 @@ interface Props {
   participantId: string | null;
   questions: QuestionLike[];
   answers: Record<string, string>;
+  onExit?: () => void;
 }
 
-export function ClassTestResultScreen({ test, questions, answers }: Props) {
+export function ClassTestResultScreen({ test, questions, answers, onExit }: Props) {
   const results = useMemo(
     () =>
       questions.map((q, i) => {
@@ -85,7 +86,7 @@ export function ClassTestResultScreen({ test, questions, answers }: Props) {
         <p className="text-xs text-muted-foreground">
           Your teacher will go through the solutions in class.
         </p>
-        <Button className="w-full" onClick={() => window.location.reload()}>
+        <Button className="w-full" onClick={() => (onExit ? onExit() : window.location.reload())}>
           Back to practice
         </Button>
       </div>
