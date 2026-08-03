@@ -126,8 +126,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
     }
 
     return allQuestions.filter((question) =>
-      question.question_id.toLowerCase().includes(normalizedSearch) ||
-      question.question_text.toLowerCase().includes(normalizedSearch)
+      (question.question_id ?? '').toLowerCase().includes(normalizedSearch) ||
+      (question.question_text ?? '').toLowerCase().includes(normalizedSearch)
     );
   }, [allQuestions, isInlineSearch, search]);
 
