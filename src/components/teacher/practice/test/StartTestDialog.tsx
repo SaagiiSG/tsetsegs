@@ -111,7 +111,9 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
     }
     if (picks.length === 0) return;
     setCreating(true);
-    const startsAt = new Date(Date.now() + delay * 60_000).toISOString();
+    const code = Array.from({ length: 6 }, () =>
+      'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)],
+    ).join('');
     const { data, error } = await supabase
       .from('class_tests')
       .insert({
@@ -121,20 +123,21 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
         question_set: '68',
         question_ids: picks.map((p) => p.question_id),
         duration_seconds: effectiveDuration * 60,
-        starts_at: startsAt,
-        status: 'active',
+        starts_at: new Date().toISOString(),
+        status: 'scheduled',
+        join_code: code,
       })
-      .select('id')
+      .select('id, join_code')
       .maybeSingle();
     setCreating(false);
     if (error || !data) {
-      toast.error(error?.message ?? 'Could not start the test');
+      toast.error(error?.message ?? 'Could not create the exam');
       return;
     }
-    toast.success('Test started — students are being pulled in');
     onOpenChange(false);
-    onStarted(data.id);
+    onStarted(data.id, data.join_code as string);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
