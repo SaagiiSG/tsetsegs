@@ -33,6 +33,7 @@ export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questi
         .from('questions')
         .select('id, question_id, category_id, subtopic, difficulty_level')
         .eq('is_active', true)
+        .eq('hide_from_practice', false)
         .eq('subject', subject);
       
       if (subject === 'math') {

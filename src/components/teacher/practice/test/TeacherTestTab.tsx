@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StartTestDialog } from './StartTestDialog';
 import { TestLiveMonitor } from './TestLiveMonitor';
+import { TestJoinScreen } from './TestJoinScreen';
 import { ClassTestResults } from './ClassTestResults';
 import { ClipboardList, Play } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TestRow {
   id: string;
+  join_code: string | null;
   title: string;
   status: string;
   starts_at: string;
@@ -22,13 +24,14 @@ interface TestRow {
 export function TeacherTestTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [monitorId, setMonitorId] = useState<string | null>(null);
+  const [lobby, setLobby] = useState<{ id: string; code: string } | null>(null);
   const [resultsId, setResultsId] = useState<string | null>(null);
   const [tests, setTests] = useState<TestRow[]>([]);
 
   const load = async () => {
     const { data } = await supabase
       .from('class_tests')
-      .select('id, title, status, starts_at, duration_seconds, batch_id')
+      .select('id, join_code, title, status, starts_at, duration_seconds, batch_id')
       .order('created_at', { ascending: false })
       .limit(20);
     const rows = (data ?? []) as TestRow[];
@@ -46,8 +49,21 @@ export function TeacherTestTab() {
 
   useEffect(() => {
     load();
-  }, [monitorId, resultsId, dialogOpen]);
+  }, [monitorId, resultsId, dialogOpen, lobby]);
 
+  if (lobby) {
+    return (
+      <TestJoinScreen
+        testId={lobby.id}
+        joinCode={lobby.code}
+        onBack={() => setLobby(null)}
+        onStarted={() => {
+          setMonitorId(lobby.id);
+          setLobby(null);
+        }}
+      />
+    );
+  }
   if (monitorId) {
     return <TestLiveMonitor testId={monitorId} onBack={() => setMonitorId(null)} />;
   }
@@ -64,12 +80,12 @@ export function TeacherTestTab() {
             <h3 className="text-sm font-semibold">68 Hardest 22</h3>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            A timed 22-question test built from the lowest-accuracy, slowest-solved problems in the 68 set. Every
-            logged-in student in the class is pulled in automatically.
+            A timed 22-question test built from the lowest-accuracy, slowest-solved problems in the 68 set. Students
+            join by scanning the QR code and entering their phone number.
           </p>
         </div>
         <Button onClick={() => setDialogOpen(true)} className="gap-2 shrink-0">
-          <Play className="h-4 w-4" /> Start 68 Test
+          <Play className="h-4 w-4" /> Start 68 Exam
         </Button>
       </Card>
 
@@ -84,7 +100,11 @@ export function TeacherTestTab() {
               return (
                 <button
                   key={t.id}
-                  onClick={() => (live ? setMonitorId(t.id) : setResultsId(t.id))}
+                  onClick={() => {
+                    if (t.status === 'scheduled' && t.join_code) setLobby({ id: t.id, code: t.join_code });
+                    else if (live) setMonitorId(t.id);
+                    else setResultsId(t.id);
+                  }}
                   className="w-full text-left p-3 flex items-center gap-3 hover:bg-muted/40 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
@@ -96,7 +116,7 @@ export function TeacherTestTab() {
                     </div>
                   </div>
                   <Badge variant={live ? 'default' : 'secondary'} className="text-[10px] shrink-0">
-                    {live ? 'Live' : 'Finished'}
+                    {t.status === 'scheduled' ? 'Lobby' : live ? 'Live' : 'Finished'}
                   </Badge>
                 </button>
               );
@@ -105,7 +125,11 @@ export function TeacherTestTab() {
         </Card>
       </div>
 
-      <StartTestDialog open={dialogOpen} onOpenChange={setDialogOpen} onStarted={(id) => setMonitorId(id)} />
+      <StartTestDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onStarted={(id, code) => setLobby({ id, code })}
+      />
     </div>
   );
 }

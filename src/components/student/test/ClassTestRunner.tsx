@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MathText } from '@/components/MathText';
 import { Button } from '@/components/ui/button';
@@ -14,9 +13,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Flag, Grid3X3, Loader2, EyeOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Grid3X3, Loader2, EyeOff, Calculator } from 'lucide-react';
+import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import type { ClassTest } from '@/hooks/useClassTest';
 import { ClassTestResultScreen } from './ClassTestResultScreen';
+
 
 interface QuestionRow {
   id: string;
@@ -41,22 +42,25 @@ function normalizeFill(v: string) {
 
 export function ClassTestRunner({
   test,
+  participantId,
+  alreadySubmitted = false,
   ended = false,
   onExit,
 }: {
   test: ClassTest;
+  /** Participant row created when the student joined with their phone number. */
+  participantId: string;
+  alreadySubmitted?: boolean;
   /** Teacher ended the test early or the clock expired — force-submit and show the score. */
   ended?: boolean;
   onExit?: () => void;
 }) {
-  const { student } = useStudentAuth();
   const isMobile = useIsMobile();
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
-  const [participantId, setParticipantId] = useState<string | null>(null);
   const [cursor, setCursor] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [flags, setFlags] = useState<Record<string, boolean>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [blurred, setBlurred] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
@@ -83,32 +87,32 @@ export function ClassTestRunner({
       });
   }, [test.question_ids]);
 
-  /* ---------- ensure participant ---------- */
+  /* ---------- restore any answers this participant already saved ---------- */
   useEffect(() => {
-    if (!student) return;
-    const name = student.linked_student
-      ? `${student.linked_student.first_name} ${student.linked_student.last_name ?? ''}`.trim()
-      : student.phone_number;
-    (async () => {
-      const { data: existing } = await supabase
-        .from('class_test_participants')
-        .select('id, submitted_at')
-        .eq('test_id', test.id)
-        .eq('student_account_id', student.id)
-        .maybeSingle();
-      if (existing) {
-        setParticipantId(existing.id);
-        if (existing.submitted_at) setSubmitted(true);
-        return;
-      }
-      const { data } = await supabase
-        .from('class_test_participants')
-        .insert({ test_id: test.id, student_account_id: student.id, display_name: name })
-        .select('id')
-        .maybeSingle();
-      if (data) setParticipantId(data.id);
-    })();
-  }, [student, test.id]);
+    if (!participantId) return;
+    supabase
+      .from('class_test_answers')
+      .select('question_id, selected_answer, flagged')
+      .eq('participant_id', participantId)
+      .then(({ data }) => {
+        if (!data?.length) return;
+        setAnswers((prev) => {
+          const next = { ...prev };
+          data.forEach((r: any) => {
+            if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
+          });
+          return next;
+        });
+        setFlags((prev) => {
+          const next = { ...prev };
+          data.forEach((r: any) => {
+            if (r.flagged) next[r.question_id] = true;
+          });
+          return next;
+        });
+      });
+  }, [participantId]);
+
 
   /* ---------- timer ---------- */
   const submitTest = useCallback(async (auto = false) => {
@@ -273,6 +277,7 @@ export function ClassTestRunner({
 
   return (
     <div className="fixed inset-0 z-[70] bg-background flex flex-col">
+      <DesmosCalculator />
       {/* top bar */}
       <div className="border-b px-3 py-2 flex items-center gap-3">
         <div className="min-w-0 flex-1">
@@ -282,6 +287,10 @@ export function ClassTestRunner({
           </div>
         </div>
         <div className={cn('font-mono text-sm tabular-nums', timerTone)}>{fmt(remaining)}</div>
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleCalculator()} aria-label="Calculator">
+          <Calculator className="h-4 w-4" />
+        </Button>
+
         {isMobile ? (
           <Sheet open={gridOpen} onOpenChange={setGridOpen}>
             <SheetTrigger asChild>

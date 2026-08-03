@@ -39,7 +39,7 @@ const PRACTICE_QUESTION_SELECT = `
 `;
 
 const applyPracticeQuestionFilters = (query: any, questionSet: QuestionSet, subject: Subject) => {
-  let filteredQuery = query.eq('is_active', true).eq('subject', subject);
+  let filteredQuery = query.eq('is_active', true).eq('subject', subject).eq('hide_from_practice', false);
 
   if (subject === 'math') {
     if (questionSet === '68') {

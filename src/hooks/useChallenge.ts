@@ -42,7 +42,7 @@ interface CreateChallengeArgs {
 }
 
 async function fetchQuestionPool(subject: string, question_set: string, limit = 60) {
-  let q = supabase.from('questions').select('id').eq('is_active', true).eq('question_type', 'multiple_choice');
+  let q = supabase.from('questions').select('id').eq('is_active', true).eq('hide_from_practice', false).eq('question_type', 'multiple_choice');
   if (subject === 'english' || question_set === 'English') {
     q = q.eq('subject', 'english');
   } else {
