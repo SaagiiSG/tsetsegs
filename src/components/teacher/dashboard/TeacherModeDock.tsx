@@ -39,7 +39,9 @@ interface Props {
   activeMode: DashboardMode;
   onChange: (m: DashboardMode) => void;
   onOpenHandbook: () => void;
+  onOpenTests?: () => void;
 }
+
 
 export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props) {
   const [anchor, setAnchor] = useState<DockAnchor>(() => loadAnchor());
