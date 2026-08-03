@@ -24,24 +24,17 @@ interface HardQuestion {
 }
 
 const DURATIONS = [20, 30, 45];
-const DELAYS = [
-  { label: 'Now', value: 0 },
-  { label: 'In 1 min', value: 1 },
-  { label: 'In 5 min', value: 5 },
-  { label: 'In 10 min', value: 10 },
-];
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onStarted: (testId: string) => void;
+  onStarted: (testId: string, joinCode: string) => void;
 }
 
 export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
   const { teacherName } = useTeacherAuth();
   const [duration, setDuration] = useState(30);
   const [customDuration, setCustomDuration] = useState('');
-  const [delay, setDelay] = useState(1);
   const [batchId, setBatchId] = useState<string>('');
   const [batches, setBatches] = useState<Array<{ id: string; label: string }>>([]);
   const [picks, setPicks] = useState<HardQuestion[]>([]);
@@ -143,9 +136,9 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Start 68 Test</DialogTitle>
+          <DialogTitle>Start 68 Exam</DialogTitle>
           <DialogDescription>
-            22 hardest questions from the 68 set — lowest accuracy and slowest average solve time.
+            22 hardest questions from the 68 set. Students join by scanning a QR code — you start the clock when everyone is in.
           </DialogDescription>
         </DialogHeader>
 
@@ -171,22 +164,6 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
                 onChange={(e) => setCustomDuration(e.target.value)}
                 className="h-9 w-24"
               />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs">Start</Label>
-            <div className="flex flex-wrap gap-2 mt-1.5">
-              {DELAYS.map((d) => (
-                <Button
-                  key={d.value}
-                  size="sm"
-                  variant={delay === d.value ? 'default' : 'outline'}
-                  onClick={() => setDelay(d.value)}
-                >
-                  {d.label}
-                </Button>
-              ))}
             </div>
           </div>
 
@@ -236,7 +213,7 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
           </div>
           <Button onClick={handleStart} disabled={creating || picks.length === 0}>
             {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Start test
+            Create exam & show QR
           </Button>
         </DialogFooter>
       </DialogContent>
