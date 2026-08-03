@@ -29,6 +29,8 @@ import TeacherClassAttendance from "./pages/TeacherClassAttendance";
 import TeacherStudentCards from "./pages/TeacherStudentCards";
 import TeacherSettings from "./pages/TeacherSettings";
 import TeacherClassWrapped from "./pages/teacher/TeacherClassWrapped";
+import TeacherTestPage from "./pages/teacher/TeacherTestPage";
+
 import TeacherChecklistMobile from "./pages/TeacherChecklistMobile";
 import TeacherSessionRun from "./pages/TeacherSessionRun";
 
