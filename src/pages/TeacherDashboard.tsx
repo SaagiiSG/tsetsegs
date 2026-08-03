@@ -252,11 +252,16 @@ export default function TeacherDashboard() {
         <TeacherModeDock
           activeMode={activeMode}
           onChange={handleModeChange}
+          onOpenTests={() => {
+            haptic("light");
+            navigate("/teacher/test");
+          }}
           onOpenHandbook={() => {
             haptic("light");
             navigate("/teacher/checklist");
           }}
         />
+
       </div>
 
       {/* QR Code Dialog */}
