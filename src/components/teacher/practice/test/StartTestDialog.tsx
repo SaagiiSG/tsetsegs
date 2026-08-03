@@ -49,16 +49,30 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-    supabase
-      .from('batches')
-      .select('id, batch_name, nickname, course_type')
-      .eq('course_type', 'SAT')
-      .order('start_date', { ascending: false })
-      .then(({ data }) => {
-        setBatches((data ?? []).map((b: any) => ({ id: b.id, label: b.nickname || b.batch_name || 'Class' })));
-      });
-  }, [open]);
+    if (!open || !teacherName) return;
+    (async () => {
+      const [{ data }, { data: completion }] = await Promise.all([
+        supabase
+          .from('batches')
+          .select('id, batch_name, nickname, course_type')
+          .eq('course_type', 'SAT')
+          .ilike('teacher', `%${teacherName}%`)
+          .order('start_date', { ascending: false }),
+        supabase.rpc('get_batch_completion_status', { teacher_name: teacherName }),
+      ]);
+      const completed = new Set(
+        ((completion ?? []) as Array<{ batch_id: string; is_completed: boolean }>)
+          .filter((c) => c.is_completed)
+          .map((c) => c.batch_id)
+      );
+      setBatches(
+        (data ?? [])
+          .filter((b: any) => !completed.has(b.id))
+          .map((b: any) => ({ id: b.id, label: b.nickname || b.batch_name || 'Class' }))
+      );
+    })();
+  }, [open, teacherName]);
+
 
   useEffect(() => {
     if (!open) return;
