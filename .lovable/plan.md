@@ -1,61 +1,56 @@
-## Goal
+# Hide BBK questions from student practice + rebuild the 68 exam as a QR flow
 
-A new **Test** tab in the teacher dashboard's Practice section that runs a timed 22-question class test drawn from the hardest problems in the 68 set, auto-pushed to every logged-in student in the chosen class, with live monitoring and post-test analytics for the teacher and an instant score for the student.
+## Part 1 — BBK questions out of student practice
 
-## Teacher flow
+The 50 questions coded `BBK0001`–`BBK0050` currently live inside the `68` question set, so they show up in the student 68 set, smart/adaptive practice, speed mode, challenges, review queue and set progress counts.
 
-1. Practice → **Test** tab → "Start 68 Test".
-2. Setup dialog:
-   - Duration (preset chips 20 / 30 / 45 min + custom)
-   - Start time (Now, or in 1/5/10 min, or pick a time)
-   - Class picker (their batches)
-   - Preview of the auto-selected 22 questions (accuracy % and avg time per question shown)
-3. Confirm → test is created in `scheduled` state; teacher lands on a **live monitor** screen: who joined, who is in progress, live answered counts, focus-loss flags, countdown.
-4. When time expires (or teacher taps "End now"), the test flips to `finished` and results appear.
+Approach: add a `hide_from_practice` flag on questions, set it to true for all `BBK%` codes, and filter on it in every student-facing question query. They stay fully usable in the admin question bank and in published practice tests (Bluebook module builder / exams), which do not apply the filter.
 
-## Student flow
+Student-side paths that get the filter:
 
-1. Any logged-in student whose account links to that class gets a full-screen takeover: "Your teacher started a 68 Test — starting in Xs" with a countdown.
-2. At T-0 the test opens automatically:
-   - **Mobile**: one question per screen, big tap targets, bottom sheet for the question grid, sticky slim timer.
-   - **Tablet/desktop**: two-pane layout, question grid rail, focus lock on.
-   - Free navigation: skip, flag, revisit, change answers until time is up.
-3. Subtle timer top-center; turns amber at 5 min, red at 1 min.
-4. Auto-submit on timeout; manual "Submit test" with confirm.
-5. Result screen: **X / 22**, accuracy, avg time per question, per-question correct/incorrect list (no answer reveal, per existing practice rules).
+- 68 / 800 / CollegeBoard set browsing and the question navigator
+- Smart (adaptive) practice selection
+- Speed mode and speed sessions
+- Challenges question pool
+- Review queue and set progress / mastery counts
+- The hardest-questions picker used by the class exam
 
-## Question selection
+Set-progress totals will drop by 49 for the 68 set, which is correct — students never see those items.
 
-Computed at test creation from live `student_attempts` joined to `questions` where `question_set = '68'`:
+## Part 2 — 68 exam: QR + phone entry flow
 
-- Rank by a difficulty score combining low first-attempt accuracy and high avg `time_spent_seconds` (z-scored, weighted 60% accuracy / 40% time), minimum attempt threshold so noisy questions don't win.
-- Top 22 are snapshotted into the test row so the set is frozen for that test even if stats shift mid-test.
+The auto-takeover for logged-in students is removed. New flow:
 
-## Focus lock (tablet/desktop only)
+**Teacher**
+1. Dashboard dock → Test → choose duration + class (own active SAT classes only) → Start.
+2. A full-screen **join screen** appears: large QR code plus a short join code, class name, question count, duration, and a live roster of who has joined.
+3. Teacher taps "Start exam" (or the scheduled start time hits) — everyone who joined moves into the exam together. Late scanners can still join while the exam is running; their clock ends with the class clock.
+4. Live monitor and results screens stay as they are today (per-student score, accuracy, avg speed, focus flags, class trends).
 
-Reuses the existing security wrapper pattern: on tab blur / visibility change the screen blurs with a "Return to your test" overlay, a warning toast fires, and each violation is logged to the attempt row. The teacher's results view shows a flag count per student. No auto-submit.
-
-## Teacher results
-
-- **Overall**: class average score /22, accuracy %, avg time per question, score distribution, hardest questions for this class (per-question accuracy bars).
-- **Per student**: score, accuracy, avg speed, time used, focus-loss flags, per-question breakdown; sortable table plus a comparison against the class average.
+**Student**
+1. Scans the QR → public page, no login required.
+2. Enters phone number → checked against the students enrolled in that class. If it does not match, a clear "this number isn't in this class" message; if it matches, their result is linked to their student account for analytics.
+3. Waiting screen until the teacher starts, then the exam opens: one question per screen on mobile, two-pane with question rail on tablet/desktop, question grid, flagging, subtle timer that turns amber at 5 min and red at 1 min, and the **Desmos calculator** available exactly like in normal practice.
+4. Focus lock on tablet/desktop (blur overlay, violations logged); auto-submit at time up.
+5. Score screen: X / 22, accuracy, avg time per question, per-question correct/incorrect list, no answer reveal.
 
 ## Technical notes
 
-New tables (with GRANTs + RLS, teacher/admin write, student read-own):
+Database:
 
-- `class_tests` — batch_id, teacher, title, question_ids (jsonb snapshot), duration_seconds, starts_at, status (scheduled/active/finished/cancelled), created/finished timestamps.
-- `class_test_participants` — test_id, student_account_id, joined_at, submitted_at, score, correct_count, total_time_ms, focus_violations.
-- `class_test_answers` — test_id, participant_id, question_id, selected_answer, is_correct, time_ms, flagged.
-
-Realtime is enabled on `class_tests` and `class_test_participants` so the auto-push, countdown, and live monitor all react instantly.
-
-A DB function picks the hardest 22 (security definer, teacher/admin only) so the ranking runs server-side over the full attempt history rather than in the browser.
+- `questions.hide_from_practice boolean not null default false`; set true where `question_id like 'BBK%'`. `pick_hardest_questions` gains the same exclusion.
+- `class_tests`: add `join_code` (short unique code per test) and `opens_at` handling so "scheduled" means "waiting in lobby" rather than a fixed countdown.
+- `class_test_participants`: add `phone` and make `student_account_id` nullable-but-resolved, so a QR joiner is matched to their account by phone.
+- New security-definer RPCs callable by `anon`, scoped to a single test id/join code so nothing else is exposed:
+  - `class_test_join(join_code, phone)` → validates the phone is enrolled in that test's batch, creates/returns the participant row plus test metadata.
+  - `class_test_questions(participant_token)` → returns the frozen question list without answers.
+  - `class_test_submit_answer(...)` / `class_test_submit(...)` → grade server-side so answers are never sent to the browser.
+- Grants + RLS written so anonymous access exists only through those RPCs, never via direct table reads.
 
 Frontend:
 
-- `src/components/teacher/practice/test/` — `TeacherTestTab`, `StartTestDialog`, `TestLiveMonitor`, `TestResults` (overall + per-student).
-- `src/components/student/test/` — a global `ActiveClassTestWatcher` mounted in the student shell (so the takeover works from any page), `TestCountdownOverlay`, `ClassTestRunner` (responsive), `TestResultScreen`.
-- New tab wired into `TeacherPracticeHub` next to Browse / Live Session / Flagged.
-
-The design stays inside the existing coral/indigo token system — no new hardcoded colors.
+- New public route `/exam/:joinCode` → `src/pages/public/ClassTestJoin.tsx` (phone entry + lobby) which then renders the exam runner.
+- `ClassTestRunner` refactored to work from RPC data instead of a logged-in student session, with the Desmos calculator mounted the same way as `StudentQuestion`.
+- Teacher side: new `TestJoinScreen` (QR + roster + start button) inserted between `StartTestDialog` and `TestLiveMonitor`.
+- `ActiveClassTestWatcher` removed from the student shell.
+- QR rendered client-side with a small QR library (no external image service).
