@@ -130,6 +130,7 @@ export default function StudentQuestion() {
           .select('id, question_id')
           .eq('is_original', true)
           .eq('is_active', true)
+          .eq('hide_from_practice', false)
           .order('question_id')
           .range(from, from + PAGE - 1);
         if (error) throw error;

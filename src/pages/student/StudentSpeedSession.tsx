@@ -134,6 +134,7 @@ export default function StudentSpeedSession() {
           category:question_categories(name)
         `)
         .eq('is_active', true)
+        .eq('hide_from_practice', false)
         .eq('subject', subject);
 
       // English bypasses is_original filter (per question-bank spec)

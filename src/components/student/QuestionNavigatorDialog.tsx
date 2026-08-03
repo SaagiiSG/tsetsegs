@@ -97,6 +97,7 @@ export function QuestionNavigatorDialog({
         .from('questions')
         .select('id, question_id, question_set')
         .eq('is_active', true)
+        .eq('hide_from_practice', false)
         .eq('subject', subject);
       
       // For 68 set: include ALL questions (no is_original filter)

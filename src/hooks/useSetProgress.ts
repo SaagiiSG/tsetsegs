@@ -31,6 +31,7 @@ async function countSet(
       .from('questions')
       .select('id')
       .eq('is_active', true)
+      .eq('hide_from_practice', false)
       .range(from, from + pageSize - 1);
     if (typeof questionSet === 'string') {
       q = q.eq('question_set', questionSet);

@@ -279,7 +279,8 @@ export default function StudentSpeedMode() {
         .from('questions')
         .select('category_id, subject, category:question_categories(id, name)')
         .eq('is_original', true)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('hide_from_practice', false);
       if (error) throw error;
 
       const mathCategories: { id: string; name: string }[] = [];
