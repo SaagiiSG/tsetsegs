@@ -1027,7 +1027,9 @@ export type Database = {
           focus_violations: number
           id: string
           joined_at: string
-          student_account_id: string
+          linked_student_id: string | null
+          phone: string | null
+          student_account_id: string | null
           submitted_at: string | null
           test_id: string
           total_time_ms: number
@@ -1039,7 +1041,9 @@ export type Database = {
           focus_violations?: number
           id?: string
           joined_at?: string
-          student_account_id: string
+          linked_student_id?: string | null
+          phone?: string | null
+          student_account_id?: string | null
           submitted_at?: string | null
           test_id: string
           total_time_ms?: number
@@ -1051,7 +1055,9 @@ export type Database = {
           focus_violations?: number
           id?: string
           joined_at?: string
-          student_account_id?: string
+          linked_student_id?: string | null
+          phone?: string | null
+          student_account_id?: string | null
           submitted_at?: string | null
           test_id?: string
           total_time_ms?: number
@@ -1080,6 +1086,7 @@ export type Database = {
           duration_seconds: number
           finished_at: string | null
           id: string
+          join_code: string | null
           question_ids: Json
           question_set: string
           starts_at: string
@@ -1093,6 +1100,7 @@ export type Database = {
           duration_seconds?: number
           finished_at?: string | null
           id?: string
+          join_code?: string | null
           question_ids?: Json
           question_set?: string
           starts_at?: string
@@ -1106,6 +1114,7 @@ export type Database = {
           duration_seconds?: number
           finished_at?: string | null
           id?: string
+          join_code?: string | null
           question_ids?: Json
           question_set?: string
           starts_at?: string
@@ -2228,6 +2237,7 @@ export type Database = {
           figure_svg: string | null
           figure_type: string | null
           has_figure: boolean | null
+          hide_from_practice: boolean
           id: string
           is_active: boolean
           is_original: boolean
@@ -2258,6 +2268,7 @@ export type Database = {
           figure_svg?: string | null
           figure_type?: string | null
           has_figure?: boolean | null
+          hide_from_practice?: boolean
           id?: string
           is_active?: boolean
           is_original?: boolean
@@ -2288,6 +2299,7 @@ export type Database = {
           figure_svg?: string | null
           figure_type?: string | null
           has_figure?: boolean | null
+          hide_from_practice?: boolean
           id?: string
           is_active?: boolean
           is_original?: boolean
@@ -4164,6 +4176,20 @@ export type Database = {
         Returns: {
           bytes: number
           pretty: string
+        }[]
+      }
+      class_test_join: {
+        Args: { p_join_code: string; p_phone: string }
+        Returns: {
+          display_name: string
+          duration_seconds: number
+          participant_id: string
+          question_ids: Json
+          starts_at: string
+          status: string
+          submitted_at: string
+          test_id: string
+          title: string
         }[]
       }
       current_student_account_id: { Args: never; Returns: string }
