@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MathText } from '@/components/MathText';
 import { Button } from '@/components/ui/button';
@@ -14,9 +13,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Flag, Grid3X3, Loader2, EyeOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Grid3X3, Loader2, EyeOff, Calculator } from 'lucide-react';
+import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import type { ClassTest } from '@/hooks/useClassTest';
 import { ClassTestResultScreen } from './ClassTestResultScreen';
+
 
 interface QuestionRow {
   id: string;
