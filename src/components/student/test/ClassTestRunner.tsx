@@ -277,6 +277,7 @@ export function ClassTestRunner({
 
   return (
     <div className="fixed inset-0 z-[70] bg-background flex flex-col">
+      <DesmosCalculator />
       {/* top bar */}
       <div className="border-b px-3 py-2 flex items-center gap-3">
         <div className="min-w-0 flex-1">
@@ -286,6 +287,10 @@ export function ClassTestRunner({
           </div>
         </div>
         <div className={cn('font-mono text-sm tabular-nums', timerTone)}>{fmt(remaining)}</div>
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleCalculator()} aria-label="Calculator">
+          <Calculator className="h-4 w-4" />
+        </Button>
+
         {isMobile ? (
           <Sheet open={gridOpen} onOpenChange={setGridOpen}>
             <SheetTrigger asChild>
