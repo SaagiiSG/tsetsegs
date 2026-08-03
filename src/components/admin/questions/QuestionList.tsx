@@ -22,8 +22,9 @@ interface QuestionListProps {
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
   const [search, setSearch] = useState('');
-  const isInlineSearch = questionSet === '150';
-  const serverSearch = isInlineSearch ? '' : search.trim();
+  // Search is always client-side (inline) so typing never refetches from the server
+  const isInlineSearch = true;
+  const serverSearch = '';
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [figureFilter, setFigureFilter] = useState(false);
