@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, useMotionValue, animate, PanInfo, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, MoreHorizontal, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -39,9 +39,11 @@ interface Props {
   activeMode: DashboardMode;
   onChange: (m: DashboardMode) => void;
   onOpenHandbook: () => void;
+  onOpenTests?: () => void;
 }
 
-export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props) {
+
+export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTests }: Props) {
   const [anchor, setAnchor] = useState<DockAnchor>(() => loadAnchor());
   const [expanded, setExpanded] = useState(false);
   const x = useMotionValue(0);
@@ -165,6 +167,29 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook }: Props)
                   <div key={mode}>{btn}</div>
                 );
               })}
+              {onOpenTests && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn("h-9 rounded-full gap-2 text-xs", isVertical ? "px-3 md:w-9 md:px-0" : "px-3")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenTests();
+                      }}
+                      aria-label="Class tests"
+                    >
+                      <ClipboardList className="h-4 w-4 shrink-0" />
+                      <span className={isVertical ? "hidden" : "hidden sm:inline"}>Test</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={isVertical ? (anchor === "left" ? "right" : "left") : "top"}>
+                    Class tests
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {isCorner && (
                 <Button
                   variant="ghost"
