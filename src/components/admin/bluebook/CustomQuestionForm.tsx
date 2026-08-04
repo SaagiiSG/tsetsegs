@@ -414,11 +414,17 @@ const CustomQuestionForm = ({
           ? { A: options.A, B: options.B, C: options.C, D: options.D }
           : null;
 
+      const cleanedAlternates =
+        questionType === "fill_in"
+          ? alternateAnswers.map((a) => a.trim()).filter(Boolean)
+          : [];
+
       const { error } = await supabase
         .from("questions")
         .update({
           question_text: questionText,
           answer: answer.trim(),
+          alternate_answers: cleanedAlternates.length ? cleanedAlternates : null,
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
