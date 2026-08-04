@@ -109,6 +109,7 @@ const CustomQuestionForm = ({
   const reset = () => {
     setQuestionText("");
     setAnswer("");
+    setAlternateAnswers([]);
     setPassage("");
     setOptions({ A: "", B: "", C: "", D: "" });
     setQuestionType("multiple_choice");
