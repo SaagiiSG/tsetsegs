@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTeacherAuth } from '@/contexts/TeacherAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface TestRow {
 }
 
 export function TeacherTestTab() {
+  const { teacherName } = useTeacherAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [lobby, setLobby] = useState<{ id: string; code: string } | null>(null);
@@ -29,27 +31,34 @@ export function TeacherTestTab() {
   const [tests, setTests] = useState<TestRow[]>([]);
 
   const load = async () => {
+    if (!teacherName) {
+      setTests([]);
+      return;
+    }
+    // Only this teacher's classes
+    const { data: myBatches } = await supabase
+      .from('batches')
+      .select('id, batch_name, nickname')
+      .ilike('teacher', `%${teacherName}%`);
+    const labels = new Map((myBatches ?? []).map((b: any) => [b.id, b.nickname || b.batch_name || 'Class']));
+    const ids = Array.from(labels.keys());
+    if (ids.length === 0) {
+      setTests([]);
+      return;
+    }
     const { data } = await supabase
       .from('class_tests')
       .select('id, join_code, title, status, starts_at, duration_seconds, batch_id')
+      .in('batch_id', ids)
       .order('created_at', { ascending: false })
       .limit(20);
     const rows = (data ?? []) as TestRow[];
-    if (rows.length > 0) {
-      const { data: bs } = await supabase
-        .from('batches')
-        .select('id, batch_name, nickname')
-        .in('id', Array.from(new Set(rows.map((r) => r.batch_id))));
-      const labels = new Map((bs ?? []).map((b: any) => [b.id, b.nickname || b.batch_name || 'Class']));
-      setTests(rows.map((r) => ({ ...r, batch_label: labels.get(r.batch_id) })));
-    } else {
-      setTests([]);
-    }
+    setTests(rows.map((r) => ({ ...r, batch_label: labels.get(r.batch_id) })));
   };
 
   useEffect(() => {
     load();
-  }, [monitorId, resultsId, dialogOpen, lobby]);
+  }, [monitorId, resultsId, dialogOpen, lobby, teacherName]);
 
   if (lobby) {
     return (
