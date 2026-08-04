@@ -575,14 +575,28 @@ const CustomQuestionForm = ({
                     })}
                   </div>
                 ) : (
-                  <div className="text-xs">
-                    <span className="text-muted-foreground">Answer: </span>
-                    {answer ? (
-                      <span className="font-mono font-semibold text-emerald-600">
-                        <MathText text={answer} />
-                      </span>
-                    ) : (
-                      <span className="italic text-muted-foreground">not set</span>
+                  <div className="space-y-1">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Answer: </span>
+                      {answer ? (
+                        <span className="font-mono font-semibold text-emerald-600">
+                          <MathText text={answer} />
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground">not set</span>
+                      )}
+                    </div>
+                    {alternateAnswers.filter((a) => a.trim()).length > 0 && (
+                      <div className="text-xs flex flex-wrap items-center gap-1">
+                        <span className="text-muted-foreground">Also accepted: </span>
+                        {alternateAnswers
+                          .filter((a) => a.trim())
+                          .map((a, i) => (
+                            <Badge key={i} variant="outline" className="font-mono text-[10px]">
+                              <MathText text={a} />
+                            </Badge>
+                          ))}
+                      </div>
                     )}
                   </div>
                 )}
