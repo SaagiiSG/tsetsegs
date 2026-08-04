@@ -135,6 +135,11 @@ const CustomQuestionForm = ({
     setQuestionText(q.question_text ?? "");
     setPassage(q.passage_text ?? "");
     setAnswer(q.answer ?? "");
+    setAlternateAnswers(
+      Array.isArray(q.alternate_answers)
+        ? (q.alternate_answers as any[]).map((a) => String(a))
+        : []
+    );
     const isFill = q.question_type === "fill_blank" || q.question_type === "fill_in";
     setQuestionType(isFill ? "fill_in" : "multiple_choice");
 
