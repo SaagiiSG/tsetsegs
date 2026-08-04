@@ -45,6 +45,7 @@ const CustomQuestionForm = ({
 
   const [questionText, setQuestionText] = useState("");
   const [answer, setAnswer] = useState("");
+  const [alternateAnswers, setAlternateAnswers] = useState<string[]>([]);
   const [passage, setPassage] = useState("");
   const [options, setOptions] = useState({ A: "", B: "", C: "", D: "" });
   const [questionType, setQuestionType] = useState<"multiple_choice" | "fill_in">(
