@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil } from "lucide-react";
+import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
 import { MathText } from "@/components/MathText";
@@ -45,6 +45,7 @@ const CustomQuestionForm = ({
 
   const [questionText, setQuestionText] = useState("");
   const [answer, setAnswer] = useState("");
+  const [alternateAnswers, setAlternateAnswers] = useState<string[]>([]);
   const [passage, setPassage] = useState("");
   const [options, setOptions] = useState({ A: "", B: "", C: "", D: "" });
   const [questionType, setQuestionType] = useState<"multiple_choice" | "fill_in">(
@@ -108,6 +109,7 @@ const CustomQuestionForm = ({
   const reset = () => {
     setQuestionText("");
     setAnswer("");
+    setAlternateAnswers([]);
     setPassage("");
     setOptions({ A: "", B: "", C: "", D: "" });
     setQuestionType("multiple_choice");
@@ -133,6 +135,11 @@ const CustomQuestionForm = ({
     setQuestionText(q.question_text ?? "");
     setPassage(q.passage_text ?? "");
     setAnswer(q.answer ?? "");
+    setAlternateAnswers(
+      Array.isArray(q.alternate_answers)
+        ? (q.alternate_answers as any[]).map((a) => String(a))
+        : []
+    );
     const isFill = q.question_type === "fill_blank" || q.question_type === "fill_in";
     setQuestionType(isFill ? "fill_in" : "multiple_choice");
 
@@ -317,12 +324,18 @@ const CustomQuestionForm = ({
 
       const dbType = questionType === "fill_in" ? "fill_blank" : "multiple_choice";
 
+      const cleanedAlternates =
+        questionType === "fill_in"
+          ? alternateAnswers.map((a) => a.trim()).filter(Boolean)
+          : [];
+
       const { data: newQ, error: qErr } = await supabase
         .from("questions")
         .insert({
           question_id: newQid,
           question_text: questionText,
           answer: answer.trim(),
+          alternate_answers: cleanedAlternates.length ? cleanedAlternates : null,
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
@@ -401,11 +414,17 @@ const CustomQuestionForm = ({
           ? { A: options.A, B: options.B, C: options.C, D: options.D }
           : null;
 
+      const cleanedAlternates =
+        questionType === "fill_in"
+          ? alternateAnswers.map((a) => a.trim()).filter(Boolean)
+          : [];
+
       const { error } = await supabase
         .from("questions")
         .update({
           question_text: questionText,
           answer: answer.trim(),
+          alternate_answers: cleanedAlternates.length ? cleanedAlternates : null,
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
@@ -556,14 +575,28 @@ const CustomQuestionForm = ({
                     })}
                   </div>
                 ) : (
-                  <div className="text-xs">
-                    <span className="text-muted-foreground">Answer: </span>
-                    {answer ? (
-                      <span className="font-mono font-semibold text-emerald-600">
-                        <MathText text={answer} />
-                      </span>
-                    ) : (
-                      <span className="italic text-muted-foreground">not set</span>
+                  <div className="space-y-1">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Answer: </span>
+                      {answer ? (
+                        <span className="font-mono font-semibold text-emerald-600">
+                          <MathText text={answer} />
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground">not set</span>
+                      )}
+                    </div>
+                    {alternateAnswers.filter((a) => a.trim()).length > 0 && (
+                      <div className="text-xs flex flex-wrap items-center gap-1">
+                        <span className="text-muted-foreground">Also accepted: </span>
+                        {alternateAnswers
+                          .filter((a) => a.trim())
+                          .map((a, i) => (
+                            <Badge key={i} variant="outline" className="font-mono text-[10px]">
+                              <MathText text={a} />
+                            </Badge>
+                          ))}
+                      </div>
                     )}
                   </div>
                 )}
@@ -810,6 +843,65 @@ const CustomQuestionForm = ({
           />
         )}
       </div>
+
+      {/* Alternate accepted answers (fill-in only) */}
+      {questionType === "fill_in" && (
+        <div className="rounded-lg border overflow-hidden">
+          <div className="bg-muted/50 px-3 py-2 border-b flex items-center justify-between gap-2">
+            <div>
+              <span className="text-sm font-medium">Alternate Correct Answers</span>
+              <p className="text-xs text-muted-foreground">
+                Equivalent forms students may type (e.g. 0.5 and 1/2)
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={alternateAnswers.length >= 4}
+              onClick={() => setAlternateAnswers((prev) => [...prev, ""])}
+            >
+              <Plus className="h-3 w-3" /> Add
+            </Button>
+          </div>
+
+          {alternateAnswers.length === 0 ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">
+              No alternates — only the exact answer above will be accepted.
+            </div>
+          ) : (
+            <div className="p-3 space-y-2">
+              {alternateAnswers.map((val, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-4">{index + 1}.</span>
+                  <Input
+                    placeholder="e.g. 1/2 or .5"
+                    value={val}
+                    onChange={(e) =>
+                      setAlternateAnswers((prev) =>
+                        prev.map((v, i) => (i === index ? e.target.value : v))
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() =>
+                      setAlternateAnswers((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
 
       <div className="flex gap-2">
         {isEditing && (
