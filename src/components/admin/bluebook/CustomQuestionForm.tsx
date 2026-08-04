@@ -844,6 +844,65 @@ const CustomQuestionForm = ({
         )}
       </div>
 
+      {/* Alternate accepted answers (fill-in only) */}
+      {questionType === "fill_in" && (
+        <div className="rounded-lg border overflow-hidden">
+          <div className="bg-muted/50 px-3 py-2 border-b flex items-center justify-between gap-2">
+            <div>
+              <span className="text-sm font-medium">Alternate Correct Answers</span>
+              <p className="text-xs text-muted-foreground">
+                Equivalent forms students may type (e.g. 0.5 and 1/2)
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={alternateAnswers.length >= 4}
+              onClick={() => setAlternateAnswers((prev) => [...prev, ""])}
+            >
+              <Plus className="h-3 w-3" /> Add
+            </Button>
+          </div>
+
+          {alternateAnswers.length === 0 ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">
+              No alternates — only the exact answer above will be accepted.
+            </div>
+          ) : (
+            <div className="p-3 space-y-2">
+              {alternateAnswers.map((val, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-4">{index + 1}.</span>
+                  <Input
+                    placeholder="e.g. 1/2 or .5"
+                    value={val}
+                    onChange={(e) =>
+                      setAlternateAnswers((prev) =>
+                        prev.map((v, i) => (i === index ? e.target.value : v))
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() =>
+                      setAlternateAnswers((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+
       <div className="flex gap-2">
         {isEditing && (
           <Button variant="outline" className="flex-1" onClick={() => onCancelEdit?.()}>
