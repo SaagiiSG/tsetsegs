@@ -362,13 +362,22 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }> => {
     try {
-      // First check if phone exists in students table
-      const { data: studentRecords, error: studentError } = await supabase
-        .from('students')
-        .select('id, first_name, phone')
-        .eq('phone', phoneNumber)
-        .limit(1);
+      // Run the roster lookup and the account lookup in parallel — they are
+      // independent, and doing them sequentially doubled the login wait time.
+      const [studentRes, accountRes] = await Promise.all([
+        supabase
+          .from('students')
+          .select('id, first_name, phone')
+          .eq('phone', phoneNumber)
+          .limit(1),
+        supabase
+          .from('student_accounts')
+          .select('*')
+          .eq('phone_number', phoneNumber)
+          .maybeSingle(),
+      ]);
 
+      const { data: studentRecords, error: studentError } = studentRes;
       const studentRecord = studentRecords?.[0] || null;
 
       if (studentError && studentError.code !== 'PGRST116') {
@@ -379,7 +388,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         // Phone not found in students table — check registration_requests
         const { data: existingRequest } = await supabase
           .from('registration_requests')
-          .select('*')
+          .select('status')
           .eq('phone_number', phoneNumber)
           .maybeSingle();
 
@@ -403,12 +412,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: null, needsRegistration: true };
       }
 
-      // Check if student account exists
-      let { data: studentAccount, error: fetchError } = await supabase
-        .from('student_accounts')
-        .select('*')
-        .eq('phone_number', phoneNumber)
-        .maybeSingle();
+      let { data: studentAccount, error: fetchError } = accountRes;
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
