@@ -324,12 +324,18 @@ const CustomQuestionForm = ({
 
       const dbType = questionType === "fill_in" ? "fill_blank" : "multiple_choice";
 
+      const cleanedAlternates =
+        questionType === "fill_in"
+          ? alternateAnswers.map((a) => a.trim()).filter(Boolean)
+          : [];
+
       const { data: newQ, error: qErr } = await supabase
         .from("questions")
         .insert({
           question_id: newQid,
           question_text: questionText,
           answer: answer.trim(),
+          alternate_answers: cleanedAlternates.length ? cleanedAlternates : null,
           passage_text: passage || null,
           multiple_choice_options: mcOptions,
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
