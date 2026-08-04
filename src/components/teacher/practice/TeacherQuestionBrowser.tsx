@@ -56,6 +56,7 @@ export function TeacherQuestionBrowser() {
         .from('questions')
         .select('id, question_id, question_text, question_image_url, difficulty_level, question_type, subject, category:question_categories(name)')
         .eq('is_active', true)
+        .eq('hide_from_practice', false)
         .order('question_id');
 
       if (subject === 'english') {
