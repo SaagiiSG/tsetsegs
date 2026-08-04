@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil } from "lucide-react";
+import { Plus, Loader2, ImagePlus, X, Calculator, Eye, EyeOff, Save, Pencil, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/questions/RichTextEditor";
 import MathQuillEditor from "@/components/admin/questions/MathQuillEditor";
 import { MathText } from "@/components/MathText";
