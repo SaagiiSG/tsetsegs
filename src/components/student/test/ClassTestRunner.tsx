@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MathText } from '@/components/MathText';
@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, Flag, Grid3X3, Loader2, EyeOff, Calculator }
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import type { ClassTest } from '@/hooks/useClassTest';
 import { ClassTestResultScreen } from './ClassTestResultScreen';
+import { ExamTimer } from './ExamTimer';
 
 
 interface QuestionRow {
@@ -30,15 +31,165 @@ interface QuestionRow {
   passage_text: string | null;
 }
 
-function fmt(s: number) {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, '0')}`;
-}
-
 function normalizeFill(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
 }
+
+function isCorrect(q: QuestionRow, value: string) {
+  const isFill = (q.question_type ?? '').includes('fill');
+  return isFill
+    ? normalizeFill(value) === normalizeFill(q.answer ?? '')
+    : value.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
+}
+
+type Option = { key: string; text: string; img?: string };
+
+/** Question body is memoized so only a question change / new pick repaints it. */
+const QuestionBody = memo(function QuestionBody({
+  question,
+  options,
+  picked,
+  isMobile,
+  onPick,
+  onType,
+  nextImage,
+}: {
+  question: QuestionRow;
+  options: Option[];
+  picked: string | undefined;
+  isMobile: boolean;
+  onPick: (q: QuestionRow, key: string) => void;
+  onType: (q: QuestionRow, value: string) => void;
+  nextImage?: string | null;
+}) {
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      {question.passage_text && (
+        <Card className="p-3 text-sm bg-muted/30">
+          <MathText text={question.passage_text} />
+        </Card>
+      )}
+      <div className={cn('font-medium', isMobile ? 'text-base' : 'text-lg')}>
+        <MathText text={question.question_text} />
+      </div>
+      {question.question_image_url && (
+        <img
+          src={question.question_image_url}
+          alt="Question figure"
+          decoding="async"
+          className="rounded-md max-h-72 mx-auto"
+        />
+      )}
+      {/* warm the next figure so navigation feels instant */}
+      {nextImage && <link rel="prefetch" as="image" href={nextImage} />}
+
+      {options.length > 0 ? (
+        <div className="grid gap-2">
+          {options.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => onPick(question, opt.key)}
+              className={cn(
+                'w-full text-left rounded-lg border p-3 flex gap-3 items-start transition-colors',
+                isMobile && 'p-4',
+                picked === opt.key ? 'border-primary bg-primary/10' : 'hover:bg-muted/50',
+              )}
+            >
+              <span className="font-bold shrink-0">{opt.key}.</span>
+              <span className="flex-1 min-w-0 space-y-2">
+                <MathText text={opt.text} />
+                {opt.img && <img src={opt.img} alt={`Choice ${opt.key}`} loading="lazy" decoding="async" className="max-h-40 rounded" />}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <FillInInput
+          key={question.id}
+          question={question}
+          initial={picked ?? ''}
+          isMobile={isMobile}
+          onCommit={onType}
+        />
+      )}
+    </div>
+  );
+});
+
+/** Keeps keystrokes local and debounces the save so typing never repaints the screen. */
+function FillInInput({
+  question,
+  initial,
+  isMobile,
+  onCommit,
+}: {
+  question: QuestionRow;
+  initial: string;
+  isMobile: boolean;
+  onCommit: (q: QuestionRow, value: string) => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const schedule = (v: string) => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (v.trim()) onCommit(question, v);
+    }, 600);
+  };
+
+  return (
+    <Input
+      inputMode="text"
+      placeholder="Type your answer"
+      value={value}
+      onChange={(e) => {
+        setValue(e.target.value);
+        schedule(e.target.value);
+      }}
+      onBlur={() => {
+        clearTimeout(timerRef.current);
+        if (value.trim()) onCommit(question, value);
+      }}
+      className={cn(isMobile && 'h-12 text-base')}
+    />
+  );
+}
+
+const QuestionGrid = memo(function QuestionGrid({
+  ids,
+  answered,
+  flagged,
+  cursor,
+  onGoto,
+}: {
+  ids: string[];
+  answered: string;
+  flagged: string;
+  cursor: number;
+  onGoto: (i: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+      {ids.map((id, i) => (
+        <button
+          key={id}
+          onClick={() => onGoto(i)}
+          className={cn(
+            'h-9 rounded-md text-xs font-semibold border transition-colors',
+            i === cursor && 'ring-2 ring-primary',
+            answered[i] === '1' ? 'bg-primary/15 border-primary/40' : 'bg-muted/40',
+            flagged[i] === '1' && 'border-amber-500',
+          )}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+  );
+});
 
 export function ClassTestRunner({
   test,
@@ -64,28 +215,40 @@ export function ClassTestRunner({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [blurred, setBlurred] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
+  const [calcMounted, setCalcMounted] = useState(false);
   const questionStartRef = useRef<number>(Date.now());
   const violationsRef = useRef(0);
   const submittingRef = useRef(false);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const flagsRef = useRef(flags);
+  flagsRef.current = flags;
+  // serialize background writes so rapid taps can't overlap
+  const writeChainRef = useRef<Promise<unknown>>(Promise.resolve());
 
   const endsAt = useMemo(
     () => new Date(test.starts_at).getTime() + test.duration_seconds * 1000,
     [test.starts_at, test.duration_seconds],
   );
-  const [remaining, setRemaining] = useState(() => Math.max(0, Math.floor((endsAt - Date.now()) / 1000)));
 
-  /* ---------- load questions ---------- */
+  /* ---------- load questions (keyed on a stable id string, not the array ref) ---------- */
+  const idsKey = useMemo(() => (test.question_ids as string[]).join(','), [test.question_ids]);
+  const loadedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (test.question_ids.length === 0) return;
+    if (!idsKey) return;
+    if (loadedKeyRef.current === idsKey) return;
+    loadedKeyRef.current = idsKey;
+    const ids = idsKey.split(',');
     supabase
       .from('questions')
       .select('id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
-      .in('id', test.question_ids)
+      .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
-        setQuestions(test.question_ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[]);
+        setQuestions(ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[]);
       });
-  }, [test.question_ids]);
+  }, [idsKey]);
 
   /* ---------- restore any answers this participant already saved ---------- */
   useEffect(() => {
@@ -114,45 +277,38 @@ export function ClassTestRunner({
   }, [participantId]);
 
 
-  /* ---------- timer ---------- */
+  /* ---------- submit ---------- */
   const submitTest = useCallback(async (auto = false) => {
     if (submittingRef.current || !participantId) return;
     submittingRef.current = true;
+    const current = answersRef.current;
     const correct = questions.reduce((acc, q) => {
-      const given = answers[q.id];
-      if (!given) return acc;
-      const isFill = (q.question_type ?? '').includes('fill');
-      const ok = isFill
-        ? normalizeFill(given) === normalizeFill(q.answer ?? '')
-        : given.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
-      return acc + (ok ? 1 : 0);
+      const given = current[q.id];
+      return acc + (given && isCorrect(q, given) ? 1 : 0);
     }, 0);
+    // let any queued answer writes land first so counts match
+    await writeChainRef.current.catch(() => {});
     await supabase
       .from('class_test_participants')
       .update({
         submitted_at: new Date().toISOString(),
         correct_count: correct,
-        answered_count: Object.keys(answers).length,
+        answered_count: Object.keys(current).length,
         focus_violations: violationsRef.current,
       })
       .eq('id', participantId);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions, answers]);
+  }, [participantId, questions]);
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
     if (ended && !submitted) submitTest(true);
   }, [ended, submitted, submitTest]);
 
-  useEffect(() => {
-    const t = setInterval(() => {
-      const r = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
-      setRemaining(r);
-      if (r === 0 && !submitted) submitTest(true);
-    }, 500);
-    return () => clearInterval(t);
-  }, [endsAt, submitted, submitTest]);
+  const handleExpire = useCallback(() => {
+    if (!submitted) submitTest(true);
+  }, [submitted, submitTest]);
 
 
   /* ---------- focus lock (tablet / desktop only) ---------- */
@@ -182,8 +338,8 @@ export function ClassTestRunner({
 
   const current = questions[cursor];
 
-  const options = useMemo(() => {
-    if (!current?.multiple_choice_options) return [] as Array<{ key: string; text: string; img?: string }>;
+  const options = useMemo<Option[]>(() => {
+    if (!current?.multiple_choice_options) return [];
     const raw = current.multiple_choice_options;
     const imgs = (current.choice_images ?? {}) as Record<string, string>;
     if (Array.isArray(raw)) {
@@ -195,38 +351,52 @@ export function ClassTestRunner({
     return Object.entries(raw).map(([k, v]) => ({ key: k, text: String(v), img: imgs?.[k] }));
   }, [current]);
 
-  const saveAnswer = useCallback(async (q: QuestionRow, value: string) => {
-    setAnswers((a) => ({ ...a, [q.id]: value }));
+  /** Instant local update; persistence runs in the background (never awaited on tap). */
+  const saveAnswer = useCallback((q: QuestionRow, value: string) => {
+    setAnswers((a) => (a[q.id] === value ? a : { ...a, [q.id]: value }));
     if (!participantId) return;
-    const isFill = (q.question_type ?? '').includes('fill');
-    const ok = isFill
-      ? normalizeFill(value) === normalizeFill(q.answer ?? '')
-      : value.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
     const timeMs = Date.now() - questionStartRef.current;
-    await supabase.from('class_test_answers').upsert(
-      {
-        test_id: test.id,
-        participant_id: participantId,
-        question_id: q.id,
-        selected_answer: value,
-        is_correct: ok,
-        time_ms: timeMs,
-        flagged: !!flags[q.id],
-      },
-      { onConflict: 'participant_id,question_id' },
-    );
-    await supabase
-      .from('class_test_participants')
-      .update({ answered_count: Object.keys({ ...answers, [q.id]: value }).length })
-      .eq('id', participantId);
-  }, [participantId, test.id, flags, answers]);
+    const nextCount = Object.keys({ ...answersRef.current, [q.id]: value }).length;
+    writeChainRef.current = writeChainRef.current
+      .catch(() => {})
+      .then(() =>
+        Promise.all([
+          supabase.from('class_test_answers').upsert(
+            {
+              test_id: test.id,
+              participant_id: participantId,
+              question_id: q.id,
+              selected_answer: value,
+              is_correct: isCorrect(q, value),
+              time_ms: timeMs,
+              flagged: !!flagsRef.current[q.id],
+            },
+            { onConflict: 'participant_id,question_id' },
+          ),
+          supabase.from('class_test_participants').update({ answered_count: nextCount }).eq('id', participantId),
+        ]),
+      )
+      .catch(() => {});
+  }, [participantId, test.id]);
 
-  const goto = (i: number) => {
-    if (i < 0 || i >= questions.length) return;
-    questionStartRef.current = Date.now();
-    setCursor(i);
+  const goto = useCallback((i: number) => {
+    setCursor((prev) => {
+      if (i < 0 || i >= questions.length) return prev;
+      questionStartRef.current = Date.now();
+      return i;
+    });
     setGridOpen(false);
-  };
+  }, [questions.length]);
+
+  const openCalculator = useCallback(() => {
+    if (!calcMounted) {
+      setCalcMounted(true);
+      // let the calculator mount its listener before toggling it open
+      setTimeout(() => toggleCalculator(), 0);
+      return;
+    }
+    toggleCalculator();
+  }, [calcMounted]);
 
   if (submitted) {
     return (
@@ -250,34 +420,17 @@ export function ClassTestRunner({
   }
 
   const answeredCount = Object.keys(answers).length;
-  const timerTone =
-    remaining <= 60 ? 'text-destructive' : remaining <= 300 ? 'text-amber-500' : 'text-muted-foreground';
+  const ids = questions.map((q) => q.id);
+  const answeredMask = questions.map((q) => (answers[q.id] ? '1' : '0')).join('');
+  const flaggedMask = questions.map((q) => (flags[q.id] ? '1' : '0')).join('');
 
   const grid = (
-    <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
-      {questions.map((q, i) => {
-        const done = !!answers[q.id];
-        return (
-          <button
-            key={q.id}
-            onClick={() => goto(i)}
-            className={cn(
-              'h-9 rounded-md text-xs font-semibold border transition-colors',
-              i === cursor && 'ring-2 ring-primary',
-              done ? 'bg-primary/15 border-primary/40' : 'bg-muted/40',
-              flags[q.id] && 'border-amber-500',
-            )}
-          >
-            {i + 1}
-          </button>
-        );
-      })}
-    </div>
+    <QuestionGrid ids={ids} answered={answeredMask} flagged={flaggedMask} cursor={cursor} onGoto={goto} />
   );
 
   return (
     <div className="fixed inset-0 z-[70] bg-background flex flex-col">
-      <DesmosCalculator />
+      {calcMounted && <DesmosCalculator />}
       {/* top bar */}
       <div className="border-b px-3 py-2 flex items-center gap-3">
         <div className="min-w-0 flex-1">
@@ -286,8 +439,8 @@ export function ClassTestRunner({
             Question {cursor + 1} of {questions.length}
           </div>
         </div>
-        <div className={cn('font-mono text-sm tabular-nums', timerTone)}>{fmt(remaining)}</div>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleCalculator()} aria-label="Calculator">
+        <ExamTimer endsAt={endsAt} paused={submitted} onExpire={handleExpire} />
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={openCalculator} aria-label="Calculator">
           <Calculator className="h-4 w-4" />
         </Button>
 
@@ -312,53 +465,15 @@ export function ClassTestRunner({
       <div className="flex-1 min-h-0 flex">
         {/* question pane */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto w-full max-w-2xl space-y-4">
-            {current.passage_text && (
-              <Card className="p-3 text-sm bg-muted/30">
-                <MathText text={current.passage_text} />
-              </Card>
-            )}
-            <div className={cn('font-medium', isMobile ? 'text-base' : 'text-lg')}>
-              <MathText text={current.question_text} />
-            </div>
-            {current.question_image_url && (
-              <img src={current.question_image_url} alt="Question figure" className="rounded-md max-h-72 mx-auto" />
-            )}
-
-            {options.length > 0 ? (
-              <div className="grid gap-2">
-                {options.map((opt) => {
-                  const picked = answers[current.id] === opt.key;
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => saveAnswer(current, opt.key)}
-                      className={cn(
-                        'w-full text-left rounded-lg border p-3 flex gap-3 items-start transition-colors',
-                        isMobile && 'p-4',
-                        picked ? 'border-primary bg-primary/10' : 'hover:bg-muted/50',
-                      )}
-                    >
-                      <span className="font-bold shrink-0">{opt.key}.</span>
-                      <span className="flex-1 min-w-0 space-y-2">
-                        <MathText text={opt.text} />
-                        {opt.img && <img src={opt.img} alt={`Choice ${opt.key}`} className="max-h-40 rounded" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <Input
-                inputMode="text"
-                placeholder="Type your answer"
-                value={answers[current.id] ?? ''}
-                onChange={(e) => setAnswers((a) => ({ ...a, [current.id]: e.target.value }))}
-                onBlur={(e) => e.target.value && saveAnswer(current, e.target.value)}
-                className={cn(isMobile && 'h-12 text-base')}
-              />
-            )}
-          </div>
+          <QuestionBody
+            question={current}
+            options={options}
+            picked={answers[current.id]}
+            isMobile={isMobile}
+            onPick={saveAnswer}
+            onType={saveAnswer}
+            nextImage={questions[cursor + 1]?.question_image_url ?? null}
+          />
         </div>
 
         {/* desktop rail */}
