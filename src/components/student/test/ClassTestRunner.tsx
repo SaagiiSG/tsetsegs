@@ -515,6 +515,62 @@ export function ClassTestRunner({
     );
   }
 
+  /* ---------- crash / reload recovery gate ---------- */
+  if (needsResume && restored) {
+    const answeredNow = Object.keys(answers).length;
+    const msLeft = Math.max(0, endsAt - Date.now());
+    const mins = Math.floor(msLeft / 60000);
+    const secs = Math.floor((msLeft % 60000) / 1000);
+    const firstUnanswered = questions.findIndex((q) => !answers[q.id]);
+    return (
+      <div className="fixed inset-0 z-[70] bg-background flex items-center justify-center px-5">
+        <Card className="w-full max-w-sm p-6 space-y-5 text-center">
+          <div className="space-y-1">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{test.title}</div>
+            <h1 className="text-xl font-semibold">Continue where you left off</h1>
+            <p className="text-sm text-muted-foreground">
+              Your answers were saved. Nothing is lost — the clock kept running.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Time left</div>
+              <div className="text-lg font-bold font-mono">
+                {mins}:{String(secs).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="rounded-lg border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Answered</div>
+              <div className="text-lg font-bold font-mono">
+                {answeredNow}/{questions.length}
+              </div>
+            </div>
+          </div>
+
+          <Progress value={(answeredNow / questions.length) * 100} className="h-1.5" />
+
+          <Button
+            className="w-full h-11"
+            onClick={() => {
+              setNeedsResume(false);
+              goto(firstUnanswered >= 0 ? firstUnanswered : 0);
+            }}
+          >
+            {answeredNow > 0 ? 'Resume test' : 'Enter test'}
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+          {firstUnanswered >= 0 && answeredNow > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              You'll land on question {firstUnanswered + 1}, your first unanswered one.
+            </p>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
+
   const answeredCount = Object.keys(answers).length;
   const ids = questions.map((q) => q.id);
   const answeredMask = questions.map((q) => (answers[q.id] ? '1' : '0')).join('');
