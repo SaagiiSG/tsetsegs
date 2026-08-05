@@ -143,6 +143,12 @@ export function StudentCard({
   const [editingNoteContent, setEditingNoteContent] = useState("");
   const [showStudentInfo, setShowStudentInfo] = useState(false); // Collapsed by default
 
+  // Drop any half-typed score inputs when the card switches student
+  useEffect(() => {
+    setTestInputs({});
+  }, [student.id]);
+
+
   // Fetch notes when student changes
   useEffect(() => {
     if (student.id && batchId) {
