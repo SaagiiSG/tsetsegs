@@ -29,6 +29,7 @@ export default function ClassExam() {
   const code = joinCode.toUpperCase();
   const [phone, setPhone] = useState('');
   const [joining, setJoining] = useState(false);
+  const joiningRef = useRef(false);
   const [joined, setJoined] = useState<JoinResult | null>(null);
   const [test, setTest] = useState<ClassTest | null>(null);
   const [loadingTest, setLoadingTest] = useState(true);
