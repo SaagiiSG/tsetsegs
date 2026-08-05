@@ -516,7 +516,7 @@ export function ClassTestRunner({
           <Calculator className="h-4 w-4" />
         </Button>
 
-        {isMobile ? (
+        {isMobile && (
           <Sheet open={gridOpen} onOpenChange={setGridOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -528,10 +528,9 @@ export function ClassTestRunner({
               {grid}
             </SheetContent>
           </Sheet>
-        ) : (
-          <Button size="sm" onClick={() => setConfirmOpen(true)}>Submit</Button>
         )}
       </div>
+
       <Progress value={(answeredCount / questions.length) * 100} className="h-1 rounded-none" />
 
       <div className="flex-1 min-h-0 flex">
