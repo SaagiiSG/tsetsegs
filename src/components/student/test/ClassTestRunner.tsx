@@ -286,6 +286,10 @@ export function ClassTestRunner({
   const [blurred, setBlurred] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [needsResume, setNeedsResume] = useState(false);
+  const startedKey = `class-exam:started:${test.id}:${participantId}`;
+  const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
   const [calcMounted, setCalcMounted] = useState(false);
   const questionStartRef = useRef<number>(Date.now());
   const violationsRef = useRef(0);
@@ -329,23 +333,37 @@ export function ClassTestRunner({
       .select('question_id, selected_answer, flagged')
       .eq('participant_id', participantId)
       .then(({ data }) => {
-        if (!data?.length) return;
-        setAnswers((prev) => {
-          const next = { ...prev };
-          data.forEach((r: any) => {
-            if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
+        if (data?.length) {
+          setAnswers((prev) => {
+            const next = { ...prev };
+            data.forEach((r: any) => {
+              if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
+            });
+            return next;
           });
-          return next;
-        });
-        setFlags((prev) => {
-          const next = { ...prev };
-          data.forEach((r: any) => {
-            if (r.flagged) next[r.question_id] = true;
+          setFlags((prev) => {
+            const next = { ...prev };
+            data.forEach((r: any) => {
+              if (r.flagged) next[r.question_id] = true;
+            });
+            return next;
           });
-          return next;
-        });
+        }
+        // A session already in progress (saved answers, or a start marker from a
+        // previous visit) means the student crashed / reloaded out of the test.
+        const marker = localStorage.getItem(startedKey);
+        if ((data?.length ?? 0) > 0 || marker) setNeedsResume(true);
+        localStorage.setItem(startedKey, marker ?? String(Date.now()));
+        setRestored(true);
       });
-  }, [participantId]);
+  }, [participantId, startedKey]);
+
+  // Came back after the clock already ran out — submit what was saved.
+  useEffect(() => {
+    if (!restored || submitted || questions.length === 0) return;
+    if (Date.now() >= endsAt) submitTestRef.current?.(true);
+  }, [restored, submitted, questions.length, endsAt]);
+
 
 
   /* ---------- submit ---------- */
@@ -371,6 +389,12 @@ export function ClassTestRunner({
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions]);
+  submitTestRef.current = submitTest;
+
+  // Clear the crash marker once the test is really over.
+  useEffect(() => {
+    if (submitted) localStorage.removeItem(startedKey);
+  }, [submitted, startedKey]);
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
@@ -490,6 +514,62 @@ export function ClassTestRunner({
       </div>
     );
   }
+
+  /* ---------- crash / reload recovery gate ---------- */
+  if (needsResume && restored) {
+    const answeredNow = Object.keys(answers).length;
+    const msLeft = Math.max(0, endsAt - Date.now());
+    const mins = Math.floor(msLeft / 60000);
+    const secs = Math.floor((msLeft % 60000) / 1000);
+    const firstUnanswered = questions.findIndex((q) => !answers[q.id]);
+    return (
+      <div className="fixed inset-0 z-[70] bg-background flex items-center justify-center px-5">
+        <Card className="w-full max-w-sm p-6 space-y-5 text-center">
+          <div className="space-y-1">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{test.title}</div>
+            <h1 className="text-xl font-semibold">Continue where you left off</h1>
+            <p className="text-sm text-muted-foreground">
+              Your answers were saved. Nothing is lost — the clock kept running.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Time left</div>
+              <div className="text-lg font-bold font-mono">
+                {mins}:{String(secs).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="rounded-lg border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Answered</div>
+              <div className="text-lg font-bold font-mono">
+                {answeredNow}/{questions.length}
+              </div>
+            </div>
+          </div>
+
+          <Progress value={(answeredNow / questions.length) * 100} className="h-1.5" />
+
+          <Button
+            className="w-full h-11"
+            onClick={() => {
+              setNeedsResume(false);
+              goto(firstUnanswered >= 0 ? firstUnanswered : 0);
+            }}
+          >
+            {answeredNow > 0 ? 'Resume test' : 'Enter test'}
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+          {firstUnanswered >= 0 && answeredNow > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              You'll land on question {firstUnanswered + 1}, your first unanswered one.
+            </p>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
 
   const answeredCount = Object.keys(answers).length;
   const ids = questions.map((q) => q.id);
