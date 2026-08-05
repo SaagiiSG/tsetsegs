@@ -238,10 +238,17 @@ export function StudentCard({
   };
 
   const handleTestScoreBlur = (testNumber: number, value: string) => {
-    const parsed = parseInt(value);
-    if (value === "") {
+    const raw = value.trim();
+    const parsed = parseInt(raw, 10);
+    if (raw === "") {
       onTestScoreChange(testNumber, null);
-    } else if (!isNaN(parsed) && parsed >= 0 && parsed <= 800) {
+    } else if (isNaN(parsed) || parsed < 0 || parsed > 800) {
+      toast({
+        variant: "destructive",
+        title: "Invalid score",
+        description: "SAT Math section scores must be between 0 and 800.",
+      });
+    } else {
       onTestScoreChange(testNumber, parsed);
     }
     // Clear local input state after save
@@ -251,6 +258,7 @@ export function StudentCard({
       return next;
     });
   };
+
 
   const handleIELTSScoreBlur = (testNumber: number, value: string) => {
     const parsed = parseFloat(value);
