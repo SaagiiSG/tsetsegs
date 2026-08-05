@@ -389,6 +389,12 @@ export function ClassTestRunner({
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions]);
+  submitTestRef.current = submitTest;
+
+  // Clear the crash marker once the test is really over.
+  useEffect(() => {
+    if (submitted) localStorage.removeItem(startedKey);
+  }, [submitted, startedKey]);
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
