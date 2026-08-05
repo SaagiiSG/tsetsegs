@@ -98,16 +98,22 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
     ? Math.round(perStudent.reduce((s, p) => s + p.avgSeconds, 0) / perStudent.length)
     : 0;
 
+  const questionMap = useMemo(() => new Map(questions.map((q) => [q.id, q])), [questions]);
+
   const perQuestion = useMemo(
     () =>
       questionIds.map((qid, i) => {
         const mine = answers.filter((a) => a.question_id === qid);
         const acc = mine.length ? Math.round((mine.filter((a) => a.is_correct).length / mine.length) * 100) : 0;
         const avgS = mine.length ? Math.round(mine.reduce((s, a) => s + a.time_ms, 0) / mine.length / 1000) : 0;
-        return { index: i + 1, accuracy: acc, avgSeconds: avgS, answers: mine.length };
+        return { id: qid, index: i + 1, accuracy: acc, avgSeconds: avgS, answers: mine.length, question: questionMap.get(qid) };
       }),
-    [questionIds, answers],
+    [questionIds, answers, questionMap],
   );
+
+  const zoomed = zoomId ? questionMap.get(zoomId) : undefined;
+  const zoomedIndex = zoomId ? questionIds.indexOf(zoomId) + 1 : 0;
+
 
   if (loading) {
     return <div className="p-10 text-center"><Loader2 className="h-5 w-5 mx-auto animate-spin opacity-60" /></div>;
