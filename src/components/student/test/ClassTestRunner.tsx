@@ -191,6 +191,76 @@ const QuestionGrid = memo(function QuestionGrid({
   );
 });
 
+/** Bluebook-style "Review your answers" list. */
+const ReviewPanel = memo(function ReviewPanel({
+  questions,
+  answers,
+  flags,
+  onGoto,
+}: {
+  questions: QuestionRow[];
+  answers: Record<string, string>;
+  flags: Record<string, boolean>;
+  onGoto: (i: number) => void;
+}) {
+  const unanswered = questions.filter((q) => !answers[q.id]).length;
+  const flaggedCount = questions.filter((q) => flags[q.id]).length;
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-5">
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-semibold">Check Your Work</h2>
+        <p className="text-sm text-muted-foreground">
+          On test day, you won't be able to move on to the next module until time expires.
+          <br className="hidden sm:block" />
+          For these questions, you can review your work before you submit.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 text-xs">
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-sm bg-primary/20 border border-primary/40" /> Answered
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-sm border border-dashed border-muted-foreground/60" /> Unanswered
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Flag className="h-3 w-3 text-amber-500" /> For review
+        </span>
+      </div>
+
+      <div className="rounded-lg border p-3">
+        <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+          {questions.map((q, i) => {
+            const done = !!answers[q.id];
+            return (
+              <button
+                key={q.id}
+                onClick={() => onGoto(i)}
+                className={cn(
+                  'relative h-10 rounded-md text-sm font-semibold transition-colors',
+                  done
+                    ? 'bg-primary/15 border border-primary/40'
+                    : 'border border-dashed border-muted-foreground/50 text-muted-foreground',
+                )}
+              >
+                {i + 1}
+                {flags[q.id] && <Flag className="absolute -top-1.5 -right-1.5 h-3 w-3 text-amber-500 fill-amber-500" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="text-center text-sm text-muted-foreground">
+        {unanswered === 0 ? 'All questions answered.' : `${unanswered} unanswered`}
+        {flaggedCount > 0 && ` · ${flaggedCount} marked for review`}
+      </p>
+    </div>
+  );
+});
+
+
 export function ClassTestRunner({
   test,
   participantId,
