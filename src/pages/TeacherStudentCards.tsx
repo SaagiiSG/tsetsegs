@@ -238,25 +238,26 @@ export default function TeacherStudentCards() {
         status: hwMap.has(i + 1) ? (hwMap.get(i + 1) ? "completed" : "incomplete") : null,
       }));
 
-      // Fetch practice tests
+      // Fetch practice tests (not filtered by batch — a student who switched
+      // classes keeps one row per test_number, tied to their original batch)
       const { data: testsData } = await supabase
         .from("practice_tests")
         .select("test_number, score, listening, reading, writing, speaking")
-        .eq("student_id", studentId)
-        .eq("batch_id", batchId);
+        .eq("student_id", studentId);
 
       const testsMap = new Map(testsData?.map(t => [t.test_number, t]) || []);
       const practiceTests: PracticeTest[] = Array.from({ length: maxTests }, (_, i) => {
         const testData = testsMap.get(i + 1);
         return {
           test_number: i + 1,
-          score: testData?.score || null,
-          listening: testData?.listening || null,
-          reading: testData?.reading || null,
-          writing: testData?.writing || null,
-          speaking: testData?.speaking || null,
+          score: testData?.score ?? null,
+          listening: testData?.listening ?? null,
+          reading: testData?.reading ?? null,
+          writing: testData?.writing ?? null,
+          speaking: testData?.speaking ?? null,
         };
       });
+
 
       // Update the map with this student's data
       setStudentDataMap(prev => new Map(prev).set(studentId, {

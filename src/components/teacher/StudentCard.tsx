@@ -143,6 +143,12 @@ export function StudentCard({
   const [editingNoteContent, setEditingNoteContent] = useState("");
   const [showStudentInfo, setShowStudentInfo] = useState(false); // Collapsed by default
 
+  // Drop any half-typed score inputs when the card switches student
+  useEffect(() => {
+    setTestInputs({});
+  }, [student.id]);
+
+
   // Fetch notes when student changes
   useEffect(() => {
     if (student.id && batchId) {
@@ -238,10 +244,17 @@ export function StudentCard({
   };
 
   const handleTestScoreBlur = (testNumber: number, value: string) => {
-    const parsed = parseInt(value);
-    if (value === "") {
+    const raw = value.trim();
+    const parsed = parseInt(raw, 10);
+    if (raw === "") {
       onTestScoreChange(testNumber, null);
-    } else if (!isNaN(parsed) && parsed >= 0 && parsed <= 800) {
+    } else if (isNaN(parsed) || parsed < 0 || parsed > 800) {
+      toast({
+        variant: "destructive",
+        title: "Invalid score",
+        description: "SAT Math section scores must be between 0 and 800.",
+      });
+    } else {
       onTestScoreChange(testNumber, parsed);
     }
     // Clear local input state after save
@@ -251,6 +264,7 @@ export function StudentCard({
       return next;
     });
   };
+
 
   const handleIELTSScoreBlur = (testNumber: number, value: string) => {
     const parsed = parseFloat(value);
@@ -681,11 +695,12 @@ export function StudentCard({
                               value={testInputs[test.test_number] ?? test.score ?? ""}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                                if (val === "" || /^\d{1,4}$/.test(val)) {
                                   setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                                 }
                               }}
                               onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+
                               className="w-16 h-7 text-xs"
                             />
                             <span className="text-[10px] text-muted-foreground">/800</span>
@@ -786,11 +801,12 @@ export function StudentCard({
                           value={testInputs[test.test_number] ?? test.score ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                            if (val === "" || /^\d{1,4}$/.test(val)) {
                               setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                             }
                           }}
                           onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+
                           className="w-20 h-8 text-sm"
                         />
                         <span className="text-xs text-muted-foreground">/800</span>
