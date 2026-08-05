@@ -67,21 +67,28 @@ export default function ClassExam() {
   }, [code]);
 
   const join = async (rawPhone: string, silent = false) => {
+    if (joiningRef.current || joined) return false;
+    joiningRef.current = true;
     setJoining(true);
-    const { data, error } = await supabase.rpc('class_test_join', {
-      p_join_code: code,
-      p_phone: rawPhone,
-    });
-    setJoining(false);
-    const row = (Array.isArray(data) ? data[0] : data) as JoinResult | undefined;
-    if (error || !row) {
-      if (!silent) toast.error(error?.message ?? 'Could not join this exam');
-      return false;
+    try {
+      const { data, error } = await supabase.rpc('class_test_join', {
+        p_join_code: code,
+        p_phone: rawPhone,
+      });
+      const row = (Array.isArray(data) ? data[0] : data) as JoinResult | undefined;
+      if (error || !row) {
+        if (!silent) toast.error(error?.message ?? 'Could not join this exam');
+        return false;
+      }
+      localStorage.setItem(STORAGE_PREFIX + code, JSON.stringify({ phone: rawPhone }));
+      setJoined(row);
+      return true;
+    } finally {
+      joiningRef.current = false;
+      setJoining(false);
     }
-    localStorage.setItem(STORAGE_PREFIX + code, JSON.stringify({ phone: rawPhone }));
-    setJoined(row);
-    return true;
   };
+
 
   // Auto re-join after a refresh with the remembered number.
   useEffect(() => {
