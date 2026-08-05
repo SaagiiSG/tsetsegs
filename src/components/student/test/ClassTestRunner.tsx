@@ -508,7 +508,7 @@ export function ClassTestRunner({
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{test.title}</div>
           <div className="text-xs font-medium">
-            Question {cursor + 1} of {questions.length}
+            {reviewing ? 'Review your answers' : `Question ${cursor + 1} of ${questions.length}`}
           </div>
         </div>
         <ExamTimer endsAt={endsAt} paused={submitted} onExpire={handleExpire} />
@@ -516,7 +516,7 @@ export function ClassTestRunner({
           <Calculator className="h-4 w-4" />
         </Button>
 
-        {isMobile && (
+        {isMobile && !reviewing && (
           <Sheet open={gridOpen} onOpenChange={setGridOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -536,19 +536,23 @@ export function ClassTestRunner({
       <div className="flex-1 min-h-0 flex">
         {/* question pane */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6">
-          <QuestionBody
-            question={current}
-            options={options}
-            picked={answers[current.id]}
-            isMobile={isMobile}
-            onPick={saveAnswer}
-            onType={saveAnswer}
-            nextImage={questions[cursor + 1]?.question_image_url ?? null}
-          />
+          {reviewing ? (
+            <ReviewPanel questions={questions} answers={answers} flags={flags} onGoto={goto} />
+          ) : (
+            <QuestionBody
+              question={current}
+              options={options}
+              picked={answers[current.id]}
+              isMobile={isMobile}
+              onPick={saveAnswer}
+              onType={saveAnswer}
+              nextImage={questions[cursor + 1]?.question_image_url ?? null}
+            />
+          )}
         </div>
 
         {/* desktop rail */}
-        {!isMobile && (
+        {!isMobile && !reviewing && (
           <div className="w-56 shrink-0 border-l p-3 overflow-y-auto hidden md:block">
             <div className="text-xs font-semibold mb-2 text-muted-foreground">Questions</div>
             {grid}
@@ -558,26 +562,44 @@ export function ClassTestRunner({
 
       {/* bottom bar */}
       <div className="border-t px-3 py-2 flex items-center gap-2">
-        <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor - 1)} disabled={cursor === 0}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={flags[current.id] ? 'default' : 'outline'}
-          size={isMobile ? 'default' : 'sm'}
-          onClick={() => setFlags((f) => ({ ...f, [current.id]: !f[current.id] }))}
-        >
-          <Flag className="h-4 w-4" />
-        </Button>
-        <div className="flex-1" />
-        {isMobile && (
-          <Button variant="secondary" size="default" onClick={() => setConfirmOpen(true)}>
-            Submit
-          </Button>
+        {reviewing ? (
+          <>
+            <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={() => goto(questions.length - 1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to question
+            </Button>
+            <div className="flex-1" />
+            <Button size={isMobile ? 'default' : 'sm'} onClick={() => setConfirmOpen(true)}>
+              Submit test
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor - 1)} disabled={cursor === 0}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={flags[current.id] ? 'default' : 'outline'}
+              size={isMobile ? 'default' : 'sm'}
+              onClick={() => setFlags((f) => ({ ...f, [current.id]: !f[current.id] }))}
+            >
+              <Flag className="h-4 w-4" />
+            </Button>
+            <div className="flex-1" />
+            {cursor === questions.length - 1 ? (
+              <Button size={isMobile ? 'default' : 'sm'} onClick={() => setReviewing(true)}>
+                Review your answers
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </>
         )}
-        <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)} disabled={cursor === questions.length - 1}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
+
 
       {/* focus lock overlay */}
       {blurred && !isMobile && (
