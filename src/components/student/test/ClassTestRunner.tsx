@@ -285,6 +285,7 @@ export function ClassTestRunner({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [blurred, setBlurred] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [calcMounted, setCalcMounted] = useState(false);
   const questionStartRef = useRef<number>(Date.now());
   const violationsRef = useRef(0);
