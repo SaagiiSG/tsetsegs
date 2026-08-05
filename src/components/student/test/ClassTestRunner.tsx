@@ -329,23 +329,37 @@ export function ClassTestRunner({
       .select('question_id, selected_answer, flagged')
       .eq('participant_id', participantId)
       .then(({ data }) => {
-        if (!data?.length) return;
-        setAnswers((prev) => {
-          const next = { ...prev };
-          data.forEach((r: any) => {
-            if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
+        if (data?.length) {
+          setAnswers((prev) => {
+            const next = { ...prev };
+            data.forEach((r: any) => {
+              if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
+            });
+            return next;
           });
-          return next;
-        });
-        setFlags((prev) => {
-          const next = { ...prev };
-          data.forEach((r: any) => {
-            if (r.flagged) next[r.question_id] = true;
+          setFlags((prev) => {
+            const next = { ...prev };
+            data.forEach((r: any) => {
+              if (r.flagged) next[r.question_id] = true;
+            });
+            return next;
           });
-          return next;
-        });
+        }
+        // A session already in progress (saved answers, or a start marker from a
+        // previous visit) means the student crashed / reloaded out of the test.
+        const marker = localStorage.getItem(startedKey);
+        if ((data?.length ?? 0) > 0 || marker) setNeedsResume(true);
+        localStorage.setItem(startedKey, marker ?? String(Date.now()));
+        setRestored(true);
       });
-  }, [participantId]);
+  }, [participantId, startedKey]);
+
+  // Came back after the clock already ran out — submit what was saved.
+  useEffect(() => {
+    if (!restored || submitted || questions.length === 0) return;
+    if (Date.now() >= endsAt) submitTestRef.current?.(true);
+  }, [restored, submitted, questions.length, endsAt]);
+
 
 
   /* ---------- submit ---------- */
