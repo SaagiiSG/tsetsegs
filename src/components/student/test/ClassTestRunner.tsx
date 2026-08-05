@@ -457,6 +457,7 @@ export function ClassTestRunner({
       return i;
     });
     setGridOpen(false);
+    setReviewing(false);
   }, [questions.length]);
 
   const openCalculator = useCallback(() => {
