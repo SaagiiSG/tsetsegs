@@ -5,8 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MathText } from '@/components/MathText';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, EyeOff, Loader2 } from 'lucide-react';
+
+interface QuestionRow {
+  id: string;
+  question_id: string | number | null;
+  question_text: string | null;
+  question_image_url: string | null;
+  multiple_choice_options: any;
+  choice_images: any;
+  answer: string | null;
+  question_type: string | null;
+  passage_text: string | null;
+}
+
 
 interface ParticipantRow {
   id: string;
@@ -29,6 +44,8 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
   const [questionIds, setQuestionIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<ParticipantRow[]>([]);
   const [answers, setAnswers] = useState<AnswerRow[]>([]);
+  const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [zoomId, setZoomId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -37,15 +54,24 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
         supabase.from('class_test_participants').select('id, display_name, submitted_at, correct_count, answered_count, focus_violations').eq('test_id', testId),
         supabase.from('class_test_answers').select('participant_id, question_id, is_correct, time_ms').eq('test_id', testId),
       ]);
+      const qids = t && Array.isArray(t.question_ids) ? (t.question_ids as string[]) : [];
       if (t) {
         setTitle(t.title);
-        setQuestionIds(Array.isArray(t.question_ids) ? (t.question_ids as string[]) : []);
+        setQuestionIds(qids);
+      }
+      if (qids.length) {
+        const { data: q } = await supabase
+          .from('questions')
+          .select('id, question_id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
+          .in('id', qids);
+        setQuestions((q ?? []) as QuestionRow[]);
       }
       setParticipants((p ?? []) as ParticipantRow[]);
       setAnswers((a ?? []) as AnswerRow[]);
       setLoading(false);
     })();
   }, [testId]);
+
 
   const total = questionIds.length || 22;
 
@@ -72,16 +98,22 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
     ? Math.round(perStudent.reduce((s, p) => s + p.avgSeconds, 0) / perStudent.length)
     : 0;
 
+  const questionMap = useMemo(() => new Map(questions.map((q) => [q.id, q])), [questions]);
+
   const perQuestion = useMemo(
     () =>
       questionIds.map((qid, i) => {
         const mine = answers.filter((a) => a.question_id === qid);
         const acc = mine.length ? Math.round((mine.filter((a) => a.is_correct).length / mine.length) * 100) : 0;
         const avgS = mine.length ? Math.round(mine.reduce((s, a) => s + a.time_ms, 0) / mine.length / 1000) : 0;
-        return { index: i + 1, accuracy: acc, avgSeconds: avgS, answers: mine.length };
+        return { id: qid, index: i + 1, accuracy: acc, avgSeconds: avgS, answers: mine.length, question: questionMap.get(qid) };
       }),
-    [questionIds, answers],
+    [questionIds, answers, questionMap],
   );
+
+  const zoomed = zoomId ? questionMap.get(zoomId) : undefined;
+  const zoomedIndex = zoomId ? questionIds.indexOf(zoomId) + 1 : 0;
+
 
   if (loading) {
     return <div className="p-10 text-center"><Loader2 className="h-5 w-5 mx-auto animate-spin opacity-60" /></div>;
@@ -153,16 +185,97 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
         <TabsContent value="questions">
           <Card className="divide-y">
             {perQuestion.map((q) => (
-              <div key={q.index} className="p-3 flex items-center gap-3">
-                <span className="font-mono text-xs w-6 text-muted-foreground">{q.index}</span>
-                <Progress value={q.accuracy} className="h-2 flex-1" />
-                <span className="font-mono text-xs w-10 text-right">{q.accuracy}%</span>
-                <span className="font-mono text-xs w-10 text-right text-muted-foreground">{q.avgSeconds}s</span>
-              </div>
+              <button
+                key={q.index}
+                onClick={() => setZoomId(q.id)}
+                className="w-full text-left p-3 flex gap-3 hover:bg-muted/40 transition-colors"
+              >
+                <span className="font-mono text-xs w-6 shrink-0 text-muted-foreground pt-0.5">{q.index}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs line-clamp-2">
+                    {q.question?.question_text ? (
+                      <MathText text={q.question.question_text} />
+                    ) : (
+                      <span className="text-muted-foreground">Question unavailable</span>
+                    )}
+                  </div>
+                  {q.question?.question_image_url && (
+                    <img
+                      src={q.question.question_image_url}
+                      alt={`Question ${q.index} figure`}
+                      loading="lazy"
+                      className="mt-2 max-h-24 rounded border bg-background object-contain"
+                    />
+                  )}
+                  <div className="mt-2 flex items-center gap-2">
+                    <Progress value={q.accuracy} className="h-2 flex-1" />
+                    <span className="font-mono text-xs w-10 text-right">{q.accuracy}%</span>
+                    <span className="font-mono text-xs w-10 text-right text-muted-foreground">{q.avgSeconds}s</span>
+                  </div>
+                </div>
+              </button>
             ))}
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!zoomId} onOpenChange={(o) => !o && setZoomId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm">
+              Question {zoomedIndex}
+              {zoomed?.question_id ? ` · ${zoomed.question_id}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+          {zoomed ? (
+            <div className="space-y-3 text-sm">
+              {zoomed.passage_text && (
+                <div className="rounded-md border bg-muted/30 p-3 text-xs">
+                  <MathText text={zoomed.passage_text} />
+                </div>
+              )}
+              <div><MathText text={zoomed.question_text ?? ''} /></div>
+              {zoomed.question_image_url && (
+                <img
+                  src={zoomed.question_image_url}
+                  alt={`Question ${zoomedIndex} figure`}
+                  className="max-h-72 rounded border bg-background object-contain"
+                />
+              )}
+              {Array.isArray(zoomed.multiple_choice_options) && zoomed.multiple_choice_options.length > 0 && (
+                <div className="space-y-2">
+                  {(zoomed.multiple_choice_options as any[]).map((opt, i) => {
+                    const letter = String.fromCharCode(65 + i);
+                    const img = zoomed.choice_images?.[letter] ?? zoomed.choice_images?.[String(i)];
+                    const isAnswer = (zoomed.answer ?? '').trim().toUpperCase() === letter;
+                    return (
+                      <div
+                        key={letter}
+                        className={cn(
+                          'rounded-md border p-2 flex gap-2 text-xs',
+                          isAnswer && 'border-emerald-500/50 bg-emerald-500/10',
+                        )}
+                      >
+                        <span className="font-mono font-semibold">{letter}</span>
+                        <div className="min-w-0">
+                          <MathText text={typeof opt === 'string' ? opt : String(opt?.text ?? '')} />
+                          {img && <img src={img} alt={`Choice ${letter}`} className="mt-1 max-h-28 object-contain" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="text-xs font-mono text-emerald-600 dark:text-emerald-400">
+                Correct answer: {zoomed.answer ?? '—'}
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Question details unavailable.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
 }

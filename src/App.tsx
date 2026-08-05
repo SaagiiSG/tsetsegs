@@ -60,6 +60,7 @@ import StudentBugReport from "./pages/student/StudentBugReport";
 import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
+import StudentExamResults from "./pages/student/StudentExamResults";
 
 // Mini Challenges
 import ChallengesHome from "./pages/student/challenges/ChallengesHome";
@@ -241,6 +242,7 @@ const App = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
+                    <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="booking" element={<StudentBooking />} />
                     <Route path="challenges" element={<ChallengesHome />} />
                     <Route path="challenges/new" element={<NewChallenge />} />
