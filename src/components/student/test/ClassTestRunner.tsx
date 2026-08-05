@@ -286,6 +286,10 @@ export function ClassTestRunner({
   const [blurred, setBlurred] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [needsResume, setNeedsResume] = useState(false);
+  const startedKey = `class-exam:started:${test.id}:${participantId}`;
+  const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
   const [calcMounted, setCalcMounted] = useState(false);
   const questionStartRef = useRef<number>(Date.now());
   const violationsRef = useRef(0);
