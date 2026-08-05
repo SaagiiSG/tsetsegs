@@ -74,7 +74,7 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
       const { data, error } = await supabase.rpc('pick_hardest_questions', {
         p_question_set: '68',
         p_limit: 22,
-        p_min_attempts: 5,
+        p_min_attempts: 1,
       });
       if (error) {
         toast.error('Could not load the hardest questions');
@@ -138,7 +138,7 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
         <DialogHeader>
           <DialogTitle>Start 68 Exam</DialogTitle>
           <DialogDescription>
-            22 hardest questions from the 68 set. Students join by scanning a QR code — you start the clock when everyone is in.
+            22 all-time hardest questions from the 68 set (lowest accuracy, most attempts). Students join by scanning a QR code — you start the clock when everyone is in.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,7 +187,7 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
               {loadingPicks ? (
                 <div className="p-6 text-center"><Loader2 className="h-5 w-5 mx-auto animate-spin opacity-60" /></div>
               ) : picks.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">Not enough attempt data yet.</div>
+                <div className="p-6 text-center text-sm text-muted-foreground">No questions available in this set.</div>
               ) : (
                 picks.map((p, i) => (
                   <div key={p.question_id} className="p-2.5 flex gap-3 text-xs">
