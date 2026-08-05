@@ -5,8 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MathText } from '@/components/MathText';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, EyeOff, Loader2 } from 'lucide-react';
+
+interface QuestionRow {
+  id: string;
+  question_id: string | number | null;
+  question_text: string | null;
+  question_image_url: string | null;
+  multiple_choice_options: any;
+  choice_images: any;
+  answer: string | null;
+  question_type: string | null;
+  passage_text: string | null;
+}
+
 
 interface ParticipantRow {
   id: string;
