@@ -44,6 +44,8 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
   const [questionIds, setQuestionIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<ParticipantRow[]>([]);
   const [answers, setAnswers] = useState<AnswerRow[]>([]);
+  const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [zoomId, setZoomId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,15 +54,24 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
         supabase.from('class_test_participants').select('id, display_name, submitted_at, correct_count, answered_count, focus_violations').eq('test_id', testId),
         supabase.from('class_test_answers').select('participant_id, question_id, is_correct, time_ms').eq('test_id', testId),
       ]);
+      const qids = t && Array.isArray(t.question_ids) ? (t.question_ids as string[]) : [];
       if (t) {
         setTitle(t.title);
-        setQuestionIds(Array.isArray(t.question_ids) ? (t.question_ids as string[]) : []);
+        setQuestionIds(qids);
+      }
+      if (qids.length) {
+        const { data: q } = await supabase
+          .from('questions')
+          .select('id, question_id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
+          .in('id', qids);
+        setQuestions((q ?? []) as QuestionRow[]);
       }
       setParticipants((p ?? []) as ParticipantRow[]);
       setAnswers((a ?? []) as AnswerRow[]);
       setLoading(false);
     })();
   }, [testId]);
+
 
   const total = questionIds.length || 22;
 
