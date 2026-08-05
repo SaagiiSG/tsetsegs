@@ -242,6 +242,7 @@ const App = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
+                    <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="booking" element={<StudentBooking />} />
                     <Route path="challenges" element={<ChallengesHome />} />
                     <Route path="challenges/new" element={<NewChallenge />} />
