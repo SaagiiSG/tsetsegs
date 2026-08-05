@@ -16,27 +16,32 @@ function fmt(s: number) {
 
 export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: () => void }) {
   const { test, participants, refresh } = useClassTestMonitor(testId);
-  const [remaining, setRemaining] = useState(0);
+  const [remaining, setRemaining] = useState<number | null>(null);
   const [ending, setEnding] = useState(false);
+  const autoEndedRef = useRef(false);
+
+  const endsAt = test ? new Date(test.starts_at).getTime() + test.duration_seconds * 1000 : null;
 
   useEffect(() => {
-    if (!test) return;
-    const end = new Date(test.starts_at).getTime() + test.duration_seconds * 1000;
-    const tick = () => setRemaining(Math.max(0, Math.floor((end - Date.now()) / 1000)));
+    if (endsAt === null) return;
+    const tick = () => setRemaining(Math.max(0, Math.floor((endsAt - Date.now()) / 1000)));
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
-  }, [test?.starts_at, test?.duration_seconds]);
+  }, [endsAt]);
 
   useEffect(() => {
-    if (test && test.status === 'active' && remaining === 0) {
-      supabase
-        .from('class_tests')
-        .update({ status: 'finished', finished_at: new Date().toISOString() })
-        .eq('id', testId)
-        .then(() => refresh());
-    }
-  }, [remaining, test?.status, testId, refresh]);
+    // Only auto-finish once the clock has genuinely run out (never on first render).
+    if (!test || test.status !== 'active' || endsAt === null) return;
+    if (autoEndedRef.current || Date.now() < endsAt) return;
+    autoEndedRef.current = true;
+    supabase
+      .from('class_tests')
+      .update({ status: 'finished', finished_at: new Date().toISOString() })
+      .eq('id', testId)
+      .then(() => refresh());
+  }, [remaining, test, endsAt, testId, refresh]);
+
 
   const endNow = async () => {
     setEnding(true);
