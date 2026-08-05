@@ -415,7 +415,7 @@ export function ClassTestRunner({
       const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body) return false;
       if (el.tagName === 'IFRAME') return true;
-      return !!el.closest?.('[data-exam-widget], .dcg-calculator-api-container, .dcg-container');
+      return !!el.closest?.('[data-exam-widget], [data-calculator-window], .dcg-calculator-api-container, .dcg-container');
     };
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
