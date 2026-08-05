@@ -76,7 +76,7 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
             {participants.length} joined · {submitted} submitted
           </div>
         </div>
-        <div className="font-mono text-lg tabular-nums">{fmt(remaining)}</div>
+        <div className="font-mono text-lg tabular-nums">{fmt(remaining ?? Math.max(0, Math.floor(((endsAt ?? 0) - Date.now()) / 1000)))}</div>
         <Button size="sm" variant="destructive" onClick={endNow} disabled={ending}>End now</Button>
       </div>
 
