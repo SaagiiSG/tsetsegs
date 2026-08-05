@@ -94,7 +94,7 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-xs text-muted-foreground line-clamp-2">
-                {q?.question_text ? <MathText>{q.question_text}</MathText> : 'Question unavailable'}
+                {q?.question_text ? <MathText text={q.question_text} /> : 'Question unavailable'}
               </div>
               {q?.question_image_url && (
                 <img
