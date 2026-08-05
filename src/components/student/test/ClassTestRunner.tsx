@@ -409,6 +409,14 @@ export function ClassTestRunner({
   /* ---------- focus lock (tablet / desktop only) ---------- */
   useEffect(() => {
     if (isMobile || submitted) return;
+    // Focus moving into the Desmos calculator (or any in-page widget/iframe)
+    // is not a violation — only leaving the tab/window is.
+    const isInternalFocus = () => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return false;
+      if (el.tagName === 'IFRAME') return true;
+      return !!el.closest?.('[data-exam-widget], [data-calculator-window], .dcg-calculator-api-container, .dcg-container');
+    };
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
         violationsRef.current += 1;
@@ -422,7 +430,17 @@ export function ClassTestRunner({
         }
       }
     };
-    const onBlur = () => setBlurred(true);
+    const onBlur = () => {
+      // Defer so activeElement is settled after the focus transfer.
+      setTimeout(() => {
+        if (document.visibilityState === 'hidden') {
+          setBlurred(true);
+          return;
+        }
+        if (document.hasFocus() || isInternalFocus()) return;
+        setBlurred(true);
+      }, 60);
+    };
     document.addEventListener('visibilitychange', onHide);
     window.addEventListener('blur', onBlur);
     return () => {
@@ -430,6 +448,7 @@ export function ClassTestRunner({
       window.removeEventListener('blur', onBlur);
     };
   }, [isMobile, submitted, participantId]);
+
 
   const current = questions[cursor];
 
