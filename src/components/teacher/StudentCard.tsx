@@ -681,11 +681,12 @@ export function StudentCard({
                               value={testInputs[test.test_number] ?? test.score ?? ""}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 800)) {
+                                if (val === "" || /^\d{1,4}$/.test(val)) {
                                   setTestInputs(prev => ({ ...prev, [test.test_number]: val }));
                                 }
                               }}
                               onBlur={(e) => handleTestScoreBlur(test.test_number, e.target.value)}
+
                               className="w-16 h-7 text-xs"
                             />
                             <span className="text-[10px] text-muted-foreground">/800</span>
