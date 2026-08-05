@@ -35,7 +35,10 @@ export default function ClassExam() {
   const [loadingTest, setLoadingTest] = useState(true);
   const [exited, setExited] = useState(false);
 
-  /* ---------- live test row (public read) ---------- */
+  /* ---------- live test row (public read) ----------
+     Only swap state when something meaningful changed. Returning a fresh object
+     on every poll made `test.question_ids` a new reference, which re-triggered the
+     runner's question fetch + KaTeX render every few seconds (the "freeze"). */
   const loadTest = useCallback(async () => {
     if (!code) return;
     const { data } = await supabase
@@ -45,15 +48,45 @@ export default function ClassExam() {
       .order('created_at', { ascending: false })
       .limit(1);
     const row = data?.[0];
-    setTest(row ? ({ ...row, question_ids: Array.isArray(row.question_ids) ? row.question_ids : [] } as ClassTest) : null);
+    const next = row
+      ? ({ ...row, question_ids: Array.isArray(row.question_ids) ? row.question_ids : [] } as ClassTest)
+      : null;
+    setTest((prev) => {
+      if (!prev || !next) return prev === next ? prev : next;
+      const same =
+        prev.id === next.id &&
+        prev.status === next.status &&
+        prev.title === next.title &&
+        prev.starts_at === next.starts_at &&
+        prev.duration_seconds === next.duration_seconds &&
+        (prev.question_ids as string[]).join(',') === (next.question_ids as string[]).join(',');
+      return same ? prev : next;
+    });
     setLoadingTest(false);
   }, [code]);
 
   useEffect(() => {
     loadTest();
-    const t = setInterval(loadTest, 4000);
+    const t = setInterval(loadTest, 8000);
     return () => clearInterval(t);
   }, [loadTest]);
+
+  // Realtime: teacher start/finish lands instantly without a periodic full pass.
+  useEffect(() => {
+    if (!code) return;
+    const channel = supabase
+      .channel(`class-exam-${code}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'class_tests', filter: `join_code=eq.${code}` },
+        () => loadTest(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [code, loadTest]);
+
 
   /* ---------- remember the join so a refresh doesn't lose the seat ---------- */
   useEffect(() => {
