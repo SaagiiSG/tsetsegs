@@ -67,7 +67,8 @@ export default function ClassExam() {
 
   useEffect(() => {
     loadTest();
-    const t = setInterval(loadTest, 8000);
+    // Realtime below carries start/finish instantly; this is only a slow safety net.
+    const t = setInterval(loadTest, 60000);
     return () => clearInterval(t);
   }, [loadTest]);
 
