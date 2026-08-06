@@ -869,13 +869,21 @@ export function ClassTestRunner({
           </>
         ) : (
           <>
-            <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor - 1)} disabled={cursor === 0}>
+            <Button
+              variant="outline"
+              size={isMobile ? 'default' : 'sm'}
+              onClick={() => goto(cursor - 1)}
+              disabled={cursor === 0}
+              aria-label="Previous question"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant={flags[current.id] ? 'default' : 'outline'}
               size={isMobile ? 'default' : 'sm'}
               onClick={() => setFlags((f) => ({ ...f, [current.id]: !f[current.id] }))}
+              aria-label={flags[current.id] ? 'Remove flag from this question' : 'Flag this question for review'}
+              aria-pressed={!!flags[current.id]}
             >
               <Flag className="h-4 w-4" />
             </Button>
@@ -886,11 +894,12 @@ export function ClassTestRunner({
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)}>
+              <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)} aria-label="Next question">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
           </>
+
         )}
       </div>
 
