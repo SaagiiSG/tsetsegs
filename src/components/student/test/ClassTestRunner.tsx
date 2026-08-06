@@ -773,12 +773,19 @@ export function ClassTestRunner({
             className="w-full h-11"
             onClick={() => {
               setNeedsResume(false);
-              goto(firstUnanswered >= 0 ? firstUnanswered : 0);
+              if (firstUnanswered >= 0) {
+                goto(firstUnanswered);
+              } else {
+                // Everything is already answered — go straight to the check screen.
+                goto(questions.length - 1);
+                setReviewing(true);
+              }
             }}
           >
             {answeredNow > 0 ? 'Resume test' : 'Enter test'}
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
+
           {firstUnanswered >= 0 && answeredNow > 0 && (
             <p className="text-[11px] text-muted-foreground">
               You'll land on question {firstUnanswered + 1}, your first unanswered one.
