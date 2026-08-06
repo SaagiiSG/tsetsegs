@@ -4251,6 +4251,14 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      fill_answer_matches: {
+        Args: {
+          p_alternates: string[]
+          p_expected: string
+          p_submitted: string
+        }
+        Returns: boolean
+      }
       generate_ngee_sessions: {
         Args: { p_course_id: string; p_weeks_ahead?: number }
         Returns: number

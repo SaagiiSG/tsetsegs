@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.fill_answer_matches(text, text, text[]) TO supabase_read_only_user;
