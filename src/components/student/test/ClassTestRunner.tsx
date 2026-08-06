@@ -285,6 +285,8 @@ export function ClassTestRunner({
   const [serverScore, setServerScore] = useState<{ correct: number; answered: number } | null>(null);
   /** Answer key, fetched only after the paper is submitted (for the review screen). */
   const [answerKey, setAnswerKey] = useState<Record<string, string>>({});
+  const [alternateKey, setAlternateKey] = useState<Record<string, string[]>>({});
+
   const [draftSyncing, setDraftSyncing] = useState(false);
 
 
@@ -520,15 +522,21 @@ export function ClassTestRunner({
     if (Object.keys(answerKey).length > 0) return;
     supabase
       .from('questions')
-      .select('id, answer')
+      .select('id, answer, alternate_answers')
       .in('id', idsKey.split(','))
       .then(({ data }) => {
         if (!data) return;
         const key: Record<string, string> = {};
-        for (const r of data as any[]) key[r.id] = r.answer ?? '';
+        const alts: Record<string, string[]> = {};
+        for (const r of data as any[]) {
+          key[r.id] = r.answer ?? '';
+          alts[r.id] = Array.isArray(r.alternate_answers) ? r.alternate_answers : [];
+        }
         setAnswerKey(key);
+        setAlternateKey(alts);
       });
   }, [submitted, idsKey, answerKey]);
+
 
 
 
