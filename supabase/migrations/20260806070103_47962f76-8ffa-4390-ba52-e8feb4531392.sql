@@ -1,0 +1,1 @@
+DELETE FROM public.class_tests WHERE join_code = 'DRYV01';
