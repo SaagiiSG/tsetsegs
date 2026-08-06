@@ -4190,6 +4190,7 @@ export type Database = {
           pretty: string
         }[]
       }
+      class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
         Returns: {
