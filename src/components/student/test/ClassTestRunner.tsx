@@ -288,6 +288,8 @@ export function ClassTestRunner({
   const [reviewing, setReviewing] = useState(false);
   const [restored, setRestored] = useState(false);
   const [needsResume, setNeedsResume] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(false);
+
   const startedKey = `class-exam:started:${test.id}:${participantId}`;
   const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
   const [calcMounted, setCalcMounted] = useState(false);
@@ -364,6 +366,7 @@ export function ClassTestRunner({
           hadProgress = Object.keys(saved.answers).length > 0;
         }
         if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (saved?.times && typeof saved.times === 'object') timesRef.current = saved.times;
         if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
       }
     } catch {
@@ -377,16 +380,33 @@ export function ClassTestRunner({
 
   /* ---------- persist progress locally on every change ---------- */
   useEffect(() => {
-    if (!restored || submitted) return;
+    if (!restored) return;
     try {
       localStorage.setItem(
         progressKey,
-        JSON.stringify({ answers, flags, violations: violationsRef.current }),
+        JSON.stringify({ answers, flags, times: timesRef.current, violations: violationsRef.current }),
       );
     } catch {
       /* ignore */
     }
-  }, [answers, flags, restored, submitted, progressKey]);
+  }, [answers, flags, restored, progressKey]);
+
+  /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
+  useEffect(() => {
+    if (!submitted || !participantId) return;
+    if (Object.keys(answersRef.current).length > 0) return;
+    supabase
+      .from('class_test_answers')
+      .select('question_id, selected_answer')
+      .eq('participant_id', participantId)
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const map: Record<string, string> = {};
+        for (const r of data as any[]) if (r.selected_answer != null) map[r.question_id] = r.selected_answer;
+        setAnswers(map);
+      });
+  }, [submitted, participantId]);
+
 
   // Came back after the clock already ran out — submit what was saved.
   useEffect(() => {
@@ -416,18 +436,29 @@ export function ClassTestRunner({
         question_id: q.id,
         selected_answer: current[q.id],
         is_correct: isCorrect(q, current[q.id]),
-        time_ms: times[q.id] ?? null,
+        // column is NOT NULL — a resumed session can have no timing for an answer
+        time_ms: Math.max(0, Math.round(times[q.id] ?? 0)),
         flagged: !!currentFlags[q.id],
       }));
+
+    const fail = () => {
+      setPendingUpload(true);
+      submittingRef.current = false;
+      if (!auto) toast.error('No connection — we will keep retrying, keep this page open.');
+    };
 
     try {
       if (rows.length > 0) {
         // one bulk write for the entire paper
-        await supabase
+        const { error } = await supabase
           .from('class_test_answers')
           .upsert(rows, { onConflict: 'participant_id,question_id' });
+        if (error) {
+          fail();
+          return;
+        }
       }
-      await supabase
+      const { error: pErr } = await supabase
         .from('class_test_participants')
         .update({
           submitted_at: new Date().toISOString(),
@@ -436,32 +467,51 @@ export function ClassTestRunner({
           focus_violations: violationsRef.current,
         })
         .eq('id', participantId);
+      if (pErr) {
+        fail();
+        return;
+      }
     } catch {
-      toast.error('We could not reach the server — keep this page open and try submitting again.');
-      submittingRef.current = false;
+      fail();
       return;
     }
+    setPendingUpload(false);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions, test.id]);
   submitTestRef.current = submitTest;
 
-  // Clear local exam state once the test is really over.
+  /* ---------- keep retrying a failed upload until it lands ---------- */
+  useEffect(() => {
+    if (!pendingUpload) return;
+    const t = setInterval(() => submitTestRef.current?.(true), 8000);
+    const onOnline = () => submitTestRef.current?.(true);
+    window.addEventListener('online', onOnline);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [pendingUpload]);
+
+  // Exam is over for this student: only the "in progress" marker goes away.
+  // The paper + answers stay cached so a refresh still shows their score screen.
   useEffect(() => {
     if (!submitted) return;
     localStorage.removeItem(startedKey);
-    localStorage.removeItem(progressKey);
-    localStorage.removeItem(paperKey);
-  }, [submitted, startedKey, progressKey, paperKey]);
+  }, [submitted, startedKey]);
+
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
+  // Wait until the paper and the locally saved answers are loaded, otherwise we would
+  // upload an empty paper and wipe the student's work.
   useEffect(() => {
-    if (ended && !submitted) submitTest(true);
-  }, [ended, submitted, submitTest]);
+    if (ended && !submitted && restored && questions.length > 0) submitTest(true);
+  }, [ended, submitted, restored, questions.length, submitTest]);
 
   const handleExpire = useCallback(() => {
-    if (!submitted) submitTest(true);
-  }, [submitted, submitTest]);
+    if (!submitted && restored && questions.length > 0) submitTest(true);
+  }, [submitted, restored, questions.length, submitTest]);
+
 
 
   /* ---------- focus lock (tablet / desktop only) ---------- */
@@ -661,6 +711,14 @@ export function ClassTestRunner({
       </div>
 
       <Progress value={(answeredCount / questions.length) * 100} className="h-1 rounded-none" />
+
+      {pendingUpload && (
+        <div className="bg-amber-500/15 text-amber-600 text-[11px] px-3 py-1.5 flex items-center gap-2">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Your answers are saved on this device — we're retrying the upload. Keep this page open.
+        </div>
+      )}
+
 
       <div className="flex-1 min-h-0 flex">
         {/* question pane */}
