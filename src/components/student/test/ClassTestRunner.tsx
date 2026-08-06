@@ -306,57 +306,87 @@ export function ClassTestRunner({
     [test.starts_at, test.duration_seconds],
   );
 
-  /* ---------- load questions (keyed on a stable id string, not the array ref) ---------- */
+  /* ---------- load questions ONCE, then keep them in local storage ----------
+     The whole paper is downloaded up front so the exam runs entirely offline
+     from that point on — no database traffic while students are working. */
   const idsKey = useMemo(() => (test.question_ids as string[]).join(','), [test.question_ids]);
   const loadedKeyRef = useRef<string | null>(null);
+  const paperKey = `class-exam:paper:${test.id}`;
 
   useEffect(() => {
     if (!idsKey) return;
     if (loadedKeyRef.current === idsKey) return;
     loadedKeyRef.current = idsKey;
     const ids = idsKey.split(',');
+
+    // cached paper from an earlier visit / reload
+    try {
+      const raw = localStorage.getItem(paperKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached?.idsKey === idsKey && Array.isArray(cached.questions) && cached.questions.length === ids.length) {
+          setQuestions(cached.questions as QuestionRow[]);
+          return;
+        }
+      }
+    } catch {
+      /* ignore a bad cache */
+    }
+
     supabase
       .from('questions')
       .select('id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
       .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
-        setQuestions(ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[]);
+        const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[];
+        setQuestions(ordered);
+        try {
+          localStorage.setItem(paperKey, JSON.stringify({ idsKey, questions: ordered }));
+        } catch {
+          /* storage full — the test still works, just no offline cache */
+        }
       });
-  }, [idsKey]);
+  }, [idsKey, paperKey]);
 
-  /* ---------- restore any answers this participant already saved ---------- */
+  /* ---------- restore progress from this device (no network) ---------- */
+  const progressKey = `class-exam:progress:${test.id}:${participantId}`;
+
   useEffect(() => {
     if (!participantId) return;
-    supabase
-      .from('class_test_answers')
-      .select('question_id, selected_answer, flagged')
-      .eq('participant_id', participantId)
-      .then(({ data }) => {
-        if (data?.length) {
-          setAnswers((prev) => {
-            const next = { ...prev };
-            data.forEach((r: any) => {
-              if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
-            });
-            return next;
-          });
-          setFlags((prev) => {
-            const next = { ...prev };
-            data.forEach((r: any) => {
-              if (r.flagged) next[r.question_id] = true;
-            });
-            return next;
-          });
+    let hadProgress = false;
+    try {
+      const raw = localStorage.getItem(progressKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved?.answers && typeof saved.answers === 'object') {
+          setAnswers(saved.answers);
+          hadProgress = Object.keys(saved.answers).length > 0;
         }
-        // A session already in progress (saved answers, or a start marker from a
-        // previous visit) means the student crashed / reloaded out of the test.
-        const marker = localStorage.getItem(startedKey);
-        if ((data?.length ?? 0) > 0 || marker) setNeedsResume(true);
-        localStorage.setItem(startedKey, marker ?? String(Date.now()));
-        setRestored(true);
-      });
-  }, [participantId, startedKey]);
+        if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
+      }
+    } catch {
+      /* ignore */
+    }
+    const marker = localStorage.getItem(startedKey);
+    if (hadProgress || marker) setNeedsResume(true);
+    localStorage.setItem(startedKey, marker ?? String(Date.now()));
+    setRestored(true);
+  }, [participantId, startedKey, progressKey]);
+
+  /* ---------- persist progress locally on every change ---------- */
+  useEffect(() => {
+    if (!restored || submitted) return;
+    try {
+      localStorage.setItem(
+        progressKey,
+        JSON.stringify({ answers, flags, violations: violationsRef.current }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [answers, flags, restored, submitted, progressKey]);
 
   // Came back after the clock already ran out — submit what was saved.
   useEffect(() => {
