@@ -58,57 +58,71 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
       
       const excludeIds = bluebookQuestionIds?.map(q => q.question_id).filter(Boolean) || [];
 
-      let query = supabase
-        .from('questions')
-        .select(`
-          *,
-          category:question_categories(name)
-        `)
-        .eq('is_original', true)
-        .order('question_id');
+      const buildQuery = () => {
+        let query = supabase
+          .from('questions')
+          .select(`
+            *,
+            category:question_categories(name)
+          `)
+          .eq('is_original', true)
+          .order('question_id');
 
-      // Filter by question set
-      if (questionSet === '68') {
-        query = query.eq('question_set', '68');
-      } else if (questionSet === '150') {
-        query = query.eq('question_set', 'SATMathTraining800');
-      } else if (questionSet === 'english') {
-        query = query.eq('subject', 'english');
-      } else {
-        // CB tab: all math questions that aren't in the 68 or 150 sets
-        query = query
-          .eq('subject', 'math')
-          .neq('question_set', '68')
-          .neq('question_set', 'SATMathTraining800');
+        // Filter by question set
+        if (questionSet === '68') {
+          query = query.eq('question_set', '68');
+        } else if (questionSet === '150') {
+          query = query.eq('question_set', 'SATMathTraining800');
+        } else if (questionSet === 'english') {
+          query = query.eq('subject', 'english');
+        } else {
+          // CB tab: all math questions that aren't in the 68 or 150 sets
+          query = query
+            .eq('subject', 'math')
+            .neq('question_set', '68')
+            .neq('question_set', 'SATMathTraining800');
+        }
+
+        if (categoryFilter !== 'all') {
+          query = query.eq('category_id', categoryFilter);
+        }
+
+        if (difficultyFilter !== 'all') {
+          query = query.eq('difficulty_level', difficultyFilter);
+        }
+
+        if (serverSearch) {
+          query = query.or(`question_id.ilike.%${serverSearch}%,question_text.ilike.%${serverSearch}%`);
+        }
+
+        // Filter by figure
+        if (figureFilter) {
+          query = query.eq('has_figure', true);
+        }
+
+        // Exclude bluebook questions
+        if (excludeIds.length > 0) {
+          query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+        }
+
+        return query;
+      };
+
+      // Paginate: a single response is capped at 1000 rows, which was silently
+      // hiding questions (e.g. EXT0953) from the admin bank.
+      const pageSize = 1000;
+      const all: any[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+        if (error) throw error;
+        all.push(...(data || []));
+        if (!data || data.length < pageSize) break;
       }
+      return all;
 
-      if (categoryFilter !== 'all') {
-        query = query.eq('category_id', categoryFilter);
-      }
-
-      if (difficultyFilter !== 'all') {
-        query = query.eq('difficulty_level', difficultyFilter);
-      }
-
-      if (serverSearch) {
-        query = query.or(`question_id.ilike.%${serverSearch}%,question_text.ilike.%${serverSearch}%`);
-      }
-
-      // Filter by figure
-      if (figureFilter) {
-        query = query.eq('has_figure', true);
-      }
-
-      // Exclude bluebook questions
-      if (excludeIds.length > 0) {
-        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     }
   });
+
 
   const questions = useMemo(() => {
     if (!allQuestions) {
