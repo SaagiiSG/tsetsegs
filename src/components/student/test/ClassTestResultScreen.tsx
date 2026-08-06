@@ -68,9 +68,16 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
           <div className="mt-1 text-sm text-muted-foreground">{accuracy}% accuracy</div>
         </div>
 
+        {!keyLoaded && (
+          <p className="text-center text-xs text-muted-foreground">
+            Loading the answer key for your review…
+          </p>
+        )}
+
         <Card className="p-4">
           <div className="text-sm font-semibold mb-3">Your answers</div>
           <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+
             {results.map((r) => (
               <button
                 key={r.index}
