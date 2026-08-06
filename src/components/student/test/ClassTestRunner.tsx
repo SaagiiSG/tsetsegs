@@ -679,12 +679,15 @@ export function ClassTestRunner({
       <ClassTestResultScreen
         test={test}
         participantId={participantId}
-        questions={questions}
+        questions={questions.map((q) => ({ ...q, answer: answerKey[q.id] }))}
         answers={answers}
+        serverScore={serverScore}
+        keyLoaded={Object.keys(answerKey).length > 0}
         onExit={onExit}
       />
     );
   }
+
 
 
   if (questions.length === 0) {
