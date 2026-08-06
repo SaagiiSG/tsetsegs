@@ -84,23 +84,24 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
                 onClick={() => setOpenId(r.question.id)}
                 className={cn(
                   'h-9 rounded-md border flex items-center justify-center text-xs font-semibold gap-1 transition-colors',
-                  r.correct
+                  keyLoaded && r.correct
                     ? 'bg-emerald-500/15 border-emerald-500/40'
-                    : r.answered
+                    : keyLoaded && r.answered
                     ? 'bg-destructive/10 border-destructive/40'
                     : 'bg-muted/40',
                 )}
               >
                 {r.index}
-                {r.correct ? (
+                {keyLoaded && r.correct ? (
                   <Check className="h-3 w-3" />
-                ) : r.answered ? (
+                ) : keyLoaded && r.answered ? (
                   <X className="h-3 w-3" />
                 ) : (
                   <Minus className="h-3 w-3" />
                 )}
               </button>
             ))}
+
           </div>
         </Card>
 
