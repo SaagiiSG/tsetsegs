@@ -434,18 +434,29 @@ export function ClassTestRunner({
         question_id: q.id,
         selected_answer: current[q.id],
         is_correct: isCorrect(q, current[q.id]),
-        time_ms: times[q.id] ?? null,
+        // column is NOT NULL — a resumed session can have no timing for an answer
+        time_ms: Math.max(0, Math.round(times[q.id] ?? 0)),
         flagged: !!currentFlags[q.id],
       }));
+
+    const fail = () => {
+      setPendingUpload(true);
+      submittingRef.current = false;
+      if (!auto) toast.error('No connection — we will keep retrying, keep this page open.');
+    };
 
     try {
       if (rows.length > 0) {
         // one bulk write for the entire paper
-        await supabase
+        const { error } = await supabase
           .from('class_test_answers')
           .upsert(rows, { onConflict: 'participant_id,question_id' });
+        if (error) {
+          fail();
+          return;
+        }
       }
-      await supabase
+      const { error: pErr } = await supabase
         .from('class_test_participants')
         .update({
           submitted_at: new Date().toISOString(),
@@ -454,23 +465,39 @@ export function ClassTestRunner({
           focus_violations: violationsRef.current,
         })
         .eq('id', participantId);
+      if (pErr) {
+        fail();
+        return;
+      }
     } catch {
-      toast.error('We could not reach the server — keep this page open and try submitting again.');
-      submittingRef.current = false;
+      fail();
       return;
     }
+    setPendingUpload(false);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
   }, [participantId, questions, test.id]);
   submitTestRef.current = submitTest;
 
-  // Clear local exam state once the test is really over.
+  /* ---------- keep retrying a failed upload until it lands ---------- */
+  useEffect(() => {
+    if (!pendingUpload) return;
+    const t = setInterval(() => submitTestRef.current?.(true), 8000);
+    const onOnline = () => submitTestRef.current?.(true);
+    window.addEventListener('online', onOnline);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [pendingUpload]);
+
+  // Exam is over for this student: only the "in progress" marker goes away.
+  // The paper + answers stay cached so a refresh still shows their score screen.
   useEffect(() => {
     if (!submitted) return;
     localStorage.removeItem(startedKey);
-    localStorage.removeItem(progressKey);
-    localStorage.removeItem(paperKey);
-  }, [submitted, startedKey, progressKey, paperKey]);
+  }, [submitted, startedKey]);
+
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
