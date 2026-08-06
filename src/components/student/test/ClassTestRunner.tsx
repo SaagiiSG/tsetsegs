@@ -281,6 +281,12 @@ export function ClassTestRunner({
   const [restored, setRestored] = useState(false);
   const [needsResume, setNeedsResume] = useState(false);
   const [pendingUpload, setPendingUpload] = useState(false);
+  /** Authoritative score returned by the server after grading. */
+  const [serverScore, setServerScore] = useState<{ correct: number; answered: number } | null>(null);
+  /** Answer key, fetched only after the paper is submitted (for the review screen). */
+  const [answerKey, setAnswerKey] = useState<Record<string, string>>({});
+  const [draftSyncing, setDraftSyncing] = useState(false);
+
 
   const startedKey = `class-exam:started:${test.id}:${participantId}`;
   const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
