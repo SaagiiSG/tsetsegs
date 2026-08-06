@@ -502,13 +502,16 @@ export function ClassTestRunner({
 
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
+  // Wait until the paper and the locally saved answers are loaded, otherwise we would
+  // upload an empty paper and wipe the student's work.
   useEffect(() => {
-    if (ended && !submitted) submitTest(true);
-  }, [ended, submitted, submitTest]);
+    if (ended && !submitted && restored && questions.length > 0) submitTest(true);
+  }, [ended, submitted, restored, questions.length, submitTest]);
 
   const handleExpire = useCallback(() => {
-    if (!submitted) submitTest(true);
-  }, [submitted, submitTest]);
+    if (!submitted && restored && questions.length > 0) submitTest(true);
+  }, [submitted, restored, questions.length, submitTest]);
+
 
 
   /* ---------- focus lock (tablet / desktop only) ---------- */
