@@ -104,11 +104,20 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
         query = query.not('id', 'in', `(${excludeIds.join(',')})`);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      // Paginate: PostgREST caps a single response at 1000 rows, which was
+      // silently hiding questions (e.g. EXT0953) from the admin bank.
+      const pageSize = 1000;
+      const all: any[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await query.range(from, from + pageSize - 1);
+        if (error) throw error;
+        all.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      return all;
     }
   });
+
 
   const questions = useMemo(() => {
     if (!allQuestions) {
