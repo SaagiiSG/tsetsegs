@@ -26,21 +26,13 @@ interface QuestionRow {
   question_image_url: string | null;
   multiple_choice_options: any;
   choice_images: any;
-  answer: string;
+  /** Never downloaded while the exam is running — the answer key only arrives
+   *  after the paper is graded on the server. */
+  answer?: string;
   question_type: string | null;
   passage_text: string | null;
 }
 
-function normalizeFill(v: string) {
-  return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
-}
-
-function isCorrect(q: QuestionRow, value: string) {
-  const isFill = (q.question_type ?? '').includes('fill');
-  return isFill
-    ? normalizeFill(value) === normalizeFill(q.answer ?? '')
-    : value.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
-}
 
 type Option = { key: string; text: string; img?: string };
 
@@ -289,6 +281,12 @@ export function ClassTestRunner({
   const [restored, setRestored] = useState(false);
   const [needsResume, setNeedsResume] = useState(false);
   const [pendingUpload, setPendingUpload] = useState(false);
+  /** Authoritative score returned by the server after grading. */
+  const [serverScore, setServerScore] = useState<{ correct: number; answered: number } | null>(null);
+  /** Answer key, fetched only after the paper is submitted (for the review screen). */
+  const [answerKey, setAnswerKey] = useState<Record<string, string>>({});
+  const [draftSyncing, setDraftSyncing] = useState(false);
+
 
   const startedKey = `class-exam:started:${test.id}:${participantId}`;
   const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
@@ -337,7 +335,9 @@ export function ClassTestRunner({
 
     supabase
       .from('questions')
-      .select('id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
+      // NOTE: `answer` is deliberately excluded — the answer key never touches the
+      // student's device while the exam is live (grading happens on the server).
+      .select('id, question_text, question_image_url, multiple_choice_options, choice_images, question_type, passage_text')
       .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
@@ -351,11 +351,13 @@ export function ClassTestRunner({
       });
   }, [idsKey, paperKey]);
 
+
   /* ---------- restore progress from this device (no network) ---------- */
   const progressKey = `class-exam:progress:${test.id}:${participantId}`;
 
   useEffect(() => {
     if (!participantId) return;
+    let cancelled = false;
     let hadProgress = false;
     try {
       const raw = localStorage.getItem(progressKey);
@@ -375,7 +377,38 @@ export function ClassTestRunner({
     const marker = localStorage.getItem(startedKey);
     if (hadProgress || marker) setNeedsResume(true);
     localStorage.setItem(startedKey, marker ?? String(Date.now()));
-    setRestored(true);
+
+    // Nothing on this device (cleared storage, new phone, borrowed laptop):
+    // pull the server-side draft so no work is ever stranded.
+    if (hadProgress) {
+      setRestored(true);
+      return;
+    }
+    supabase
+      .rpc('class_test_load_draft', { p_participant_id: participantId })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const row = (Array.isArray(data) ? data[0] : data) as any;
+        if (row) {
+          if (row.submitted_at) setSubmitted(true);
+          const a = (row.answers ?? {}) as Record<string, string>;
+          if (a && Object.keys(a).length > 0) {
+            setAnswers(a);
+            setNeedsResume(true);
+          }
+          if (row.flags && typeof row.flags === 'object') setFlags(row.flags);
+          if (row.times && typeof row.times === 'object') timesRef.current = row.times;
+          if (typeof row.focus_violations === 'number') {
+            violationsRef.current = Math.max(violationsRef.current, row.focus_violations);
+          }
+        }
+      })
+      .then(() => {
+        if (!cancelled) setRestored(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [participantId, startedKey, progressKey]);
 
   /* ---------- persist progress locally on every change ---------- */
@@ -390,6 +423,52 @@ export function ClassTestRunner({
       /* ignore */
     }
   }, [answers, flags, restored, progressKey]);
+
+  /* ---------- server-side draft: one tiny write every 30s, only when dirty ----------
+     This is the safety net for a cleared cache / dead device. It stays cheap:
+     ~1 row update per student per 30s, never per keystroke. */
+  const draftDirtyRef = useRef(false);
+  const draftSentRef = useRef('');
+  useEffect(() => {
+    if (!restored || submitted) return;
+    draftDirtyRef.current = true;
+  }, [answers, flags, restored, submitted]);
+
+  const pushDraft = useCallback(async () => {
+    if (!participantId || submittingRef.current) return;
+    const snapshot = JSON.stringify({ a: answersRef.current, f: flagsRef.current });
+    if (!draftDirtyRef.current || snapshot === draftSentRef.current) return;
+    if (Object.keys(answersRef.current).length === 0) return;
+    setDraftSyncing(true);
+    const { error } = await supabase.rpc('class_test_save_draft', {
+      p_participant_id: participantId,
+      p_answers: answersRef.current,
+      p_flags: flagsRef.current,
+      p_times: timesRef.current,
+      p_violations: violationsRef.current,
+    });
+    setDraftSyncing(false);
+    if (!error) {
+      draftSentRef.current = snapshot;
+      draftDirtyRef.current = false;
+    }
+  }, [participantId]);
+
+  useEffect(() => {
+    if (!restored || submitted) return;
+    const t = setInterval(() => void pushDraft(), 30000);
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') void pushDraft();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+      void pushDraft();
+    };
+  }, [restored, submitted, pushDraft]);
 
   /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
   useEffect(() => {
@@ -407,6 +486,23 @@ export function ClassTestRunner({
       });
   }, [submitted, participantId]);
 
+  /* ---------- answer key arrives only once the paper is in ---------- */
+  useEffect(() => {
+    if (!submitted || !idsKey) return;
+    if (Object.keys(answerKey).length > 0) return;
+    supabase
+      .from('questions')
+      .select('id, answer')
+      .in('id', idsKey.split(','))
+      .then(({ data }) => {
+        if (!data) return;
+        const key: Record<string, string> = {};
+        for (const r of data as any[]) key[r.id] = r.answer ?? '';
+        setAnswerKey(key);
+      });
+  }, [submitted, idsKey, answerKey]);
+
+
 
   // Came back after the clock already ran out — submit what was saved.
   useEffect(() => {
@@ -416,30 +512,22 @@ export function ClassTestRunner({
 
 
 
-  /* ---------- submit: the ONLY upload of the whole exam ---------- */
+  /* ---------- submit: graded on the server, one call for the whole paper ---------- */
   const submitTest = useCallback(async (auto = false) => {
     if (submittingRef.current || !participantId) return;
     submittingRef.current = true;
     const current = answersRef.current;
-    const currentFlags = flagsRef.current;
-    const times = timesRef.current;
-    const correct = questions.reduce((acc, q) => {
-      const given = current[q.id];
-      return acc + (given && isCorrect(q, given) ? 1 : 0);
-    }, 0);
-
-    const rows = questions
-      .filter((q) => current[q.id] !== undefined && current[q.id] !== '')
-      .map((q) => ({
-        test_id: test.id,
-        participant_id: participantId,
-        question_id: q.id,
-        selected_answer: current[q.id],
-        is_correct: isCorrect(q, current[q.id]),
-        // column is NOT NULL — a resumed session can have no timing for an answer
-        time_ms: Math.max(0, Math.round(times[q.id] ?? 0)),
-        flagged: !!currentFlags[q.id],
-      }));
+    const payloadAnswers: Record<string, string> = {};
+    for (const q of questions) {
+      const v = current[q.id];
+      if (v !== undefined && v !== '') payloadAnswers[q.id] = v;
+    }
+    const payloadFlags: Record<string, boolean> = {};
+    const payloadTimes: Record<string, number> = {};
+    for (const q of questions) {
+      if (flagsRef.current[q.id]) payloadFlags[q.id] = true;
+      payloadTimes[q.id] = Math.max(0, Math.round(timesRef.current[q.id] ?? 0));
+    }
 
     const fail = () => {
       setPendingUpload(true);
@@ -448,29 +536,21 @@ export function ClassTestRunner({
     };
 
     try {
-      if (rows.length > 0) {
-        // one bulk write for the entire paper
-        const { error } = await supabase
-          .from('class_test_answers')
-          .upsert(rows, { onConflict: 'participant_id,question_id' });
-        if (error) {
-          fail();
-          return;
-        }
-      }
-      const { error: pErr } = await supabase
-        .from('class_test_participants')
-        .update({
-          submitted_at: new Date().toISOString(),
-          correct_count: correct,
-          answered_count: rows.length,
-          focus_violations: violationsRef.current,
-        })
-        .eq('id', participantId);
-      if (pErr) {
+      const { data, error } = await supabase.rpc('class_test_submit', {
+        p_participant_id: participantId,
+        p_answers: payloadAnswers,
+        p_flags: payloadFlags,
+        p_times: payloadTimes,
+        p_violations: violationsRef.current,
+      });
+      const row = (Array.isArray(data) ? data[0] : data) as
+        | { correct_count: number; answered_count: number }
+        | undefined;
+      if (error || !row) {
         fail();
         return;
       }
+      setServerScore({ correct: row.correct_count ?? 0, answered: row.answered_count ?? 0 });
     } catch {
       fail();
       return;
@@ -478,7 +558,8 @@ export function ClassTestRunner({
     setPendingUpload(false);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions, test.id]);
+  }, [participantId, questions]);
+
   submitTestRef.current = submitTest;
 
   /* ---------- keep retrying a failed upload until it lands ---------- */
@@ -598,12 +679,15 @@ export function ClassTestRunner({
       <ClassTestResultScreen
         test={test}
         participantId={participantId}
-        questions={questions}
+        questions={questions.map((q) => ({ ...q, answer: answerKey[q.id] }))}
         answers={answers}
+        serverScore={serverScore}
+        keyLoaded={Object.keys(answerKey).length > 0}
         onExit={onExit}
       />
     );
   }
+
 
 
   if (questions.length === 0) {
@@ -712,12 +796,18 @@ export function ClassTestRunner({
 
       <Progress value={(answeredCount / questions.length) * 100} className="h-1 rounded-none" />
 
-      {pendingUpload && (
+      {pendingUpload ? (
         <div className="bg-amber-500/15 text-amber-600 text-[11px] px-3 py-1.5 flex items-center gap-2">
           <Loader2 className="h-3 w-3 animate-spin" />
           Your answers are saved on this device — we're retrying the upload. Keep this page open.
         </div>
-      )}
+      ) : draftSyncing ? (
+        <div className="bg-muted/60 text-muted-foreground text-[11px] px-3 py-1 flex items-center gap-2">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Backing up your progress…
+        </div>
+      ) : null}
+
 
 
       <div className="flex-1 min-h-0 flex">

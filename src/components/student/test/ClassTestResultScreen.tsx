@@ -8,7 +8,7 @@ import type { ClassTest } from '@/hooks/useClassTest';
 
 interface QuestionLike {
   id: string;
-  answer: string;
+  answer?: string;
   question_type: string | null;
   question_text?: string;
   question_image_url?: string | null;
@@ -26,10 +26,14 @@ interface Props {
   participantId: string | null;
   questions: QuestionLike[];
   answers: Record<string, string>;
+  /** Authoritative score computed on the server at submit time. */
+  serverScore?: { correct: number; answered: number } | null;
+  /** Whether the answer key has arrived — the per-question breakdown waits for it. */
+  keyLoaded?: boolean;
   onExit?: () => void;
 }
 
-export function ClassTestResultScreen({ test, questions, answers, onExit }: Props) {
+export function ClassTestResultScreen({ test, questions, answers, serverScore, keyLoaded = true, onExit }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const results = useMemo(
@@ -37,7 +41,7 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
       questions.map((q, i) => {
         const given = answers[q.id];
         const isFill = (q.question_type ?? '').includes('fill');
-        const correct = !given
+        const correct = !given || !q.answer
           ? false
           : isFill
           ? normalizeFill(given) === normalizeFill(q.answer ?? '')
@@ -47,9 +51,10 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
     [questions, answers],
   );
 
-  const score = results.filter((r) => r.correct).length;
+  const score = serverScore ? serverScore.correct : results.filter((r) => r.correct).length;
   const total = questions.length || test.question_ids.length;
   const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+
 
   return (
     <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
@@ -63,32 +68,40 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
           <div className="mt-1 text-sm text-muted-foreground">{accuracy}% accuracy</div>
         </div>
 
+        {!keyLoaded && (
+          <p className="text-center text-xs text-muted-foreground">
+            Loading the answer key for your review…
+          </p>
+        )}
+
         <Card className="p-4">
           <div className="text-sm font-semibold mb-3">Your answers</div>
           <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+
             {results.map((r) => (
               <button
                 key={r.index}
                 onClick={() => setOpenId(r.question.id)}
                 className={cn(
                   'h-9 rounded-md border flex items-center justify-center text-xs font-semibold gap-1 transition-colors',
-                  r.correct
+                  keyLoaded && r.correct
                     ? 'bg-emerald-500/15 border-emerald-500/40'
-                    : r.answered
+                    : keyLoaded && r.answered
                     ? 'bg-destructive/10 border-destructive/40'
                     : 'bg-muted/40',
                 )}
               >
                 {r.index}
-                {r.correct ? (
+                {keyLoaded && r.correct ? (
                   <Check className="h-3 w-3" />
-                ) : r.answered ? (
+                ) : keyLoaded && r.answered ? (
                   <X className="h-3 w-3" />
                 ) : (
                   <Minus className="h-3 w-3" />
                 )}
               </button>
             ))}
+
           </div>
         </Card>
 

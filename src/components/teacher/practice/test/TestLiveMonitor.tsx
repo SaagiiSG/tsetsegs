@@ -34,16 +34,29 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
     return () => clearInterval(t);
   }, [endsAt]);
 
+  /** Grade any student who never pressed Submit from their last saved backup. */
+  const finalize = async () => {
+    try {
+      await supabase.rpc('class_test_finalize', { p_test_id: testId });
+    } catch {
+      /* results still open, teacher can refresh */
+    }
+  };
+
   useEffect(() => {
     // Only auto-finish once the clock has genuinely run out (never on first render).
     if (!test || test.status !== 'active' || endsAt === null) return;
     if (autoEndedRef.current || Date.now() < endsAt) return;
     autoEndedRef.current = true;
-    supabase
-      .from('class_tests')
-      .update({ status: 'finished', finished_at: new Date().toISOString() })
-      .eq('id', testId)
-      .then(() => refresh());
+    (async () => {
+      await supabase
+        .from('class_tests')
+        .update({ status: 'finished', finished_at: new Date().toISOString() })
+        .eq('id', testId);
+      await finalize();
+      refresh();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining, test, endsAt, testId, refresh]);
 
   const endNow = async () => {
@@ -52,9 +65,11 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
       .from('class_tests')
       .update({ status: 'finished', finished_at: new Date().toISOString() })
       .eq('id', testId);
+    await finalize();
     setEnding(false);
     refresh();
   };
+
 
   const manualRefresh = async () => {
     setRefreshing(true);

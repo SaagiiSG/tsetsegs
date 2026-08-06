@@ -1024,6 +1024,10 @@ export type Database = {
           answered_count: number
           correct_count: number
           display_name: string
+          draft_answers: Json
+          draft_flags: Json
+          draft_saved_at: string | null
+          draft_times: Json
           focus_violations: number
           id: string
           joined_at: string
@@ -1038,6 +1042,10 @@ export type Database = {
           answered_count?: number
           correct_count?: number
           display_name?: string
+          draft_answers?: Json
+          draft_flags?: Json
+          draft_saved_at?: string | null
+          draft_times?: Json
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -1052,6 +1060,10 @@ export type Database = {
           answered_count?: number
           correct_count?: number
           display_name?: string
+          draft_answers?: Json
+          draft_flags?: Json
+          draft_saved_at?: string | null
+          draft_times?: Json
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -4178,6 +4190,7 @@ export type Database = {
           pretty: string
         }[]
       }
+      class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
         Returns: {
@@ -4190,6 +4203,42 @@ export type Database = {
           submitted_at: string
           test_id: string
           title: string
+        }[]
+      }
+      class_test_load_draft: {
+        Args: { p_participant_id: string }
+        Returns: {
+          answers: Json
+          flags: Json
+          focus_violations: number
+          saved_at: string
+          submitted_at: string
+          times: Json
+        }[]
+      }
+      class_test_save_draft: {
+        Args: {
+          p_answers: Json
+          p_flags?: Json
+          p_participant_id: string
+          p_times?: Json
+          p_violations?: number
+        }
+        Returns: boolean
+      }
+      class_test_submit: {
+        Args: {
+          p_answers: Json
+          p_flags?: Json
+          p_participant_id: string
+          p_times?: Json
+          p_violations?: number
+        }
+        Returns: {
+          answered_count: number
+          correct_count: number
+          results: Json
+          submitted_at: string
         }[]
       }
       current_student_account_id: { Args: never; Returns: string }
