@@ -446,10 +446,13 @@ export function ClassTestRunner({
   }, [participantId, questions, test.id]);
   submitTestRef.current = submitTest;
 
-  // Clear the crash marker once the test is really over.
+  // Clear local exam state once the test is really over.
   useEffect(() => {
-    if (submitted) localStorage.removeItem(startedKey);
-  }, [submitted, startedKey]);
+    if (!submitted) return;
+    localStorage.removeItem(startedKey);
+    localStorage.removeItem(progressKey);
+    localStorage.removeItem(paperKey);
+  }, [submitted, startedKey, progressKey, paperKey]);
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
