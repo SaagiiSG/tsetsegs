@@ -368,15 +368,20 @@ export function ClassTestRunner({
           hadProgress = Object.keys(saved.answers).length > 0;
         }
         if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (typeof saved?.cursor === 'number' && saved.cursor >= 0) setCursor(saved.cursor);
         if (saved?.times && typeof saved.times === 'object') timesRef.current = saved.times;
         if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
       }
     } catch {
       /* ignore */
     }
+
+    // Only offer "continue where you left off" when there is real work to continue.
+    // A bare start marker (first mount, StrictMode double-mount) must not trigger it.
     const marker = localStorage.getItem(startedKey);
-    if (hadProgress || marker) setNeedsResume(true);
+    if (hadProgress) setNeedsResume(true);
     localStorage.setItem(startedKey, marker ?? String(Date.now()));
+
 
     // Nothing on this device (cleared storage, new phone, borrowed laptop):
     // pull the server-side draft so no work is ever stranded.
@@ -411,18 +416,27 @@ export function ClassTestRunner({
     };
   }, [participantId, startedKey, progressKey]);
 
-  /* ---------- persist progress locally on every change ---------- */
+  /* ---------- persist progress locally on every change ----------
+     `cursor` rides along so a refresh (or any remount) puts the student back on the
+     question they were reading, never on question 1. */
   useEffect(() => {
     if (!restored) return;
     try {
       localStorage.setItem(
         progressKey,
-        JSON.stringify({ answers, flags, times: timesRef.current, violations: violationsRef.current }),
+        JSON.stringify({
+          answers,
+          flags,
+          cursor,
+          times: timesRef.current,
+          violations: violationsRef.current,
+        }),
       );
     } catch {
       /* ignore */
     }
-  }, [answers, flags, restored, progressKey]);
+  }, [answers, flags, cursor, restored, progressKey]);
+
 
   /* ---------- server-side draft: one tiny write every 30s, only when dirty ----------
      This is the safety net for a cleared cache / dead device. It stays cheap:
@@ -469,6 +483,20 @@ export function ClassTestRunner({
       void pushDraft();
     };
   }, [restored, submitted, pushDraft]);
+
+  /* First answers land on the server within seconds, not at the 30s tick — a crash
+     in the opening minute must not leave a student with nothing to recover. */
+  const earlyDraftRef = useRef(false);
+  useEffect(() => {
+    if (!restored || submitted || earlyDraftRef.current) return;
+    if (Object.keys(answers).length === 0) return;
+    const t = setTimeout(() => {
+      earlyDraftRef.current = true;
+      void pushDraft();
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [answers, restored, submitted, pushDraft]);
+
 
   /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
   useEffect(() => {
@@ -648,11 +676,19 @@ export function ClassTestRunner({
     return Object.entries(raw).map(([k, v]) => ({ key: k, text: String(v), img: imgs?.[k] }));
   }, [current]);
 
+  /* A restored cursor can outrun a paper that is still loading — clamp it once we know
+     how many questions there actually are. */
+  useEffect(() => {
+    if (questions.length === 0) return;
+    setCursor((prev) => (prev > questions.length - 1 ? questions.length - 1 : prev));
+  }, [questions.length]);
+
   /** Purely local — nothing touches the network until the student submits. */
   const saveAnswer = useCallback((q: QuestionRow, value: string) => {
     timesRef.current[q.id] = Date.now() - questionStartRef.current;
     setAnswers((a) => (a[q.id] === value ? a : { ...a, [q.id]: value }));
   }, []);
+
 
   const goto = useCallback((i: number) => {
     setCursor((prev) => {
@@ -737,12 +773,19 @@ export function ClassTestRunner({
             className="w-full h-11"
             onClick={() => {
               setNeedsResume(false);
-              goto(firstUnanswered >= 0 ? firstUnanswered : 0);
+              if (firstUnanswered >= 0) {
+                goto(firstUnanswered);
+              } else {
+                // Everything is already answered — go straight to the check screen.
+                goto(questions.length - 1);
+                setReviewing(true);
+              }
             }}
           >
             {answeredNow > 0 ? 'Resume test' : 'Enter test'}
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
+
           {firstUnanswered >= 0 && answeredNow > 0 && (
             <p className="text-[11px] text-muted-foreground">
               You'll land on question {firstUnanswered + 1}, your first unanswered one.
@@ -852,13 +895,21 @@ export function ClassTestRunner({
           </>
         ) : (
           <>
-            <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor - 1)} disabled={cursor === 0}>
+            <Button
+              variant="outline"
+              size={isMobile ? 'default' : 'sm'}
+              onClick={() => goto(cursor - 1)}
+              disabled={cursor === 0}
+              aria-label="Previous question"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant={flags[current.id] ? 'default' : 'outline'}
               size={isMobile ? 'default' : 'sm'}
               onClick={() => setFlags((f) => ({ ...f, [current.id]: !f[current.id] }))}
+              aria-label={flags[current.id] ? 'Remove flag from this question' : 'Flag this question for review'}
+              aria-pressed={!!flags[current.id]}
             >
               <Flag className="h-4 w-4" />
             </Button>
@@ -869,11 +920,12 @@ export function ClassTestRunner({
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)}>
+              <Button size={isMobile ? 'default' : 'sm'} onClick={() => goto(cursor + 1)} aria-label="Next question">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
           </>
+
         )}
       </div>
 
