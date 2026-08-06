@@ -357,6 +357,7 @@ export function ClassTestRunner({
 
   useEffect(() => {
     if (!participantId) return;
+    let cancelled = false;
     let hadProgress = false;
     try {
       const raw = localStorage.getItem(progressKey);
@@ -376,7 +377,38 @@ export function ClassTestRunner({
     const marker = localStorage.getItem(startedKey);
     if (hadProgress || marker) setNeedsResume(true);
     localStorage.setItem(startedKey, marker ?? String(Date.now()));
-    setRestored(true);
+
+    // Nothing on this device (cleared storage, new phone, borrowed laptop):
+    // pull the server-side draft so no work is ever stranded.
+    if (hadProgress) {
+      setRestored(true);
+      return;
+    }
+    supabase
+      .rpc('class_test_load_draft', { p_participant_id: participantId })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const row = (Array.isArray(data) ? data[0] : data) as any;
+        if (row) {
+          if (row.submitted_at) setSubmitted(true);
+          const a = (row.answers ?? {}) as Record<string, string>;
+          if (a && Object.keys(a).length > 0) {
+            setAnswers(a);
+            setNeedsResume(true);
+          }
+          if (row.flags && typeof row.flags === 'object') setFlags(row.flags);
+          if (row.times && typeof row.times === 'object') timesRef.current = row.times;
+          if (typeof row.focus_violations === 'number') {
+            violationsRef.current = Math.max(violationsRef.current, row.focus_violations);
+          }
+        }
+      })
+      .then(() => {
+        if (!cancelled) setRestored(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [participantId, startedKey, progressKey]);
 
   /* ---------- persist progress locally on every change ---------- */
@@ -391,6 +423,52 @@ export function ClassTestRunner({
       /* ignore */
     }
   }, [answers, flags, restored, progressKey]);
+
+  /* ---------- server-side draft: one tiny write every 30s, only when dirty ----------
+     This is the safety net for a cleared cache / dead device. It stays cheap:
+     ~1 row update per student per 30s, never per keystroke. */
+  const draftDirtyRef = useRef(false);
+  const draftSentRef = useRef('');
+  useEffect(() => {
+    if (!restored || submitted) return;
+    draftDirtyRef.current = true;
+  }, [answers, flags, restored, submitted]);
+
+  const pushDraft = useCallback(async () => {
+    if (!participantId || submittingRef.current) return;
+    const snapshot = JSON.stringify({ a: answersRef.current, f: flagsRef.current });
+    if (!draftDirtyRef.current || snapshot === draftSentRef.current) return;
+    if (Object.keys(answersRef.current).length === 0) return;
+    setDraftSyncing(true);
+    const { error } = await supabase.rpc('class_test_save_draft', {
+      p_participant_id: participantId,
+      p_answers: answersRef.current,
+      p_flags: flagsRef.current,
+      p_times: timesRef.current,
+      p_violations: violationsRef.current,
+    });
+    setDraftSyncing(false);
+    if (!error) {
+      draftSentRef.current = snapshot;
+      draftDirtyRef.current = false;
+    }
+  }, [participantId]);
+
+  useEffect(() => {
+    if (!restored || submitted) return;
+    const t = setInterval(() => void pushDraft(), 30000);
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') void pushDraft();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+      void pushDraft();
+    };
+  }, [restored, submitted, pushDraft]);
 
   /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
   useEffect(() => {
@@ -407,6 +485,23 @@ export function ClassTestRunner({
         setAnswers(map);
       });
   }, [submitted, participantId]);
+
+  /* ---------- answer key arrives only once the paper is in ---------- */
+  useEffect(() => {
+    if (!submitted || !idsKey) return;
+    if (Object.keys(answerKey).length > 0) return;
+    supabase
+      .from('questions')
+      .select('id, answer')
+      .in('id', idsKey.split(','))
+      .then(({ data }) => {
+        if (!data) return;
+        const key: Record<string, string> = {};
+        for (const r of data as any[]) key[r.id] = r.answer ?? '';
+        setAnswerKey(key);
+      });
+  }, [submitted, idsKey, answerKey]);
+
 
 
   // Came back after the clock already ran out — submit what was saved.
