@@ -374,9 +374,12 @@ export function ClassTestRunner({
     } catch {
       /* ignore */
     }
+    // Only offer "continue where you left off" when there is real work to continue.
+    // A bare start marker (first mount, StrictMode double-mount) must not trigger it.
     const marker = localStorage.getItem(startedKey);
-    if (hadProgress || marker) setNeedsResume(true);
+    if (hadProgress) setNeedsResume(true);
     localStorage.setItem(startedKey, marker ?? String(Date.now()));
+
 
     // Nothing on this device (cleared storage, new phone, borrowed laptop):
     // pull the server-side draft so no work is ever stranded.
