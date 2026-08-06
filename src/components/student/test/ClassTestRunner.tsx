@@ -414,18 +414,27 @@ export function ClassTestRunner({
     };
   }, [participantId, startedKey, progressKey]);
 
-  /* ---------- persist progress locally on every change ---------- */
+  /* ---------- persist progress locally on every change ----------
+     `cursor` rides along so a refresh (or any remount) puts the student back on the
+     question they were reading, never on question 1. */
   useEffect(() => {
     if (!restored) return;
     try {
       localStorage.setItem(
         progressKey,
-        JSON.stringify({ answers, flags, times: timesRef.current, violations: violationsRef.current }),
+        JSON.stringify({
+          answers,
+          flags,
+          cursor,
+          times: timesRef.current,
+          violations: violationsRef.current,
+        }),
       );
     } catch {
       /* ignore */
     }
-  }, [answers, flags, restored, progressKey]);
+  }, [answers, flags, cursor, restored, progressKey]);
+
 
   /* ---------- server-side draft: one tiny write every 30s, only when dirty ----------
      This is the safety net for a cleared cache / dead device. It stays cheap:
