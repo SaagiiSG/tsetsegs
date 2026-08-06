@@ -709,6 +709,14 @@ export function ClassTestRunner({
 
       <Progress value={(answeredCount / questions.length) * 100} className="h-1 rounded-none" />
 
+      {pendingUpload && (
+        <div className="bg-amber-500/15 text-amber-600 text-[11px] px-3 py-1.5 flex items-center gap-2">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Your answers are saved on this device — we're retrying the upload. Keep this page open.
+        </div>
+      )}
+
+
       <div className="flex-1 min-h-0 flex">
         {/* question pane */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6">
