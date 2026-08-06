@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { Check, X, Minus, ChevronDown } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import type { ClassTest } from '@/hooks/useClassTest';
@@ -9,16 +9,13 @@ import type { ClassTest } from '@/hooks/useClassTest';
 interface QuestionLike {
   id: string;
   answer?: string;
+  alternate_answers?: string[] | null;
   question_type: string | null;
   question_text?: string;
   question_image_url?: string | null;
   multiple_choice_options?: any;
   choice_images?: any;
   passage_text?: string | null;
-}
-
-function normalizeFill(v: string) {
-  return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
 }
 
 interface Props {
@@ -44,12 +41,13 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
         const correct = !given || !q.answer
           ? false
           : isFill
-          ? normalizeFill(given) === normalizeFill(q.answer ?? '')
+          ? isAcceptedFillBlankAnswer(given, q.answer ?? '', q.alternate_answers)
           : given.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
         return { index: i + 1, answered: !!given, correct, given, question: q };
       }),
     [questions, answers],
   );
+
 
   const score = serverScore ? serverScore.correct : results.filter((r) => r.correct).length;
   const total = questions.length || test.question_ids.length;

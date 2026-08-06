@@ -723,7 +723,7 @@ export function ClassTestRunner({
       <ClassTestResultScreen
         test={test}
         participantId={participantId}
-        questions={questions.map((q) => ({ ...q, answer: answerKey[q.id] }))}
+        questions={questions.map((q) => ({ ...q, answer: answerKey[q.id], alternate_answers: alternateKey[q.id] }))}
         answers={answers}
         serverScore={serverScore}
         keyLoaded={Object.keys(answerKey).length > 0}
