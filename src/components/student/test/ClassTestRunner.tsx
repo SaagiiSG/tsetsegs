@@ -676,11 +676,19 @@ export function ClassTestRunner({
     return Object.entries(raw).map(([k, v]) => ({ key: k, text: String(v), img: imgs?.[k] }));
   }, [current]);
 
+  /* A restored cursor can outrun a paper that is still loading — clamp it once we know
+     how many questions there actually are. */
+  useEffect(() => {
+    if (questions.length === 0) return;
+    setCursor((prev) => (prev > questions.length - 1 ? questions.length - 1 : prev));
+  }, [questions.length]);
+
   /** Purely local — nothing touches the network until the student submits. */
   const saveAnswer = useCallback((q: QuestionRow, value: string) => {
     timesRef.current[q.id] = Date.now() - questionStartRef.current;
     setAnswers((a) => (a[q.id] === value ? a : { ...a, [q.id]: value }));
   }, []);
+
 
   const goto = useCallback((i: number) => {
     setCursor((prev) => {
