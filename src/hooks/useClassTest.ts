@@ -82,7 +82,13 @@ export function useStudentActiveClassTest() {
   return { test, loading, refresh: load };
 }
 
-/** Teacher-side live view of a test + its participants. */
+/**
+ * Teacher-side view of a test + its participants.
+ *
+ * Deliberately NOT subscribed to participant changes: students work entirely
+ * offline and upload once at submit, so there is no live progress to watch and
+ * no reason to stream every row change to every open teacher screen.
+ */
 export function useClassTestMonitor(testId: string | null) {
   const [test, setTest] = useState<ClassTest | null>(null);
   const [participants, setParticipants] = useState<ClassTestParticipant[]>([]);
@@ -105,7 +111,6 @@ export function useClassTestMonitor(testId: string | null) {
     if (!testId) return;
     const channel = supabase
       .channel(`class-test-monitor-${testId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'class_test_participants', filter: `test_id=eq.${testId}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'class_tests', filter: `id=eq.${testId}` }, () => load())
       .subscribe();
     return () => {

@@ -3,10 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useClassTestMonitor } from '@/hooks/useClassTest';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { ArrowLeft, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Loader2, RefreshCw, Users } from 'lucide-react';
 import { ClassTestResults } from './ClassTestResults';
 
 function fmt(s: number) {
@@ -14,10 +12,16 @@ function fmt(s: number) {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
+/**
+ * While the exam runs the teacher only needs the clock and a way to end it.
+ * Students work fully offline and upload their paper once at submit, so there is
+ * no per-question progress to stream — results appear on the results page after.
+ */
 export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: () => void }) {
   const { test, participants, refresh } = useClassTestMonitor(testId);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [ending, setEnding] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const autoEndedRef = useRef(false);
 
   const endsAt = test ? new Date(test.starts_at).getTime() + test.duration_seconds * 1000 : null;
@@ -42,7 +46,6 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
       .then(() => refresh());
   }, [remaining, test, endsAt, testId, refresh]);
 
-
   const endNow = async () => {
     setEnding(true);
     await supabase
@@ -53,6 +56,12 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
     refresh();
   };
 
+  const manualRefresh = async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  };
+
   if (!test) {
     return <div className="p-10 text-center"><Loader2 className="h-5 w-5 mx-auto animate-spin opacity-60" /></div>;
   }
@@ -61,51 +70,58 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
     return <ClassTestResults testId={testId} onBack={onBack} />;
   }
 
-  const total = test.question_ids.length;
   const submitted = participants.filter((p) => p.submitted_at).length;
+  const joined = participants.length;
+  const secondsLeft = remaining ?? Math.max(0, Math.floor(((endsAt ?? 0) - Date.now()) / 1000));
+  const elapsedPct = test.duration_seconds
+    ? Math.min(100, ((test.duration_seconds - secondsLeft) / test.duration_seconds) * 100)
+    : 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack} aria-label="Back">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold truncate">{test.title}</div>
-          <div className="text-xs text-muted-foreground">
-            {participants.length} joined · {submitted} submitted
-          </div>
+          <div className="text-xs text-muted-foreground">Exam in progress</div>
         </div>
-        <div className="font-mono text-lg tabular-nums">{fmt(remaining ?? Math.max(0, Math.floor(((endsAt ?? 0) - Date.now()) / 1000)))}</div>
         <Button size="sm" variant="destructive" onClick={endNow} disabled={ending}>End now</Button>
       </div>
 
-      <Card className="divide-y">
-        {participants.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            Waiting for students to appear — they are pulled in automatically.
+      <Card className="p-8 flex flex-col items-center gap-5 text-center">
+        <div>
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Time remaining</div>
+          <div className="font-mono text-6xl font-bold tabular-nums">{fmt(secondsLeft)}</div>
+        </div>
+
+        <Progress value={elapsedPct} className="h-1.5 w-full max-w-md" />
+
+        <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+          <div className="rounded-lg border p-3">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              <Users className="h-3 w-3" /> Taking the exam
+            </div>
+            <div className="text-2xl font-bold font-mono">{joined}</div>
           </div>
-        ) : (
-          participants
-            .slice()
-            .sort((a, b) => b.answered_count - a.answered_count)
-            .map((p) => (
-              <div key={p.id} className="p-3 flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium truncate">{p.display_name}</div>
-                  <Progress value={total ? (p.answered_count / total) * 100 : 0} className="h-1.5 mt-1.5" />
-                </div>
-                {p.focus_violations > 0 && (
-                  <Badge variant="destructive" className="gap-1 text-[10px]">
-                    <EyeOff className="h-3 w-3" /> {p.focus_violations}
-                  </Badge>
-                )}
-                <span className={cn('text-xs font-mono shrink-0', p.submitted_at ? 'text-emerald-500' : 'text-muted-foreground')}>
-                  {p.submitted_at ? 'Submitted' : `${p.answered_count}/${total}`}
-                </span>
-              </div>
-            ))
-        )}
+          <div className="rounded-lg border p-3">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              <CheckCircle2 className="h-3 w-3" /> Submitted
+            </div>
+            <div className="text-2xl font-bold font-mono">{submitted}</div>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground max-w-sm">
+          Students have the whole paper on their device and work offline, so nothing loads mid-exam. Every answer is
+          uploaded when they submit, and the full breakdown opens here as soon as the exam ends.
+        </p>
+
+        <Button variant="outline" size="sm" className="gap-2" onClick={manualRefresh} disabled={refreshing}>
+          <RefreshCw className={refreshing ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+          Refresh count
+        </Button>
       </Card>
     </div>
   );

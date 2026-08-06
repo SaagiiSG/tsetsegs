@@ -298,65 +298,95 @@ export function ClassTestRunner({
   answersRef.current = answers;
   const flagsRef = useRef(flags);
   flagsRef.current = flags;
-  // serialize background writes so rapid taps can't overlap
-  const writeChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  // per-question time spent, kept locally and uploaded with the submission
+  const timesRef = useRef<Record<string, number>>({});
 
   const endsAt = useMemo(
     () => new Date(test.starts_at).getTime() + test.duration_seconds * 1000,
     [test.starts_at, test.duration_seconds],
   );
 
-  /* ---------- load questions (keyed on a stable id string, not the array ref) ---------- */
+  /* ---------- load questions ONCE, then keep them in local storage ----------
+     The whole paper is downloaded up front so the exam runs entirely offline
+     from that point on — no database traffic while students are working. */
   const idsKey = useMemo(() => (test.question_ids as string[]).join(','), [test.question_ids]);
   const loadedKeyRef = useRef<string | null>(null);
+  const paperKey = `class-exam:paper:${test.id}`;
 
   useEffect(() => {
     if (!idsKey) return;
     if (loadedKeyRef.current === idsKey) return;
     loadedKeyRef.current = idsKey;
     const ids = idsKey.split(',');
+
+    // cached paper from an earlier visit / reload
+    try {
+      const raw = localStorage.getItem(paperKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached?.idsKey === idsKey && Array.isArray(cached.questions) && cached.questions.length === ids.length) {
+          setQuestions(cached.questions as QuestionRow[]);
+          return;
+        }
+      }
+    } catch {
+      /* ignore a bad cache */
+    }
+
     supabase
       .from('questions')
       .select('id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
       .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
-        setQuestions(ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[]);
+        const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[];
+        setQuestions(ordered);
+        try {
+          localStorage.setItem(paperKey, JSON.stringify({ idsKey, questions: ordered }));
+        } catch {
+          /* storage full — the test still works, just no offline cache */
+        }
       });
-  }, [idsKey]);
+  }, [idsKey, paperKey]);
 
-  /* ---------- restore any answers this participant already saved ---------- */
+  /* ---------- restore progress from this device (no network) ---------- */
+  const progressKey = `class-exam:progress:${test.id}:${participantId}`;
+
   useEffect(() => {
     if (!participantId) return;
-    supabase
-      .from('class_test_answers')
-      .select('question_id, selected_answer, flagged')
-      .eq('participant_id', participantId)
-      .then(({ data }) => {
-        if (data?.length) {
-          setAnswers((prev) => {
-            const next = { ...prev };
-            data.forEach((r: any) => {
-              if (r.selected_answer && next[r.question_id] === undefined) next[r.question_id] = r.selected_answer;
-            });
-            return next;
-          });
-          setFlags((prev) => {
-            const next = { ...prev };
-            data.forEach((r: any) => {
-              if (r.flagged) next[r.question_id] = true;
-            });
-            return next;
-          });
+    let hadProgress = false;
+    try {
+      const raw = localStorage.getItem(progressKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved?.answers && typeof saved.answers === 'object') {
+          setAnswers(saved.answers);
+          hadProgress = Object.keys(saved.answers).length > 0;
         }
-        // A session already in progress (saved answers, or a start marker from a
-        // previous visit) means the student crashed / reloaded out of the test.
-        const marker = localStorage.getItem(startedKey);
-        if ((data?.length ?? 0) > 0 || marker) setNeedsResume(true);
-        localStorage.setItem(startedKey, marker ?? String(Date.now()));
-        setRestored(true);
-      });
-  }, [participantId, startedKey]);
+        if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
+      }
+    } catch {
+      /* ignore */
+    }
+    const marker = localStorage.getItem(startedKey);
+    if (hadProgress || marker) setNeedsResume(true);
+    localStorage.setItem(startedKey, marker ?? String(Date.now()));
+    setRestored(true);
+  }, [participantId, startedKey, progressKey]);
+
+  /* ---------- persist progress locally on every change ---------- */
+  useEffect(() => {
+    if (!restored || submitted) return;
+    try {
+      localStorage.setItem(
+        progressKey,
+        JSON.stringify({ answers, flags, violations: violationsRef.current }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [answers, flags, restored, submitted, progressKey]);
 
   // Came back after the clock already ran out — submit what was saved.
   useEffect(() => {
@@ -366,35 +396,63 @@ export function ClassTestRunner({
 
 
 
-  /* ---------- submit ---------- */
+  /* ---------- submit: the ONLY upload of the whole exam ---------- */
   const submitTest = useCallback(async (auto = false) => {
     if (submittingRef.current || !participantId) return;
     submittingRef.current = true;
     const current = answersRef.current;
+    const currentFlags = flagsRef.current;
+    const times = timesRef.current;
     const correct = questions.reduce((acc, q) => {
       const given = current[q.id];
       return acc + (given && isCorrect(q, given) ? 1 : 0);
     }, 0);
-    // let any queued answer writes land first so counts match
-    await writeChainRef.current.catch(() => {});
-    await supabase
-      .from('class_test_participants')
-      .update({
-        submitted_at: new Date().toISOString(),
-        correct_count: correct,
-        answered_count: Object.keys(current).length,
-        focus_violations: violationsRef.current,
-      })
-      .eq('id', participantId);
+
+    const rows = questions
+      .filter((q) => current[q.id] !== undefined && current[q.id] !== '')
+      .map((q) => ({
+        test_id: test.id,
+        participant_id: participantId,
+        question_id: q.id,
+        selected_answer: current[q.id],
+        is_correct: isCorrect(q, current[q.id]),
+        time_ms: times[q.id] ?? null,
+        flagged: !!currentFlags[q.id],
+      }));
+
+    try {
+      if (rows.length > 0) {
+        // one bulk write for the entire paper
+        await supabase
+          .from('class_test_answers')
+          .upsert(rows, { onConflict: 'participant_id,question_id' });
+      }
+      await supabase
+        .from('class_test_participants')
+        .update({
+          submitted_at: new Date().toISOString(),
+          correct_count: correct,
+          answered_count: rows.length,
+          focus_violations: violationsRef.current,
+        })
+        .eq('id', participantId);
+    } catch {
+      toast.error('We could not reach the server — keep this page open and try submitting again.');
+      submittingRef.current = false;
+      return;
+    }
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions]);
+  }, [participantId, questions, test.id]);
   submitTestRef.current = submitTest;
 
-  // Clear the crash marker once the test is really over.
+  // Clear local exam state once the test is really over.
   useEffect(() => {
-    if (submitted) localStorage.removeItem(startedKey);
-  }, [submitted, startedKey]);
+    if (!submitted) return;
+    localStorage.removeItem(startedKey);
+    localStorage.removeItem(progressKey);
+    localStorage.removeItem(paperKey);
+  }, [submitted, startedKey, progressKey, paperKey]);
 
   // Teacher ended the test early: submit whatever the student has so they still get a score.
   useEffect(() => {
@@ -419,15 +477,9 @@ export function ClassTestRunner({
     };
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
+        // counted locally; reported once with the submission
         violationsRef.current += 1;
         setBlurred(true);
-        if (participantId) {
-          supabase
-            .from('class_test_participants')
-            .update({ focus_violations: violationsRef.current })
-            .eq('id', participantId)
-            .then(() => {});
-        }
       }
     };
     const onBlur = () => {
@@ -465,33 +517,11 @@ export function ClassTestRunner({
     return Object.entries(raw).map(([k, v]) => ({ key: k, text: String(v), img: imgs?.[k] }));
   }, [current]);
 
-  /** Instant local update; persistence runs in the background (never awaited on tap). */
+  /** Purely local — nothing touches the network until the student submits. */
   const saveAnswer = useCallback((q: QuestionRow, value: string) => {
+    timesRef.current[q.id] = Date.now() - questionStartRef.current;
     setAnswers((a) => (a[q.id] === value ? a : { ...a, [q.id]: value }));
-    if (!participantId) return;
-    const timeMs = Date.now() - questionStartRef.current;
-    const nextCount = Object.keys({ ...answersRef.current, [q.id]: value }).length;
-    writeChainRef.current = writeChainRef.current
-      .catch(() => {})
-      .then(() =>
-        Promise.all([
-          supabase.from('class_test_answers').upsert(
-            {
-              test_id: test.id,
-              participant_id: participantId,
-              question_id: q.id,
-              selected_answer: value,
-              is_correct: isCorrect(q, value),
-              time_ms: timeMs,
-              flagged: !!flagsRef.current[q.id],
-            },
-            { onConflict: 'participant_id,question_id' },
-          ),
-          supabase.from('class_test_participants').update({ answered_count: nextCount }).eq('id', participantId),
-        ]),
-      )
-      .catch(() => {});
-  }, [participantId, test.id]);
+  }, []);
 
   const goto = useCallback((i: number) => {
     setCursor((prev) => {
