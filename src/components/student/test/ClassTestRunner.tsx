@@ -329,7 +329,9 @@ export function ClassTestRunner({
 
     supabase
       .from('questions')
-      .select('id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
+      // NOTE: `answer` is deliberately excluded — the answer key never touches the
+      // student's device while the exam is live (grading happens on the server).
+      .select('id, question_text, question_image_url, multiple_choice_options, choice_images, question_type, passage_text')
       .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
@@ -342,6 +344,7 @@ export function ClassTestRunner({
         }
       });
   }, [idsKey, paperKey]);
+
 
   /* ---------- restore progress from this device (no network) ---------- */
   const progressKey = `class-exam:progress:${test.id}:${participantId}`;
