@@ -474,15 +474,9 @@ export function ClassTestRunner({
     };
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
+        // counted locally; reported once with the submission
         violationsRef.current += 1;
         setBlurred(true);
-        if (participantId) {
-          supabase
-            .from('class_test_participants')
-            .update({ focus_violations: violationsRef.current })
-            .eq('id', participantId)
-            .then(() => {});
-        }
       }
     };
     const onBlur = () => {
