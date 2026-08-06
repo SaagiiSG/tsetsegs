@@ -368,12 +368,14 @@ export function ClassTestRunner({
           hadProgress = Object.keys(saved.answers).length > 0;
         }
         if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (typeof saved?.cursor === 'number' && saved.cursor >= 0) setCursor(saved.cursor);
         if (saved?.times && typeof saved.times === 'object') timesRef.current = saved.times;
         if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
       }
     } catch {
       /* ignore */
     }
+
     // Only offer "continue where you left off" when there is real work to continue.
     // A bare start marker (first mount, StrictMode double-mount) must not trigger it.
     const marker = localStorage.getItem(startedKey);
