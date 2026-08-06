@@ -298,8 +298,8 @@ export function ClassTestRunner({
   answersRef.current = answers;
   const flagsRef = useRef(flags);
   flagsRef.current = flags;
-  // serialize background writes so rapid taps can't overlap
-  const writeChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  // per-question time spent, kept locally and uploaded with the submission
+  const timesRef = useRef<Record<string, number>>({});
 
   const endsAt = useMemo(
     () => new Date(test.starts_at).getTime() + test.duration_seconds * 1000,
