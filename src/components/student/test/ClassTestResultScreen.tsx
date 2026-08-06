@@ -8,7 +8,7 @@ import type { ClassTest } from '@/hooks/useClassTest';
 
 interface QuestionLike {
   id: string;
-  answer: string;
+  answer?: string;
   question_type: string | null;
   question_text?: string;
   question_image_url?: string | null;
@@ -26,10 +26,14 @@ interface Props {
   participantId: string | null;
   questions: QuestionLike[];
   answers: Record<string, string>;
+  /** Authoritative score computed on the server at submit time. */
+  serverScore?: { correct: number; answered: number } | null;
+  /** Whether the answer key has arrived — the per-question breakdown waits for it. */
+  keyLoaded?: boolean;
   onExit?: () => void;
 }
 
-export function ClassTestResultScreen({ test, questions, answers, onExit }: Props) {
+export function ClassTestResultScreen({ test, questions, answers, serverScore, keyLoaded = true, onExit }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const results = useMemo(
@@ -37,7 +41,7 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
       questions.map((q, i) => {
         const given = answers[q.id];
         const isFill = (q.question_type ?? '').includes('fill');
-        const correct = !given
+        const correct = !given || !q.answer
           ? false
           : isFill
           ? normalizeFill(given) === normalizeFill(q.answer ?? '')
@@ -47,9 +51,10 @@ export function ClassTestResultScreen({ test, questions, answers, onExit }: Prop
     [questions, answers],
   );
 
-  const score = results.filter((r) => r.correct).length;
+  const score = serverScore ? serverScore.correct : results.filter((r) => r.correct).length;
   const total = questions.length || test.question_ids.length;
   const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+
 
   return (
     <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
