@@ -411,30 +411,22 @@ export function ClassTestRunner({
 
 
 
-  /* ---------- submit: the ONLY upload of the whole exam ---------- */
+  /* ---------- submit: graded on the server, one call for the whole paper ---------- */
   const submitTest = useCallback(async (auto = false) => {
     if (submittingRef.current || !participantId) return;
     submittingRef.current = true;
     const current = answersRef.current;
-    const currentFlags = flagsRef.current;
-    const times = timesRef.current;
-    const correct = questions.reduce((acc, q) => {
-      const given = current[q.id];
-      return acc + (given && isCorrect(q, given) ? 1 : 0);
-    }, 0);
-
-    const rows = questions
-      .filter((q) => current[q.id] !== undefined && current[q.id] !== '')
-      .map((q) => ({
-        test_id: test.id,
-        participant_id: participantId,
-        question_id: q.id,
-        selected_answer: current[q.id],
-        is_correct: isCorrect(q, current[q.id]),
-        // column is NOT NULL — a resumed session can have no timing for an answer
-        time_ms: Math.max(0, Math.round(times[q.id] ?? 0)),
-        flagged: !!currentFlags[q.id],
-      }));
+    const payloadAnswers: Record<string, string> = {};
+    for (const q of questions) {
+      const v = current[q.id];
+      if (v !== undefined && v !== '') payloadAnswers[q.id] = v;
+    }
+    const payloadFlags: Record<string, boolean> = {};
+    const payloadTimes: Record<string, number> = {};
+    for (const q of questions) {
+      if (flagsRef.current[q.id]) payloadFlags[q.id] = true;
+      payloadTimes[q.id] = Math.max(0, Math.round(timesRef.current[q.id] ?? 0));
+    }
 
     const fail = () => {
       setPendingUpload(true);
@@ -443,29 +435,21 @@ export function ClassTestRunner({
     };
 
     try {
-      if (rows.length > 0) {
-        // one bulk write for the entire paper
-        const { error } = await supabase
-          .from('class_test_answers')
-          .upsert(rows, { onConflict: 'participant_id,question_id' });
-        if (error) {
-          fail();
-          return;
-        }
-      }
-      const { error: pErr } = await supabase
-        .from('class_test_participants')
-        .update({
-          submitted_at: new Date().toISOString(),
-          correct_count: correct,
-          answered_count: rows.length,
-          focus_violations: violationsRef.current,
-        })
-        .eq('id', participantId);
-      if (pErr) {
+      const { data, error } = await supabase.rpc('class_test_submit', {
+        p_participant_id: participantId,
+        p_answers: payloadAnswers,
+        p_flags: payloadFlags,
+        p_times: payloadTimes,
+        p_violations: violationsRef.current,
+      });
+      const row = (Array.isArray(data) ? data[0] : data) as
+        | { correct_count: number; answered_count: number }
+        | undefined;
+      if (error || !row) {
         fail();
         return;
       }
+      setServerScore({ correct: row.correct_count ?? 0, answered: row.answered_count ?? 0 });
     } catch {
       fail();
       return;
@@ -473,7 +457,8 @@ export function ClassTestRunner({
     setPendingUpload(false);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions, test.id]);
+  }, [participantId, questions]);
+
   submitTestRef.current = submitTest;
 
   /* ---------- keep retrying a failed upload until it lands ---------- */
