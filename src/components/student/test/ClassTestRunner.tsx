@@ -288,6 +288,8 @@ export function ClassTestRunner({
   const [reviewing, setReviewing] = useState(false);
   const [restored, setRestored] = useState(false);
   const [needsResume, setNeedsResume] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(false);
+
   const startedKey = `class-exam:started:${test.id}:${participantId}`;
   const submitTestRef = useRef<((auto?: boolean) => void) | null>(null);
   const [calcMounted, setCalcMounted] = useState(false);
