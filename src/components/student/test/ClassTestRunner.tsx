@@ -364,6 +364,7 @@ export function ClassTestRunner({
           hadProgress = Object.keys(saved.answers).length > 0;
         }
         if (saved?.flags && typeof saved.flags === 'object') setFlags(saved.flags);
+        if (saved?.times && typeof saved.times === 'object') timesRef.current = saved.times;
         if (typeof saved?.violations === 'number') violationsRef.current = saved.violations;
       }
     } catch {
@@ -377,16 +378,33 @@ export function ClassTestRunner({
 
   /* ---------- persist progress locally on every change ---------- */
   useEffect(() => {
-    if (!restored || submitted) return;
+    if (!restored) return;
     try {
       localStorage.setItem(
         progressKey,
-        JSON.stringify({ answers, flags, violations: violationsRef.current }),
+        JSON.stringify({ answers, flags, times: timesRef.current, violations: violationsRef.current }),
       );
     } catch {
       /* ignore */
     }
-  }, [answers, flags, restored, submitted, progressKey]);
+  }, [answers, flags, restored, progressKey]);
+
+  /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
+  useEffect(() => {
+    if (!submitted || !participantId) return;
+    if (Object.keys(answersRef.current).length > 0) return;
+    supabase
+      .from('class_test_answers')
+      .select('question_id, selected_answer')
+      .eq('participant_id', participantId)
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const map: Record<string, string> = {};
+        for (const r of data as any[]) if (r.selected_answer != null) map[r.question_id] = r.selected_answer;
+        setAnswers(map);
+      });
+  }, [submitted, participantId]);
+
 
   // Came back after the clock already ran out — submit what was saved.
   useEffect(() => {
