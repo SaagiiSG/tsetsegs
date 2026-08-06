@@ -396,29 +396,54 @@ export function ClassTestRunner({
 
 
 
-  /* ---------- submit ---------- */
+  /* ---------- submit: the ONLY upload of the whole exam ---------- */
   const submitTest = useCallback(async (auto = false) => {
     if (submittingRef.current || !participantId) return;
     submittingRef.current = true;
     const current = answersRef.current;
+    const currentFlags = flagsRef.current;
+    const times = timesRef.current;
     const correct = questions.reduce((acc, q) => {
       const given = current[q.id];
       return acc + (given && isCorrect(q, given) ? 1 : 0);
     }, 0);
-    // let any queued answer writes land first so counts match
-    await writeChainRef.current.catch(() => {});
-    await supabase
-      .from('class_test_participants')
-      .update({
-        submitted_at: new Date().toISOString(),
-        correct_count: correct,
-        answered_count: Object.keys(current).length,
-        focus_violations: violationsRef.current,
-      })
-      .eq('id', participantId);
+
+    const rows = questions
+      .filter((q) => current[q.id] !== undefined && current[q.id] !== '')
+      .map((q) => ({
+        test_id: test.id,
+        participant_id: participantId,
+        question_id: q.id,
+        selected_answer: current[q.id],
+        is_correct: isCorrect(q, current[q.id]),
+        time_ms: times[q.id] ?? null,
+        flagged: !!currentFlags[q.id],
+      }));
+
+    try {
+      if (rows.length > 0) {
+        // one bulk write for the entire paper
+        await supabase
+          .from('class_test_answers')
+          .upsert(rows, { onConflict: 'participant_id,question_id' });
+      }
+      await supabase
+        .from('class_test_participants')
+        .update({
+          submitted_at: new Date().toISOString(),
+          correct_count: correct,
+          answered_count: rows.length,
+          focus_violations: violationsRef.current,
+        })
+        .eq('id', participantId);
+    } catch {
+      toast.error('We could not reach the server — keep this page open and try submitting again.');
+      submittingRef.current = false;
+      return;
+    }
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions]);
+  }, [participantId, questions, test.id]);
   submitTestRef.current = submitTest;
 
   // Clear the crash marker once the test is really over.
