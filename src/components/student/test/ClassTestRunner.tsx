@@ -520,33 +520,11 @@ export function ClassTestRunner({
     return Object.entries(raw).map(([k, v]) => ({ key: k, text: String(v), img: imgs?.[k] }));
   }, [current]);
 
-  /** Instant local update; persistence runs in the background (never awaited on tap). */
+  /** Purely local — nothing touches the network until the student submits. */
   const saveAnswer = useCallback((q: QuestionRow, value: string) => {
+    timesRef.current[q.id] = Date.now() - questionStartRef.current;
     setAnswers((a) => (a[q.id] === value ? a : { ...a, [q.id]: value }));
-    if (!participantId) return;
-    const timeMs = Date.now() - questionStartRef.current;
-    const nextCount = Object.keys({ ...answersRef.current, [q.id]: value }).length;
-    writeChainRef.current = writeChainRef.current
-      .catch(() => {})
-      .then(() =>
-        Promise.all([
-          supabase.from('class_test_answers').upsert(
-            {
-              test_id: test.id,
-              participant_id: participantId,
-              question_id: q.id,
-              selected_answer: value,
-              is_correct: isCorrect(q, value),
-              time_ms: timeMs,
-              flagged: !!flagsRef.current[q.id],
-            },
-            { onConflict: 'participant_id,question_id' },
-          ),
-          supabase.from('class_test_participants').update({ answered_count: nextCount }).eq('id', participantId),
-        ]),
-      )
-      .catch(() => {});
-  }, [participantId, test.id]);
+  }, []);
 
   const goto = useCallback((i: number) => {
     setCursor((prev) => {
