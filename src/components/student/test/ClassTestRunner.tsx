@@ -26,21 +26,13 @@ interface QuestionRow {
   question_image_url: string | null;
   multiple_choice_options: any;
   choice_images: any;
-  answer: string;
+  /** Never downloaded while the exam is running — the answer key only arrives
+   *  after the paper is graded on the server. */
+  answer?: string;
   question_type: string | null;
   passage_text: string | null;
 }
 
-function normalizeFill(v: string) {
-  return v.trim().toLowerCase().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
-}
-
-function isCorrect(q: QuestionRow, value: string) {
-  const isFill = (q.question_type ?? '').includes('fill');
-  return isFill
-    ? normalizeFill(value) === normalizeFill(q.answer ?? '')
-    : value.trim().toUpperCase() === (q.answer ?? '').trim().toUpperCase();
-}
 
 type Option = { key: string; text: string; img?: string };
 
