@@ -473,6 +473,20 @@ export function ClassTestRunner({
     };
   }, [restored, submitted, pushDraft]);
 
+  /* First answers land on the server within seconds, not at the 30s tick — a crash
+     in the opening minute must not leave a student with nothing to recover. */
+  const earlyDraftRef = useRef(false);
+  useEffect(() => {
+    if (!restored || submitted || earlyDraftRef.current) return;
+    if (Object.keys(answers).length === 0) return;
+    const t = setTimeout(() => {
+      earlyDraftRef.current = true;
+      void pushDraft();
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [answers, restored, submitted, pushDraft]);
+
+
   /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
   useEffect(() => {
     if (!submitted || !participantId) return;
