@@ -88,27 +88,37 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
               </p>
             )}
 
-            {/* Pin to Profile Button */}
-            {isUnlocked && onPin && (
-              <Button
-                variant={isPinned ? "secondary" : "default"}
-                size="sm"
-                className="mt-3 gap-2"
-                onClick={() => onPin(badgeId)}
-                disabled={isPinning}
-              >
-                {isPinned ? (
-                  <>
-                    <PinOff className="h-4 w-4" />
-                    Unpin from Profile
-                  </>
-                ) : (
-                  <>
-                    <Pin className="h-4 w-4" />
-                    Pin to Profile
-                  </>
+            {/* Pin + Share actions */}
+            {isUnlocked && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {onPin && (
+                  <Button
+                    variant={isPinned ? "secondary" : "default"}
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onPin(badgeId)}
+                    disabled={isPinning}
+                  >
+                    {isPinned ? (
+                      <>
+                        <PinOff className="h-4 w-4" />
+                        Unpin from Profile
+                      </>
+                    ) : (
+                      <>
+                        <Pin className="h-4 w-4" />
+                        Pin to Profile
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+                {onShare && (
+                  <Button variant="outline" size="sm" className="gap-2" onClick={onShare}>
+                    <Share2 className="h-4 w-4" />
+                    Share to story
+                  </Button>
+                )}
+              </div>
             )}
           </motion.div>
 
