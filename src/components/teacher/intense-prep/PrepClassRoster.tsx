@@ -37,8 +37,9 @@ interface Member {
 
 interface Tracking {
   member_id: string;
-  bluebook_math_scores: number[];
-  review_notes: string | null;
+  // per-test math scores keyed by pt4…pt11
+  bluebook_math_scores: Partial<Record<PtKey, number>>;
+  noted_lesson: boolean;
 }
 
 interface Props {
