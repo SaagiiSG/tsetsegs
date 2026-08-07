@@ -26,6 +26,7 @@ interface QuestionRow {
 export default function FlowersChallengePlay() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const navigate = useNavigate();
+  const calculatorSnapSide = useCalculatorSnap();
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [cursor, setCursor] = useState(0);
