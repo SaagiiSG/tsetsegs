@@ -17,6 +17,32 @@ import { cn } from "@/lib/utils";
 const PT_KEYS = ["pt4", "pt5", "pt6", "pt7", "pt8", "pt9", "pt10", "pt11"] as const;
 type PtKey = (typeof PT_KEYS)[number];
 
+function ProgressRing({ pct, solved, total }: { pct: number; solved: number; total: number }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  const stroke = pct >= 70 ? "hsl(var(--primary))" : pct >= 35 ? "#f59e0b" : "hsl(var(--muted-foreground))";
+  return (
+    <div className="inline-flex flex-col items-center leading-none" title={`${solved} of ${total} solved`}>
+      <svg width="32" height="32" viewBox="0 0 32 32" className="-rotate-90">
+        <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" className="stroke-secondary" />
+        <circle
+          cx="16"
+          cy="16"
+          r={r}
+          fill="none"
+          strokeWidth="3.5"
+          stroke={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c - (c * pct) / 100}
+        />
+      </svg>
+      <span className="text-[9px] font-mono text-muted-foreground mt-0.5">{solved}/{total}</span>
+    </div>
+  );
+}
+
+
 const SETS = [
   { key: "68", label: "68", questionSet: "68" },
   { key: "150", label: "Hard 150", questionSet: "SATMathTraining800" },
