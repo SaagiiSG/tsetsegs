@@ -178,7 +178,7 @@ export default function StudentBadges() {
 
       <BadgeStoryShare
         badge={shareBadge}
-        studentName={student?.full_name ?? null}
+        studentName={studentName}
         open={!!shareBadge}
         onClose={() => setShareBadge(null)}
       />
