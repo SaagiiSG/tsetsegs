@@ -1473,6 +1473,62 @@ export type Database = {
           },
         ]
       }
+      flowers_challenge_attempts: {
+        Row: {
+          answered_count: number
+          answers: Json
+          challenge_key: string
+          correct_count: number
+          created_at: string
+          duration_ms: number
+          goal_met: boolean
+          id: string
+          question_ids: Json
+          started_at: string
+          student_account_id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          answered_count?: number
+          answers?: Json
+          challenge_key: string
+          correct_count?: number
+          created_at?: string
+          duration_ms?: number
+          goal_met?: boolean
+          id?: string
+          question_ids?: Json
+          started_at?: string
+          student_account_id: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answered_count?: number
+          answers?: Json
+          challenge_key?: string
+          correct_count?: number
+          created_at?: string
+          duration_ms?: number
+          goal_met?: boolean
+          id?: string
+          question_ids?: Json
+          started_at?: string
+          student_account_id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowers_challenge_attempts_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homework: {
         Row: {
           batch_id: string
@@ -1613,23 +1669,32 @@ export type Database = {
         Row: {
           created_at: string
           created_by_teacher_id: string
+          end_date: string | null
           id: string
           is_active: boolean
+          join_code: string | null
           name: string
+          start_date: string | null
         }
         Insert: {
           created_at?: string
           created_by_teacher_id: string
+          end_date?: string | null
           id?: string
           is_active?: boolean
+          join_code?: string | null
           name: string
+          start_date?: string | null
         }
         Update: {
           created_at?: string
           created_by_teacher_id?: string
+          end_date?: string | null
           id?: string
           is_active?: boolean
+          join_code?: string | null
           name?: string
+          start_date?: string | null
         }
         Relationships: [
           {
@@ -1646,24 +1711,30 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          joined_via_qr: boolean
           manual_name: string | null
           manual_phone: string | null
+          student_account_id: string | null
           student_id: string | null
         }
         Insert: {
           created_at?: string
           group_id: string
           id?: string
+          joined_via_qr?: boolean
           manual_name?: string | null
           manual_phone?: string | null
+          student_account_id?: string | null
           student_id?: string | null
         }
         Update: {
           created_at?: string
           group_id?: string
           id?: string
+          joined_via_qr?: boolean
           manual_name?: string | null
           manual_phone?: string | null
+          student_account_id?: string | null
           student_id?: string | null
         }
         Relationships: [
@@ -1672,6 +1743,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "intense_prep_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intense_prep_members_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -1685,32 +1763,38 @@ export type Database = {
       }
       intense_prep_tracking: {
         Row: {
+          bluebook_math_scores: Json
           id: string
           member_id: string
           practice_test_scores: Json | null
           prep_session_notes: number | null
           problems_68_notes: boolean[] | null
           problems_68_solved: boolean[] | null
+          review_notes: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          bluebook_math_scores?: Json
           id?: string
           member_id: string
           practice_test_scores?: Json | null
           prep_session_notes?: number | null
           problems_68_notes?: boolean[] | null
           problems_68_solved?: boolean[] | null
+          review_notes?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          bluebook_math_scores?: Json
           id?: string
           member_id?: string
           practice_test_scores?: Json | null
           prep_session_notes?: number | null
           problems_68_notes?: boolean[] | null
           problems_68_solved?: boolean[] | null
+          review_notes?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2170,6 +2254,163 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proctor_participants: {
+        Row: {
+          answers: Json
+          answers_saved_at: string | null
+          code_verified_at: string | null
+          created_at: string
+          current_module: number
+          display_name: string
+          focus_violations: number
+          id: string
+          linked_student_id: string | null
+          math_correct: number | null
+          math_total: number | null
+          oath_accepted_at: string | null
+          phone: string
+          rw_correct: number | null
+          rw_total: number | null
+          session_id: string
+          started_at: string | null
+          student_account_id: string | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          answers_saved_at?: string | null
+          code_verified_at?: string | null
+          created_at?: string
+          current_module?: number
+          display_name: string
+          focus_violations?: number
+          id?: string
+          linked_student_id?: string | null
+          math_correct?: number | null
+          math_total?: number | null
+          oath_accepted_at?: string | null
+          phone: string
+          rw_correct?: number | null
+          rw_total?: number | null
+          session_id: string
+          started_at?: string | null
+          student_account_id?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          answers_saved_at?: string | null
+          code_verified_at?: string | null
+          created_at?: string
+          current_module?: number
+          display_name?: string
+          focus_violations?: number
+          id?: string
+          linked_student_id?: string | null
+          math_correct?: number | null
+          math_total?: number | null
+          oath_accepted_at?: string | null
+          phone?: string
+          rw_correct?: number | null
+          rw_total?: number | null
+          session_id?: string
+          started_at?: string | null
+          student_account_id?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proctor_participants_linked_student_id_fkey"
+            columns: ["linked_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proctor_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "proctor_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proctor_participants_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proctor_sessions: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          current_module: number
+          finished_at: string | null
+          id: string
+          join_code: string
+          module_started_at: string | null
+          started_at: string | null
+          status: string
+          teacher_username: string | null
+          test_id: string
+          title: string
+          unlock_code: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          current_module?: number
+          finished_at?: string | null
+          id?: string
+          join_code: string
+          module_started_at?: string | null
+          started_at?: string | null
+          status?: string
+          teacher_username?: string | null
+          test_id: string
+          title: string
+          unlock_code: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          current_module?: number
+          finished_at?: string | null
+          id?: string
+          join_code?: string
+          module_started_at?: string | null
+          started_at?: string | null
+          status?: string
+          teacher_username?: string | null
+          test_id?: string
+          title?: string
+          unlock_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proctor_sessions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proctor_sessions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_tests"
             referencedColumns: ["id"]
           },
         ]
@@ -4260,6 +4501,26 @@ export type Database = {
         Returns: boolean
       }
       fill_value: { Args: { p_text: string }; Returns: number }
+      flowers_challenge_leaderboard: {
+        Args: { p_challenge_key: string; p_limit?: number }
+        Returns: {
+          correct_count: number
+          display_name: string
+          duration_ms: number
+          goal_met: boolean
+          student_account_id: string
+          submitted_at: string
+        }[]
+      }
+      flowers_challenge_submit: {
+        Args: { p_answers: Json; p_attempt_id: string; p_duration_ms: number }
+        Returns: {
+          answered_count: number
+          correct_count: number
+          goal_met: boolean
+          results: Json
+        }[]
+      }
       generate_ngee_sessions: {
         Args: { p_course_id: string; p_weeks_ahead?: number }
         Returns: number
@@ -4375,6 +4636,59 @@ export type Database = {
           difficulty_score: number
           question_id: string
         }[]
+      }
+      prep_class_join: {
+        Args: { p_join_code: string; p_phone: string }
+        Returns: {
+          badge_awarded: boolean
+          display_name: string
+          group_id: string
+          group_name: string
+          member_id: string
+          status: string
+        }[]
+      }
+      proctor_accept_oath: {
+        Args: { p_participant_id: string }
+        Returns: boolean
+      }
+      proctor_join: {
+        Args: { p_join_code: string; p_phone: string }
+        Returns: {
+          code_verified: boolean
+          display_name: string
+          oath_accepted: boolean
+          participant_id: string
+          session_id: string
+          submitted_at: string
+        }[]
+      }
+      proctor_save_progress: {
+        Args: {
+          p_answers: Json
+          p_module?: number
+          p_participant_id: string
+          p_violations?: number
+        }
+        Returns: boolean
+      }
+      proctor_submit: {
+        Args: {
+          p_answers: Json
+          p_participant_id: string
+          p_violations?: number
+        }
+        Returns: {
+          math_correct: number
+          math_total: number
+          rw_correct: number
+          rw_total: number
+          submitted_at: string
+        }[]
+      }
+      proctor_unlock: {
+        Args: { p_code: string; p_participant_id: string }
+        Returns: boolean
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

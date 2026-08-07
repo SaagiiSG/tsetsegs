@@ -1,5 +1,6 @@
 export { IntensePrepContent } from "./IntensePrepContent";
 export { IntensePrepGroupList } from "./IntensePrepGroupList";
-export { IntensePrepGroupDetail } from "./IntensePrepGroupDetail";
+export { PrepClassRoster } from "./PrepClassRoster";
+export { PrepClassQrDialog } from "./PrepClassQrDialog";
 export { IntensePrepStudentRow } from "./IntensePrepStudentRow";
 export { IntensePrepAddStudentDialog } from "./IntensePrepAddStudentDialog";
