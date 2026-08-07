@@ -333,8 +333,8 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                   {SETS.map((s) => (
                     <TableHead key={s.key} className="w-[130px] text-center">{s.label}</TableHead>
                   ))}
-                  <TableHead className="w-[190px]">Bluebook math scores</TableHead>
-                  <TableHead className="min-w-[240px]">Review session notes</TableHead>
+                  <TableHead className="w-[300px]">Bluebook math scores (PT4–PT11)</TableHead>
+                  <TableHead className="w-[90px] text-center">Noted lesson</TableHead>
                   <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
