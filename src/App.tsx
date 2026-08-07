@@ -31,6 +31,7 @@ import TeacherSettings from "./pages/TeacherSettings";
 import TeacherClassWrapped from "./pages/teacher/TeacherClassWrapped";
 import TeacherTestPage from "./pages/teacher/TeacherTestPage";
 import TeacherIntensePrep from "./pages/teacher/TeacherIntensePrep";
+import TeacherProctor from "./pages/teacher/TeacherProctor";
 import PrepClassJoin from "./pages/public/PrepClassJoin";
 import FlowersChallengeHome from "./pages/student/flowers/FlowersChallengeHome";
 import FlowersChallengePlay from "./pages/student/flowers/FlowersChallengePlay";
@@ -222,6 +223,14 @@ const App = () => (
                     element={
                       <TeacherProtectedRoute>
                         <TeacherIntensePrep />
+                      </TeacherProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teacher/proctor"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherProctor />
                       </TeacherProtectedRoute>
                     }
                   />

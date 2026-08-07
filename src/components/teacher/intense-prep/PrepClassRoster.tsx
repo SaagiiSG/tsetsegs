@@ -17,6 +17,32 @@ import { cn } from "@/lib/utils";
 const PT_KEYS = ["pt4", "pt5", "pt6", "pt7", "pt8", "pt9", "pt10", "pt11"] as const;
 type PtKey = (typeof PT_KEYS)[number];
 
+function ProgressRing({ pct, solved, total }: { pct: number; solved: number; total: number }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  const stroke = pct >= 70 ? "hsl(var(--primary))" : pct >= 35 ? "#f59e0b" : "hsl(var(--muted-foreground))";
+  return (
+    <div className="inline-flex flex-col items-center leading-none" title={`${solved} of ${total} solved`}>
+      <svg width="32" height="32" viewBox="0 0 32 32" className="-rotate-90">
+        <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" className="stroke-secondary" />
+        <circle
+          cx="16"
+          cy="16"
+          r={r}
+          fill="none"
+          strokeWidth="3.5"
+          stroke={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c - (c * pct) / 100}
+        />
+      </svg>
+      <span className="text-[9px] font-mono text-muted-foreground mt-0.5">{solved}/{total}</span>
+    </div>
+  );
+}
+
+
 const SETS = [
   { key: "68", label: "68", questionSet: "68" },
   { key: "150", label: "Hard 150", questionSet: "SATMathTraining800" },
@@ -325,57 +351,53 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <ScrollArea className="w-full">
-            <Table className="min-w-[1080px]">
+            <Table className="min-w-[1180px]">
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="w-[40px] text-center">#</TableHead>
-                  <TableHead className="w-[200px]">Student</TableHead>
+                  <TableHead className="h-9 w-[36px] text-center text-xs">#</TableHead>
+                  <TableHead className="h-9 w-[190px] text-xs">Student</TableHead>
                   {SETS.map((s) => (
-                    <TableHead key={s.key} className="w-[130px] text-center">{s.label}</TableHead>
+                    <TableHead key={s.key} className="h-9 w-[74px] text-center text-xs">{s.label}</TableHead>
                   ))}
-                  <TableHead className="w-[300px]">Bluebook math scores (PT4–PT11)</TableHead>
-                  <TableHead className="w-[90px] text-center">Noted lesson</TableHead>
-                  <TableHead className="w-[50px]" />
+                  <TableHead className="h-9 w-[440px] text-xs">Bluebook math (PT4–PT11)</TableHead>
+                  <TableHead className="h-9 w-[70px] text-center text-xs leading-tight">Noted</TableHead>
+                  <TableHead className="h-9 w-[44px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {members.map((m, i) => (
-                  <TableRow key={m.id} className="align-top">
-                    <TableCell className="text-center text-xs text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm flex items-center gap-1.5">
-                        <span className="truncate">{displayName(m)}</span>
-                        {m.joined_via_qr && <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />}
+                  <TableRow key={m.id}>
+                    <TableCell className="py-1.5 text-center text-xs text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="py-1.5">
+                      <div className="font-medium text-xs flex items-center gap-1.5 leading-tight">
+                        <span className="truncate max-w-[130px]">{displayName(m)}</span>
+                        {m.joined_via_qr && <Sparkles className="h-3 w-3 text-primary shrink-0" />}
+                        {!m.student_account_id && (
+                          <span className="text-[10px] text-muted-foreground shrink-0">(no acct)</span>
+                        )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground font-mono">{m.manual_phone ?? "—"}</div>
-                      {!m.student_account_id && (
-                        <Badge variant="outline" className="mt-1 text-[10px]">no platform account</Badge>
-                      )}
+                      <div className="text-[10px] text-muted-foreground font-mono leading-tight">{m.manual_phone ?? "—"}</div>
                     </TableCell>
                     {SETS.map((s) => {
                       const solved = progress[m.id]?.[s.key] ?? 0;
                       const total = totals[s.key] || 0;
-                      const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
+                      const pct = total > 0 ? Math.min(100, Math.round((solved / total) * 100)) : 0;
                       return (
-                        <TableCell key={s.key} className="text-center">
-                          <div className="text-xs font-mono">{solved}/{total}</div>
-                          <div className="h-1.5 mt-1 rounded-full bg-secondary overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-full", pct >= 70 ? "bg-emerald-500" : pct >= 35 ? "bg-amber-500" : "bg-primary")}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
+                        <TableCell key={s.key} className="py-1.5 text-center">
+                          <ProgressRing pct={pct} solved={solved} total={total} />
                         </TableCell>
                       );
                     })}
-                    <TableCell>
-                      <div className="grid grid-cols-4 gap-1.5">
+                    <TableCell className="py-1.5">
+                      <div className="flex items-center gap-1">
                         {PT_KEYS.map((key) => (
-                          <div key={key}>
-                            <p className="text-[10px] text-muted-foreground text-center uppercase">{key.replace("pt", "PT")}</p>
+                          <div key={key} className="flex items-center gap-0.5">
+                            <span className="text-[9px] text-muted-foreground uppercase w-[22px] text-right">
+                              {key.replace("pt", "")}
+                            </span>
                             <Input
                               inputMode="numeric"
-                              className="h-8 text-xs font-mono text-center px-1"
+                              className="h-7 w-[42px] text-[11px] font-mono text-center px-0.5"
                               placeholder="—"
                               value={drafts[m.id]?.[key] ?? ""}
                               onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], [key]: e.target.value } }))}
@@ -384,21 +406,19 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                           </div>
                         ))}
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Official Bluebook math (200–800)</p>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="py-1.5 text-center">
                       <Checkbox
                         checked={tracking[m.id]?.noted_lesson ?? false}
                         onCheckedChange={(v) => toggleNoted(m.id, v === true)}
                         aria-label="Noted down the lesson"
                       />
                     </TableCell>
-
-                    <TableCell>
+                    <TableCell className="py-1.5">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive"
+                        className="h-7 w-7 text-destructive"
                         onClick={() => removeMember(m.id)}
                         aria-label="Remove student"
                       >
@@ -408,6 +428,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                   </TableRow>
                 ))}
               </TableBody>
+
             </Table>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
