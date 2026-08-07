@@ -51,6 +51,8 @@ const learningItems: NavItem[] = [
   { to: '/practice/bluebook', icon: FileText, label: 'Practice Tests' },
   { to: '/practice/speed', icon: Zap, label: 'Speed Mode' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
+  { to: '/practice/challenges', icon: Swords, label: 'Challenges' },
+  { to: '/practice/flowers', icon: Flower2, label: 'Flowers Challenge' },
 ];
 
 const toolsItems: NavItem[] = [
