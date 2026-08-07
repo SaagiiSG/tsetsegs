@@ -162,14 +162,14 @@ export default function FlowersChallengePlay() {
 
   return (
     <div
-      className="container max-w-2xl py-4 space-y-4 pb-28 transition-all duration-300"
+      className="w-full min-h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[padding]"
       style={{
-        marginLeft: calculatorSnapSide === "left" ? "40vw" : undefined,
-        marginRight: calculatorSnapSide === "right" ? "40vw" : undefined,
-        width: calculatorSnapSide ? "60vw" : undefined,
-        maxWidth: calculatorSnapSide ? "60vw" : undefined,
+        paddingLeft: calculatorSnapSide === "left" ? "40vw" : 0,
+        paddingRight: calculatorSnapSide === "right" ? "40vw" : 0,
       }}
     >
+      <div className="max-w-2xl mx-auto w-full px-4 py-4 space-y-4 pb-28 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width,max-width]">
+
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-mono font-semibold">
           <Timer className={cn("h-4 w-4", remaining < 120000 ? "text-destructive" : "text-primary")} />
