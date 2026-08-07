@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { MathText } from "@/components/MathText";
-import { DesmosCalculator } from "@/components/student/DesmosCalculator";
-import { Flower2, Loader2, Timer } from "lucide-react";
+import { DesmosCalculator, toggleCalculator } from "@/components/student/DesmosCalculator";
+import { ReferenceSheet, toggleReferenceSheet } from "@/components/student/ReferenceSheet";
+import { BookOpen, Calculator, Flower2, Loader2, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -167,7 +168,27 @@ export default function FlowersChallengePlay() {
             {Math.floor(remaining / 60000)}:{String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0")}
           </span>
         </div>
-        <span className="text-xs text-muted-foreground">{answeredCount}/22 answered</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{answeredCount}/22 answered</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Calculator"
+            onClick={() => toggleCalculator()}
+            className="h-9 w-9 rounded-full bg-muted/50"
+          >
+            <Calculator className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Formula sheet"
+            onClick={() => toggleReferenceSheet()}
+            className="h-9 w-9 rounded-full bg-muted/50"
+          >
+            <BookOpen className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <Progress value={((cursor + 1) / Math.max(questions.length, 1)) * 100} />
 
@@ -240,6 +261,7 @@ export default function FlowersChallengePlay() {
       )}
 
       <DesmosCalculator />
+      <ReferenceSheet />
     </div>
   );
 }
