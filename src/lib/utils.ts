@@ -50,24 +50,6 @@ const approximationMatches = (approx: string, exactValue: number) => {
 
 const normalizeAnswerText = (value: string) => value.trim().replace(/\s+/g, ' ').toUpperCase();
 
-const stripNumericFormatting = (value: string) => value.trim().replace(/,/g, '');
-
-const parsePlainNumber = (value: string) => {
-  const normalized = stripNumericFormatting(value);
-
-  if (!PLAIN_NUMBER_REGEX.test(normalized)) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const getDecimalPlaces = (value: string) => {
-  const normalized = stripNumericFormatting(value);
-  const [, decimals = ''] = normalized.split('.');
-  return decimals.length;
-};
 
 const roundToPlaces = (value: number, places: number) => {
   if (places <= 0) {
