@@ -12,6 +12,7 @@ import {
 import {
   PlayCircle, BookOpen, Zap, Brain, BarChart3, Trophy, Languages, Armchair,
   User, Settings, FileText, Calculator, Bookmark, Home, RotateCcw, Star, Swords, ClipboardList,
+  Flower2,
 } from 'lucide-react';
 import { usePracticeCommandSheet } from './PracticeCommandSheetContext';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
