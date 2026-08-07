@@ -4259,6 +4259,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      fill_value: { Args: { p_text: string }; Returns: number }
       generate_ngee_sessions: {
         Args: { p_course_id: string; p_weeks_ahead?: number }
         Returns: number
