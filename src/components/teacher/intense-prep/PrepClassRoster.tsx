@@ -13,6 +13,10 @@ import { IntensePrepAddStudentDialog } from "./IntensePrepAddStudentDialog";
 import { PrepClassQrDialog } from "./PrepClassQrDialog";
 import { cn } from "@/lib/utils";
 
+// Official Bluebook practice tests we hand-enter math scores for
+const PT_KEYS = ["pt4", "pt5", "pt6", "pt7", "pt8", "pt9", "pt10", "pt11"] as const;
+type PtKey = (typeof PT_KEYS)[number];
+
 const SETS = [
   { key: "68", label: "68", questionSet: "68" },
   { key: "150", label: "Hard 150", questionSet: "SATMathTraining800" },
