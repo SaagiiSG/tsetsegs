@@ -6,8 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, Flame, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Plus, Users, Flame, Loader2, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { makePrepJoinCode } from "./PrepClassQrDialog";
 import type { IntensePrepGroup } from "./IntensePrepContent";
 
 interface Props {
@@ -21,6 +23,8 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
   const [isCreating, setIsCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,6 +102,9 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
         .insert({
           name: newGroupName.trim(),
           created_by_teacher_id: teacher.id,
+          join_code: makePrepJoinCode(),
+          start_date: startDate || null,
+          end_date: endDate || null,
         })
         .select()
         .single();
@@ -106,11 +113,13 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
 
       setGroups(prev => [{ ...data, memberCount: 0, avgProgress: 0 }, ...prev]);
       setNewGroupName("");
+      setStartDate("");
+      setEndDate("");
       setDialogOpen(false);
-      
+
       toast({
-        title: "Group created",
-        description: `"${newGroupName}" has been created successfully.`,
+        title: "Prep class created",
+        description: `Registration code ${data.join_code} is ready to scan.`,
       });
     } catch (error: any) {
       console.error("Error creating group:", error);
@@ -151,15 +160,31 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Prep Group</DialogTitle>
+              <DialogTitle>Create prep class</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <Input
-                placeholder="Group name (e.g., March SAT Prep)"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
-              />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Class name</Label>
+                <Input
+                  placeholder="e.g. March SAT Intense Prep"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Starts</Label>
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ends</Label>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A registration code and QR are created automatically. Registration closes after the end date.
+              </p>
               <Button 
                 onClick={handleCreateGroup} 
                 className="w-full" 
@@ -221,7 +246,18 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
                         <Users className="h-3.5 w-3.5" />
                         <span>{group.memberCount || 0} students</span>
                       </div>
+                      {group.join_code && (
+                        <div className="flex items-center gap-1.5 font-mono text-xs">
+                          <QrCode className="h-3.5 w-3.5" />
+                          <span>{group.join_code}</span>
+                        </div>
+                      )}
                     </div>
+                    {(group.start_date || group.end_date) && (
+                      <p className="text-xs text-muted-foreground">
+                        {group.start_date ?? "?"} → {group.end_date ?? "?"}
+                      </p>
+                    )}
 
                     <div className="pt-2">
                       <div className="flex items-center justify-between text-xs mb-1">

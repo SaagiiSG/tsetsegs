@@ -30,6 +30,10 @@ import TeacherStudentCards from "./pages/TeacherStudentCards";
 import TeacherSettings from "./pages/TeacherSettings";
 import TeacherClassWrapped from "./pages/teacher/TeacherClassWrapped";
 import TeacherTestPage from "./pages/teacher/TeacherTestPage";
+import TeacherIntensePrep from "./pages/teacher/TeacherIntensePrep";
+import PrepClassJoin from "./pages/public/PrepClassJoin";
+import FlowersChallengeHome from "./pages/student/flowers/FlowersChallengeHome";
+import FlowersChallengePlay from "./pages/student/flowers/FlowersChallengePlay";
 
 import TeacherChecklistMobile from "./pages/TeacherChecklistMobile";
 import TeacherSessionRun from "./pages/TeacherSessionRun";
@@ -111,6 +115,7 @@ const App = () => (
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />
                   <Route path="/exam/:joinCode" element={<ClassExam />} />
+                  <Route path="/prep/:joinCode" element={<PrepClassJoin />} />
                   <Route path="/lectures" element={<LecturesHub />} />
                   <Route path="/unsubscribe" element={<Unsubscribe />} />
 
@@ -213,6 +218,14 @@ const App = () => (
                     }
                   />
                   <Route
+                    path="/teacher/intense-prep"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherIntensePrep />
+                      </TeacherProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/teacher/session/:batchId/:sessionNumber"
                     element={
                       <TeacherProtectedRoute>
@@ -249,6 +262,8 @@ const App = () => (
                     <Route path="challenges/:id/lobby" element={<ChallengeLobby />} />
                     <Route path="challenges/:id/play" element={<ChallengePlay />} />
                     <Route path="challenges/:id/results" element={<ChallengeResults />} />
+                    <Route path="flowers" element={<FlowersChallengeHome />} />
+                    <Route path="flowers/:attemptId" element={<FlowersChallengePlay />} />
 
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="question/:questionId" element={<StudentQuestion />} />

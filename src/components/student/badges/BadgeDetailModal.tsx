@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff } from 'lucide-react';
+import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff, Share2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,10 @@ interface BadgeDetailModalProps {
   onPin?: (badgeId: string) => void;
   isPinned?: boolean;
   isPinning?: boolean;
+  onShare?: () => void;
 }
 
-export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinning }: BadgeDetailModalProps) {
+export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinning, onShare }: BadgeDetailModalProps) {
   if (!badge) return null;
 
   const { badge: badgeDef, isUnlocked, progress, unlockedAt, requirementsProgress, badgeId } = badge;
@@ -88,27 +89,37 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
               </p>
             )}
 
-            {/* Pin to Profile Button */}
-            {isUnlocked && onPin && (
-              <Button
-                variant={isPinned ? "secondary" : "default"}
-                size="sm"
-                className="mt-3 gap-2"
-                onClick={() => onPin(badgeId)}
-                disabled={isPinning}
-              >
-                {isPinned ? (
-                  <>
-                    <PinOff className="h-4 w-4" />
-                    Unpin from Profile
-                  </>
-                ) : (
-                  <>
-                    <Pin className="h-4 w-4" />
-                    Pin to Profile
-                  </>
+            {/* Pin + Share actions */}
+            {isUnlocked && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {onPin && (
+                  <Button
+                    variant={isPinned ? "secondary" : "default"}
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onPin(badgeId)}
+                    disabled={isPinning}
+                  >
+                    {isPinned ? (
+                      <>
+                        <PinOff className="h-4 w-4" />
+                        Unpin from Profile
+                      </>
+                    ) : (
+                      <>
+                        <Pin className="h-4 w-4" />
+                        Pin to Profile
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+                {onShare && (
+                  <Button variant="outline" size="sm" className="gap-2" onClick={onShare}>
+                    <Share2 className="h-4 w-4" />
+                    Share to story
+                  </Button>
+                )}
+              </div>
             )}
           </motion.div>
 

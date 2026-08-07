@@ -256,6 +256,10 @@ export default function TeacherDashboard() {
             haptic("light");
             navigate("/teacher/test");
           }}
+          onOpenIntensePrep={() => {
+            haptic("light");
+            navigate("/teacher/intense-prep");
+          }}
           onOpenHandbook={() => {
             haptic("light");
             navigate("/teacher/checklist");
