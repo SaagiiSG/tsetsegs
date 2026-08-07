@@ -30,7 +30,7 @@ import { MathText } from '@/components/MathText';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
-import { cn } from '@/lib/utils';
+import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 interface ResultsData {
