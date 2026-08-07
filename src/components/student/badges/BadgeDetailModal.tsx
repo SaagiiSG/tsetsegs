@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff } from 'lucide-react';
+import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff, Share2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
