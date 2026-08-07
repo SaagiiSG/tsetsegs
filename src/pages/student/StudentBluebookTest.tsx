@@ -30,7 +30,7 @@ import { MathText } from '@/components/MathText';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
-import { cn } from '@/lib/utils';
+import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 interface ResultsData {
@@ -394,7 +394,7 @@ export default function StudentBluebookTest() {
       .from('bluebook_answers')
       .select(`
         *,
-        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer)
+        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
       `)
       .eq('attempt_id', attemptId);
 
@@ -428,7 +428,11 @@ export default function StudentBluebookTest() {
     const questionResults: QuestionResult[] = [];
 
     allAnswers?.forEach(a => {
-      const isCorrect = a.answer_submitted?.toLowerCase() === a.question?.answer?.toLowerCase();
+      const isCorrect = isAcceptedFillBlankAnswer(
+        a.answer_submitted ?? '',
+        (a.question as any)?.answer ?? '',
+        (a.question as any)?.alternate_answers as string[] | null
+      );
       const moduleInfo = moduleMap.get(a.module_id!);
       const orderInfo = questionOrderMap.get(a.question_id!);
       const section = moduleInfo?.section as 'reading_writing' | 'math';

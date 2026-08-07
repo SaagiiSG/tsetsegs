@@ -17,6 +17,7 @@ import {
   RotateCcw, Eye, Video
 } from 'lucide-react';
 import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
+import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 
 interface BluebookTest {
   id: string;
@@ -239,7 +240,7 @@ export default function StudentBluebook() {
         .from('bluebook_answers')
         .select(`
           *,
-          question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer)
+          question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
         `)
         .eq('attempt_id', attemptId);
 
@@ -269,7 +270,11 @@ export default function StudentBluebook() {
       let rwCorrect = 0, mathCorrect = 0, rwTotal = 0, mathTotal = 0;
 
       allAnswers?.forEach(a => {
-        const isCorrect = a.answer_submitted?.toLowerCase() === a.question?.answer?.toLowerCase();
+        const isCorrect = isAcceptedFillBlankAnswer(
+          a.answer_submitted ?? '',
+          (a.question as any)?.answer ?? '',
+          (a.question as any)?.alternate_answers as string[] | null
+        );
         const moduleInfo = moduleMap.get(a.module_id!);
         const orderInfo = questionOrderMap.get(a.question_id!);
         const section = moduleInfo?.section as 'reading_writing' | 'math';
