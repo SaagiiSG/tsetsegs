@@ -17,6 +17,7 @@ import {
   RotateCcw, Eye, Video
 } from 'lucide-react';
 import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
+import { isAcceptedFillBlankAnswer } from '@/lib/utils';
 
 interface BluebookTest {
   id: string;
