@@ -369,24 +369,31 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                       );
                     })}
                     <TableCell>
-                      <Input
-                        className="h-8 text-xs font-mono"
-                        placeholder="e.g. 620, 680, 710"
-                        value={drafts[m.id]?.scores ?? ""}
-                        onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], scores: e.target.value } }))}
-                        onBlur={() => commitScores(m.id)}
-                      />
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {PT_KEYS.map((key) => (
+                          <div key={key}>
+                            <p className="text-[10px] text-muted-foreground text-center uppercase">{key.replace("pt", "PT")}</p>
+                            <Input
+                              inputMode="numeric"
+                              className="h-8 text-xs font-mono text-center px-1"
+                              placeholder="—"
+                              value={drafts[m.id]?.[key] ?? ""}
+                              onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], [key]: e.target.value } }))}
+                              onBlur={() => commitScore(m.id, key)}
+                            />
+                          </div>
+                        ))}
+                      </div>
                       <p className="text-[10px] text-muted-foreground mt-1">Official Bluebook math (200–800)</p>
                     </TableCell>
-                    <TableCell>
-                      <Textarea
-                        className="min-h-[56px] text-xs"
-                        placeholder="What to fix before the test…"
-                        value={drafts[m.id]?.notes ?? ""}
-                        onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], notes: e.target.value } }))}
-                        onBlur={() => commitNotes(m.id)}
+                    <TableCell className="text-center">
+                      <Checkbox
+                        checked={tracking[m.id]?.noted_lesson ?? false}
+                        onCheckedChange={(v) => toggleNoted(m.id, v === true)}
+                        aria-label="Noted down the lesson"
                       />
                     </TableCell>
+
                     <TableCell>
                       <Button
                         variant="ghost"
