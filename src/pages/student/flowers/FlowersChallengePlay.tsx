@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { MathText } from "@/components/MathText";
-import { DesmosCalculator, toggleCalculator } from "@/components/student/DesmosCalculator";
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from "@/components/student/DesmosCalculator";
 import { ReferenceSheet, toggleReferenceSheet } from "@/components/student/ReferenceSheet";
 import { BookOpen, Calculator, Flower2, Loader2, Timer } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ interface QuestionRow {
 export default function FlowersChallengePlay() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const navigate = useNavigate();
+  const calculatorSnapSide = useCalculatorSnap();
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -160,7 +161,15 @@ export default function FlowersChallengePlay() {
   }
 
   return (
-    <div className="container max-w-2xl py-4 space-y-4 pb-28">
+    <div
+      className="container max-w-2xl py-4 space-y-4 pb-28 transition-all duration-300"
+      style={{
+        marginLeft: calculatorSnapSide === "left" ? "40vw" : undefined,
+        marginRight: calculatorSnapSide === "right" ? "40vw" : undefined,
+        width: calculatorSnapSide ? "60vw" : undefined,
+        maxWidth: calculatorSnapSide ? "60vw" : undefined,
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-mono font-semibold">
           <Timer className={cn("h-4 w-4", remaining < 120000 ? "text-destructive" : "text-primary")} />
