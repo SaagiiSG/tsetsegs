@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff, Share2 } from 'lucide-react';
+import {  X, Check, Clock, Users, Award, Zap, Timer, Flame, Link, Mountain, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Pin, PinOff, Share2, Sparkles, Flower2, Flower } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,7 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
   
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, 
-    Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award
+    Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award, Sparkles, Flower, Flower2
   };
   const IconComponent = iconMap[badgeDef.iconName] || Award;
 

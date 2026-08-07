@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, Award, Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem } from 'lucide-react';
+import {  TrendingUp, Award, Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Sparkles, Flower2, Flower } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { StudentBadge } from '@/hooks/useBadges';
@@ -28,7 +28,7 @@ export function BadgeProgressSection({ inProgressBadges, onBadgeClick }: BadgePr
           const colors = RARITY_COLORS[badge.badge.rarity];
           const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
             Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, 
-            Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award
+            Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award, Sparkles, Flower, Flower2
           };
           const IconComponent = iconMap[badge.badge.iconName] || Award;
           

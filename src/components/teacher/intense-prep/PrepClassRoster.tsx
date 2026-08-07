@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { IntensePrepAddStudentDialog } from "./IntensePrepAddStudentDialog";
 import { PrepClassQrDialog } from "./PrepClassQrDialog";
 import { cn } from "@/lib/utils";
+
+// Official Bluebook practice tests we hand-enter math scores for
+const PT_KEYS = ["pt4", "pt5", "pt6", "pt7", "pt8", "pt9", "pt10", "pt11"] as const;
+type PtKey = (typeof PT_KEYS)[number];
 
 const SETS = [
   { key: "68", label: "68", questionSet: "68" },
@@ -33,8 +37,9 @@ interface Member {
 
 interface Tracking {
   member_id: string;
-  bluebook_math_scores: number[];
-  review_notes: string | null;
+  // per-test math scores keyed by pt4…pt11
+  bluebook_math_scores: Partial<Record<PtKey, number>>;
+  noted_lesson: boolean;
 }
 
 interface Props {
@@ -52,7 +57,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [drafts, setDrafts] = useState<Record<string, { scores: string; notes: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, Partial<Record<PtKey, string>>>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,19 +88,38 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
       const memberIds = memberRows.map((m) => m.id);
       const { data: trackRows } = await supabase
         .from("intense_prep_tracking")
-        .select("member_id, bluebook_math_scores, review_notes")
+        .select("member_id, bluebook_math_scores, prep_session_notes")
         .in("member_id", memberIds);
 
       const trackMap: Record<string, Tracking> = {};
-      const draftMap: Record<string, { scores: string; notes: string }> = {};
+      const draftMap: Record<string, Partial<Record<PtKey, string>>> = {};
       memberRows.forEach((m) => {
         const row = (trackRows ?? []).find((t) => t.member_id === m.id);
-        const scores = Array.isArray(row?.bluebook_math_scores) ? (row!.bluebook_math_scores as unknown as number[]) : [];
-        trackMap[m.id] = { member_id: m.id, bluebook_math_scores: scores, review_notes: row?.review_notes ?? null };
-        draftMap[m.id] = { scores: scores.join(", "), notes: row?.review_notes ?? "" };
+        const raw = row?.bluebook_math_scores;
+        const scores: Partial<Record<PtKey, number>> = {};
+        if (Array.isArray(raw)) {
+          // legacy flat list -> map onto pt4, pt5, …
+          (raw as unknown[]).forEach((v, i) => {
+            const key = PT_KEYS[i];
+            const num = Number(v);
+            if (key && Number.isFinite(num)) scores[key] = num;
+          });
+        } else if (raw && typeof raw === "object") {
+          PT_KEYS.forEach((key) => {
+            const num = Number((raw as Record<string, unknown>)[key]);
+            if (Number.isFinite(num) && num > 0) scores[key] = num;
+          });
+        }
+        trackMap[m.id] = { member_id: m.id, bluebook_math_scores: scores, noted_lesson: (row?.prep_session_notes ?? 0) === 1 };
+        const d: Partial<Record<PtKey, string>> = {};
+        PT_KEYS.forEach((key) => {
+          d[key] = scores[key] != null ? String(scores[key]) : "";
+        });
+        draftMap[m.id] = d;
       });
       setTracking(trackMap);
       setDrafts(draftMap);
+
 
       // Question sets -> id maps + usable totals
       const setNames = SETS.map((s) => s.questionSet);
@@ -161,36 +185,46 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     load();
   }, [load]);
 
-  const saveTracking = async (memberId: string, patch: { bluebook_math_scores?: number[]; review_notes?: string | null }) => {
+  const saveTracking = async (
+    memberId: string,
+    patch: { bluebook_math_scores?: Partial<Record<PtKey, number>>; noted_lesson?: boolean },
+  ) => {
+    const payload: Record<string, unknown> = { member_id: memberId, updated_at: new Date().toISOString() };
+    if (patch.bluebook_math_scores) payload.bluebook_math_scores = patch.bluebook_math_scores;
+    if (patch.noted_lesson !== undefined) payload.prep_session_notes = patch.noted_lesson ? 1 : 0;
+
     const { error } = await supabase
       .from("intense_prep_tracking")
-      .upsert(
-        { member_id: memberId, ...patch, updated_at: new Date().toISOString() },
-        { onConflict: "member_id" },
-      );
+      .upsert(payload as never, { onConflict: "member_id" });
     if (error) {
       toast({ title: "Could not save", description: error.message, variant: "destructive" });
       return;
     }
     setTracking((prev) => ({
       ...prev,
-      [memberId]: { member_id: memberId, bluebook_math_scores: patch.bluebook_math_scores ?? prev[memberId]?.bluebook_math_scores ?? [], review_notes: patch.review_notes ?? prev[memberId]?.review_notes ?? null },
+      [memberId]: {
+        member_id: memberId,
+        bluebook_math_scores: patch.bluebook_math_scores ?? prev[memberId]?.bluebook_math_scores ?? {},
+        noted_lesson: patch.noted_lesson ?? prev[memberId]?.noted_lesson ?? false,
+      },
     }));
   };
 
-  const commitScores = (memberId: string) => {
-    const raw = drafts[memberId]?.scores ?? "";
-    const scores = raw
-      .split(/[,\s]+/)
-      .map((v) => parseInt(v, 10))
-      .filter((n) => Number.isFinite(n) && n >= 200 && n <= 800);
-    setDrafts((prev) => ({ ...prev, [memberId]: { ...prev[memberId], scores: scores.join(", ") } }));
-    saveTracking(memberId, { bluebook_math_scores: scores });
+  const commitScore = (memberId: string, key: PtKey) => {
+    const raw = (drafts[memberId]?.[key] ?? "").trim();
+    const parsed = parseInt(raw, 10);
+    const valid = Number.isFinite(parsed) && parsed >= 200 && parsed <= 800;
+    const next = { ...(tracking[memberId]?.bluebook_math_scores ?? {}) };
+    if (valid) next[key] = parsed;
+    else delete next[key];
+    setDrafts((prev) => ({ ...prev, [memberId]: { ...prev[memberId], [key]: valid ? String(parsed) : "" } }));
+    saveTracking(memberId, { bluebook_math_scores: next });
   };
 
-  const commitNotes = (memberId: string) => {
-    saveTracking(memberId, { review_notes: drafts[memberId]?.notes?.trim() || null });
+  const toggleNoted = (memberId: string, value: boolean) => {
+    saveTracking(memberId, { noted_lesson: value });
   };
+
 
   const removeMember = async (memberId: string) => {
     const { error } = await supabase.from("intense_prep_members").delete().eq("id", memberId);
@@ -236,7 +270,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const displayName = (m: Member) => (m.student_id ? names[m.student_id] : undefined) || m.manual_name || m.manual_phone || "Unknown";
 
   const bbAverage = useMemo(() => {
-    const all = Object.values(tracking).flatMap((t) => t.bluebook_math_scores ?? []);
+    const all = Object.values(tracking).flatMap((t) => Object.values(t.bluebook_math_scores ?? {}));
     if (all.length === 0) return null;
     return Math.round(all.reduce((a, b) => a + b, 0) / all.length);
   }, [tracking]);
@@ -299,8 +333,8 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                   {SETS.map((s) => (
                     <TableHead key={s.key} className="w-[130px] text-center">{s.label}</TableHead>
                   ))}
-                  <TableHead className="w-[190px]">Bluebook math scores</TableHead>
-                  <TableHead className="min-w-[240px]">Review session notes</TableHead>
+                  <TableHead className="w-[300px]">Bluebook math scores (PT4–PT11)</TableHead>
+                  <TableHead className="w-[90px] text-center">Noted lesson</TableHead>
                   <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
@@ -335,24 +369,31 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                       );
                     })}
                     <TableCell>
-                      <Input
-                        className="h-8 text-xs font-mono"
-                        placeholder="e.g. 620, 680, 710"
-                        value={drafts[m.id]?.scores ?? ""}
-                        onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], scores: e.target.value } }))}
-                        onBlur={() => commitScores(m.id)}
-                      />
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {PT_KEYS.map((key) => (
+                          <div key={key}>
+                            <p className="text-[10px] text-muted-foreground text-center uppercase">{key.replace("pt", "PT")}</p>
+                            <Input
+                              inputMode="numeric"
+                              className="h-8 text-xs font-mono text-center px-1"
+                              placeholder="—"
+                              value={drafts[m.id]?.[key] ?? ""}
+                              onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], [key]: e.target.value } }))}
+                              onBlur={() => commitScore(m.id, key)}
+                            />
+                          </div>
+                        ))}
+                      </div>
                       <p className="text-[10px] text-muted-foreground mt-1">Official Bluebook math (200–800)</p>
                     </TableCell>
-                    <TableCell>
-                      <Textarea
-                        className="min-h-[56px] text-xs"
-                        placeholder="What to fix before the test…"
-                        value={drafts[m.id]?.notes ?? ""}
-                        onChange={(e) => setDrafts((p) => ({ ...p, [m.id]: { ...p[m.id], notes: e.target.value } }))}
-                        onBlur={() => commitNotes(m.id)}
+                    <TableCell className="text-center">
+                      <Checkbox
+                        checked={tracking[m.id]?.noted_lesson ?? false}
+                        onCheckedChange={(v) => toggleNoted(m.id, v === true)}
+                        aria-label="Noted down the lesson"
                       />
                     </TableCell>
+
                     <TableCell>
                       <Button
                         variant="ghost"
