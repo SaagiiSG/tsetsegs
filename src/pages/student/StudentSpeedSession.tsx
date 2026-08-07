@@ -128,7 +128,7 @@ export default function StudentSpeedSession() {
       let query = supabase
         .from('questions')
         .select(`
-          id, question_id, question_text, answer, question_type,
+          id, question_id, question_text, answer, alternate_answers, question_type,
           multiple_choice_options,
           question_image_url, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
