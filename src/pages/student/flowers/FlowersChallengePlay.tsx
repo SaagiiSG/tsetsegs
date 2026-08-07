@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { MathText } from "@/components/MathText";
-import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from "@/components/student/DesmosCalculator";
+import { DesmosCalculator, toggleCalculator } from "@/components/student/DesmosCalculator";
 import { ReferenceSheet, toggleReferenceSheet } from "@/components/student/ReferenceSheet";
 import { BookOpen, Calculator, Flower2, Loader2, Timer } from "lucide-react";
 import { toast } from "sonner";
