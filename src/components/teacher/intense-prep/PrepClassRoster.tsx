@@ -185,36 +185,46 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     load();
   }, [load]);
 
-  const saveTracking = async (memberId: string, patch: { bluebook_math_scores?: number[]; review_notes?: string | null }) => {
+  const saveTracking = async (
+    memberId: string,
+    patch: { bluebook_math_scores?: Partial<Record<PtKey, number>>; noted_lesson?: boolean },
+  ) => {
+    const payload: Record<string, unknown> = { member_id: memberId, updated_at: new Date().toISOString() };
+    if (patch.bluebook_math_scores) payload.bluebook_math_scores = patch.bluebook_math_scores;
+    if (patch.noted_lesson !== undefined) payload.prep_session_notes = patch.noted_lesson ? 1 : 0;
+
     const { error } = await supabase
       .from("intense_prep_tracking")
-      .upsert(
-        { member_id: memberId, ...patch, updated_at: new Date().toISOString() },
-        { onConflict: "member_id" },
-      );
+      .upsert(payload as never, { onConflict: "member_id" });
     if (error) {
       toast({ title: "Could not save", description: error.message, variant: "destructive" });
       return;
     }
     setTracking((prev) => ({
       ...prev,
-      [memberId]: { member_id: memberId, bluebook_math_scores: patch.bluebook_math_scores ?? prev[memberId]?.bluebook_math_scores ?? [], review_notes: patch.review_notes ?? prev[memberId]?.review_notes ?? null },
+      [memberId]: {
+        member_id: memberId,
+        bluebook_math_scores: patch.bluebook_math_scores ?? prev[memberId]?.bluebook_math_scores ?? {},
+        noted_lesson: patch.noted_lesson ?? prev[memberId]?.noted_lesson ?? false,
+      },
     }));
   };
 
-  const commitScores = (memberId: string) => {
-    const raw = drafts[memberId]?.scores ?? "";
-    const scores = raw
-      .split(/[,\s]+/)
-      .map((v) => parseInt(v, 10))
-      .filter((n) => Number.isFinite(n) && n >= 200 && n <= 800);
-    setDrafts((prev) => ({ ...prev, [memberId]: { ...prev[memberId], scores: scores.join(", ") } }));
-    saveTracking(memberId, { bluebook_math_scores: scores });
+  const commitScore = (memberId: string, key: PtKey) => {
+    const raw = (drafts[memberId]?.[key] ?? "").trim();
+    const parsed = parseInt(raw, 10);
+    const valid = Number.isFinite(parsed) && parsed >= 200 && parsed <= 800;
+    const next = { ...(tracking[memberId]?.bluebook_math_scores ?? {}) };
+    if (valid) next[key] = parsed;
+    else delete next[key];
+    setDrafts((prev) => ({ ...prev, [memberId]: { ...prev[memberId], [key]: valid ? String(parsed) : "" } }));
+    saveTracking(memberId, { bluebook_math_scores: next });
   };
 
-  const commitNotes = (memberId: string) => {
-    saveTracking(memberId, { review_notes: drafts[memberId]?.notes?.trim() || null });
+  const toggleNoted = (memberId: string, value: boolean) => {
+    saveTracking(memberId, { noted_lesson: value });
   };
+
 
   const removeMember = async (memberId: string) => {
     const { error } = await supabase.from("intense_prep_members").delete().eq("id", memberId);
