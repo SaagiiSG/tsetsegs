@@ -57,7 +57,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [drafts, setDrafts] = useState<Record<string, { scores: string; notes: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, Partial<Record<PtKey, string>>>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
