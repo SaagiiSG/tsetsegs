@@ -261,6 +261,7 @@ export default function FlowersChallengePlay() {
       )}
 
       <DesmosCalculator />
+      <ReferenceSheet />
     </div>
   );
 }
