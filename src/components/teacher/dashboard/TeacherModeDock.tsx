@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, useMotionValue, animate, PanInfo, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, MoreHorizontal, ClipboardList, Flame } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Gamepad2, BookOpen, MoreHorizontal, ClipboardList, Flame, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
