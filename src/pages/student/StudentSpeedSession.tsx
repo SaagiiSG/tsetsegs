@@ -270,12 +270,14 @@ export default function StudentSpeedSession() {
     })();
   }, [sessionComplete, student?.id]);
 
-  const normalizeAnswer = (answer: string) => answer.trim().toLowerCase().replace(/\s+/g, ' ');
-
   const handleSubmit = useCallback((timeout = false) => {
     if (!currentQuestion || showResult) return;
     const timeSpent = Date.now() - questionStartTime.current;
-    const correct = !timeout && normalizeAnswer(selectedAnswer) === normalizeAnswer(currentQuestion.answer);
+    const correct = !timeout && isAcceptedFillBlankAnswer(
+      selectedAnswer,
+      currentQuestion.answer,
+      (currentQuestion as any).alternate_answers as string[] | null
+    );
     
     setIsCorrect(correct);
     setShowResult(true);
