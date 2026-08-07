@@ -88,19 +88,38 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
       const memberIds = memberRows.map((m) => m.id);
       const { data: trackRows } = await supabase
         .from("intense_prep_tracking")
-        .select("member_id, bluebook_math_scores, review_notes")
+        .select("member_id, bluebook_math_scores, prep_session_notes")
         .in("member_id", memberIds);
 
       const trackMap: Record<string, Tracking> = {};
-      const draftMap: Record<string, { scores: string; notes: string }> = {};
+      const draftMap: Record<string, Partial<Record<PtKey, string>>> = {};
       memberRows.forEach((m) => {
         const row = (trackRows ?? []).find((t) => t.member_id === m.id);
-        const scores = Array.isArray(row?.bluebook_math_scores) ? (row!.bluebook_math_scores as unknown as number[]) : [];
-        trackMap[m.id] = { member_id: m.id, bluebook_math_scores: scores, review_notes: row?.review_notes ?? null };
-        draftMap[m.id] = { scores: scores.join(", "), notes: row?.review_notes ?? "" };
+        const raw = row?.bluebook_math_scores;
+        const scores: Partial<Record<PtKey, number>> = {};
+        if (Array.isArray(raw)) {
+          // legacy flat list -> map onto pt4, pt5, …
+          (raw as unknown[]).forEach((v, i) => {
+            const key = PT_KEYS[i];
+            const num = Number(v);
+            if (key && Number.isFinite(num)) scores[key] = num;
+          });
+        } else if (raw && typeof raw === "object") {
+          PT_KEYS.forEach((key) => {
+            const num = Number((raw as Record<string, unknown>)[key]);
+            if (Number.isFinite(num) && num > 0) scores[key] = num;
+          });
+        }
+        trackMap[m.id] = { member_id: m.id, bluebook_math_scores: scores, noted_lesson: (row?.prep_session_notes ?? 0) === 1 };
+        const d: Partial<Record<PtKey, string>> = {};
+        PT_KEYS.forEach((key) => {
+          d[key] = scores[key] != null ? String(scores[key]) : "";
+        });
+        draftMap[m.id] = d;
       });
       setTracking(trackMap);
       setDrafts(draftMap);
+
 
       // Question sets -> id maps + usable totals
       const setNames = SETS.map((s) => s.questionSet);
