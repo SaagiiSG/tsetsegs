@@ -394,7 +394,7 @@ export default function StudentBluebookTest() {
       .from('bluebook_answers')
       .select(`
         *,
-        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer)
+        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
       `)
       .eq('attempt_id', attemptId);
 
