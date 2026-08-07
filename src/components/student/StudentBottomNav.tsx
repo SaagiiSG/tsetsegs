@@ -1,6 +1,6 @@
 import { NavLink } from '@/components/NavLink';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, BookOpen, Zap, Armchair, User } from 'lucide-react';
+import { Home, BookOpen, Zap, Armchair, User, Swords } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PracticeQuickFab } from './practice/PracticeQuickFab';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -30,6 +30,7 @@ const navItems: NavItemDef[] = [
 ];
 
 const speedItem: NavItemDef = { to: '/practice/speed', icon: Zap, label: 'Speed' };
+const challengesItem: NavItemDef = { to: '/practice/challenges', icon: Swords, label: 'Versus' };
 
 function NavTab({ item }: { item: NavItemDef }) {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ function NavTab({ item }: { item: NavItemDef }) {
       type="button"
       {...longPressHandlers}
       className={cn(
-        'flex flex-col items-center justify-center gap-0.5 px-3 py-2 min-w-[60px]',
+        'flex flex-col items-center justify-center gap-0.5 px-2 py-2 min-w-[52px]',
         'transition-colors',
         active ? 'text-primary' : 'text-muted-foreground'
       )}
@@ -78,6 +79,7 @@ export function StudentBottomNav() {
         {/* Center FAB → Command Sheet */}
         <PracticeQuickFab inline />
         <NavTab item={speedItem} />
+        <NavTab item={challengesItem} />
         <NavTab item={navItems[3]} />
       </div>
     </nav>

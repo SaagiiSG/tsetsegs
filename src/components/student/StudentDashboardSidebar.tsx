@@ -9,7 +9,7 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords
+  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords, Flower2, Award
 } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useStudentTier } from '@/hooks/useStudentTier';
@@ -51,6 +51,8 @@ const learningItems: NavItem[] = [
   { to: '/practice/bluebook', icon: FileText, label: 'Practice Tests' },
   { to: '/practice/speed', icon: Zap, label: 'Speed Mode' },
   { to: '/practice/review', icon: Brain, label: 'Review' },
+  { to: '/practice/challenges', icon: Swords, label: 'Challenges' },
+  { to: '/practice/flowers', icon: Flower2, label: 'Flowers Challenge' },
 ];
 
 const toolsItems: NavItem[] = [
@@ -58,6 +60,7 @@ const toolsItems: NavItem[] = [
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
   { to: '/practice/my-flags', icon: Flag, label: 'My Flags' },
+  { to: '/practice/badges', icon: Award, label: 'Badges' },
 ];
 
 const accountItems: NavItem[] = [
@@ -74,8 +77,8 @@ export function StudentDashboardSidebar() {
   const { isEnabled } = useFeatureFlags();
   const { tier } = useStudentTier();
   const learningItemsResolved: NavItem[] = isEnabled('mini_challenges')
-    ? [...learningItems, { to: '/practice/challenges', icon: Swords, label: 'Challenges' }]
-    : learningItems;
+    ? learningItems
+    : learningItems.filter((i) => i.to !== '/practice/challenges');
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
 
