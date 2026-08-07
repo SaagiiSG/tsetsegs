@@ -269,7 +269,11 @@ export default function StudentBluebook() {
       let rwCorrect = 0, mathCorrect = 0, rwTotal = 0, mathTotal = 0;
 
       allAnswers?.forEach(a => {
-        const isCorrect = a.answer_submitted?.toLowerCase() === a.question?.answer?.toLowerCase();
+        const isCorrect = isAcceptedFillBlankAnswer(
+          a.answer_submitted ?? '',
+          (a.question as any)?.answer ?? '',
+          (a.question as any)?.alternate_answers as string[] | null
+        );
         const moduleInfo = moduleMap.get(a.module_id!);
         const orderInfo = questionOrderMap.get(a.question_id!);
         const section = moduleInfo?.section as 'reading_writing' | 'math';
