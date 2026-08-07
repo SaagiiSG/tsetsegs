@@ -1,0 +1,1 @@
+DELETE FROM public.flowers_challenge_attempts WHERE id = '808c2d8a-64a2-4d85-a21f-12bcafbf9f7d';

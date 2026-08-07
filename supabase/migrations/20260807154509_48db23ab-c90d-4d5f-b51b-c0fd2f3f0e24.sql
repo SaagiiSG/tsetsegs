@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.pick_hardest_questions(text, integer, integer) TO anon;
