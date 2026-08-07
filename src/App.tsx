@@ -227,6 +227,14 @@ const App = () => (
                     }
                   />
                   <Route
+                    path="/teacher/proctor"
+                    element={
+                      <TeacherProtectedRoute>
+                        <TeacherProctor />
+                      </TeacherProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/teacher/session/:batchId/:sessionNumber"
                     element={
                       <TeacherProtectedRoute>
