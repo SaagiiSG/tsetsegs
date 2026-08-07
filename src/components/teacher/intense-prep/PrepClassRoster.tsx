@@ -270,7 +270,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const displayName = (m: Member) => (m.student_id ? names[m.student_id] : undefined) || m.manual_name || m.manual_phone || "Unknown";
 
   const bbAverage = useMemo(() => {
-    const all = Object.values(tracking).flatMap((t) => t.bluebook_math_scores ?? []);
+    const all = Object.values(tracking).flatMap((t) => Object.values(t.bluebook_math_scores ?? {}));
     if (all.length === 0) return null;
     return Math.round(all.reduce((a, b) => a + b, 0) / all.length);
   }, [tracking]);
