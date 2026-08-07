@@ -160,11 +160,19 @@ export default function StudentBadges() {
       {/* Detail Modal */}
       <BadgeDetailModal
         badge={selectedBadge}
-        open={!!selectedBadge}
+        open={!!selectedBadge && !shareBadge}
         onClose={() => setSelectedBadge(null)}
         onPin={handlePin}
         isPinned={selectedBadge ? isPinned(selectedBadge.badgeId) : false}
         isPinning={isPinning}
+        onShare={() => setShareBadge(selectedBadge)}
+      />
+
+      <BadgeStoryShare
+        badge={shareBadge}
+        studentName={student?.full_name ?? null}
+        open={!!shareBadge}
+        onClose={() => setShareBadge(null)}
       />
     </div>
   );
