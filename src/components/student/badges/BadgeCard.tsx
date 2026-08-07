@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Lock, Check, Sparkles, Award, Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem } from 'lucide-react';
+import {  Lock, Check, Sparkles, Award, Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, Hourglass, Diamond, Star, Bird, Snowflake, Gem, Flower2, Flower } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { StudentBadge } from '@/hooks/useBadges';
 import { RARITY_COLORS, BadgeRarity } from '@/data/badgeDefinitions';
@@ -18,7 +18,7 @@ export function BadgeCard({ badge, onClick }: BadgeCardProps) {
   // Map icon names to components
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     Zap, Timer, Flame, Link, Mountain, Clock, Crown, Target, Package, Medal, 
-    Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award
+    Hourglass, Diamond, Star, Bird, Snowflake, Gem, Award, Sparkles, Flower, Flower2
   };
   const IconComponent = iconMap[badgeDef.iconName] || Award;
 
