@@ -41,10 +41,11 @@ interface Props {
   onOpenHandbook: () => void;
   onOpenTests?: () => void;
   onOpenIntensePrep?: () => void;
+  onOpenProctor?: () => void;
 }
 
 
-export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTests, onOpenIntensePrep }: Props) {
+export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTests, onOpenIntensePrep, onOpenProctor }: Props) {
   const [anchor, setAnchor] = useState<DockAnchor>(() => loadAnchor());
   const [expanded, setExpanded] = useState(false);
   const x = useMotionValue(0);
