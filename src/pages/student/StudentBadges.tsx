@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Award } from 'lucide-react';
 import { useBadges, StudentBadge } from '@/hooks/useBadges';
 import { BadgeRarity, BadgeCategory } from '@/data/badgeDefinitions';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
   BadgeGrid,
   BadgeFilters,
@@ -10,6 +11,7 @@ import {
   BadgeProgressSection,
   BadgeDetailModal
 } from '@/components/student/badges';
+import { BadgeStoryShare } from '@/components/student/badges/BadgeStoryShare';
 
 export default function StudentBadges() {
   const [status, setStatus] = useState<'all' | 'earned' | 'in-progress' | 'locked'>('all');
@@ -17,6 +19,12 @@ export default function StudentBadges() {
   const [category, setCategory] = useState<BadgeCategory | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selectedBadge, setSelectedBadge] = useState<StudentBadge | null>(null);
+  const [shareBadge, setShareBadge] = useState<StudentBadge | null>(null);
+  const { student } = useStudentAuth();
+  const linked = student?.linked_student;
+  const studentName = linked
+    ? [linked.first_name, linked.last_name].filter(Boolean).join(' ')
+    : null;
 
   const { allBadges, inProgressBadges, badgeStats, featuredBadges, isLoading, pinBadge, unpinBadge, isPinning } = useBadges();
 
