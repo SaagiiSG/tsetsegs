@@ -1,0 +1,2 @@
+ALTER TABLE public.point_transactions DROP CONSTRAINT IF EXISTS point_transactions_category_check;
+ALTER TABLE public.point_transactions ADD CONSTRAINT point_transactions_category_check CHECK (category = ANY (ARRAY['questions'::text,'section_bonus'::text,'speed_session'::text,'badge'::text,'bank_completion'::text,'streak_daily'::text,'flowers_challenge'::text,'class_test'::text,'challenge'::text]));
