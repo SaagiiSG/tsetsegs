@@ -21,9 +21,10 @@ interface BadgeDetailModalProps {
   onPin?: (badgeId: string) => void;
   isPinned?: boolean;
   isPinning?: boolean;
+  onShare?: () => void;
 }
 
-export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinning }: BadgeDetailModalProps) {
+export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinning, onShare }: BadgeDetailModalProps) {
   if (!badge) return null;
 
   const { badge: badgeDef, isUnlocked, progress, unlockedAt, requirementsProgress, badgeId } = badge;
