@@ -78,32 +78,28 @@ const roundToPlaces = (value: number, places: number) => {
   return Math.round((value + Number.EPSILON) * factor) / factor;
 };
 
-const numericAnswersMatch = (submitted: string, expected: string) => {
-  const submittedNumber = parsePlainNumber(submitted);
-  const expectedNumber = parsePlainNumber(expected);
+const valuesMatch = (submitted: string, expected: string) => {
+  const submittedValue = parseFillValue(submitted);
+  const expectedValue = parseFillValue(expected);
 
-  if (submittedNumber === null || expectedNumber === null) {
+  if (submittedValue === null || expectedValue === null) {
     return false;
   }
 
-  if (submittedNumber === expectedNumber) {
+  if (nearlyEqual(submittedValue, expectedValue)) {
     return true;
   }
 
-  const expectedPlaces = getDecimalPlaces(expected);
-  if (expectedPlaces === 0) {
-    return false;
-  }
-
-  return roundToPlaces(submittedNumber, expectedPlaces) === roundToPlaces(expectedNumber, expectedPlaces);
+  // Either side may be the shortened form that fits the answer box.
+  return approximationMatches(submitted, expectedValue) || approximationMatches(expected, submittedValue);
 };
 
 export function isAcceptedFillBlankAnswer(submitted: string, expected: string, alternates?: string[] | null) {
-  if (normalizeAnswerText(submitted) === normalizeAnswerText(expected) || numericAnswersMatch(submitted, expected)) {
+  if (normalizeAnswerText(submitted) === normalizeAnswerText(expected) || valuesMatch(submitted, expected)) {
     return true;
   }
 
   return alternates?.some((alternate) => {
-    return normalizeAnswerText(submitted) === normalizeAnswerText(alternate) || numericAnswersMatch(submitted, alternate);
+    return normalizeAnswerText(submitted) === normalizeAnswerText(alternate) || valuesMatch(submitted, alternate);
   }) ?? false;
 }
