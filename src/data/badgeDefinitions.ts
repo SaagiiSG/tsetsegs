@@ -671,6 +671,42 @@ export const badgeDefinitions: BadgeDefinition[] = [
     requirements: [
       { type: 'seasonal_streak', target: 31, label: 'Daily practice in December' }
     ]
+  },
+  {
+    id: 'one-last-dance',
+    name: 'One last dance with Tsetsegs family',
+    description: 'Joined an intense prep class the week before the SAT. One last dance.',
+    rarity: 'legendary',
+    pointValue: 500,
+    iconName: 'Sparkles',
+    category: 'seasonal',
+    requirements: [
+      { type: 'prep_class_join', target: 1, label: 'Join an intense prep class via QR' }
+    ]
+  },
+  {
+    id: 'flowers-challenge-68',
+    name: 'Flowers Challenge: 68',
+    description: 'Scored 20 of 22 in under 20 minutes on the hardest questions from the 68 set.',
+    rarity: 'epic',
+    pointValue: 300,
+    iconName: 'Flower',
+    category: 'championship',
+    requirements: [
+      { type: 'flowers_challenge_68', target: 1, label: '20/22 in under 20 minutes' }
+    ]
+  },
+  {
+    id: 'flowers-challenge-150',
+    name: 'Flowers Challenge: Hard 150',
+    description: 'Scored 20 of 22 in under 20 minutes on the hardest questions from the Hard 150 set.',
+    rarity: 'epic',
+    pointValue: 300,
+    iconName: 'Flower2',
+    category: 'championship',
+    requirements: [
+      { type: 'flowers_challenge_150', target: 1, label: '20/22 in under 20 minutes' }
+    ]
   }
 ];
 
