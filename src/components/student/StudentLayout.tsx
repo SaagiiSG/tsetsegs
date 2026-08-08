@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
 import { StreakAndRankBar } from './StreakAndRankBar';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
+import { ChallengeWinCelebration } from './challenges/ChallengeWinCelebration';
 
 import { TourProvider } from './onboarding/TourProvider';
 import { TourOverlay } from './onboarding/TourOverlay';
@@ -207,6 +208,7 @@ function StudentLayoutContent() {
       <StreakCelebrationListener />
       <StreakBrokenOverlay />
       <ActiveChallengeHUD />
+      <ChallengeWinCelebration />
       <TourOverlay />
 
 
