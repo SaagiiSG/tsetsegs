@@ -431,6 +431,9 @@ export function useLeaderboard(selectedTier?: TierType) {
     lastSprintResults,
     leaderboard,
     allTimeLeaderboard: allTimeLeaderboard || [],
+    allTimeWindow,
+    setAllTimeWindow,
+
     currentUserEntry,
     currentUserAllTime,
     currentUserRank,
