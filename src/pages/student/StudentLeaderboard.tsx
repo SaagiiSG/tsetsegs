@@ -77,6 +77,9 @@ export default function StudentLeaderboard() {
     lastSprintResults,
     leaderboard,
     allTimeLeaderboard,
+    allTimeWindow,
+    setAllTimeWindow,
+
     currentUserEntry,
     groupInfo,
     pointsToAdvance,
