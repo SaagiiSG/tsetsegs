@@ -18,18 +18,41 @@ import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
 import { TeacherModeDock } from "@/components/teacher/dashboard/TeacherModeDock";
+import { TeacherTestTab } from "@/components/teacher/practice/test/TeacherTestTab";
+import { IntensePrepContent } from "@/components/teacher/intense-prep";
+import { ProctorContent } from "@/components/teacher/proctor/ProctorContent";
+import { Flame, ShieldCheck } from "lucide-react";
 import { useHaptics } from "@/hooks/useHaptics";
 
-type DashboardMode = "dashboard" | "analytics" | "practice";
+type DashboardMode = "dashboard" | "analytics" | "practice" | "tests" | "intense" | "proctor";
 
-const MODE_ORDER: DashboardMode[] = ["dashboard", "analytics", "practice"];
+const MODE_ORDER: DashboardMode[] = ["dashboard", "analytics", "practice", "tests", "intense", "proctor"];
+
+const MODE_META: Partial<Record<DashboardMode, { title: string; subtitle: string; icon: typeof ClipboardList; iconClass?: string }>> = {
+  tests: {
+    title: "Class Tests",
+    subtitle: "Launch and monitor the 68 Hardest 22 timed test",
+    icon: ClipboardList,
+  },
+  intense: {
+    title: "Intense Prep",
+    subtitle: "Register students by QR and track them through the final week",
+    icon: Flame,
+    iconClass: "text-orange-500",
+  },
+  proctor: {
+    title: "Proctored test",
+    subtitle: "Run a Bluebook practice test under your supervision",
+    icon: ShieldCheck,
+  },
+};
 
 
-export default function TeacherDashboard() {
+export default function TeacherDashboard({ initialMode = "dashboard" }: { initialMode?: DashboardMode } = {}) {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [activeMode, setActiveMode] = useState<DashboardMode>("dashboard");
+  const [activeMode, setActiveMode] = useState<DashboardMode>(initialMode);
   const [slideDirection, setSlideDirection] = useState(0);
   const [qrBatch, setQrBatch] = useState<DashboardBatch | null>(null);
   const [renameBatch, setRenameBatch] = useState<DashboardBatch | null>(null);
@@ -243,6 +266,35 @@ export default function TeacherDashboard() {
                   <TeacherPracticeHub />
                 </motion.div>
               )}
+              {(activeMode === "tests" || activeMode === "intense" || activeMode === "proctor") && (
+                <motion.div
+                  key={activeMode}
+                  custom={slideDirection}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={slideTransition}
+                  className="space-y-4"
+                >
+                  {(() => {
+                    const meta = MODE_META[activeMode]!;
+                    const Icon = meta.icon;
+                    return (
+                      <div className="min-w-0">
+                        <h2 className="text-base md:text-xl font-bold flex items-center gap-2 truncate">
+                          <Icon className={`h-5 w-5 shrink-0 ${meta.iconClass ?? "text-primary"}`} />
+                          {meta.title}
+                        </h2>
+                        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{meta.subtitle}</p>
+                      </div>
+                    );
+                  })()}
+                  {activeMode === "tests" && <TeacherTestTab />}
+                  {activeMode === "intense" && <IntensePrepContent />}
+                  {activeMode === "proctor" && <ProctorContent />}
+                </motion.div>
+              )}
 
             </AnimatePresence>
           </div>
@@ -254,15 +306,15 @@ export default function TeacherDashboard() {
           onChange={handleModeChange}
           onOpenTests={() => {
             haptic("light");
-            navigate("/teacher/test");
+            handleModeChange("tests");
           }}
           onOpenIntensePrep={() => {
             haptic("light");
-            navigate("/teacher/intense-prep");
+            handleModeChange("intense");
           }}
           onOpenProctor={() => {
             haptic("light");
-            navigate("/teacher/proctor");
+            handleModeChange("proctor");
           }}
           onOpenHandbook={() => {
             haptic("light");

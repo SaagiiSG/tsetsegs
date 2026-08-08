@@ -214,7 +214,7 @@ const App = () => (
                     path="/teacher/test"
                     element={
                       <TeacherProtectedRoute>
-                        <TeacherTestPage />
+                        <TeacherDashboard initialMode="tests" />
                       </TeacherProtectedRoute>
                     }
                   />
@@ -222,7 +222,7 @@ const App = () => (
                     path="/teacher/intense-prep"
                     element={
                       <TeacherProtectedRoute>
-                        <TeacherIntensePrep />
+                        <TeacherDashboard initialMode="intense" />
                       </TeacherProtectedRoute>
                     }
                   />
@@ -230,7 +230,7 @@ const App = () => (
                     path="/teacher/proctor"
                     element={
                       <TeacherProtectedRoute>
-                        <TeacherProctor />
+                        <TeacherDashboard initialMode="proctor" />
                       </TeacherProtectedRoute>
                     }
                   />
