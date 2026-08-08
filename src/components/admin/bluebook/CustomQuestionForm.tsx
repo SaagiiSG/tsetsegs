@@ -591,13 +591,19 @@ const CustomQuestionForm = ({
                     <MathText text={passage} />
                   </div>
                 )}
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Question"
-                    className="max-h-40 rounded-md border object-contain mx-auto"
-                  />
+                {(imagePreview || imagePreview2) && (
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {[imagePreview, imagePreview2].filter(Boolean).map((src, i) => (
+                      <img
+                        key={i}
+                        src={src as string}
+                        alt={`Figure ${i + 1}`}
+                        className="max-h-40 rounded-md border object-contain"
+                      />
+                    ))}
+                  </div>
                 )}
+
                 {questionText && (
                   <div className="text-sm font-medium">
                     <MathText text={questionText.replace(/<[^>]+>/g, " ")} />
