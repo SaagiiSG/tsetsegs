@@ -484,6 +484,8 @@ const CustomQuestionForm = ({
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
           question_type: questionType === "fill_in" ? "fill_blank" : "multiple_choice",
           question_image_url: imageUrl,
+          question_image_url_2: imageUrl2,
+
         })
         .eq("id", editQuestionId!);
       if (error) throw error;
