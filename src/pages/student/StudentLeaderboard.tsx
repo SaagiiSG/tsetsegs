@@ -77,6 +77,9 @@ export default function StudentLeaderboard() {
     lastSprintResults,
     leaderboard,
     allTimeLeaderboard,
+    allTimeWindow,
+    setAllTimeWindow,
+
     currentUserEntry,
     groupInfo,
     pointsToAdvance,
@@ -321,7 +324,10 @@ export default function StudentLeaderboard() {
                 leaderboard={allTimeLeaderboard}
                 currentUserId={student?.id}
                 isLoading={isAllTimeLoading}
+                window={allTimeWindow}
+                onWindowChange={setAllTimeWindow}
               />
+
             </motion.div>
           </TabsContent>
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -55,8 +56,12 @@ export interface AllTimeEntry {
   isRubyLegend: boolean;
 }
 
+export type AllTimeWindow = 'all' | 'last30';
+
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
+  const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
+
 
   // Fetch current active sprint
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
@@ -362,91 +367,35 @@ export function useLeaderboard(selectedTier?: TierType) {
   const leaderboard = leaderboardData?.entries || [];
   const groupInfo = leaderboardData?.groupInfo || null;
 
-  // Fetch all-time leaderboard
+  // Fetch all-time leaderboard (aggregated server-side)
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
-    queryKey: ['all-time-leaderboard'],
+    queryKey: ['all-time-leaderboard', allTimeWindow],
     queryFn: async (): Promise<AllTimeEntry[]> => {
-      // Get total points from all point transactions (paginate to avoid 1000-row limit)
-      let allTransactions: { student_account_id: string; points: number }[] = [];
-      let page = 0;
-      const pageSize = 1000;
-      while (true) {
-        const { data: batch, error: batchError } = await supabase
-          .from('point_transactions')
-          .select('student_account_id, points')
-          .range(page * pageSize, (page + 1) * pageSize - 1);
-        if (batchError) throw batchError;
-        if (!batch || batch.length === 0) break;
-        allTransactions = allTransactions.concat(batch);
-        if (batch.length < pageSize) break;
-        page++;
-      }
-      const transactions = allTransactions;
-
-      if (!transactions.length) return [];
-
-      // Aggregate points per student
-      const totalsByStudent: Record<string, number> = {};
-      transactions?.forEach(t => {
-        totalsByStudent[t.student_account_id] = (totalsByStudent[t.student_account_id] || 0) + t.points;
+      const { data, error } = await supabase.rpc('all_time_leaderboard', {
+        p_window: allTimeWindow,
+        p_limit: 100,
       });
+      if (error) throw error;
 
-      // Get student accounts
-      const studentIds = Object.keys(totalsByStudent);
-      const { data: accounts } = await supabase
-        .from('student_accounts')
-        .select(`
-          id,
-          phone_number,
-          is_ghost,
-          linked_student:students(first_name, last_name)
-        `)
-        .eq('is_ghost', false)
-        .in('id', studentIds);
-      const visibleIds = new Set((accounts || []).map(a => a.id));
-
-      // Get highest tier achieved per student
-      const { data: rankings } = await supabase
-        .from('student_sprint_rankings')
-        .select('student_account_id, current_tier, is_top_1')
-        .in('student_account_id', studentIds);
-
-      const tierOrder: TierType[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
-      const highestTiers: Record<string, TierType> = {};
-      const rubyWeeks: Record<string, number> = {};
-      
-      rankings?.forEach(r => {
-        const tier = r.current_tier as TierType;
-        const current = highestTiers[r.student_account_id];
-        if (!current || tierOrder.indexOf(tier) > tierOrder.indexOf(current)) {
-          highestTiers[r.student_account_id] = tier;
-        }
-        if (tier === 'ruby') {
-          rubyWeeks[r.student_account_id] = (rubyWeeks[r.student_account_id] || 0) + 1;
-        }
-      });
-
-      return studentIds
-        .filter(id => visibleIds.has(id))
-        .map(id => {
-          const account = accounts?.find(a => a.id === id);
-          const linkedStudent = account?.linked_student as { first_name: string; last_name: string } | null;
-          
-          return {
-            userId: id,
-            username: linkedStudent 
-              ? `${linkedStudent.first_name} ${linkedStudent.last_name?.charAt(0) || ''}.`
-              : account?.phone_number?.slice(-4) || 'Anonymous',
-            level: calculateLevel(totalsByStudent[id]),
-            totalPoints: totalsByStudent[id],
-            highestTier: highestTiers[id] || 'unranked',
-            rubyWeeks: rubyWeeks[id] || 0,
-            isRubyLegend: (rubyWeeks[id] || 0) >= 4
-          };
-        })
-        .sort((a, b) => b.totalPoints - a.totalPoints);
-    }
+      return (data || []).map((row: {
+        student_account_id: string;
+        username: string;
+        total_points: number;
+        highest_tier: string;
+        ruby_weeks: number;
+      }) => ({
+        userId: row.student_account_id,
+        username: row.username,
+        level: calculateLevel(Number(row.total_points)),
+        totalPoints: Number(row.total_points),
+        highestTier: row.highest_tier as TierType,
+        rubyWeeks: row.ruby_weeks,
+        isRubyLegend: row.ruby_weeks >= 4,
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
   });
+
 
   // Get current user's rank and stats
   const currentUserEntry = leaderboard?.find(e => e.userId === student?.id);
@@ -482,6 +431,9 @@ export function useLeaderboard(selectedTier?: TierType) {
     lastSprintResults,
     leaderboard,
     allTimeLeaderboard: allTimeLeaderboard || [],
+    allTimeWindow,
+    setAllTimeWindow,
+
     currentUserEntry,
     currentUserAllTime,
     currentUserRank,

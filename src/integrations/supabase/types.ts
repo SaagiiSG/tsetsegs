@@ -4431,6 +4431,16 @@ export type Database = {
           pretty: string
         }[]
       }
+      all_time_leaderboard: {
+        Args: { p_limit?: number; p_window?: string }
+        Returns: {
+          highest_tier: string
+          ruby_weeks: number
+          student_account_id: string
+          total_points: number
+          username: string
+        }[]
+      }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
