@@ -105,16 +105,16 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
 
       {/* Filter */}
       <div className="flex justify-end">
-        <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+        <Select value={timeWindow} onValueChange={(v) => onWindowChange(v as 'all' | 'last30')}>
           <SelectTrigger className="w-[150px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Time</SelectItem>
             <SelectItem value="last30">Last 30 Days</SelectItem>
-            <SelectItem value="lastSeason">Last Season</SelectItem>
           </SelectContent>
         </Select>
+
       </div>
 
       {/* Leaderboard */}
