@@ -36,7 +36,87 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
   const [newGroupName, setNewGroupName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [editGroup, setEditGroup] = useState<IntensePrepGroup | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<IntensePrepGroup | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+
+  const openEdit = (group: IntensePrepGroup) => {
+    setEditGroup(group);
+    setEditName(group.name);
+    setEditStart(group.start_date ?? "");
+    setEditEnd(group.end_date ?? "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editGroup || !editName.trim()) return;
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .update({
+          name: editName.trim(),
+          start_date: editStart || null,
+          end_date: editEnd || null,
+        })
+        .eq("id", editGroup.id);
+      if (error) throw error;
+
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === editGroup.id
+            ? { ...g, name: editName.trim(), start_date: editStart || null, end_date: editEnd || null }
+            : g
+        )
+      );
+      setEditGroup(null);
+      toast({ title: "Prep class updated" });
+    } catch (error: any) {
+      toast({ title: "Could not update", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleArchive = async (group: IntensePrepGroup) => {
+    try {
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .update({ is_active: false })
+        .eq("id", group.id);
+      if (error) throw error;
+      setGroups(prev => prev.filter(g => g.id !== group.id));
+      toast({
+        title: "Prep class archived",
+        description: `"${group.name}" is hidden but its data is kept.`,
+      });
+    } catch (error: any) {
+      toast({ title: "Could not archive", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .delete()
+        .eq("id", deleteTarget.id);
+      if (error) throw error;
+      setGroups(prev => prev.filter(g => g.id !== deleteTarget.id));
+      toast({ title: "Prep class deleted", description: `"${deleteTarget.name}" is gone for good.` });
+      setDeleteTarget(null);
+    } catch (error: any) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     fetchGroups();
