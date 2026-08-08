@@ -55,8 +55,12 @@ export interface AllTimeEntry {
   isRubyLegend: boolean;
 }
 
+export type AllTimeWindow = 'all' | 'last30';
+
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
+  const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
+
 
   // Fetch current active sprint
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
