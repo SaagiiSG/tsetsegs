@@ -4673,6 +4673,23 @@ export type Database = {
           submitted_at: string
         }[]
       }
+      proctor_paper: {
+        Args: { p_participant_id: string }
+        Returns: {
+          choice_images: Json
+          module_id: string
+          module_number: number
+          multiple_choice_options: Json
+          order_index: number
+          passage_text: string
+          question_id: string
+          question_image_url: string
+          question_text: string
+          question_type: string
+          section: string
+          time_limit_minutes: number
+        }[]
+      }
       proctor_save_progress: {
         Args: {
           p_answers: Json
@@ -4681,6 +4698,22 @@ export type Database = {
           p_violations?: number
         }
         Returns: boolean
+      }
+      proctor_state: {
+        Args: { p_participant_id: string }
+        Returns: {
+          answers: Json
+          code_verified: boolean
+          current_module: number
+          display_name: string
+          focus_violations: number
+          module_started_at: string
+          oath_accepted: boolean
+          session_current_module: number
+          session_status: string
+          session_title: string
+          submitted_at: string
+        }[]
       }
       proctor_submit: {
         Args: {

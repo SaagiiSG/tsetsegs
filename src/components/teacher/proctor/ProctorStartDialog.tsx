@@ -44,7 +44,6 @@ export function ProctorStartDialog({ open, onOpenChange, onCreated }: Props) {
         supabase
           .from("bluebook_tests")
           .select("id, name, section_type, test_month, test_year, variant, is_published")
-          .eq("is_published", true)
           .order("created_at", { ascending: false }),
         supabase.from("bluebook_modules").select("id, test_id"),
         teacherName
@@ -67,7 +66,7 @@ export function ProctorStartDialog({ open, onOpenChange, onCreated }: Props) {
         (testRows ?? [])
           .map((t) => ({
             id: t.id,
-            label: [t.name, t.variant, t.test_year ? `${t.test_month ?? ""}/${t.test_year}` : null]
+            label: [t.name, t.variant, t.test_year ? `${t.test_month ?? ""}/${t.test_year}` : null, t.is_published ? null : "draft"]
               .filter(Boolean)
               .join(" · "),
             moduleCount: counts.get(t.id) ?? 0,
