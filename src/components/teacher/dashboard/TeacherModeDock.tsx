@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-export type DashboardMode = "dashboard" | "analytics" | "practice";
+export type DashboardMode = "dashboard" | "analytics" | "practice" | "tests" | "intense" | "proctor";
 type DockAnchor =
   | "bottom" | "top" | "left" | "right"
   | "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -173,7 +173,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant={activeMode === "tests" ? "default" : "ghost"}
                       size="sm"
                       className={cn("h-9 rounded-full gap-2 text-xs", isVertical ? "px-3 md:w-9 md:px-0" : "px-3")}
                       onClick={(e) => {
@@ -196,7 +196,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant={activeMode === "intense" ? "default" : "ghost"}
                       size="sm"
                       className={cn("h-9 rounded-full gap-2 text-xs", isVertical ? "px-3 md:w-9 md:px-0" : "px-3")}
                       onClick={(e) => {
@@ -219,7 +219,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant={activeMode === "proctor" ? "default" : "ghost"}
                       size="sm"
                       className={cn("h-9 rounded-full gap-2 text-xs", isVertical ? "px-3 md:w-9 md:px-0" : "px-3")}
                       onClick={(e) => {
