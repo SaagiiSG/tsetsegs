@@ -353,21 +353,27 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Apply demotions for next season
+        // Apply season-end tier changes
+        // RULE: the winner (P1) of the LAST sprint of the season PRESERVES their rank
+        // into the next season — no promotion, no demotion. Everyone else drops one tier.
+        let seasonEndPreserved = 0
         for (const [studentId, data] of studentData) {
-          // If the student got P1 in Sprint 3, they keep their promoted tier (no demotion)
           const s3 = data.sprint3Ranking
           const s3Tier = s3?.current_tier || data.finalTier || 'unranked'
-          const s3Cutoff = TIER_PROMOTION_CUTOFFS[s3Tier] ?? 20
-          const s3Promoted = !!s3 && typeof s3.final_rank === 'number' && s3.final_rank <= s3Cutoff
-          // P1 in Sprint 3, or anyone who earned a promotion in Sprint 3, keeps their
-          // reserved_next_tier — never overwrite it with a demotion.
-          if (s3?.is_top_1 || s3Promoted) {
-            console.log(`Student ${studentId}: promoted in Sprint 3 - keeps tier ${s3?.reserved_next_tier}`)
-            // reserved_next_tier is already set correctly from the main finalization above
+
+          if (s3?.is_top_1) {
+            // Preserve the exact tier they won in — overwrite any promotion from the
+            // per-sprint step so the tier carries over unchanged.
+            console.log(`Student ${studentId}: Sprint 3 winner - preserves tier ${s3Tier} into next season`)
+            seasonEndPreserved++
+            await supabase
+              .from('student_sprint_rankings')
+              .update({ reserved_next_tier: s3Tier })
+              .eq('sprint_id', sprintId)
+              .eq('student_account_id', studentId)
             continue
           }
-          
+
           const currentTierIndex = TIER_ORDER.indexOf(data.finalTier || 'unranked')
           const demotedTierIndex = Math.max(0, currentTierIndex - 1) // Drop 1 tier, min is unranked
           const newTier = TIER_ORDER[demotedTierIndex]
@@ -388,7 +394,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        console.log(`Season end: ${seasonEndDemotions} students demoted`)
+        console.log(`Season end: ${seasonEndDemotions} demoted, ${seasonEndPreserved} winners preserved`)
+
       }
     }
 
