@@ -116,15 +116,20 @@ export function StudentDashboardSidebar() {
 
   return (
     <>
-    <Sidebar collapsible="offcanvas" variant="floating" className="border-r-0">
+    <Sidebar collapsible="icon" variant="floating" className="border-r-0">
       <SidebarHeader className="border-b">
         <div className={cn(
           "flex items-center gap-3 p-2",
           !open && "justify-center"
         )}>
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <User className="h-4 w-4 text-primary" />
-          </div>
+          {open ? (
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+          ) : (
+            <SidebarTrigger className="h-8 w-8" title="Expand sidebar" />
+          )}
+
           {open && (
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
@@ -182,7 +187,9 @@ export function StudentDashboardSidebar() {
               )}
             </motion.div>
           )}
+          {open && <SidebarTrigger className="h-8 w-8 shrink-0" title="Collapse sidebar" />}
         </div>
+
         {/* SAT Countdown */}
         {open && (
           <div className="px-2 pb-2">
