@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Crown, ArrowUp, AlertTriangle, Shield, Flame } from 'lucide-react';
+import { Crown, ArrowUp, ArrowDown, AlertTriangle, Shield, Flame } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LeaderboardEntry } from '@/hooks/useLeaderboard';
