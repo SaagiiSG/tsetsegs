@@ -16,6 +16,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Flag, Loader2, Play, ChevronRight, Ch
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { DrawingCanvas } from '@/components/student/DrawingCanvas';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
@@ -971,13 +972,11 @@ export default function StudentQuestion() {
                   )}
 
                   {/* Question Image */}
-                  {currentQuestion.question_image_url && (
-                    <img 
-                      src={currentQuestion.question_image_url} 
-                      alt="Question" 
-                      className="max-w-full rounded-lg border"
-                    />
-                  )}
+                  <QuestionFigures
+                    url1={currentQuestion.question_image_url}
+                    url2={(currentQuestion as any).question_image_url_2}
+                    imgClassName="max-w-full rounded-lg border"
+                  />
 
                   {/* Multiple Choice Options */}
                   {currentQuestion.question_type === 'multiple_choice' && options && (
