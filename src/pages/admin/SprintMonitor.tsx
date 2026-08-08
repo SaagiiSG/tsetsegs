@@ -23,15 +23,7 @@ const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond
 const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
 const TARGET_GROUP_SIZE = 40;
 
-const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
-  unranked: 30,
-  bronze: 20,
-  silver: 15,
-  gold: 10,
-  platinum: 5,
-  diamond: 1,
-  ruby: 1,
-};
+import { TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
 
 // Calculate optimal group assignment: minimize groups, each between 25-55 students
 function calculateGroupNumber(index: number, totalInTier: number): number {
