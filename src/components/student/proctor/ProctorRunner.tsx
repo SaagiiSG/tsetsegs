@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ export interface PaperRow {
   question_id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   passage_text: string | null;
   question_type: string | null;
   multiple_choice_options: unknown;
@@ -321,9 +323,11 @@ export function ProctorRunner({
             <div className="font-medium text-base sm:text-lg">
               <MathText text={q.question_text} />
             </div>
-            {q.question_image_url && (
-              <img src={q.question_image_url} alt="Question figure" className="rounded-md max-h-72 mx-auto" />
-            )}
+            <QuestionFigures
+              url1={q.question_image_url}
+              url2={q.question_image_url_2}
+              imgClassName="rounded-md max-h-72"
+            />
             {options.length > 0 ? (
               <div className="grid gap-2">
                 {options.map((opt) => (

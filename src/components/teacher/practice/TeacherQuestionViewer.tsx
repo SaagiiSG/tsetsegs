@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import {
@@ -200,10 +201,10 @@ export function TeacherQuestionViewer({
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                       <div className="md:col-span-2">
                         <div className="md:sticky md:top-4">
-                          <img
-                            src={question.question_image_url}
-                            alt="Question figure"
-                            className="w-full max-h-64 md:max-h-[70vh] rounded-lg border object-contain bg-white"
+                          <QuestionFigures
+                            url1={question.question_image_url}
+                            url2={(question as any).question_image_url_2}
+                            imgClassName="w-full max-h-64 md:max-h-[70vh] rounded-lg border object-contain bg-white"
                           />
                         </div>
                       </div>
