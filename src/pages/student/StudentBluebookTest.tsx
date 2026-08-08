@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
@@ -49,6 +50,7 @@ interface QuestionResult {
   question_id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   question_type: string;
   multiple_choice_options: any;
   passage_text: string | null;
@@ -65,6 +67,7 @@ interface Question {
   question_id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   question_type: string;
   multiple_choice_options: any;
   passage_text: string | null;
@@ -158,7 +161,7 @@ export default function StudentBluebookTest() {
           id,
           order_index,
           question:questions(
-            id, question_id, question_text, question_image_url,
+            id, question_id, question_text, question_image_url, question_image_url_2,
             question_type, multiple_choice_options, passage_text
           )
         `)
@@ -394,7 +397,7 @@ export default function StudentBluebookTest() {
       .from('bluebook_answers')
       .select(`
         *,
-        question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
+        question:questions(id, question_id, question_text, question_image_url, question_image_url_2, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
       `)
       .eq('attempt_id', attemptId);
 
@@ -451,6 +454,7 @@ export default function StudentBluebookTest() {
           question_id: a.question.question_id,
           question_text: a.question.question_text,
           question_image_url: a.question.question_image_url,
+          question_image_url_2: a.question.question_image_url_2,
           question_type: a.question.question_type,
           multiple_choice_options: a.question.multiple_choice_options,
           passage_text: a.question.passage_text,
@@ -721,15 +725,16 @@ export default function StudentBluebookTest() {
                       </Badge>
                       
                       {/* Question Image */}
-                      {currentQuestion.question.question_image_url && (
-                        <div className="flex justify-center mb-4">
-                          <img 
-                            src={currentQuestion.question.question_image_url}
-                            alt="Question"
-                            className="w-[55%] h-auto rounded-lg"
-                          />
-                        </div>
-                      )}
+                      <QuestionFigures
+                        url1={currentQuestion.question.question_image_url}
+                        url2={currentQuestion.question.question_image_url_2}
+                        className="mb-4"
+                        imgClassName={
+                          currentQuestion.question.question_image_url_2
+                            ? "max-h-72 w-auto rounded-lg"
+                            : "w-[55%] h-auto rounded-lg"
+                        }
+                      />
 
                       {/* Question Text */}
                       <div className="text-lg">
