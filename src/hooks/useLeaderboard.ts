@@ -324,7 +324,8 @@ export function useLeaderboard(selectedTier?: TierType) {
 
       // Calculate cutoff based on group size (P1 wins within group)
       const groupSize = rankings?.length || 0;
-      const cutoff = Math.min(TIER_PROMOTION_CUTOFFS[tierToQuery as TierType] || 30, Math.ceil(groupSize * 0.25)); // Top 25% or tier cutoff, whichever is smaller
+      // Fixed top-N per tier (matches finalize-sprint), capped at group size
+      const cutoff = Math.min(TIER_PROMOTION_CUTOFFS[tierToQuery as TierType] ?? 20, groupSize || 1);
 
       const entries = (rankings || []).map((ranking, index) => {
         const linkedStudent = ranking.student_accounts?.linked_student as { first_name: string; last_name: string } | null;
