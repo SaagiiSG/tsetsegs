@@ -156,6 +156,14 @@ export function ProctorRunner({
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
+  // Tell the server which module the student is on the moment they move into it,
+  // so the teacher's monitor shows real progress even before the next answer.
+  useEffect(() => {
+    if (!mod || submittedRef.current) return;
+    save(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mod?.moduleNumber]);
+
   /* ---- focus discipline (teacher sees the count) ---- */
   useEffect(() => {
     const onBlur = () => {
