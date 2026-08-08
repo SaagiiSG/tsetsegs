@@ -14,11 +14,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getRankOutcome, LAST_SPRINT_OF_SEASON } from './rankProgression';
 
-const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+const env = ((globalThis as any).process?.env ?? {}) as Record<string, string | undefined>;
+const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL;
 const SUPABASE_KEY =
-  (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
+  (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const ADMIN_EMAIL = env.TEST_ADMIN_EMAIL;
+const ADMIN_PASSWORD = env.TEST_ADMIN_PASSWORD;
+
 
 const canRun = Boolean(SUPABASE_URL && SUPABASE_KEY && ADMIN_EMAIL && ADMIN_PASSWORD);
 
