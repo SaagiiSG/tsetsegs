@@ -187,7 +187,9 @@ export function StudentDashboardSidebar() {
               )}
             </motion.div>
           )}
+          {open && <SidebarTrigger className="h-8 w-8 shrink-0" title="Collapse sidebar" />}
         </div>
+
         {/* SAT Countdown */}
         {open && (
           <div className="px-2 pb-2">
