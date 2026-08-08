@@ -92,17 +92,21 @@ export function StudentDashboardSidebar() {
         <NavLink
           to={item.to}
           end={item.end}
+          title={!open ? item.label : undefined}
           className={cn(
             "hover:bg-muted/50 transition-all duration-200 group/item relative",
-            open ? "" : "justify-center"
+            open ? "" : "!justify-center !gap-0 !px-0"
           )}
           activeClassName="bg-primary/10 text-primary font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
         >
-          <motion.span 
-            className="active-dot absolute left-1.5 w-1.5 h-1.5 rounded-full bg-primary opacity-0 scale-0 transition-all duration-200"
-            layoutId="studentActiveDot"
-          />
+          {open && (
+            <motion.span
+              className="active-dot absolute left-1.5 w-1.5 h-1.5 rounded-full bg-primary opacity-0 scale-0 transition-all duration-200"
+              layoutId="studentActiveDot"
+            />
+          )}
           <motion.div
+            className="flex items-center justify-center shrink-0"
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
@@ -110,6 +114,7 @@ export function StudentDashboardSidebar() {
           </motion.div>
           {open && <span className="ml-2">{item.label}</span>}
         </NavLink>
+
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
