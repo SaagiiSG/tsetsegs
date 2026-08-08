@@ -68,6 +68,8 @@ const CustomQuestionForm = ({
   const [showPreview, setShowPreview] = useState(true);
   // URLs of already-stored images (kept unless the admin clears them)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [existingImageUrl2, setExistingImageUrl2] = useState<string | null>(null);
+
   const [existingChoiceImageUrls, setExistingChoiceImageUrls] = useState<Record<Letter, string | null>>({
     A: null, B: null, C: null, D: null,
   });
