@@ -325,11 +325,44 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
                   onClick={() => onSelectGroup(group.id)}
                 >
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-2">
                         {group.name}
                       </h3>
-                      <Flame className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              aria-label="Prep class options"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => openEdit(group)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Rename / edit dates
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleArchive(group)}>
+                              <Archive className="h-4 w-4 mr-2" />
+                              Archive (keep data)
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeleteTarget(group)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete permanently
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
