@@ -120,6 +120,10 @@ const CustomQuestionForm = ({
     setQuestionType("multiple_choice");
     setImage(null);
     setImagePreview(null);
+    setImage2(null);
+    setImagePreview2(null);
+    setExistingImageUrl2(null);
+
     setChoiceImages({ A: null, B: null, C: null, D: null });
     setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     setExistingImageUrl(null);
