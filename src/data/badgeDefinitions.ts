@@ -240,12 +240,12 @@ export const TIER_DISPLAY_NAMES: Record<TierType, string> = {
 export const TIER_ORDER: TierType[] = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
 
 export const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
-  unranked: 50,  // Top 50 advance to Bronze
-  bronze: 30,    // Top 30 advance to Silver
-  silver: 20,    // Top 20 advance to Gold
-  gold: 15,      // Top 15 advance to Platinum
-  platinum: 10,  // Top 10 advance to Diamond
-  diamond: 5,    // Top 5 advance to Ruby
+  unranked: 20,  // Top 20 advance to Bronze
+  bronze: 20,    // Top 20 advance to Silver
+  silver: 15,    // Top 15 advance to Gold
+  gold: 10,      // Top 10 advance to Platinum
+  platinum: 5,   // Top 5 advance to Diamond
+  diamond: 1,    // Top 1 advances to Ruby
   ruby: 1        // Top 1 retains Ruby rank
 };
 

@@ -8,7 +8,7 @@ const corsHeaders = {
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby']
 const MAX_GROUP_SIZE = 55 // 40 ± 15 margin, effective range 25-55
 const TIER_PROMOTION_CUTOFFS: Record<string, number> = {
-  unranked: 30,
+  unranked: 20,
   bronze: 20,
   silver: 15,
   gold: 10,
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
       // We need to find their highest reserved_next_tier (from P1 wins) and current tier
       const { data: seasonRankings, error: seasonError } = await supabase
         .from('student_sprint_rankings')
-        .select('student_account_id, current_tier, reserved_next_tier, is_top_1, sprint_id, group_number')
+        .select('student_account_id, current_tier, reserved_next_tier, is_top_1, final_rank, sprint_id, group_number')
         .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!))
       
       if (seasonError) {
@@ -356,8 +356,14 @@ Deno.serve(async (req) => {
         // Apply demotions for next season
         for (const [studentId, data] of studentData) {
           // If the student got P1 in Sprint 3, they keep their promoted tier (no demotion)
-          if (data.sprint3Ranking?.is_top_1) {
-            console.log(`Student ${studentId}: P1 in Sprint 3 - keeps promoted tier ${data.sprint3Ranking.reserved_next_tier}`)
+          const s3 = data.sprint3Ranking
+          const s3Tier = s3?.current_tier || data.finalTier || 'unranked'
+          const s3Cutoff = TIER_PROMOTION_CUTOFFS[s3Tier] ?? 20
+          const s3Promoted = !!s3 && typeof s3.final_rank === 'number' && s3.final_rank <= s3Cutoff
+          // P1 in Sprint 3, or anyone who earned a promotion in Sprint 3, keeps their
+          // reserved_next_tier — never overwrite it with a demotion.
+          if (s3?.is_top_1 || s3Promoted) {
+            console.log(`Student ${studentId}: promoted in Sprint 3 - keeps tier ${s3?.reserved_next_tier}`)
             // reserved_next_tier is already set correctly from the main finalization above
             continue
           }

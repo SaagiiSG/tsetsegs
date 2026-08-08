@@ -16,7 +16,7 @@ import {
   RankAdvancementCelebration
 } from '@/components/student/leaderboard';
 import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
-import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER } from '@/data/badgeDefinitions';
+import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
 
 // Badge name to tier mapping (same as in edge function)
 const TIER_BADGE_NAMES: Record<string, string> = {
@@ -29,16 +29,6 @@ const TIER_BADGE_NAMES: Record<string, string> = {
   ruby: 'Ruby Legend'
 };
 
-// Promotion cutoffs - must match finalize-sprint edge function
-const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
-  unranked: 30,
-  bronze: 20,
-  silver: 15,
-  gold: 10,
-  platinum: 5,
-  diamond: 1,
-  ruby: 1
-};
 
 export default function StudentLeaderboard() {
   const queryClient = useQueryClient();
