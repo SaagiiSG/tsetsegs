@@ -1,22 +1,28 @@
 import { motion } from 'framer-motion';
-import { Crown, ArrowUp, AlertTriangle, Shield, Flame } from 'lucide-react';
+import { Crown, ArrowUp, ArrowDown, AlertTriangle, Shield, Flame } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LeaderboardEntry } from '@/hooks/useLeaderboard';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { PointsBreakdownTooltip } from './PointsBreakdownTooltip';
 import { cn } from '@/lib/utils';
+import { getRankOutcome, LAST_SPRINT_OF_SEASON } from '@/lib/rankProgression';
 
 interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isCurrentUser: boolean;
   cutoffRank: number;
+  /** Sprint number of the sprint being shown — 3 means season finale. */
+  sprintNumber?: number | null;
   onProfileClick?: (entry: LeaderboardEntry) => void;
 }
 
-export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, onProfileClick }: LeaderboardRowProps) {
+export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, sprintNumber, onProfileClick }: LeaderboardRowProps) {
   const tierColor = TIER_COLORS[entry.currentTier as TierType] || TIER_COLORS.unranked;
   const isCutoffRow = entry.rank === cutoffRank;
+  const isSeasonFinale = sprintNumber === LAST_SPRINT_OF_SEASON;
+  const outcome = getRankOutcome(entry.currentTier, entry.rank, { sprintNumber });
+
 
   const handleClick = () => {
     // Don't open profile for current user - they can use the profile page
@@ -130,9 +136,36 @@ export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, onProfileClic
         </div>
       </PointsBreakdownTooltip>
 
-      {/* Status — icon-only on mobile, full pill on desktop */}
-      <div className="w-6 sm:w-28 flex justify-end shrink-0">
-        {entry.isTop1 ? (
+      {/* Status — icon-only on mobile, full pill on desktop.
+          On the season finale (last sprint) we show which rule applies:
+          winner preserves their tier, everyone else drops one. */}
+      <div className="w-6 sm:w-32 flex justify-end shrink-0">
+        {isSeasonFinale ? (
+          outcome.rule === 'preserved' ? (
+            <>
+              <Badge className="hidden sm:inline-flex bg-gradient-to-r from-amber-500 to-yellow-500 text-white gap-1">
+                <Shield className="h-3 w-3" />
+                RANK KEPT
+              </Badge>
+              <Shield className="sm:hidden h-4 w-4 text-amber-500" />
+            </>
+          ) : outcome.rule === 'stayed' ? (
+            <>
+              <Badge variant="outline" className="hidden sm:inline-flex text-muted-foreground gap-1">
+                STAYS {TIER_DISPLAY_NAMES[outcome.nextTier]?.toUpperCase()}
+              </Badge>
+              <span className="sm:hidden text-xs text-muted-foreground">—</span>
+            </>
+          ) : (
+            <>
+              <Badge variant="outline" className="hidden sm:inline-flex border-destructive/50 text-destructive gap-1">
+                <ArrowDown className="h-3 w-3" />
+                TO {TIER_DISPLAY_NAMES[outcome.nextTier]?.toUpperCase()}
+              </Badge>
+              <ArrowDown className="sm:hidden h-4 w-4 text-destructive" />
+            </>
+          )
+        ) : entry.isTop1 ? (
           <>
             <Badge className="hidden sm:inline-flex bg-gradient-to-r from-amber-500 to-yellow-500 text-white gap-1">
               <Flame className="h-3 w-3" />
@@ -161,6 +194,7 @@ export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, onProfileClic
           <span className="text-xs text-muted-foreground hidden sm:inline">—</span>
         )}
       </div>
+
     </motion.div>
   );
 }
