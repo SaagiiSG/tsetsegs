@@ -23,6 +23,22 @@ export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, sprintNumber,
   const isSeasonFinale = sprintNumber === LAST_SPRINT_OF_SEASON;
   const outcome = getRankOutcome(entry.currentTier, entry.rank, { sprintNumber });
 
+  // Plain-language hover hint so the status label is never a mystery.
+  const nextTierName = TIER_DISPLAY_NAMES[outcome.nextTier] || outcome.nextTier;
+  const statusHint = isSeasonFinale
+    ? outcome.rule === 'preserved'
+      ? `Rank kept — finished #1 on the season's last sprint, so ${nextTierName} carries into the new season.`
+      : outcome.rule === 'stayed'
+        ? `Already at the lowest rank — stays ${nextTierName} next season.`
+        : `Drops one rank at season end — starts the new season in ${nextTierName}.`
+    : entry.isTop1
+      ? 'Currently #1 in the group — advancing a rank and earning the champion badge.'
+      : entry.isAdvancing
+        ? `Inside the promotion zone — advancing to ${nextTierName} if the sprint ends now.`
+        : entry.isAtRisk
+          ? 'At risk — just outside the promotion zone, a few points can fix it.'
+          : `Outside the promotion zone — would drop to ${nextTierName} if the sprint ends now.`;
+
 
   const handleClick = () => {
     // Don't open profile for current user - they can use the profile page
@@ -139,7 +155,7 @@ export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, sprintNumber,
       {/* Status — icon-only on mobile, full pill on desktop.
           On the season finale (last sprint) we show which rule applies:
           winner preserves their tier, everyone else drops one. */}
-      <div className="w-6 sm:w-32 flex justify-end shrink-0">
+      <div className="w-6 sm:w-32 flex justify-end shrink-0" title={statusHint}>
         {isSeasonFinale ? (
           outcome.rule === 'preserved' ? (
             <>

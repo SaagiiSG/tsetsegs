@@ -10,6 +10,7 @@ import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
 import { FullProfileDialog } from './FullProfileDialog';
 import { LAST_SPRINT_OF_SEASON } from '@/lib/rankProgression';
+import { StatusLegend } from './StatusLegend';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -69,6 +70,9 @@ export function CurrentSprintTab({
               {sprint?.sprintNumber === LAST_SPRINT_OF_SEASON && ' Season finale — the group winner keeps their rank next season, everyone else drops one tier.'}
             </p>
           )}
+          <div className="mt-1.5">
+            <StatusLegend sprintNumber={sprint?.sprintNumber} tier={currentUserRanking?.currentTier} />
+          </div>
         </CardHeader>
         <CardContent className="space-y-2 p-2 sm:p-6 pt-0 sm:pt-0">
           {isLoading ? (
