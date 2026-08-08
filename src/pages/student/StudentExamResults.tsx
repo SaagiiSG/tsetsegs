@@ -11,6 +11,7 @@ import { MathText } from '@/components/MathText';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, ClipboardList, Check, X, Minus, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 interface ParticipantRow {
   id: string;

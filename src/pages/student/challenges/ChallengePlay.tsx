@@ -11,6 +11,7 @@ import { MathText } from '@/components/MathText';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DesmosCalculator } from '@/components/student/DesmosCalculator';
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 interface QuestionRow {
   id: string;

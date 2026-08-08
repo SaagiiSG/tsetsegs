@@ -11,6 +11,7 @@ import { ReferenceSheet, toggleReferenceSheet } from "@/components/student/Refer
 import { BookOpen, Calculator, Flower2, Loader2, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 const LIMIT_MS = 20 * 60 * 1000;
 

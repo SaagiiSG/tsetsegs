@@ -21,6 +21,7 @@ import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 interface Question {
   id: string;
