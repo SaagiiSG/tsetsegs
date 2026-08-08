@@ -254,7 +254,13 @@ const CustomQuestionForm = ({
     if (file) ingestImageFile(file);
   };
 
+  const handleImageSelect2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) ingestImageFile2(file);
+  };
+
   const [isDragging, setIsDragging] = useState(false);
+  const [isDragging2, setIsDragging2] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -264,20 +270,32 @@ const CustomQuestionForm = ({
     if (file) ingestImageFile(file);
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handleDrop2 = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging2(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestImageFile2(file);
+  };
+
+  const pasteHandler = (ingest: (f: File) => void) => (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          ingestImageFile(file);
+          ingest(file);
           e.preventDefault();
           break;
         }
       }
     }
   };
+
+  const handlePaste = pasteHandler(ingestImageFile);
+  const handlePaste2 = pasteHandler(ingestImageFile2);
+
 
   const createMutation = useMutation({
     mutationFn: async () => {
