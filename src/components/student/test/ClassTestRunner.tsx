@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,7 @@ interface QuestionRow {
   id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   multiple_choice_options: any;
   choice_images: any;
   /** Never downloaded while the exam is running — the answer key only arrives
@@ -64,14 +66,11 @@ const QuestionBody = memo(function QuestionBody({
       <div className={cn('font-medium', isMobile ? 'text-base' : 'text-lg')}>
         <MathText text={question.question_text} />
       </div>
-      {question.question_image_url && (
-        <img
-          src={question.question_image_url}
-          alt="Question figure"
-          decoding="async"
-          className="rounded-md max-h-72 mx-auto"
-        />
-      )}
+      <QuestionFigures
+        url1={question.question_image_url}
+        url2={question.question_image_url_2}
+        imgClassName="rounded-md max-h-72"
+      />
       {/* warm the next figure so navigation feels instant */}
       {nextImage && <link rel="prefetch" as="image" href={nextImage} />}
 
@@ -339,7 +338,7 @@ export function ClassTestRunner({
       .from('questions')
       // NOTE: `answer` is deliberately excluded — the answer key never touches the
       // student's device while the exam is live (grading happens on the server).
-      .select('id, question_text, question_image_url, multiple_choice_options, choice_images, question_type, passage_text')
+      .select('id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, question_type, passage_text')
       .in('id', ids)
       .then(({ data }) => {
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));

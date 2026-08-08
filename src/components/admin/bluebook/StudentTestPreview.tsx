@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { MathText } from "@/components/MathText";
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft, Clock, Flag, ChevronLeft, ChevronRight, Grid3X3, Eye, EyeOff, X,
@@ -23,6 +24,7 @@ interface PreviewQuestion {
   question_id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   question_type: string;
   multiple_choice_options: any;
   choice_images: any;
@@ -91,7 +93,7 @@ const StudentTestPreview = () => {
           bluebook_module_questions(
             id, order_index,
             question:questions(
-              id, question_id, question_text, question_image_url, question_type,
+              id, question_id, question_text, question_image_url, question_image_url_2, question_type,
               multiple_choice_options, choice_images, passage_text, answer
             )
           )
@@ -270,15 +272,17 @@ const StudentTestPreview = () => {
                         </Badge>
                       </div>
 
-                      {currentQuestion.question_image_url && (
-                        <div className="flex justify-center mb-4">
-                          <img
-                            src={currentQuestion.question_image_url}
-                            alt="Question figure"
-                            className="w-[55%] h-auto rounded-lg"
-                          />
-                        </div>
-                      )}
+                      <QuestionFigures
+                        url1={currentQuestion.question_image_url}
+                        url2={currentQuestion.question_image_url_2}
+                        className="mb-4"
+                        imgClassName={
+                          currentQuestion.question_image_url_2
+                            ? "max-h-72 w-auto rounded-lg"
+                            : "w-[55%] h-auto rounded-lg"
+                        }
+                      />
+
 
                       <div className="text-lg">
                         <MathText text={currentQuestion.question_text} />

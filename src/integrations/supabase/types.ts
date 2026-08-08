@@ -2500,6 +2500,7 @@ export type Database = {
           passage_text: string | null
           question_id: string
           question_image_url: string | null
+          question_image_url_2: string | null
           question_set: string | null
           question_text: string
           question_type: string
@@ -2531,6 +2532,7 @@ export type Database = {
           passage_text?: string | null
           question_id: string
           question_image_url?: string | null
+          question_image_url_2?: string | null
           question_set?: string | null
           question_text: string
           question_type: string
@@ -2562,6 +2564,7 @@ export type Database = {
           passage_text?: string | null
           question_id?: string
           question_image_url?: string | null
+          question_image_url_2?: string | null
           question_set?: string | null
           question_text?: string
           question_type?: string
@@ -4684,6 +4687,7 @@ export type Database = {
           passage_text: string
           question_id: string
           question_image_url: string
+          question_image_url_2: string
           question_text: string
           question_type: string
           section: string

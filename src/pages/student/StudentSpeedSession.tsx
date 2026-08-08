@@ -21,6 +21,7 @@ import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 interface Question {
   id: string;
@@ -31,6 +32,7 @@ interface Question {
   multiple_choice_options: Record<string, string> | null;
   category: { name: string } | null;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   has_figure: boolean | null;
   figure_svg: string | null;
   figure_type: string | null;
@@ -130,7 +132,7 @@ export default function StudentSpeedSession() {
         .select(`
           id, question_id, question_text, answer, alternate_answers, question_type,
           multiple_choice_options,
-          question_image_url, has_figure, figure_svg, figure_type, figure_description,
+          question_image_url, question_image_url_2, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
         `)
         .eq('is_active', true)
@@ -534,14 +536,13 @@ export default function StudentSpeedSession() {
                     dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
                   />
                 ) : currentQuestion?.question_image_url ? (
-                  <div className="flex justify-center py-2">
-                    <img
-                      src={currentQuestion.question_image_url}
-                      alt={currentQuestion.figure_description || 'Question figure'}
-                      className="rounded-md max-h-72 w-auto object-contain"
-                      loading="eager"
-                    />
-                  </div>
+                  <QuestionFigures
+                    url1={currentQuestion.question_image_url}
+                    url2={currentQuestion.question_image_url_2}
+                    className="py-2"
+                    alt={currentQuestion.figure_description || 'Question figure'}
+                    imgClassName="rounded-md max-h-72 w-auto object-contain"
+                  />
                 ) : null}
 
                 {/* Answer options */}

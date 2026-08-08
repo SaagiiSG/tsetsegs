@@ -53,6 +53,9 @@ const CustomQuestionForm = ({
   );
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [image2, setImage2] = useState<File | null>(null);
+  const [imagePreview2, setImagePreview2] = useState<string | null>(null);
+
   type Letter = "A" | "B" | "C" | "D";
   const [choiceImages, setChoiceImages] = useState<Record<Letter, File | null>>({
     A: null, B: null, C: null, D: null,
@@ -65,6 +68,8 @@ const CustomQuestionForm = ({
   const [showPreview, setShowPreview] = useState(true);
   // URLs of already-stored images (kept unless the admin clears them)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [existingImageUrl2, setExistingImageUrl2] = useState<string | null>(null);
+
   const [existingChoiceImageUrls, setExistingChoiceImageUrls] = useState<Record<Letter, string | null>>({
     A: null, B: null, C: null, D: null,
   });
@@ -115,6 +120,10 @@ const CustomQuestionForm = ({
     setQuestionType("multiple_choice");
     setImage(null);
     setImagePreview(null);
+    setImage2(null);
+    setImagePreview2(null);
+    setExistingImageUrl2(null);
+
     setChoiceImages({ A: null, B: null, C: null, D: null });
     setChoiceImagePreviews({ A: null, B: null, C: null, D: null });
     setExistingImageUrl(null);
@@ -163,6 +172,10 @@ const CustomQuestionForm = ({
     setImage(null);
     setExistingImageUrl(q.question_image_url ?? null);
     setImagePreview(q.question_image_url ?? null);
+    setImage2(null);
+    setExistingImageUrl2(q.question_image_url_2 ?? null);
+    setImagePreview2(q.question_image_url_2 ?? null);
+
 
     const ci = (q.choice_images ?? {}) as Record<string, string>;
     const nextCi: Record<Letter, string | null> = { A: null, B: null, C: null, D: null };
@@ -196,6 +209,15 @@ const CustomQuestionForm = ({
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
   };
+
+  const ingestImageFile2 = (file: File) => {
+    if (!validateImageFile(file)) return;
+    setImage2(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview2(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
 
   const ingestChoiceImage = (letter: Letter, file: File) => {
     if (!validateImageFile(file)) return;
@@ -241,7 +263,13 @@ const CustomQuestionForm = ({
     if (file) ingestImageFile(file);
   };
 
+  const handleImageSelect2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) ingestImageFile2(file);
+  };
+
   const [isDragging, setIsDragging] = useState(false);
+  const [isDragging2, setIsDragging2] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -251,20 +279,32 @@ const CustomQuestionForm = ({
     if (file) ingestImageFile(file);
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handleDrop2 = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging2(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) ingestImageFile2(file);
+  };
+
+  const pasteHandler = (ingest: (f: File) => void) => (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          ingestImageFile(file);
+          ingest(file);
           e.preventDefault();
           break;
         }
       }
     }
   };
+
+  const handlePaste = pasteHandler(ingestImageFile);
+  const handlePaste2 = pasteHandler(ingestImageFile2);
+
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -297,6 +337,18 @@ const CustomQuestionForm = ({
         } = supabase.storage.from("question-images").getPublicUrl(fileName);
         imageUrl = publicUrl;
       }
+
+      let imageUrl2: string | null = null;
+      if (image2) {
+        const ext = image2.name.split(".").pop();
+        const fileName = `${newQid}-fig2-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("question-images")
+          .upload(fileName, image2);
+        if (upErr) throw upErr;
+        imageUrl2 = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
+      }
+
 
       // Upload per-choice figures
       const choiceImageUrls: Record<string, string> = {};
@@ -343,6 +395,8 @@ const CustomQuestionForm = ({
           question_type: dbType,
           subject: subjectFilter,
           question_image_url: imageUrl,
+          question_image_url_2: imageUrl2,
+
           is_active: true,
           is_original: true,
         })
@@ -389,6 +443,18 @@ const CustomQuestionForm = ({
         imageUrl = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
       }
 
+      let imageUrl2: string | null = existingImageUrl2;
+      if (image2) {
+        const ext = image2.name.split(".").pop();
+        const fileName = `${qid}-fig2-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("question-images")
+          .upload(fileName, image2);
+        if (upErr) throw upErr;
+        imageUrl2 = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
+      }
+
+
       const choiceImageUrls: Record<string, string> = {};
       if (questionType === "multiple_choice") {
         for (const letter of ["A", "B", "C", "D"] as Letter[]) {
@@ -430,6 +496,8 @@ const CustomQuestionForm = ({
           choice_images: Object.keys(choiceImageUrls).length ? choiceImageUrls : null,
           question_type: questionType === "fill_in" ? "fill_blank" : "multiple_choice",
           question_image_url: imageUrl,
+          question_image_url_2: imageUrl2,
+
         })
         .eq("id", editQuestionId!);
       if (error) throw error;
@@ -511,7 +579,8 @@ const CustomQuestionForm = ({
         </button>
         {showPreview && (
           <div className="px-4 pb-4 pt-1 space-y-3">
-            {!questionText && !passage && !imagePreview ? (
+            {!questionText && !passage && !imagePreview && !imagePreview2 ? (
+
               <p className="text-xs text-muted-foreground italic text-center py-6">
                 Start typing below to see a live preview of your question.
               </p>
@@ -522,13 +591,19 @@ const CustomQuestionForm = ({
                     <MathText text={passage} />
                   </div>
                 )}
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Question"
-                    className="max-h-40 rounded-md border object-contain mx-auto"
-                  />
+                {(imagePreview || imagePreview2) && (
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {[imagePreview, imagePreview2].filter(Boolean).map((src, i) => (
+                      <img
+                        key={i}
+                        src={src as string}
+                        alt={`Figure ${i + 1}`}
+                        className="max-h-40 rounded-md border object-contain"
+                      />
+                    ))}
+                  </div>
                 )}
+
                 {questionText && (
                   <div className="text-sm font-medium">
                     <MathText text={questionText.replace(/<[^>]+>/g, " ")} />
@@ -619,67 +694,103 @@ const CustomQuestionForm = ({
         />
       </div>
 
-      {/* Image */}
+      {/* Figures */}
       <div className="space-y-2">
-        <Label>Question Image (optional)</Label>
-        {imagePreview ? (
-          <div className="relative inline-block">
-            <img
-              src={imagePreview}
-              alt="Question preview"
-              className="max-w-full max-h-48 rounded-lg border object-contain"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -top-2 -right-2 h-6 w-6"
-              onClick={() => {
+        <Label>Figures (optional) — add a second figure to show side by side</Label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {([
+            {
+              key: "1" as const,
+              label: "Figure 1",
+              preview: imagePreview,
+              dragging: isDragging,
+              setDragging: setIsDragging,
+              onDrop: handleDrop,
+              onPaste: handlePaste,
+              onSelect: handleImageSelect,
+              clear: () => {
                 setImage(null);
                 setImagePreview(null);
                 setExistingImageUrl(null);
-              }}
-
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ) : (
-          <label
-            onDrop={handleDrop}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDragging(true);
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDragging(false);
-            }}
-            onPaste={handlePaste}
-            tabIndex={0}
-            className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
-              isDragging
-                ? "border-primary bg-primary/10"
-                : "hover:bg-muted/50 focus:bg-muted/50"
-            }`}
-          >
-            <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">
-              {isDragging
-                ? "Drop image here"
-                : "Click, drag & drop, or paste screenshot (PNG/JPG, ≤5MB)"}
-            </p>
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageSelect}
-            />
-          </label>
-        )}
+              },
+            },
+            {
+              key: "2" as const,
+              label: "Figure 2",
+              preview: imagePreview2,
+              dragging: isDragging2,
+              setDragging: setIsDragging2,
+              onDrop: handleDrop2,
+              onPaste: handlePaste2,
+              onSelect: handleImageSelect2,
+              clear: () => {
+                setImage2(null);
+                setImagePreview2(null);
+                setExistingImageUrl2(null);
+              },
+            },
+          ]).map((slot) => (
+            <div key={slot.key} className="space-y-1.5">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {slot.label}
+              </div>
+              {slot.preview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={slot.preview}
+                    alt={`${slot.label} preview`}
+                    className="max-w-full max-h-48 rounded-lg border object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6"
+                    onClick={slot.clear}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  onDrop={slot.onDrop}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    slot.setDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    slot.setDragging(false);
+                  }}
+                  onPaste={slot.onPaste}
+                  tabIndex={0}
+                  className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
+                    slot.dragging
+                      ? "border-primary bg-primary/10"
+                      : "hover:bg-muted/50 focus:bg-muted/50"
+                  }`}
+                >
+                  <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                    {slot.dragging
+                      ? "Drop image here"
+                      : "Click, drag & drop, or paste (PNG/JPG, ≤5MB)"}
+                  </p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={slot.onSelect}
+                  />
+                </label>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
 
       {/* Question text */}
       <div
