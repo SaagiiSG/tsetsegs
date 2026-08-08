@@ -7,7 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Flame, Loader2, QrCode } from "lucide-react";
+import { Plus, Users, Flame, Loader2, QrCode, MoreVertical, Pencil, Archive, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { makePrepJoinCode } from "./PrepClassQrDialog";
 import type { IntensePrepGroup } from "./IntensePrepContent";
@@ -25,7 +36,87 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
   const [newGroupName, setNewGroupName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [editGroup, setEditGroup] = useState<IntensePrepGroup | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<IntensePrepGroup | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+
+  const openEdit = (group: IntensePrepGroup) => {
+    setEditGroup(group);
+    setEditName(group.name);
+    setEditStart(group.start_date ?? "");
+    setEditEnd(group.end_date ?? "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editGroup || !editName.trim()) return;
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .update({
+          name: editName.trim(),
+          start_date: editStart || null,
+          end_date: editEnd || null,
+        })
+        .eq("id", editGroup.id);
+      if (error) throw error;
+
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === editGroup.id
+            ? { ...g, name: editName.trim(), start_date: editStart || null, end_date: editEnd || null }
+            : g
+        )
+      );
+      setEditGroup(null);
+      toast({ title: "Prep class updated" });
+    } catch (error: any) {
+      toast({ title: "Could not update", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleArchive = async (group: IntensePrepGroup) => {
+    try {
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .update({ is_active: false })
+        .eq("id", group.id);
+      if (error) throw error;
+      setGroups(prev => prev.filter(g => g.id !== group.id));
+      toast({
+        title: "Prep class archived",
+        description: `"${group.name}" is hidden but its data is kept.`,
+      });
+    } catch (error: any) {
+      toast({ title: "Could not archive", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase
+        .from("intense_prep_groups")
+        .delete()
+        .eq("id", deleteTarget.id);
+      if (error) throw error;
+      setGroups(prev => prev.filter(g => g.id !== deleteTarget.id));
+      toast({ title: "Prep class deleted", description: `"${deleteTarget.name}" is gone for good.` });
+      setDeleteTarget(null);
+    } catch (error: any) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     fetchGroups();
@@ -234,11 +325,44 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
                   onClick={() => onSelectGroup(group.id)}
                 >
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-2">
                         {group.name}
                       </h3>
-                      <Flame className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              aria-label="Prep class options"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => openEdit(group)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Rename / edit dates
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleArchive(group)}>
+                              <Archive className="h-4 w-4 mr-2" />
+                              Archive (keep data)
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeleteTarget(group)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete permanently
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -278,6 +402,64 @@ export function IntensePrepGroupList({ onSelectGroup }: Props) {
           </AnimatePresence>
         </div>
       )}
+
+      <Dialog open={!!editGroup} onOpenChange={(open) => !open && setEditGroup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit prep class</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Class name</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Starts</Label>
+                <Input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Ends</Label>
+                <Input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={handleSaveEdit} className="w-full" disabled={!editName.trim() || isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Save changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the prep class, its roster ({deleteTarget?.memberCount || 0} students)
+              and all tracking notes and Bluebook scores entered for it. Student practice data is untouched.
+              Use Archive instead if you just want it out of the way.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
