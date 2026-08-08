@@ -579,7 +579,8 @@ const CustomQuestionForm = ({
         </button>
         {showPreview && (
           <div className="px-4 pb-4 pt-1 space-y-3">
-            {!questionText && !passage && !imagePreview ? (
+            {!questionText && !passage && !imagePreview && !imagePreview2 ? (
+
               <p className="text-xs text-muted-foreground italic text-center py-6">
                 Start typing below to see a live preview of your question.
               </p>
