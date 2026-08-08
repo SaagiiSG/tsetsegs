@@ -395,6 +395,8 @@ const CustomQuestionForm = ({
           question_type: dbType,
           subject: subjectFilter,
           question_image_url: imageUrl,
+          question_image_url_2: imageUrl2,
+
           is_active: true,
           is_original: true,
         })
