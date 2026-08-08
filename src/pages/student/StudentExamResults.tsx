@@ -41,6 +41,7 @@ interface QuestionRow {
   question_id: string | number | null;
   question_text: string | null;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   answer: string | null;
 }
 
@@ -56,7 +57,7 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
         questionIds.length
           ? supabase
               .from('questions')
-              .select('id, question_id, question_text, question_image_url, answer')
+              .select('id, question_id, question_text, question_image_url, question_image_url_2, answer')
               .in('id', questionIds)
           : Promise.resolve({ data: [] as QuestionRow[] }),
       ]);
@@ -96,14 +97,13 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
               <div className="text-xs text-muted-foreground line-clamp-2">
                 {q?.question_text ? <MathText text={q.question_text} /> : 'Question unavailable'}
               </div>
-              {q?.question_image_url && (
-                <img
-                  src={q.question_image_url}
-                  alt={`Exam question ${i + 1} figure`}
-                  loading="lazy"
-                  className="mt-2 max-h-28 rounded border bg-background object-contain"
-                />
-              )}
+              <QuestionFigures
+                url1={q?.question_image_url}
+                url2={q?.question_image_url_2}
+                className="mt-2 justify-start"
+                alt={`Exam question ${i + 1} figure`}
+                imgClassName="max-h-28 rounded border bg-background object-contain"
+              />
               <div className="mt-1.5 flex items-center gap-2 text-[11px] font-mono">
                 <span className="text-muted-foreground">
                   You: {a?.selected_answer?.trim() || '—'}

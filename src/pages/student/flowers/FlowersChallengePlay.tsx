@@ -18,6 +18,7 @@ interface QuestionRow {
   id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   multiple_choice_options: unknown;
   question_type: string | null;
   passage_text: string | null;
@@ -65,7 +66,7 @@ export default function FlowersChallengePlay() {
       const ids = (attempt.question_ids as string[]) ?? [];
       const { data: qs } = await supabase
         .from("questions")
-        .select("id, question_text, question_image_url, multiple_choice_options, question_type, passage_text")
+        .select("id, question_text, question_image_url, question_image_url_2, multiple_choice_options, question_type, passage_text")
         .in("id", ids);
 
       const ordered = ids
@@ -215,9 +216,11 @@ export default function FlowersChallengePlay() {
           <div className="text-base font-medium">
             <MathText text={question.question_text} />
           </div>
-          {question.question_image_url && (
-            <img src={question.question_image_url} alt="Question figure" className="rounded-md max-h-72 mx-auto" />
-          )}
+          <QuestionFigures
+            url1={question.question_image_url}
+            url2={question.question_image_url_2}
+            imgClassName="rounded-md max-h-72"
+          />
 
           {isFill ? (
             <Input

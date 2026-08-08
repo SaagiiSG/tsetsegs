@@ -16,6 +16,7 @@ interface QuestionRow {
   id: string;
   question_text: string;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   multiple_choice_options: any;
   answer: string;
   difficulty_level: string | null;
@@ -58,7 +59,7 @@ export default function ChallengePlay() {
     startedAtRef.current = Date.now();
     supabase
       .from('questions')
-      .select('id, question_text, question_image_url, multiple_choice_options, answer, difficulty_level, passage_text')
+      .select('id, question_text, question_image_url, question_image_url_2, multiple_choice_options, answer, difficulty_level, passage_text')
       .eq('id', poolIds[cursor])
       .maybeSingle()
       .then(({ data }) => setQuestion(data as QuestionRow));
@@ -205,9 +206,11 @@ export default function ChallengePlay() {
           <div className="text-base font-medium">
             <MathText text={question.question_text} />
           </div>
-          {question.question_image_url && (
-            <img src={question.question_image_url} alt="Question" className="rounded-md max-h-60 mx-auto" />
-          )}
+          <QuestionFigures
+            url1={question.question_image_url}
+            url2={question.question_image_url_2}
+            imgClassName="rounded-md max-h-60"
+          />
           <div className="grid gap-2">
             {options.map((opt) => {
               const isPicked = picked === opt.key;
