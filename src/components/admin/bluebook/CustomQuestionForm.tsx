@@ -687,67 +687,103 @@ const CustomQuestionForm = ({
         />
       </div>
 
-      {/* Image */}
+      {/* Figures */}
       <div className="space-y-2">
-        <Label>Question Image (optional)</Label>
-        {imagePreview ? (
-          <div className="relative inline-block">
-            <img
-              src={imagePreview}
-              alt="Question preview"
-              className="max-w-full max-h-48 rounded-lg border object-contain"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -top-2 -right-2 h-6 w-6"
-              onClick={() => {
+        <Label>Figures (optional) — add a second figure to show side by side</Label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {([
+            {
+              key: "1" as const,
+              label: "Figure 1",
+              preview: imagePreview,
+              dragging: isDragging,
+              setDragging: setIsDragging,
+              onDrop: handleDrop,
+              onPaste: handlePaste,
+              onSelect: handleImageSelect,
+              clear: () => {
                 setImage(null);
                 setImagePreview(null);
                 setExistingImageUrl(null);
-              }}
-
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ) : (
-          <label
-            onDrop={handleDrop}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDragging(true);
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDragging(false);
-            }}
-            onPaste={handlePaste}
-            tabIndex={0}
-            className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
-              isDragging
-                ? "border-primary bg-primary/10"
-                : "hover:bg-muted/50 focus:bg-muted/50"
-            }`}
-          >
-            <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">
-              {isDragging
-                ? "Drop image here"
-                : "Click, drag & drop, or paste screenshot (PNG/JPG, ≤5MB)"}
-            </p>
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageSelect}
-            />
-          </label>
-        )}
+              },
+            },
+            {
+              key: "2" as const,
+              label: "Figure 2",
+              preview: imagePreview2,
+              dragging: isDragging2,
+              setDragging: setIsDragging2,
+              onDrop: handleDrop2,
+              onPaste: handlePaste2,
+              onSelect: handleImageSelect2,
+              clear: () => {
+                setImage2(null);
+                setImagePreview2(null);
+                setExistingImageUrl2(null);
+              },
+            },
+          ]).map((slot) => (
+            <div key={slot.key} className="space-y-1.5">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {slot.label}
+              </div>
+              {slot.preview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={slot.preview}
+                    alt={`${slot.label} preview`}
+                    className="max-w-full max-h-48 rounded-lg border object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6"
+                    onClick={slot.clear}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  onDrop={slot.onDrop}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    slot.setDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    slot.setDragging(false);
+                  }}
+                  onPaste={slot.onPaste}
+                  tabIndex={0}
+                  className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors outline-none ${
+                    slot.dragging
+                      ? "border-primary bg-primary/10"
+                      : "hover:bg-muted/50 focus:bg-muted/50"
+                  }`}
+                >
+                  <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                    {slot.dragging
+                      ? "Drop image here"
+                      : "Click, drag & drop, or paste (PNG/JPG, ≤5MB)"}
+                  </p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={slot.onSelect}
+                  />
+                </label>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
 
       {/* Question text */}
       <div
