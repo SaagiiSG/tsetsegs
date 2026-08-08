@@ -21,13 +21,15 @@ interface AllTimeTabProps {
   leaderboard: AllTimeEntry[];
   currentUserId: string | undefined;
   isLoading: boolean;
+  window: 'all' | 'last30';
+  onWindowChange: (w: 'all' | 'last30') => void;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading }: AllTimeTabProps) {
-  const [filter, setFilter] = useState<'all' | 'last30' | 'lastSeason'>('all');
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+
 
   // Get Ruby Legends (4+ weeks at Ruby)
   const rubyLegends = leaderboard.filter(e => e.isRubyLegend);
