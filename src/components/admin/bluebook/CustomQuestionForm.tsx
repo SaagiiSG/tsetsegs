@@ -210,6 +210,15 @@ const CustomQuestionForm = ({
     reader.readAsDataURL(file);
   };
 
+  const ingestImageFile2 = (file: File) => {
+    if (!validateImageFile(file)) return;
+    setImage2(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview2(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+
   const ingestChoiceImage = (letter: Letter, file: File) => {
     if (!validateImageFile(file)) return;
     setChoiceImages((p) => ({ ...p, [letter]: file }));
