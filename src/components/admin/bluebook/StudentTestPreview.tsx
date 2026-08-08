@@ -270,15 +270,17 @@ const StudentTestPreview = () => {
                         </Badge>
                       </div>
 
-                      {currentQuestion.question_image_url && (
-                        <div className="flex justify-center mb-4">
-                          <img
-                            src={currentQuestion.question_image_url}
-                            alt="Question figure"
-                            className="w-[55%] h-auto rounded-lg"
-                          />
-                        </div>
-                      )}
+                      <QuestionFigures
+                        url1={currentQuestion.question_image_url}
+                        url2={currentQuestion.question_image_url_2}
+                        className="mb-4"
+                        imgClassName={
+                          currentQuestion.question_image_url_2
+                            ? "max-h-72 w-auto rounded-lg"
+                            : "w-[55%] h-auto rounded-lg"
+                        }
+                      />
+
 
                       <div className="text-lg">
                         <MathText text={currentQuestion.question_text} />
