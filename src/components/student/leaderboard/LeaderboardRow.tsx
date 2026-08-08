@@ -6,6 +6,7 @@ import { LeaderboardEntry } from '@/hooks/useLeaderboard';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { PointsBreakdownTooltip } from './PointsBreakdownTooltip';
 import { cn } from '@/lib/utils';
+import { getRankOutcome, LAST_SPRINT_OF_SEASON } from '@/lib/rankProgression';
 
 interface LeaderboardRowProps {
   entry: LeaderboardEntry;
