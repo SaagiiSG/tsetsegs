@@ -9,6 +9,7 @@ import { TIER_PROMOTION_CUTOFFS, TierType, TIER_DISPLAY_NAMES } from '@/data/bad
 import { SprintTimer } from './SprintTimer';
 import { LeaderboardRow } from './LeaderboardRow';
 import { FullProfileDialog } from './FullProfileDialog';
+import { LAST_SPRINT_OF_SEASON } from '@/lib/rankProgression';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -65,6 +66,7 @@ export function CurrentSprintTab({
           {groupInfo && (
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
               Compete against up to 40 students. Tap a competitor to view their full profile.
+              {sprint?.sprintNumber === LAST_SPRINT_OF_SEASON && ' Season finale — the group winner keeps their rank next season, everyone else drops one tier.'}
             </p>
           )}
         </CardHeader>
@@ -88,6 +90,7 @@ export function CurrentSprintTab({
                             entry={entryWithRank}
                             isCurrentUser={isCurrentUser}
                             cutoffRank={cutoffRank}
+                            sprintNumber={sprint?.sprintNumber}
                             onProfileClick={sprint && !isCurrentUser ? handleProfileClick : undefined}
                           />
                         </div>
