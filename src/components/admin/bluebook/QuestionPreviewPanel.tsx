@@ -75,14 +75,14 @@ export default function QuestionPreviewPanel({ questionId, onClose }: QuestionPr
             <MathText text={question.question_text ?? ""} />
           </div>
 
-          {question.question_image_url && (
-            <img
-              src={question.question_image_url}
-              alt={`Question ${question.question_id} figure`}
-              className="max-h-72 rounded-lg border object-contain"
-              loading="lazy"
-            />
-          )}
+          <QuestionFigures
+            url1={question.question_image_url}
+            url2={question.question_image_url_2}
+            className="justify-start"
+            imgClassName="max-h-72 rounded-lg border object-contain"
+            alt={`Question ${question.question_id} figure`}
+          />
+
 
           {options.length > 0 ? (
             <div className="space-y-2">
