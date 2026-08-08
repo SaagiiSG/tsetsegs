@@ -4687,6 +4687,7 @@ export type Database = {
           passage_text: string
           question_id: string
           question_image_url: string
+          question_image_url_2: string
           question_text: string
           question_type: string
           section: string
