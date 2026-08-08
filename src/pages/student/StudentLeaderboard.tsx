@@ -324,7 +324,10 @@ export default function StudentLeaderboard() {
                 leaderboard={allTimeLeaderboard}
                 currentUserId={student?.id}
                 isLoading={isAllTimeLoading}
+                window={allTimeWindow}
+                onWindowChange={setAllTimeWindow}
               />
+
             </motion.div>
           </TabsContent>
 
