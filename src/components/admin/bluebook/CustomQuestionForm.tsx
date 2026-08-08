@@ -172,6 +172,10 @@ const CustomQuestionForm = ({
     setImage(null);
     setExistingImageUrl(q.question_image_url ?? null);
     setImagePreview(q.question_image_url ?? null);
+    setImage2(null);
+    setExistingImageUrl2(q.question_image_url_2 ?? null);
+    setImagePreview2(q.question_image_url_2 ?? null);
+
 
     const ci = (q.choice_images ?? {}) as Record<string, string>;
     const nextCi: Record<Letter, string | null> = { A: null, B: null, C: null, D: null };
