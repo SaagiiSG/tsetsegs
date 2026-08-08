@@ -11,12 +11,17 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isCurrentUser: boolean;
   cutoffRank: number;
+  /** Sprint number of the sprint being shown — 3 means season finale. */
+  sprintNumber?: number | null;
   onProfileClick?: (entry: LeaderboardEntry) => void;
 }
 
-export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, onProfileClick }: LeaderboardRowProps) {
+export function LeaderboardRow({ entry, isCurrentUser, cutoffRank, sprintNumber, onProfileClick }: LeaderboardRowProps) {
   const tierColor = TIER_COLORS[entry.currentTier as TierType] || TIER_COLORS.unranked;
   const isCutoffRow = entry.rank === cutoffRank;
+  const isSeasonFinale = sprintNumber === LAST_SPRINT_OF_SEASON;
+  const outcome = getRankOutcome(entry.currentTier, entry.rank, { sprintNumber });
+
 
   const handleClick = () => {
     // Don't open profile for current user - they can use the profile page
