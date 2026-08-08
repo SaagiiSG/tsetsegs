@@ -338,6 +338,18 @@ const CustomQuestionForm = ({
         imageUrl = publicUrl;
       }
 
+      let imageUrl2: string | null = null;
+      if (image2) {
+        const ext = image2.name.split(".").pop();
+        const fileName = `${newQid}-fig2-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("question-images")
+          .upload(fileName, image2);
+        if (upErr) throw upErr;
+        imageUrl2 = supabase.storage.from("question-images").getPublicUrl(fileName).data.publicUrl;
+      }
+
+
       // Upload per-choice figures
       const choiceImageUrls: Record<string, string> = {};
       if (questionType === "multiple_choice") {
