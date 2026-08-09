@@ -272,7 +272,13 @@ export function ProctorRunner({
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto px-4 py-5">
+      <main
+        className="flex-1 overflow-y-auto px-4 py-5 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[padding]"
+        style={{
+          paddingLeft: snapSide === 'left' ? '40vw' : undefined,
+          paddingRight: snapSide === 'right' ? '40vw' : undefined,
+        }}
+      >
         {reviewing ? (
           <div className="mx-auto w-full max-w-2xl space-y-4">
             <h2 className="text-lg font-semibold">Check your work — Module {mod.moduleNumber}</h2>
