@@ -258,11 +258,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role client for inserts
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Reuses the service-role client created above for inserts
+
 
     // Fetch category IDs
     const { data: categories } = await adminClient.from("question_categories").select("id, name");
