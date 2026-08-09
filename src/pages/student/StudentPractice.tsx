@@ -531,6 +531,7 @@ export default function StudentPractice() {
                     { key: '68', label: `68 (${questionCounts?.set68 || 0})` },
                     { key: 'CB', label: `CB (${questionCounts?.cb || 0})` },
                     { key: '150', label: `150 (${questionCounts?.set150 || 0})` },
+                    { key: 'ANP', label: `New 120 (${questionCounts?.anp || 0})` },
                   ] as { key: QuestionSet; label: string }[]).map((s) => (
                     <Button
                       key={s.key}
@@ -625,6 +626,18 @@ export default function StudentPractice() {
                   className="gap-2 h-9 text-sm px-3"
                 >
                   150 ({questionCounts?.set150 || 0})
+                </Button>
+                <Button
+                  variant={questionSet === 'ANP' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setQuestionSet('ANP');
+                    setSelectedCategory(null);
+                    setSelectedSubtopic(null);
+                  }}
+                  className="gap-2 h-9 text-sm px-3"
+                >
+                  New 120 ({questionCounts?.anp || 0})
                 </Button>
               </div>
             )}
