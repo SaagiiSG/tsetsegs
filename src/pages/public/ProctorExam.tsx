@@ -8,7 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ShieldCheck, Timer, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
-import { ProctorRunner, type PaperRow } from '@/components/student/proctor/ProctorRunner';
+import {
+  ProctorRunner,
+  type PaperRow,
+  type ProctorResult,
+  type ProctorModuleResult,
+} from '@/components/student/proctor/ProctorRunner';
 
 interface State {
   display_name: string;
@@ -20,6 +25,11 @@ interface State {
   submitted_at: string | null;
   session_status: string;
   session_title: string;
+  rw_correct: number | null;
+  math_correct: number | null;
+  rw_total: number | null;
+  math_total: number | null;
+  module_results: ProctorModuleResult[] | null;
 }
 
 const KEY = 'proctor-exam:';
