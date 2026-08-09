@@ -48,12 +48,13 @@ export default function ProctorExam() {
   const [loading, setLoading] = useState(!!participantId);
   const [paper, setPaper] = useState<PaperRow[] | null>(null);
   const [done, setDone] = useState(false);
+  const [result, setResult] = useState<ProctorResult | null>(null);
 
   /* ---------- poll my own state ---------- */
   const loadState = useCallback(async () => {
     if (!participantId) return;
     const { data, error } = await supabase.rpc('proctor_state', { p_participant_id: participantId });
-    const row = (Array.isArray(data) ? data[0] : data) as State | undefined;
+    const row = (Array.isArray(data) ? data[0] : data) as unknown as State | undefined;
     if (error || !row) {
       // stale participant (session deleted) — start over
       localStorage.removeItem(KEY + code);
