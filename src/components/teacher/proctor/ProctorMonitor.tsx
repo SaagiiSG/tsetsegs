@@ -58,7 +58,7 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
       setStatus(s.status);
       setTitle(s.title);
     }
-    setPeople((p ?? []) as Participant[]);
+    setPeople((p ?? []) as unknown as Participant[]);
   }, [sessionId]);
 
   useEffect(() => {
