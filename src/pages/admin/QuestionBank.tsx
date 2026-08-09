@@ -784,6 +784,10 @@ export default function QuestionBank() {
           <QuestionList onEdit={handleEdit} questionSet="CB" />
         </TabsContent>
 
+        <TabsContent value="questions-anp" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="ANP" />
+        </TabsContent>
+
         <TabsContent value="questions-english" className="space-y-4">
           <QuestionList onEdit={handleEdit} questionSet="english" />
         </TabsContent>
