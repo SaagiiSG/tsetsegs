@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Rate limit: max 3 requests per phone per hour
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
-      .from('password_reset_codes')
+      .from('password_reset_requests')
       .select('*', { count: 'exact', head: true })
       .eq('phone_number', phone)
       .gt('created_at', since);
