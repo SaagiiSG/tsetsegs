@@ -379,6 +379,9 @@ export function StudentAccountsManagement() {
         </Card>
       </div>
 
+      {/* Pending password reset requests from students */}
+      <PasswordResetRequestsPanel onResolved={fetchAccounts} />
+
       {/* Phase 2 migration panel — remove once all accounts are migrated */}
       <StudentAuthMigrationPanel />
 
