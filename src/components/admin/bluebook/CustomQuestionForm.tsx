@@ -399,6 +399,7 @@ const CustomQuestionForm = ({
 
           is_active: true,
           is_original: true,
+          hide_from_practice: true,
         })
         .select()
         .single();
