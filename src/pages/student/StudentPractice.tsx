@@ -21,7 +21,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
-type QuestionSet = '68' | 'CB' | '150';
+type QuestionSet = '68' | 'CB' | '150' | 'ANP';
 type Subject = 'math' | 'english';
 
 const PAGE_SIZE = 1000;
@@ -46,10 +46,13 @@ const applyPracticeQuestionFilters = (query: any, questionSet: QuestionSet, subj
       filteredQuery = filteredQuery.eq('question_set', '68');
     } else if (questionSet === '150') {
       filteredQuery = filteredQuery.eq('question_set', 'SATMathTraining800');
+    } else if (questionSet === 'ANP') {
+      filteredQuery = filteredQuery.eq('question_set', 'ANP120Aug3');
     } else {
       filteredQuery = filteredQuery
         .neq('question_set', '68')
         .neq('question_set', 'SATMathTraining800')
+        .neq('question_set', 'ANP120Aug3')
         .eq('is_original', true);
     }
   } else {
@@ -113,6 +116,7 @@ export default function StudentPractice() {
   const initialSet: QuestionSet =
     initialSetParam === '150' ? '150' :
     initialSetParam === 'CB' ? 'CB' :
+    initialSetParam === 'ANP' ? 'ANP' :
     initialSetParam === '68' ? '68' : '68';
   const [questionSet, setQuestionSet] = useState<QuestionSet>(initialSet);
   const [subject, setSubject] = useState<Subject>('math');
@@ -136,17 +140,19 @@ export default function StudentPractice() {
     }
   }, [student]);
 
-  // ---------- iOS-style gestures: cycle 68 → CB → 150 → English ----------
+  // ---------- iOS-style gestures: cycle 68 → CB → 150 → ANP → English ----------
   const haptics = useHaptics();
   const { recordSet, recordCategory } = usePracticeRecents();
-  const SET_CYCLE: { set: QuestionSet; subject: Subject; key: '68' | 'CB' | '150' | 'english' }[] = [
+  type SetKey = '68' | 'CB' | '150' | 'ANP' | 'english';
+  const SET_CYCLE: { set: QuestionSet; subject: Subject; key: SetKey }[] = [
     { set: '68', subject: 'math', key: '68' },
     { set: 'CB', subject: 'math', key: 'CB' },
     { set: '150', subject: 'math', key: '150' },
+    { set: 'ANP', subject: 'math', key: 'ANP' },
     { set: 'CB', subject: 'english', key: 'english' },
   ];
   const cycleSet = (dir: 1 | -1) => {
-    const currentKey: '68' | 'CB' | '150' | 'english' =
+    const currentKey: SetKey =
       subject === 'english' ? 'english' : (questionSet as any);
     const idx = SET_CYCLE.findIndex((s) => s.key === currentKey);
     const next = SET_CYCLE[(idx + dir + SET_CYCLE.length) % SET_CYCLE.length];
@@ -209,11 +215,12 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Rows, cbRows, englishRows, set150Rows] = await Promise.all([
+      const [set68Rows, cbRows, englishRows, set150Rows, anpRows] = await Promise.all([
         fetchAllPracticeQuestionRows<{ id: string }>('id', '68', 'math'),
         fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'math'),
         fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'english'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math')
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math'),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'ANP', 'math')
       ]);
       
       const filterBluebook = (data: { id: string }[]) => {
@@ -225,7 +232,8 @@ export default function StudentPractice() {
         set68: filterBluebook(set68Rows),
         cb: filterBluebook(cbRows),
         english: filterBluebook(englishRows),
-        set150: filterBluebook(set150Rows)
+        set150: filterBluebook(set150Rows),
+        anp: filterBluebook(anpRows)
       };
     },
     enabled: !!student && bluebookLoaded
@@ -523,6 +531,7 @@ export default function StudentPractice() {
                     { key: '68', label: `68 (${questionCounts?.set68 || 0})` },
                     { key: 'CB', label: `CB (${questionCounts?.cb || 0})` },
                     { key: '150', label: `150 (${questionCounts?.set150 || 0})` },
+                    { key: 'ANP', label: `New 120 (${questionCounts?.anp || 0})` },
                   ] as { key: QuestionSet; label: string }[]).map((s) => (
                     <Button
                       key={s.key}
@@ -617,6 +626,18 @@ export default function StudentPractice() {
                   className="gap-2 h-9 text-sm px-3"
                 >
                   150 ({questionCounts?.set150 || 0})
+                </Button>
+                <Button
+                  variant={questionSet === 'ANP' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setQuestionSet('ANP');
+                    setSelectedCategory(null);
+                    setSelectedSubtopic(null);
+                  }}
+                  className="gap-2 h-9 text-sm px-3"
+                >
+                  New 120 ({questionCounts?.anp || 0})
                 </Button>
               </div>
             )}
