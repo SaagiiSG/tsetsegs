@@ -2156,6 +2156,47 @@ export type Database = {
           },
         ]
       }
+      password_reset_requests: {
+        Row: {
+          created_at: string
+          id: string
+          phone_number: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          student_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          phone_number: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          student_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          phone_number?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          student_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_reset_requests_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       point_transactions: {
         Row: {
           category: string

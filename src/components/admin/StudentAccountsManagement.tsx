@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
+import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -378,6 +379,9 @@ export function StudentAccountsManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending password reset requests from students */}
+      <PasswordResetRequestsPanel onResolved={fetchAccounts} />
 
       {/* Phase 2 migration panel — remove once all accounts are migrated */}
       <StudentAuthMigrationPanel />
