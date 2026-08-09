@@ -386,6 +386,7 @@ export function ProctorRunner({
       </footer>
 
       <DesmosCalculator />
+      <ReferenceSheet />
     </div>
   );
 }
