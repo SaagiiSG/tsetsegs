@@ -239,9 +239,14 @@ export function ProctorRunner({
           </div>
         </div>
         {isMath && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>
-            <Calculator className="h-4 w-4" /> Calc
-          </Button>
+          <>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>
+              <Calculator className="h-4 w-4" /> Calc
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleReferenceSheet()}>
+              <BookOpen className="h-4 w-4" /> <span className="hidden sm:inline">Formulas</span>
+            </Button>
+          </>
         )}
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowGrid((v) => !v)}>
           <Grid3X3 className="h-4 w-4" /> {qIdx + 1}/{rows.length}
