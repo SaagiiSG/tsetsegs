@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck } from 'lucide-react';
-import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck, BookOpen } from 'lucide-react';
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { ExamTimer } from '@/components/student/test/ExamTimer';
 
 export interface PaperRow {
@@ -77,6 +78,22 @@ function FillIn({ qid, initial, onCommit }: { qid: string; initial: string; onCo
   );
 }
 
+export interface ProctorModuleResult {
+  module: number;
+  section: string;
+  correct: number;
+  total: number;
+}
+
+export interface ProctorResult {
+  rw_correct: number;
+  math_correct: number;
+  rw_total: number;
+  math_total: number;
+  submitted_at: string | null;
+  module_results: ProctorModuleResult[] | null;
+}
+
 interface Props {
   participantId: string;
   title: string;
@@ -85,7 +102,7 @@ interface Props {
   initialAnswers: Record<string, string>;
   initialModule: number;
   ended: boolean;
-  onDone: () => void;
+  onDone: (result?: ProctorResult) => void;
 }
 
 export function ProctorRunner({
@@ -118,6 +135,7 @@ export function ProctorRunner({
   answersRef.current = answers;
   const submittedRef = useRef(false);
 
+  const snapSide = useCalculatorSnap();
   const mod = modules[modIdx];
   const isLastModule = modIdx === modules.length - 1;
   const isMath = (mod?.section ?? '').toLowerCase().startsWith('math');
@@ -185,7 +203,7 @@ export function ProctorRunner({
     if (submittedRef.current) return;
     submittedRef.current = true;
     setSubmitting(true);
-    const { error } = await supabase.rpc('proctor_submit', {
+    const { data, error } = await supabase.rpc('proctor_submit', {
       p_participant_id: participantId,
       p_answers: answersRef.current,
       p_violations: violations,
@@ -198,7 +216,8 @@ export function ProctorRunner({
     }
     modules.forEach((m) => localStorage.removeItem(`proctor:clock:${participantId}:${m.moduleNumber}`));
     localStorage.removeItem(`proctor:answers:${participantId}`);
-    onDone();
+    const row = (Array.isArray(data) ? data[0] : data) as unknown as ProctorResult | undefined;
+    onDone(row ?? undefined);
   }, [participantId, violations, modules, onDone]);
 
   // Teacher force-ended the session -> submit whatever we have.
@@ -237,9 +256,14 @@ export function ProctorRunner({
           </div>
         </div>
         {isMath && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>
-            <Calculator className="h-4 w-4" /> Calc
-          </Button>
+          <>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>
+              <Calculator className="h-4 w-4" /> Calc
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleReferenceSheet()}>
+              <BookOpen className="h-4 w-4" /> <span className="hidden sm:inline">Formulas</span>
+            </Button>
+          </>
         )}
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowGrid((v) => !v)}>
           <Grid3X3 className="h-4 w-4" /> {qIdx + 1}/{rows.length}
@@ -271,7 +295,13 @@ export function ProctorRunner({
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto px-4 py-5">
+      <main
+        className="flex-1 overflow-y-auto px-4 py-5 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[padding]"
+        style={{
+          paddingLeft: snapSide === 'left' ? '40vw' : undefined,
+          paddingRight: snapSide === 'right' ? '40vw' : undefined,
+        }}
+      >
         {reviewing ? (
           <div className="mx-auto w-full max-w-2xl space-y-4">
             <h2 className="text-lg font-semibold">Check your work — Module {mod.moduleNumber}</h2>
@@ -385,6 +415,7 @@ export function ProctorRunner({
       </footer>
 
       <DesmosCalculator />
+      <ReferenceSheet />
     </div>
   );
 }

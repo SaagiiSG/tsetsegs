@@ -10,6 +10,13 @@ import {
 import { ArrowLeft, Loader2, Square, Users } from "lucide-react";
 import { toast } from "sonner";
 
+interface ModuleResult {
+  module: number;
+  section: string;
+  correct: number;
+  total: number;
+}
+
 interface Participant {
   id: string;
   display_name: string | null;
@@ -22,6 +29,7 @@ interface Participant {
   math_correct: number | null;
   rw_total: number | null;
   math_total: number | null;
+  module_results: ModuleResult[] | null;
 }
 
 interface Props {
@@ -41,7 +49,7 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
       supabase
         .from("proctor_participants")
         .select(
-          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total",
+          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total, module_results",
         )
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true }),
@@ -50,7 +58,7 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
       setStatus(s.status);
       setTitle(s.title);
     }
-    setPeople((p ?? []) as Participant[]);
+    setPeople((p ?? []) as unknown as Participant[]);
   }, [sessionId]);
 
   useEffect(() => {
@@ -121,17 +129,32 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
               p.submitted_at && p.rw_total !== null
                 ? `${(p.rw_correct ?? 0) + (p.math_correct ?? 0)}/${(p.rw_total ?? 0) + (p.math_total ?? 0)}`
                 : null;
+            const mods = [...((p.module_results ?? []) as ModuleResult[])].sort((a, b) => a.module - b.module);
             return (
-              <div key={p.id} className="flex items-center gap-3 p-3">
-                <span className="text-sm truncate flex-1">{p.display_name ?? "Student"}</span>
-                {(p.focus_violations ?? 0) > 0 && (
-                  <Badge variant="destructive" className="text-[10px] font-mono">
-                    {p.focus_violations} focus
+              <div key={p.id} className="p-3 space-y-1.5">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm truncate flex-1">{p.display_name ?? "Student"}</span>
+                  {(p.focus_violations ?? 0) > 0 && (
+                    <Badge variant="destructive" className="text-[10px] font-mono">
+                      {p.focus_violations} focus
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="text-[10px] font-mono">
+                    {p.submitted_at ? (score ?? "submitted") : p.started_at ? `module ${p.current_module ?? 1}` : p.oath_accepted_at ? "ready" : "waiting"}
                   </Badge>
+                </div>
+                {p.submitted_at && mods.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pl-0.5">
+                    {mods.map((m) => (
+                      <span
+                        key={`${m.section}-${m.module}`}
+                        className="text-[10px] font-mono rounded bg-muted px-1.5 py-0.5 text-muted-foreground"
+                      >
+                        M{m.module} {m.correct}/{m.total}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                <Badge variant="secondary" className="text-[10px] font-mono">
-                  {p.submitted_at ? (score ?? "submitted") : p.started_at ? `module ${p.current_module ?? 1}` : p.oath_accepted_at ? "ready" : "waiting"}
-                </Badge>
               </div>
             );
           })

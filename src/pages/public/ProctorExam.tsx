@@ -8,7 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ShieldCheck, Timer, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
-import { ProctorRunner, type PaperRow } from '@/components/student/proctor/ProctorRunner';
+import {
+  ProctorRunner,
+  type PaperRow,
+  type ProctorResult,
+  type ProctorModuleResult,
+} from '@/components/student/proctor/ProctorRunner';
 
 interface State {
   display_name: string;
@@ -20,6 +25,11 @@ interface State {
   submitted_at: string | null;
   session_status: string;
   session_title: string;
+  rw_correct: number | null;
+  math_correct: number | null;
+  rw_total: number | null;
+  math_total: number | null;
+  module_results: ProctorModuleResult[] | null;
 }
 
 const KEY = 'proctor-exam:';
@@ -38,12 +48,13 @@ export default function ProctorExam() {
   const [loading, setLoading] = useState(!!participantId);
   const [paper, setPaper] = useState<PaperRow[] | null>(null);
   const [done, setDone] = useState(false);
+  const [result, setResult] = useState<ProctorResult | null>(null);
 
   /* ---------- poll my own state ---------- */
   const loadState = useCallback(async () => {
     if (!participantId) return;
     const { data, error } = await supabase.rpc('proctor_state', { p_participant_id: participantId });
-    const row = (Array.isArray(data) ? data[0] : data) as State | undefined;
+    const row = (Array.isArray(data) ? data[0] : data) as unknown as State | undefined;
     if (error || !row) {
       // stale participant (session deleted) — start over
       localStorage.removeItem(KEY + code);
@@ -161,11 +172,42 @@ export default function ProctorExam() {
   }
 
   if (done || state.submitted_at) {
+    const mods = (result?.module_results ?? state.module_results ?? []) as ProctorModuleResult[];
+    const correct = (result?.math_correct ?? state.math_correct ?? 0) + (result?.rw_correct ?? state.rw_correct ?? 0);
+    const total = (result?.math_total ?? state.math_total ?? 0) + (result?.rw_total ?? state.rw_total ?? 0);
     return (
       <Shell>
         <h1 className="text-lg font-semibold">Your test is submitted</h1>
+        {total > 0 ? (
+          <>
+            <div className="rounded-xl border p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Raw score</div>
+              <div className="text-3xl font-mono font-bold">
+                {correct}
+                <span className="text-base text-muted-foreground">/{total}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">{total - correct} wrong or blank</div>
+            </div>
+            {mods.length > 0 && (
+              <div className="space-y-1.5">
+                {[...mods]
+                  .sort((a, b) => a.module - b.module)
+                  .map((m) => (
+                    <div key={`${m.section}-${m.module}`} className="flex items-center justify-between text-sm rounded-lg bg-muted/40 px-3 py-2">
+                      <span className="capitalize">
+                        Module {m.module} · {m.section}
+                      </span>
+                      <span className="font-mono font-semibold">
+                        {m.correct}/{m.total}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </>
+        ) : null}
         <p className="text-sm text-muted-foreground">
-          Scores are with your teacher — they will go through the paper in class. You can close this page.
+          Your teacher has the full breakdown — they will go through the paper in class. You can close this page.
         </p>
       </Shell>
     );
@@ -264,7 +306,11 @@ export default function ProctorExam() {
       initialAnswers={state.answers ?? {}}
       initialModule={state.current_module ?? 1}
       ended={(state.session_status as string) === 'finished'}
-      onDone={() => setDone(true)}
+      onDone={(res) => {
+        if (res) setResult(res);
+        setDone(true);
+        loadState();
+      }}
     />
   );
 }
