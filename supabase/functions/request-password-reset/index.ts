@@ -5,21 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
 
-function generateOtp(): string {
-  // 6-digit numeric, zero-padded — cryptographically secure
-  const arr = new Uint32Array(1);
-  crypto.getRandomValues(arr);
-  return (arr[0] % 1_000_000).toString().padStart(6, '0');
-}
 
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.startsWith('976')) return '+' + digits;
-  if (digits.length === 8) return '+976' + digits;
-  return '+' + digits;
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
