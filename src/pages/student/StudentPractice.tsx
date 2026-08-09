@@ -215,11 +215,12 @@ export default function StudentPractice() {
   const { data: questionCounts } = useQuery({
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const [set68Rows, cbRows, englishRows, set150Rows] = await Promise.all([
+      const [set68Rows, cbRows, englishRows, set150Rows, anpRows] = await Promise.all([
         fetchAllPracticeQuestionRows<{ id: string }>('id', '68', 'math'),
         fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'math'),
         fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'english'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math')
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math'),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'ANP', 'math')
       ]);
       
       const filterBluebook = (data: { id: string }[]) => {
@@ -231,7 +232,8 @@ export default function StudentPractice() {
         set68: filterBluebook(set68Rows),
         cb: filterBluebook(cbRows),
         english: filterBluebook(englishRows),
-        set150: filterBluebook(set150Rows)
+        set150: filterBluebook(set150Rows),
+        anp: filterBluebook(anpRows)
       };
     },
     enabled: !!student && bluebookLoaded
