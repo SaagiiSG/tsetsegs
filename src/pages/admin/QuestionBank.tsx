@@ -105,6 +105,19 @@ export default function QuestionBank() {
       return count || 0;
     }
   });
+
+  // Fetch "New 120 (Aug 3rd)" (ANP) questions count
+  const { data: questionsANPCount } = useQuery({
+    queryKey: ['questions-anp-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('question_set', 'ANP120Aug3');
+      return count || 0;
+    }
+  });
+
   // Fetch English questions count
   const { data: questionsEnglishCount } = useQuery({
     queryKey: ['questions-english-count'],
@@ -715,6 +728,7 @@ export default function QuestionBank() {
             <TabsTrigger value="questions-68" className="text-xs md:text-sm px-2 md:px-3">68 Q's</TabsTrigger>
             <TabsTrigger value="questions-150" className="text-xs md:text-sm px-2 md:px-3">150 Hard</TabsTrigger>
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
+            <TabsTrigger value="questions-anp" className="text-xs md:text-sm px-2 md:px-3">New 120 ({questionsANPCount ?? 0})</TabsTrigger>
             <TabsTrigger value="questions-english" className="text-xs md:text-sm px-2 md:px-3">English ({questionsEnglishCount ?? 0})</TabsTrigger>
             <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
               <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
@@ -768,6 +782,10 @@ export default function QuestionBank() {
 
         <TabsContent value="questions-cb" className="space-y-4">
           <QuestionList onEdit={handleEdit} questionSet="CB" />
+        </TabsContent>
+
+        <TabsContent value="questions-anp" className="space-y-4">
+          <QuestionList onEdit={handleEdit} questionSet="ANP" />
         </TabsContent>
 
         <TabsContent value="questions-english" className="space-y-4">

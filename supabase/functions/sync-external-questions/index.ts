@@ -90,7 +90,7 @@ function getCategoryId(
   return null;
 }
 
-function normalizeQuestion(q: any, categoryMap: Record<string, string>) {
+function normalizeQuestion(q: any, categoryMap: Record<string, string>, targetSet?: string | null) {
   const rawDifficulty = (q.difficulty_level || '').toString().toLowerCase().trim();
   const normalizedDifficulty = ['easy', 'medium', 'hard'].includes(rawDifficulty) ? rawDifficulty : null;
 
@@ -113,7 +113,7 @@ function normalizeQuestion(q: any, categoryMap: Record<string, string>) {
     rationale: q.rationale,
     passage_text: q.passage_text,
     original_cb_id: cbId || `ext_${q.question_id}`,
-    question_set: q.question_set || "External",
+    question_set: targetSet || q.question_set || "External",
     subtopic: q.subtopic,
     alternate_answers: q.alternate_answers,
     question_image_url: q.question_image_url,
@@ -171,7 +171,11 @@ Deno.serve(async (req) => {
 
 
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set } = body;
+    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set } = body;
+
+    // Optional custom code prefix (e.g. "ANP") and target question_set label for this import
+    const codePrefix = typeof id_prefix === "string" && /^[A-Z]{2,5}$/.test(id_prefix) ? id_prefix : "EXT";
+    const targetSet = typeof target_set === "string" && target_set.trim() ? target_set.trim() : null;
 
     // Clamp limit to prevent abuse
     const safeLimit = Math.min(Math.max(limit, 1), 200);
@@ -254,11 +258,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role client for inserts
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Reuses the service-role client created above for inserts
+
 
     // Fetch category IDs
     const { data: categories } = await adminClient.from("question_categories").select("id, name");
@@ -294,10 +295,10 @@ Deno.serve(async (req) => {
     // Find highest EXT number
     const extIds = allExistingQuestions
       .map((q) => q.question_id)
-      .filter((id: string) => id.startsWith("EXT"))
-      .map((id: string) => parseInt(id.replace("EXT", ""), 10))
+      .filter((id: string) => id.startsWith(codePrefix))
+      .map((id: string) => parseInt(id.replace(codePrefix, ""), 10))
       .filter((n: number) => !isNaN(n));
-    let nextExtNum = extIds.length > 0 ? Math.max(...extIds) + 1 : 1;
+    let nextExtNum: number = extIds.length > 0 ? Math.max(...extIds) + 1 : 1;
 
     let imported = 0, skipped = 0, errors = 0;
     const errorDetails: string[] = [];
@@ -320,8 +321,8 @@ Deno.serve(async (req) => {
         if (existingId) {
           skipped++;
         } else {
-          const questionData = normalizeQuestion(q, categoryMap);
-          const newQuestionId = `EXT${String(nextExtNum).padStart(4, "0")}`;
+          const questionData = normalizeQuestion(q, categoryMap, targetSet);
+          const newQuestionId = `${codePrefix}${String(nextExtNum).padStart(4, "0")}`;
           nextExtNum++;
           toInsert.push({ ...questionData, question_id: newQuestionId });
         }

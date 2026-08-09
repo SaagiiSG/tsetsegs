@@ -15,6 +15,7 @@ const MATH_QUESTION_SETS = [
   { value: '68', label: '68 Problems' },
   { value: 'cb', label: 'CollegeBoard' },
   { value: '150_hard', label: '150 Hard' },
+  { value: 'anp', label: 'New 120 (Aug 3rd)' },
 ];
 
 const ENGLISH_QUESTION_SETS = [
@@ -71,6 +72,8 @@ export function TeacherQuestionBrowser() {
         query = query.not('original_cb_id', 'is', null);
       } else if (questionSet === '150_hard') {
         query = query.eq('question_set', 'SATMathTraining800');
+      } else if (questionSet === 'anp') {
+        query = query.eq('question_set', 'ANP120Aug3');
       } else if (questionSet === 'english') {
         query = query.eq('subject', 'english');
       }

@@ -17,7 +17,7 @@ import { MathText } from '@/components/MathText';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
-  questionSet?: '68' | 'CB' | '150' | 'english';
+  questionSet?: '68' | 'CB' | '150' | 'ANP' | 'english';
 }
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
@@ -73,6 +73,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
           query = query.eq('question_set', '68');
         } else if (questionSet === '150') {
           query = query.eq('question_set', 'SATMathTraining800');
+        } else if (questionSet === 'ANP') {
+          query = query.eq('question_set', 'ANP120Aug3');
         } else if (questionSet === 'english') {
           query = query.eq('subject', 'english');
         } else {
@@ -272,7 +274,7 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
             <div className="flex items-center justify-between">
               <div>
               <CardTitle className="text-base md:text-xl">
-                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : questionSet === 'english' ? 'English Questions' : 'CB Questions'} ({questions?.length || 0})
+                  {questionSet === '68' ? '68 Questions' : questionSet === '150' ? '150 Hard Questions' : questionSet === 'ANP' ? 'New 120 (Aug 3rd)' : questionSet === 'english' ? 'English Questions' : 'CB Questions'} ({questions?.length || 0})
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 hidden md:block">
                   Tip: Drag to select multiple • Shift+click for range
