@@ -78,6 +78,22 @@ function FillIn({ qid, initial, onCommit }: { qid: string; initial: string; onCo
   );
 }
 
+export interface ProctorModuleResult {
+  module: number;
+  section: string;
+  correct: number;
+  total: number;
+}
+
+export interface ProctorResult {
+  rw_correct: number;
+  math_correct: number;
+  rw_total: number;
+  math_total: number;
+  submitted_at: string | null;
+  module_results: ProctorModuleResult[] | null;
+}
+
 interface Props {
   participantId: string;
   title: string;
@@ -86,7 +102,7 @@ interface Props {
   initialAnswers: Record<string, string>;
   initialModule: number;
   ended: boolean;
-  onDone: () => void;
+  onDone: (result?: ProctorResult) => void;
 }
 
 export function ProctorRunner({
