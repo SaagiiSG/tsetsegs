@@ -187,7 +187,7 @@ export function ProctorRunner({
     if (submittedRef.current) return;
     submittedRef.current = true;
     setSubmitting(true);
-    const { error } = await supabase.rpc('proctor_submit', {
+    const { data, error } = await supabase.rpc('proctor_submit', {
       p_participant_id: participantId,
       p_answers: answersRef.current,
       p_violations: violations,
@@ -200,7 +200,8 @@ export function ProctorRunner({
     }
     modules.forEach((m) => localStorage.removeItem(`proctor:clock:${participantId}:${m.moduleNumber}`));
     localStorage.removeItem(`proctor:answers:${participantId}`);
-    onDone();
+    const row = (Array.isArray(data) ? data[0] : data) as ProctorResult | undefined;
+    onDone(row ?? undefined);
   }, [participantId, violations, modules, onDone]);
 
   // Teacher force-ended the session -> submit whatever we have.
