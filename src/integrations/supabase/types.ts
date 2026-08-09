@@ -2271,6 +2271,7 @@ export type Database = {
           linked_student_id: string | null
           math_correct: number | null
           math_total: number | null
+          module_results: Json
           oath_accepted_at: string | null
           phone: string
           rw_correct: number | null
@@ -2293,6 +2294,7 @@ export type Database = {
           linked_student_id?: string | null
           math_correct?: number | null
           math_total?: number | null
+          module_results?: Json
           oath_accepted_at?: string | null
           phone: string
           rw_correct?: number | null
@@ -2315,6 +2317,7 @@ export type Database = {
           linked_student_id?: string | null
           math_correct?: number | null
           math_total?: number | null
+          module_results?: Json
           oath_accepted_at?: string | null
           phone?: string
           rw_correct?: number | null
@@ -4711,8 +4714,13 @@ export type Database = {
           current_module: number
           display_name: string
           focus_violations: number
+          math_correct: number
+          math_total: number
+          module_results: Json
           module_started_at: string
           oath_accepted: boolean
+          rw_correct: number
+          rw_total: number
           session_current_module: number
           session_status: string
           session_title: string
@@ -4728,6 +4736,7 @@ export type Database = {
         Returns: {
           math_correct: number
           math_total: number
+          module_results: Json
           rw_correct: number
           rw_total: number
           submitted_at: string
