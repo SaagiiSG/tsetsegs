@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck } from 'lucide-react';
-import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck, BookOpen } from 'lucide-react';
+import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { ExamTimer } from '@/components/student/test/ExamTimer';
 
 export interface PaperRow {
