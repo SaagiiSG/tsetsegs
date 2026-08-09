@@ -121,17 +121,32 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
               p.submitted_at && p.rw_total !== null
                 ? `${(p.rw_correct ?? 0) + (p.math_correct ?? 0)}/${(p.rw_total ?? 0) + (p.math_total ?? 0)}`
                 : null;
+            const mods = [...((p.module_results ?? []) as ModuleResult[])].sort((a, b) => a.module - b.module);
             return (
-              <div key={p.id} className="flex items-center gap-3 p-3">
-                <span className="text-sm truncate flex-1">{p.display_name ?? "Student"}</span>
-                {(p.focus_violations ?? 0) > 0 && (
-                  <Badge variant="destructive" className="text-[10px] font-mono">
-                    {p.focus_violations} focus
+              <div key={p.id} className="p-3 space-y-1.5">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm truncate flex-1">{p.display_name ?? "Student"}</span>
+                  {(p.focus_violations ?? 0) > 0 && (
+                    <Badge variant="destructive" className="text-[10px] font-mono">
+                      {p.focus_violations} focus
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="text-[10px] font-mono">
+                    {p.submitted_at ? (score ?? "submitted") : p.started_at ? `module ${p.current_module ?? 1}` : p.oath_accepted_at ? "ready" : "waiting"}
                   </Badge>
+                </div>
+                {p.submitted_at && mods.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pl-0.5">
+                    {mods.map((m) => (
+                      <span
+                        key={`${m.section}-${m.module}`}
+                        className="text-[10px] font-mono rounded bg-muted px-1.5 py-0.5 text-muted-foreground"
+                      >
+                        M{m.module} {m.correct}/{m.total}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                <Badge variant="secondary" className="text-[10px] font-mono">
-                  {p.submitted_at ? (score ?? "submitted") : p.started_at ? `module ${p.current_module ?? 1}` : p.oath_accepted_at ? "ready" : "waiting"}
-                </Badge>
               </div>
             );
           })
