@@ -244,12 +244,24 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       };
 
       if (editingQuestion) {
-        const { error } = await supabase
+        // Keep flags as-is when editing (don't resurrect deactivated/derived questions)
+        delete questionData.is_original;
+        delete questionData.is_active;
+
+        const { data: updated, error } = await supabase
           .from('questions')
           .update(questionData)
-          .eq('id', editingQuestion.id);
+          .eq('id', editingQuestion.id)
+          .select('id, answer');
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error('Update did not save — no matching question was changed (check admin permissions).');
+        }
+        if ((updated[0].answer ?? '') !== (questionData.answer ?? '')) {
+          throw new Error('Answer did not persist correctly. Please retry.');
+        }
       } else {
+
         const { data: insertedData, error } = await supabase
           .from('questions')
           .insert(questionData)
