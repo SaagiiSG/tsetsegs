@@ -216,7 +216,7 @@ export function ProctorRunner({
     }
     modules.forEach((m) => localStorage.removeItem(`proctor:clock:${participantId}:${m.moduleNumber}`));
     localStorage.removeItem(`proctor:answers:${participantId}`);
-    const row = (Array.isArray(data) ? data[0] : data) as ProctorResult | undefined;
+    const row = (Array.isArray(data) ? data[0] : data) as unknown as ProctorResult | undefined;
     onDone(row ?? undefined);
   }, [participantId, violations, modules, onDone]);
 
