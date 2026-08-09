@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
+import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
 
 const ITEMS_PER_PAGE = 15;
 
