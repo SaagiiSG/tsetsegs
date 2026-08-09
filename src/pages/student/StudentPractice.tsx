@@ -21,7 +21,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
-type QuestionSet = '68' | 'CB' | '150';
+type QuestionSet = '68' | 'CB' | '150' | 'ANP';
 type Subject = 'math' | 'english';
 
 const PAGE_SIZE = 1000;
@@ -46,10 +46,13 @@ const applyPracticeQuestionFilters = (query: any, questionSet: QuestionSet, subj
       filteredQuery = filteredQuery.eq('question_set', '68');
     } else if (questionSet === '150') {
       filteredQuery = filteredQuery.eq('question_set', 'SATMathTraining800');
+    } else if (questionSet === 'ANP') {
+      filteredQuery = filteredQuery.eq('question_set', 'ANP120Aug3');
     } else {
       filteredQuery = filteredQuery
         .neq('question_set', '68')
         .neq('question_set', 'SATMathTraining800')
+        .neq('question_set', 'ANP120Aug3')
         .eq('is_original', true);
     }
   } else {
@@ -113,6 +116,7 @@ export default function StudentPractice() {
   const initialSet: QuestionSet =
     initialSetParam === '150' ? '150' :
     initialSetParam === 'CB' ? 'CB' :
+    initialSetParam === 'ANP' ? 'ANP' :
     initialSetParam === '68' ? '68' : '68';
   const [questionSet, setQuestionSet] = useState<QuestionSet>(initialSet);
   const [subject, setSubject] = useState<Subject>('math');
