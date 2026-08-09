@@ -10,6 +10,13 @@ import {
 import { ArrowLeft, Loader2, Square, Users } from "lucide-react";
 import { toast } from "sonner";
 
+interface ModuleResult {
+  module: number;
+  section: string;
+  correct: number;
+  total: number;
+}
+
 interface Participant {
   id: string;
   display_name: string | null;
@@ -22,6 +29,7 @@ interface Participant {
   math_correct: number | null;
   rw_total: number | null;
   math_total: number | null;
+  module_results: ModuleResult[] | null;
 }
 
 interface Props {
