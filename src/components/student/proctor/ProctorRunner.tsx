@@ -119,6 +119,7 @@ export function ProctorRunner({
   answersRef.current = answers;
   const submittedRef = useRef(false);
 
+  const snapSide = useCalculatorSnap();
   const mod = modules[modIdx];
   const isLastModule = modIdx === modules.length - 1;
   const isMath = (mod?.section ?? '').toLowerCase().startsWith('math');
