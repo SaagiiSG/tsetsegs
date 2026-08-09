@@ -73,6 +73,8 @@ export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) 
           query = query.eq('question_set', '68');
         } else if (questionSet === '150') {
           query = query.eq('question_set', 'SATMathTraining800');
+        } else if (questionSet === 'ANP') {
+          query = query.eq('question_set', 'ANP120Aug3');
         } else if (questionSet === 'english') {
           query = query.eq('subject', 'english');
         } else {
