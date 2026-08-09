@@ -17,7 +17,7 @@ import { MathText } from '@/components/MathText';
 
 interface QuestionListProps {
   onEdit: (question: any) => void;
-  questionSet?: '68' | 'CB' | '150' | 'english';
+  questionSet?: '68' | 'CB' | '150' | 'ANP' | 'english';
 }
 
 export function QuestionList({ onEdit, questionSet = '68' }: QuestionListProps) {
