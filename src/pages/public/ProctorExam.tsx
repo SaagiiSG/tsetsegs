@@ -306,7 +306,11 @@ export default function ProctorExam() {
       initialAnswers={state.answers ?? {}}
       initialModule={state.current_module ?? 1}
       ended={(state.session_status as string) === 'finished'}
-      onDone={() => setDone(true)}
+      onDone={(res) => {
+        if (res) setResult(res);
+        setDone(true);
+        loadState();
+      }}
     />
   );
 }
