@@ -15,6 +15,7 @@ const MATH_QUESTION_SETS = [
   { value: '68', label: '68 Problems' },
   { value: 'cb', label: 'CollegeBoard' },
   { value: '150_hard', label: '150 Hard' },
+  { value: 'anp', label: 'New 120 (Aug 3rd)' },
 ];
 
 const ENGLISH_QUESTION_SETS = [
