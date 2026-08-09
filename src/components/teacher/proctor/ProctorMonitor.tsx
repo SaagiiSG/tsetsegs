@@ -49,7 +49,7 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
       supabase
         .from("proctor_participants")
         .select(
-          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total",
+          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total, module_results",
         )
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true }),
