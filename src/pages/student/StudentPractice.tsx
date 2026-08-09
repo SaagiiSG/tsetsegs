@@ -140,17 +140,19 @@ export default function StudentPractice() {
     }
   }, [student]);
 
-  // ---------- iOS-style gestures: cycle 68 → CB → 150 → English ----------
+  // ---------- iOS-style gestures: cycle 68 → CB → 150 → ANP → English ----------
   const haptics = useHaptics();
   const { recordSet, recordCategory } = usePracticeRecents();
-  const SET_CYCLE: { set: QuestionSet; subject: Subject; key: '68' | 'CB' | '150' | 'english' }[] = [
+  type SetKey = '68' | 'CB' | '150' | 'ANP' | 'english';
+  const SET_CYCLE: { set: QuestionSet; subject: Subject; key: SetKey }[] = [
     { set: '68', subject: 'math', key: '68' },
     { set: 'CB', subject: 'math', key: 'CB' },
     { set: '150', subject: 'math', key: '150' },
+    { set: 'ANP', subject: 'math', key: 'ANP' },
     { set: 'CB', subject: 'english', key: 'english' },
   ];
   const cycleSet = (dir: 1 | -1) => {
-    const currentKey: '68' | 'CB' | '150' | 'english' =
+    const currentKey: SetKey =
       subject === 'english' ? 'english' : (questionSet as any);
     const idx = SET_CYCLE.findIndex((s) => s.key === currentKey);
     const next = SET_CYCLE[(idx + dir + SET_CYCLE.length) % SET_CYCLE.length];

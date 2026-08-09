@@ -5,7 +5,7 @@ const KEY = 'practice:recents:v1';
 export interface PracticeRecents {
   lastQuestionId?: string;
   lastQuestionLabel?: string;
-  lastSet?: 'CB' | '68' | '150' | 'english';
+  lastSet?: 'CB' | '68' | '150' | 'ANP' | 'english';
   lastCategoryId?: string;
   lastCategoryName?: string;
   recentRoutes?: { path: string; label: string; at: number }[];
