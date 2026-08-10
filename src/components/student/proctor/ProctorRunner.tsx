@@ -308,6 +308,20 @@ export function ProctorRunner({
             {displayName} · Module {mod.moduleNumber} · {mod.section}
           </div>
         </div>
+        {syncFailed ? (
+          <button
+            onClick={() => save(true)}
+            title="Your answers are safe on this device. Tap to retry syncing."
+            className="flex items-center gap-1 rounded-md border border-destructive/40 px-2 py-1 text-[10px] font-mono text-destructive"
+          >
+            <CloudOff className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Saved on device — retry</span>
+          </button>
+        ) : (
+          <span className="hidden sm:flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
+            <Check className="h-3.5 w-3.5" /> Saved
+          </span>
+        )}
+
         {isMath && (
           <>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>
