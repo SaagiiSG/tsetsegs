@@ -48,8 +48,12 @@ export default function ProctorExam() {
   const busyRef = useRef(false);
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(!!participantId);
-  const [paper, setPaper] = useState<PaperRow[] | null>(null);
+  const [paper, setPaper] = useState<PaperRow[] | null>(() => {
+    const pid = localStorage.getItem(KEY + code);
+    return pid ? loadPaper(pid) : null;
+  });
   const [done, setDone] = useState(false);
+  const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
 
   /* ---------- poll my own state ---------- */
@@ -58,6 +62,11 @@ export default function ProctorExam() {
     const { data, error } = await supabase.rpc('proctor_state', { p_participant_id: participantId });
     const row = (Array.isArray(data) ? data[0] : data) as unknown as State | undefined;
     if (error || !row) {
+      // no network? keep the student in their test using the cached paper
+      if (loadPaper(participantId)) {
+        setLoading(false);
+        return;
+      }
       // stale participant (session deleted) — start over
       localStorage.removeItem(KEY + code);
       setParticipantId(null);
@@ -80,10 +89,17 @@ export default function ProctorExam() {
     if (!participantId || !state?.oath_accepted || state.session_status !== 'active' || paper) return;
     (async () => {
       const { data, error } = await supabase.rpc('proctor_paper', { p_participant_id: participantId });
-      if (error) return toast.error('Could not download the test paper — retrying');
-      setPaper((data ?? []) as PaperRow[]);
+      if (error) {
+        const cached = loadPaper(participantId);
+        if (cached) return setPaper(cached);
+        return toast.error('Could not download the test paper — retrying');
+      }
+      const rows = (data ?? []) as PaperRow[];
+      savePaper(participantId, rows);
+      setPaper(rows);
     })();
   }, [participantId, state?.oath_accepted, state?.session_status, paper]);
+
 
   const guard = async (fn: () => Promise<void>) => {
     if (busyRef.current) return;
