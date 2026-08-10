@@ -314,7 +314,32 @@ export default function ProctorExam() {
     );
   }
 
-  /* ---------- 5. the test ---------- */
+  /* ---------- 5. resume where they left off ---------- */
+  const snap = loadSnapshot(participantId);
+  const savedAnswers = Math.max(answeredCount(snap?.answers ?? {}), answeredCount(state.answers ?? {}));
+  const savedModule = Math.max(snap?.module ?? 1, state.current_module ?? 1);
+  if (!resumed && savedAnswers > 0) {
+    return (
+      <Shell>
+        <Timer className="h-8 w-8 text-primary mx-auto" />
+        <div className="text-center space-y-1">
+          <h1 className="text-lg font-semibold">Continue where you left off</h1>
+          <p className="text-sm text-muted-foreground">
+            Module {savedModule}
+            {snap?.qIdx != null ? ` · question ${snap.qIdx + 1}` : ''} · {savedAnswers} answers saved.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Your module timer kept running, so go back in as soon as you're ready.
+          </p>
+        </div>
+        <Button className="w-full h-11" onClick={() => setResumed(true)}>
+          Resume my test
+        </Button>
+      </Shell>
+    );
+  }
+
+  /* ---------- 6. the test ---------- */
   return (
     <ProctorRunner
       participantId={participantId}
@@ -331,6 +356,7 @@ export default function ProctorExam() {
       }}
     />
   );
+
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
