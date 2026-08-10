@@ -100,6 +100,32 @@ export default function ProctorExam() {
     })();
   }, [participantId, state?.oath_accepted, state?.session_status, paper]);
 
+  /* ---------- auto-resume the moment the device is back online ----------
+     No prompt, no lost work: pull fresh state, re-download the paper if the
+     cache is empty, and drop the student straight back into their attempt. */
+  useEffect(() => {
+    if (!participantId) return;
+    const onOnline = async () => {
+      const hadAttempt = answeredCount(loadSnapshot(participantId)?.answers ?? {}) > 0;
+      await loadState();
+      if (!loadPaper(participantId)) {
+        const { data } = await supabase.rpc('proctor_paper', { p_participant_id: participantId });
+        const rows = (data ?? []) as PaperRow[];
+        if (rows.length > 0) {
+          savePaper(participantId, rows);
+          setPaper(rows);
+        }
+      }
+      if (hadAttempt) {
+        setResumed(true);
+        toast.success('Back online — your saved answers are restored');
+      }
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [participantId, loadState]);
+
+
 
   const guard = async (fn: () => Promise<void>) => {
     if (busyRef.current) return;
