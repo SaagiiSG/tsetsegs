@@ -243,8 +243,9 @@ export function ProctorRunner({
   }, []);
 
   const pick = (qid: string, value: string) => {
-    setAnswers((a) => ({ ...a, [qid]: value }));
-
+    const next = { ...answersRef.current, [qid]: value };
+    answersRef.current = next;
+    setAnswers(next);
     save();
   };
 
@@ -255,7 +256,7 @@ export function ProctorRunner({
     const { data, error } = await supabase.rpc('proctor_submit', {
       p_participant_id: participantId,
       p_answers: answersRef.current,
-      p_violations: violations,
+      p_violations: violationsRef.current,
     });
     setSubmitting(false);
     if (error) {
@@ -263,11 +264,14 @@ export function ProctorRunner({
       toast.error('Could not submit — trying again keeps your answers safe');
       return;
     }
-    modules.forEach((m) => localStorage.removeItem(`proctor:clock:${participantId}:${m.moduleNumber}`));
-    localStorage.removeItem(`proctor:answers:${participantId}`);
+    clearProctorLocal(
+      participantId,
+      modules.map((m) => m.moduleNumber),
+    );
     const row = (Array.isArray(data) ? data[0] : data) as unknown as ProctorResult | undefined;
     onDone(row ?? undefined);
-  }, [participantId, violations, modules, onDone]);
+  }, [participantId, modules, onDone]);
+
 
   // Teacher force-ended the session -> submit whatever we have.
   useEffect(() => {
