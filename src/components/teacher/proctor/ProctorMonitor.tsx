@@ -69,15 +69,26 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
 
   const endSession = async () => {
     setEnding(true);
-    const { error } = await supabase
-      .from("proctor_sessions")
-      .update({ status: "finished", finished_at: new Date().toISOString() })
-      .eq("id", sessionId);
+    // Grades everyone who hasn't submitted from their last saved answers, then marks it finished.
+    const { error } = await supabase.rpc("proctor_finalize_session", { p_session_id: sessionId });
     setEnding(false);
     if (error) return toast.error(error.message);
-    toast.success("Session ended");
+    toast.success("Session ended — results are in");
     load();
   };
+
+  // A session can be finished while stragglers are still ungraded (closed tab, crash).
+  const finalizedRef = useRef(false);
+  useEffect(() => {
+    if (status !== "finished" || finalizedRef.current) return;
+    if (!people.some((p) => !p.submitted_at && p.oath_accepted_at)) return;
+    finalizedRef.current = true;
+    (async () => {
+      await supabase.rpc("proctor_finalize_session", { p_session_id: sessionId });
+      load();
+    })();
+  }, [status, people, sessionId, load]);
+
 
   const submitted = people.filter((p) => p.submitted_at).length;
 
