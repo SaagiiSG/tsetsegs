@@ -12,10 +12,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calculator, Grid3X3, Loader2, ShieldCheck, BookOpen, CloudOff, Check } from 'lucide-react';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { ExamTimer } from '@/components/student/test/ExamTimer';
+import { loadSnapshot, saveSnapshot, clearProctorLocal, answeredCount } from './proctorStorage';
+
 
 export interface PaperRow {
   module_id: string;
@@ -123,14 +125,20 @@ export function ProctorRunner({
     return [...map.values()].sort((a, b) => a.moduleNumber - b.moduleNumber);
   }, [paper]);
 
-  const startIdx = Math.max(0, modules.findIndex((m) => m.moduleNumber === initialModule));
-  const [modIdx, setModIdx] = useState(startIdx === -1 ? 0 : startIdx);
-  const [qIdx, setQIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
+  /* ---- restore from the device snapshot first, server state second ---- */
+  const snap = useMemo(() => loadSnapshot(participantId), [participantId]);
+  const resumeModule = Math.max(initialModule || 1, snap?.module ?? 1);
+  const startIdx = modules.findIndex((m) => m.moduleNumber === resumeModule);
+  const [modIdx, setModIdx] = useState(startIdx < 0 ? 0 : startIdx);
+  const [qIdx, setQIdx] = useState(snap && snap.module === resumeModule ? (snap.qIdx ?? 0) : 0);
+  const [answers, setAnswers] = useState<Record<string, string>>(() =>
+    snap && answeredCount(snap.answers) >= answeredCount(initialAnswers) ? snap.answers : initialAnswers,
+  );
   const [showGrid, setShowGrid] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [violations, setViolations] = useState(0);
+  const [violations, setViolations] = useState(snap?.violations ?? 0);
+  const [syncFailed, setSyncFailed] = useState(false);
   const answersRef = useRef(answers);
   answersRef.current = answers;
   const submittedRef = useRef(false);
@@ -142,6 +150,7 @@ export function ProctorRunner({
 
   /* ---- module clock: local per-module start, survives refresh ---- */
   const clockKey = `proctor:clock:${participantId}:${mod?.moduleNumber ?? 0}`;
+  const firstClockRun = useRef(true);
   const [endsAt, setEndsAt] = useState<number>(0);
   useEffect(() => {
     if (!mod) return;
@@ -149,32 +158,65 @@ export function ProctorRunner({
     const start = saved > 0 ? saved : Date.now();
     if (!saved) localStorage.setItem(clockKey, String(start));
     setEndsAt(start + mod.minutes * 60_000);
-    setQIdx(0);
+    // on a refresh we keep the restored question; only a real module change resets it
+    if (!firstClockRun.current) setQIdx(0);
+    firstClockRun.current = false;
     setReviewing(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockKey, mod?.moduleNumber]);
 
-  /* ---- autosave (debounced) ---- */
+  /* ---- autosave: device snapshot immediately, server sync debounced ---- */
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const qIdxRef = useRef(qIdx);
+  qIdxRef.current = qIdx;
+  const violationsRef = useRef(violations);
+  violationsRef.current = violations;
+
+  const persistLocal = useCallback(() => {
+    saveSnapshot(participantId, {
+      module: mod?.moduleNumber ?? 1,
+      qIdx: qIdxRef.current,
+      answers: answersRef.current,
+      violations: violationsRef.current,
+      savedAt: Date.now(),
+    });
+  }, [participantId, mod?.moduleNumber]);
+
+  const syncServer = useCallback(async () => {
+    if (submittedRef.current) return;
+    const { data, error } = await supabase.rpc('proctor_save_progress', {
+      p_participant_id: participantId,
+      p_answers: answersRef.current,
+      p_module: mod?.moduleNumber ?? 1,
+      p_violations: violationsRef.current,
+    });
+    setSyncFailed(!!error || data === false);
+  }, [participantId, mod?.moduleNumber]);
+
   const save = useCallback(
     (immediate = false) => {
+      persistLocal();
       clearTimeout(saveTimer.current);
-      const run = () => {
-        localStorage.setItem(`proctor:answers:${participantId}`, JSON.stringify(answersRef.current));
-        supabase.rpc('proctor_save_progress', {
-          p_participant_id: participantId,
-          p_answers: answersRef.current,
-          p_module: mod?.moduleNumber ?? 1,
-          p_violations: violations,
-        });
-      };
-      if (immediate) run();
-      else saveTimer.current = setTimeout(run, 1200);
+      if (immediate) void syncServer();
+      else saveTimer.current = setTimeout(() => void syncServer(), 1200);
     },
-    [participantId, mod?.moduleNumber, violations],
+    [persistLocal, syncServer],
   );
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
+
+  // Heartbeat + retry: keeps the teacher's monitor live and recovers failed syncs.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (!submittedRef.current) void syncServer();
+    }, 20_000);
+    const onOnline = () => void syncServer();
+    window.addEventListener('online', onOnline);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [syncServer]);
 
   // Tell the server which module the student is on the moment they move into it,
   // so the teacher's monitor shows real progress even before the next answer.
@@ -183,6 +225,12 @@ export function ProctorRunner({
     save(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mod?.moduleNumber]);
+
+  // Keep the device snapshot in step with navigation and violation counts.
+  useEffect(() => {
+    if (!mod || submittedRef.current) return;
+    persistLocal();
+  }, [qIdx, violations, mod, persistLocal]);
 
   /* ---- focus discipline (teacher sees the count) ---- */
   useEffect(() => {
@@ -195,7 +243,9 @@ export function ProctorRunner({
   }, []);
 
   const pick = (qid: string, value: string) => {
-    setAnswers((a) => ({ ...a, [qid]: value }));
+    const next = { ...answersRef.current, [qid]: value };
+    answersRef.current = next;
+    setAnswers(next);
     save();
   };
 
@@ -206,7 +256,7 @@ export function ProctorRunner({
     const { data, error } = await supabase.rpc('proctor_submit', {
       p_participant_id: participantId,
       p_answers: answersRef.current,
-      p_violations: violations,
+      p_violations: violationsRef.current,
     });
     setSubmitting(false);
     if (error) {
@@ -214,11 +264,14 @@ export function ProctorRunner({
       toast.error('Could not submit — trying again keeps your answers safe');
       return;
     }
-    modules.forEach((m) => localStorage.removeItem(`proctor:clock:${participantId}:${m.moduleNumber}`));
-    localStorage.removeItem(`proctor:answers:${participantId}`);
+    clearProctorLocal(
+      participantId,
+      modules.map((m) => m.moduleNumber),
+    );
     const row = (Array.isArray(data) ? data[0] : data) as unknown as ProctorResult | undefined;
     onDone(row ?? undefined);
-  }, [participantId, violations, modules, onDone]);
+  }, [participantId, modules, onDone]);
+
 
   // Teacher force-ended the session -> submit whatever we have.
   useEffect(() => {
@@ -255,6 +308,20 @@ export function ProctorRunner({
             {displayName} · Module {mod.moduleNumber} · {mod.section}
           </div>
         </div>
+        {syncFailed ? (
+          <button
+            onClick={() => save(true)}
+            title="Your answers are safe on this device. Tap to retry syncing."
+            className="flex items-center gap-1 rounded-md border border-destructive/40 px-2 py-1 text-[10px] font-mono text-destructive"
+          >
+            <CloudOff className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Saved on device — retry</span>
+          </button>
+        ) : (
+          <span className="hidden sm:flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
+            <Check className="h-3.5 w-3.5" /> Saved
+          </span>
+        )}
+
         {isMath && (
           <>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleCalculator()}>

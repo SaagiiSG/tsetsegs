@@ -14,6 +14,8 @@ import {
   type ProctorResult,
   type ProctorModuleResult,
 } from '@/components/student/proctor/ProctorRunner';
+import { loadPaper, savePaper, loadSnapshot, answeredCount } from '@/components/student/proctor/proctorStorage';
+
 
 interface State {
   display_name: string;
@@ -46,8 +48,12 @@ export default function ProctorExam() {
   const busyRef = useRef(false);
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(!!participantId);
-  const [paper, setPaper] = useState<PaperRow[] | null>(null);
+  const [paper, setPaper] = useState<PaperRow[] | null>(() => {
+    const pid = localStorage.getItem(KEY + code);
+    return pid ? loadPaper(pid) : null;
+  });
   const [done, setDone] = useState(false);
+  const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
 
   /* ---------- poll my own state ---------- */
@@ -56,6 +62,11 @@ export default function ProctorExam() {
     const { data, error } = await supabase.rpc('proctor_state', { p_participant_id: participantId });
     const row = (Array.isArray(data) ? data[0] : data) as unknown as State | undefined;
     if (error || !row) {
+      // no network? keep the student in their test using the cached paper
+      if (loadPaper(participantId)) {
+        setLoading(false);
+        return;
+      }
       // stale participant (session deleted) — start over
       localStorage.removeItem(KEY + code);
       setParticipantId(null);
@@ -78,10 +89,17 @@ export default function ProctorExam() {
     if (!participantId || !state?.oath_accepted || state.session_status !== 'active' || paper) return;
     (async () => {
       const { data, error } = await supabase.rpc('proctor_paper', { p_participant_id: participantId });
-      if (error) return toast.error('Could not download the test paper — retrying');
-      setPaper((data ?? []) as PaperRow[]);
+      if (error) {
+        const cached = loadPaper(participantId);
+        if (cached) return setPaper(cached);
+        return toast.error('Could not download the test paper — retrying');
+      }
+      const rows = (data ?? []) as PaperRow[];
+      savePaper(participantId, rows);
+      setPaper(rows);
     })();
   }, [participantId, state?.oath_accepted, state?.session_status, paper]);
+
 
   const guard = async (fn: () => Promise<void>) => {
     if (busyRef.current) return;
@@ -296,7 +314,32 @@ export default function ProctorExam() {
     );
   }
 
-  /* ---------- 5. the test ---------- */
+  /* ---------- 5. resume where they left off ---------- */
+  const snap = loadSnapshot(participantId);
+  const savedAnswers = Math.max(answeredCount(snap?.answers ?? {}), answeredCount(state.answers ?? {}));
+  const savedModule = Math.max(snap?.module ?? 1, state.current_module ?? 1);
+  if (!resumed && savedAnswers > 0) {
+    return (
+      <Shell>
+        <Timer className="h-8 w-8 text-primary mx-auto" />
+        <div className="text-center space-y-1">
+          <h1 className="text-lg font-semibold">Continue where you left off</h1>
+          <p className="text-sm text-muted-foreground">
+            Module {savedModule}
+            {snap?.qIdx != null ? ` · question ${snap.qIdx + 1}` : ''} · {savedAnswers} answers saved.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Your module timer kept running, so go back in as soon as you're ready.
+          </p>
+        </div>
+        <Button className="w-full h-11" onClick={() => setResumed(true)}>
+          Resume my test
+        </Button>
+      </Shell>
+    );
+  }
+
+  /* ---------- 6. the test ---------- */
   return (
     <ProctorRunner
       participantId={participantId}
@@ -313,6 +356,7 @@ export default function ProctorExam() {
       }}
     />
   );
+
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
