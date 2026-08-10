@@ -14,6 +14,8 @@ import {
   type ProctorResult,
   type ProctorModuleResult,
 } from '@/components/student/proctor/ProctorRunner';
+import { loadPaper, savePaper, loadSnapshot, answeredCount } from '@/components/student/proctor/proctorStorage';
+
 
 interface State {
   display_name: string;
