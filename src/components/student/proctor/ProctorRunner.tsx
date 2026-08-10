@@ -150,7 +150,10 @@ export function ProctorRunner({
 
   /* ---- module clock: local per-module start, survives refresh ---- */
   const clockKey = `proctor:clock:${participantId}:${mod?.moduleNumber ?? 0}`;
-  const firstClockRun = useRef(true);
+  // Track the module we last set up. Comparing module numbers (instead of a
+  // "first run" flag) keeps a restored question index intact even when the
+  // effect runs twice on mount, and still resets it on a real module change.
+  const seenModule = useRef<number | null>(mod?.moduleNumber ?? null);
   const [endsAt, setEndsAt] = useState<number>(0);
   useEffect(() => {
     if (!mod) return;
@@ -158,12 +161,15 @@ export function ProctorRunner({
     const start = saved > 0 ? saved : Date.now();
     if (!saved) localStorage.setItem(clockKey, String(start));
     setEndsAt(start + mod.minutes * 60_000);
-    // on a refresh we keep the restored question; only a real module change resets it
-    if (!firstClockRun.current) setQIdx(0);
-    firstClockRun.current = false;
-    setReviewing(false);
+    if (seenModule.current !== null && seenModule.current !== mod.moduleNumber) {
+      setQIdx(0);
+      setReviewing(false);
+    }
+    seenModule.current = mod.moduleNumber;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockKey, mod?.moduleNumber]);
+
+
 
   /* ---- autosave: device snapshot immediately, server sync debounced ---- */
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
