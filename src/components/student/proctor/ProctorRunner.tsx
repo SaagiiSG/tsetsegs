@@ -470,10 +470,11 @@ export function ProctorRunner({
               </div>
             ) : (
               <FillIn
-                qid={q.question_id}
+                key={q.question_id}
                 initial={answers[q.question_id] ?? ''}
                 onCommit={(v) => pick(q.question_id, v)}
               />
+
             )}
           </div>
         ) : null}
