@@ -181,19 +181,38 @@ export function ProctorRunner({
   // effect runs twice on mount, and still resets it on a real module change.
   const seenModule = useRef<number | null>(mod?.moduleNumber ?? null);
   const [endsAt, setEndsAt] = useState<number>(0);
+  const [lateMinutes, setLateMinutes] = useState(0);
   useEffect(() => {
     if (!mod) return;
     const saved = Number(localStorage.getItem(clockKey) ?? 0);
-    const start = saved > 0 ? saved : Date.now();
+    // Late joiner: align this module's clock with the room's, so everyone finishes together.
+    const roomStart =
+      sessionModule && mod.moduleNumber === sessionModule && moduleStartedAt
+        ? Date.parse(moduleStartedAt)
+        : 0;
+    const start = saved > 0 ? saved : roomStart > 0 ? roomStart : Date.now();
     if (!saved) localStorage.setItem(clockKey, String(start));
     setEndsAt(start + mod.minutes * 60_000);
+    if (!saved && roomStart > 0) {
+      const lost = Math.round((Date.now() - roomStart) / 60_000);
+      if (lost >= 1) setLateMinutes(lost);
+    }
     if (seenModule.current !== null && seenModule.current !== mod.moduleNumber) {
       setQIdx(0);
       setReviewing(false);
     }
     seenModule.current = mod.moduleNumber;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clockKey, mod?.moduleNumber]);
+  }, [clockKey, mod?.moduleNumber, sessionModule, moduleStartedAt]);
+
+  // One-time heads-up so a late student knows why their clock is short.
+  const lateToldRef = useRef(false);
+  useEffect(() => {
+    if (lateMinutes < 1 || lateToldRef.current) return;
+    lateToldRef.current = true;
+    toast.info(`You joined ${lateMinutes} min after the room started — your timer matches the class.`);
+  }, [lateMinutes]);
+
 
 
 
