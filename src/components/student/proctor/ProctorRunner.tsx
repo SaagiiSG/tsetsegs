@@ -60,25 +60,43 @@ function toOptions(row: PaperRow): Option[] {
     .map((o) => ({ ...o, img: imgs?.[o.key] }));
 }
 
-function FillIn({ qid, initial, onCommit }: { qid: string; initial: string; onCommit: (v: string) => void }) {
+/* One instance per question (keyed by qid at the call site), so two fill-in
+   questions in a row can never share the same box or overwrite each other.
+   Anything typed is flushed on unmount, so a fast "Next" never loses it. */
+function FillIn({ initial, onCommit }: { initial: string; onCommit: (v: string) => void }) {
   const [value, setValue] = useState(initial);
+  const valueRef = useRef(initial);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  const dirty = useRef(false);
   const t = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(t.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(t.current);
+      if (dirty.current) commitRef.current(valueRef.current);
+    },
+    [],
+  );
   return (
     <Input
-      key={qid}
       placeholder="Type your answer"
       value={value}
       onChange={(e) => {
-        setValue(e.target.value);
+        const v = e.target.value;
+        valueRef.current = v;
+        dirty.current = true;
+        setValue(v);
         clearTimeout(t.current);
-        t.current = setTimeout(() => onCommit(e.target.value), 500);
+        t.current = setTimeout(() => commitRef.current(v), 500);
       }}
-      onBlur={() => onCommit(value)}
+      onBlur={() => {
+        if (dirty.current) commitRef.current(valueRef.current);
+      }}
       className="h-12 text-center text-lg font-mono"
     />
   );
 }
+
 
 export interface ProctorModuleResult {
   module: number;
@@ -103,13 +121,19 @@ interface Props {
   paper: PaperRow[];
   initialAnswers: Record<string, string>;
   initialModule: number;
+  /** Module the room is currently on — a late student is dropped straight into it. */
+  sessionModule?: number | null;
+  /** When the room started that module — a late student only gets the time left. */
+  moduleStartedAt?: string | null;
   ended: boolean;
   onDone: (result?: ProctorResult) => void;
 }
 
 export function ProctorRunner({
-  participantId, title, displayName, paper, initialAnswers, initialModule, ended, onDone,
+  participantId, title, displayName, paper, initialAnswers, initialModule,
+  sessionModule, moduleStartedAt, ended, onDone,
 }: Props) {
+
   const modules = useMemo<ModuleGroup[]>(() => {
     const map = new Map<number, ModuleGroup>();
     paper.forEach((r) => {
@@ -127,7 +151,9 @@ export function ProctorRunner({
 
   /* ---- restore from the device snapshot first, server state second ---- */
   const snap = useMemo(() => loadSnapshot(participantId), [participantId]);
-  const resumeModule = Math.max(initialModule || 1, snap?.module ?? 1);
+  // A student who joins after the room started begins on the module the room is on.
+  const resumeModule = Math.max(initialModule || 1, snap?.module ?? 1, sessionModule ?? 1);
+
   const startIdx = modules.findIndex((m) => m.moduleNumber === resumeModule);
   const [modIdx, setModIdx] = useState(startIdx < 0 ? 0 : startIdx);
   const [qIdx, setQIdx] = useState(snap && snap.module === resumeModule ? (snap.qIdx ?? 0) : 0);
@@ -155,19 +181,38 @@ export function ProctorRunner({
   // effect runs twice on mount, and still resets it on a real module change.
   const seenModule = useRef<number | null>(mod?.moduleNumber ?? null);
   const [endsAt, setEndsAt] = useState<number>(0);
+  const [lateMinutes, setLateMinutes] = useState(0);
   useEffect(() => {
     if (!mod) return;
     const saved = Number(localStorage.getItem(clockKey) ?? 0);
-    const start = saved > 0 ? saved : Date.now();
+    // Late joiner: align this module's clock with the room's, so everyone finishes together.
+    const roomStart =
+      sessionModule && mod.moduleNumber === sessionModule && moduleStartedAt
+        ? Date.parse(moduleStartedAt)
+        : 0;
+    const start = saved > 0 ? saved : roomStart > 0 ? roomStart : Date.now();
     if (!saved) localStorage.setItem(clockKey, String(start));
     setEndsAt(start + mod.minutes * 60_000);
+    if (!saved && roomStart > 0) {
+      const lost = Math.round((Date.now() - roomStart) / 60_000);
+      if (lost >= 1) setLateMinutes(lost);
+    }
     if (seenModule.current !== null && seenModule.current !== mod.moduleNumber) {
       setQIdx(0);
       setReviewing(false);
     }
     seenModule.current = mod.moduleNumber;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clockKey, mod?.moduleNumber]);
+  }, [clockKey, mod?.moduleNumber, sessionModule, moduleStartedAt]);
+
+  // One-time heads-up so a late student knows why their clock is short.
+  const lateToldRef = useRef(false);
+  useEffect(() => {
+    if (lateMinutes < 1 || lateToldRef.current) return;
+    lateToldRef.current = true;
+    toast.info(`You joined ${lateMinutes} min after the room started — your timer matches the class.`);
+  }, [lateMinutes]);
+
 
 
 
@@ -452,10 +497,11 @@ export function ProctorRunner({
               </div>
             ) : (
               <FillIn
-                qid={q.question_id}
+                key={q.question_id}
                 initial={answers[q.question_id] ?? ''}
                 onCommit={(v) => pick(q.question_id, v)}
               />
+
             )}
           </div>
         ) : null}
