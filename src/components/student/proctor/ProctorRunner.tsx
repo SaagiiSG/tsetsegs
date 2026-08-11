@@ -60,25 +60,43 @@ function toOptions(row: PaperRow): Option[] {
     .map((o) => ({ ...o, img: imgs?.[o.key] }));
 }
 
-function FillIn({ qid, initial, onCommit }: { qid: string; initial: string; onCommit: (v: string) => void }) {
+/* One instance per question (keyed by qid at the call site), so two fill-in
+   questions in a row can never share the same box or overwrite each other.
+   Anything typed is flushed on unmount, so a fast "Next" never loses it. */
+function FillIn({ initial, onCommit }: { initial: string; onCommit: (v: string) => void }) {
   const [value, setValue] = useState(initial);
+  const valueRef = useRef(initial);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  const dirty = useRef(false);
   const t = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(t.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(t.current);
+      if (dirty.current) commitRef.current(valueRef.current);
+    },
+    [],
+  );
   return (
     <Input
-      key={qid}
       placeholder="Type your answer"
       value={value}
       onChange={(e) => {
-        setValue(e.target.value);
+        const v = e.target.value;
+        valueRef.current = v;
+        dirty.current = true;
+        setValue(v);
         clearTimeout(t.current);
-        t.current = setTimeout(() => onCommit(e.target.value), 500);
+        t.current = setTimeout(() => commitRef.current(v), 500);
       }}
-      onBlur={() => onCommit(value)}
+      onBlur={() => {
+        if (dirty.current) commitRef.current(valueRef.current);
+      }}
       className="h-12 text-center text-lg font-mono"
     />
   );
 }
+
 
 export interface ProctorModuleResult {
   module: number;
