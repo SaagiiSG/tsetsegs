@@ -377,7 +377,10 @@ export default function ProctorExam() {
       paper={paper}
       initialAnswers={state.answers ?? {}}
       initialModule={state.current_module ?? 1}
+      sessionModule={state.session_current_module}
+      moduleStartedAt={state.module_started_at}
       ended={(state.session_status as string) === 'finished'}
+
       onDone={(res) => {
         if (res) setResult(res);
         setDone(true);
