@@ -352,10 +352,21 @@ export default function ProctorExam() {
   const deviceAnswers = (snap?.answers ?? {}) as AnswerMap;
   const serverAnswers = (state.answers ?? {}) as AnswerMap;
   const report = compareAttempts(deviceAnswers, serverAnswers);
-  const savedAnswers = Math.max(report.deviceCount, report.serverCount);
   const savedModule = Math.max(snap?.module ?? 1, state.current_module ?? 1);
 
-  if (!resolvedChoice && report.needsChoice) {
+  /* These two screens are entry gates only. Freezing the decision on the first
+     render stops the 5s state poll from yanking a student mid-test back to
+     "Continue where you left off" the moment their first answer lands. */
+  if (entryRef.current === null) {
+    entryRef.current = {
+      saved: Math.max(report.deviceCount, report.serverCount),
+      conflict: report.needsChoice,
+    };
+  }
+  const savedAnswers = entryRef.current.saved;
+
+  if (!resolvedChoice && entryRef.current.conflict) {
+
     const chooseCopy = (answers: AnswerMap, label: string) => {
       // Make the choice the single source of truth on both sides before resuming.
       saveSnapshot(participantId, {
