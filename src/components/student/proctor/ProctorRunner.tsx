@@ -151,7 +151,9 @@ export function ProctorRunner({
 
   /* ---- restore from the device snapshot first, server state second ---- */
   const snap = useMemo(() => loadSnapshot(participantId), [participantId]);
-  const resumeModule = Math.max(initialModule || 1, snap?.module ?? 1);
+  // A student who joins after the room started begins on the module the room is on.
+  const resumeModule = Math.max(initialModule || 1, snap?.module ?? 1, sessionModule ?? 1);
+
   const startIdx = modules.findIndex((m) => m.moduleNumber === resumeModule);
   const [modIdx, setModIdx] = useState(startIdx < 0 ? 0 : startIdx);
   const [qIdx, setQIdx] = useState(snap && snap.module === resumeModule ? (snap.qIdx ?? 0) : 0);
