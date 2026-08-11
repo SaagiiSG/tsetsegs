@@ -14,7 +14,9 @@ import {
   type ProctorResult,
   type ProctorModuleResult,
 } from '@/components/student/proctor/ProctorRunner';
-import { loadPaper, savePaper, loadSnapshot, answeredCount } from '@/components/student/proctor/proctorStorage';
+import { loadPaper, savePaper, loadSnapshot, saveSnapshot, answeredCount } from '@/components/student/proctor/proctorStorage';
+import { compareAttempts, type AnswerMap } from '@/components/student/proctor/proctorConflict';
+import { ProctorRecoveryScreen } from '@/components/student/proctor/ProctorRecoveryScreen';
 
 
 interface State {
@@ -58,6 +60,8 @@ export default function ProctorExam() {
   const [done, setDone] = useState(false);
   const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
+  const [resolvedChoice, setResolvedChoice] = useState(false);
+
 
   /* ---------- poll my own state ---------- */
   const loadState = useCallback(async () => {
@@ -343,11 +347,54 @@ export default function ProctorExam() {
     );
   }
 
-  /* ---------- 5. resume where they left off ---------- */
+  /* ---------- 5. recovery: device copy vs online copy ---------- */
   const snap = loadSnapshot(participantId);
-  const savedAnswers = Math.max(answeredCount(snap?.answers ?? {}), answeredCount(state.answers ?? {}));
+  const deviceAnswers = (snap?.answers ?? {}) as AnswerMap;
+  const serverAnswers = (state.answers ?? {}) as AnswerMap;
+  const report = compareAttempts(deviceAnswers, serverAnswers);
+  const savedAnswers = Math.max(report.deviceCount, report.serverCount);
   const savedModule = Math.max(snap?.module ?? 1, state.current_module ?? 1);
+
+  if (!resolvedChoice && report.needsChoice) {
+    const chooseCopy = (answers: AnswerMap, label: string) => {
+      // Make the choice the single source of truth on both sides before resuming.
+      saveSnapshot(participantId, {
+        module: savedModule,
+        qIdx: snap?.qIdx ?? 0,
+        answers,
+        violations: Math.max(snap?.violations ?? 0, state.focus_violations ?? 0),
+        savedAt: Date.now(),
+      });
+      setState((prev) => (prev ? { ...prev, answers } : prev));
+      void supabase.rpc('proctor_save_progress', {
+        p_participant_id: participantId,
+        p_answers: answers,
+        p_module: savedModule,
+        p_violations: Math.max(snap?.violations ?? 0, state.focus_violations ?? 0),
+      });
+      setResolvedChoice(true);
+      setResumed(true);
+      toast.success(
+        label === 'combined'
+          ? 'All your saved answers are restored'
+          : label === 'device'
+            ? "Continuing with this device's answers"
+            : 'Continuing with your online answers',
+      );
+    };
+    return (
+      <ProctorRecoveryScreen
+        report={report}
+        device={deviceAnswers}
+        server={serverAnswers}
+        savedAt={snap?.savedAt}
+        onChoose={chooseCopy}
+      />
+    );
+  }
+
   if (!resumed && savedAnswers > 0) {
+
     return (
       <Shell>
         <Timer className="h-8 w-8 text-primary mx-auto" />
