@@ -30,6 +30,7 @@ interface Participant {
   rw_total: number | null;
   math_total: number | null;
   module_results: ModuleResult[] | null;
+  created_at: string | null;
 }
 
 interface Props {
@@ -40,16 +41,17 @@ interface Props {
 export function ProctorMonitor({ sessionId, onBack }: Props) {
   const [status, setStatus] = useState<string>("active");
   const [title, setTitle] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<string | null>(null);
   const [people, setPeople] = useState<Participant[]>([]);
   const [ending, setEnding] = useState(false);
 
   const load = useCallback(async () => {
     const [{ data: s }, { data: p }] = await Promise.all([
-      supabase.from("proctor_sessions").select("status, title").eq("id", sessionId).maybeSingle(),
+      supabase.from("proctor_sessions").select("status, title, started_at").eq("id", sessionId).maybeSingle(),
       supabase
         .from("proctor_participants")
         .select(
-          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total, module_results",
+          "id, display_name, oath_accepted_at, started_at, submitted_at, current_module, focus_violations, rw_correct, math_correct, rw_total, math_total, module_results, created_at",
         )
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true }),
@@ -57,6 +59,7 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
     if (s) {
       setStatus(s.status);
       setTitle(s.title);
+      setStartedAt((s as { started_at?: string | null }).started_at ?? null);
     }
     setPeople((p ?? []) as unknown as Participant[]);
   }, [sessionId]);
@@ -140,11 +143,19 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
               p.submitted_at && p.rw_total !== null
                 ? `${(p.rw_correct ?? 0) + (p.math_correct ?? 0)}/${(p.rw_total ?? 0) + (p.math_total ?? 0)}`
                 : null;
+            // Joined more than 2 minutes after the room started — proctor should know.
+            const late =
+              !!startedAt && !!p.created_at && Date.parse(p.created_at) - Date.parse(startedAt) > 120_000;
             const mods = [...((p.module_results ?? []) as ModuleResult[])].sort((a, b) => a.module - b.module);
             return (
               <div key={p.id} className="p-3 space-y-1.5">
                 <div className="flex items-center gap-3">
                   <span className="text-sm truncate flex-1">{p.display_name ?? "Student"}</span>
+                  {late && (
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      late join
+                    </Badge>
+                  )}
                   {(p.focus_violations ?? 0) > 0 && (
                     <Badge variant="destructive" className="text-[10px] font-mono">
                       {p.focus_violations} focus
