@@ -27,6 +27,9 @@ interface State {
   submitted_at: string | null;
   session_status: string;
   session_title: string;
+  session_current_module: number | null;
+  module_started_at: string | null;
+
   rw_correct: number | null;
   math_correct: number | null;
   rw_total: number | null;
