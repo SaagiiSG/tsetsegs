@@ -61,6 +61,8 @@ export default function ProctorExam() {
   const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
   const [resolvedChoice, setResolvedChoice] = useState(false);
+  const entryRef = useRef<{ saved: number; conflict: boolean } | null>(null);
+
 
 
   /* ---------- poll my own state ---------- */
