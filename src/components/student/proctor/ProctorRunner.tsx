@@ -121,13 +121,19 @@ interface Props {
   paper: PaperRow[];
   initialAnswers: Record<string, string>;
   initialModule: number;
+  /** Module the room is currently on — a late student is dropped straight into it. */
+  sessionModule?: number | null;
+  /** When the room started that module — a late student only gets the time left. */
+  moduleStartedAt?: string | null;
   ended: boolean;
   onDone: (result?: ProctorResult) => void;
 }
 
 export function ProctorRunner({
-  participantId, title, displayName, paper, initialAnswers, initialModule, ended, onDone,
+  participantId, title, displayName, paper, initialAnswers, initialModule,
+  sessionModule, moduleStartedAt, ended, onDone,
 }: Props) {
+
   const modules = useMemo<ModuleGroup[]>(() => {
     const map = new Map<number, ModuleGroup>();
     paper.forEach((r) => {
