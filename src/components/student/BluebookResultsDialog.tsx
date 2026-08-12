@@ -159,7 +159,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
   if (selectedQuestion) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] h-[calc(100dvh-1rem)] sm:w-[95vw] sm:h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           {/* Question Detail Header */}
           <div className="flex items-center justify-between p-4 border-b shrink-0">
             <Button 
@@ -176,7 +176,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
           </div>
           
           {/* Question Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 touch-pan-y">
             <div className="space-y-6 max-w-4xl mx-auto">
               {/* Passage if exists */}
               {selectedQuestion.passage_text && (
@@ -316,17 +316,17 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] h-[calc(100dvh-1rem)] sm:h-[90vh] grid grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-0 p-0 overflow-hidden">
         {/* Header with Score */}
-        <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 text-center border-b">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/20 mb-3">
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 px-4 py-3 sm:p-6 text-center border-b shrink-0">
+          <div className="hidden sm:inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/20 mb-3">
             <Trophy className="h-7 w-7 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold mb-1">Test Complete!</h2>
-          <div className="text-4xl font-black text-primary mb-3">
+          <h2 className="text-lg sm:text-2xl font-bold mb-1">Test Complete!</h2>
+          <div className="text-3xl sm:text-4xl font-black text-primary mb-2 sm:mb-3">
             {results.totalScore}
           </div>
-          <div className="flex items-center justify-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-blue-500" />
               <span>R&W: <strong>{results.rwScaled}</strong></span>
@@ -341,7 +341,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 py-3 border-b bg-muted/30 text-sm">
+        <div className="flex items-center justify-center gap-4 sm:gap-6 py-2 sm:py-3 border-b bg-muted/30 text-xs sm:text-sm shrink-0">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <span>Correct</span>
@@ -357,8 +357,8 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
         </div>
 
         {/* Question Breakdown */}
-        <div className="flex-1 overflow-hidden">
-          <Tabs defaultValue="reading_writing" className="h-full flex flex-col">
+        <div className="min-h-0 overflow-hidden">
+          <Tabs defaultValue="reading_writing" className="h-full min-h-0 flex flex-col">
             <div className="px-4 pt-3">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="reading_writing" className="gap-2">
@@ -372,7 +372,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 px-4 py-3">
+            <ScrollArea className="min-h-0 flex-1 px-4 py-3 touch-pan-y">
               <TabsContent value="reading_writing" className="mt-0">
                 {renderQuestionList(rwQuestions, "Reading & Writing")}
               </TabsContent>
@@ -385,7 +385,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t">
+        <div className="p-3 sm:p-4 border-t shrink-0">
           <Button onClick={onClose} className="w-full gap-2">
             <X className="h-4 w-4" />
             Close & Return to Practice Tests
