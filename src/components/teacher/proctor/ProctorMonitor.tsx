@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Loader2, Square, Users } from "lucide-react";
 import { toast } from "sonner";
+import { ReviewModeControl } from "./ReviewModeControl";
+
 
 interface ModuleResult {
   module: number;
@@ -131,7 +133,10 @@ export function ProctorMonitor({ sessionId, onBack }: Props) {
         )}
       </div>
 
+      <ReviewModeControl sessionId={sessionId} />
+
       <Card className="divide-y">
+
         <div className="flex items-center gap-2 p-3 text-xs font-semibold text-muted-foreground">
           <Users className="h-4 w-4" /> Roster
         </div>

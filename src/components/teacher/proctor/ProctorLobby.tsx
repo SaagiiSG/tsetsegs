@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Copy, Eye, EyeOff, Loader2, Play, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 import { makeCode } from "./ProctorStartDialog";
+import { ReviewModeControl } from "./ReviewModeControl";
+
 
 interface Participant {
   id: string;
@@ -173,10 +175,13 @@ export function ProctorLobby({ sessionId, onBack, onStarted }: Props) {
             </div>
           </Card>
 
+          <ReviewModeControl sessionId={sessionId} />
+
           <Button className="w-full gap-2" onClick={start} disabled={working || people.length === 0}>
             {working ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             Start test for everyone
           </Button>
+
         </div>
       </div>
     </div>
