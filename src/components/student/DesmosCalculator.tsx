@@ -208,12 +208,17 @@ export function DesmosCalculator() {
       if (isOpen) {
         if (t.clientX > EDGE) return;
         g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
+        // Block the browser's native left-edge "swipe back" gesture, which would
+        // otherwise pop history and kick the student out of the test.
+        if (e.cancelable) e.preventDefault();
       } else {
         if (t.clientX < window.innerWidth - EDGE) return;
         setMobileMounted(true);
         g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
+        if (e.cancelable) e.preventDefault();
       }
     };
+
 
     const onMove = (e: TouchEvent) => {
       if (!g || e.touches.length !== 1) return;
