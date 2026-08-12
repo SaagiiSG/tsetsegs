@@ -230,25 +230,70 @@ export default function ProctorExam() {
     );
   }
 
-  if (done || state.submitted_at) {
+  if (done || state.submitted_at || state.session_status === 'finished') {
     const mods = (result?.module_results ?? state.module_results ?? []) as ProctorModuleResult[];
-    const correct = (result?.math_correct ?? state.math_correct ?? 0) + (result?.rw_correct ?? state.rw_correct ?? 0);
-    const total = (result?.math_total ?? state.math_total ?? 0) + (result?.rw_total ?? state.rw_total ?? 0);
+    const rwCorrect = result?.rw_correct ?? state.rw_correct ?? 0;
+    const mathCorrect = result?.math_correct ?? state.math_correct ?? 0;
+    const rwTotal = result?.rw_total ?? state.rw_total ?? 0;
+    const mathTotal = result?.math_total ?? state.math_total ?? 0;
+    const correct = rwCorrect + mathCorrect;
+    const total = rwTotal + mathTotal;
+    const rwScaled = rwTotal ? scaleSectionScore(rwCorrect, rwTotal) : 0;
+    const mathScaled = mathTotal ? scaleSectionScore(mathCorrect, mathTotal) : 0;
+    const scaledTotal = rwScaled + mathScaled;
     if (reviewOpen && reviewRows && reviewRows.length > 0) {
       return <ProctorReview rows={reviewRows} onBack={() => setReviewOpen(false)} />;
     }
+    if (total === 0 && !state.submitted_at && !done) {
+      return (
+        <Shell>
+          <h1 className="text-lg font-semibold">Scoring your test…</h1>
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" /> This takes a moment — keep this page open.
+          </p>
+        </Shell>
+      );
+    }
     return (
       <Shell>
-        <h1 className="text-lg font-semibold">Your test is submitted</h1>
+        <h1 className="text-lg font-semibold">Your results</h1>
         {total > 0 ? (
           <>
             <div className="rounded-xl border p-4 text-center">
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Raw score</div>
-              <div className="text-3xl font-mono font-bold">
-                {correct}
-                <span className="text-base text-muted-foreground">/{total}</span>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {rwTotal && mathTotal ? 'Total score' : 'Section score'}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">{total - correct} wrong or blank</div>
+              <div className="text-4xl font-mono font-bold">{scaledTotal}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {rwTotal && mathTotal ? '400–1600 scale' : '200–800 scale'}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {rwTotal > 0 && (
+                <div className="rounded-lg border px-3 py-2 text-center">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Reading & Writing</div>
+                  <div className="text-xl font-mono font-semibold">{rwScaled}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono">
+                    {rwCorrect}/{rwTotal} raw
+                  </div>
+                </div>
+              )}
+              {mathTotal > 0 && (
+                <div className="rounded-lg border px-3 py-2 text-center">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Math</div>
+                  <div className="text-xl font-mono font-semibold">{mathScaled}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono">
+                    {mathCorrect}/{mathTotal} raw
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm flex items-center justify-between">
+              <span>Raw score</span>
+              <span className="font-mono font-semibold">
+                {correct}/{total}
+                <span className="text-muted-foreground"> · {total - correct} missed</span>
+              </span>
             </div>
             {mods.length > 0 && (
               <div className="space-y-1.5">
@@ -277,7 +322,7 @@ export default function ProctorExam() {
                 : 'See which questions you missed'}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Your teacher has the full breakdown — they will go through the paper in class.
+              Go through every question, then your teacher will cover the paper in class.
             </p>
           </>
         ) : (
@@ -290,14 +335,6 @@ export default function ProctorExam() {
   }
 
 
-  if (state.session_status === 'finished' && !paper) {
-    return (
-      <Shell>
-        <h1 className="text-lg font-semibold">This session has ended</h1>
-        <p className="text-sm text-muted-foreground">Ask your teacher for the results.</p>
-      </Shell>
-    );
-  }
 
   /* ---------- 2. unlock code ---------- */
   if (!state.code_verified) {
