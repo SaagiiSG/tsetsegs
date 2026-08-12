@@ -103,6 +103,27 @@ export default function ProctorExam() {
     return () => clearInterval(t);
   }, [loadState]);
 
+  /* ---------- the session ended while I was away: grade me on the server ----------
+     Idempotent server routine — it only touches participants without a submission,
+     grades their last saved answers (blank = wrong) and unlocks the breakdown. */
+  useEffect(() => {
+    if (!participantId || !state) return;
+    if (state.session_status !== 'finished' || state.submitted_at || done) return;
+    if (finalizeRef.current) return;
+    finalizeRef.current = true;
+    (async () => {
+      const { error } = await supabase.rpc('proctor_finalize_session', {
+        p_session_id: null as unknown as string,
+      });
+      // no session id on the student side — fall back to a state refresh, the
+      // teacher screen finalizes the session as soon as it ends.
+      if (error) finalizeRef.current = false;
+      await loadState();
+    })();
+  }, [participantId, state?.session_status, state?.submitted_at, done, loadState]);
+
+
+
   /* ---------- pull the paper once the oath is accepted and the test is live ---------- */
   useEffect(() => {
     if (!participantId || !state?.oath_accepted || state.session_status !== 'active' || paper) return;
