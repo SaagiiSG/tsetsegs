@@ -827,18 +827,19 @@ export default function StudentBluebookTest() {
           </Drawer>
 
           {currentQuestionIndex === (moduleQuestions?.length || 0) - 1 ? (
-            <Button onClick={handleModuleComplete} size="icon" className="h-10 w-10">
+            <Button onClick={handleModuleComplete} size="icon" className="h-11 w-11 shrink-0">
               <CheckCircle2 className="h-5 w-5" />
             </Button>
           ) : (
             <Button
               onClick={() => setCurrentQuestionIndex(prev => Math.min((moduleQuestions?.length || 0) - 1, prev + 1))}
               size="icon"
-              className="h-10 w-10"
+              className="h-11 w-11 shrink-0"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
           )}
+
         </div>
       </footer>
     </div>
