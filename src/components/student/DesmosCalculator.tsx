@@ -158,119 +158,67 @@ export function DesmosCalculator() {
     if (!isMobile) delete document.body.dataset.calcMobileOpen;
   }, [isMobile]);
 
-  // ── Mobile swipe gesture (open only) ──
-  // Swipe left from the question view's right edge to pull the Desmos pane in.
-  // Closing is button-only ("Back to question") — a close swipe fought the OS
-  // back gesture and could kick students out of a test.
-  // Disabled inside the Bluebook mock test — the edge swipe there fought the
-  // test's own navigation and could pull students out of a module.
+  // ── Mobile floating launcher (draggable) ──
+  // Swipe-to-open was removed: it fought the OS back gesture and could pull
+  // students out of a test. A draggable FAB is far more predictable.
+  const FAB_SIZE = 52;
+  const [fabPos, setFabPos] = useState<{ x: number; y: number } | null>(null);
+  const fabDrag = useRef<{ dx: number; dy: number; moved: boolean } | null>(null);
+
   useEffect(() => {
-    if (!isMobile || isOpen) return;
-    if (/\/practice\/bluebook\/test\//.test(window.location.pathname)) return;
-    const rootEl = document.getElementById('root');
-    if (!rootEl) return;
+    if (!isMobile || fabPos) return;
+    let saved: { x: number; y: number } | null = null;
+    try {
+      const raw = localStorage.getItem('desmos:fab:pos');
+      if (raw) saved = JSON.parse(raw);
+    } catch { /* ignore */ }
+    const clamp = (p: { x: number; y: number }) => ({
+      x: Math.max(4, Math.min(window.innerWidth - FAB_SIZE - 4, p.x)),
+      y: Math.max(4, Math.min(window.innerHeight - FAB_SIZE - 4, p.y)),
+    });
+    setFabPos(
+      clamp(saved ?? {
+        x: window.innerWidth - FAB_SIZE - 10,
+        y: Math.round(window.innerHeight * 0.55),
+      })
+    );
+  }, [isMobile, fabPos]);
 
-    const OPEN_EDGE = 32; // px hot zone on the question view's right edge
-    const THRESHOLD = 0.35; // fraction of the screen needed to commit
-    let g: { startX: number; startY: number; startP: number; p: number; decided: boolean } | null = null;
+  const onFabTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1 || !fabPos) return;
+    const t = e.touches[0];
+    fabDrag.current = { dx: t.clientX - fabPos.x, dy: t.clientY - fabPos.y, moved: false };
+  };
 
-
-
-    const apply = (p: number) => {
-      const w = window.innerWidth;
-      rootEl.style.transition = 'none';
-      rootEl.style.willChange = 'transform';
-      rootEl.style.transform = `translate3d(${-p * w}px,0,0)`;
-      const pane = mobilePaneRef.current;
-      if (pane) {
-        pane.style.transition = 'none';
-        pane.style.willChange = 'transform';
-        pane.style.transform = `translate3d(${(1 - p) * w}px,0,0)`;
-        pane.style.visibility = 'visible';
-      }
-    };
-
-    const settle = (open: boolean) => {
-      const pane = mobilePaneRef.current;
-      rootEl.style.transition = '';
-      rootEl.style.transform = open ? 'translate3d(-100%,0,0)' : 'translate3d(0,0,0)';
-      if (pane) {
-        pane.style.transition = '';
-        pane.style.transform = open ? 'translate3d(0,0,0)' : 'translate3d(100%,0,0)';
-      }
-      // Let the slide finish on the compositor before React re-renders the
-      // question view / flips body flags — otherwise the closing animation
-      // stutters on the last frames.
-      window.setTimeout(() => {
-        setIsOpen(open);
-        // One extra tick so the body flag / CSS transform is in place before the
-        // inline transform is dropped (prevents a one-frame jump).
-        window.setTimeout(() => {
-          rootEl.style.transform = '';
-          rootEl.style.willChange = '';
-          const p2 = mobilePaneRef.current;
-          if (p2) {
-            p2.style.transform = '';
-            p2.style.willChange = '';
-            p2.style.visibility = '';
-          }
-        }, 50);
-      }, 260);
-
-    };
-
-
-    const onStart = (e: TouchEvent) => {
-      if (g || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      // Only from the far right edge of the question view.
-      if (t.clientX < window.innerWidth - OPEN_EDGE) return;
-      setMobileMounted(true);
-      g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
+  const onFabTouchMove = (e: React.TouchEvent) => {
+    const g = fabDrag.current;
+    if (!g || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const x = Math.max(4, Math.min(window.innerWidth - FAB_SIZE - 4, t.clientX - g.dx));
+    const y = Math.max(4, Math.min(window.innerHeight - FAB_SIZE - 4, t.clientY - g.dy));
+    if (!g.moved && (Math.abs(t.clientX - g.dx - (fabPos?.x ?? 0)) > 6 || Math.abs(t.clientY - g.dy - (fabPos?.y ?? 0)) > 6)) {
+      g.moved = true;
+    }
+    if (g.moved) {
       if (e.cancelable) e.preventDefault();
-    };
+      setFabPos({ x, y });
+    }
+  };
 
-
-
-
-    const onMove = (e: TouchEvent) => {
-      if (!g || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      const dx = t.clientX - g.startX;
-      const dy = t.clientY - g.startY;
-      if (!g.decided) {
-        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-        if (Math.abs(dx) <= Math.abs(dy)) { g = null; return; } // vertical scroll wins
-        g.decided = true;
-        document.body.dataset.calculatorDragging = 'true';
+  const onFabTouchEnd = () => {
+    const g = fabDrag.current;
+    fabDrag.current = null;
+    if (!g) return;
+    if (g.moved) {
+      if (fabPos) {
+        try { localStorage.setItem('desmos:fab:pos', JSON.stringify(fabPos)); } catch { /* ignore */ }
       }
-      e.preventDefault();
-      const w = window.innerWidth;
-      g.p = Math.min(1, Math.max(0, g.startP - dx / w));
-      apply(g.p);
-    };
+      return;
+    }
+    setMobileMounted(true);
+    setIsOpen(true);
+  };
 
-    const onEnd = () => {
-      if (!g) return;
-      const { p, decided } = g;
-      g = null;
-      delete document.body.dataset.calculatorDragging;
-      if (!decided) return;
-      settle(p > THRESHOLD);
-    };
-
-
-    document.addEventListener('touchstart', onStart, { passive: false });
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onEnd);
-    document.addEventListener('touchcancel', onEnd);
-    return () => {
-      document.removeEventListener('touchstart', onStart);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-      document.removeEventListener('touchcancel', onEnd);
-    };
-  }, [isMobile, isOpen]);
 
 
 
@@ -522,50 +470,73 @@ export function DesmosCalculator() {
   // Tapping the calculator icon pushes the shell left and slides this pane in.
   // Portalled to <body> so it isn't affected by the #root transform.
   if (isMobile) {
-    if (!mobileMounted) return null;
     return createPortal(
-      <div
-        ref={mobilePaneRef}
-        data-calculator-window
-        aria-hidden={!isOpen}
-        className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
-        style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          visibility: isOpen ? 'visible' : 'hidden',
-        }}
-      >
-        <div className="flex-1 min-h-0 relative pt-[env(safe-area-inset-top)]">
-          <iframe
-            src="https://www.desmos.com/calculator"
-            title="Desmos Graphing Calculator"
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin"
-          />
-        </div>
-        {/* Thumb-reachable, high-visibility close button on the right at ~35% height */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          aria-label="Back to question"
-          className="absolute right-2 z-20 flex items-center justify-center rounded-full h-11 w-11 shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
-          style={{
-            top: '35%',
-            transform: 'translateY(-50%)',
-            background: 'hsl(var(--gold))',
-            color: 'hsl(240 10% 12%)',
-          }}
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
+      <>
+        {/* Draggable launcher — hidden while the pane is open */}
+        {!isOpen && fabPos && (
+          <button
+            type="button"
+            aria-label="Open calculator"
+            onTouchStart={onFabTouchStart}
+            onTouchMove={onFabTouchMove}
+            onTouchEnd={onFabTouchEnd}
+            onTouchCancel={onFabTouchEnd}
+            className="fixed z-[70] flex items-center justify-center rounded-full shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform touch-none"
+            style={{
+              left: fabPos.x,
+              top: fabPos.y,
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              background: 'hsl(var(--gold))',
+              color: 'hsl(240 10% 12%)',
+            }}
+          >
+            <Calculator className="h-6 w-6" />
+          </button>
+        )}
 
-
-
-
-      </div>,
+        {mobileMounted && (
+          <div
+            ref={mobilePaneRef}
+            data-calculator-window
+            aria-hidden={!isOpen}
+            className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
+            style={{
+              transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+              pointerEvents: isOpen ? 'auto' : 'none',
+              visibility: isOpen ? 'visible' : 'hidden',
+            }}
+          >
+            <div className="flex-1 min-h-0 relative pt-[env(safe-area-inset-top)]">
+              <iframe
+                src="https://www.desmos.com/calculator"
+                title="Desmos Graphing Calculator"
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+            {/* Thumb-reachable, high-visibility close button on the right at ~35% height */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Back to question"
+              className="absolute right-2 z-20 flex items-center justify-center rounded-full h-11 w-11 shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
+              style={{
+                top: '35%',
+                transform: 'translateY(-50%)',
+                background: 'hsl(var(--gold))',
+                color: 'hsl(240 10% 12%)',
+              }}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+      </>,
       document.body,
     );
   }
+
 
 
   // When closed, don't render anything - toggle is handled via header button
