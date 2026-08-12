@@ -532,22 +532,7 @@ export function DesmosCalculator() {
           visibility: isOpen ? 'visible' : 'hidden',
         }}
       >
-        <div className="flex items-center justify-between gap-2 px-3 border-b bg-card min-h-[48px] pt-[env(safe-area-inset-top)]">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-9 gap-1"
-            onClick={() => setIsOpen(false)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to question
-          </Button>
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Calculator className="h-4 w-4" />
-            <span>Desmos</span>
-          </div>
-        </div>
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0 relative pt-[env(safe-area-inset-top)]">
           <iframe
             src="https://www.desmos.com/calculator"
             title="Desmos Graphing Calculator"
@@ -555,16 +540,23 @@ export function DesmosCalculator() {
             sandbox="allow-scripts allow-same-origin"
           />
         </div>
-        {/* Thumb-reachable close button on the right at ~35% height */}
+        {/* Thumb-reachable, high-visibility close button on the right at ~35% height */}
         <button
           type="button"
           onClick={() => setIsOpen(false)}
           aria-label="Back to question"
-          className="absolute right-2 z-20 flex h-11 w-11 items-center justify-center rounded-full border bg-card/95 text-foreground shadow-lg backdrop-blur active:scale-95 transition-transform"
-          style={{ top: '35%', transform: 'translateY(-50%)' }}
+          className="absolute right-2 z-20 flex items-center gap-1 rounded-full pl-2 pr-3 h-11 text-[13px] font-semibold shadow-xl ring-2 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
+          style={{
+            top: '35%',
+            transform: 'translateY(-50%)',
+            background: 'hsl(var(--gold))',
+            color: 'hsl(240 10% 12%)',
+          }}
         >
           <ChevronLeft className="h-5 w-5" />
+          Question
         </button>
+
 
 
       </div>,
