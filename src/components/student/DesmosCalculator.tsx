@@ -52,7 +52,12 @@ export function useCalculatorSnap() {
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null;
 
 export function DesmosCalculator() {
+  const isMobile = useIsMobile();
+  // Once the mobile pane has been opened we keep it mounted (translated off-canvas)
+  // so the Desmos iframe — and any typed expressions — survive switching back and forth.
+  const [mobileMounted, setMobileMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
   const [isMinimized, setIsMinimized] = useState(false);
   const [snapSide, setSnapSide] = useState<SnapSide>(null);
   const [position, setPosition] = useState({ x: 20, y: 60 });
