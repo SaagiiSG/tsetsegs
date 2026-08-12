@@ -601,21 +601,21 @@ export default function StudentBluebookTest() {
       {/* Main Content - Offset when calculator is snapped */}
       <div 
         className={cn(
-          "flex-1 overflow-auto pb-20 transition-all duration-300",
+          "flex-1 overflow-auto pb-[max(5rem,calc(4.5rem+env(safe-area-inset-bottom)))] transition-all duration-300",
           calculatorSnapSide === 'left' && "ml-[40vw]",
           calculatorSnapSide === 'right' && "mr-[40vw]"
         )}
       >
-        <main className="p-6">
+        <main className="px-2.5 py-3 md:p-6">
           {currentQuestion?.question && (
             <div className={cn(
-              "space-y-6 transition-all duration-300",
+              "space-y-3 md:space-y-6 transition-all duration-300",
               calculatorSnapSide ? "max-w-2xl mx-auto" : "max-w-4xl mx-auto"
             )}>
               {/* Passage (if any) */}
               {currentQuestion.question.passage_text && (
                 <Card className="bg-muted/30">
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 md:p-4">
                     <MathText text={currentQuestion.question.passage_text} />
                   </CardContent>
                 </Card>
@@ -623,12 +623,14 @@ export default function StudentBluebookTest() {
 
               {/* Question */}
               <Card>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <Badge variant="outline" className="mb-3">
+                <CardContent className="p-3 md:p-6 space-y-3 md:space-y-4">
+                  <div className="flex items-start justify-between gap-2 md:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <Badge variant="outline" className="mb-2 md:mb-3">
                         Question {currentQuestionIndex + 1}
                       </Badge>
+                      
+
                       
                       {/* Question Image */}
                       <QuestionFigures
