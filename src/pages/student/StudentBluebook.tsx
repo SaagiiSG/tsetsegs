@@ -270,9 +270,11 @@ export default function StudentBluebook() {
   const renderTestCard = (test: BluebookTest) => {
     const stats = moduleStats?.[test.id];
     const attempt = getTestAttempt(test.id);
+    const lastCompleted = getLastCompletedAttempt(test.id);
     const isCompleted = attempt?.status === 'completed';
     const isInProgress = attempt?.status === 'in_progress';
     const monthLabel = test.test_month ? MONTHS.find(m => m.value === test.test_month)?.short : '';
+
 
     return (
       <Card 
