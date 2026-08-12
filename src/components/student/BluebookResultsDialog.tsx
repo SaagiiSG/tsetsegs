@@ -10,34 +10,14 @@ import {
   Calculator, BookOpen, X, Circle, Minus
 } from 'lucide-react';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 import { cn } from '@/lib/utils';
+import {
+  normaliseChoices,
+  type BluebookQuestionResult as QuestionResult,
+  type BluebookResultsData as ResultsData,
+} from '@/lib/bluebookReview';
 
-interface QuestionResult {
-  id: string;
-  question_id: string;
-  question_text: string;
-  question_image_url: string | null;
-  question_type: string;
-  multiple_choice_options: any;
-  passage_text: string | null;
-  correct_answer: string;
-  user_answer: string | null;
-  is_correct: boolean;
-  order_index: number;
-  section: 'reading_writing' | 'math';
-  module_number: number;
-}
-
-interface ResultsData {
-  totalScore: number;
-  rwScaled: number;
-  mathScaled: number;
-  rwRaw: number;
-  mathRaw: number;
-  rwTotal: number;
-  mathTotal: number;
-  questions: QuestionResult[];
-}
 
 interface BluebookResultsDialogProps {
   open: boolean;
