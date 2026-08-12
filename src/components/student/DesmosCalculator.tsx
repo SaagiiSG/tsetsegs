@@ -401,8 +401,8 @@ export function DesmosCalculator() {
     };
   }, [isDragging, isResizing]);
 
-  // ── Mobile: full-screen pane that sits to the LEFT of the app shell ──
-  // Tapping the calculator icon slides the shell right and reveals this pane.
+  // ── Mobile: full-screen pane that sits to the RIGHT of the app shell ──
+  // Tapping the calculator icon pushes the shell left and slides this pane in.
   // Portalled to <body> so it isn't affected by the #root transform.
   if (isMobile) {
     if (!mobileMounted) return null;
@@ -410,9 +410,9 @@ export function DesmosCalculator() {
       <div
         data-calculator-window
         aria-hidden={!isOpen}
-        className="fixed inset-y-0 left-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
+        className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
         style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           pointerEvents: isOpen ? 'auto' : 'none',
           visibility: isOpen ? 'visible' : 'hidden',
         }}
