@@ -562,8 +562,8 @@ button .math-inline .katex {
 }
 
 /* ── Mobile full-screen Desmos split view ──
-   The calculator pane is portalled to <body> and lives just off the left edge.
-   Opening it slides the whole app shell (#root) one screen to the right so the
+   The calculator pane is portalled to <body> and lives just off the right edge.
+   Opening it pushes the whole app shell (#root) one screen to the left so the
    two full-screen panels sit side by side. Mobile widths only. */
 @media (max-width: 767px) {
   #root {
@@ -576,7 +576,7 @@ button .math-inline .katex {
   }
 
   body[data-calc-mobile-open='true'] #root {
-    transform: translateX(100%);
+    transform: translateX(-100%);
   }
 
   .calc-mobile-pane {

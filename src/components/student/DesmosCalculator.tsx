@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Calculator, X, Minus, Maximize2, Minimize2, ChevronRight } from 'lucide-react';
+import { Calculator, X, Minus, Maximize2, Minimize2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { getDesmosContext } from '@/lib/desmosTracking';
@@ -401,8 +401,8 @@ export function DesmosCalculator() {
     };
   }, [isDragging, isResizing]);
 
-  // ── Mobile: full-screen pane that sits to the LEFT of the app shell ──
-  // Tapping the calculator icon slides the shell right and reveals this pane.
+  // ── Mobile: full-screen pane that sits to the RIGHT of the app shell ──
+  // Tapping the calculator icon pushes the shell left and slides this pane in.
   // Portalled to <body> so it isn't affected by the #root transform.
   if (isMobile) {
     if (!mobileMounted) return null;
@@ -410,27 +410,27 @@ export function DesmosCalculator() {
       <div
         data-calculator-window
         aria-hidden={!isOpen}
-        className="fixed inset-y-0 left-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
+        className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
         style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           pointerEvents: isOpen ? 'auto' : 'none',
           visibility: isOpen ? 'visible' : 'hidden',
         }}
       >
         <div className="flex items-center justify-between gap-2 px-3 border-b bg-card min-h-[48px] pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Calculator className="h-4 w-4" />
-            <span>Desmos</span>
-          </div>
           <Button
             variant="secondary"
             size="sm"
             className="h-9 gap-1"
             onClick={() => setIsOpen(false)}
           >
+            <ChevronLeft className="h-4 w-4" />
             Back to question
-            <ChevronRight className="h-4 w-4" />
           </Button>
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Calculator className="h-4 w-4" />
+            <span>Desmos</span>
+          </div>
         </div>
         <div className="flex-1 min-h-0">
           <iframe
