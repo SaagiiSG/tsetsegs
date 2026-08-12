@@ -766,7 +766,7 @@ export default function StudentQuestion() {
     <>
     {/* Fixed Bottom Bar - portaled to body to escape stacking contexts */}
     {createPortal(
-    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[55] bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[55] bg-background/95 backdrop-blur-sm border-t px-2.5 py-2 md:px-4 md:py-3"
       style={{ 
         marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
         marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
@@ -854,34 +854,34 @@ export default function StudentQuestion() {
         }}
       >
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/practice/dashboard')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+          <div className="container mx-auto px-2.5 py-2 md:px-4 md:py-4 flex items-center justify-between gap-1">
+            <Button variant="ghost" size="sm" className="h-10 px-2 md:px-3 shrink-0" onClick={() => navigate('/practice/dashboard')}>
+              <ArrowLeft className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Back</span>
             </Button>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
-              <Badge variant="secondary">{question.category?.name}</Badge>
+            <div className="flex items-center gap-1.5 md:gap-2 min-w-0 overflow-hidden">
+              <Badge variant="outline" className="font-mono shrink-0">{question.question_id}</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex">{question.category?.name}</Badge>
               {(question as any).difficulty_level && (
-                <Badge variant="outline" className="gap-1.5">
+                <Badge variant="outline" className="gap-1.5 shrink-0">
                   <DifficultyDots level={(question as any).difficulty_level} />
-                  <span className="text-xs capitalize">{(question as any).difficulty_level}</span>
+                  <span className="hidden sm:inline text-xs capitalize">{(question as any).difficulty_level}</span>
                 </Badge>
               )}
               {allQuestions && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground shrink-0">
                   ({currentQuestionIndex + 1}/{allQuestions.length})
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => toggleCalculator()}>
+            <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
+              <Button variant="ghost" size="sm" className="h-11 w-11 p-0 md:h-9 md:w-9" aria-label="Calculator" onClick={() => toggleCalculator()}>
                 <Calculator className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => toggleReferenceSheet()}>
+              <Button variant="ghost" size="sm" className="h-11 w-11 p-0 md:h-9 md:w-9" aria-label="Reference sheet" onClick={() => toggleReferenceSheet()}>
                 <BookOpen className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setFlagDialogOpen(true)}>
+              <Button variant="ghost" size="sm" className="h-11 w-11 p-0 md:h-9 md:w-9" aria-label="Flag question" onClick={() => setFlagDialogOpen(true)}>
                 <Flag className="h-4 w-4" />
               </Button>
             </div>
@@ -889,7 +889,8 @@ export default function StudentQuestion() {
         </header>
 
 
-        <main className="container mx-auto px-4 py-6 pb-24 max-w-3xl space-y-6">
+        <main className="container mx-auto px-2.5 py-3 md:px-4 md:py-6 pb-24 max-w-3xl space-y-3 md:space-y-6">
+
           {/* Video Section */}
           {videoId && !videoWatched && (
             <Card>

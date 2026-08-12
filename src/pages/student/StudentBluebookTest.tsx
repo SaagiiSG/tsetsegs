@@ -508,19 +508,21 @@ export default function StudentBluebookTest() {
       {currentModule?.section === 'math' && <ReferenceSheet />}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b px-4 py-3">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <header className="sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           {/* Left: Exit and Test Info */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-1 md:gap-4 flex-1 min-w-0">
             <Button 
               variant="ghost" 
               size="icon"
+              className="h-11 w-11 md:h-10 md:w-10 shrink-0"
               onClick={() => navigate('/practice/bluebook')}
             >
               <X className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="font-semibold">{attempt?.test?.name}</h1>
+            {/* Title is hidden on phones — the module label lives in the question drawer */}
+            <div className="hidden md:block min-w-0">
+              <h1 className="font-semibold truncate">{attempt?.test?.name}</h1>
               <p className="text-sm text-muted-foreground">
                 {currentModule?.section === 'reading_writing' ? 'Reading & Writing' : 'Math'} - 
                 Module {currentModule?.module_number}
@@ -533,7 +535,7 @@ export default function StudentBluebookTest() {
             <Badge 
               variant={timeRemaining && timeRemaining < 300 ? 'destructive' : 'secondary'}
               className={cn(
-                "gap-1 text-lg px-3 py-1 transition-all",
+                "gap-1 text-base md:text-lg px-2.5 md:px-3 py-1 tabular-nums transition-all",
                 timeRemaining !== null && timeRemaining < 60 && "animate-pulse shadow-[0_0_15px_hsl(var(--destructive))]"
               )}
             >
@@ -542,18 +544,20 @@ export default function StudentBluebookTest() {
             </Badge>
           </div>
 
+
           {/* Right: Calculator, Reference, Settings */}
-          <div className="flex items-center gap-2 flex-1 justify-end">
+          <div className="flex items-center gap-1 md:gap-2 flex-1 justify-end">
             {/* Calculator Button - Only for Math */}
             {currentModule?.section === 'math' && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => toggleCalculator()}
-                className="gap-2"
+                className="gap-2 h-11 w-11 p-0 md:h-9 md:w-auto md:px-3"
+                aria-label="Calculator"
               >
                 <Calculator className="h-4 w-4" />
-                <span className="hidden sm:inline">Calculator</span>
+                <span className="hidden md:inline">Calculator</span>
               </Button>
             )}
 
@@ -563,10 +567,11 @@ export default function StudentBluebookTest() {
             {/* Settings Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="h-11 w-11 md:h-10 md:w-10">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => {
                   // Save progress
@@ -596,21 +601,21 @@ export default function StudentBluebookTest() {
       {/* Main Content - Offset when calculator is snapped */}
       <div 
         className={cn(
-          "flex-1 overflow-auto pb-20 transition-all duration-300",
+          "flex-1 overflow-auto pb-[max(5rem,calc(4.5rem+env(safe-area-inset-bottom)))] transition-all duration-300",
           calculatorSnapSide === 'left' && "ml-[40vw]",
           calculatorSnapSide === 'right' && "mr-[40vw]"
         )}
       >
-        <main className="p-6">
+        <main className="px-2.5 py-3 md:p-6">
           {currentQuestion?.question && (
             <div className={cn(
-              "space-y-6 transition-all duration-300",
+              "space-y-3 md:space-y-6 transition-all duration-300",
               calculatorSnapSide ? "max-w-2xl mx-auto" : "max-w-4xl mx-auto"
             )}>
               {/* Passage (if any) */}
               {currentQuestion.question.passage_text && (
                 <Card className="bg-muted/30">
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 md:p-4">
                     <MathText text={currentQuestion.question.passage_text} />
                   </CardContent>
                 </Card>
@@ -618,27 +623,29 @@ export default function StudentBluebookTest() {
 
               {/* Question */}
               <Card>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <Badge variant="outline" className="mb-3">
+                <CardContent className="p-3 md:p-6 space-y-3 md:space-y-4">
+                  <div className="flex items-start justify-between gap-2 md:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <Badge variant="outline" className="mb-2 md:mb-3">
                         Question {currentQuestionIndex + 1}
                       </Badge>
+                      
+
                       
                       {/* Question Image */}
                       <QuestionFigures
                         url1={currentQuestion.question.question_image_url}
                         url2={currentQuestion.question.question_image_url_2}
-                        className="mb-4"
+                        className="mb-3 md:mb-4"
                         imgClassName={
                           currentQuestion.question.question_image_url_2
-                            ? "max-h-72 w-auto rounded-lg"
-                            : "w-[55%] h-auto rounded-lg"
+                            ? "max-h-56 md:max-h-72 w-auto rounded-lg"
+                            : "w-full sm:w-[55%] h-auto rounded-lg"
                         }
                       />
 
                       {/* Question Text */}
-                      <div className="text-lg">
+                      <div className="text-base md:text-lg">
                         <MathText text={currentQuestion.question.question_text} />
                       </div>
                     </div>
@@ -649,7 +656,7 @@ export default function StudentBluebookTest() {
                       size="icon"
                       onClick={() => questionId && handleToggleMark(questionId)}
                       className={cn(
-                        "shrink-0",
+                        "shrink-0 h-11 w-11",
                         currentAnswer?.is_marked && "text-amber-500"
                       )}
                     >
@@ -658,12 +665,13 @@ export default function StudentBluebookTest() {
                   </div>
 
                   {/* Answer Options */}
-                  <div className="pt-4">
+                  <div className="pt-1 md:pt-4">
+
                     {currentQuestion.question.question_type === 'multiple_choice' ? (
                       <RadioGroup
                         value={currentAnswer?.answer_submitted || ''}
                         onValueChange={(value) => questionId && handleAnswerChange(questionId, value)}
-                        className="space-y-3"
+                        className="space-y-2 md:space-y-3"
                       >
                         {normaliseChoices(
                           currentQuestion.question.multiple_choice_options,
@@ -673,7 +681,8 @@ export default function StudentBluebookTest() {
                             key={letter}
                             htmlFor={`option-${letter}`}
                             className={cn(
-                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                              "flex items-start gap-3 p-3 md:p-4 min-h-[44px] rounded-lg border cursor-pointer transition-colors",
+
                               currentAnswer?.answer_submitted === letter
                                 ? "border-primary bg-primary/5"
                                 : "hover:bg-muted/50"
@@ -720,14 +729,17 @@ export default function StudentBluebookTest() {
       </div>
 
       {/* Footer Navigation with Bottom Drawer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-card border-t px-4 py-3 z-40">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <footer
+        className="fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           <Button
             variant="outline"
             onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
             disabled={currentQuestionIndex === 0}
             size="icon"
-            className="h-10 w-10"
+            className="h-11 w-11 shrink-0"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -735,13 +747,15 @@ export default function StudentBluebookTest() {
           {/* Center: Question counter - opens drawer */}
           <Drawer open={showQuestionDrawer} onOpenChange={setShowQuestionDrawer}>
             <DrawerTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Grid3X3 className="h-4 w-4" />
-                <span className="font-medium">
-                  Question {currentQuestionIndex + 1} of {moduleQuestions?.length || 0}
+              <Button variant="outline" className="gap-2 h-11 min-w-0 flex-1 md:flex-none">
+                <Grid3X3 className="h-4 w-4 shrink-0" />
+                <span className="font-medium truncate">
+                  <span className="hidden sm:inline">Question </span>
+                  {currentQuestionIndex + 1} of {moduleQuestions?.length || 0}
                 </span>
               </Button>
             </DrawerTrigger>
+
             <DrawerContent className="max-h-[70vh]">
               <DrawerHeader className="border-b">
                 <DrawerTitle className="flex items-center justify-between">
@@ -813,18 +827,19 @@ export default function StudentBluebookTest() {
           </Drawer>
 
           {currentQuestionIndex === (moduleQuestions?.length || 0) - 1 ? (
-            <Button onClick={handleModuleComplete} size="icon" className="h-10 w-10">
+            <Button onClick={handleModuleComplete} size="icon" className="h-11 w-11 shrink-0">
               <CheckCircle2 className="h-5 w-5" />
             </Button>
           ) : (
             <Button
               onClick={() => setCurrentQuestionIndex(prev => Math.min((moduleQuestions?.length || 0) - 1, prev + 1))}
               size="icon"
-              className="h-10 w-10"
+              className="h-11 w-11 shrink-0"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
           )}
+
         </div>
       </footer>
     </div>
