@@ -220,13 +220,13 @@ export function DesmosCalculator() {
     const onStart = (e: TouchEvent) => {
       if (g || e.touches.length !== 1) return;
       const t = e.touches[0];
-      // Only from the right-side handle, so the rest of the Desmos UI stays usable.
-      if (t.clientX < window.innerWidth - HANDLE_WIDTH) return;
-      const handleY = window.innerHeight * HANDLE_Y_RATIO;
-      if (Math.abs(t.clientY - handleY) > HANDLE_Y_TOLERANCE) return;
-      g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
+      // Only from the far right edge of the question view.
+      if (t.clientX < window.innerWidth - OPEN_EDGE) return;
+      setMobileMounted(true);
+      g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
       if (e.cancelable) e.preventDefault();
     };
+
 
 
 
