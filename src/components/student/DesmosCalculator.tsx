@@ -253,7 +253,7 @@ export function DesmosCalculator() {
       g = null;
       delete document.body.dataset.calculatorDragging;
       if (!decided) return;
-      settle(p > 1 - THRESHOLD);
+      settle(p > THRESHOLD);
     };
 
 
