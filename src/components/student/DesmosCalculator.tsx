@@ -621,11 +621,11 @@ export function DesmosCalculator() {
       <div
         ref={windowRef}
         data-calculator-window
-        className="fixed z-40 bg-background border rounded-lg shadow-2xl overflow-hidden"
+        className={`fixed ${snapSide ? 'z-[60]' : 'z-40'} bg-background border rounded-lg shadow-2xl overflow-hidden`}
         style={{
           left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
           right: snapSide === 'right' ? 0 : 'auto',
-          top: snapSide ? '60px' : position.y,
+          top: snapSide ? 0 : position.y,
           bottom: snapSide ? 0 : 'auto',
           width: windowWidth,
           height: windowHeight,
