@@ -140,10 +140,8 @@ export function ProctorReview({ rows, onBack }: Props) {
             </div>
           )}
 
-          <QuestionFigures
-            imageUrl={row.question_image_url}
-            imageUrl2={row.question_image_url_2}
-          />
+          <QuestionFigures url1={row.question_image_url} url2={row.question_image_url_2} />
+
 
           {isMc ? (
             <div className="space-y-2">
