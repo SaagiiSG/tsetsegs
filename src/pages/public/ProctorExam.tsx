@@ -69,6 +69,8 @@ export default function ProctorExam() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const submittedNow = done || !!state?.submitted_at;
   const reviewRows = useProctorReview(participantId, submittedNow);
+  const finalizeRef = useRef(false);
+
 
 
 
