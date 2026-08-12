@@ -14,10 +14,12 @@ import { toast } from 'sonner';
 import { 
   BookOpen, Clock, PlayCircle, CheckCircle2, 
   FileText, AlertCircle, Trophy, Calculator, Filter,
-  RotateCcw, Eye, Video
+  RotateCcw, Eye, Video, History
 } from 'lucide-react';
 import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
+import { BluebookHistoryTab } from '@/components/student/bluebook/BluebookHistoryTab';
 import { buildBluebookResults, roundToTen, type BluebookResultsData } from '@/lib/bluebookReview';
+
 
 interface BluebookTest {
   id: string;
@@ -146,6 +148,14 @@ export default function StudentBluebook() {
     return attempts?.find(a => a.test_id === testId);
   };
 
+  /** Most recent finished attempt, so a redo doesn't hide an existing score. */
+  const getLastCompletedAttempt = (testId: string) => {
+    return attempts?.find(a => a.test_id === testId && a.status === 'completed');
+  };
+
+  const testNames = Object.fromEntries((tests ?? []).map(t => [t.id, t.name]));
+
+
   // Filter tests
   const filteredTests = tests?.filter(test => {
     // Section filter
@@ -260,9 +270,11 @@ export default function StudentBluebook() {
   const renderTestCard = (test: BluebookTest) => {
     const stats = moduleStats?.[test.id];
     const attempt = getTestAttempt(test.id);
+    const lastCompleted = getLastCompletedAttempt(test.id);
     const isCompleted = attempt?.status === 'completed';
     const isInProgress = attempt?.status === 'in_progress';
     const monthLabel = test.test_month ? MONTHS.find(m => m.value === test.test_month)?.short : '';
+
 
     return (
       <Card 
@@ -297,12 +309,13 @@ export default function StudentBluebook() {
                   </Badge>
                 )}
               </div>
-              {isCompleted && attempt?.total_score && (
+              {lastCompleted?.total_score ? (
                 <Badge variant="default" className="mt-2 gap-1 bg-green-500">
                   <Trophy className="h-3 w-3" />
-                  Score: {roundToTen(attempt.total_score)}
+                  {isCompleted ? 'Score' : 'Last score'}: {roundToTen(lastCompleted.total_score)}
                 </Badge>
-              )}
+              ) : null}
+
               {isInProgress && (
                 <Badge variant="secondary" className="mt-2 gap-1 bg-amber-500/20 text-amber-600">
                   <AlertCircle className="h-3 w-3" />
@@ -376,18 +389,19 @@ export default function StudentBluebook() {
 
 
           {/* Previous Scores */}
-          {isCompleted && attempt && (
+          {lastCompleted && (
             <div className="grid grid-cols-2 gap-2 pt-2 border-t">
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">R&W</p>
-                <p className="text-sm font-bold">{attempt.rw_scaled_score ? roundToTen(attempt.rw_scaled_score) : '-'}</p>
+                <p className="text-sm font-bold">{lastCompleted.rw_scaled_score ? roundToTen(lastCompleted.rw_scaled_score) : '-'}</p>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">Math</p>
-                <p className="text-sm font-bold">{attempt.math_scaled_score ? roundToTen(attempt.math_scaled_score) : '-'}</p>
+                <p className="text-sm font-bold">{lastCompleted.math_scaled_score ? roundToTen(lastCompleted.math_scaled_score) : '-'}</p>
               </div>
             </div>
           )}
+
         </CardContent>
       </Card>
     );
@@ -469,7 +483,7 @@ export default function StudentBluebook() {
 
       {/* Tests Tabs — always render so Videos tab is reachable even when no tests published */}
       <Tabs defaultValue="videos" className="w-full">
-        <TabsList className="grid w-full max-w-[560px] grid-cols-4">
+        <TabsList className="grid w-full max-w-[680px] grid-cols-5">
           <TabsTrigger value="math" className="gap-1.5 text-sm">
             <Calculator className="h-4 w-4" />
             <span className="hidden sm:inline">Math</span>
@@ -497,12 +511,22 @@ export default function StudentBluebook() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5 text-sm">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
+            {attempts && attempts.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {attempts.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="videos" data-tour="bluebook-videos-tab" className="gap-1.5 text-sm relative">
             <Video className="h-4 w-4" />
             <span className="hidden sm:inline">Videos</span>
             <span className="absolute -top-0.5 -right-0.5 text-[8px] font-bold uppercase tracking-wider text-primary bg-primary/15 rounded px-1">NEW</span>
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="math" className="mt-4">
           {mathTests && mathTests.length > 0 ? (
@@ -555,9 +579,20 @@ export default function StudentBluebook() {
           )}
         </TabsContent>
 
+        <TabsContent value="history" className="mt-4">
+          <BluebookHistoryTab
+            attempts={attempts ?? []}
+            testNames={testNames}
+            onReview={handleReviewTest}
+            onContinue={(attemptId) => navigate(`/practice/bluebook/test/${attemptId}`)}
+            isLoadingResults={isLoadingResults}
+          />
+        </TabsContent>
+
         <TabsContent value="videos" className="mt-4">
           <BluebookVideosTab />
         </TabsContent>
+
       </Tabs>
 
     </div>
