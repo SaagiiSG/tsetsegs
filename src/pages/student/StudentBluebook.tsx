@@ -14,10 +14,12 @@ import { toast } from 'sonner';
 import { 
   BookOpen, Clock, PlayCircle, CheckCircle2, 
   FileText, AlertCircle, Trophy, Calculator, Filter,
-  RotateCcw, Eye, Video
+  RotateCcw, Eye, Video, History
 } from 'lucide-react';
 import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
+import { BluebookHistoryTab } from '@/components/student/bluebook/BluebookHistoryTab';
 import { buildBluebookResults, roundToTen, type BluebookResultsData } from '@/lib/bluebookReview';
+
 
 interface BluebookTest {
   id: string;
@@ -145,6 +147,14 @@ export default function StudentBluebook() {
   const getTestAttempt = (testId: string) => {
     return attempts?.find(a => a.test_id === testId);
   };
+
+  /** Most recent finished attempt, so a redo doesn't hide an existing score. */
+  const getLastCompletedAttempt = (testId: string) => {
+    return attempts?.find(a => a.test_id === testId && a.status === 'completed');
+  };
+
+  const testNames = Object.fromEntries((tests ?? []).map(t => [t.id, t.name]));
+
 
   // Filter tests
   const filteredTests = tests?.filter(test => {
