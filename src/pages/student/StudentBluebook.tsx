@@ -309,12 +309,13 @@ export default function StudentBluebook() {
                   </Badge>
                 )}
               </div>
-              {isCompleted && attempt?.total_score && (
+              {lastCompleted?.total_score ? (
                 <Badge variant="default" className="mt-2 gap-1 bg-green-500">
                   <Trophy className="h-3 w-3" />
-                  Score: {roundToTen(attempt.total_score)}
+                  {isCompleted ? 'Score' : 'Last score'}: {roundToTen(lastCompleted.total_score)}
                 </Badge>
-              )}
+              ) : null}
+
               {isInProgress && (
                 <Badge variant="secondary" className="mt-2 gap-1 bg-amber-500/20 text-amber-600">
                   <AlertCircle className="h-3 w-3" />
