@@ -766,7 +766,7 @@ export default function StudentQuestion() {
     <>
     {/* Fixed Bottom Bar - portaled to body to escape stacking contexts */}
     {createPortal(
-    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[55] bg-background/95 backdrop-blur-sm border-t px-4 py-3"
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[55] bg-background/95 backdrop-blur-sm border-t px-2.5 py-2 md:px-4 md:py-3"
       style={{ 
         marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
         marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
