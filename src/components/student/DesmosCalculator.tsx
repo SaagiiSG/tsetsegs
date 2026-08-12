@@ -251,12 +251,13 @@ export function DesmosCalculator() {
 
     const onEnd = () => {
       if (!g) return;
-      const { startP, p, decided } = g;
+      const { p, decided } = g;
       g = null;
       delete document.body.dataset.calculatorDragging;
       if (!decided) return;
-      settle(startP === 0 ? p > THRESHOLD : p > 1 - THRESHOLD);
+      settle(p > 1 - THRESHOLD);
     };
+
 
     document.addEventListener('touchstart', onStart, { passive: false });
     document.addEventListener('touchmove', onMove, { passive: false });
