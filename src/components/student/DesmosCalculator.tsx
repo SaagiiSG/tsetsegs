@@ -222,22 +222,14 @@ export function DesmosCalculator() {
     const onStart = (e: TouchEvent) => {
       if (g || e.touches.length !== 1) return;
       const t = e.touches[0];
-      if (isOpen) {
-        if (t.clientX < CLOSE_EDGE_MIN || t.clientX > CLOSE_EDGE_MAX) return;
-        // Only near the visible handle, so the rest of the Desmos UI stays usable.
-        const handleY = window.innerHeight / 2 - 80;
-        if (Math.abs(t.clientY - handleY) > 60) return;
-        g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
-        // Block the browser's native left-edge "swipe back" gesture, which would
-        // otherwise pop history and kick the student out of the test.
-        if (e.cancelable) e.preventDefault();
-      } else {
-        if (t.clientX < window.innerWidth - OPEN_EDGE) return;
-        setMobileMounted(true);
-        g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
-        if (e.cancelable) e.preventDefault();
-      }
+      // Only from the right-side handle, so the rest of the Desmos UI stays usable.
+      if (t.clientX < window.innerWidth - HANDLE_WIDTH) return;
+      const handleY = window.innerHeight * HANDLE_Y_RATIO;
+      if (Math.abs(t.clientY - handleY) > HANDLE_Y_TOLERANCE) return;
+      g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
+      if (e.cancelable) e.preventDefault();
     };
+
 
 
     const onMove = (e: TouchEvent) => {
