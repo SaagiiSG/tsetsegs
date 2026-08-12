@@ -671,7 +671,7 @@ export default function StudentBluebookTest() {
                       <RadioGroup
                         value={currentAnswer?.answer_submitted || ''}
                         onValueChange={(value) => questionId && handleAnswerChange(questionId, value)}
-                        className="space-y-3"
+                        className="space-y-2 md:space-y-3"
                       >
                         {normaliseChoices(
                           currentQuestion.question.multiple_choice_options,
@@ -681,7 +681,8 @@ export default function StudentBluebookTest() {
                             key={letter}
                             htmlFor={`option-${letter}`}
                             className={cn(
-                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                              "flex items-start gap-3 p-3 md:p-4 min-h-[44px] rounded-lg border cursor-pointer transition-colors",
+
                               currentAnswer?.answer_submitted === letter
                                 ? "border-primary bg-primary/5"
                                 : "hover:bg-muted/50"
