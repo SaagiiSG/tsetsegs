@@ -158,21 +158,19 @@ export function DesmosCalculator() {
     if (!isMobile) delete document.body.dataset.calcMobileOpen;
   }, [isMobile]);
 
-  // ── Mobile swipe gesture (close only) ──
-  // Swipe-to-open was removed: it conflicted with browser/OS edge gestures and
-  // could kick students out of a test. Only the "back to question" swipe from
-  // the pane's right-side handle remains. The app shell (#root) and the pane
-  // follow the finger 1:1, then settle with an iOS-style spring.
+  // ── Mobile swipe gesture (open only) ──
+  // Swipe left from the question view's right edge to pull the Desmos pane in.
+  // Closing is button-only ("Back to question") — a close swipe fought the OS
+  // back gesture and could kick students out of a test.
   useEffect(() => {
-    if (!isMobile || !isOpen) return;
+    if (!isMobile || isOpen) return;
     const rootEl = document.getElementById('root');
     if (!rootEl) return;
 
-    const HANDLE_WIDTH = 56; // px hot zone on the pane's right edge
-    const HANDLE_Y_RATIO = 0.35;
-    const HANDLE_Y_TOLERANCE = 60;
+    const OPEN_EDGE = 32; // px hot zone on the question view's right edge
     const THRESHOLD = 0.35; // fraction of the screen needed to commit
     let g: { startX: number; startY: number; startP: number; p: number; decided: boolean } | null = null;
+
 
 
     const apply = (p: number) => {
@@ -222,13 +220,13 @@ export function DesmosCalculator() {
     const onStart = (e: TouchEvent) => {
       if (g || e.touches.length !== 1) return;
       const t = e.touches[0];
-      // Only from the right-side handle, so the rest of the Desmos UI stays usable.
-      if (t.clientX < window.innerWidth - HANDLE_WIDTH) return;
-      const handleY = window.innerHeight * HANDLE_Y_RATIO;
-      if (Math.abs(t.clientY - handleY) > HANDLE_Y_TOLERANCE) return;
-      g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
+      // Only from the far right edge of the question view.
+      if (t.clientX < window.innerWidth - OPEN_EDGE) return;
+      setMobileMounted(true);
+      g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
       if (e.cancelable) e.preventDefault();
     };
+
 
 
 
@@ -255,7 +253,7 @@ export function DesmosCalculator() {
       g = null;
       delete document.body.dataset.calculatorDragging;
       if (!decided) return;
-      settle(p > 1 - THRESHOLD);
+      settle(p > THRESHOLD);
     };
 
 
@@ -557,16 +555,17 @@ export function DesmosCalculator() {
             sandbox="allow-scripts allow-same-origin"
           />
         </div>
-        {/* Right-side swipe handle at ~35% height: thumb-friendly, and away from
-            the phone's native Back edge so this gesture always returns to the
-            question, never out of the test. */}
-        <div
-          aria-hidden
-          className="absolute right-0 z-10 flex items-center justify-end"
-          style={{ touchAction: 'none', top: '35%', height: 120, width: 32, transform: 'translateY(-50%)' }}
+        {/* Thumb-reachable close button on the right at ~35% height */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Back to question"
+          className="absolute right-2 z-20 flex h-11 w-11 items-center justify-center rounded-full border bg-card/95 text-foreground shadow-lg backdrop-blur active:scale-95 transition-transform"
+          style={{ top: '35%', transform: 'translateY(-50%)' }}
         >
-          <div className="h-16 w-1 rounded-l-full bg-border/70 mr-1.5" />
-        </div>
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
 
       </div>,
       document.body,
