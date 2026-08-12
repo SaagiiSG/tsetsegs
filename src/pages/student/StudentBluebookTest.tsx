@@ -636,16 +636,16 @@ export default function StudentBluebookTest() {
                       <QuestionFigures
                         url1={currentQuestion.question.question_image_url}
                         url2={currentQuestion.question.question_image_url_2}
-                        className="mb-4"
+                        className="mb-3 md:mb-4"
                         imgClassName={
                           currentQuestion.question.question_image_url_2
-                            ? "max-h-72 w-auto rounded-lg"
-                            : "w-[55%] h-auto rounded-lg"
+                            ? "max-h-56 md:max-h-72 w-auto rounded-lg"
+                            : "w-full sm:w-[55%] h-auto rounded-lg"
                         }
                       />
 
                       {/* Question Text */}
-                      <div className="text-lg">
+                      <div className="text-base md:text-lg">
                         <MathText text={currentQuestion.question.question_text} />
                       </div>
                     </div>
@@ -656,7 +656,7 @@ export default function StudentBluebookTest() {
                       size="icon"
                       onClick={() => questionId && handleToggleMark(questionId)}
                       className={cn(
-                        "shrink-0",
+                        "shrink-0 h-11 w-11",
                         currentAnswer?.is_marked && "text-amber-500"
                       )}
                     >
@@ -665,7 +665,8 @@ export default function StudentBluebookTest() {
                   </div>
 
                   {/* Answer Options */}
-                  <div className="pt-4">
+                  <div className="pt-1 md:pt-4">
+
                     {currentQuestion.question.question_type === 'multiple_choice' ? (
                       <RadioGroup
                         value={currentAnswer?.answer_submitted || ''}
