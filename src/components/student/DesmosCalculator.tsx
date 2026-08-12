@@ -581,7 +581,7 @@ export function DesmosCalculator() {
             className="absolute left-5 inset-y-0 w-14 z-10 flex items-center justify-start"
             style={{ touchAction: 'none' }}
           >
-            <div className="h-16 w-1 rounded-r-full bg-border/70" />
+            <div className="h-16 w-1 rounded-r-full bg-border/70" style={{ transform: 'translateY(-80px)' }} />
           </div>
         </div>
       </div>,
