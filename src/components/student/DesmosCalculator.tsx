@@ -238,6 +238,9 @@ export function DesmosCalculator() {
       const t = e.touches[0];
       if (isOpen) {
         if (t.clientX < CLOSE_EDGE_MIN || t.clientX > CLOSE_EDGE_MAX) return;
+        // Only near the visible handle, so the rest of the Desmos UI stays usable.
+        const handleY = window.innerHeight / 2 - 80;
+        if (Math.abs(t.clientY - handleY) > 60) return;
         g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
         // Block the browser's native left-edge "swipe back" gesture, which would
         // otherwise pop history and kick the student out of the test.
@@ -578,10 +581,10 @@ export function DesmosCalculator() {
               this gesture always returns to the question, never out of the test. */}
           <div
             aria-hidden
-            className="absolute left-5 inset-y-0 w-14 z-10 flex items-center justify-start"
-            style={{ touchAction: 'none' }}
+            className="absolute left-0 z-10 flex items-center justify-start"
+            style={{ touchAction: 'none', top: 'calc(50% - 80px)', height: 96, width: 28, transform: 'translateY(-50%)' }}
           >
-            <div className="h-16 w-1 rounded-r-full bg-border/70" style={{ transform: 'translateY(-80px)' }} />
+            <div className="h-16 w-1 rounded-r-full bg-border/70 ml-5" />
           </div>
         </div>
       </div>,
