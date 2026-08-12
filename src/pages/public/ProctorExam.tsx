@@ -112,15 +112,14 @@ export default function ProctorExam() {
     if (finalizeRef.current) return;
     finalizeRef.current = true;
     (async () => {
-      const { error } = await supabase.rpc('proctor_finalize_session', {
-        p_session_id: null as unknown as string,
+      const { error } = await supabase.rpc('proctor_finalize_me', {
+        p_participant_id: participantId,
       });
-      // no session id on the student side — fall back to a state refresh, the
-      // teacher screen finalizes the session as soon as it ends.
       if (error) finalizeRef.current = false;
       await loadState();
     })();
   }, [participantId, state?.session_status, state?.submitted_at, done, loadState]);
+
 
 
 
