@@ -153,6 +153,34 @@ export function DesmosCalculator() {
     };
   }, [isMobile, isOpen]);
 
+  // Keep one same-route history entry in front of the test while the mobile
+  // calculator is open. If the OS claims a horizontal drag as its native Back
+  // gesture, it only consumes this entry and closes Desmos — it cannot leave
+  // the active test.
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const marker = '__desmosMobilePane';
+    const hasMarker = () => window.history.state?.[marker] === true;
+
+    if (isOpen && !hasMarker()) {
+      window.history.pushState(
+        { ...(window.history.state ?? {}), [marker]: true },
+        '',
+        window.location.href,
+      );
+    } else if (!isOpen && hasMarker()) {
+      window.history.back();
+    }
+
+    const handlePopState = () => {
+      if (isOpen && !hasMarker()) setIsOpen(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isMobile, isOpen]);
+
   // Leaving mobile widths (rotate to landscape iPad) resets the shell shift.
   useEffect(() => {
     if (!isMobile) delete document.body.dataset.calcMobileOpen;
@@ -167,7 +195,10 @@ export function DesmosCalculator() {
     const rootEl = document.getElementById('root');
     if (!rootEl) return;
 
-    const EDGE = 32; // px hot zone
+    const OPEN_EDGE = 32; // px hot zone on the question view's right edge
+    // Deliberately starts outside the OS/browser's reserved left-edge Back zone.
+    const CLOSE_EDGE_MIN = 20;
+    const CLOSE_EDGE_MAX = 76;
     const THRESHOLD = 0.35; // fraction of the screen needed to commit
     let g: { startX: number; startY: number; startP: number; p: number; decided: boolean } | null = null;
 
@@ -206,13 +237,13 @@ export function DesmosCalculator() {
       if (g || e.touches.length !== 1) return;
       const t = e.touches[0];
       if (isOpen) {
-        if (t.clientX > EDGE) return;
+        if (t.clientX < CLOSE_EDGE_MIN || t.clientX > CLOSE_EDGE_MAX) return;
         g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
         // Block the browser's native left-edge "swipe back" gesture, which would
         // otherwise pop history and kick the student out of the test.
         if (e.cancelable) e.preventDefault();
       } else {
-        if (t.clientX < window.innerWidth - EDGE) return;
+        if (t.clientX < window.innerWidth - OPEN_EDGE) return;
         setMobileMounted(true);
         g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
         if (e.cancelable) e.preventDefault();
@@ -543,11 +574,11 @@ export function DesmosCalculator() {
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
           />
-          {/* Left edge swipe strip — lets students swipe right to go back to the
-              question without the Desmos iframe swallowing the gesture. */}
+          {/* Inset swipe strip: kept away from the phone's native Back edge so
+              this gesture always returns to the question, never out of the test. */}
           <div
             aria-hidden
-            className="absolute left-0 inset-y-0 w-7 z-10 flex items-center justify-start"
+            className="absolute left-5 inset-y-0 w-14 z-10 flex items-center justify-start"
             style={{ touchAction: 'none' }}
           >
             <div className="h-16 w-1 rounded-r-full bg-border/70" />
