@@ -545,7 +545,7 @@ export function DesmosCalculator() {
           type="button"
           onClick={() => setIsOpen(false)}
           aria-label="Back to question"
-          className="absolute right-2 z-20 flex items-center gap-1 rounded-full pl-2 pr-3 h-11 text-[13px] font-semibold shadow-xl ring-2 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
+          className="absolute right-2 z-20 flex items-center justify-center rounded-full h-11 w-11 shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
           style={{
             top: '35%',
             transform: 'translateY(-50%)',
@@ -553,9 +553,9 @@ export function DesmosCalculator() {
             color: 'hsl(240 10% 12%)',
           }}
         >
-          <ChevronLeft className="h-5 w-5" />
-          Question
+          <ChevronLeft className="h-6 w-6" />
         </button>
+
 
 
 
