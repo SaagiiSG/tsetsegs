@@ -19,12 +19,20 @@ interface SwipeHandlers {
 }
 
 const isInteractive = (el: EventTarget | null): boolean => {
+  // Mobile Desmos split-view owns horizontal gestures while it is open/dragging.
+  if (
+    document.body.dataset.calcMobileOpen === 'true' ||
+    document.body.dataset.calculatorDragging === 'true'
+  ) {
+    return true;
+  }
   if (!(el instanceof HTMLElement)) return false;
   if (el.closest('input, textarea, select, [contenteditable="true"], canvas')) return true;
   // If any modal-like overlay is open, ignore swipes
   if (document.querySelector('[data-state="open"][role="dialog"]')) return true;
   return false;
 };
+
 
 /**
  * Attach pointer-event swipe listeners to a target (defaults to window).

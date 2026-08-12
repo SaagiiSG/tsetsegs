@@ -111,6 +111,9 @@ All colors MUST be HSL.
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    /* Stops the browser's horizontal swipe-back/forward navigation gesture */
+    overscroll-behavior-x: none;
+
   }
 
   body {
