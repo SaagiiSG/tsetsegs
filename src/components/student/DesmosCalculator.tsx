@@ -470,50 +470,73 @@ export function DesmosCalculator() {
   // Tapping the calculator icon pushes the shell left and slides this pane in.
   // Portalled to <body> so it isn't affected by the #root transform.
   if (isMobile) {
-    if (!mobileMounted) return null;
     return createPortal(
-      <div
-        ref={mobilePaneRef}
-        data-calculator-window
-        aria-hidden={!isOpen}
-        className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
-        style={{
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          visibility: isOpen ? 'visible' : 'hidden',
-        }}
-      >
-        <div className="flex-1 min-h-0 relative pt-[env(safe-area-inset-top)]">
-          <iframe
-            src="https://www.desmos.com/calculator"
-            title="Desmos Graphing Calculator"
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin"
-          />
-        </div>
-        {/* Thumb-reachable, high-visibility close button on the right at ~35% height */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          aria-label="Back to question"
-          className="absolute right-2 z-20 flex items-center justify-center rounded-full h-11 w-11 shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
-          style={{
-            top: '35%',
-            transform: 'translateY(-50%)',
-            background: 'hsl(var(--gold))',
-            color: 'hsl(240 10% 12%)',
-          }}
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
+      <>
+        {/* Draggable launcher — hidden while the pane is open */}
+        {!isOpen && fabPos && (
+          <button
+            type="button"
+            aria-label="Open calculator"
+            onTouchStart={onFabTouchStart}
+            onTouchMove={onFabTouchMove}
+            onTouchEnd={onFabTouchEnd}
+            onTouchCancel={onFabTouchEnd}
+            className="fixed z-[70] flex items-center justify-center rounded-full shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform touch-none"
+            style={{
+              left: fabPos.x,
+              top: fabPos.y,
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              background: 'hsl(var(--gold))',
+              color: 'hsl(240 10% 12%)',
+            }}
+          >
+            <Calculator className="h-6 w-6" />
+          </button>
+        )}
 
-
-
-
-      </div>,
+        {mobileMounted && (
+          <div
+            ref={mobilePaneRef}
+            data-calculator-window
+            aria-hidden={!isOpen}
+            className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
+            style={{
+              transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+              pointerEvents: isOpen ? 'auto' : 'none',
+              visibility: isOpen ? 'visible' : 'hidden',
+            }}
+          >
+            <div className="flex-1 min-h-0 relative pt-[env(safe-area-inset-top)]">
+              <iframe
+                src="https://www.desmos.com/calculator"
+                title="Desmos Graphing Calculator"
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+            {/* Thumb-reachable, high-visibility close button on the right at ~35% height */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Back to question"
+              className="absolute right-2 z-20 flex items-center justify-center rounded-full h-11 w-11 shadow-lg ring-1 ring-[hsl(var(--gold)/0.35)] active:scale-95 transition-transform"
+              style={{
+                top: '35%',
+                transform: 'translateY(-50%)',
+                background: 'hsl(var(--gold))',
+                color: 'hsl(240 10% 12%)',
+              }}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+      </>,
       document.body,
     );
   }
+
 
 
   // When closed, don't render anything - toggle is handled via header button
