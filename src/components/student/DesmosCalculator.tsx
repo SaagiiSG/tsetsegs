@@ -158,21 +158,22 @@ export function DesmosCalculator() {
     if (!isMobile) delete document.body.dataset.calcMobileOpen;
   }, [isMobile]);
 
-  // ── Mobile swipe gestures ──
-  // Swipe left from the right screen edge to pull the Desmos pane in; swipe
-  // right from the pane's left edge to push it back out. The app shell (#root)
-  // and the pane follow the finger 1:1, then settle with an iOS-style spring.
+  // ── Mobile swipe gesture (close only) ──
+  // Swipe-to-open was removed: it conflicted with browser/OS edge gestures and
+  // could kick students out of a test. Only the "back to question" swipe from
+  // the pane's right-side handle remains. The app shell (#root) and the pane
+  // follow the finger 1:1, then settle with an iOS-style spring.
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || !isOpen) return;
     const rootEl = document.getElementById('root');
     if (!rootEl) return;
 
-    const OPEN_EDGE = 32; // px hot zone on the question view's right edge
-    // Deliberately starts outside the OS/browser's reserved left-edge Back zone.
-    const CLOSE_EDGE_MIN = 20;
-    const CLOSE_EDGE_MAX = 76;
+    const HANDLE_WIDTH = 56; // px hot zone on the pane's right edge
+    const HANDLE_Y_RATIO = 0.35;
+    const HANDLE_Y_TOLERANCE = 60;
     const THRESHOLD = 0.35; // fraction of the screen needed to commit
     let g: { startX: number; startY: number; startP: number; p: number; decided: boolean } | null = null;
+
 
     const apply = (p: number) => {
       const w = window.innerWidth;
