@@ -764,46 +764,40 @@ export default function StudentBluebookTest() {
                         onValueChange={(value) => questionId && handleAnswerChange(questionId, value)}
                         className="space-y-3"
                       >
-                        {(() => {
-                          // Parse multiple_choice_options - could be string, array, or object
-                          let options: string[] = [];
-                          const rawOptions = currentQuestion.question.multiple_choice_options;
-                          
-                          if (Array.isArray(rawOptions)) {
-                            options = rawOptions;
-                          } else if (typeof rawOptions === 'string') {
-                            try {
-                              const parsed = JSON.parse(rawOptions);
-                              options = Array.isArray(parsed) ? parsed : [];
-                            } catch {
-                              options = [];
-                            }
-                          } else if (rawOptions && typeof rawOptions === 'object') {
-                            // Handle object format like {A: "option1", B: "option2"}
-                            options = Object.values(rawOptions) as string[];
-                          }
-
-                          return options.map((option, idx) => {
-                            const optionLetter = String.fromCharCode(65 + idx);
-                            return (
-                              <Label
-                                key={idx}
-                                htmlFor={`option-${idx}`}
-                                className={cn(
-                                  "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
-                                  currentAnswer?.answer_submitted === optionLetter 
-                                    ? "border-primary bg-primary/5" 
-                                    : "hover:bg-muted/50"
-                                )}
-                              >
-                                <RadioGroupItem value={optionLetter} id={`option-${idx}`} />
-                                <span className="font-medium mr-2">{optionLetter}.</span>
-                                <MathText text={option} />
-                              </Label>
-                            );
-                          });
-                        })()}
+                        {normaliseChoices(
+                          currentQuestion.question.multiple_choice_options,
+                          (currentQuestion.question as any).choice_images,
+                        ).map(({ letter, text, image }) => (
+                          <Label
+                            key={letter}
+                            htmlFor={`option-${letter}`}
+                            className={cn(
+                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                              currentAnswer?.answer_submitted === letter
+                                ? "border-primary bg-primary/5"
+                                : "hover:bg-muted/50"
+                            )}
+                          >
+                            <RadioGroupItem value={letter} id={`option-${letter}`} />
+                            <span className="font-medium mr-2">{letter}.</span>
+                            <span className="flex-1 min-w-0">
+                              {text ? <MathText text={text} /> : null}
+                              {image && (
+                                <img
+                                  src={image}
+                                  alt={`Answer choice ${letter}`}
+                                  loading="lazy"
+                                  className={cn(
+                                    "max-h-40 w-auto rounded-md border bg-background object-contain",
+                                    text && "mt-2"
+                                  )}
+                                />
+                              )}
+                            </span>
+                          </Label>
+                        ))}
                       </RadioGroup>
+
                     ) : (
                       <div className="space-y-2">
                         <Label htmlFor="answer">Your Answer</Label>
