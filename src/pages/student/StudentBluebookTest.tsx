@@ -41,33 +41,8 @@ import {
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 
-interface ResultsData {
-  totalScore: number;
-  rwScaled: number;
-  mathScaled: number;
-  rwRaw: number;
-  mathRaw: number;
-  rwTotal: number;
-  mathTotal: number;
-  questions: QuestionResult[];
-}
-
-interface QuestionResult {
-  id: string;
-  question_id: string;
-  question_text: string;
-  question_image_url: string | null;
-  question_image_url_2: string | null;
-  question_type: string;
-  multiple_choice_options: any;
-  passage_text: string | null;
-  correct_answer: string;
-  user_answer: string | null;
-  is_correct: boolean;
-  order_index: number;
-  section: 'reading_writing' | 'math';
-  module_number: number;
-}
+type ResultsData = BluebookResultsData;
+type QuestionResult = BluebookQuestionResult;
 
 interface Question {
   id: string;
@@ -77,8 +52,10 @@ interface Question {
   question_image_url_2: string | null;
   question_type: string;
   multiple_choice_options: any;
+  choice_images: any;
   passage_text: string | null;
 }
+
 
 interface ModuleQuestion {
   id: string;
