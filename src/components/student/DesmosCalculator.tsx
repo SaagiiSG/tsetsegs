@@ -556,16 +556,18 @@ export function DesmosCalculator() {
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
           />
-          {/* Inset swipe strip: kept away from the phone's native Back edge so
-              this gesture always returns to the question, never out of the test. */}
-          <div
-            aria-hidden
-            className="absolute left-0 z-10 flex items-center justify-start"
-            style={{ touchAction: 'none', top: 'calc(50% - 80px)', height: 96, width: 28, transform: 'translateY(-50%)' }}
-          >
-            <div className="h-16 w-1 rounded-r-full bg-border/70 ml-5" />
-          </div>
         </div>
+        {/* Right-side swipe handle at ~35% height: thumb-friendly, and away from
+            the phone's native Back edge so this gesture always returns to the
+            question, never out of the test. */}
+        <div
+          aria-hidden
+          className="absolute right-0 z-10 flex items-center justify-end"
+          style={{ touchAction: 'none', top: '35%', height: 120, width: 32, transform: 'translateY(-50%)' }}
+        >
+          <div className="h-16 w-1 rounded-l-full bg-border/70 mr-1.5" />
+        </div>
+
       </div>,
       document.body,
     );
