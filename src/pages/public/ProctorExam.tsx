@@ -18,6 +18,8 @@ import { loadPaper, savePaper, loadSnapshot, saveSnapshot, answeredCount } from 
 import { compareAttempts, type AnswerMap } from '@/components/student/proctor/proctorConflict';
 import { ProctorRecoveryScreen } from '@/components/student/proctor/ProctorRecoveryScreen';
 import { ProctorReview, useProctorReview } from '@/components/student/proctor/ProctorReview';
+import { scaleSectionScore } from '@/lib/bluebookReview';
+
 
 
 
