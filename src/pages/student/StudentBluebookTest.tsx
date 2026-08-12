@@ -146,8 +146,9 @@ export default function StudentBluebookTest() {
           order_index,
           question:questions(
             id, question_id, question_text, question_image_url, question_image_url_2,
-            question_type, multiple_choice_options, passage_text
+            question_type, multiple_choice_options, choice_images, passage_text
           )
+
         `)
         .eq('module_id', attempt.current_module_id)
         .order('order_index');
