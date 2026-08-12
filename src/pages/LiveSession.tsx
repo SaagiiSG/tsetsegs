@@ -329,12 +329,15 @@ export default function LiveSession() {
       // If this phone already joined this session (e.g. they cleared localStorage
       // but their participant row still exists), reuse the existing row instead
       // of creating a duplicate that resets points.
-      const { data: existing } = await supabase
-        .from("live_session_participants")
-        .select("id, player_name, phone_number, total_points")
-        .eq("session_id", session.id)
-        .eq("phone_number", trimmedPhone)
-        .maybeSingle();
+      const { data: existingRows } = await supabase.rpc("live_session_find_participant", {
+        p_session_id: session.id,
+        p_phone: trimmedPhone,
+      });
+      const existing = (Array.isArray(existingRows) ? existingRows[0] : existingRows) as
+        | { id: string; player_name: string; total_points: number | null }
+        | null
+        | undefined;
+
 
       let pid: string;
       let restoredPoints = 0;
