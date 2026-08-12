@@ -17,7 +17,7 @@ import {
   RotateCcw, Eye, Video
 } from 'lucide-react';
 import { BluebookVideosTab } from '@/components/student/bluebook/BluebookVideosTab';
-import { buildBluebookResults, type BluebookResultsData } from '@/lib/bluebookReview';
+import { buildBluebookResults, roundToTen, type BluebookResultsData } from '@/lib/bluebookReview';
 
 interface BluebookTest {
   id: string;
@@ -300,7 +300,7 @@ export default function StudentBluebook() {
               {isCompleted && attempt?.total_score && (
                 <Badge variant="default" className="mt-2 gap-1 bg-green-500">
                   <Trophy className="h-3 w-3" />
-                  Score: {attempt.total_score}
+                  Score: {roundToTen(attempt.total_score)}
                 </Badge>
               )}
               {isInProgress && (
@@ -380,11 +380,11 @@ export default function StudentBluebook() {
             <div className="grid grid-cols-2 gap-2 pt-2 border-t">
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">R&W</p>
-                <p className="text-sm font-bold">{attempt.rw_scaled_score || '-'}</p>
+                <p className="text-sm font-bold">{attempt.rw_scaled_score ? roundToTen(attempt.rw_scaled_score) : '-'}</p>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">Math</p>
-                <p className="text-sm font-bold">{attempt.math_scaled_score || '-'}</p>
+                <p className="text-sm font-bold">{attempt.math_scaled_score ? roundToTen(attempt.math_scaled_score) : '-'}</p>
               </div>
             </div>
           )}
