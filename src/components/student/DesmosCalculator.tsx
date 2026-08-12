@@ -555,16 +555,17 @@ export function DesmosCalculator() {
             sandbox="allow-scripts allow-same-origin"
           />
         </div>
-        {/* Right-side swipe handle at ~35% height: thumb-friendly, and away from
-            the phone's native Back edge so this gesture always returns to the
-            question, never out of the test. */}
-        <div
-          aria-hidden
-          className="absolute right-0 z-10 flex items-center justify-end"
-          style={{ touchAction: 'none', top: '35%', height: 120, width: 32, transform: 'translateY(-50%)' }}
+        {/* Thumb-reachable close button on the right at ~35% height */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Back to question"
+          className="absolute right-2 z-20 flex h-11 w-11 items-center justify-center rounded-full border bg-card/95 text-foreground shadow-lg backdrop-blur active:scale-95 transition-transform"
+          style={{ top: '35%', transform: 'translateY(-50%)' }}
         >
-          <div className="h-16 w-1 rounded-l-full bg-border/70 mr-1.5" />
-        </div>
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
 
       </div>,
       document.body,
