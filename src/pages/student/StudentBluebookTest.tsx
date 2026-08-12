@@ -36,8 +36,8 @@ import {
   buildBluebookResults,
   normaliseChoices,
   type BluebookResultsData,
-  type BluebookQuestionResult,
 } from '@/lib/bluebookReview';
+
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 
