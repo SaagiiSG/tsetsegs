@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Calculator, X, Minus, Maximize2, Minimize2, ChevronRight } from 'lucide-react';
+import { Calculator, X, Minus, Maximize2, Minimize2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { getDesmosContext } from '@/lib/desmosTracking';
@@ -418,19 +418,19 @@ export function DesmosCalculator() {
         }}
       >
         <div className="flex items-center justify-between gap-2 px-3 border-b bg-card min-h-[48px] pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Calculator className="h-4 w-4" />
-            <span>Desmos</span>
-          </div>
           <Button
             variant="secondary"
             size="sm"
             className="h-9 gap-1"
             onClick={() => setIsOpen(false)}
           >
+            <ChevronLeft className="h-4 w-4" />
             Back to question
-            <ChevronRight className="h-4 w-4" />
           </Button>
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Calculator className="h-4 w-4" />
+            <span>Desmos</span>
+          </div>
         </div>
         <div className="flex-1 min-h-0">
           <iframe
