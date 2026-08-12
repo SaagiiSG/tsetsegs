@@ -4712,6 +4712,10 @@ export type Database = {
         Args: { p_participant_id: string }
         Returns: boolean
       }
+      proctor_finalize_me: {
+        Args: { p_participant_id: string }
+        Returns: boolean
+      }
       proctor_finalize_session: {
         Args: { p_session_id: string }
         Returns: number
