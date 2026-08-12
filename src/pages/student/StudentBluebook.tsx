@@ -349,25 +349,31 @@ export default function StudentBluebook() {
               </Button>
             </div>
           ) : (
-            <Button 
-              className="w-full gap-2"
-              variant="default"
-              size="sm"
-              onClick={() => handleStartTest(test.id)}
-            >
-              {isInProgress ? (
-                <>
-                  <PlayCircle className="h-4 w-4" />
-                  Continue
-                </>
-              ) : (
-                <>
-                  <PlayCircle className="h-4 w-4" />
-                  Start
-                </>
+            <div className="flex gap-2">
+              <Button 
+                className="flex-1 gap-2"
+                variant="default"
+                size="sm"
+                onClick={() => handleStartTest(test.id)}
+              >
+                <PlayCircle className="h-4 w-4" />
+                {isInProgress ? 'Continue' : 'Start'}
+              </Button>
+              {isInProgress && attempt && (
+                <Button
+                  className="flex-1 gap-2"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReviewTest(attempt.id, test.id)}
+                  disabled={isLoadingResults}
+                >
+                  <Eye className="h-4 w-4" />
+                  Review
+                </Button>
               )}
-            </Button>
+            </div>
           )}
+
 
           {/* Previous Scores */}
           {isCompleted && attempt && (
