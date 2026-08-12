@@ -606,8 +606,8 @@ export default function StudentBluebookTest() {
       <div 
         className={cn(
           "flex-1 overflow-auto pb-[max(5rem,calc(4.5rem+env(safe-area-inset-bottom)))] transition-all duration-300",
-          calculatorSnapSide === 'left' && "ml-[40vw]",
-          calculatorSnapSide === 'right' && "mr-[40vw]"
+          calculatorSnapSide === 'left' && "md:ml-[40vw]",
+          calculatorSnapSide === 'right' && "md:mr-[40vw]"
         )}
       >
         <main className="px-2.5 py-3 md:p-6">
