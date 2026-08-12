@@ -571,7 +571,14 @@ button .math-inline .katex {
 @media (max-width: 767px) {
   #root {
     transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Only promote to its own layer while the pane is in play — a permanent
+     will-change keeps a huge layer alive and makes the whole app feel heavy. */
+  body[data-calc-mobile-open='true'] #root,
+  body[data-calculator-dragging='true'] #root {
     will-change: transform;
+    backface-visibility: hidden;
   }
 
   body[data-calc-mobile-open='true'] {
@@ -579,13 +586,15 @@ button .math-inline .katex {
   }
 
   body[data-calc-mobile-open='true'] #root {
-    transform: translateX(-100%);
+    transform: translate3d(-100%, 0, 0);
   }
 
   .calc-mobile-pane {
     transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+    backface-visibility: hidden;
   }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   #root,
