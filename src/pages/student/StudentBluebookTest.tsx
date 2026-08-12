@@ -546,17 +546,18 @@ export default function StudentBluebookTest() {
 
 
           {/* Right: Calculator, Reference, Settings */}
-          <div className="flex items-center gap-2 flex-1 justify-end">
+          <div className="flex items-center gap-1 md:gap-2 flex-1 justify-end">
             {/* Calculator Button - Only for Math */}
             {currentModule?.section === 'math' && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => toggleCalculator()}
-                className="gap-2"
+                className="gap-2 h-11 w-11 p-0 md:h-9 md:w-auto md:px-3"
+                aria-label="Calculator"
               >
                 <Calculator className="h-4 w-4" />
-                <span className="hidden sm:inline">Calculator</span>
+                <span className="hidden md:inline">Calculator</span>
               </Button>
             )}
 
@@ -566,10 +567,11 @@ export default function StudentBluebookTest() {
             {/* Settings Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="h-11 w-11 md:h-10 md:w-10">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => {
                   // Save progress
