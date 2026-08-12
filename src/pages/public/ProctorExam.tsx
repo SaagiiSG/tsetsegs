@@ -228,6 +228,9 @@ export default function ProctorExam() {
     const mods = (result?.module_results ?? state.module_results ?? []) as ProctorModuleResult[];
     const correct = (result?.math_correct ?? state.math_correct ?? 0) + (result?.rw_correct ?? state.rw_correct ?? 0);
     const total = (result?.math_total ?? state.math_total ?? 0) + (result?.rw_total ?? state.rw_total ?? 0);
+    if (reviewOpen && reviewRows && reviewRows.length > 0) {
+      return <ProctorReview rows={reviewRows} onBack={() => setReviewOpen(false)} />;
+    }
     return (
       <Shell>
         <h1 className="text-lg font-semibold">Your test is submitted</h1>
@@ -259,12 +262,27 @@ export default function ProctorExam() {
             )}
           </>
         ) : null}
-        <p className="text-sm text-muted-foreground">
-          Your teacher has the full breakdown — they will go through the paper in class. You can close this page.
-        </p>
+        {reviewRows && reviewRows.length > 0 ? (
+          <>
+            <Button className="w-full gap-2" onClick={() => setReviewOpen(true)}>
+              <ListChecks className="h-4 w-4" />
+              {reviewRows[0]?.review_mode === 'explanations'
+                ? 'Review answers & explanations'
+                : 'See which questions you missed'}
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Your teacher has the full breakdown — they will go through the paper in class.
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Your teacher has the full breakdown — they will go through the paper in class. You can close this page.
+          </p>
+        )}
       </Shell>
     );
   }
+
 
   if (state.session_status === 'finished' && !paper) {
     return (
