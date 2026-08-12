@@ -70,6 +70,8 @@ export function DesmosCalculator() {
   const [currentDragX, setCurrentDragX] = useState(0);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
+  const mobilePaneRef = useRef<HTMLDivElement | null>(null);
+
   const { student } = useStudentAuth();
   const usageEventIdRef = useRef<string | null>(null);
   const usageOpenedAtRef = useRef<number | null>(null);
