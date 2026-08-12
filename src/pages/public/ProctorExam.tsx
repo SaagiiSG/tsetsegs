@@ -63,7 +63,11 @@ export default function ProctorExam() {
   const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
   const [resolvedChoice, setResolvedChoice] = useState(false);
+  const entryRef = useRef<{ saved: number; conflict: boolean } | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const submittedNow = done || !!state?.submitted_at;
+  const reviewRows = useProctorReview(participantId, submittedNow);
+
 
 
 
