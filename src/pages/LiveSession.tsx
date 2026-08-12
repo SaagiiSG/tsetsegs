@@ -167,33 +167,34 @@ export default function LiveSession() {
           // 1) Try the stored participant id
           const { data: byId } = await supabase
             .from("live_session_participants")
-            .select("id, player_name, phone_number, total_points")
+            .select("id, player_name, total_points")
             .eq("id", stored.participantId)
             .maybeSingle();
           participant = byId;
 
-          // 2) Fallback: look up by session + phone (handles cleared/stale id)
+          // 2) Fallback: secure lookup by session + phone (handles cleared/stale id).
+          //    Phone numbers are not readable by players, so this goes through an RPC
+          //    that only returns the caller's own row.
           if (!participant && stored.phoneNumber) {
-            const { data: byPhone } = await supabase
-              .from("live_session_participants")
-              .select("id, player_name, phone_number, total_points")
-              .eq("session_id", data.id)
-              .eq("phone_number", stored.phoneNumber)
-              .maybeSingle();
-            participant = byPhone;
+            const { data: byPhone } = await supabase.rpc("live_session_find_participant", {
+              p_session_id: data.id,
+              p_phone: stored.phoneNumber,
+            });
+            participant = Array.isArray(byPhone) ? byPhone[0] ?? null : byPhone;
           }
 
           if (participant && participant.id) {
             setParticipantId(participant.id);
             setPlayerName(participant.player_name);
-            setPhoneNumber(participant.phone_number);
+            setPhoneNumber(stored.phoneNumber || "");
             setTotalPoints(participant.total_points || 0);
             // Re-save in case the id changed (phone fallback path)
             saveStored(joinCode, {
               participantId: participant.id,
               playerName: participant.player_name,
-              phoneNumber: participant.phone_number,
+              phoneNumber: stored.phoneNumber,
             });
+
 
             const { data: answers } = await supabase
               .from("live_session_answers")
