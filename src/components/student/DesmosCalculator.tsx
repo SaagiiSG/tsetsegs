@@ -136,6 +136,27 @@ export function DesmosCalculator() {
     };
   }, [isOpen]);
 
+  // Mobile: keep the pane mounted after first open, and flag the body so the
+  // app shell (#root) slides right to reveal the full-screen calculator.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (isOpen) setMobileMounted(true);
+    if (isOpen) {
+      document.body.dataset.calcMobileOpen = 'true';
+    } else {
+      delete document.body.dataset.calcMobileOpen;
+    }
+    return () => {
+      delete document.body.dataset.calcMobileOpen;
+    };
+  }, [isMobile, isOpen]);
+
+  // Leaving mobile widths (rotate to landscape iPad) resets the shell shift.
+  useEffect(() => {
+    if (!isMobile) delete document.body.dataset.calcMobileOpen;
+  }, [isMobile]);
+
+
   // Listen for external toggle events
   useEffect(() => {
     const handleToggle = () => {
