@@ -483,7 +483,7 @@ export default function StudentBluebook() {
 
       {/* Tests Tabs — always render so Videos tab is reachable even when no tests published */}
       <Tabs defaultValue="videos" className="w-full">
-        <TabsList className="grid w-full max-w-[560px] grid-cols-4">
+        <TabsList className="grid w-full max-w-[680px] grid-cols-5">
           <TabsTrigger value="math" className="gap-1.5 text-sm">
             <Calculator className="h-4 w-4" />
             <span className="hidden sm:inline">Math</span>
@@ -511,12 +511,22 @@ export default function StudentBluebook() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5 text-sm">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
+            {attempts && attempts.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {attempts.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="videos" data-tour="bluebook-videos-tab" className="gap-1.5 text-sm relative">
             <Video className="h-4 w-4" />
             <span className="hidden sm:inline">Videos</span>
             <span className="absolute -top-0.5 -right-0.5 text-[8px] font-bold uppercase tracking-wider text-primary bg-primary/15 rounded px-1">NEW</span>
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="math" className="mt-4">
           {mathTests && mathTests.length > 0 ? (
