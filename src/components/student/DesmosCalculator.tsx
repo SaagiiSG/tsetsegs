@@ -212,11 +212,13 @@ export function DesmosCalculator() {
     const apply = (p: number) => {
       const w = window.innerWidth;
       rootEl.style.transition = 'none';
-      rootEl.style.transform = `translateX(${-p * w}px)`;
+      rootEl.style.willChange = 'transform';
+      rootEl.style.transform = `translate3d(${-p * w}px,0,0)`;
       const pane = mobilePaneRef.current;
       if (pane) {
         pane.style.transition = 'none';
-        pane.style.transform = `translateX(${(1 - p) * w}px)`;
+        pane.style.willChange = 'transform';
+        pane.style.transform = `translate3d(${(1 - p) * w}px,0,0)`;
         pane.style.visibility = 'visible';
       }
     };
@@ -224,21 +226,27 @@ export function DesmosCalculator() {
     const settle = (open: boolean) => {
       const pane = mobilePaneRef.current;
       rootEl.style.transition = '';
-      rootEl.style.transform = open ? 'translateX(-100%)' : 'translateX(0)';
+      rootEl.style.transform = open ? 'translate3d(-100%,0,0)' : 'translate3d(0,0,0)';
       if (pane) {
         pane.style.transition = '';
-        pane.style.transform = open ? 'translateX(0)' : 'translateX(100%)';
+        pane.style.transform = open ? 'translate3d(0,0,0)' : 'translate3d(100%,0,0)';
       }
-      setIsOpen(open);
+      // Let the slide finish on the compositor before React re-renders the
+      // question view / flips body flags — otherwise the closing animation
+      // stutters on the last frames.
       window.setTimeout(() => {
+        setIsOpen(open);
         rootEl.style.transform = '';
+        rootEl.style.willChange = '';
         const p2 = mobilePaneRef.current;
         if (p2) {
           p2.style.transform = '';
+          p2.style.willChange = '';
           p2.style.visibility = '';
         }
-      }, 300);
+      }, 260);
     };
+
 
     const onStart = (e: TouchEvent) => {
       if (g || e.touches.length !== 1) return;
