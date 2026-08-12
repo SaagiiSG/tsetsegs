@@ -508,19 +508,21 @@ export default function StudentBluebookTest() {
       {currentModule?.section === 'math' && <ReferenceSheet />}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b px-4 py-3">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <header className="sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           {/* Left: Exit and Test Info */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-1 md:gap-4 flex-1 min-w-0">
             <Button 
               variant="ghost" 
               size="icon"
+              className="h-11 w-11 md:h-10 md:w-10 shrink-0"
               onClick={() => navigate('/practice/bluebook')}
             >
               <X className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="font-semibold">{attempt?.test?.name}</h1>
+            {/* Title is hidden on phones — the module label lives in the question drawer */}
+            <div className="hidden md:block min-w-0">
+              <h1 className="font-semibold truncate">{attempt?.test?.name}</h1>
               <p className="text-sm text-muted-foreground">
                 {currentModule?.section === 'reading_writing' ? 'Reading & Writing' : 'Math'} - 
                 Module {currentModule?.module_number}
@@ -533,7 +535,7 @@ export default function StudentBluebookTest() {
             <Badge 
               variant={timeRemaining && timeRemaining < 300 ? 'destructive' : 'secondary'}
               className={cn(
-                "gap-1 text-lg px-3 py-1 transition-all",
+                "gap-1 text-base md:text-lg px-2.5 md:px-3 py-1 tabular-nums transition-all",
                 timeRemaining !== null && timeRemaining < 60 && "animate-pulse shadow-[0_0_15px_hsl(var(--destructive))]"
               )}
             >
@@ -541,6 +543,7 @@ export default function StudentBluebookTest() {
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
             </Badge>
           </div>
+
 
           {/* Right: Calculator, Reference, Settings */}
           <div className="flex items-center gap-2 flex-1 justify-end">
