@@ -158,6 +158,102 @@ export function DesmosCalculator() {
     if (!isMobile) delete document.body.dataset.calcMobileOpen;
   }, [isMobile]);
 
+  // ── Mobile swipe gestures ──
+  // Swipe left from the right screen edge to pull the Desmos pane in; swipe
+  // right from the pane's left edge to push it back out. The app shell (#root)
+  // and the pane follow the finger 1:1, then settle with an iOS-style spring.
+  useEffect(() => {
+    if (!isMobile) return;
+    const rootEl = document.getElementById('root');
+    if (!rootEl) return;
+
+    const EDGE = 32; // px hot zone
+    const THRESHOLD = 0.35; // fraction of the screen needed to commit
+    let g: { startX: number; startY: number; startP: number; p: number; decided: boolean } | null = null;
+
+    const apply = (p: number) => {
+      const w = window.innerWidth;
+      rootEl.style.transition = 'none';
+      rootEl.style.transform = `translateX(${-p * w}px)`;
+      const pane = mobilePaneRef.current;
+      if (pane) {
+        pane.style.transition = 'none';
+        pane.style.transform = `translateX(${(1 - p) * w}px)`;
+        pane.style.visibility = 'visible';
+      }
+    };
+
+    const settle = (open: boolean) => {
+      const pane = mobilePaneRef.current;
+      rootEl.style.transition = '';
+      rootEl.style.transform = open ? 'translateX(-100%)' : 'translateX(0)';
+      if (pane) {
+        pane.style.transition = '';
+        pane.style.transform = open ? 'translateX(0)' : 'translateX(100%)';
+      }
+      setIsOpen(open);
+      window.setTimeout(() => {
+        rootEl.style.transform = '';
+        const p2 = mobilePaneRef.current;
+        if (p2) {
+          p2.style.transform = '';
+          p2.style.visibility = '';
+        }
+      }, 300);
+    };
+
+    const onStart = (e: TouchEvent) => {
+      if (g || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      if (isOpen) {
+        if (t.clientX > EDGE) return;
+        g = { startX: t.clientX, startY: t.clientY, startP: 1, p: 1, decided: false };
+      } else {
+        if (t.clientX < window.innerWidth - EDGE) return;
+        setMobileMounted(true);
+        g = { startX: t.clientX, startY: t.clientY, startP: 0, p: 0, decided: false };
+      }
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (!g || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - g.startX;
+      const dy = t.clientY - g.startY;
+      if (!g.decided) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        if (Math.abs(dx) <= Math.abs(dy)) { g = null; return; } // vertical scroll wins
+        g.decided = true;
+        document.body.dataset.calculatorDragging = 'true';
+      }
+      e.preventDefault();
+      const w = window.innerWidth;
+      g.p = Math.min(1, Math.max(0, g.startP - dx / w));
+      apply(g.p);
+    };
+
+    const onEnd = () => {
+      if (!g) return;
+      const { startP, p, decided } = g;
+      g = null;
+      delete document.body.dataset.calculatorDragging;
+      if (!decided) return;
+      settle(startP === 0 ? p > THRESHOLD : p > 1 - THRESHOLD);
+    };
+
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+    return () => {
+      document.removeEventListener('touchstart', onStart);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      document.removeEventListener('touchcancel', onEnd);
+    };
+  }, [isMobile, isOpen]);
+
+
 
   // Listen for external toggle events
   useEffect(() => {
