@@ -209,54 +209,74 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                     <MathText text={selectedQuestion.question_text} />
                   </div>
 
-                  {selectedQuestion.question_image_url && (
-                    <div className="flex justify-center">
-                      <img 
-                        src={selectedQuestion.question_image_url} 
-                        alt="Question" 
-                        className="max-w-md w-full h-auto rounded-lg border object-contain"
-                      />
-                    </div>
-                  )}
+                  <QuestionFigures
+                    url1={selectedQuestion.question_image_url}
+                    url2={selectedQuestion.question_image_url_2}
+                    alt="Question figure"
+                    imgClassName={cn(
+                      "rounded-lg border object-contain",
+                      selectedQuestion.question_image_url_2 ? "max-h-72 w-auto" : "max-w-md w-full h-auto"
+                    )}
+                  />
 
-                  {/* Multiple Choice Options */}
-                  {selectedQuestion.multiple_choice_options && (
-                    <div className="space-y-2 mt-4">
-                      {Object.entries(selectedQuestion.multiple_choice_options as Record<string, string>).map(([key, value]) => {
-                        const isCorrect = key.toUpperCase() === selectedQuestion.correct_answer?.toUpperCase();
-                        const isUserAnswer = key.toUpperCase() === selectedQuestion.user_answer?.toUpperCase();
-                        
-                        return (
-                          <div
-                            key={key}
-                            className={cn(
-                              "p-3 rounded-lg border-2 flex items-start gap-3",
-                              isCorrect && "border-green-500 bg-green-500/10",
-                              isUserAnswer && !isCorrect && "border-red-500 bg-red-500/10",
-                              !isCorrect && !isUserAnswer && "border-muted"
-                            )}
-                          >
-                            <span className={cn(
-                              "font-semibold w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0",
-                              isCorrect && "bg-green-500 text-white",
-                              isUserAnswer && !isCorrect && "bg-red-500 text-white",
-                              !isCorrect && !isUserAnswer && "bg-muted"
-                            )}>
-                              {key.toUpperCase()}
-                            </span>
-                            <span className="flex-1">
-                              <MathText text={value} />
-                            </span>
-                            {isCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />}
-                            {isUserAnswer && !isCorrect && <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {/* Multiple Choice Options (text and/or image choices) */}
+                  {(() => {
+                    const choices = normaliseChoices(
+                      selectedQuestion.multiple_choice_options,
+                      selectedQuestion.choice_images,
+                    );
+                    if (choices.length === 0) return null;
+
+                    return (
+                      <div className="space-y-2 mt-4">
+                        {choices.map(({ letter, text, image }) => {
+                          const isCorrect = letter === selectedQuestion.correct_answer?.trim().toUpperCase();
+                          const isUserAnswer = letter === selectedQuestion.user_answer?.trim().toUpperCase();
+
+                          return (
+                            <div
+                              key={letter}
+                              className={cn(
+                                "p-3 rounded-lg border-2 flex items-start gap-3",
+                                isCorrect && "border-green-500 bg-green-500/10",
+                                isUserAnswer && !isCorrect && "border-red-500 bg-red-500/10",
+                                !isCorrect && !isUserAnswer && "border-muted"
+                              )}
+                            >
+                              <span className={cn(
+                                "font-semibold w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0",
+                                isCorrect && "bg-green-500 text-white",
+                                isUserAnswer && !isCorrect && "bg-red-500 text-white",
+                                !isCorrect && !isUserAnswer && "bg-muted"
+                              )}>
+                                {letter}
+                              </span>
+                              <span className="flex-1 min-w-0">
+                                {text ? <MathText text={text} /> : null}
+                                {image && (
+                                  <img
+                                    src={image}
+                                    alt={`Answer choice ${letter}`}
+                                    loading="lazy"
+                                    className={cn(
+                                      "max-h-40 w-auto rounded-md border bg-background object-contain",
+                                      text && "mt-2"
+                                    )}
+                                  />
+                                )}
+                              </span>
+                              {isCorrect && <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />}
+                              {isUserAnswer && !isCorrect && <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {/* Fill in the blank answer display */}
-                  {selectedQuestion.question_type === 'fill_in_blank' && (
+                  {(selectedQuestion.question_type === 'fill_blank' ||
+                    selectedQuestion.question_type === 'fill_in_blank') && (
                     <div className="space-y-3 mt-4 p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium">Your Answer:</span>
@@ -272,6 +292,19 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                       </div>
                     </div>
                   )}
+
+                  {/* Explanation */}
+                  {selectedQuestion.rationale && (
+                    <div className="mt-4 p-4 rounded-lg border bg-muted/30 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Explanation
+                      </p>
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <MathText text={selectedQuestion.rationale} />
+                      </div>
+                    </div>
+                  )}
+
                 </CardContent>
               </Card>
             </div>
