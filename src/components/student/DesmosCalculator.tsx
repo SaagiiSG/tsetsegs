@@ -236,15 +236,20 @@ export function DesmosCalculator() {
       // stutters on the last frames.
       window.setTimeout(() => {
         setIsOpen(open);
-        rootEl.style.transform = '';
-        rootEl.style.willChange = '';
-        const p2 = mobilePaneRef.current;
-        if (p2) {
-          p2.style.transform = '';
-          p2.style.willChange = '';
-          p2.style.visibility = '';
-        }
+        // One extra tick so the body flag / CSS transform is in place before the
+        // inline transform is dropped (prevents a one-frame jump).
+        window.setTimeout(() => {
+          rootEl.style.transform = '';
+          rootEl.style.willChange = '';
+          const p2 = mobilePaneRef.current;
+          if (p2) {
+            p2.style.transform = '';
+            p2.style.willChange = '';
+            p2.style.visibility = '';
+          }
+        }, 50);
       }, 260);
+
     };
 
 
