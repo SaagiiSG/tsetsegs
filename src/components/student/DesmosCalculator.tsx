@@ -246,7 +246,7 @@ export function DesmosCalculator() {
       settle(startP === 0 ? p > THRESHOLD : p > 1 - THRESHOLD);
     };
 
-    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchstart', onStart, { passive: false });
     document.addEventListener('touchmove', onMove, { passive: false });
     document.addEventListener('touchend', onEnd);
     document.addEventListener('touchcancel', onEnd);
