@@ -508,7 +508,11 @@ export default function StudentBluebookTest() {
       {currentModule?.section === 'math' && <ReferenceSheet />}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3">
+      <header className={cn(
+        "sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3 transition-all duration-300",
+        calculatorSnapSide === 'left' && "md:ml-[40vw]",
+        calculatorSnapSide === 'right' && "md:mr-[40vw]"
+      )}>
         <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           {/* Left: Exit and Test Info */}
           <div className="flex items-center gap-1 md:gap-4 flex-1 min-w-0">
