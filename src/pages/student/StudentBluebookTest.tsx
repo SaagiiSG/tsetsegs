@@ -31,7 +31,7 @@ import { QuestionFigures } from "@/components/QuestionFigures";
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
-import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   buildBluebookResults,
   normaliseChoices,
@@ -42,7 +42,7 @@ import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
 
 type ResultsData = BluebookResultsData;
-type QuestionResult = BluebookQuestionResult;
+
 
 interface Question {
   id: string;
