@@ -4645,6 +4645,14 @@ export type Database = {
         Returns: boolean
       }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
+      live_session_find_participant: {
+        Args: { p_phone: string; p_session_id: string }
+        Returns: {
+          id: string
+          player_name: string
+          total_points: number
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
