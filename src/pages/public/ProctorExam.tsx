@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ShieldCheck, Timer, LockKeyhole } from 'lucide-react';
+import { Loader2, ShieldCheck, Timer, LockKeyhole, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ProctorRunner,
@@ -17,6 +17,8 @@ import {
 import { loadPaper, savePaper, loadSnapshot, saveSnapshot, answeredCount } from '@/components/student/proctor/proctorStorage';
 import { compareAttempts, type AnswerMap } from '@/components/student/proctor/proctorConflict';
 import { ProctorRecoveryScreen } from '@/components/student/proctor/ProctorRecoveryScreen';
+import { ProctorReview, useProctorReview } from '@/components/student/proctor/ProctorReview';
+
 
 
 interface State {
@@ -61,7 +63,7 @@ export default function ProctorExam() {
   const [resumed, setResumed] = useState(false);
   const [result, setResult] = useState<ProctorResult | null>(null);
   const [resolvedChoice, setResolvedChoice] = useState(false);
-  const entryRef = useRef<{ saved: number; conflict: boolean } | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
 
 
