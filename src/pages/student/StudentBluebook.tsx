@@ -579,9 +579,20 @@ export default function StudentBluebook() {
           )}
         </TabsContent>
 
+        <TabsContent value="history" className="mt-4">
+          <BluebookHistoryTab
+            attempts={attempts ?? []}
+            testNames={testNames}
+            onReview={handleReviewTest}
+            onContinue={(attemptId) => navigate(`/practice/bluebook/test/${attemptId}`)}
+            isLoadingResults={isLoadingResults}
+          />
+        </TabsContent>
+
         <TabsContent value="videos" className="mt-4">
           <BluebookVideosTab />
         </TabsContent>
+
       </Tabs>
 
     </div>
