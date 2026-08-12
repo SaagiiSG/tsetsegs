@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.proctor_sessions FROM anon;
+GRANT SELECT (id, test_id, title, teacher_username, batch_id, join_code, status, current_module, module_started_at, started_at, finished_at, created_at, updated_at, review_mode) ON public.proctor_sessions TO anon;
