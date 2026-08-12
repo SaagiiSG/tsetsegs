@@ -156,30 +156,37 @@ export function DesmosCalculator() {
   // Keep one same-route history entry in front of the test while the mobile
   // calculator is open. If the OS claims a horizontal drag as its native Back
   // gesture, it only consumes this entry and closes Desmos — it cannot leave
-  // the active test.
+  // the active test. History work is deferred out of the animation frames so
+  // it never competes with the slide transition.
   useEffect(() => {
     if (!isMobile) return;
 
     const marker = '__desmosMobilePane';
     const hasMarker = () => window.history.state?.[marker] === true;
 
-    if (isOpen && !hasMarker()) {
-      window.history.pushState(
-        { ...(window.history.state ?? {}), [marker]: true },
-        '',
-        window.location.href,
-      );
-    } else if (!isOpen && hasMarker()) {
-      window.history.back();
-    }
+    const raf = window.requestAnimationFrame(() => {
+      if (isOpen && !hasMarker()) {
+        window.history.pushState(
+          { ...(window.history.state ?? {}), [marker]: true },
+          '',
+          window.location.href,
+        );
+      } else if (!isOpen && hasMarker()) {
+        window.history.back();
+      }
+    });
 
     const handlePopState = () => {
       if (isOpen && !hasMarker()) setIsOpen(false);
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [isMobile, isOpen]);
+
 
   // Leaving mobile widths (rotate to landscape iPad) resets the shell shift.
   useEffect(() => {
