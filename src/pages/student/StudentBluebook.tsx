@@ -389,18 +389,19 @@ export default function StudentBluebook() {
 
 
           {/* Previous Scores */}
-          {isCompleted && attempt && (
+          {lastCompleted && (
             <div className="grid grid-cols-2 gap-2 pt-2 border-t">
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">R&W</p>
-                <p className="text-sm font-bold">{attempt.rw_scaled_score ? roundToTen(attempt.rw_scaled_score) : '-'}</p>
+                <p className="text-sm font-bold">{lastCompleted.rw_scaled_score ? roundToTen(lastCompleted.rw_scaled_score) : '-'}</p>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">Math</p>
-                <p className="text-sm font-bold">{attempt.math_scaled_score ? roundToTen(attempt.math_scaled_score) : '-'}</p>
+                <p className="text-sm font-bold">{lastCompleted.math_scaled_score ? roundToTen(lastCompleted.math_scaled_score) : '-'}</p>
               </div>
             </div>
           )}
+
         </CardContent>
       </Card>
     );
