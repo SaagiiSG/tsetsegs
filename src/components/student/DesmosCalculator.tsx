@@ -162,8 +162,11 @@ export function DesmosCalculator() {
   // Swipe left from the question view's right edge to pull the Desmos pane in.
   // Closing is button-only ("Back to question") — a close swipe fought the OS
   // back gesture and could kick students out of a test.
+  // Disabled inside the Bluebook mock test — the edge swipe there fought the
+  // test's own navigation and could pull students out of a module.
   useEffect(() => {
     if (!isMobile || isOpen) return;
+    if (/\/practice\/bluebook\/test\//.test(window.location.pathname)) return;
     const rootEl = document.getElementById('root');
     if (!rootEl) return;
 
