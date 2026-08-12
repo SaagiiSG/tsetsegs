@@ -235,94 +235,10 @@ export default function StudentBluebook() {
   const handleReviewTest = async (attemptId: string, testId: string) => {
     setIsLoadingResults(true);
     try {
-      // Fetch all answers with full question data
-      const { data: allAnswers } = await supabase
-        .from('bluebook_answers')
-        .select(`
-          *,
-          question:questions(id, question_id, question_text, question_image_url, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
-        `)
-        .eq('attempt_id', attemptId);
-
-      // Get all modules with questions for ordering
-      const { data: allModulesData } = await supabase
-        .from('bluebook_modules')
-        .select(`
-          id, 
-          section, 
-          module_number,
-          bluebook_module_questions(order_index, question_id)
-        `)
-        .eq('test_id', testId);
-
-      const moduleMap = new Map(allModulesData?.map(m => [m.id, { section: m.section, module_number: m.module_number }]));
-      
-      // Create a map for question order within modules
-      const questionOrderMap = new Map<string, { module_id: string; order_index: number }>();
-      allModulesData?.forEach(m => {
-        m.bluebook_module_questions?.forEach((mq: any) => {
-          questionOrderMap.set(mq.question_id, { module_id: m.id, order_index: mq.order_index });
-        });
-      });
-
-      // Build question results
-      const questionResults: QuestionResult[] = [];
-      let rwCorrect = 0, mathCorrect = 0, rwTotal = 0, mathTotal = 0;
-
-      allAnswers?.forEach(a => {
-        const isCorrect = isAcceptedFillBlankAnswer(
-          a.answer_submitted ?? '',
-          (a.question as any)?.answer ?? '',
-          (a.question as any)?.alternate_answers as string[] | null
-        );
-        const moduleInfo = moduleMap.get(a.module_id!);
-        const orderInfo = questionOrderMap.get(a.question_id!);
-        const section = moduleInfo?.section as 'reading_writing' | 'math';
-        
-        if (section === 'reading_writing') {
-          rwTotal++;
-          if (isCorrect) rwCorrect++;
-        } else if (section === 'math') {
-          mathTotal++;
-          if (isCorrect) mathCorrect++;
-        }
-
-        if (a.question) {
-          questionResults.push({
-            id: a.question.id,
-            question_id: a.question.question_id,
-            question_text: a.question.question_text,
-            question_image_url: a.question.question_image_url,
-            question_type: a.question.question_type,
-            multiple_choice_options: a.question.multiple_choice_options,
-            passage_text: a.question.passage_text,
-            correct_answer: a.question.answer,
-            user_answer: a.answer_submitted,
-            is_correct: isCorrect,
-            order_index: orderInfo?.order_index || 0,
-            section: section,
-            module_number: moduleInfo?.module_number || 1
-          });
-        }
-      });
-
-      // Get attempt scores
-      const attempt = getTestAttempt(testId);
-      const rwScaled = attempt?.rw_scaled_score || Math.round(200 + (rwCorrect / Math.max(rwTotal, 54)) * 600);
-      const mathScaled = attempt?.math_scaled_score || Math.round(200 + (mathCorrect / Math.max(mathTotal, 44)) * 600);
-      const totalScore = attempt?.total_score || (rwScaled + mathScaled);
-
-      setResultsData({
-        totalScore,
-        rwScaled,
-        mathScaled,
-        rwRaw: rwCorrect,
-        mathRaw: mathCorrect,
-        rwTotal,
-        mathTotal,
-        questions: questionResults
-      });
+      const results = await buildBluebookResults(attemptId, testId);
+      setResultsData(results);
       setShowResultsDialog(true);
+
     } catch (error) {
       console.error('Failed to load review data:', error);
       toast.error('Failed to load test review');
