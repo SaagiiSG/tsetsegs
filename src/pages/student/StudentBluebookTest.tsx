@@ -729,14 +729,17 @@ export default function StudentBluebookTest() {
       </div>
 
       {/* Footer Navigation with Bottom Drawer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-card border-t px-4 py-3 z-40">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <footer
+        className="fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           <Button
             variant="outline"
             onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
             disabled={currentQuestionIndex === 0}
             size="icon"
-            className="h-10 w-10"
+            className="h-11 w-11 shrink-0"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -744,13 +747,15 @@ export default function StudentBluebookTest() {
           {/* Center: Question counter - opens drawer */}
           <Drawer open={showQuestionDrawer} onOpenChange={setShowQuestionDrawer}>
             <DrawerTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Grid3X3 className="h-4 w-4" />
-                <span className="font-medium">
-                  Question {currentQuestionIndex + 1} of {moduleQuestions?.length || 0}
+              <Button variant="outline" className="gap-2 h-11 min-w-0 flex-1 md:flex-none">
+                <Grid3X3 className="h-4 w-4 shrink-0" />
+                <span className="font-medium truncate">
+                  <span className="hidden sm:inline">Question </span>
+                  {currentQuestionIndex + 1} of {moduleQuestions?.length || 0}
                 </span>
               </Button>
             </DrawerTrigger>
+
             <DrawerContent className="max-h-[70vh]">
               <DrawerHeader className="border-b">
                 <DrawerTitle className="flex items-center justify-between">
