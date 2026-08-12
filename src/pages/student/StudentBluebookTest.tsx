@@ -734,7 +734,11 @@ export default function StudentBluebookTest() {
 
       {/* Footer Navigation with Bottom Drawer */}
       <footer
-        className="fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40"
+        className={cn(
+          "fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40 transition-all duration-300",
+          calculatorSnapSide === 'left' && "md:left-[40vw]",
+          calculatorSnapSide === 'right' && "md:right-[40vw]"
+        )}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
