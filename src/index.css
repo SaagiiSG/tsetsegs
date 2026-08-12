@@ -560,3 +560,33 @@ button .math-inline .katex {
   0% { transform: translateX(-50%); }
   100% { transform: translateX(0); }
 }
+
+/* ── Mobile full-screen Desmos split view ──
+   The calculator pane is portalled to <body> and lives just off the left edge.
+   Opening it slides the whole app shell (#root) one screen to the right so the
+   two full-screen panels sit side by side. Mobile widths only. */
+@media (max-width: 767px) {
+  #root {
+    transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  body[data-calc-mobile-open='true'] {
+    overflow: hidden;
+  }
+
+  body[data-calc-mobile-open='true'] #root {
+    transform: translateX(100%);
+  }
+
+  .calc-mobile-pane {
+    transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root,
+  .calc-mobile-pane {
+    transition: none !important;
+  }
+}
