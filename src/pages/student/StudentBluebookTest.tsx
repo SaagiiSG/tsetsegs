@@ -31,36 +31,18 @@ import { QuestionFigures } from "@/components/QuestionFigures";
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
-import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import {
+  buildBluebookResults,
+  normaliseChoices,
+  type BluebookResultsData,
+} from '@/lib/bluebookReview';
+
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 
-interface ResultsData {
-  totalScore: number;
-  rwScaled: number;
-  mathScaled: number;
-  rwRaw: number;
-  mathRaw: number;
-  rwTotal: number;
-  mathTotal: number;
-  questions: QuestionResult[];
-}
 
-interface QuestionResult {
-  id: string;
-  question_id: string;
-  question_text: string;
-  question_image_url: string | null;
-  question_image_url_2: string | null;
-  question_type: string;
-  multiple_choice_options: any;
-  passage_text: string | null;
-  correct_answer: string;
-  user_answer: string | null;
-  is_correct: boolean;
-  order_index: number;
-  section: 'reading_writing' | 'math';
-  module_number: number;
-}
+type ResultsData = BluebookResultsData;
+
 
 interface Question {
   id: string;
@@ -70,8 +52,10 @@ interface Question {
   question_image_url_2: string | null;
   question_type: string;
   multiple_choice_options: any;
+  choice_images: any;
   passage_text: string | null;
 }
+
 
 interface ModuleQuestion {
   id: string;
@@ -162,8 +146,9 @@ export default function StudentBluebookTest() {
           order_index,
           question:questions(
             id, question_id, question_text, question_image_url, question_image_url_2,
-            question_type, multiple_choice_options, passage_text
+            question_type, multiple_choice_options, choice_images, passage_text
           )
+
         `)
         .eq('module_id', attempt.current_module_id)
         .order('order_index');
@@ -392,97 +377,22 @@ export default function StudentBluebookTest() {
   };
 
   const completeTest = async () => {
-    // Fetch all answers with full question data
-    const { data: allAnswers } = await supabase
-      .from('bluebook_answers')
-      .select(`
-        *,
-        question:questions(id, question_id, question_text, question_image_url, question_image_url_2, question_type, multiple_choice_options, passage_text, answer, alternate_answers)
-      `)
-      .eq('attempt_id', attemptId);
+    if (!attemptId || !attempt?.test_id) return;
 
-    // Get all modules with questions for ordering
-    const { data: allModulesData } = await supabase
-      .from('bluebook_modules')
-      .select(`
-        id, 
-        section, 
-        module_number,
-        bluebook_module_questions(order_index, question_id)
-      `)
-      .eq('test_id', attempt?.test_id);
-
-    let rwCorrect = 0;
-    let mathCorrect = 0;
-    let rwTotal = 0;
-    let mathTotal = 0;
-
-    const moduleMap = new Map(allModulesData?.map(m => [m.id, { section: m.section, module_number: m.module_number }]));
-    
-    // Create a map for question order within modules
-    const questionOrderMap = new Map<string, { module_id: string; order_index: number }>();
-    allModulesData?.forEach(m => {
-      m.bluebook_module_questions?.forEach((mq: any) => {
-        questionOrderMap.set(mq.question_id, { module_id: m.id, order_index: mq.order_index });
-      });
-    });
-
-    // Build question results
-    const questionResults: QuestionResult[] = [];
-
-    allAnswers?.forEach(a => {
-      const isCorrect = isAcceptedFillBlankAnswer(
-        a.answer_submitted ?? '',
-        (a.question as any)?.answer ?? '',
-        (a.question as any)?.alternate_answers as string[] | null
-      );
-      const moduleInfo = moduleMap.get(a.module_id!);
-      const orderInfo = questionOrderMap.get(a.question_id!);
-      const section = moduleInfo?.section as 'reading_writing' | 'math';
-      
-      if (section === 'reading_writing') {
-        rwTotal++;
-        if (isCorrect) rwCorrect++;
-      } else if (section === 'math') {
-        mathTotal++;
-        if (isCorrect) mathCorrect++;
-      }
-
-      if (a.question) {
-        questionResults.push({
-          id: a.question.id,
-          question_id: a.question.question_id,
-          question_text: a.question.question_text,
-          question_image_url: a.question.question_image_url,
-          question_image_url_2: a.question.question_image_url_2,
-          question_type: a.question.question_type,
-          multiple_choice_options: a.question.multiple_choice_options,
-          passage_text: a.question.passage_text,
-          correct_answer: a.question.answer,
-          user_answer: a.answer_submitted,
-          is_correct: isCorrect,
-          order_index: orderInfo?.order_index || 0,
-          section: section,
-          module_number: moduleInfo?.module_number || 1
-        });
-      }
-    });
-
-    // Simple scaling (placeholder - real SAT uses equating tables)
-    const rwScaled = Math.round(200 + (rwCorrect / Math.max(rwTotal, 54)) * 600);
-    const mathScaled = Math.round(200 + (mathCorrect / Math.max(mathTotal, 44)) * 600);
-    const totalScore = rwScaled + mathScaled;
+    // Build results from the test's module question list so skipped questions
+    // still count against the section totals and appear in the review.
+    const results = await buildBluebookResults(attemptId, attempt.test_id);
 
     const { error } = await supabase
       .from('bluebook_attempts')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        rw_raw_score: rwCorrect,
-        math_raw_score: mathCorrect,
-        rw_scaled_score: rwScaled,
-        math_scaled_score: mathScaled,
-        total_score: totalScore
+        rw_raw_score: results.rwRaw,
+        math_raw_score: results.mathRaw,
+        rw_scaled_score: results.rwScaled,
+        math_scaled_score: results.mathScaled,
+        total_score: results.totalScore
       })
       .eq('id', attemptId);
 
@@ -491,21 +401,12 @@ export default function StudentBluebookTest() {
       return;
     }
 
-    logActivity('bluebook_test_complete', { attemptId, totalScore });
+    logActivity('bluebook_test_complete', { attemptId, totalScore: results.totalScore });
 
-    // Set results data and show dialog
-    setResultsData({
-      totalScore,
-      rwScaled,
-      mathScaled,
-      rwRaw: rwCorrect,
-      mathRaw: mathCorrect,
-      rwTotal,
-      mathTotal,
-      questions: questionResults
-    });
+    setResultsData(results);
     setShowResultsDialog(true);
   };
+
 
   const handleResultsClose = () => {
     setShowResultsDialog(false);
@@ -764,46 +665,40 @@ export default function StudentBluebookTest() {
                         onValueChange={(value) => questionId && handleAnswerChange(questionId, value)}
                         className="space-y-3"
                       >
-                        {(() => {
-                          // Parse multiple_choice_options - could be string, array, or object
-                          let options: string[] = [];
-                          const rawOptions = currentQuestion.question.multiple_choice_options;
-                          
-                          if (Array.isArray(rawOptions)) {
-                            options = rawOptions;
-                          } else if (typeof rawOptions === 'string') {
-                            try {
-                              const parsed = JSON.parse(rawOptions);
-                              options = Array.isArray(parsed) ? parsed : [];
-                            } catch {
-                              options = [];
-                            }
-                          } else if (rawOptions && typeof rawOptions === 'object') {
-                            // Handle object format like {A: "option1", B: "option2"}
-                            options = Object.values(rawOptions) as string[];
-                          }
-
-                          return options.map((option, idx) => {
-                            const optionLetter = String.fromCharCode(65 + idx);
-                            return (
-                              <Label
-                                key={idx}
-                                htmlFor={`option-${idx}`}
-                                className={cn(
-                                  "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
-                                  currentAnswer?.answer_submitted === optionLetter 
-                                    ? "border-primary bg-primary/5" 
-                                    : "hover:bg-muted/50"
-                                )}
-                              >
-                                <RadioGroupItem value={optionLetter} id={`option-${idx}`} />
-                                <span className="font-medium mr-2">{optionLetter}.</span>
-                                <MathText text={option} />
-                              </Label>
-                            );
-                          });
-                        })()}
+                        {normaliseChoices(
+                          currentQuestion.question.multiple_choice_options,
+                          (currentQuestion.question as any).choice_images,
+                        ).map(({ letter, text, image }) => (
+                          <Label
+                            key={letter}
+                            htmlFor={`option-${letter}`}
+                            className={cn(
+                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                              currentAnswer?.answer_submitted === letter
+                                ? "border-primary bg-primary/5"
+                                : "hover:bg-muted/50"
+                            )}
+                          >
+                            <RadioGroupItem value={letter} id={`option-${letter}`} />
+                            <span className="font-medium mr-2">{letter}.</span>
+                            <span className="flex-1 min-w-0">
+                              {text ? <MathText text={text} /> : null}
+                              {image && (
+                                <img
+                                  src={image}
+                                  alt={`Answer choice ${letter}`}
+                                  loading="lazy"
+                                  className={cn(
+                                    "max-h-40 w-auto rounded-md border bg-background object-contain",
+                                    text && "mt-2"
+                                  )}
+                                />
+                              )}
+                            </span>
+                          </Label>
+                        ))}
                       </RadioGroup>
+
                     ) : (
                       <div className="space-y-2">
                         <Label htmlFor="answer">Your Answer</Label>
