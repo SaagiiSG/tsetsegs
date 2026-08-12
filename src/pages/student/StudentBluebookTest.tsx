@@ -508,7 +508,11 @@ export default function StudentBluebookTest() {
       {currentModule?.section === 'math' && <ReferenceSheet />}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3">
+      <header className={cn(
+        "sticky top-0 z-50 bg-card border-b px-2 py-1.5 md:px-4 md:py-3 transition-all duration-300",
+        calculatorSnapSide === 'left' && "md:ml-[40vw]",
+        calculatorSnapSide === 'right' && "md:mr-[40vw]"
+      )}>
         <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
           {/* Left: Exit and Test Info */}
           <div className="flex items-center gap-1 md:gap-4 flex-1 min-w-0">
@@ -602,8 +606,8 @@ export default function StudentBluebookTest() {
       <div 
         className={cn(
           "flex-1 overflow-auto pb-[max(5rem,calc(4.5rem+env(safe-area-inset-bottom)))] transition-all duration-300",
-          calculatorSnapSide === 'left' && "ml-[40vw]",
-          calculatorSnapSide === 'right' && "mr-[40vw]"
+          calculatorSnapSide === 'left' && "md:ml-[40vw]",
+          calculatorSnapSide === 'right' && "md:mr-[40vw]"
         )}
       >
         <main className="px-2.5 py-3 md:p-6">
@@ -730,7 +734,11 @@ export default function StudentBluebookTest() {
 
       {/* Footer Navigation with Bottom Drawer */}
       <footer
-        className="fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40"
+        className={cn(
+          "fixed bottom-0 left-0 right-0 bg-card border-t px-2.5 py-2 md:px-4 md:py-3 z-40 transition-all duration-300",
+          calculatorSnapSide === 'left' && "md:left-[40vw]",
+          calculatorSnapSide === 'right' && "md:right-[40vw]"
+        )}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">

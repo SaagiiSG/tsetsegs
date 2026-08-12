@@ -548,10 +548,10 @@ export function DesmosCalculator() {
   const windowWidth = snapSide ? `${SNAP_WIDTH}vw` : `${size.width}px`;
   // Use 100dvh so browser chrome (Arc/Safari) doesn't clip the bottom; fall back to 100vh
   const windowHeight = snapSide
-    ? 'min(calc(100dvh - 60px), calc(100vh - 60px))'
+    ? 'min(100dvh, 100vh)'
     : `${size.height}px`;
   const contentHeight = snapSide
-    ? 'min(calc(100dvh - 60px - 44px), calc(100vh - 60px - 44px))'
+    ? 'min(calc(100dvh - 44px), calc(100vh - 44px))'
     : `${size.height - 44}px`;
 
   // Resize handle styles
@@ -621,11 +621,11 @@ export function DesmosCalculator() {
       <div
         ref={windowRef}
         data-calculator-window
-        className="fixed z-40 bg-background border rounded-lg shadow-2xl overflow-hidden"
+        className={`fixed ${snapSide ? 'z-[60]' : 'z-40'} bg-background border rounded-lg shadow-2xl overflow-hidden`}
         style={{
           left: snapSide === 'left' ? 0 : snapSide === 'right' ? 'auto' : position.x,
           right: snapSide === 'right' ? 0 : 'auto',
-          top: snapSide ? '60px' : position.y,
+          top: snapSide ? 0 : position.y,
           bottom: snapSide ? 0 : 'auto',
           width: windowWidth,
           height: windowHeight,
