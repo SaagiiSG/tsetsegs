@@ -408,6 +408,7 @@ export function DesmosCalculator() {
     if (!mobileMounted) return null;
     return createPortal(
       <div
+        ref={mobilePaneRef}
         data-calculator-window
         aria-hidden={!isOpen}
         className="fixed inset-y-0 right-0 w-screen z-[60] bg-background flex flex-col calc-mobile-pane"
@@ -432,18 +433,28 @@ export function DesmosCalculator() {
             <span>Desmos</span>
           </div>
         </div>
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 relative">
           <iframe
             src="https://www.desmos.com/calculator"
             title="Desmos Graphing Calculator"
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
           />
+          {/* Left edge swipe strip — lets students swipe right to go back to the
+              question without the Desmos iframe swallowing the gesture. */}
+          <div
+            aria-hidden
+            className="absolute left-0 inset-y-0 w-7 z-10 flex items-center justify-start"
+            style={{ touchAction: 'none' }}
+          >
+            <div className="h-16 w-1 rounded-r-full bg-border/70" />
+          </div>
         </div>
       </div>,
       document.body,
     );
   }
+
 
   // When closed, don't render anything - toggle is handled via header button
   if (!isOpen) {
