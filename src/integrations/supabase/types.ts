@@ -2402,6 +2402,7 @@ export type Database = {
           id: string
           join_code: string
           module_started_at: string | null
+          review_mode: string
           started_at: string | null
           status: string
           teacher_username: string | null
@@ -2418,6 +2419,7 @@ export type Database = {
           id?: string
           join_code: string
           module_started_at?: string | null
+          review_mode?: string
           started_at?: string | null
           status?: string
           teacher_username?: string | null
@@ -2434,6 +2436,7 @@ export type Database = {
           id?: string
           join_code?: string
           module_started_at?: string | null
+          review_mode?: string
           started_at?: string | null
           status?: string
           teacher_username?: string | null
@@ -4740,6 +4743,28 @@ export type Database = {
           question_type: string
           section: string
           time_limit_minutes: number
+        }[]
+      }
+      proctor_review: {
+        Args: { p_participant_id: string }
+        Returns: {
+          choice_images: Json
+          correct_answer: string
+          is_correct: boolean
+          module_number: number
+          multiple_choice_options: Json
+          order_index: number
+          passage_text: string
+          question_code: string
+          question_id: string
+          question_image_url: string
+          question_image_url_2: string
+          question_text: string
+          question_type: string
+          rationale: string
+          review_mode: string
+          section: string
+          student_answer: string
         }[]
       }
       proctor_save_progress: {
