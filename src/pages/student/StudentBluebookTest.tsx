@@ -32,7 +32,14 @@ import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/compone
 import { ReferenceSheet, ReferenceSheetButton } from '@/components/student/ReferenceSheet';
 import { BluebookResultsDialog } from '@/components/student/BluebookResultsDialog';
 import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
+import {
+  buildBluebookResults,
+  normaliseChoices,
+  type BluebookResultsData,
+  type BluebookQuestionResult,
+} from '@/lib/bluebookReview';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
+
 
 interface ResultsData {
   totalScore: number;
