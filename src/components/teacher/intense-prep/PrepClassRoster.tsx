@@ -233,23 +233,45 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
       setDrafts(draftMap);
       setManualDrafts(manualMap);
 
-      // Question sets -> id maps + usable totals
-      const setNames = SETS.map((s) => s.questionSet);
-      const { data: qs } = await supabase
-        .from("questions")
-        .select("id, question_set")
-        .in("question_set", setNames)
-        .eq("is_active", true)
-        .eq("hide_from_practice", false);
-
+      /* Question sets -> id maps + usable totals.
+         CollegeBoard mirrors the student practice definition: every original math
+         question outside the 68 / Hard 150 / ANP sets (~1.4k questions), not just
+         the questions literally tagged question_set = 'CollegeBoard'. */
       const idToSet = new Map<string, SetKey>();
       const computedTotals: Record<SetKey, number> = { "68": 0, "150": 0, cb: 0 };
-      (qs ?? []).forEach((q) => {
-        const meta = SETS.find((s) => s.questionSet === q.question_set);
-        if (!meta) return;
-        idToSet.set(q.id, meta.key);
-        computedTotals[meta.key] += 1;
-      });
+
+      const collectSet = async (key: SetKey) => {
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          let q = supabase
+            .from("questions")
+            .select("id")
+            .eq("is_active", true)
+            .eq("hide_from_practice", false);
+
+          if (key === "cb") {
+            q = q
+              .eq("subject", "math")
+              .eq("is_original", true)
+              .neq("question_set", "68")
+              .neq("question_set", "SATMathTraining800")
+              .neq("question_set", "ANP120Aug3");
+          } else {
+            q = q.eq("question_set", SETS.find((s) => s.key === key)!.questionSet);
+          }
+
+          const { data, error } = await q.order("id", { ascending: true }).range(from, from + PAGE - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          rows.forEach((r) => {
+            idToSet.set(r.id, key);
+            computedTotals[key] += 1;
+          });
+          if (rows.length < PAGE) break;
+        }
+      };
+
+      await Promise.all(SETS.map((s) => collectSet(s.key)));
       setTotals(computedTotals);
 
       const accountIds = memberRows.map((m) => m.student_account_id).filter(Boolean) as string[];
