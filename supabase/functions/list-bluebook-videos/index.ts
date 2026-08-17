@@ -193,6 +193,12 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("list-bluebook-videos error:", err);
+    // Upstream hiccup: serve the last good tree (even if stale) rather than breaking the page.
+    if (cache) {
+      return new Response(JSON.stringify({ ...(cache.payload as object), stale: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
