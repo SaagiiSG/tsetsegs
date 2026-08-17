@@ -254,6 +254,20 @@ export default function ProctorExam() {
     );
   }
 
+  /* Someone who never accepted the oath was never graded server-side, so there is
+     nothing to score — show a clear end state instead of an endless spinner. */
+  if (state.session_status === 'finished' && !state.submitted_at && !done && !state.oath_accepted) {
+    return (
+      <Shell>
+        <h1 className="text-lg font-semibold">This session has ended</h1>
+        <p className="text-sm text-muted-foreground">
+          You didn't start the test before your proctor ended the session, so there's no score to show.
+          You can close this page.
+        </p>
+      </Shell>
+    );
+  }
+
   if (done || state.submitted_at || state.session_status === 'finished') {
     const mods = (result?.module_results ?? state.module_results ?? []) as ProctorModuleResult[];
     const rwCorrect = result?.rw_correct ?? state.rw_correct ?? 0;
