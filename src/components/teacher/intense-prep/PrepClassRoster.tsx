@@ -281,20 +281,28 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
       });
 
       if (accountIds.length > 0) {
-        const { data: attempts } = await supabase
-          .from("student_attempts")
-          .select("student_account_id, question_id")
-          .in("student_account_id", accountIds)
-          .eq("is_correct", true);
-
         const seen = new Map<string, Set<string>>();
-        (attempts ?? []).forEach((a) => {
-          const setKey = idToSet.get(a.question_id);
-          if (!setKey) return;
-          const dedupeKey = `${a.student_account_id}:${setKey}`;
-          if (!seen.has(dedupeKey)) seen.set(dedupeKey, new Set());
-          seen.get(dedupeKey)!.add(a.question_id);
-        });
+        // Paginate: a class roster easily exceeds the 1000-row default cap.
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const { data: attempts, error } = await supabase
+            .from("student_attempts")
+            .select("student_account_id, question_id")
+            .in("student_account_id", accountIds)
+            .eq("is_correct", true)
+            .order("question_id", { ascending: true })
+            .range(from, from + PAGE - 1);
+          if (error) throw error;
+          const rows = attempts ?? [];
+          rows.forEach((a) => {
+            const setKey = idToSet.get(a.question_id);
+            if (!setKey) return;
+            const dedupeKey = `${a.student_account_id}:${setKey}`;
+            if (!seen.has(dedupeKey)) seen.set(dedupeKey, new Set());
+            seen.get(dedupeKey)!.add(a.question_id);
+          });
+          if (rows.length < PAGE) break;
+        }
 
         memberRows.forEach((m) => {
           if (!m.student_account_id) return;
