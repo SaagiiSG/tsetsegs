@@ -470,7 +470,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     );
   }
 
-  const minWidth = 1180 + days.length * 44;
+  const minWidth = 1232 + days.length * 44;
 
   return (
     <div className="space-y-4">
