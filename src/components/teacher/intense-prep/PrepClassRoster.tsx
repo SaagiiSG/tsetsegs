@@ -101,7 +101,7 @@ interface Tracking {
   bluebook_math_scores: Partial<Record<PtKey, number>>;
   note_checks: boolean[];
   prep_attendance: Record<string, AttStatus>;
-  manual_solved: Partial<Record<SetKey, number>>;
+  manual_solved: Partial<Record<ManualKey, number>>;
 }
 
 interface Props {
@@ -128,7 +128,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, Partial<Record<PtKey, string>>>>({});
-  const [manualDrafts, setManualDrafts] = useState<Record<string, Partial<Record<SetKey, string>>>>({});
+  const [manualDrafts, setManualDrafts] = useState<Record<string, Partial<Record<ManualKey, string>>>>({});
 
   const days = useMemo(() => buildDays(group?.start_date, group?.end_date), [group?.start_date, group?.end_date]);
 
@@ -166,7 +166,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
 
       const trackMap: Record<string, Tracking> = {};
       const draftMap: Record<string, Partial<Record<PtKey, string>>> = {};
-      const manualMap: Record<string, Partial<Record<SetKey, string>>> = {};
+      const manualMap: Record<string, Partial<Record<ManualKey, string>>> = {};
       memberRows.forEach((m) => {
         const row = (trackRows ?? []).find((t) => t.member_id === m.id) as
           | {
@@ -206,10 +206,10 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
           if (v === "present" || v === "late" || v === "absent" || v === "excused") att[k] = v;
         });
 
-        const manual: Partial<Record<SetKey, number>> = {};
-        SETS.forEach((s) => {
-          const num = Number((row?.manual_solved ?? {})[s.key]);
-          if (Number.isFinite(num) && num > 0) manual[s.key] = Math.round(num);
+        const manual: Partial<Record<ManualKey, number>> = {};
+        MANUAL_KEYS.forEach((k) => {
+          const num = Number((row?.manual_solved ?? {})[k]);
+          if (Number.isFinite(num) && num > 0) manual[k] = Math.round(num);
         });
 
         trackMap[m.id] = {
@@ -226,9 +226,9 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
         });
         draftMap[m.id] = d;
 
-        const md: Partial<Record<SetKey, string>> = {};
-        SETS.forEach((s) => {
-          md[s.key] = manual[s.key] != null ? String(manual[s.key]) : "";
+        const md: Partial<Record<ManualKey, string>> = {};
+        MANUAL_KEYS.forEach((k) => {
+          md[k] = manual[k] != null ? String(manual[k]) : "";
         });
         manualMap[m.id] = md;
       });
@@ -366,10 +366,10 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     saveTracking(memberId, { bluebook_math_scores: next });
   };
 
-  const commitManual = (memberId: string, key: SetKey) => {
+  const commitManual = (memberId: string, key: ManualKey) => {
     const raw = (manualDrafts[memberId]?.[key] ?? "").trim();
     const parsed = parseInt(raw, 10);
-    const cap = totals[key] || 9999;
+    const cap = totals[key === "cb2" ? "cb" : key] || 9999;
     const valid = Number.isFinite(parsed) && parsed > 0;
     const clamped = valid ? Math.min(parsed, cap) : 0;
     const next = { ...(tracking[memberId]?.manual_solved ?? {}) };
