@@ -106,19 +106,27 @@ export default function ProctorExam() {
   /* ---------- the session ended while I was away: grade me on the server ----------
      Idempotent server routine — it only touches participants without a submission,
      grades their last saved answers (blank = wrong) and unlocks the breakdown. */
+  const [finalizeAttempt, setFinalizeAttempt] = useState(0);
   useEffect(() => {
     if (!participantId || !state) return;
     if (state.session_status !== 'finished' || state.submitted_at || done) return;
-    if (finalizeRef.current) return;
+    if (!state.oath_accepted) return; // nothing to grade — handled by the "session ended" screen
+    if (finalizeRef.current || finalizeAttempt >= 4) return;
     finalizeRef.current = true;
     (async () => {
       const { error } = await supabase.rpc('proctor_finalize_me', {
         p_participant_id: participantId,
       });
-      if (error) finalizeRef.current = false;
       await loadState();
+      if (error) {
+        // transient failure — let the effect run again shortly instead of spinning forever
+        setTimeout(() => {
+          finalizeRef.current = false;
+          setFinalizeAttempt((n) => n + 1);
+        }, 3000);
+      }
     })();
-  }, [participantId, state?.session_status, state?.submitted_at, done, loadState]);
+  }, [participantId, state?.session_status, state?.submitted_at, state?.oath_accepted, done, loadState, finalizeAttempt]);
 
 
 
