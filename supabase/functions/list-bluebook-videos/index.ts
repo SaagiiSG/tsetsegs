@@ -147,24 +147,22 @@ async function buildTree(projectRef: string) {
             modifiedTime: v.modifiedTime ?? null,
           })));
 
-          return {
-            id: mf.id,
-            name: mf.name,
-            moduleNumber,
-            videoCount: videos.length,
-            videos,
-          };
-        }),
-      );
-
       return {
-        id: tf.id,
-        name: tf.name,
-        testNumber,
-        modules,
+        id: mf.id,
+        name: mf.name,
+        moduleNumber,
+        videoCount: videos.length,
+        videos,
       };
-    }),
-  );
+    });
+
+    return {
+      id: tf.id,
+      name: tf.name,
+      testNumber,
+      modules,
+    };
+  });
 
   return { tests, generatedAt: new Date().toISOString() };
 }
