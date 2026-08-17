@@ -124,15 +124,13 @@ async function buildTree(projectRef: string) {
     .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
     .sort((a, b) => naturalSort(a.name, b.name));
 
-  const tests = await Promise.all(
-    testFolders.map(async (tf) => {
+  const tests = await mapLimit(testFolders, 4, async (tf) => {
       const testNumber = parseTestNumber(tf.name);
       const moduleFolders = (await listChildren(tf.id, "id,name,mimeType"))
         .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
         .sort((a, b) => naturalSort(a.name, b.name));
 
-      const modules = await Promise.all(
-        moduleFolders.map(async (mf) => {
+      const modules = await mapLimit(moduleFolders, 4, async (mf) => {
           const moduleNumber = parseModuleNumber(mf.name);
           const files = (await listChildren(mf.id, "id,name,mimeType,thumbnailLink,modifiedTime"))
             .filter((f) => f.mimeType.startsWith("video/"))
