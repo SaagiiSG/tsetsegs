@@ -23,6 +23,23 @@ interface DriveFile {
 let cache: { at: number; payload: unknown } | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Runs async work with bounded concurrency so we don't hammer the connector gateway. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      out[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
 async function listChildren(parentId: string, fields: string): Promise<DriveFile[]> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const driveKey = Deno.env.get("GOOGLE_DRIVE_API_KEY");
@@ -35,18 +52,32 @@ async function listChildren(parentId: string, fields: string): Promise<DriveFile
     pageSize: "500",
   });
 
-  const res = await fetch(`${GATEWAY}/files?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": driveKey,
-    },
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Drive list failed (${res.status}): ${body}`);
+  // The connector gateway occasionally answers 503 / resets the connection.
+  // Retry transient failures with backoff before giving up on the whole tree.
+  const MAX_ATTEMPTS = 4;
+  let lastError = "";
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(`${GATEWAY}/files?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": driveKey,
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return (json.files ?? []) as DriveFile[];
+      }
+      const body = await res.text();
+      lastError = `Drive list failed (${res.status}): ${body}`;
+      const transient = res.status === 429 || res.status >= 500;
+      if (!transient) break;
+    } catch (err) {
+      lastError = `Drive list failed (network): ${err instanceof Error ? err.message : String(err)}`;
+    }
+    if (attempt < MAX_ATTEMPTS) await sleep(250 * 2 ** (attempt - 1) + Math.random() * 150);
   }
-  const json = await res.json();
-  return (json.files ?? []) as DriveFile[];
+  throw new Error(lastError || "Drive list failed");
 }
 
 function parseTestNumber(name: string): number | null {
