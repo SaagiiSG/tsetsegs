@@ -291,6 +291,27 @@ export default function ProctorExam() {
       return <ProctorReview rows={reviewRows} onBack={() => setReviewOpen(false)} />;
     }
     if (total === 0 && !state.submitted_at && !done) {
+      if (finalizeAttempt >= 4) {
+        return (
+          <Shell>
+            <h1 className="text-lg font-semibold">Scoring didn't finish</h1>
+            <p className="text-sm text-muted-foreground">
+              We couldn't score your test automatically. Your teacher has your answers and the full
+              breakdown — ask them in class.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full h-11"
+              onClick={() => {
+                finalizeRef.current = false;
+                setFinalizeAttempt(0);
+              }}
+            >
+              Try again
+            </Button>
+          </Shell>
+        );
+      }
       return (
         <Shell>
           <h1 className="text-lg font-semibold">Scoring your test…</h1>
