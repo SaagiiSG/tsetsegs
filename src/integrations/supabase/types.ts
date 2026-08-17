@@ -1765,8 +1765,11 @@ export type Database = {
         Row: {
           bluebook_math_scores: Json
           id: string
+          manual_solved: Json
           member_id: string
+          note_checks: boolean[]
           practice_test_scores: Json | null
+          prep_attendance: Json
           prep_session_notes: number | null
           problems_68_notes: boolean[] | null
           problems_68_solved: boolean[] | null
@@ -1777,8 +1780,11 @@ export type Database = {
         Insert: {
           bluebook_math_scores?: Json
           id?: string
+          manual_solved?: Json
           member_id: string
+          note_checks?: boolean[]
           practice_test_scores?: Json | null
+          prep_attendance?: Json
           prep_session_notes?: number | null
           problems_68_notes?: boolean[] | null
           problems_68_solved?: boolean[] | null
@@ -1789,8 +1795,11 @@ export type Database = {
         Update: {
           bluebook_math_scores?: Json
           id?: string
+          manual_solved?: Json
           member_id?: string
+          note_checks?: boolean[]
           practice_test_scores?: Json | null
+          prep_attendance?: Json
           prep_session_notes?: number | null
           problems_68_notes?: boolean[] | null
           problems_68_solved?: boolean[] | null
