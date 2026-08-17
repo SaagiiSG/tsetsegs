@@ -535,10 +535,16 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                   {SETS.map((s, i) => (
                     <TableHead
                       key={s.key}
-                      className={cn("h-9 w-[112px] text-center text-xs", i === 0 && "border-l")}
+                      className={cn(
+                        "h-9 text-center text-xs",
+                        s.key === "cb" ? "w-[164px]" : "w-[112px]",
+                        i === 0 && "border-l",
+                      )}
                     >
                       {s.label}
-                      <span className="block text-[9px] font-normal text-amber-600 leading-none">manual</span>
+                      {s.key !== "cb" && (
+                        <span className="block text-[9px] font-normal text-amber-600 leading-none">manual</span>
+                      )}
                     </TableHead>
                   ))}
                   {days.map((d, i) => {
@@ -605,20 +611,23 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                           <TableCell key={s.key} className={cn("py-1.5", si === 0 && "border-l")}>
                             <div className="flex items-center justify-center gap-1">
                               <ProgressRing pct={pct} solved={solved} total={total} />
-                              <Input
-                                inputMode="numeric"
-                                className="h-7 w-[46px] text-[11px] font-mono text-center px-0.5 text-amber-600 placeholder:text-muted-foreground"
-                                placeholder="—"
-                                title={`Hand-entered notebook count for ${s.label}`}
-                                value={manualDrafts[m.id]?.[s.key] ?? ""}
-                                onChange={(e) =>
-                                  setManualDrafts((p) => ({
-                                    ...p,
-                                    [m.id]: { ...p[m.id], [s.key]: e.target.value },
-                                  }))
-                                }
-                                onBlur={() => commitManual(m.id, s.key)}
-                              />
+                              {(s.key === "cb" ? (["cb", "cb2"] as const) : ([s.key] as const)).map((mk) => (
+                                <Input
+                                  key={mk}
+                                  inputMode="numeric"
+                                  className="h-7 w-[46px] text-[11px] font-mono text-center px-0.5 text-amber-600 placeholder:text-muted-foreground"
+                                  placeholder="—"
+                                  title={`Hand-entered notebook count for ${s.label}`}
+                                  value={manualDrafts[m.id]?.[mk] ?? ""}
+                                  onChange={(e) =>
+                                    setManualDrafts((p) => ({
+                                      ...p,
+                                      [m.id]: { ...p[m.id], [mk]: e.target.value },
+                                    }))
+                                  }
+                                  onBlur={() => commitManual(m.id, mk)}
+                                />
+                              ))}
                             </div>
                           </TableCell>
                         );
