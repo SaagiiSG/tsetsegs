@@ -81,6 +81,9 @@ const SETS = [
 ] as const;
 
 type SetKey = (typeof SETS)[number]["key"];
+/* CollegeBoard gets a second hand-entry box (two notebook batches). */
+const MANUAL_KEYS = ["68", "150", "cb", "cb2"] as const;
+type ManualKey = (typeof MANUAL_KEYS)[number];
 
 interface Member {
   id: string;
@@ -98,7 +101,7 @@ interface Tracking {
   bluebook_math_scores: Partial<Record<PtKey, number>>;
   note_checks: boolean[];
   prep_attendance: Record<string, AttStatus>;
-  manual_solved: Partial<Record<SetKey, number>>;
+  manual_solved: Partial<Record<ManualKey, number>>;
 }
 
 interface Props {
@@ -125,7 +128,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, Partial<Record<PtKey, string>>>>({});
-  const [manualDrafts, setManualDrafts] = useState<Record<string, Partial<Record<SetKey, string>>>>({});
+  const [manualDrafts, setManualDrafts] = useState<Record<string, Partial<Record<ManualKey, string>>>>({});
 
   const days = useMemo(() => buildDays(group?.start_date, group?.end_date), [group?.start_date, group?.end_date]);
 
@@ -163,7 +166,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
 
       const trackMap: Record<string, Tracking> = {};
       const draftMap: Record<string, Partial<Record<PtKey, string>>> = {};
-      const manualMap: Record<string, Partial<Record<SetKey, string>>> = {};
+      const manualMap: Record<string, Partial<Record<ManualKey, string>>> = {};
       memberRows.forEach((m) => {
         const row = (trackRows ?? []).find((t) => t.member_id === m.id) as
           | {
@@ -203,10 +206,10 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
           if (v === "present" || v === "late" || v === "absent" || v === "excused") att[k] = v;
         });
 
-        const manual: Partial<Record<SetKey, number>> = {};
-        SETS.forEach((s) => {
-          const num = Number((row?.manual_solved ?? {})[s.key]);
-          if (Number.isFinite(num) && num > 0) manual[s.key] = Math.round(num);
+        const manual: Partial<Record<ManualKey, number>> = {};
+        MANUAL_KEYS.forEach((k) => {
+          const num = Number((row?.manual_solved ?? {})[k]);
+          if (Number.isFinite(num) && num > 0) manual[k] = Math.round(num);
         });
 
         trackMap[m.id] = {
@@ -223,9 +226,9 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
         });
         draftMap[m.id] = d;
 
-        const md: Partial<Record<SetKey, string>> = {};
-        SETS.forEach((s) => {
-          md[s.key] = manual[s.key] != null ? String(manual[s.key]) : "";
+        const md: Partial<Record<ManualKey, string>> = {};
+        MANUAL_KEYS.forEach((k) => {
+          md[k] = manual[k] != null ? String(manual[k]) : "";
         });
         manualMap[m.id] = md;
       });
@@ -363,10 +366,10 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     saveTracking(memberId, { bluebook_math_scores: next });
   };
 
-  const commitManual = (memberId: string, key: SetKey) => {
+  const commitManual = (memberId: string, key: ManualKey) => {
     const raw = (manualDrafts[memberId]?.[key] ?? "").trim();
     const parsed = parseInt(raw, 10);
-    const cap = totals[key] || 9999;
+    const cap = totals[key === "cb2" ? "cb" : key] || 9999;
     const valid = Number.isFinite(parsed) && parsed > 0;
     const clamped = valid ? Math.min(parsed, cap) : 0;
     const next = { ...(tracking[memberId]?.manual_solved ?? {}) };
@@ -467,7 +470,7 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
     );
   }
 
-  const minWidth = 1180 + days.length * 44;
+  const minWidth = 1232 + days.length * 44;
 
   return (
     <div className="space-y-4">
@@ -532,10 +535,16 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                   {SETS.map((s, i) => (
                     <TableHead
                       key={s.key}
-                      className={cn("h-9 w-[112px] text-center text-xs", i === 0 && "border-l")}
+                      className={cn(
+                        "h-9 text-center text-xs",
+                        s.key === "cb" ? "w-[164px]" : "w-[112px]",
+                        i === 0 && "border-l",
+                      )}
                     >
                       {s.label}
-                      <span className="block text-[9px] font-normal text-amber-600 leading-none">manual</span>
+                      {s.key !== "cb" && (
+                        <span className="block text-[9px] font-normal text-amber-600 leading-none">manual</span>
+                      )}
                     </TableHead>
                   ))}
                   {days.map((d, i) => {
@@ -602,20 +611,23 @@ export function PrepClassRoster({ groupId, onBack }: Props) {
                           <TableCell key={s.key} className={cn("py-1.5", si === 0 && "border-l")}>
                             <div className="flex items-center justify-center gap-1">
                               <ProgressRing pct={pct} solved={solved} total={total} />
-                              <Input
-                                inputMode="numeric"
-                                className="h-7 w-[46px] text-[11px] font-mono text-center px-0.5 text-amber-600 placeholder:text-muted-foreground"
-                                placeholder="—"
-                                title={`Hand-entered notebook count for ${s.label}`}
-                                value={manualDrafts[m.id]?.[s.key] ?? ""}
-                                onChange={(e) =>
-                                  setManualDrafts((p) => ({
-                                    ...p,
-                                    [m.id]: { ...p[m.id], [s.key]: e.target.value },
-                                  }))
-                                }
-                                onBlur={() => commitManual(m.id, s.key)}
-                              />
+                              {(s.key === "cb" ? (["cb", "cb2"] as const) : ([s.key] as const)).map((mk) => (
+                                <Input
+                                  key={mk}
+                                  inputMode="numeric"
+                                  className="h-7 w-[46px] text-[11px] font-mono text-center px-0.5 text-amber-600 placeholder:text-muted-foreground"
+                                  placeholder="—"
+                                  title={`Hand-entered notebook count for ${s.label}`}
+                                  value={manualDrafts[m.id]?.[mk] ?? ""}
+                                  onChange={(e) =>
+                                    setManualDrafts((p) => ({
+                                      ...p,
+                                      [m.id]: { ...p[m.id], [mk]: e.target.value },
+                                    }))
+                                  }
+                                  onBlur={() => commitManual(m.id, mk)}
+                                />
+                              ))}
                             </div>
                           </TableCell>
                         );
