@@ -81,6 +81,9 @@ const SETS = [
 ] as const;
 
 type SetKey = (typeof SETS)[number]["key"];
+/* CollegeBoard gets a second hand-entry box (two notebook batches). */
+const MANUAL_KEYS = ["68", "150", "cb", "cb2"] as const;
+type ManualKey = (typeof MANUAL_KEYS)[number];
 
 interface Member {
   id: string;
