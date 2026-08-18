@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useSpring, useTransform } from "framer-motion";
 
 interface CounterProps {
   value: number;
@@ -11,6 +10,8 @@ interface CounterProps {
   decimals?: number;
 }
 
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
 const Counter: React.FC<CounterProps> = ({
   value,
   suffix = "",
@@ -20,32 +21,61 @@ const Counter: React.FC<CounterProps> = ({
   decimals = 0,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  const spring = useSpring(0, {
-    duration: duration * 1000,
-    bounce: 0,
-  });
-
-  const display = useTransform(spring, (current) => {
-    return `${prefix}${current.toFixed(decimals)}${suffix}`;
-  });
+  const [current, setCurrent] = useState(0);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (isInView && !hasAnimated) {
-      spring.set(value);
-      setHasAnimated(true);
+    startedRef.current = false;
+    setCurrent(0);
+
+    let raf = 0;
+    const run = () => {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min(1, (now - start) / (duration * 1000));
+        setCurrent(value * easeOut(p));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      run();
+      return () => cancelAnimationFrame(raf);
     }
-  }, [isInView, value, spring, hasAnimated]);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          run();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(el);
+
+    // Safety net: never leave the number stuck at 0
+    const fallback = window.setTimeout(() => {
+      run();
+      observer.disconnect();
+    }, 1200);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+      window.clearTimeout(fallback);
+      cancelAnimationFrame(raf);
+    };
+  }, [value, duration]);
 
   return (
-    <motion.span
-      ref={ref}
-      className={className}
-    >
-      <motion.span>{display}</motion.span>
-    </motion.span>
+    <span ref={ref} className={className}>
+      {`${prefix}${current.toFixed(decimals)}${suffix}`}
+    </span>
   );
 };
 
