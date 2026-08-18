@@ -205,7 +205,7 @@ const Index = () => {
 
   // Stats with translated labels
   const stats = [
-    { value: 680, suffix: "", labelKey: "statAvgScore", icon: Target, subKey: "statAvgScoreSub" },
+    { value: 1500, suffix: "+", labelKey: "statAvgScore", icon: Target, subKey: "statAvgScoreSub" },
     { value: 1000, suffix: "+", labelKey: "statStudents", icon: Users },
     { value: 3, suffix: "+", labelKey: "statExperience", icon: Star },
   ];
