@@ -95,8 +95,8 @@ const translations: Record<string, Record<string, string>> = {
     heroSubtitle: "Цэцэгсийн гэр бүлд нэгдэж, хувийн сургалт, тоглоомжуулсан дасгал, мэргэжилтнүүдийн удирдлагаар чадавхиа нээгээрэй.",
     studentPortal: "Сурагчийн портал",
     staffLogin: "Ажилтны нэвтрэх",
-    statAvgScore: "Дундаж математикийн оноо",
-    statAvgScoreSub: "89-р хувь",
+    statAvgScore: "Сурагч SAT математикт 660+ авсан",
+    statAvgScoreSub: "Дээд 15%-д",
     statStudents: "Актив хэрэглэгчид",
     statExperience: "Жилийн туршлага",
     whyChooseUs: "Яагаад биднийг сонгох вэ",
@@ -138,8 +138,8 @@ const translations: Record<string, Record<string, string>> = {
     heroSubtitle: "Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance.",
     studentPortal: "Student Portal",
     staffLogin: "Staff Login",
-    statAvgScore: "Avg Math Score",
-    statAvgScoreSub: "89th percentile",
+    statAvgScore: "Students scored 660+ on SAT Math",
+    statAvgScoreSub: "Top 15% nationally",
     statStudents: "Active Users",
     statExperience: "Years Experience",
     whyChooseUs: "Why Choose Us",
@@ -205,7 +205,7 @@ const Index = () => {
 
   // Stats with translated labels
   const stats = [
-    { value: 680, suffix: "", labelKey: "statAvgScore", icon: Target, subKey: "statAvgScoreSub" },
+    { value: 1500, suffix: "+", labelKey: "statAvgScore", icon: Target, subKey: "statAvgScoreSub" },
     { value: 1000, suffix: "+", labelKey: "statStudents", icon: Users },
     { value: 3, suffix: "+", labelKey: "statExperience", icon: Star },
   ];
