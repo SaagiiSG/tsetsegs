@@ -79,23 +79,32 @@ const SplitText: React.FC<SplitTextProps> = ({
     ));
   }, [text, splitType]);
 
+  // Reset the animation whenever the text changes (e.g. language toggle),
+  // so newly created spans don't stay stuck at opacity: 0.
   useEffect(() => {
+    hasAnimated.current = false;
+    elementsRef.current = elementsRef.current.slice(0, text.length);
+  }, [text, splitType]);
+
+  useEffect(() => {
+    const runAnimation = () => {
+      const els = elementsRef.current.filter(Boolean);
+      if (!els.length) return;
+      hasAnimated.current = true;
+      gsap.fromTo(els, from, {
+        ...to,
+        duration,
+        ease,
+        stagger: delay / 1000,
+        onComplete: onAnimationComplete,
+      });
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasAnimated.current) {
-            hasAnimated.current = true;
-            gsap.fromTo(
-              elementsRef.current,
-              from,
-              {
-                ...to,
-                duration,
-                ease,
-                stagger: delay / 1000,
-                onComplete: onAnimationComplete,
-              }
-            );
+            runAnimation();
           }
         });
       },
@@ -104,10 +113,14 @@ const SplitText: React.FC<SplitTextProps> = ({
 
     if (containerRef.current) {
       observer.observe(containerRef.current);
+      // Already-visible case: no new intersection event will fire on text change.
+      const rect = containerRef.current.getBoundingClientRect();
+      const inView = rect.bottom > 0 && rect.top < window.innerHeight;
+      if (inView && !hasAnimated.current) runAnimation();
     }
 
     return () => observer.disconnect();
-  }, [from, to, duration, ease, delay, threshold, rootMargin, onAnimationComplete]);
+  }, [text, splitType, from, to, duration, ease, delay, threshold, rootMargin, onAnimationComplete]);
 
   return (
     <div
