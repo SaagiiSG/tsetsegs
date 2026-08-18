@@ -485,6 +485,14 @@ const Index = () => {
                     <stat.icon className="w-3 h-3" />
                     {t(stat.labelKey)}
                   </div>
+                  {stat.subKey && (
+                    <div
+                      className="text-[11px] md:text-xs mt-0.5"
+                      style={{ color: `hsl(${GOLD.muted} / 0.75)` }}
+                    >
+                      {t(stat.subKey)}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </motion.div>
