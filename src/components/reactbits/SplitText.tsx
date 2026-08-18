@@ -1,6 +1,5 @@
 "use client";
-import { useRef, useEffect, useCallback } from "react";
-import { gsap } from "gsap";
+import { useRef, useEffect, useState } from "react";
 
 interface SplitTextProps {
   text: string;
@@ -9,113 +8,94 @@ interface SplitTextProps {
   duration?: number;
   ease?: string;
   splitType?: "chars" | "words" | "lines" | "words,chars";
-  from?: gsap.TweenVars;
-  to?: gsap.TweenVars;
+  from?: Record<string, unknown>;
+  to?: Record<string, unknown>;
   threshold?: number;
   rootMargin?: string;
   textAlign?: "left" | "center" | "right";
   onAnimationComplete?: () => void;
 }
 
+/**
+ * CSS-driven split text reveal. Every part animates with `forwards` fill, so the
+ * final state is always fully visible — even when `text` changes (language
+ * toggle) and React reuses the existing spans.
+ */
 const SplitText: React.FC<SplitTextProps> = ({
   text,
   className = "",
   delay = 50,
   duration = 0.6,
-  ease = "power3.out",
   splitType = "chars",
-  from = { opacity: 0, y: 40 },
-  to = { opacity: 1, y: 0 },
   threshold = 0.1,
   rootMargin = "-100px",
   textAlign = "center",
   onAnimationComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const elementsRef = useRef<HTMLSpanElement[]>([]);
-  const hasAnimated = useRef(false);
+  const [started, setStarted] = useState(false);
 
-  const splitContent = useCallback(() => {
-    if (!text) return [];
-
-    if (splitType === "chars") {
-      return text.split("").map((char, i) => (
-        <span
-          key={i}
-          ref={(el) => {
-            if (el) elementsRef.current[i] = el;
-          }}
-          style={{ display: char === " " ? "inline" : "inline-block", opacity: 0 }}
-        >
-          {char === " " ? "\u00A0" : char}
-        </span>
-      ));
-    }
-
-    if (splitType === "words") {
-      return text.split(" ").map((word, i) => (
-        <span
-          key={i}
-          ref={(el) => {
-            if (el) elementsRef.current[i] = el;
-          }}
-          style={{ display: "inline-block", opacity: 0, marginRight: "0.3em" }}
-        >
-          {word}
-        </span>
-      ));
-    }
-
-    return text.split("").map((char, i) => (
-      <span
-        key={i}
-        ref={(el) => {
-          if (el) elementsRef.current[i] = el;
-        }}
-        style={{ display: "inline-block", opacity: 0 }}
-      >
-        {char === " " ? "\u00A0" : char}
-      </span>
-    ));
+  // Restart the reveal whenever the text (or split mode) changes.
+  useEffect(() => {
+    setStarted(false);
   }, [text, splitType]);
 
   useEffect(() => {
+    if (started) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const isInView = () => {
+      const rect = el.getBoundingClientRect();
+      return rect.bottom > 0 && rect.top < window.innerHeight;
+    };
+
+    if (isInView()) {
+      setStarted(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasAnimated.current) {
-            hasAnimated.current = true;
-            gsap.fromTo(
-              elementsRef.current,
-              from,
-              {
-                ...to,
-                duration,
-                ease,
-                stagger: delay / 1000,
-                onComplete: onAnimationComplete,
-              }
-            );
-          }
-        });
+        if (entries.some((e) => e.isIntersecting)) setStarted(true);
       },
       { threshold, rootMargin }
     );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [from, to, duration, ease, delay, threshold, rootMargin, onAnimationComplete]);
+  }, [started, text, threshold, rootMargin]);
+
+  useEffect(() => {
+    if (!started || !onAnimationComplete) return;
+    const parts = splitType === "words" ? text.split(" ").length : text.length;
+    const total = duration * 1000 + parts * delay + 50;
+    const timer = setTimeout(onAnimationComplete, total);
+    return () => clearTimeout(timer);
+  }, [started, text, splitType, duration, delay, onAnimationComplete]);
+
+  const parts = splitType === "words" ? text.split(" ") : text.split("");
+  const isWords = splitType === "words";
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ textAlign, display: "block" }}
-    >
-      {splitContent()}
+    <div ref={containerRef} className={className} style={{ textAlign, display: "block" }}>
+      {parts.map((part, i) => {
+        const isSpace = !isWords && part === " ";
+        return (
+          <span
+            key={`${text}-${i}`}
+            style={{
+              display: isSpace ? "inline" : "inline-block",
+              marginRight: isWords ? "0.3em" : undefined,
+              opacity: started ? undefined : 0,
+              animation: started
+                ? `split-text-in ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${i * (delay / 1000)}s both`
+                : undefined,
+            }}
+          >
+            {isSpace ? "\u00A0" : part}
+          </span>
+        );
+      })}
     </div>
   );
 };

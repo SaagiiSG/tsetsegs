@@ -96,13 +96,14 @@ const translations: Record<string, Record<string, string>> = {
     studentPortal: "Сурагчийн портал",
     staffLogin: "Ажилтны нэвтрэх",
     statAvgScore: "Дундаж математикийн оноо",
-    statStudents: "Бэлтгэгдсэн сурагчид",
+    statAvgScoreSub: "89-р хувь",
+    statStudents: "Актив хэрэглэгчид",
     statExperience: "Жилийн туршлага",
     whyChooseUs: "Яагаад биднийг сонгох вэ",
     everythingYouNeed: "Амжилтанд хүрэхэд хэрэгтэй бүх зүйл",
     succeed: "Амжилт",
     featureSmartTitle: "Ухаалаг дасгал",
-    featureSmartDesc: "AI-д суурилсан 68+ өвөрмөц бодлого бүхий асуултын сан болон CollegeBoard импорт",
+    featureSmartDesc: "AI-д суурилсан 2,600+ өвөрмөц бодлого, 300 видео хичээл болон CollegeBoard импорт",
     featureScoreTitle: "Оноо хянах",
     featureScoreDesc: "Зорилтот оноогоо тавьж, хувийн ахицаа хянаарай",
     featureGameTitle: "Тоглоомжуулсан сургалт",
@@ -138,13 +139,14 @@ const translations: Record<string, Record<string, string>> = {
     studentPortal: "Student Portal",
     staffLogin: "Staff Login",
     statAvgScore: "Avg Math Score",
-    statStudents: "Students Trained",
+    statAvgScoreSub: "89th percentile",
+    statStudents: "Active Users",
     statExperience: "Years Experience",
     whyChooseUs: "Why Choose Us",
     everythingYouNeed: "Everything You Need to",
     succeed: "Succeed",
     featureSmartTitle: "Smart Practice",
-    featureSmartDesc: "AI-powered question bank with 68+ unique problems and CollegeBoard imports",
+    featureSmartDesc: "AI-powered question bank with 2,600+ unique problems, 300 video lessons, and CollegeBoard imports",
     featureScoreTitle: "Score Tracking",
     featureScoreDesc: "Set your target score and track your progress with personalized milestones",
     featureGameTitle: "Gamified Learning",
@@ -203,7 +205,7 @@ const Index = () => {
 
   // Stats with translated labels
   const stats = [
-    { value: 700, suffix: "+", labelKey: "statAvgScore", icon: Target },
+    { value: 680, suffix: "", labelKey: "statAvgScore", icon: Target, subKey: "statAvgScoreSub" },
     { value: 1000, suffix: "+", labelKey: "statStudents", icon: Users },
     { value: 3, suffix: "+", labelKey: "statExperience", icon: Star },
   ];
@@ -485,6 +487,14 @@ const Index = () => {
                     <stat.icon className="w-3 h-3" />
                     {t(stat.labelKey)}
                   </div>
+                  {stat.subKey && (
+                    <div
+                      className="text-[11px] md:text-xs mt-0.5"
+                      style={{ color: `hsl(${GOLD.muted} / 0.75)` }}
+                    >
+                      {t(stat.subKey)}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

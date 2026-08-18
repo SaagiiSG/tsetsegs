@@ -602,3 +602,14 @@ button .math-inline .katex {
     transition: none !important;
   }
 }
+
+@keyframes split-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
