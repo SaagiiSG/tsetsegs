@@ -454,8 +454,13 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
     } catch (err: any) {
       console.error('Phone check error:', err);
-      return { error: err.message || 'Failed to check phone number' };
+      const msg = String(err?.message || '');
+      if (/load failed|failed to fetch|network/i.test(msg)) {
+        return { error: 'Connection problem. Please check your internet and try again.' };
+      }
+      return { error: msg || 'Failed to check phone number' };
     }
+
   };
 
   const submitRegistrationRequest = async (fullName: string): Promise<{ error: string | null }> => {
@@ -517,11 +522,50 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: 'Session expired. Please start over.' };
       }
 
-      const { data, error } = await supabase.functions.invoke('student-verify-password', {
-        body: { account_id: pendingStudentAccount.id, password },
-      });
-      if (error || !(data as any)?.ok) {
-        return { error: (data as any)?.error || 'Incorrect password. Please try again.' };
+      // Verify against the edge function directly with fetch so we can tell a
+      // genuine "wrong password" (401 body) apart from a flaky mobile network
+      // (Safari surfaces those as a bare "Load failed"). Retries transient
+      // network failures instead of mislabelling them as a bad password.
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-verify-password`;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      let lastNetworkError: unknown = null;
+      let verified = false;
+      let serverError: string | null = null;
+
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: anonKey,
+              Authorization: `Bearer ${anonKey}`,
+            },
+            body: JSON.stringify({ account_id: pendingStudentAccount.id, password }),
+          });
+          const body = await res.json().catch(() => ({} as any));
+          if (res.ok && body?.ok) {
+            verified = true;
+            break;
+          }
+          if (res.status === 401 || res.status === 400) {
+            serverError = 'Incorrect password. Please try again.';
+            break;
+          }
+          // 5xx / gateway hiccup → retry
+          lastNetworkError = new Error(body?.error || `Server error (${res.status})`);
+        } catch (netErr) {
+          lastNetworkError = netErr;
+        }
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+      }
+
+      if (serverError) return { error: serverError };
+      if (!verified) {
+        console.error('Password verification network failure:', lastNetworkError);
+        return {
+          error: 'Could not reach the server. Check your internet connection and try again.',
+        };
       }
 
       // Password is correct, complete login
@@ -529,9 +573,14 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
     } catch (err: any) {
       console.error('Login with password error:', err);
-      return { error: err.message || 'Login failed' };
+      const msg = String(err?.message || '');
+      if (/load failed|failed to fetch|network/i.test(msg)) {
+        return { error: 'Connection problem. Please check your internet and try again.' };
+      }
+      return { error: msg || 'Login failed' };
     }
   };
+
 
 
   const completeLogin = async (studentAccount: StudentAccount, bypassDeviceLock = false): Promise<{ error: string | null }> => {
