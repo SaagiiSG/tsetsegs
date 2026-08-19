@@ -454,8 +454,13 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
     } catch (err: any) {
       console.error('Phone check error:', err);
-      return { error: err.message || 'Failed to check phone number' };
+      const msg = String(err?.message || '');
+      if (/load failed|failed to fetch|network/i.test(msg)) {
+        return { error: 'Connection problem. Please check your internet and try again.' };
+      }
+      return { error: msg || 'Failed to check phone number' };
     }
+
   };
 
   const submitRegistrationRequest = async (fullName: string): Promise<{ error: string | null }> => {
