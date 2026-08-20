@@ -9,7 +9,8 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
-  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords, Flower2, Award
+  ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords, Flower2, Award,
+  ShieldCheck, ClipboardList
 } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useStudentTier } from '@/hooks/useStudentTier';
