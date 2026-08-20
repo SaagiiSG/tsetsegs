@@ -5,7 +5,7 @@ import { GripVertical, GripHorizontal } from 'lucide-react';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
-  User, Settings, LogOut, Flower2, Award,
+  User, Settings, LogOut, Flower2, Award, ShieldCheck, ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -48,6 +48,8 @@ const moreGroups: { label: string; items: DockItem[] }[] = [
       { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
       { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
       { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
+      { to: '/practice/proctor-results', icon: ShieldCheck, label: 'My Mock Tests' },
+      { to: '/practice/exam-results', icon: ClipboardList, label: 'Exam Results' },
       { to: '/practice/my-flags', icon: Flag, label: 'My Flags' },
       { to: '/practice/badges', icon: Award, label: 'Badges' },
     ],
