@@ -4748,6 +4748,22 @@ export type Database = {
           submitted_at: string
         }[]
       }
+      proctor_my_history: {
+        Args: { p_linked_student_id: string; p_student_account_id: string }
+        Returns: {
+          finished_at: string
+          math_correct: number
+          math_total: number
+          module_results: Json
+          participant_id: string
+          review_mode: string
+          rw_correct: number
+          rw_total: number
+          session_id: string
+          submitted_at: string
+          title: string
+        }[]
+      }
       proctor_paper: {
         Args: { p_participant_id: string }
         Returns: {
