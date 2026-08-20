@@ -66,6 +66,7 @@ import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 import StudentExamResults from "./pages/student/StudentExamResults";
+import StudentProctorResults from "./pages/student/StudentProctorResults";
 
 // Mini Challenges
 import ChallengesHome from "./pages/student/challenges/ChallengesHome";
