@@ -1,31 +1,40 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Gamepad2, Flag, ClipboardList } from 'lucide-react';
+import { BookOpen, Gamepad2, Flag, ClipboardList, FileText } from 'lucide-react';
 import { TeacherQuestionBrowser } from './TeacherQuestionBrowser';
 import { LivePracticeContent } from '@/components/teacher/live-practice';
 import { TeacherFlaggedQuestions } from '@/components/teacher/TeacherFlaggedQuestions';
 import { TeacherTestTab } from './test/TeacherTestTab';
+import { TeacherMocksTab } from './mocks/TeacherMocksTab';
 
 export function TeacherPracticeHub() {
   return (
     <Tabs defaultValue="browse" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-4 h-10">
-        <TabsTrigger value="browse" className="text-xs md:text-sm gap-1.5">
+      <TabsList className="grid w-full grid-cols-5 h-10">
+        <TabsTrigger value="browse" className="text-[11px] md:text-sm gap-1.5">
           <BookOpen className="h-3.5 w-3.5" />
           <span>Browse</span>
         </TabsTrigger>
-        <TabsTrigger value="live" className="text-xs md:text-sm gap-1.5">
+        <TabsTrigger value="live" className="text-[11px] md:text-sm gap-1.5">
           <Gamepad2 className="h-3.5 w-3.5" />
-          <span>Live Session</span>
+          <span className="truncate">Live</span>
         </TabsTrigger>
-        <TabsTrigger value="test" className="text-xs md:text-sm gap-1.5">
+        <TabsTrigger value="test" className="text-[11px] md:text-sm gap-1.5">
           <ClipboardList className="h-3.5 w-3.5" />
           <span>Test</span>
         </TabsTrigger>
-        <TabsTrigger value="flagged" className="text-xs md:text-sm gap-1.5">
+        <TabsTrigger value="mocks" className="text-[11px] md:text-sm gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          <span>Mocks</span>
+        </TabsTrigger>
+        <TabsTrigger value="flagged" className="text-[11px] md:text-sm gap-1.5">
           <Flag className="h-3.5 w-3.5" />
           <span>Flagged</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="mocks">
+        <TeacherMocksTab />
+      </TabsContent>
 
       <TabsContent value="test">
         <TeacherTestTab />
