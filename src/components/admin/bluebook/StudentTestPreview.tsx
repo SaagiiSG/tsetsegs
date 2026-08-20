@@ -57,9 +57,20 @@ const parseOptions = (raw: any): string[] => {
   return [];
 };
 
-const StudentTestPreview = () => {
-  const { testId } = useParams();
+interface StudentTestPreviewProps {
+  /** When provided, the component works standalone (no route param needed). */
+  testId?: string;
+  /** When provided, replaces the admin back/close navigation. */
+  onBack?: () => void;
+  /** Hide the "Back to editor" action (e.g. teacher-side read-only preview). */
+  hideEditorLink?: boolean;
+}
+
+const StudentTestPreview = ({ testId: testIdProp, onBack, hideEditorLink }: StudentTestPreviewProps = {}) => {
+  const params = useParams();
+  const testId = testIdProp ?? params.testId;
   const navigate = useNavigate();
+  const goBack = () => (onBack ? onBack() : navigate("/admin/bluebook"));
 
   const [moduleIndex, setModuleIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -154,7 +165,7 @@ const StudentTestPreview = () => {
     return (
       <div className="text-center py-16 space-y-4">
         <p className="text-muted-foreground">This test has no modules yet.</p>
-        <Button variant="outline" onClick={() => navigate("/admin/bluebook")}>
+        <Button variant="outline" onClick={goBack}>
           Back to tests
         </Button>
       </div>
@@ -191,10 +202,10 @@ const StudentTestPreview = () => {
             variant="ghost"
             size="sm"
             className="gap-2"
-            onClick={() => navigate(`/admin/bluebook/edit/${testId}`)}
+            onClick={() => (hideEditorLink ? goBack() : navigate(`/admin/bluebook/edit/${testId}`))}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to editor
+            {hideEditorLink ? "Back to mocks" : "Back to editor"}
           </Button>
         </div>
       </div>
@@ -203,7 +214,7 @@ const StudentTestPreview = () => {
       <header className="sticky top-0 z-40 bg-card border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/bluebook")}>
+            <Button variant="ghost" size="icon" onClick={goBack}>
               <X className="h-5 w-5" />
             </Button>
             <div className="min-w-0">
