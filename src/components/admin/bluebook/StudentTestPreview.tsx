@@ -57,9 +57,20 @@ const parseOptions = (raw: any): string[] => {
   return [];
 };
 
-const StudentTestPreview = () => {
-  const { testId } = useParams();
+interface StudentTestPreviewProps {
+  /** When provided, the component works standalone (no route param needed). */
+  testId?: string;
+  /** When provided, replaces the admin back/close navigation. */
+  onBack?: () => void;
+  /** Hide the "Back to editor" action (e.g. teacher-side read-only preview). */
+  hideEditorLink?: boolean;
+}
+
+const StudentTestPreview = ({ testId: testIdProp, onBack, hideEditorLink }: StudentTestPreviewProps = {}) => {
+  const params = useParams();
+  const testId = testIdProp ?? params.testId;
   const navigate = useNavigate();
+  const goBack = () => (onBack ? onBack() : navigate("/admin/bluebook"));
 
   const [moduleIndex, setModuleIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
