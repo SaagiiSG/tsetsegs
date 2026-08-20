@@ -60,6 +60,8 @@ const toolsItems: NavItem[] = [
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
+  { to: '/practice/proctor-results', icon: ShieldCheck, label: 'My Mock Tests' },
+  { to: '/practice/exam-results', icon: ClipboardList, label: 'Exam Results' },
   { to: '/practice/my-flags', icon: Flag, label: 'My Flags' },
   { to: '/practice/badges', icon: Award, label: 'Badges' },
 ];
