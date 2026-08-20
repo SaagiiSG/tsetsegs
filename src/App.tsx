@@ -66,6 +66,7 @@ import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 import StudentExamResults from "./pages/student/StudentExamResults";
+import StudentProctorResults from "./pages/student/StudentProctorResults";
 
 // Mini Challenges
 import ChallengesHome from "./pages/student/challenges/ChallengesHome";
@@ -267,6 +268,7 @@ const App = () => (
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
+                    <Route path="proctor-results" element={<StudentProctorResults />} />
                     <Route path="booking" element={<StudentBooking />} />
                     <Route path="challenges" element={<ChallengesHome />} />
                     <Route path="challenges/new" element={<NewChallenge />} />
