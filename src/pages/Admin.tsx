@@ -15,6 +15,7 @@ import QuestionBank from '@/pages/admin/QuestionBank';
 import AdminBatchAnalytics from '@/pages/admin/AdminBatchAnalytics';
 import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
 import StudentSearch from '@/pages/admin/StudentSearch';
+import QuestionSearch from '@/pages/admin/QuestionSearch';
 import SATSchedule from '@/pages/admin/SATSchedule';
 import BluebookManager from '@/pages/admin/BluebookManager';
 import SprintMonitor from '@/pages/admin/SprintMonitor';
@@ -61,6 +62,7 @@ const Admin = () => {
       <Route path="batches" element={<BatchesView />} />
       <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
       <Route path="questions" element={<QuestionBank />} />
+      <Route path="question-search" element={<QuestionSearch />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />

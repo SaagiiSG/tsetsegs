@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { 
   Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
   ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords, Flower2, Award,
-  ShieldCheck, ClipboardList
+  ShieldCheck, ClipboardList, Search
 } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useStudentTier } from '@/hooks/useStudentTier';
@@ -57,6 +57,7 @@ const learningItems: NavItem[] = [
 ];
 
 const toolsItems: NavItem[] = [
+  { to: '/practice/search', icon: Search, label: 'Search Questions' },
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },

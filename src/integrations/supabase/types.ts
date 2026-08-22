@@ -4861,10 +4861,38 @@ export type Database = {
           read_ct: number
         }[]
       }
+      search_questions: {
+        Args: {
+          p_category?: string
+          p_difficulty?: string
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+          p_scope?: string
+          p_set?: string
+          p_subject?: string
+        }
+        Returns: {
+          category_name: string
+          difficulty_level: string
+          hide_from_practice: boolean
+          id: string
+          is_active: boolean
+          question_id: string
+          question_image_url: string
+          question_set: string
+          question_text: string
+          question_type: string
+          subject: string
+          total_count: number
+        }[]
+      }
       set_batch_nickname: {
         Args: { p_batch_id: string; p_nickname: string }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       student_owns_record: {
         Args: { phone: string; student_id: string }
         Returns: boolean

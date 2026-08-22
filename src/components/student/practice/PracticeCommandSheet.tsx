@@ -12,7 +12,7 @@ import {
 import {
   PlayCircle, BookOpen, Zap, Brain, BarChart3, Trophy, Languages, Armchair,
   User, Settings, FileText, Calculator, Bookmark, Home, RotateCcw, Star, Swords, ClipboardList, ShieldCheck,
-  Flower2,
+  Flower2, Search,
 } from 'lucide-react';
 import { usePracticeCommandSheet } from './PracticeCommandSheetContext';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
@@ -43,6 +43,7 @@ const QUICK_ROUTES: QuickRoute[] = [
   { path: '/practice/flowers', label: 'Flowers Challenge', icon: Flower2, hint: '20/22 under 20 min', group: 'jump' },
   { path: '/practice/exam-results', label: 'Exam Results', icon: ClipboardList, hint: 'Class exam scores', group: 'jump' },
   { path: '/practice/proctor-results', label: 'My Mock Tests', icon: ShieldCheck, hint: 'Proctored test history', group: 'jump' },
+  { path: '/practice/search', label: 'Search Questions', icon: Search, hint: 'Keyword search all sets', group: 'tools' },
   { path: '/practice/booking', label: 'Book a Seat', icon: Armchair, group: 'tools' },
   { path: '/practice/stats', label: 'Statistics', icon: BarChart3, group: 'tools' },
   { path: '/practice/badges', label: 'Badges', icon: Star, group: 'tools' },

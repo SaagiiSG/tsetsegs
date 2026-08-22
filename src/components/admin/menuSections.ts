@@ -56,6 +56,7 @@ export const menuSections: MenuSection[] = [
       { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
       { title: "Registration", url: "/register/admin", icon: QrCode },
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
+      { title: "Search Questions", url: "/admin/question-search", icon: Search },
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
