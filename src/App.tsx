@@ -66,6 +66,7 @@ import StudentReadingModule from "./pages/student/StudentReadingModule";
 import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 import StudentExamResults from "./pages/student/StudentExamResults";
+import StudentQuestionSearch from "./pages/student/StudentQuestionSearch";
 import StudentProctorResults from "./pages/student/StudentProctorResults";
 
 // Mini Challenges
@@ -266,6 +267,7 @@ const App = () => (
                     <Route path="smart" element={<StudentSmartPractice />} />
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
+                    <Route path="search" element={<StudentQuestionSearch />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="proctor-results" element={<StudentProctorResults />} />

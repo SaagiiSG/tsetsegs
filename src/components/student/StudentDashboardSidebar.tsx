@@ -57,6 +57,7 @@ const learningItems: NavItem[] = [
 ];
 
 const toolsItems: NavItem[] = [
+  { to: '/practice/search', icon: Search, label: 'Search Questions' },
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },

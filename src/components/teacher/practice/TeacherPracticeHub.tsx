@@ -1,18 +1,23 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Gamepad2, Flag, ClipboardList, FileText } from 'lucide-react';
+import { BookOpen, Gamepad2, Flag, ClipboardList, FileText, Search } from 'lucide-react';
 import { TeacherQuestionBrowser } from './TeacherQuestionBrowser';
 import { LivePracticeContent } from '@/components/teacher/live-practice';
 import { TeacherFlaggedQuestions } from '@/components/teacher/TeacherFlaggedQuestions';
 import { TeacherTestTab } from './test/TeacherTestTab';
 import { TeacherMocksTab } from './mocks/TeacherMocksTab';
+import { TeacherQuestionSearchTab } from './search/TeacherQuestionSearchTab';
 
 export function TeacherPracticeHub() {
   return (
     <Tabs defaultValue="browse" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-5 h-10">
+      <TabsList className="grid w-full grid-cols-6 h-10">
         <TabsTrigger value="browse" className="text-[11px] md:text-sm gap-1.5">
           <BookOpen className="h-3.5 w-3.5" />
           <span>Browse</span>
+        </TabsTrigger>
+        <TabsTrigger value="search" className="text-[11px] md:text-sm gap-1.5">
+          <Search className="h-3.5 w-3.5" />
+          <span>Search</span>
         </TabsTrigger>
         <TabsTrigger value="live" className="text-[11px] md:text-sm gap-1.5">
           <Gamepad2 className="h-3.5 w-3.5" />
@@ -31,6 +36,10 @@ export function TeacherPracticeHub() {
           <span>Flagged</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="search">
+        <TeacherQuestionSearchTab />
+      </TabsContent>
 
       <TabsContent value="mocks">
         <TeacherMocksTab />
