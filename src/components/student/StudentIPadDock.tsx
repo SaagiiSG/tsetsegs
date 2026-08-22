@@ -5,7 +5,7 @@ import { GripVertical, GripHorizontal } from 'lucide-react';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
-  User, Settings, LogOut, Flower2, Award, ShieldCheck, ClipboardList,
+  User, Settings, LogOut, Flower2, Award, ShieldCheck, ClipboardList, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
