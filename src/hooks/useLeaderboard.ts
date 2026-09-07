@@ -54,6 +54,10 @@ export interface AllTimeEntry {
   highestTier: TierType;
   rubyWeeks: number;
   isRubyLegend: boolean;
+  satMathScore: number | null;
+  satEnglishScore: number | null;
+  satTotalScore: number | null;
+  satScoreDate: string | null;
 }
 
 export type AllTimeWindow = 'all' | 'last30';
