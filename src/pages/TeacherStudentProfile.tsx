@@ -681,9 +681,86 @@ export default function TeacherStudentProfile() {
 
         {/* Score Prediction */}
         {batch.course_type === 'SAT' && (
-          <div className="mb-6 grid gap-3 md:grid-cols-2">
+          <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             <ScorePredictionCard studentId={student.id} />
             <SatSimulationPanel studentId={student.id} />
+
+            {/* Official SAT Score Editor */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Award className="h-4 w-4 text-primary" />
+                  Official SAT Score
+                </CardTitle>
+                <CardDescription>Record real SAT score for leaderboard</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-math" className="text-xs">Math</Label>
+                    <Input
+                      id="sat-math"
+                      type="number"
+                      min={200}
+                      max={800}
+                      value={satMath}
+                      onChange={(e) => setSatMath(e.target.value)}
+                      placeholder="200-800"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-english" className="text-xs">English</Label>
+                    <Input
+                      id="sat-english"
+                      type="number"
+                      min={200}
+                      max={800}
+                      value={satEnglish}
+                      onChange={(e) => setSatEnglish(e.target.value)}
+                      placeholder="200-800"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-total" className="text-xs">Total</Label>
+                    <Input
+                      id="sat-total"
+                      type="number"
+                      min={400}
+                      max={1600}
+                      value={satTotal}
+                      onChange={(e) => setSatTotal(e.target.value)}
+                      placeholder="400-1600"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sat-date" className="text-xs">Test Date</Label>
+                  <Input
+                    id="sat-date"
+                    type="date"
+                    value={satDate}
+                    onChange={(e) => setSatDate(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => saveSatScore.mutate()}
+                  disabled={saveSatScore.isPending}
+                  className="w-full"
+                >
+                  {saveSatScore.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Save SAT Score
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
 
