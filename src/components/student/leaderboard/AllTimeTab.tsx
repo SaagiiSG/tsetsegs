@@ -146,7 +146,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                         {/* Left side — 70%: rank, avatar, info, points */}
                         <div
                           className={cn(
-                            "w-full sm:w-[70%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
+                            "w-full sm:w-[75%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
                             isCurrentUser && "bg-primary/10",
                             index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
                             !isCurrentUser && "hover:bg-muted/50"
@@ -201,7 +201,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                         </div>
 
                         {/* Right side — 30%: real SAT score card */}
-                        <div className="w-full sm:w-[30%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
+                        <div className="w-full sm:w-[25%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
                           <div className="w-full rounded-md bg-card border shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center">
                             <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Real SAT Score</p>
                             {entry.satTotalScore ? (
