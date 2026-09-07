@@ -143,10 +143,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                           !isCurrentUser && "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                         )}
                       >
-                        {/* Left side — 70%: rank, avatar, info, points */}
+                        {/* Left side — full width when no SAT score, otherwise 80% */}
                         <div
                           className={cn(
-                            "w-full sm:w-[80%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
+                            "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
+                            entry.satTotalScore || entry.satMathScore ? "w-full sm:w-[80%]" : "w-full",
                             isCurrentUser && "bg-primary/10",
                             index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
                             !isCurrentUser && "hover:bg-muted/50"
@@ -200,37 +201,34 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                           </div>
                         </div>
 
-                        {/* Right side — 20%: real SAT score card */}
-                        <div className="w-full sm:w-[20%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
-                          <div
-                            className="w-full rounded-md border border-amber-500/30 shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center"
-                            style={{ background: 'radial-gradient(circle at 50% 40%, #4a4a4a 0%, #333333 70%)' }}
-                          >
-                            <p className="text-[10px] sm:text-xs text-amber-200/70 uppercase tracking-wide">Real SAT Score</p>
-                            {entry.satTotalScore ? (
-                              <>
-                                <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-                                  {entry.satTotalScore}
-                                </p>
-                                <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
-                                  {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
-                                </p>
-                              </>
-                            ) : entry.satMathScore ? (
-                              <>
-                                <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-                                  {entry.satMathScore}
-                                </p>
-                                <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-lg sm:text-xl font-semibold text-amber-100/40 leading-none mt-1">—</p>
-                                <p className="text-[10px] sm:text-xs text-amber-100/40 mt-0.5">Not recorded</p>
-                              </>
-                            )}
+                        {/* Right side — 20%: real SAT score card (only when a score exists) */}
+                        {(entry.satTotalScore || entry.satMathScore) && (
+                          <div className="w-full sm:w-[20%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
+                            <div
+                              className="w-full rounded-md border border-amber-500/30 shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center"
+                              style={{ background: 'radial-gradient(circle at 50% 40%, #4a4a4a 0%, #333333 70%)' }}
+                            >
+                              <p className="text-[10px] sm:text-xs text-amber-200/70 uppercase tracking-wide">Real SAT Score</p>
+                              {entry.satTotalScore ? (
+                                <>
+                                  <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                                    {entry.satTotalScore}
+                                  </p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
+                                    {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                                    {entry.satMathScore}
+                                  </p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </motion.div>
                     </TooltipTrigger>
                     {!isCurrentUser && (
