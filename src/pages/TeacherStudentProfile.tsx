@@ -242,6 +242,51 @@ export default function TeacherStudentProfile() {
     }
   };
 
+  // Save official SAT score
+  const saveSatScore = useMutation({
+    mutationFn: async () => {
+      if (!studentAccount?.id) throw new Error('No student account found');
+
+      const math = satMath.trim() ? parseInt(satMath, 10) : null;
+      const english = satEnglish.trim() ? parseInt(satEnglish, 10) : null;
+      const total = satTotal.trim() ? parseInt(satTotal, 10) : null;
+
+      if (math !== null && (math < 200 || math > 800)) throw new Error('Math score must be between 200 and 800');
+      if (english !== null && (english < 200 || english > 800)) throw new Error('English score must be between 200 and 800');
+      if (total !== null && (total < 400 || total > 1600)) throw new Error('Total score must be between 400 and 1600');
+
+      const { error } = await supabase
+        .from('student_accounts')
+        .update({
+          sat_math_score: math,
+          sat_english_score: english,
+          sat_total_score: total,
+          sat_score_date: satDate || null,
+        })
+        .eq('id', studentAccount.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-account-share'] });
+      queryClient.invalidateQueries({ queryKey: ['all-time-leaderboard'] });
+      toast({ title: 'SAT score saved!' });
+    },
+    onError: (error: any) => {
+      const errorToast = getErrorToast(error, 'save SAT score');
+      toast({ variant: 'destructive', ...errorToast });
+    },
+  });
+
+  // Auto-calculate total when both section scores are present
+  useEffect(() => {
+    const math = satMath.trim() ? parseInt(satMath, 10) : null;
+    const english = satEnglish.trim() ? parseInt(satEnglish, 10) : null;
+    if (math !== null && english !== null && !isNaN(math) && !isNaN(english)) {
+      setSatTotal((math + english).toString());
+    }
+  }, [satMath, satEnglish]);
+
   useEffect(() => {
     if (studentId) {
       fetchStudentData();
