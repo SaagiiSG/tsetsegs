@@ -146,7 +146,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                         {/* Left side — 70%: rank, avatar, info, points */}
                         <div
                           className={cn(
-                            "w-full sm:w-[75%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
+                            "w-full sm:w-[80%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
                             isCurrentUser && "bg-primary/10",
                             index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
                             !isCurrentUser && "hover:bg-muted/50"
