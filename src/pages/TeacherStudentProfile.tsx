@@ -119,7 +119,7 @@ export default function TeacherStudentProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('student_accounts')
-        .select('id, share_token, share_token_created_at')
+        .select('id, share_token, share_token_created_at, sat_math_score, sat_english_score, sat_total_score, sat_score_date')
         .eq('phone_number', student!.phone)
         .maybeSingle();
       if (error) throw error;
