@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getErrorToast } from "@/lib/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -109,6 +111,10 @@ export default function TeacherStudentProfile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [reportLinkCopied, setReportLinkCopied] = useState(false);
+  const [satMath, setSatMath] = useState<string>('');
+  const [satEnglish, setSatEnglish] = useState<string>('');
+  const [satTotal, setSatTotal] = useState<string>('');
+  const [satDate, setSatDate] = useState<string>('');
   const queryClient = useQueryClient();
   const { isEnabled } = useFeatureFlags();
   const showClosingReport = isEnabled('closing_reports') && batch?.course_type === 'SAT';
@@ -119,7 +125,7 @@ export default function TeacherStudentProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('student_accounts')
-        .select('id, share_token, share_token_created_at')
+        .select('id, share_token, share_token_created_at, sat_math_score, sat_english_score, sat_total_score, sat_score_date')
         .eq('phone_number', student!.phone)
         .maybeSingle();
       if (error) throw error;
@@ -238,11 +244,66 @@ export default function TeacherStudentProfile() {
     }
   };
 
+  // Save official SAT score
+  const saveSatScore = useMutation({
+    mutationFn: async () => {
+      if (!studentAccount?.id) throw new Error('No student account found');
+
+      const math = satMath.trim() ? parseInt(satMath, 10) : null;
+      const english = satEnglish.trim() ? parseInt(satEnglish, 10) : null;
+      const total = satTotal.trim() ? parseInt(satTotal, 10) : null;
+
+      if (math !== null && (math < 200 || math > 800)) throw new Error('Math score must be between 200 and 800');
+      if (english !== null && (english < 200 || english > 800)) throw new Error('English score must be between 200 and 800');
+      if (total !== null && (total < 400 || total > 1600)) throw new Error('Total score must be between 400 and 1600');
+
+      const { error } = await supabase
+        .from('student_accounts')
+        .update({
+          sat_math_score: math,
+          sat_english_score: english,
+          sat_total_score: total,
+          sat_score_date: satDate || null,
+        })
+        .eq('id', studentAccount.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-account-share'] });
+      queryClient.invalidateQueries({ queryKey: ['all-time-leaderboard'] });
+      toast({ title: 'SAT score saved!' });
+    },
+    onError: (error: any) => {
+      const errorToast = getErrorToast(error, 'save SAT score');
+      toast({ variant: 'destructive', ...errorToast });
+    },
+  });
+
+  // Auto-calculate total when both section scores are present
+  useEffect(() => {
+    const math = satMath.trim() ? parseInt(satMath, 10) : null;
+    const english = satEnglish.trim() ? parseInt(satEnglish, 10) : null;
+    if (math !== null && english !== null && !isNaN(math) && !isNaN(english)) {
+      setSatTotal((math + english).toString());
+    }
+  }, [satMath, satEnglish]);
+
   useEffect(() => {
     if (studentId) {
       fetchStudentData();
     }
   }, [studentId]);
+
+  // Populate SAT score inputs when account data loads
+  useEffect(() => {
+    if (studentAccount) {
+      setSatMath(studentAccount.sat_math_score?.toString() || '');
+      setSatEnglish(studentAccount.sat_english_score?.toString() || '');
+      setSatTotal(studentAccount.sat_total_score?.toString() || '');
+      setSatDate(studentAccount.sat_score_date || '');
+    }
+  }, [studentAccount]);
 
   const fetchStudentData = async () => {
     try {
@@ -620,9 +681,86 @@ export default function TeacherStudentProfile() {
 
         {/* Score Prediction */}
         {batch.course_type === 'SAT' && (
-          <div className="mb-6 grid gap-3 md:grid-cols-2">
+          <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             <ScorePredictionCard studentId={student.id} />
             <SatSimulationPanel studentId={student.id} />
+
+            {/* Official SAT Score Editor */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Award className="h-4 w-4 text-primary" />
+                  Official SAT Score
+                </CardTitle>
+                <CardDescription>Record real SAT score for leaderboard</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-math" className="text-xs">Math</Label>
+                    <Input
+                      id="sat-math"
+                      type="number"
+                      min={200}
+                      max={800}
+                      value={satMath}
+                      onChange={(e) => setSatMath(e.target.value)}
+                      placeholder="200-800"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-english" className="text-xs">English</Label>
+                    <Input
+                      id="sat-english"
+                      type="number"
+                      min={200}
+                      max={800}
+                      value={satEnglish}
+                      onChange={(e) => setSatEnglish(e.target.value)}
+                      placeholder="200-800"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sat-total" className="text-xs">Total</Label>
+                    <Input
+                      id="sat-total"
+                      type="number"
+                      min={400}
+                      max={1600}
+                      value={satTotal}
+                      onChange={(e) => setSatTotal(e.target.value)}
+                      placeholder="400-1600"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sat-date" className="text-xs">Test Date</Label>
+                  <Input
+                    id="sat-date"
+                    type="date"
+                    value={satDate}
+                    onChange={(e) => setSatDate(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => saveSatScore.mutate()}
+                  disabled={saveSatScore.isPending}
+                  className="w-full"
+                >
+                  {saveSatScore.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Save SAT Score
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
 

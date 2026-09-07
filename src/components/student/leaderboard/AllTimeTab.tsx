@@ -186,8 +186,25 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                           </div>
                         </div>
 
+                        {/* SAT Score */}
+                        <div className="text-right shrink-0 min-w-[52px] sm:min-w-[64px]">
+                          {entry.satTotalScore ? (
+                            <>
+                              <p className="font-bold text-sm sm:text-base leading-tight">{entry.satTotalScore}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">SAT</p>
+                            </>
+                          ) : entry.satMathScore ? (
+                            <>
+                              <p className="font-bold text-sm sm:text-base leading-tight">{entry.satMathScore}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">SAT Math</p>
+                            </>
+                          ) : (
+                            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">—</p>
+                          )}
+                        </div>
+
                         {/* Points */}
-                        <div className="text-right shrink-0">
+                        <div className="text-right shrink-0 min-w-[52px] sm:min-w-[64px]">
                           <p className="font-bold text-sm sm:text-base leading-tight">{entry.totalPoints.toLocaleString()}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">total pts</p>
                         </div>
@@ -206,6 +223,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                           {entry.rubyWeeks > 0 && (
                             <p className="text-xs text-rose-400">
                               {entry.rubyWeeks} weeks at Ruby
+                            </p>
+                          )}
+                          {(entry.satTotalScore || entry.satMathScore) && (
+                            <p className="text-xs text-primary">
+                              SAT: {entry.satTotalScore || `${entry.satMathScore} Math`}
                             </p>
                           )}
                           <p className="text-xs text-primary mt-1">Click to view full profile →</p>

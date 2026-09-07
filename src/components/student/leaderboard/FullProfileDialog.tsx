@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOtherStudentProfile } from '@/hooks/useOtherStudentProfile';
 import { TierType } from '@/data/badgeDefinitions';
 import { 
@@ -78,6 +79,42 @@ export function FullProfileDialog({ open, onOpenChange, userId, username }: Full
                 featuredBadges={profile.featuredBadges}
                 badgeStats={profile.badgeStats}
               />
+
+              {/* Official SAT Score */}
+              {(profile.satTotalScore || profile.satMathScore) && (
+                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Official SAT Score</CardTitle>
+                    <CardDescription>
+                      {profile.satScoreDate
+                        ? new Date(profile.satScoreDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : 'Test date not recorded'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap items-end gap-4 sm:gap-6">
+                      {profile.satTotalScore && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
+                          <p className="text-3xl sm:text-4xl font-bold text-primary">{profile.satTotalScore}</p>
+                        </div>
+                      )}
+                      {profile.satMathScore && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Math</p>
+                          <p className="text-2xl sm:text-3xl font-semibold">{profile.satMathScore}</p>
+                        </div>
+                      )}
+                      {profile.satEnglishScore && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">English</p>
+                          <p className="text-2xl sm:text-3xl font-semibold">{profile.satEnglishScore}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Level Progress & Rank History */}
               <div className="grid grid-cols-1 gap-3 sm:gap-6">

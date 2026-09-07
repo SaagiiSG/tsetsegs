@@ -3428,9 +3428,14 @@ export type Database = {
           phone_number: string
           rank_unlocked_at: string | null
           registered_device_id: string | null
+          sat_english_score: number | null
+          sat_math_score: number | null
+          sat_score_date: string | null
+          sat_total_score: number | null
           share_token: string | null
           share_token_created_at: string | null
           target_score: number | null
+          updated_at: string | null
         }
         Insert: {
           auth_user_id?: string | null
@@ -3458,9 +3463,14 @@ export type Database = {
           phone_number: string
           rank_unlocked_at?: string | null
           registered_device_id?: string | null
+          sat_english_score?: number | null
+          sat_math_score?: number | null
+          sat_score_date?: string | null
+          sat_total_score?: number | null
           share_token?: string | null
           share_token_created_at?: string | null
           target_score?: number | null
+          updated_at?: string | null
         }
         Update: {
           auth_user_id?: string | null
@@ -3488,9 +3498,14 @@ export type Database = {
           phone_number?: string
           rank_unlocked_at?: string | null
           registered_device_id?: string | null
+          sat_english_score?: number | null
+          sat_math_score?: number | null
+          sat_score_date?: string | null
+          sat_total_score?: number | null
           share_token?: string | null
           share_token_created_at?: string | null
           target_score?: number | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -4495,6 +4510,10 @@ export type Database = {
         Returns: {
           highest_tier: string
           ruby_weeks: number
+          sat_english_score: number
+          sat_math_score: number
+          sat_score_date: string
+          sat_total_score: number
           student_account_id: string
           total_points: number
           username: string

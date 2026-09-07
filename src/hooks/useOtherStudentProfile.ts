@@ -81,6 +81,10 @@ export function useOtherStudentProfile(userId: string | null) {
           phone_number,
           created_at,
           last_login,
+          sat_math_score,
+          sat_english_score,
+          sat_total_score,
+          sat_score_date,
           linked_student:students(first_name, last_name)
         `)
         .eq('id', userId)
@@ -441,6 +445,11 @@ export function useOtherStudentProfile(userId: string | null) {
 
     currentTier: currentTier as TierType,
     reservedNextTier: currentRanking?.reserved_next_tier || null,
+
+    satMathScore: (studentAccount?.sat_math_score as number | null) ?? null,
+    satEnglishScore: (studentAccount?.sat_english_score as number | null) ?? null,
+    satTotalScore: (studentAccount?.sat_total_score as number | null) ?? null,
+    satScoreDate: (studentAccount?.sat_score_date as string | null) ?? null,
 
     activityHeatmap: activityHeatmap || [],
     
