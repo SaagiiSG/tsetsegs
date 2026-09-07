@@ -200,26 +200,30 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                           </div>
                         </div>
 
-                        {/* Right side — 30%: real SAT score card */}
+                        {/* Right side — 20%: real SAT score card */}
                         <div className="w-full sm:w-[20%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
-                          <div className="w-full rounded-md bg-card border shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center">
-                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Real SAT Score</p>
+                          <div className="w-full rounded-md bg-black border border-amber-500/30 shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center">
+                            <p className="text-[10px] sm:text-xs text-amber-200/70 uppercase tracking-wide">Real SAT Score</p>
                             {entry.satTotalScore ? (
                               <>
-                                <p className="text-xl sm:text-2xl font-bold text-primary leading-none mt-1">{entry.satTotalScore}</p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                                <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                                  {entry.satTotalScore}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
                                   {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
                                 </p>
                               </>
                             ) : entry.satMathScore ? (
                               <>
-                                <p className="text-xl sm:text-2xl font-bold text-primary leading-none mt-1">{entry.satMathScore}</p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">SAT Math</p>
+                                <p className="text-xl sm:text-2xl font-extrabold leading-none mt-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                                  {entry.satMathScore}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
                               </>
                             ) : (
                               <>
-                                <p className="text-lg sm:text-xl font-semibold text-muted-foreground leading-none mt-1">—</p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Not recorded</p>
+                                <p className="text-lg sm:text-xl font-semibold text-amber-100/40 leading-none mt-1">—</p>
+                                <p className="text-[10px] sm:text-xs text-amber-100/40 mt-0.5">Not recorded</p>
                               </>
                             )}
                           </div>
