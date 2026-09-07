@@ -446,6 +446,11 @@ export function useOtherStudentProfile(userId: string | null) {
     currentTier: currentTier as TierType,
     reservedNextTier: currentRanking?.reserved_next_tier || null,
 
+    satMathScore: (studentAccount?.sat_math_score as number | null) ?? null,
+    satEnglishScore: (studentAccount?.sat_english_score as number | null) ?? null,
+    satTotalScore: (studentAccount?.sat_total_score as number | null) ?? null,
+    satScoreDate: (studentAccount?.sat_score_date as string | null) ?? null,
+
     activityHeatmap: activityHeatmap || [],
     
     badgeStats: badgeStats || { total: 0, unlocked: 0, percentage: 0, totalPoints: 0, epicEarned: 0, legendaryEarned: 0 },
