@@ -248,6 +248,16 @@ export default function TeacherStudentProfile() {
     }
   }, [studentId]);
 
+  // Populate SAT score inputs when account data loads
+  useEffect(() => {
+    if (studentAccount) {
+      setSatMath(studentAccount.sat_math_score?.toString() || '');
+      setSatEnglish(studentAccount.sat_english_score?.toString() || '');
+      setSatTotal(studentAccount.sat_total_score?.toString() || '');
+      setSatDate(studentAccount.sat_score_date || '');
+    }
+  }, [studentAccount]);
+
   const fetchStudentData = async () => {
     try {
       setIsLoading(true);
