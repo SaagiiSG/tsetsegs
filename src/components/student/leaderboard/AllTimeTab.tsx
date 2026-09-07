@@ -201,7 +201,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                         </div>
 
                         {/* Right side — 30%: real SAT score card */}
-                        <div className="w-full sm:w-[30%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
+                        <div className="w-full sm:w-[25%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
                           <div className="w-full rounded-md bg-card border shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center">
                             <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Real SAT Score</p>
                             {entry.satTotalScore ? (
