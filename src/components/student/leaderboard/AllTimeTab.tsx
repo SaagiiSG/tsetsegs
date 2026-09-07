@@ -225,6 +225,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                               {entry.rubyWeeks} weeks at Ruby
                             </p>
                           )}
+                          {(entry.satTotalScore || entry.satMathScore) && (
+                            <p className="text-xs text-primary">
+                              SAT: {entry.satTotalScore || `${entry.satMathScore} Math`}
+                            </p>
+                          )}
                           <p className="text-xs text-primary mt-1">Click to view full profile →</p>
                         </div>
                       </TooltipContent>
