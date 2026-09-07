@@ -139,74 +139,90 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                         transition={{ delay: index * 0.02 }}
                         onClick={() => handleProfileClick(entry)}
                         className={cn(
-                          "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border transition-all",
-                          isCurrentUser && "bg-primary/10 border-primary/30",
-                          index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30",
-                          !isCurrentUser && "cursor-pointer hover:bg-muted/50 hover:scale-[1.01] active:scale-[0.99]"
+                          "flex flex-col sm:flex-row rounded-lg border overflow-hidden transition-all",
+                          !isCurrentUser && "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                         )}
                       >
-                        {/* Rank */}
-                        <div className="w-6 sm:w-8 flex justify-center shrink-0">
-                          {index === 0 ? (
-                            <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                          ) : (
-                            <span className="font-bold text-sm sm:text-base text-muted-foreground">{index + 1}</span>
+                        {/* Left side — 70%: rank, avatar, info, points */}
+                        <div
+                          className={cn(
+                            "w-full sm:w-[70%] flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-colors",
+                            isCurrentUser && "bg-primary/10",
+                            index === 0 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
+                            !isCurrentUser && "hover:bg-muted/50"
                           )}
-                        </div>
-
-                        {/* Avatar */}
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 shrink-0" style={{ borderColor: tierColor }}>
-                          <AvatarFallback className={cn("text-xs sm:text-sm", isCurrentUser && "bg-primary text-primary-foreground")}>
-                            {entry.username.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <p className={cn("font-medium truncate text-sm sm:text-base", isCurrentUser && "text-primary")}>
-                              {entry.username}
-                            </p>
-                            {isCurrentUser && (
-                              <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">You</Badge>
-                            )}
-                            {entry.isRubyLegend && (
-                              <Badge className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] sm:text-xs px-1.5 py-0 gap-1">
-                                <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
-                                Legend
-                              </Badge>
+                        >
+                          {/* Rank */}
+                          <div className="w-6 sm:w-8 flex justify-center shrink-0">
+                            {index === 0 ? (
+                              <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
+                            ) : (
+                              <span className="font-bold text-sm sm:text-base text-muted-foreground">{index + 1}</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                            <span>L{entry.level}</span>
-                            <span>•</span>
-                            <span className="capitalize truncate" style={{ color: tierColor }}>
-                              Peak: {entry.highestTier}
-                            </span>
+
+                          {/* Avatar */}
+                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 shrink-0" style={{ borderColor: tierColor }}>
+                            <AvatarFallback className={cn("text-xs sm:text-sm", isCurrentUser && "bg-primary text-primary-foreground")}>
+                              {entry.username.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <p className={cn("font-medium truncate text-sm sm:text-base", isCurrentUser && "text-primary")}>
+                                {entry.username}
+                              </p>
+                              {isCurrentUser && (
+                                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">You</Badge>
+                              )}
+                              {entry.isRubyLegend && (
+                                <Badge className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] sm:text-xs px-1.5 py-0 gap-1">
+                                  <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
+                                  Legend
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                              <span>L{entry.level}</span>
+                              <span>•</span>
+                              <span className="capitalize truncate" style={{ color: tierColor }}>
+                                Peak: {entry.highestTier}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Points */}
+                          <div className="text-right shrink-0 min-w-[52px] sm:min-w-[64px]">
+                            <p className="font-bold text-sm sm:text-base leading-tight">{entry.totalPoints.toLocaleString()}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">total pts</p>
                           </div>
                         </div>
 
-                        {/* SAT Score */}
-                        <div className="text-right shrink-0 min-w-[52px] sm:min-w-[64px]">
-                          {entry.satTotalScore ? (
-                            <>
-                              <p className="font-bold text-sm sm:text-base leading-tight">{entry.satTotalScore}</p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">SAT</p>
-                            </>
-                          ) : entry.satMathScore ? (
-                            <>
-                              <p className="font-bold text-sm sm:text-base leading-tight">{entry.satMathScore}</p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">SAT Math</p>
-                            </>
-                          ) : (
-                            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">—</p>
-                          )}
-                        </div>
-
-                        {/* Points */}
-                        <div className="text-right shrink-0 min-w-[52px] sm:min-w-[64px]">
-                          <p className="font-bold text-sm sm:text-base leading-tight">{entry.totalPoints.toLocaleString()}</p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">total pts</p>
+                        {/* Right side — 30%: real SAT score card */}
+                        <div className="w-full sm:w-[30%] p-1.5 sm:p-2 bg-muted/20 border-t sm:border-t-0 sm:border-l flex">
+                          <div className="w-full rounded-md bg-card border shadow-sm flex flex-col items-center justify-center p-2 sm:p-3 text-center">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Real SAT Score</p>
+                            {entry.satTotalScore ? (
+                              <>
+                                <p className="text-xl sm:text-2xl font-bold text-primary leading-none mt-1">{entry.satTotalScore}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                                  {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
+                                </p>
+                              </>
+                            ) : entry.satMathScore ? (
+                              <>
+                                <p className="text-xl sm:text-2xl font-bold text-primary leading-none mt-1">{entry.satMathScore}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">SAT Math</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-lg sm:text-xl font-semibold text-muted-foreground leading-none mt-1">—</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Not recorded</p>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </motion.div>
                     </TooltipTrigger>
