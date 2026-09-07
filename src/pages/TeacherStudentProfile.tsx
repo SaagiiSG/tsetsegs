@@ -109,6 +109,10 @@ export default function TeacherStudentProfile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [reportLinkCopied, setReportLinkCopied] = useState(false);
+  const [satMath, setSatMath] = useState<string>('');
+  const [satEnglish, setSatEnglish] = useState<string>('');
+  const [satTotal, setSatTotal] = useState<string>('');
+  const [satDate, setSatDate] = useState<string>('');
   const queryClient = useQueryClient();
   const { isEnabled } = useFeatureFlags();
   const showClosingReport = isEnabled('closing_reports') && batch?.course_type === 'SAT';
