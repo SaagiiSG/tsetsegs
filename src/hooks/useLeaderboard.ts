@@ -388,6 +388,10 @@ export function useLeaderboard(selectedTier?: TierType) {
         total_points: number;
         highest_tier: string;
         ruby_weeks: number;
+        sat_math_score: number | null;
+        sat_english_score: number | null;
+        sat_total_score: number | null;
+        sat_score_date: string | null;
       }) => ({
         userId: row.student_account_id,
         username: row.username,
@@ -396,6 +400,10 @@ export function useLeaderboard(selectedTier?: TierType) {
         highestTier: row.highest_tier as TierType,
         rubyWeeks: row.ruby_weeks,
         isRubyLegend: row.ruby_weeks >= 4,
+        satMathScore: row.sat_math_score ?? null,
+        satEnglishScore: row.sat_english_score ?? null,
+        satTotalScore: row.sat_total_score ?? null,
+        satScoreDate: row.sat_score_date ?? null,
       }));
     },
     staleTime: 5 * 60 * 1000,
