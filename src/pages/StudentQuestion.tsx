@@ -29,6 +29,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
