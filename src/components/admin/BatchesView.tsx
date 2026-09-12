@@ -56,7 +56,7 @@ export function BatchesView() {
       .from('batches')
       .select('*')
       .order('start_date', { ascending: false });
-    if (data) setBatches(data);
+    if (data) setBatches(isDev ? data : data.filter((b: any) => !b.is_international));
   };
 
   const fetchStudentCounts = async () => {
