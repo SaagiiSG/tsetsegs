@@ -264,10 +264,9 @@ export default function StudentSpeedSession() {
 
     // Refresh snapshot so rank/points reflect end-of-session standing.
     (async () => {
-      const { data: activeSprint } = await supabase
-        .from('sprints').select('id').eq('is_active', true).maybeSingle();
-      const refreshed = activeSprint
-        ? await getSprintEnrollmentSnapshot(student.id, activeSprint.id)
+      const activeSprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
+      const refreshed = activeSprintId
+        ? await getSprintEnrollmentSnapshot(student.id, activeSprintId)
         : null;
       setEnrollmentDialog({ open: true, snapshot: refreshed || snap, pointsEarned: points });
     })();
