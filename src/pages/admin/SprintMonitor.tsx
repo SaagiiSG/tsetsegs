@@ -740,6 +740,26 @@ export default function SprintMonitor() {
         </Card>
       </div>
 
+      {/* Cohort Selector */}
+      <div className="flex items-center gap-4">
+        <span className="text-sm font-medium">Students:</span>
+        <Select
+          value={cohort}
+          onValueChange={(v) => {
+            setCohort(v as Cohort);
+            setSelectedSeason(null);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mn">Mongolian students</SelectItem>
+            <SelectItem value="intl">International students</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Season Selector */}
       <div className="flex items-center gap-4">
         <span className="text-sm font-medium">Season:</span>
