@@ -117,7 +117,25 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
       )}
 
       {/* Filter */}
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-2">
+        {/* Entry count selector: 10 | 50 | 100 */}
+        <div className="flex rounded-md border overflow-hidden divide-x">
+          {([10, 50, 100] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onLimitChange(n)}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold transition-colors",
+                limit === n
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:bg-muted"
+              )}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
         <Select value={timeWindow} onValueChange={(v) => onWindowChange(v as 'all' | 'last30')}>
           <SelectTrigger className="w-[150px]">
             <SelectValue />
