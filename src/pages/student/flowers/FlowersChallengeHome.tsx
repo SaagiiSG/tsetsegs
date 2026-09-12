@@ -49,7 +49,13 @@ export default function FlowersChallengeHome() {
   const load = useCallback(async () => {
     setLoading(true);
     const results = await Promise.all(
-      FLOWERS_CHALLENGES.map((c) => supabase.rpc("flowers_challenge_leaderboard", { p_challenge_key: c.key, p_limit: 10 })),
+      FLOWERS_CHALLENGES.map((c) =>
+        supabase.rpc("flowers_challenge_leaderboard", {
+          p_challenge_key: c.key,
+          p_limit: 10,
+          p_cohort: normalizeCohort(student?.cohort),
+        }),
+      ),
     );
     const next: Record<string, LeaderRow[]> = {};
     FLOWERS_CHALLENGES.forEach((c, i) => {
