@@ -376,11 +376,11 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch all-time leaderboard (aggregated server-side)
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
-    queryKey: ['all-time-leaderboard', allTimeWindow],
+    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit],
     queryFn: async (): Promise<AllTimeEntry[]> => {
       const { data, error } = await supabase.rpc('all_time_leaderboard', {
         p_window: allTimeWindow,
-        p_limit: 100,
+        p_limit: allTimeLimit,
       });
       if (error) throw error;
 
