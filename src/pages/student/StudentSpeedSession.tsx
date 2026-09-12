@@ -203,8 +203,8 @@ export default function StudentSpeedSession() {
         const timeInSeconds = timeSpent / 1000;
         const points = timeInSeconds < 10 ? 15 : timeInSeconds < 20 ? 10 : timeInSeconds < 30 ? 5 : 2;
         
-        const { data: activeSprint } = await supabase
-          .from('sprints').select('id').eq('is_active', true).maybeSingle();
+        const activeSprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
+        const activeSprint = activeSprintId ? { id: activeSprintId } : null;
 
         await supabase.from('point_transactions').insert({
           student_account_id: student.id,
