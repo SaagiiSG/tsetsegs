@@ -448,6 +448,9 @@ export function useLeaderboard(selectedTier?: TierType) {
     allTimeLeaderboard: allTimeLeaderboard || [],
     allTimeWindow,
     setAllTimeWindow,
+    allTimeLimit,
+    setAllTimeLimit,
+
 
     currentUserEntry,
     currentUserAllTime,
