@@ -69,6 +69,9 @@ export default function StudentLeaderboard() {
     allTimeLeaderboard,
     allTimeWindow,
     setAllTimeWindow,
+    allTimeLimit,
+    setAllTimeLimit,
+
 
     currentUserEntry,
     groupInfo,
@@ -316,6 +319,8 @@ export default function StudentLeaderboard() {
                 isLoading={isAllTimeLoading}
                 window={allTimeWindow}
                 onWindowChange={setAllTimeWindow}
+                limit={allTimeLimit}
+                onLimitChange={setAllTimeLimit}
               />
 
             </motion.div>

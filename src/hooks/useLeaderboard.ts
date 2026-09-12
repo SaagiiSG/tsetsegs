@@ -61,10 +61,12 @@ export interface AllTimeEntry {
 }
 
 export type AllTimeWindow = 'all' | 'last30';
+export type AllTimeLimit = 10 | 50 | 100;
 
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
   const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
+  const [allTimeLimit, setAllTimeLimit] = useState<AllTimeLimit>(100);
 
 
   // Fetch current active sprint
@@ -374,11 +376,11 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch all-time leaderboard (aggregated server-side)
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
-    queryKey: ['all-time-leaderboard', allTimeWindow],
+    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit],
     queryFn: async (): Promise<AllTimeEntry[]> => {
       const { data, error } = await supabase.rpc('all_time_leaderboard', {
         p_window: allTimeWindow,
-        p_limit: 100,
+        p_limit: allTimeLimit,
       });
       if (error) throw error;
 
@@ -446,6 +448,9 @@ export function useLeaderboard(selectedTier?: TierType) {
     allTimeLeaderboard: allTimeLeaderboard || [],
     allTimeWindow,
     setAllTimeWindow,
+    allTimeLimit,
+    setAllTimeLimit,
+
 
     currentUserEntry,
     currentUserAllTime,

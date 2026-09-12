@@ -23,9 +23,22 @@ interface AllTimeTabProps {
   isLoading: boolean;
   window: 'all' | 'last30';
   onWindowChange: (w: 'all' | 'last30') => void;
+  limit: 10 | 50 | 100;
+  onLimitChange: (l: 10 | 50 | 100) => void;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange }: AllTimeTabProps) {
+// Convert SAT Math section score to Mongolian YESH points
+function satMathToYesh(mathScore: number | null): number | null {
+  if (mathScore == null) return null;
+  if (mathScore >= 760) return 800;
+  if (mathScore >= 710) return 749;
+  if (mathScore >= 660) return 699;
+  if (mathScore >= 610) return 649;
+  if (mathScore >= 560) return 599;
+  return null;
+}
+
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -104,7 +117,25 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
       )}
 
       {/* Filter */}
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-2">
+        {/* Entry count selector: 10 | 50 | 100 */}
+        <div className="flex rounded-md border overflow-hidden divide-x">
+          {([10, 50, 100] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onLimitChange(n)}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold transition-colors",
+                limit === n
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:bg-muted"
+              )}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
         <Select value={timeWindow} onValueChange={(v) => onWindowChange(v as 'all' | 'last30')}>
           <SelectTrigger className="w-[150px]">
             <SelectValue />
@@ -126,7 +157,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
         <CardContent className="space-y-2 p-2 sm:p-6 pt-0 sm:pt-0">
           {leaderboard.length > 0 ? (
             <TooltipProvider delayDuration={300}>
-              {leaderboard.slice(0, 50).map((entry, index) => {
+              {leaderboard.map((entry, index) => {
                 const isCurrentUser = entry.userId === currentUserId;
                 const tierColor = TIER_COLORS[entry.highestTier];
 
@@ -217,6 +248,9 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
                                     {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
                                   </p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                  </p>
                                 </>
                               ) : (
                                 <>
@@ -224,6 +258,9 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                     {entry.satMathScore}
                                   </p>
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                  </p>
                                 </>
                               )}
                             </div>
