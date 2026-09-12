@@ -25,6 +25,7 @@ import NGEEAdmin from '@/pages/admin/NGEEAdmin';
 import BugReports from '@/pages/admin/BugReports';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import DatabaseHealth from '@/pages/admin/DatabaseHealth';
+import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -76,6 +77,7 @@ const Admin = () => {
       <Route path="announcements" element={<AdminAnnouncements />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="database-health" element={<DatabaseHealth />} />
+      <Route path="burner" element={<BurnerAdmin />} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
   );
