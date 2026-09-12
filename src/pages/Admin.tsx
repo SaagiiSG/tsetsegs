@@ -77,7 +77,7 @@ const Admin = () => {
       <Route path="announcements" element={<AdminAnnouncements />} />
       <Route path="registration-queue" element={<RegistrationQueue />} />
       <Route path="database-health" element={<DatabaseHealth />} />
-      <Route path="burner" element={<BurnerAdmin />} />
+      <Route path="burner" element={<DevOnlyRoute><BurnerAdmin /></DevOnlyRoute>} />
       <Route path="settings" element={<AdminSettings />} />
     </Routes>
   );
