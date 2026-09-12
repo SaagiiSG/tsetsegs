@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
       const { data: seasonRankings, error: seasonError } = await supabase
         .from('student_sprint_rankings')
         .select('student_account_id, current_tier, reserved_next_tier, is_top_1, final_rank, sprint_id, group_number')
-        .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!))
+        .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!, cohort))
       
       if (seasonError) {
         console.error('Failed to get season rankings:', seasonError)
