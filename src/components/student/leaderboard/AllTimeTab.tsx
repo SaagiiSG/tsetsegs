@@ -252,7 +252,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                   </p>
                                   {showYesh && (
                                     <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
-                                      YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                      yesh: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
                                     </p>
                                   )}
                                 </>
@@ -264,7 +264,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
                                   {showYesh && (
                                     <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
-                                      YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                      yesh: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
                                     </p>
                                   )}
                                 </>
