@@ -89,7 +89,7 @@ export default function FlowersChallengeHome() {
       setBests(best);
     }
     setLoading(false);
-  }, [student?.id]);
+  }, [student?.id, student?.cohort]);
 
   useEffect(() => {
     load();
