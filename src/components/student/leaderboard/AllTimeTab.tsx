@@ -157,7 +157,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
         <CardContent className="space-y-2 p-2 sm:p-6 pt-0 sm:pt-0">
           {leaderboard.length > 0 ? (
             <TooltipProvider delayDuration={300}>
-              {leaderboard.slice(0, 50).map((entry, index) => {
+              {leaderboard.map((entry, index) => {
                 const isCurrentUser = entry.userId === currentUserId;
                 const tierColor = TIER_COLORS[entry.highestTier];
 
@@ -248,6 +248,9 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
                                     {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
                                   </p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                  </p>
                                 </>
                               ) : (
                                 <>
@@ -255,6 +258,9 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                     {entry.satMathScore}
                                   </p>
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
+                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                  </p>
                                 </>
                               )}
                             </div>
