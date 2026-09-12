@@ -381,11 +381,12 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch all-time leaderboard (aggregated server-side)
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
-    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit],
+    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit, cohort],
     queryFn: async (): Promise<AllTimeEntry[]> => {
       const { data, error } = await supabase.rpc('all_time_leaderboard', {
         p_window: allTimeWindow,
         p_limit: allTimeLimit,
+        p_cohort: cohort,
       });
       if (error) throw error;
 
@@ -445,6 +446,7 @@ export function useLeaderboard(selectedTier?: TierType) {
   };
 
   return {
+    cohort,
     activeSprint,
     lastEndedSprint,
     nextSprint,
