@@ -25,6 +25,8 @@ interface AllTimeTabProps {
   onWindowChange: (w: 'all' | 'last30') => void;
   limit: 10 | 50 | 100;
   onLimitChange: (l: 10 | 50 | 100) => void;
+  /** Mongolian YESH conversion is only meaningful for Mongolian students */
+  showYesh?: boolean;
 }
 
 // Convert SAT Math section score to Mongolian YESH points
