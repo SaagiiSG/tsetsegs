@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { isBurnerUser, isBurnerExpired, selfDestructBurner } from '@/lib/burnerAdmin';
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +48,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        // An expired burner admin can never be used again — kill it on sight
+        if (isBurnerExpired(session.user)) {
+          selfDestructBurner().finally(() => {
+            supabase.auth.signOut();
+            setIsAdmin(false);
+            setIsLoading(false);
+          });
+          return;
+        }
         checkAdminRole(session.user.id);
       } else {
         setIsLoading(false);
@@ -102,6 +112,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Burner admin accounts destroy themselves when their session ends
+    if (isBurnerUser(user)) {
+      await selfDestructBurner();
+    }
     await supabase.auth.signOut();
     setIsAdmin(false);
     navigate('/login');
