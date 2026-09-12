@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, format, getDay, getHours } from 'date-fns';
+import { useIsDevAccount } from '@/lib/devAccount';
 
 interface DashboardStats {
   activeToday: number;
@@ -48,6 +49,7 @@ interface AtRiskStudent {
 }
 
 export function useAdminDashboard() {
+  const isDev = useIsDevAccount();
   const now = new Date();
   const sevenDaysAgo = subDays(now, 7);
   const todayStart = startOfDay(now);
@@ -257,13 +259,14 @@ export function useAdminDashboard() {
 
   // Fetch recent batches
   const { data: recentBatches } = useQuery({
-    queryKey: ['admin-dashboard-recent-batches'],
+    queryKey: ['admin-dashboard-recent-batches', isDev],
     queryFn: async (): Promise<RecentBatch[]> => {
-      const { data: batches } = await supabase
+      let query = supabase
         .from('batches')
-        .select('id, batch_name, teacher, course_type, start_date, students(id)')
-        .order('created_at', { ascending: false })
-        .limit(6);
+        .select('id, batch_name, teacher, course_type, start_date, is_international, students(id)')
+        .order('created_at', { ascending: false });
+      if (!isDev) query = query.eq('is_international', false);
+      const { data: batches } = await query.limit(6);
 
       return batches?.map(b => ({
         id: b.id,

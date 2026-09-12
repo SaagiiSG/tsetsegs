@@ -18,8 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, parseISO } from 'date-fns';
+import { useIsDevAccount } from '@/lib/devAccount';
 
 export function BatchesView() {
+  const isDev = useIsDevAccount();
   const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<any[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
@@ -56,7 +58,7 @@ export function BatchesView() {
       .from('batches')
       .select('*')
       .order('start_date', { ascending: false });
-    if (data) setBatches(data);
+    if (data) setBatches(isDev ? data : data.filter((b: any) => !b.is_international));
   };
 
   const fetchStudentCounts = async () => {
