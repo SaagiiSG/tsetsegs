@@ -82,7 +82,8 @@ export function useLeaderboard(selectedTier?: TierType) {
         .from('sprints')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .eq('cohort', cohort)
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -111,15 +112,16 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch most recent ended sprint (for showing results)
   const { data: lastEndedSprint } = useQuery({
-    queryKey: ['last-ended-sprint'],
+    queryKey: ['last-ended-sprint', cohort],
     queryFn: async (): Promise<SprintInfo | null> => {
       const { data, error } = await supabase
         .from('sprints')
         .select('*')
         .eq('is_active', false)
+        .eq('cohort', cohort)
         .order('end_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -139,17 +141,18 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch next upcoming sprint (for countdown)
   const { data: nextSprint } = useQuery({
-    queryKey: ['next-sprint'],
+    queryKey: ['next-sprint', cohort],
     queryFn: async (): Promise<SprintInfo | null> => {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('sprints')
         .select('*')
         .eq('is_active', false)
+        .eq('cohort', cohort)
         .gt('start_date', now)
         .order('start_date', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) return null;
 
