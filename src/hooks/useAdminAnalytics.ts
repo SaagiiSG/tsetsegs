@@ -2099,6 +2099,7 @@ export function useSprintComparisonData(batchIds: string[]) {
         .from('sprints')
         .select('id')
         .eq('is_active', true)
+        .eq('cohort', 'mn')
         .maybeSingle();
 
       if (!sprint) {
@@ -2640,7 +2641,8 @@ export function useSprintLeaderboardPreview() {
         .from('sprints')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .eq('cohort', 'mn')
+        .maybeSingle();
 
       if (!sprint) {
         return {
