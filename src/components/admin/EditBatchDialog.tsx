@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -63,6 +64,7 @@ interface Batch {
   start_date: string;
   fb_group_link: string;
   course_type: 'SAT' | 'IELTS';
+  is_international?: boolean | null;
 }
 
 interface EditBatchDialogProps {
@@ -83,6 +85,7 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
   const [selectedRoom, setSelectedRoom] = useState(batch.room);
   const [startDate, setStartDate] = useState(batch.start_date);
   const [fbGroupLink, setFbGroupLink] = useState(batch.fb_group_link || '');
+  const [isInternational, setIsInternational] = useState(!!batch.is_international);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -108,6 +111,7 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
       setSelectedRoom(batch.room);
       setStartDate(batch.start_date);
       setFbGroupLink(batch.fb_group_link || '');
+      setIsInternational(!!batch.is_international);
     }
   }, [open, batch]);
 
@@ -407,6 +411,7 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
         room: selectedRoom,
         start_date: startDate,
         fb_group_link: fbGroupLink,
+        is_international: isInternational,
       };
       if (teacherChanged || dateChanged) {
         const d = new Date(startDate);
@@ -473,6 +478,20 @@ export function EditBatchDialog({ batch, open, onOpenChange, onUpdate }: EditBat
             </TabsList>
 
             <TabsContent value="details" className="space-y-4 mt-4">
+              <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="edit-international-batch">International class</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Students here compete only against each other — separate leaderboard, sprints and challenges.
+                  </p>
+                </div>
+                <Switch
+                  id="edit-international-batch"
+                  checked={isInternational}
+                  onCheckedChange={setIsInternational}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Teacher{batch.course_type === 'IELTS' ? 's' : ''}</Label>
                 {batch.course_type === 'IELTS' ? (
