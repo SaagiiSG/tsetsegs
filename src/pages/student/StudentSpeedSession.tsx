@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { QuestionFigures } from "@/components/QuestionFigures";
 
@@ -203,8 +204,8 @@ export default function StudentSpeedSession() {
         const timeInSeconds = timeSpent / 1000;
         const points = timeInSeconds < 10 ? 15 : timeInSeconds < 20 ? 10 : timeInSeconds < 30 ? 5 : 2;
         
-        const { data: activeSprint } = await supabase
-          .from('sprints').select('id').eq('is_active', true).maybeSingle();
+        const activeSprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
+        const activeSprint = activeSprintId ? { id: activeSprintId } : null;
 
         await supabase.from('point_transactions').insert({
           student_account_id: student.id,
@@ -263,10 +264,9 @@ export default function StudentSpeedSession() {
 
     // Refresh snapshot so rank/points reflect end-of-session standing.
     (async () => {
-      const { data: activeSprint } = await supabase
-        .from('sprints').select('id').eq('is_active', true).maybeSingle();
-      const refreshed = activeSprint
-        ? await getSprintEnrollmentSnapshot(student.id, activeSprint.id)
+      const activeSprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
+      const refreshed = activeSprintId
+        ? await getSprintEnrollmentSnapshot(student.id, activeSprintId)
         : null;
       setEnrollmentDialog({ open: true, snapshot: refreshed || snap, pointsEarned: points });
     })();
@@ -361,9 +361,9 @@ export default function StudentSpeedSession() {
       }
 
       try {
-        const { data: activeSprint } = await supabase.from('sprints').select('id').eq('is_active', true).maybeSingle();
+        const summarySprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
         await supabase.from('point_transactions').insert({
-          student_account_id: student.id, sprint_id: activeSprint?.id || null, points: 0, category: 'speed',
+          student_account_id: student.id, sprint_id: summarySprintId, points: 0, category: 'speed',
           metadata: { session_summary: true, total_questions: results.length, correct_count: correctCount, accuracy, total_time_seconds: totalTimeSeconds, avg_time_per_question: Math.round(avgTimePerQuestion * 10) / 10 }
         });
       } catch (err) { console.error('Failed to record speed session summary:', err); }

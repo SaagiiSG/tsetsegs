@@ -177,6 +177,11 @@ Class Info: ${batchLink}
               >
                 {batch.course_type}
               </Badge>
+              {batch.is_international && (
+                <Badge variant="outline" className="mb-2 ml-2 w-fit font-semibold">
+                  International
+                </Badge>
+              )}
               <CardTitle className="text-lg">
                 {batch.batch_name || `${batch.teacher} - ${formatDate(batch.start_date)}`}
               </CardTitle>

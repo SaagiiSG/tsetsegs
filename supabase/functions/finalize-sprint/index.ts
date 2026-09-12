@@ -29,11 +29,12 @@ const TIER_BADGE_NAMES: Record<string, string> = {
 }
 
 // Helper function to get all sprint IDs for a season
-async function getSeasonSprintIds(supabase: any, seasonNumber: number): Promise<string[]> {
+async function getSeasonSprintIds(supabase: any, seasonNumber: number, cohort = 'mn'): Promise<string[]> {
   const { data: sprints } = await supabase
     .from('sprints')
     .select('id')
     .eq('season_number', seasonNumber)
+    .eq('cohort', cohort)
   
   return sprints?.map((s: any) => s.id) || []
 }
@@ -71,12 +72,14 @@ Deno.serve(async (req) => {
 
     let sprintNumber: number | null = null
     let seasonNumber: number | null = null
+    // Each cohort (Mongolian / international) runs its own sprint cycle
+    let cohort = 'mn'
 
     if (!sprintId) {
       // Find sprints that ended but haven't been finalized (no final_rank set for anyone)
       const { data: endedSprints } = await supabase
         .from('sprints')
-        .select('id, sprint_number, season_number')
+        .select('id, sprint_number, season_number, cohort')
         .eq('is_active', false)
         .order('end_date', { ascending: false })
         .limit(5)
@@ -95,6 +98,7 @@ Deno.serve(async (req) => {
           sprintId = sprint.id
           sprintNumber = sprint.sprint_number
           seasonNumber = sprint.season_number
+          cohort = sprint.cohort ?? 'mn'
           break
         }
       }
@@ -102,13 +106,14 @@ Deno.serve(async (req) => {
       // Get sprint info for provided sprintId
       const { data: sprint } = await supabase
         .from('sprints')
-        .select('sprint_number, season_number')
+        .select('sprint_number, season_number, cohort')
         .eq('id', sprintId)
         .single()
       
       if (sprint) {
         sprintNumber = sprint.sprint_number
         seasonNumber = sprint.season_number
+        cohort = sprint.cohort ?? 'mn'
       }
     }
 
@@ -323,7 +328,7 @@ Deno.serve(async (req) => {
       const { data: seasonRankings, error: seasonError } = await supabase
         .from('student_sprint_rankings')
         .select('student_account_id, current_tier, reserved_next_tier, is_top_1, final_rank, sprint_id, group_number')
-        .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!))
+        .in('sprint_id', await getSeasonSprintIds(supabase, seasonNumber!, cohort))
       
       if (seasonError) {
         console.error('Failed to get season rankings:', seasonError)
@@ -409,6 +414,7 @@ Deno.serve(async (req) => {
       .from('sprints')
       .select('id, season_number, sprint_number')
       .eq('is_active', true)
+      .eq('cohort', cohort)
       .neq('id', sprintId)
       .order('start_date', { ascending: true })
       .limit(1)
@@ -421,6 +427,7 @@ Deno.serve(async (req) => {
       const { data: nextUpcomingSprint } = await supabase
         .from('sprints')
         .select('id, season_number, sprint_number, start_date')
+        .eq('cohort', cohort)
         .eq('season_number', seasonNumber)
         .gt('sprint_number', sprintNumber)
         .order('sprint_number', { ascending: true })

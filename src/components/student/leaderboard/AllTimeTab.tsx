@@ -25,6 +25,8 @@ interface AllTimeTabProps {
   onWindowChange: (w: 'all' | 'last30') => void;
   limit: 10 | 50 | 100;
   onLimitChange: (l: 10 | 50 | 100) => void;
+  /** Mongolian YESH conversion is only meaningful for Mongolian students */
+  showYesh?: boolean;
 }
 
 // Convert SAT Math section score to Mongolian YESH points
@@ -38,7 +40,7 @@ function satMathToYesh(mathScore: number | null): number | null {
   return null;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange }: AllTimeTabProps) {
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange, showYesh = true }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -248,9 +250,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">
                                     {entry.satEnglishScore ? `${entry.satMathScore || '—'} M · ${entry.satEnglishScore} E` : 'Math only'}
                                   </p>
-                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
-                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
-                                  </p>
+                                  {showYesh && (
+                                    <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                      YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                    </p>
+                                  )}
                                 </>
                               ) : (
                                 <>
@@ -258,9 +262,11 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                                     {entry.satMathScore}
                                   </p>
                                   <p className="text-[10px] sm:text-xs text-amber-100/60 mt-0.5">SAT Math</p>
-                                  <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
-                                    YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
-                                  </p>
+                                  {showYesh && (
+                                    <p className="text-[10px] sm:text-xs text-amber-100/60 mt-1">
+                                      YESH: <span className="font-bold bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">{satMathToYesh(entry.satMathScore) ?? '—'}</span>
+                                    </p>
+                                  )}
                                 </>
                               )}
                             </div>

@@ -85,7 +85,8 @@ export function useAdminDashboard() {
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .single();
+        .eq('cohort', 'mn')
+        .maybeSingle();
 
       let sprintParticipants = { active: 0, total: 0 };
       if (activeSprint) {
@@ -223,7 +224,8 @@ export function useAdminDashboard() {
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .single();
+        .eq('cohort', 'mn')
+        .maybeSingle();
 
       if (!activeSprint) return [];
 

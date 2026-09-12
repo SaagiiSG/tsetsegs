@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { normalizeCohort } from '@/lib/cohort';
 
 export interface FriendRow {
   id: string;
@@ -128,7 +129,7 @@ export function useFriends() {
 
       const { data: acct } = await supabase
         .from('student_accounts')
-        .select('id')
+        .select('id, cohort')
         .eq('phone_number', (studentRow[0] as any).phone)
         .eq('is_ghost', false)
         .maybeSingle();
@@ -136,6 +137,10 @@ export function useFriends() {
         return { error: 'That student has not signed in yet' };
       }
       if (acct.id === student.id) return { error: "You can't add yourself" };
+      // Friends stay inside their own cohort so competition worlds never mix
+      if (normalizeCohort((acct as any).cohort) !== normalizeCohort(student.cohort)) {
+        return { error: 'No student with that phone number' };
+      }
 
       const { error } = await supabase.from('student_friendships').insert({
         requester_id: student.id,

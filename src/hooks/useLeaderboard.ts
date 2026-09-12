@@ -3,6 +3,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { TIER_PROMOTION_CUTOFFS, calculateLevel, TierType } from '@/data/badgeDefinitions';
+import { normalizeCohort } from '@/lib/cohort';
 
 export interface PointsBreakdown {
   questions: number;
@@ -65,13 +66,14 @@ export type AllTimeLimit = 10 | 50 | 100;
 
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
+  const cohort = normalizeCohort(student?.cohort);
   const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
   const [allTimeLimit, setAllTimeLimit] = useState<AllTimeLimit>(100);
 
 
-  // Fetch current active sprint
+  // Fetch current active sprint (per cohort)
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
-    queryKey: ['active-sprint'],
+    queryKey: ['active-sprint', cohort],
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
@@ -80,7 +82,8 @@ export function useLeaderboard(selectedTier?: TierType) {
         .from('sprints')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .eq('cohort', cohort)
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -109,15 +112,16 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch most recent ended sprint (for showing results)
   const { data: lastEndedSprint } = useQuery({
-    queryKey: ['last-ended-sprint'],
+    queryKey: ['last-ended-sprint', cohort],
     queryFn: async (): Promise<SprintInfo | null> => {
       const { data, error } = await supabase
         .from('sprints')
         .select('*')
         .eq('is_active', false)
+        .eq('cohort', cohort)
         .order('end_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -137,17 +141,18 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch next upcoming sprint (for countdown)
   const { data: nextSprint } = useQuery({
-    queryKey: ['next-sprint'],
+    queryKey: ['next-sprint', cohort],
     queryFn: async (): Promise<SprintInfo | null> => {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('sprints')
         .select('*')
         .eq('is_active', false)
+        .eq('cohort', cohort)
         .gt('start_date', now)
         .order('start_date', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) return null;
 
@@ -376,11 +381,12 @@ export function useLeaderboard(selectedTier?: TierType) {
 
   // Fetch all-time leaderboard (aggregated server-side)
   const { data: allTimeLeaderboard, isLoading: allTimeLoading } = useQuery({
-    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit],
+    queryKey: ['all-time-leaderboard', allTimeWindow, allTimeLimit, cohort],
     queryFn: async (): Promise<AllTimeEntry[]> => {
       const { data, error } = await supabase.rpc('all_time_leaderboard', {
         p_window: allTimeWindow,
         p_limit: allTimeLimit,
+        p_cohort: cohort,
       });
       if (error) throw error;
 
@@ -440,6 +446,7 @@ export function useLeaderboard(selectedTier?: TierType) {
   };
 
   return {
+    cohort,
     activeSprint,
     lastEndedSprint,
     nextSprint,

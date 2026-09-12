@@ -29,6 +29,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { setDesmosContext, clearDesmosContext } from '@/lib/desmosTracking';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
+import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 
@@ -457,12 +458,9 @@ export default function StudentQuestion() {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         pointsAwarded = points;
 
-        // Get active sprint (optional - points are awarded regardless)
-        const { data: activeSprint } = await supabase
-          .from('sprints')
-          .select('id')
-          .eq('is_active', true)
-          .maybeSingle();
+        // Get active sprint for this student's cohort (optional - points are awarded regardless)
+        const activeSprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
+        const activeSprint = activeSprintId ? { id: activeSprintId } : null;
 
         // Always insert point transaction (with or without sprint)
         await supabase

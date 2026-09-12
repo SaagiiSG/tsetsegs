@@ -61,6 +61,7 @@ export default function StudentLeaderboard() {
   } | null>(null);
   
   const {
+    cohort,
     activeSprint,
     lastEndedSprint,
     nextSprint,
@@ -321,6 +322,7 @@ export default function StudentLeaderboard() {
                 onWindowChange={setAllTimeWindow}
                 limit={allTimeLimit}
                 onLimitChange={setAllTimeLimit}
+                showYesh={cohort === 'mn'}
               />
 
             </motion.div>

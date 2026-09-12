@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +50,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
   const [startDate, setStartDate] = useState('');
   const [fbGroupLink, setFbGroupLink] = useState('');
   const [courseType, setCourseType] = useState<CourseType>('SAT');
+  const [isInternational, setIsInternational] = useState(false);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -213,6 +215,7 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
           unique_link_id: batchLinkId,
           batch_name: batchName,
           course_type: courseType,
+          is_international: isInternational,
           math_schedule: useScheduleBuilder && courseType !== 'IELTS' ? JSON.parse(JSON.stringify(mathSchedule)) : null,
           english_schedule: useScheduleBuilder ? JSON.parse(JSON.stringify(englishSchedule)) : null,
         })
@@ -284,6 +287,16 @@ export function CreateBatchForm({ onSuccess }: CreateBatchFormProps) {
                 <SelectItem value="IELTS">IELTS</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="international-batch">International class</Label>
+              <p className="text-xs text-muted-foreground">
+                Students in this class compete in their own leaderboard, sprints and challenges — fully separate from Mongolian students.
+              </p>
+            </div>
+            <Switch id="international-batch" checked={isInternational} onCheckedChange={setIsInternational} />
           </div>
 
           <div className="space-y-2">

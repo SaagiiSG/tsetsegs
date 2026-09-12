@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown, TrendingUp, Zap, Plus, Loader2, CalendarIcon, X, Rocket, Pencil, Save } from 'lucide-react';
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import type { Cohort } from '@/lib/cohort';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
 const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
@@ -49,6 +50,7 @@ interface Sprint {
   start_date: string;
   end_date: string;
   is_active: boolean;
+  cohort?: string | null;
 }
 
 interface SprintRanking {
@@ -106,6 +108,7 @@ export default function SprintMonitor() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [cohort, setCohort] = useState<Cohort>('mn');
   const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [showSeasonBuilder, setShowSeasonBuilder] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -169,21 +172,24 @@ export default function SprintMonitor() {
           sprint_number: 1,
           start_date: sprint1Start.toISOString(),
           end_date: sprint1End.toISOString(),
-          is_active: false // Will be activated when it starts
+          is_active: false, // Will be activated when it starts
+          cohort,
         },
         {
           season_number: nextSeasonNumber,
           sprint_number: 2,
           start_date: sprint2Start.toISOString(),
           end_date: sprint2End.toISOString(),
-          is_active: false
+          is_active: false,
+          cohort,
         },
         {
           season_number: nextSeasonNumber,
           sprint_number: 3,
           start_date: sprint3Start.toISOString(),
           end_date: sprint3End.toISOString(),
-          is_active: false
+          is_active: false,
+          cohort,
         }
       ];
       
@@ -283,6 +289,7 @@ export default function SprintMonitor() {
     const { data: allSprints, error } = await supabase
       .from('sprints')
       .select('*')
+      .eq('cohort', cohort)
       .order('season_number', { ascending: false })
       .order('sprint_number', { ascending: true });
     
@@ -349,7 +356,7 @@ export default function SprintMonitor() {
 
   // Fetch all sprints with auto-transition check
   const { data: sprints, isLoading: sprintsLoading } = useQuery({
-    queryKey: ['admin-sprints'],
+    queryKey: ['admin-sprints', cohort],
     queryFn: autoTransitionSprints,
   });
 
@@ -731,6 +738,26 @@ export default function SprintMonitor() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Cohort Selector */}
+      <div className="flex items-center gap-4">
+        <span className="text-sm font-medium">Students:</span>
+        <Select
+          value={cohort}
+          onValueChange={(v) => {
+            setCohort(v as Cohort);
+            setSelectedSeason(null);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mn">Mongolian students</SelectItem>
+            <SelectItem value="intl">International students</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Season Selector */}

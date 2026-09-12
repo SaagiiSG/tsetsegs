@@ -302,6 +302,7 @@ export type Database = {
           english_schedule: Json | null
           fb_group_link: string | null
           id: string
+          is_international: boolean
           math_schedule: Json | null
           nickname: string | null
           room: string | null
@@ -317,6 +318,7 @@ export type Database = {
           english_schedule?: Json | null
           fb_group_link?: string | null
           id?: string
+          is_international?: boolean
           math_schedule?: Json | null
           nickname?: string | null
           room?: string | null
@@ -332,6 +334,7 @@ export type Database = {
           english_schedule?: Json | null
           fb_group_link?: string | null
           id?: string
+          is_international?: boolean
           math_schedule?: Json | null
           nickname?: string | null
           room?: string | null
@@ -3373,6 +3376,7 @@ export type Database = {
       }
       sprints: {
         Row: {
+          cohort: string
           created_at: string
           end_date: string
           id: string
@@ -3382,6 +3386,7 @@ export type Database = {
           start_date: string
         }
         Insert: {
+          cohort?: string
           created_at?: string
           end_date: string
           id?: string
@@ -3391,6 +3396,7 @@ export type Database = {
           start_date: string
         }
         Update: {
+          cohort?: string
           created_at?: string
           end_date?: string
           id?: string
@@ -3406,6 +3412,7 @@ export type Database = {
           auth_user_id: string | null
           blocked_at: string | null
           blocked_reason: string | null
+          cohort: string
           created_at: string
           daily_goal_hard: number
           daily_goal_medium: number
@@ -3441,6 +3448,7 @@ export type Database = {
           auth_user_id?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
+          cohort?: string
           created_at?: string
           daily_goal_hard?: number
           daily_goal_medium?: number
@@ -3476,6 +3484,7 @@ export type Database = {
           auth_user_id?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
+          cohort?: string
           created_at?: string
           daily_goal_hard?: number
           daily_goal_medium?: number
@@ -4505,20 +4514,35 @@ export type Database = {
           pretty: string
         }[]
       }
-      all_time_leaderboard: {
-        Args: { p_limit?: number; p_window?: string }
-        Returns: {
-          highest_tier: string
-          ruby_weeks: number
-          sat_english_score: number
-          sat_math_score: number
-          sat_score_date: string
-          sat_total_score: number
-          student_account_id: string
-          total_points: number
-          username: string
-        }[]
-      }
+      all_time_leaderboard:
+        | {
+            Args: { p_limit?: number; p_window?: string }
+            Returns: {
+              highest_tier: string
+              ruby_weeks: number
+              sat_english_score: number
+              sat_math_score: number
+              sat_score_date: string
+              sat_total_score: number
+              student_account_id: string
+              total_points: number
+              username: string
+            }[]
+          }
+        | {
+            Args: { p_cohort?: string; p_limit?: number; p_window?: string }
+            Returns: {
+              highest_tier: string
+              ruby_weeks: number
+              sat_english_score: number
+              sat_math_score: number
+              sat_score_date: string
+              sat_total_score: number
+              student_account_id: string
+              total_points: number
+              username: string
+            }[]
+          }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
@@ -4589,17 +4613,33 @@ export type Database = {
         Returns: boolean
       }
       fill_value: { Args: { p_text: string }; Returns: number }
-      flowers_challenge_leaderboard: {
-        Args: { p_challenge_key: string; p_limit?: number }
-        Returns: {
-          correct_count: number
-          display_name: string
-          duration_ms: number
-          goal_met: boolean
-          student_account_id: string
-          submitted_at: string
-        }[]
-      }
+      flowers_challenge_leaderboard:
+        | {
+            Args: { p_challenge_key: string; p_limit?: number }
+            Returns: {
+              correct_count: number
+              display_name: string
+              duration_ms: number
+              goal_met: boolean
+              student_account_id: string
+              submitted_at: string
+            }[]
+          }
+        | {
+            Args: {
+              p_challenge_key: string
+              p_cohort?: string
+              p_limit?: number
+            }
+            Returns: {
+              correct_count: number
+              display_name: string
+              duration_ms: number
+              goal_met: boolean
+              student_account_id: string
+              submitted_at: string
+            }[]
+          }
       flowers_challenge_submit: {
         Args: { p_answers: Json; p_attempt_id: string; p_duration_ms: number }
         Returns: {
@@ -4879,6 +4919,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      resolve_account_cohort: {
+        Args: { _linked_student_id: string }
+        Returns: string
       }
       search_questions: {
         Args: {

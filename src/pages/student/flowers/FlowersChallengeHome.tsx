@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
+import { normalizeCohort } from "@/lib/cohort";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +50,13 @@ export default function FlowersChallengeHome() {
   const load = useCallback(async () => {
     setLoading(true);
     const results = await Promise.all(
-      FLOWERS_CHALLENGES.map((c) => supabase.rpc("flowers_challenge_leaderboard", { p_challenge_key: c.key, p_limit: 10 })),
+      FLOWERS_CHALLENGES.map((c) =>
+        supabase.rpc("flowers_challenge_leaderboard", {
+          p_challenge_key: c.key,
+          p_limit: 10,
+          p_cohort: normalizeCohort(student?.cohort),
+        }),
+      ),
     );
     const next: Record<string, LeaderRow[]> = {};
     FLOWERS_CHALLENGES.forEach((c, i) => {
@@ -82,7 +89,7 @@ export default function FlowersChallengeHome() {
       setBests(best);
     }
     setLoading(false);
-  }, [student?.id]);
+  }, [student?.id, student?.cohort]);
 
   useEffect(() => {
     load();
