@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -72,6 +72,7 @@ export const menuSections: MenuSection[] = [
     items: [
       { title: "Team", url: "/admin/team", icon: Users },
       { title: "Database Health", url: "/admin/database-health", icon: Database },
+      { title: "Burner Admin", url: "/admin/burner", icon: Flame },
       { title: "Settings", url: "/admin/settings", icon: Settings },
     ],
     defaultOpen: false,
