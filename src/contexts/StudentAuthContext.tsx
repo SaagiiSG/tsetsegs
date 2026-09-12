@@ -38,6 +38,8 @@ interface StudentAccount {
   password_set_at: string | null;
   onboarding_completed: boolean;
   email_link_prompted_at: string | null;
+  /** 'mn' (Mongolian) or 'intl' (international) — derived from the student's batch */
+  cohort?: string | null;
 }
 
 export type AuthStep = 'phone' | 'password' | 'set_password' | 'request_registration' | 'pending_approval';
