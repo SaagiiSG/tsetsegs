@@ -65,13 +65,14 @@ export type AllTimeLimit = 10 | 50 | 100;
 
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
+  const cohort = normalizeCohort(student?.cohort);
   const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
   const [allTimeLimit, setAllTimeLimit] = useState<AllTimeLimit>(100);
 
 
-  // Fetch current active sprint
+  // Fetch current active sprint (per cohort)
   const { data: activeSprint, isLoading: sprintLoading } = useQuery({
-    queryKey: ['active-sprint'],
+    queryKey: ['active-sprint', cohort],
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
