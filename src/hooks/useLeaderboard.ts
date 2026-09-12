@@ -61,10 +61,12 @@ export interface AllTimeEntry {
 }
 
 export type AllTimeWindow = 'all' | 'last30';
+export type AllTimeLimit = 10 | 50 | 100;
 
 export function useLeaderboard(selectedTier?: TierType) {
   const { student } = useStudentAuth();
   const [allTimeWindow, setAllTimeWindow] = useState<AllTimeWindow>('all');
+  const [allTimeLimit, setAllTimeLimit] = useState<AllTimeLimit>(100);
 
 
   // Fetch current active sprint
