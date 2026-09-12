@@ -23,9 +23,22 @@ interface AllTimeTabProps {
   isLoading: boolean;
   window: 'all' | 'last30';
   onWindowChange: (w: 'all' | 'last30') => void;
+  limit: 10 | 50 | 100;
+  onLimitChange: (l: 10 | 50 | 100) => void;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange }: AllTimeTabProps) {
+// Convert SAT Math section score to Mongolian YESH points
+function satMathToYesh(mathScore: number | null): number | null {
+  if (mathScore == null) return null;
+  if (mathScore >= 760) return 800;
+  if (mathScore >= 710) return 749;
+  if (mathScore >= 660) return 699;
+  if (mathScore >= 610) return 649;
+  if (mathScore >= 560) return 599;
+  return null;
+}
+
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
