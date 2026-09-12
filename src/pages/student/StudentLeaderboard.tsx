@@ -61,6 +61,7 @@ export default function StudentLeaderboard() {
   } | null>(null);
   
   const {
+    cohort,
     activeSprint,
     lastEndedSprint,
     nextSprint,
