@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -24,6 +24,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import {
+  digitsOnly,
+  isValidInternationalPhone,
+  normalizeInternationalPhone,
+  sanitizePhoneInput,
+} from "@/lib/phone";
+
+type Locale = "mn" | "en";
 
 // Step 1: Code validation schema
 const codeSchema = z.object({
@@ -34,60 +42,38 @@ const codeSchema = z.object({
     .regex(/^[A-Z0-9]+$/, "Зөвхөн том үсэг ба тоо оруулна уу"),
 });
 
-// Step 2: Registration form schema
-// Generate SAT test dates for current and next year
-const generateSATDates = () => {
+// ---------------------------------------------------------------------------
+// Test date options
+// ---------------------------------------------------------------------------
+const MN_MONTHS = [
+  "1-р сар", "2-р сар", "3-р сар", "4-р сар",
+  "5-р сар", "6-р сар", "7-р сар", "8-р сар",
+  "9-р сар", "10-р сар", "11-р сар", "12-р сар",
+];
+
+const EN_MONTHS = [
+  "January", "February", "March", "April",
+  "May", "June", "July", "August",
+  "September", "October", "November", "December",
+];
+
+const monthLabel = (locale: Locale, monthIdx: number, year: number) =>
+  locale === "en"
+    ? `${EN_MONTHS[monthIdx]} ${year}`
+    : `${year} оны ${MN_MONTHS[monthIdx]}`;
+
+const buildDates = (locale: Locale, monthIndexes: number[]) => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-
-  const satMonths = [
-    { month: 2, label: "3-р сар" },
-    { month: 4, label: "5-р сар" },
-    { month: 5, label: "6-р сар" },
-    { month: 7, label: "8-р сар" },
-    { month: 8, label: "9-р сар" },
-    { month: 9, label: "10-р сар" },
-    { month: 10, label: "11-р сар" },
-    { month: 11, label: "12-р сар" },
-  ];
-
   const dates: { value: string; label: string }[] = [];
 
-  [currentYear, currentYear + 1].forEach(year => {
-    satMonths.forEach(({ month, label }) => {
-      if (year > currentYear || (year === currentYear && month >= currentMonth)) {
-        dates.push({
-          value: `${year}-${String(month + 1).padStart(2, '0')}`,
-          label: `${year} оны ${label}`,
-        });
-      }
-    });
-  });
-
-  return dates;
-};
-
-// Generate IELTS test dates (all 12 months, current and next year)
-const generateIELTSDates = () => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-
-  const monthLabels = [
-    "1-р сар", "2-р сар", "3-р сар", "4-р сар",
-    "5-р сар", "6-р сар", "7-р сар", "8-р сар",
-    "9-р сар", "10-р сар", "11-р сар", "12-р сар",
-  ];
-
-  const dates: { value: string; label: string }[] = [];
-
-  [currentYear, currentYear + 1].forEach(year => {
-    monthLabels.forEach((label, monthIdx) => {
+  [currentYear, currentYear + 1].forEach((year) => {
+    monthIndexes.forEach((monthIdx) => {
       if (year > currentYear || (year === currentYear && monthIdx >= currentMonth)) {
         dates.push({
-          value: `${year}-${String(monthIdx + 1).padStart(2, '0')}`,
-          label: `${year} оны ${label}`,
+          value: `${year}-${String(monthIdx + 1).padStart(2, "0")}`,
+          label: monthLabel(locale, monthIdx, year),
         });
       }
     });
@@ -96,51 +82,237 @@ const generateIELTSDates = () => {
   return dates;
 };
 
-const SAT_TEST_DATES = generateSATDates();
-const IELTS_TEST_DATES = generateIELTSDates();
+const SAT_MONTH_INDEXES = [2, 4, 5, 7, 8, 9, 10, 11];
+const ALL_MONTH_INDEXES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-// Step 2: Registration form schema
-const registrationSchema = z.object({
-  firstName: z
-    .string()
-    .trim()
-    .min(1, "Өөрийн нэрээ оруулна уу")
-    .max(100, "Нэр хэт урт байна"),
-  lastName: z
-    .string()
-    .trim()
-    .min(1, "Эцэг/эхийн нэрээ (овог) оруулна уу")
-    .max(100, "Овог хэт урт байна"),
-  phone: z
-    .string()
-    .regex(/^\d{8}$/, "Утасны дугаар яг 8 оронтой байх ёстой"),
-  parentPhone: z
-    .string()
-    .regex(/^\d{8}$/, "Эцэг/эхийн утасны дугаар яг 8 оронтой байх ёстой"),
-  grade: z
-    .string()
-    .min(1, "Ангиа сонгоно уу"),
-  schoolName: z
-    .string()
-    .trim()
-    .min(1, "Сургуулийнхаа нэрийг оруулна уу")
-    .max(200, "Сургуулийн нэр хэт урт байна"),
-  mathLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Математикийн түвшингээ сонгоно уу",
-  }),
-  englishLevel: z.enum(["bad", "average", "good"], {
-    required_error: "Англи хэлний түвшингээ сонгоно уу",
-  }),
-  teacher: z.string().min(1, "Багшаа сонгоно уу"),
-  hasTakenSat: z.boolean().default(false),
-  previousSatScore: z.number().min(400).max(1600).optional(),
-  plannedSatDate: z.string().optional(),
-  previousIeltsScore: z.number().min(0).max(9).optional(),
-  plannedIeltsDate: z.string().optional(),
-});
+// ---------------------------------------------------------------------------
+// Copy dictionary
+// ---------------------------------------------------------------------------
+const COPY = {
+  mn: {
+    joinTitle: (name: string) => `${name}-д нэгдэх`,
+    defaultBatchName: (isIelts: boolean) => (isIelts ? "IELTS анги" : "SAT анги"),
+    fallbackTitle: "SAT бүртгэл",
+    codeDescription: "Багшийнхаа өгсөн кодыг оруулна уу",
+    batchDescription: "Ангид нэгдэхийн тулд мэдээллээ бөглөнө үү",
+    plainDescription: "Дасгалын порталд нэвтрэхийн тулд бүртгэлээ бөглөнө үү",
+    stepCounter: (a: number, b: number) => `Алхам ${a} / ${b}`,
+    welcome: "Tsetsegs-т тавтай морил!",
+    welcomeSub: "Welcome to Tsetsegs",
+    yourTeacher: "Таны багш:",
+    fewSteps: (test: string) => `Дараах хэдхэн алхмын дараа ${test}-д бэлдэж эхэлнэ.`,
+    teacherSelect: "Багшийн анги сонгох",
+    teacherPlaceholder: "Багш сонгоно уу...",
+    nameHeading: "Таны нэр",
+    nameSub: "Your name",
+    firstName: "Өөрийн нэр",
+    firstNameHint: "Жишээ: Сараа — паспорт дээрх өөрийн нэр",
+    firstNamePlaceholder: "Өөрийн нэрээ оруулна уу",
+    lastName: "Овог",
+    lastNameHint: "Жишээ: Болдын — эцгийн нэр",
+    lastNamePlaceholder: "Эцэг/эхийн нэрээ оруулна уу",
+    phoneHeading: "Утасны дугаар",
+    phoneSub: "Phone numbers",
+    phone: "Таны утасны дугаар",
+    phoneHint: "Энэ дугаараар порталд нэвтэрнэ",
+    phonePlaceholder: "99112233",
+    parentPhone: "Эцэг/эхийн утасны дугаар",
+    parentPhonePlaceholder: "99887766",
+    schoolHeading: "Сургууль, анги",
+    schoolSub: "School & grade",
+    grade: "Анги",
+    gradePlaceholder: "Ангиа сонгоно уу...",
+    gradeOption: (g: string) => `${g}-р анги`,
+    school: "Сургуулийн нэр",
+    schoolPlaceholder: "Сургуулийнхаа нэрийг бичнэ үү",
+    levelHeading: "Өөрийн түвшин",
+    levelSub: "Your level",
+    mathLevel: "Математикийн түвшин",
+    englishLevel: "Англи хэлний түвшин",
+    levels: { bad: "Сул", average: "Дунд", good: "Сайн" },
+    priorHeading: (test: string) => `${test} туршлага`,
+    priorSub: "Prior experience",
+    takenBefore: (test: string) => `Та өмнө нь ${test} шалгалт өгч үзсэн үү?`,
+    no: "Үгүй / No",
+    yes: "Тийм / Yes",
+    scoreHeadingTaken: "Өмнөх оноо ба дараагийн шалгалт",
+    scoreHeadingNew: "Дараагийн шалгалт",
+    scoreSubTaken: "Previous score & next test",
+    scoreSubNew: "Your upcoming test",
+    previousSat: "Өмнөх SAT оноо",
+    previousSatPlaceholder: "жишээ нь: 1200",
+    satRangeError: "Оноо 400-1600 хооронд байх ёстой",
+    previousIelts: "Өмнөх IELTS оноо (Band)",
+    previousIeltsPlaceholder: "жишээ нь: 6.5",
+    ieltsRangeError: "IELTS оноо 0-9 хооронд байх ёстой",
+    nextDate: (test: string) => `Дараагийн ${test}-аа хэзээ өгөх вэ?`,
+    plannedDate: (test: string) => `Хэзээ ${test} өгөхөөр төлөвлөж байна?`,
+    datePlaceholder: "Огноо сонгоно уу...",
+    finishHeading: "Амжилт хүсье!",
+    finishSub: "Good luck on your journey",
+    finishHint: 'Доорх "Бүртгүүлэх" товчийг дарж бүртгэлээ дуусгана уу.',
+    back: "Буцах",
+    continue: "Үргэлжлүүлэх",
+    submitting: "Бүртгэж байна...",
+    cooldown: (s: number) => `Түр хүлээнэ үү... (${s}с)`,
+    submit: "Бүртгүүлэх",
+    successTitle: "Бүртгэл амжилттай!",
+    successBody: (test: string) => `${test} хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...`,
+    badLink: "Холбоос буруу байна",
+    alreadyTitle: "Та аль хэдийн бүртгэгдсэн байна! 🎉",
+    alreadyInBatch: "Та энэ ангид бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
+    alreadyInSystem: "Та манай системд бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
+    failTitle: "Бүртгэл амжилтгүй боллоо",
+    failBody: "Дахин оролдох эсвэл багштайгаа холбогдоно уу.",
+    errorTitle: "Алдаа гарлаа",
+    errorBody: "Дахин оролдоно уу.",
+    successToast: "Бүртгэл амжилттай!",
+    successToastBody: "Одоо дасгалын порталд нэвтэрч болно.",
+    errors: {
+      firstName: "Өөрийн нэрээ оруулна уу",
+      firstNameLong: "Нэр хэт урт байна",
+      lastName: "Эцэг/эхийн нэрээ (овог) оруулна уу",
+      lastNameLong: "Овог хэт урт байна",
+      phone: "Утасны дугаар яг 8 оронтой байх ёстой",
+      parentPhone: "Эцэг/эхийн утасны дугаар яг 8 оронтой байх ёстой",
+      grade: "Ангиа сонгоно уу",
+      school: "Сургуулийнхаа нэрийг оруулна уу",
+      schoolLong: "Сургуулийн нэр хэт урт байна",
+      mathLevel: "Математикийн түвшингээ сонгоно уу",
+      englishLevel: "Англи хэлний түвшингээ сонгоно уу",
+      teacher: "Багшаа сонгоно уу",
+    },
+  },
+  en: {
+    joinTitle: (name: string) => `Join ${name}`,
+    defaultBatchName: (isIelts: boolean) => (isIelts ? "IELTS class" : "SAT class"),
+    fallbackTitle: "SAT registration",
+    codeDescription: "Enter the code your teacher gave you",
+    batchDescription: "Fill in your details to join the class",
+    plainDescription: "Complete your registration to access the practice portal",
+    stepCounter: (a: number, b: number) => `Step ${a} of ${b}`,
+    welcome: "Welcome to Tsetsegs!",
+    welcomeSub: "International SAT program",
+    yourTeacher: "Your teacher:",
+    fewSteps: (test: string) => `A few quick steps and you'll be ready to prep for the ${test}.`,
+    teacherSelect: "Choose your teacher's class",
+    teacherPlaceholder: "Select a teacher...",
+    nameHeading: "Your name",
+    nameSub: "As it appears on your passport",
+    firstName: "First name",
+    firstNameHint: "Example: Sarah — your given name",
+    firstNamePlaceholder: "Enter your first name",
+    lastName: "Last name",
+    lastNameHint: "Your family name",
+    lastNamePlaceholder: "Enter your last name",
+    phoneHeading: "Phone numbers",
+    phoneSub: "Include your country code",
+    phone: "Your phone number",
+    phoneHint: "You'll sign in with this number. Include the country code, e.g. +1 415 555 0134",
+    phonePlaceholder: "+1 415 555 0134",
+    parentPhone: "Parent / guardian phone number",
+    parentPhonePlaceholder: "+1 415 555 0199",
+    schoolHeading: "School & grade",
+    schoolSub: "Where you study now",
+    grade: "Grade",
+    gradePlaceholder: "Select your grade...",
+    gradeOption: (g: string) => `Grade ${g}`,
+    school: "School name",
+    schoolPlaceholder: "Enter your school name",
+    levelHeading: "Your level",
+    levelSub: "Be honest — it helps us place you",
+    mathLevel: "Math level",
+    englishLevel: "English level",
+    levels: { bad: "Beginner", average: "Intermediate", good: "Strong" },
+    priorHeading: (test: string) => `${test} experience`,
+    priorSub: "Prior experience",
+    takenBefore: (test: string) => `Have you taken the ${test} before?`,
+    no: "No",
+    yes: "Yes",
+    scoreHeadingTaken: "Previous score & next test",
+    scoreHeadingNew: "Your upcoming test",
+    scoreSubTaken: "Tell us where you're starting from",
+    scoreSubNew: "When are you testing?",
+    previousSat: "Previous SAT score",
+    previousSatPlaceholder: "e.g. 1200",
+    satRangeError: "Score must be between 400 and 1600",
+    previousIelts: "Previous IELTS band score",
+    previousIeltsPlaceholder: "e.g. 6.5",
+    ieltsRangeError: "IELTS score must be between 0 and 9",
+    nextDate: (test: string) => `When is your next ${test}?`,
+    plannedDate: (test: string) => `When do you plan to take the ${test}?`,
+    datePlaceholder: "Select a date...",
+    finishHeading: "You're all set!",
+    finishSub: "Good luck on your journey",
+    finishHint: 'Tap "Register" below to finish signing up.',
+    back: "Back",
+    continue: "Continue",
+    submitting: "Registering...",
+    cooldown: (s: number) => `Please wait... (${s}s)`,
+    submit: "Register",
+    successTitle: "Registration complete!",
+    successBody: (test: string) => `Welcome to the ${test} program. Taking you to the practice portal...`,
+    badLink: "This link is not valid",
+    alreadyTitle: "You're already registered! 🎉",
+    alreadyInBatch: "You're already in this class. Sign in with your phone number.",
+    alreadyInSystem: "You're already in our system. Sign in with your phone number.",
+    failTitle: "Registration failed",
+    failBody: "Please try again or contact your teacher.",
+    errorTitle: "Something went wrong",
+    errorBody: "Please try again.",
+    successToast: "Registration complete!",
+    successToastBody: "You can now sign in to the practice portal.",
+    errors: {
+      firstName: "Please enter your first name",
+      firstNameLong: "That name is too long",
+      lastName: "Please enter your last name",
+      lastNameLong: "That name is too long",
+      phone: "Enter your full phone number with country code, e.g. +1 415 555 0134",
+      parentPhone: "Enter your parent's full phone number with country code",
+      grade: "Please select your grade",
+      school: "Please enter your school name",
+      schoolLong: "That school name is too long",
+      mathLevel: "Please select your math level",
+      englishLevel: "Please select your English level",
+      teacher: "Please select a teacher",
+    },
+  },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Registration schema (locale aware)
+// ---------------------------------------------------------------------------
+const makeRegistrationSchema = (locale: Locale) => {
+  const t = COPY[locale];
+  const phoneRule =
+    locale === "en"
+      ? z.string().refine((v) => isValidInternationalPhone(v), t.errors.phone)
+      : z.string().regex(/^\d{8}$/, t.errors.phone);
+  const parentPhoneRule =
+    locale === "en"
+      ? z.string().refine((v) => isValidInternationalPhone(v), t.errors.parentPhone)
+      : z.string().regex(/^\d{8}$/, t.errors.parentPhone);
+
+  return z.object({
+    firstName: z.string().trim().min(1, t.errors.firstName).max(100, t.errors.firstNameLong),
+    lastName: z.string().trim().min(1, t.errors.lastName).max(100, t.errors.lastNameLong),
+    phone: phoneRule,
+    parentPhone: parentPhoneRule,
+    grade: z.string().min(1, t.errors.grade),
+    schoolName: z.string().trim().min(1, t.errors.school).max(200, t.errors.schoolLong),
+    mathLevel: z.enum(["bad", "average", "good"], { required_error: t.errors.mathLevel }),
+    englishLevel: z.enum(["bad", "average", "good"], { required_error: t.errors.englishLevel }),
+    teacher: z.string().min(1, t.errors.teacher),
+    hasTakenSat: z.boolean().default(false),
+    previousSatScore: z.number().min(400).max(1600).optional(),
+    plannedSatDate: z.string().optional(),
+    previousIeltsScore: z.number().min(0).max(9).optional(),
+    plannedIeltsDate: z.string().optional(),
+  });
+};
 
 type CodeFormData = z.infer<typeof codeSchema>;
-type RegistrationFormData = z.infer<typeof registrationSchema>;
+type RegistrationFormData = z.infer<ReturnType<typeof makeRegistrationSchema>>;
 
 export default function ReviewRegistration() {
   const navigate = useNavigate();
@@ -153,7 +325,22 @@ export default function ReviewRegistration() {
   const [submitCooldown, setSubmitCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
-  const [batchInfo, setBatchInfo] = useState<{ id: string; batch_name: string | null; teacher: string | null; course_type: string | null } | null>(null);
+  const [batchInfo, setBatchInfo] = useState<{
+    id: string;
+    batch_name: string | null;
+    teacher: string | null;
+    course_type: string | null;
+    is_international: boolean | null;
+  } | null>(null);
+
+  // International batches drive the English form + world phone numbers.
+  const locale: Locale = batchInfo?.is_international ? "en" : "mn";
+  const t = COPY[locale];
+  const localeRef = useRef<Locale>(locale);
+  localeRef.current = locale;
+
+  const satDates = useMemo(() => buildDates(locale, SAT_MONTH_INDEXES), [locale]);
+  const ieltsDates = useMemo(() => buildDates(locale, ALL_MONTH_INDEXES), [locale]);
 
   const codeForm = useForm<CodeFormData>({
     resolver: zodResolver(codeSchema),
@@ -161,7 +348,9 @@ export default function ReviewRegistration() {
   });
 
   const registrationForm = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationSchema),
+    // Resolve against the schema for whichever locale is active right now.
+    resolver: (values, context, options) =>
+      zodResolver(makeRegistrationSchema(localeRef.current))(values, context, options),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -236,11 +425,11 @@ export default function ReviewRegistration() {
     (async () => {
       const { data, error } = await supabase
         .from("batches")
-        .select("id, batch_name, teacher, course_type")
+        .select("id, batch_name, teacher, course_type, is_international")
         .eq("id", batchParam)
         .single();
       if (error || !data) {
-        toast.error("Холбоос буруу байна");
+        toast.error(COPY.mn.badLink);
         setStep("code"); // Fall back to code flow
         return;
       }
@@ -302,7 +491,7 @@ export default function ReviewRegistration() {
     if (submitCooldown) {
       return;
     }
-    
+
     setIsSubmitting(true);
     setSubmitCooldown(true);
 
@@ -310,19 +499,30 @@ export default function ReviewRegistration() {
       // Determine batch_id: from QR param or null
       const assignedBatchId = batchParam || null;
 
+      // International numbers are stored in E.164 so sign-in matches later.
+      const storedPhone =
+        locale === "en" ? (normalizeInternationalPhone(data.phone) ?? data.phone) : data.phone;
+      const storedParentPhone =
+        locale === "en"
+          ? (normalizeInternationalPhone(data.parentPhone) ?? data.parentPhone)
+          : data.parentPhone;
+      const phoneDigits = digitsOnly(storedPhone);
+
       // Check if phone number already exists (in the same batch for QR, or globally for code-based)
       if (assignedBatchId) {
         // QR flow: only block if already in THIS batch
         const { data: existingInBatch } = await supabase
           .from("students")
-          .select("id")
-          .eq("phone", data.phone)
-          .eq("batch_id", assignedBatchId)
-          .single();
+          .select("id, phone")
+          .eq("batch_id", assignedBatchId);
 
-        if (existingInBatch) {
-          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
-            description: "Та энэ ангид бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
+        const duplicate = (existingInBatch || []).some(
+          (s) => digitsOnly(s.phone || "") === phoneDigits,
+        );
+
+        if (duplicate) {
+          toast.warning(t.alreadyTitle, {
+            description: t.alreadyInBatch,
             duration: 6000,
           });
           setIsSubmitting(false);
@@ -334,12 +534,12 @@ export default function ReviewRegistration() {
         const { data: existingStudent } = await supabase
           .from("students")
           .select("id, name")
-          .eq("phone", data.phone)
-          .single();
+          .eq("phone", storedPhone)
+          .maybeSingle();
 
         if (existingStudent) {
-          toast.warning("Та аль хэдийн бүртгэгдсэн байна! 🎉", {
-            description: "Та манай системд бүртгэлтэй байна. Утасны дугаараараа нэвтэрнэ үү.",
+          toast.warning(t.alreadyTitle, {
+            description: t.alreadyInSystem,
             duration: 6000,
           });
           setIsSubmitting(false);
@@ -351,15 +551,13 @@ export default function ReviewRegistration() {
       // Generate unique link ID
       const uniqueLinkId = crypto.randomUUID().split("-")[0];
 
-      // Use assignedBatchId from above
-
       // Create student record
       const { data: newStudent, error: insertError } = await supabase.from("students").insert({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
         name: `${data.firstName.trim()} ${data.lastName.trim()}`,
-        phone: data.phone,
-        parent_phone: data.parentPhone,
+        phone: storedPhone,
+        parent_phone: storedParentPhone,
         grade: data.grade,
         school_name: data.schoolName.trim(),
         math_level: data.mathLevel,
@@ -378,8 +576,8 @@ export default function ReviewRegistration() {
 
       if (insertError) {
         console.error("Error creating student:", insertError);
-        toast.error("Бүртгэл амжилтгүй боллоо", {
-          description: "Дахин оролдох эсвэл багштайгаа холбогдоно уу.",
+        toast.error(t.failTitle, {
+          description: t.failBody,
         });
         return;
       }
@@ -387,7 +585,7 @@ export default function ReviewRegistration() {
       // Auto-create student_account if batch QR flow (so they can login immediately)
       if (assignedBatchId && newStudent) {
         await supabase.from("student_accounts").insert({
-          phone_number: data.phone,
+          phone_number: storedPhone,
           is_active: true,
           onboarding_completed: !!data.plannedSatDate, // Mark complete if they already set SAT date
         });
@@ -402,8 +600,8 @@ export default function ReviewRegistration() {
       }
 
       setStep("success");
-      toast.success("Бүртгэл амжилттай!", {
-        description: "Одоо дасгалын порталд нэвтэрч болно.",
+      toast.success(t.successToast, {
+        description: t.successToastBody,
       });
 
       // Redirect after a short delay
@@ -412,8 +610,8 @@ export default function ReviewRegistration() {
       }, 2000);
     } catch (error) {
       console.error("Error during registration:", error);
-      toast.error("Алдаа гарлаа", {
-        description: "Дахин оролдоно уу.",
+      toast.error(t.errorTitle, {
+        description: t.errorBody,
       });
       // Reset cooldown on error so they can retry after a short wait
       startCooldown(5);
@@ -422,20 +620,31 @@ export default function ReviewRegistration() {
     }
   };
 
-  const getLevelLabel = (level: string) => {
-    switch (level) {
-      case "bad":
-        return "Сул";
-      case "average":
-        return "Дунд";
-      case "good":
-        return "Сайн";
-      default:
-        return level;
-    }
-  };
+  const getLevelLabel = (level: string) =>
+    (t.levels as Record<string, string>)[level] ?? level;
 
   const isIELTS = batchInfo?.course_type === 'IELTS';
+  const testName = isIELTS ? "IELTS" : "SAT";
+  const isIntl = locale === "en";
+
+  // Phone field props differ between the Mongolian 8-digit format and
+  // the international "+country code" format.
+  const phoneFieldProps = (field: "phone" | "parentPhone") => ({
+    id: field,
+    type: "tel" as const,
+    inputMode: (isIntl ? "tel" : "numeric") as "tel" | "numeric",
+    placeholder: field === "phone" ? t.phonePlaceholder : t.parentPhonePlaceholder,
+    maxLength: isIntl ? 20 : 8,
+    value: registrationForm.watch(field) || "",
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      const next = isIntl
+        ? sanitizePhoneInput(raw)
+        : digitsOnly(raw).slice(0, 8);
+      registrationForm.setValue(field, next, { shouldValidate: false });
+    },
+    className: registrationForm.formState.errors[field] ? "border-destructive" : "",
+  });
 
   if (step === "success") {
     return (
@@ -445,10 +654,8 @@ export default function ReviewRegistration() {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Бүртгэл амжилттай!</CardTitle>
-            <CardDescription>
-              {isIELTS ? 'IELTS' : 'SAT'} хичээлд тавтай морил. Дасгалын порталруу шилжүүлж байна...
-            </CardDescription>
+            <CardTitle className="text-2xl">{t.successTitle}</CardTitle>
+            <CardDescription>{t.successBody(testName)}</CardDescription>
           </CardHeader>
           <CardContent>
             <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
@@ -463,14 +670,16 @@ export default function ReviewRegistration() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {batchInfo ? `${batchInfo.batch_name || (isIELTS ? 'IELTS анги' : 'SAT анги')}-д нэгдэх` : 'SAT бүртгэл'}
+            {batchInfo
+              ? t.joinTitle(batchInfo.batch_name || t.defaultBatchName(!!isIELTS))
+              : t.fallbackTitle}
           </CardTitle>
           <CardDescription>
             {step === "code"
-              ? "Багшийнхаа өгсөн кодыг оруулна уу"
+              ? t.codeDescription
               : batchInfo
-                ? "Ангид нэгдэхийн тулд мэдээллээ бөглөнө үү"
-                : "Дасгалын порталд нэвтрэхийн тулд бүртгэлээ бөглөнө үү"}
+                ? t.batchDescription
+                : t.plainDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -519,7 +728,7 @@ export default function ReviewRegistration() {
               {/* Progress bar */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Алхам {wizardStep + 1} / {TOTAL_WIZARD_STEPS}</span>
+                  <span>{t.stepCounter(wizardStep + 1, TOTAL_WIZARD_STEPS)}</span>
                   <span>{Math.round(((wizardStep + 1) / TOTAL_WIZARD_STEPS) * 100)}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -535,28 +744,26 @@ export default function ReviewRegistration() {
                 <div className="space-y-4 text-center py-4">
                   <div className="text-4xl">👋</div>
                   <h2 className="text-2xl font-bold">
-                    Tsetsegs-т тавтай морил!
+                    {t.welcome}
                     <span className="block text-base font-normal text-muted-foreground mt-1">
-                      Welcome to Tsetsegs
+                      {t.welcomeSub}
                     </span>
                   </h2>
                   {batchInfo?.teacher ? (
                     <p className="text-muted-foreground">
-                      Таны багш: <span className="font-medium text-foreground">{batchInfo.teacher}</span>
+                      {t.yourTeacher} <span className="font-medium text-foreground">{batchInfo.teacher}</span>
                     </p>
                   ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Дараах хэдхэн алхмын дараа {isIELTS ? "IELTS" : "SAT"}-д бэлдэж эхэлнэ.
-                    </p>
+                    <p className="text-muted-foreground text-sm">{t.fewSteps(testName)}</p>
                   )}
                   {!batchInfo?.teacher && (
                     <div className="space-y-2 text-left">
-                      <Label>Багшийн анги сонгох <span className="text-muted-foreground font-normal">(Teacher's Class)</span></Label>
+                      <Label>{t.teacherSelect}</Label>
                       <Select onValueChange={(value) => registrationForm.setValue("teacher", value)}>
                         <SelectTrigger
                           className={registrationForm.formState.errors.teacher ? "border-destructive" : ""}
                         >
-                          <SelectValue placeholder="Багш сонгоно уу..." />
+                          <SelectValue placeholder={t.teacherPlaceholder} />
                         </SelectTrigger>
                         <SelectContent>
                           {teachers.map((teacher) => (
@@ -580,15 +787,15 @@ export default function ReviewRegistration() {
               {wizardStep === 1 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    Таны нэр
-                    <span className="block text-sm font-normal text-muted-foreground">Your name</span>
+                    {t.nameHeading}
+                    <span className="block text-sm font-normal text-muted-foreground">{t.nameSub}</span>
                   </h2>
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Өөрийн нэр <span className="text-muted-foreground font-normal">(First Name)</span></Label>
-                    <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Сараа</span> — паспорт дээрх өөрийн нэр</p>
+                    <Label htmlFor="firstName">{t.firstName}</Label>
+                    <p className="text-xs text-muted-foreground">{t.firstNameHint}</p>
                     <Input
                       id="firstName"
-                      placeholder="Өөрийн нэрээ оруулна уу"
+                      placeholder={t.firstNamePlaceholder}
                       className={registrationForm.formState.errors.firstName ? "border-destructive" : ""}
                       {...registrationForm.register("firstName")}
                     />
@@ -597,11 +804,11 @@ export default function ReviewRegistration() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Овог <span className="text-muted-foreground font-normal">(Last Name)</span></Label>
-                    <p className="text-xs text-muted-foreground">Жишээ: <span className="font-medium">Болдын</span> — эцгийн нэр</p>
+                    <Label htmlFor="lastName">{t.lastName}</Label>
+                    <p className="text-xs text-muted-foreground">{t.lastNameHint}</p>
                     <Input
                       id="lastName"
-                      placeholder="Эцэг/эхийн нэрээ оруулна уу"
+                      placeholder={t.lastNamePlaceholder}
                       className={registrationForm.formState.errors.lastName ? "border-destructive" : ""}
                       {...registrationForm.register("lastName")}
                     />
@@ -616,34 +823,20 @@ export default function ReviewRegistration() {
               {wizardStep === 2 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    Утасны дугаар
-                    <span className="block text-sm font-normal text-muted-foreground">Phone numbers</span>
+                    {t.phoneHeading}
+                    <span className="block text-sm font-normal text-muted-foreground">{t.phoneSub}</span>
                   </h2>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Таны утасны дугаар <span className="text-muted-foreground font-normal">(Your Phone)</span></Label>
-                    <p className="text-xs text-muted-foreground">Энэ дугаараар порталд нэвтэрнэ</p>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="99112233"
-                      maxLength={8}
-                      className={registrationForm.formState.errors.phone ? "border-destructive" : ""}
-                      {...registrationForm.register("phone")}
-                    />
+                    <Label htmlFor="phone">{t.phone}</Label>
+                    <p className="text-xs text-muted-foreground">{t.phoneHint}</p>
+                    <Input {...phoneFieldProps("phone")} />
                     {registrationForm.formState.errors.phone && (
                       <p className="text-sm text-destructive">{registrationForm.formState.errors.phone.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="parentPhone">Эцэг/эхийн утасны дугаар <span className="text-muted-foreground font-normal">(Parent's Phone)</span></Label>
-                    <Input
-                      id="parentPhone"
-                      type="tel"
-                      placeholder="99887766"
-                      maxLength={8}
-                      className={registrationForm.formState.errors.parentPhone ? "border-destructive" : ""}
-                      {...registrationForm.register("parentPhone")}
-                    />
+                    <Label htmlFor="parentPhone">{t.parentPhone}</Label>
+                    <Input {...phoneFieldProps("parentPhone")} />
                     {registrationForm.formState.errors.parentPhone && (
                       <p className="text-sm text-destructive">{registrationForm.formState.errors.parentPhone.message}</p>
                     )}
@@ -655,21 +848,21 @@ export default function ReviewRegistration() {
               {wizardStep === 3 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    Сургууль, анги
-                    <span className="block text-sm font-normal text-muted-foreground">School & grade</span>
+                    {t.schoolHeading}
+                    <span className="block text-sm font-normal text-muted-foreground">{t.schoolSub}</span>
                   </h2>
                   <div className="space-y-2">
-                    <Label>Анги <span className="text-muted-foreground font-normal">(Grade)</span></Label>
+                    <Label>{t.grade}</Label>
                     <Select
                       value={registrationForm.watch("grade") || ""}
                       onValueChange={(value) => registrationForm.setValue("grade", value, { shouldValidate: true })}
                     >
                       <SelectTrigger className={registrationForm.formState.errors.grade ? "border-destructive" : ""}>
-                        <SelectValue placeholder="Ангиа сонгоно уу..." />
+                        <SelectValue placeholder={t.gradePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {["8", "9", "10", "11", "12"].map((g) => (
-                          <SelectItem key={g} value={g}>{g}-р анги</SelectItem>
+                          <SelectItem key={g} value={g}>{t.gradeOption(g)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -678,10 +871,10 @@ export default function ReviewRegistration() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="schoolName">Сургуулийн нэр <span className="text-muted-foreground font-normal">(School)</span></Label>
+                    <Label htmlFor="schoolName">{t.school}</Label>
                     <Input
                       id="schoolName"
-                      placeholder="Сургуулийнхаа нэрийг бичнэ үү"
+                      placeholder={t.schoolPlaceholder}
                       className={registrationForm.formState.errors.schoolName ? "border-destructive" : ""}
                       {...registrationForm.register("schoolName")}
                     />
@@ -696,12 +889,12 @@ export default function ReviewRegistration() {
               {wizardStep === 4 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    Өөрийн түвшин
-                    <span className="block text-sm font-normal text-muted-foreground">Your level</span>
+                    {t.levelHeading}
+                    <span className="block text-sm font-normal text-muted-foreground">{t.levelSub}</span>
                   </h2>
                   {!isIELTS && (
                     <div className="space-y-2">
-                      <Label>Математикийн түвшин <span className="text-muted-foreground font-normal">(Math Level)</span></Label>
+                      <Label>{t.mathLevel}</Label>
                       <RadioGroup
                         onValueChange={(value) =>
                           registrationForm.setValue("mathLevel", value as "bad" | "average" | "good", { shouldValidate: true })
@@ -724,7 +917,7 @@ export default function ReviewRegistration() {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Label>Англи хэлний түвшин <span className="text-muted-foreground font-normal">(English Level)</span></Label>
+                    <Label>{t.englishLevel}</Label>
                     <RadioGroup
                       onValueChange={(value) =>
                         registrationForm.setValue("englishLevel", value as "bad" | "average" | "good", { shouldValidate: true })
@@ -756,14 +949,10 @@ export default function ReviewRegistration() {
               {wizardStep === 5 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    {isIELTS ? "IELTS туршлага" : "SAT туршлага"}
-                    <span className="block text-sm font-normal text-muted-foreground">Prior experience</span>
+                    {t.priorHeading(testName)}
+                    <span className="block text-sm font-normal text-muted-foreground">{t.priorSub}</span>
                   </h2>
-                  <Label>
-                    {isIELTS
-                      ? <>Та өмнө нь IELTS шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken IELTS before?)</span></>
-                      : <>Та өмнө нь SAT шалгалт өгч үзсэн үү? <span className="text-muted-foreground font-normal">(Taken SAT before?)</span></>}
-                  </Label>
+                  <Label>{t.takenBefore(testName)}</Label>
                   <RadioGroup
                     value={hasTakenSat ? "yes" : "no"}
                     onValueChange={(value) => registrationForm.setValue("hasTakenSat", value === "yes")}
@@ -771,11 +960,11 @@ export default function ReviewRegistration() {
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="sat-no" />
-                      <Label htmlFor="sat-no" className="cursor-pointer">Үгүй / No</Label>
+                      <Label htmlFor="sat-no" className="cursor-pointer">{t.no}</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id="sat-yes" />
-                      <Label htmlFor="sat-yes" className="cursor-pointer">Тийм / Yes</Label>
+                      <Label htmlFor="sat-yes" className="cursor-pointer">{t.yes}</Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -785,21 +974,19 @@ export default function ReviewRegistration() {
               {wizardStep === 6 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">
-                    {hasTakenSat
-                      ? (isIELTS ? "Өмнөх оноо ба дараагийн шалгалт" : "Өмнөх оноо ба дараагийн шалгалт")
-                      : "Дараагийн шалгалт"}
+                    {hasTakenSat ? t.scoreHeadingTaken : t.scoreHeadingNew}
                     <span className="block text-sm font-normal text-muted-foreground">
-                      {hasTakenSat ? "Previous score & next test" : "Your upcoming test"}
+                      {hasTakenSat ? t.scoreSubTaken : t.scoreSubNew}
                     </span>
                   </h2>
 
                   {hasTakenSat && !isIELTS && (
                     <div className="space-y-2">
-                      <Label htmlFor="previousScore">Өмнөх SAT оноо <span className="text-muted-foreground font-normal">(Previous Score)</span></Label>
+                      <Label htmlFor="previousScore">{t.previousSat}</Label>
                       <Input
                         id="previousScore"
                         type="number"
-                        placeholder="жишээ нь: 1200"
+                        placeholder={t.previousSatPlaceholder}
                         min={400}
                         max={1600}
                         defaultValue={registrationForm.getValues("previousSatScore") ?? ""}
@@ -810,18 +997,18 @@ export default function ReviewRegistration() {
                         }}
                       />
                       {registrationForm.formState.errors.previousSatScore && (
-                        <p className="text-sm text-destructive">Оноо 400-1600 хооронд байх ёстой</p>
+                        <p className="text-sm text-destructive">{t.satRangeError}</p>
                       )}
                     </div>
                   )}
 
                   {hasTakenSat && isIELTS && (
                     <div className="space-y-2">
-                      <Label htmlFor="previousIeltsScore">Өмнөх IELTS оноо (Band) <span className="text-muted-foreground font-normal">(Previous Band Score)</span></Label>
+                      <Label htmlFor="previousIeltsScore">{t.previousIelts}</Label>
                       <Input
                         id="previousIeltsScore"
                         type="number"
-                        placeholder="жишээ нь: 6.5"
+                        placeholder={t.previousIeltsPlaceholder}
                         min={0}
                         max={9}
                         step={0.5}
@@ -833,27 +1020,23 @@ export default function ReviewRegistration() {
                         }}
                       />
                       {registrationForm.formState.errors.previousIeltsScore && (
-                        <p className="text-sm text-destructive">IELTS оноо 0-9 хооронд байх ёстой</p>
+                        <p className="text-sm text-destructive">{t.ieltsRangeError}</p>
                       )}
                     </div>
                   )}
 
                   {!isIELTS ? (
                     <div className="space-y-2">
-                      <Label>
-                        {hasTakenSat
-                          ? <>Дараагийн SAT-аа хэзээ өгөх вэ? <span className="text-muted-foreground font-normal">(Next SAT Date)</span></>
-                          : <>Хэзээ SAT өгөхөөр төлөвлөж байна? <span className="text-muted-foreground font-normal">(Planned SAT Date)</span></>}
-                      </Label>
+                      <Label>{hasTakenSat ? t.nextDate("SAT") : t.plannedDate("SAT")}</Label>
                       <Select
                         value={registrationForm.watch("plannedSatDate") || ""}
                         onValueChange={(value) => registrationForm.setValue("plannedSatDate", value)}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Огноо сонгоно уу..." />
+                          <SelectValue placeholder={t.datePlaceholder} />
                         </SelectTrigger>
                         <SelectContent>
-                          {SAT_TEST_DATES.map((date) => (
+                          {satDates.map((date) => (
                             <SelectItem key={date.value} value={date.value}>{date.label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -861,20 +1044,16 @@ export default function ReviewRegistration() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <Label>
-                        {hasTakenSat
-                          ? <>Дараагийн IELTS-ээ хэзээ өгөх вэ? <span className="text-muted-foreground font-normal">(Next IELTS Date)</span></>
-                          : <>Хэзээ IELTS өгөхөөр төлөвлөж байна? <span className="text-muted-foreground font-normal">(Planned IELTS Date)</span></>}
-                      </Label>
+                      <Label>{hasTakenSat ? t.nextDate("IELTS") : t.plannedDate("IELTS")}</Label>
                       <Select
                         value={registrationForm.watch("plannedIeltsDate") || ""}
                         onValueChange={(value) => registrationForm.setValue("plannedIeltsDate", value)}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Сар сонгоно уу..." />
+                          <SelectValue placeholder={t.datePlaceholder} />
                         </SelectTrigger>
                         <SelectContent>
-                          {IELTS_TEST_DATES.map((date) => (
+                          {ieltsDates.map((date) => (
                             <SelectItem key={date.value} value={date.value}>{date.label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -889,14 +1068,12 @@ export default function ReviewRegistration() {
                 <div className="space-y-4 text-center py-6">
                   <div className="text-5xl">🎉</div>
                   <h2 className="text-2xl font-bold">
-                    Амжилт хүсье!
+                    {t.finishHeading}
                     <span className="block text-base font-normal text-muted-foreground mt-1">
-                      Good luck on your journey
+                      {t.finishSub}
                     </span>
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Доорх "Бүртгүүлэх" товчийг дарж бүртгэлээ дуусгана уу.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t.finishHint}</p>
                 </div>
               )}
 
@@ -904,7 +1081,7 @@ export default function ReviewRegistration() {
               <div className="flex gap-2 pt-2">
                 {wizardStep > 0 && (
                   <Button type="button" variant="outline" className="flex-1" onClick={goBack} disabled={isSubmitting}>
-                    Буцах
+                    {t.back}
                   </Button>
                 )}
                 {wizardStep < TOTAL_WIZARD_STEPS - 1 ? (
@@ -924,7 +1101,7 @@ export default function ReviewRegistration() {
                       goNext(perStep[wizardStep] || []);
                     }}
                   >
-                    Үргэлжлүүлэх
+                    {t.continue}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
@@ -932,12 +1109,12 @@ export default function ReviewRegistration() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Бүртгэж байна...
+                        {t.submitting}
                       </>
                     ) : submitCooldown ? (
-                      `Түр хүлээнэ үү... (${cooldownSeconds}с)`
+                      t.cooldown(cooldownSeconds)
                     ) : (
-                      "Бүртгүүлэх"
+                      t.submit
                     )}
                   </Button>
                 )}
