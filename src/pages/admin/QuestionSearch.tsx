@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { QuestionSearchPanel } from '@/components/questions/QuestionSearchPanel';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 import { Search } from 'lucide-react';
 
 export default function QuestionSearch() {
@@ -42,11 +43,19 @@ export default function QuestionSearch() {
       />
 
       {editingId && editingQuestion && (
-        <QuestionForm
-          open
-          onOpenChange={(v) => !v && setEditingId(null)}
-          editingQuestion={editingQuestion as any}
-        />
+        (editingQuestion as any).question_set === 'CollegeBoard' ? (
+          <CBQuestionForm
+            open
+            onOpenChange={(v) => !v && setEditingId(null)}
+            editingQuestion={editingQuestion as any}
+          />
+        ) : (
+          <QuestionForm
+            open
+            onOpenChange={(v) => !v && setEditingId(null)}
+            editingQuestion={editingQuestion as any}
+          />
+        )
       )}
     </div>
   );
