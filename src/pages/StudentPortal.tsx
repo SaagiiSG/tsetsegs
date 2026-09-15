@@ -74,14 +74,15 @@ export default function StudentPortal() {
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (phoneNumber.length !== 8) {
+    if (digitsOnly(phoneNumber).length < 8) {
       toast({
         title: 'Invalid phone number',
-        description: 'Please enter an 8-digit phone number',
+        description: 'Please enter your full phone number',
         variant: 'destructive'
       });
       return;
     }
+
 
     setIsLoading(true);
     
