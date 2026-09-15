@@ -219,21 +219,22 @@ export default function StudentPortal() {
                 type="tel"
                 placeholder="99112233"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
                 className="pl-10 text-lg tracking-wider"
-                maxLength={8}
+                maxLength={20}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Use the phone number registered with your class
+              Use the phone number registered with your class. International students: include your country code (e.g. +1 415 555 0134).
             </p>
           </div>
           
           <Button 
             type="submit" 
             className="w-full h-12 text-lg"
-            disabled={isLoading || phoneNumber.length !== 8}
+            disabled={isLoading || digitsOnly(phoneNumber).length < 8}
           >
+
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
