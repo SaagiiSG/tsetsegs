@@ -10,6 +10,8 @@ import { Navigate, Link } from 'react-router-dom';
 import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
+import { digitsOnly, sanitizePhoneInput } from '@/lib/phone';
+
 
 // Password validation rules
 const PASSWORD_RULES = {
