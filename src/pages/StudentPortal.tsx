@@ -227,7 +227,7 @@ export default function StudentPortal() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Use the phone number registered with your class. International students: include your country code (e.g. +1 415 555 0134).
+              Use the phone number registered with your class.
             </p>
           </div>
           
