@@ -364,23 +364,35 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }> => {
     try {
+      // Normalize: students may type with/without "+", spaces, or dashes.
+      // Match against exact input, digits-only, and E.164 ("+digits") variants
+      // so international numbers stored as "+14155550134" match "4155550134".
+      const digits = phoneNumber.replace(/\D/g, '');
+      const candidates = Array.from(new Set(
+        [phoneNumber, digits, digits ? `+${digits}` : ''].filter(Boolean)
+      ));
+
       // Run the roster lookup and the account lookup in parallel — they are
       // independent, and doing them sequentially doubled the login wait time.
       const [studentRes, accountRes] = await Promise.all([
         supabase
           .from('students')
           .select('id, first_name, phone')
-          .eq('phone', phoneNumber)
+          .in('phone', candidates)
           .limit(1),
         supabase
           .from('student_accounts')
           .select('*')
-          .eq('phone_number', phoneNumber)
+          .in('phone_number', candidates)
+          .limit(1)
           .maybeSingle(),
       ]);
 
       const { data: studentRecords, error: studentError } = studentRes;
       const studentRecord = studentRecords?.[0] || null;
+      // Canonical phone: prefer the roster record's stored format so the
+      // account and session stay consistent with how the number is stored.
+      const canonicalPhone = studentRecord?.phone ?? phoneNumber;
 
       if (studentError && studentError.code !== 'PGRST116') {
         throw studentError;
