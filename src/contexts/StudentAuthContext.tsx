@@ -455,7 +455,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Store pending info
-      setPendingPhone(phoneNumber);
+      setPendingPhone(canonicalPhone);
       setPendingStudentAccount(studentAccount as StudentAccount);
 
       // Check if password is set
