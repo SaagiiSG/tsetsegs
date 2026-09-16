@@ -403,10 +403,11 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         const { data: existingRequest } = await supabase
           .from('registration_requests')
           .select('status')
-          .eq('phone_number', phoneNumber)
+          .in('phone_number', candidates)
+          .limit(1)
           .maybeSingle();
 
-        setPendingPhone(phoneNumber);
+        setPendingPhone(canonicalPhone);
 
         if (existingRequest) {
           if (existingRequest.status === 'pending') {
@@ -437,7 +438,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         const { data: newStudent, error: createError } = await supabase
           .from('student_accounts')
           .insert({ 
-            phone_number: phoneNumber
+            phone_number: canonicalPhone
           })
           .select()
           .single();
