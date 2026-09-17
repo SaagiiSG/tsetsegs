@@ -121,7 +121,9 @@ async function listChildren(parentId: string, fields: string): Promise<DriveFile
     } catch (err) {
       lastError = `Drive list failed (network): ${err instanceof Error ? err.message : String(err)}`;
     }
-    if (attempt < MAX_ATTEMPTS) await sleep(250 * 2 ** (attempt - 1) + Math.random() * 150);
+    // Drive's rate limiter needs real breathing room: 1s, 2s, 4s, 8s.
+    if (attempt < MAX_ATTEMPTS) await sleep(1000 * 2 ** (attempt - 1) + Math.random() * 400);
+
   }
   throw new Error(lastError || "Drive list failed");
 }
