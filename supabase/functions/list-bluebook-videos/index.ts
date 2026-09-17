@@ -100,7 +100,7 @@ async function listChildren(parentId: string, fields: string): Promise<DriveFile
 
   // The connector gateway occasionally answers 503 / resets the connection.
   // Retry transient failures with backoff before giving up on the whole tree.
-  const MAX_ATTEMPTS = 4;
+  const MAX_ATTEMPTS = 5;
   let lastError = "";
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
