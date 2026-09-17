@@ -221,35 +221,49 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const json = (payload: unknown, extra?: Record<string, unknown>) =>
+    new Response(JSON.stringify(extra ? { ...(payload as object), ...extra } : payload), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const projectRef = supabaseUrl.replace(/^https?:\/\//, "").split(".")[0];
     if (!projectRef) throw new Error("SUPABASE_URL not set");
 
-    if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
-      return new Response(JSON.stringify(cache.payload), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (cache && Date.now() - cache.at < CACHE_TTL_MS) return json(cache.payload);
+
+    // Shared cache survives cold starts, so a burst of students triggers at most
+    // one Drive scan per TTL instead of one per instance.
+    const dbCache = await readDbCache();
+    if (dbCache) {
+      cache = dbCache;
+      if (Date.now() - dbCache.at < CACHE_TTL_MS) return json(dbCache.payload);
     }
 
-    const payload = await buildTree(projectRef);
-    cache = { at: Date.now(), payload };
-
-
-    return new Response(JSON.stringify(payload), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    try {
+      // Single-flight: concurrent requests on this instance share one scan.
+      if (!inflight) {
+        inflight = buildTree(projectRef).finally(() => {
+          inflight = null;
+        });
+      }
+      const payload = await inflight;
+      cache = { at: Date.now(), payload };
+      await writeDbCache(payload);
+      return json(payload);
+    } catch (err) {
+      console.error("list-bluebook-videos refresh failed:", err);
+      // Rate-limited or upstream hiccup: serve the last good tree rather than an error.
+      if (cache) return json(cache.payload, { stale: true });
+      throw err;
+    }
   } catch (err) {
     console.error("list-bluebook-videos error:", err);
-    // Upstream hiccup: serve the last good tree (even if stale) rather than breaking the page.
-    if (cache) {
-      return new Response(JSON.stringify({ ...(cache.payload as object), stale: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
 });
