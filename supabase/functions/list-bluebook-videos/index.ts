@@ -21,7 +21,53 @@ interface DriveFile {
 
 // simple in-memory cache (per warm instance)
 let cache: { at: number; payload: unknown } | null = null;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 30 * 60 * 1000;
+// Shared cache row so cold instances don't re-scan Drive on every request.
+const DB_CACHE_KEY = "tree";
+let inflight: Promise<unknown> | null = null;
+
+async function readDbCache(): Promise<{ at: number; payload: unknown } | null> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/bluebook_video_cache?key=eq.${DB_CACHE_KEY}&select=payload,updated_at`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return { at: new Date(rows[0].updated_at).getTime(), payload: rows[0].payload };
+  } catch (_err) {
+    return null;
+  }
+}
+
+async function writeDbCache(payload: unknown): Promise<void> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return;
+  try {
+    await fetch(`${url}/rest/v1/bluebook_video_cache?on_conflict=key`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates",
+      },
+      body: JSON.stringify({
+        key: DB_CACHE_KEY,
+        payload,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  } catch (_err) {
+    // cache write failures must never break the response
+  }
+}
+
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -54,7 +100,7 @@ async function listChildren(parentId: string, fields: string): Promise<DriveFile
 
   // The connector gateway occasionally answers 503 / resets the connection.
   // Retry transient failures with backoff before giving up on the whole tree.
-  const MAX_ATTEMPTS = 4;
+  const MAX_ATTEMPTS = 5;
   let lastError = "";
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
@@ -75,7 +121,9 @@ async function listChildren(parentId: string, fields: string): Promise<DriveFile
     } catch (err) {
       lastError = `Drive list failed (network): ${err instanceof Error ? err.message : String(err)}`;
     }
-    if (attempt < MAX_ATTEMPTS) await sleep(250 * 2 ** (attempt - 1) + Math.random() * 150);
+    // Drive's rate limiter needs real breathing room: 1s, 2s, 4s, 8s.
+    if (attempt < MAX_ATTEMPTS) await sleep(1000 * 2 ** (attempt - 1) + Math.random() * 400);
+
   }
   throw new Error(lastError || "Drive list failed");
 }
@@ -124,13 +172,13 @@ async function buildTree(projectRef: string) {
     .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
     .sort((a, b) => naturalSort(a.name, b.name));
 
-  const tests = await mapLimit(testFolders, 4, async (tf) => {
+  const tests = await mapLimit(testFolders, 2, async (tf) => {
       const testNumber = parseTestNumber(tf.name);
       const moduleFolders = (await listChildren(tf.id, "id,name,mimeType"))
         .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
         .sort((a, b) => naturalSort(a.name, b.name));
 
-      const modules = await mapLimit(moduleFolders, 4, async (mf) => {
+      const modules = await mapLimit(moduleFolders, 2, async (mf) => {
           const moduleNumber = parseModuleNumber(mf.name);
           const files = (await listChildren(mf.id, "id,name,mimeType,thumbnailLink,modifiedTime"))
             .filter((f) => f.mimeType.startsWith("video/"))
@@ -173,35 +221,49 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const json = (payload: unknown, extra?: Record<string, unknown>) =>
+    new Response(JSON.stringify(extra ? { ...(payload as object), ...extra } : payload), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const projectRef = supabaseUrl.replace(/^https?:\/\//, "").split(".")[0];
     if (!projectRef) throw new Error("SUPABASE_URL not set");
 
-    if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
-      return new Response(JSON.stringify(cache.payload), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (cache && Date.now() - cache.at < CACHE_TTL_MS) return json(cache.payload);
+
+    // Shared cache survives cold starts, so a burst of students triggers at most
+    // one Drive scan per TTL instead of one per instance.
+    const dbCache = await readDbCache();
+    if (dbCache) {
+      cache = dbCache;
+      if (Date.now() - dbCache.at < CACHE_TTL_MS) return json(dbCache.payload);
     }
 
-    const payload = await buildTree(projectRef);
-    cache = { at: Date.now(), payload };
-
-
-    return new Response(JSON.stringify(payload), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    try {
+      // Single-flight: concurrent requests on this instance share one scan.
+      if (!inflight) {
+        inflight = buildTree(projectRef).finally(() => {
+          inflight = null;
+        });
+      }
+      const payload = await inflight;
+      cache = { at: Date.now(), payload };
+      await writeDbCache(payload);
+      return json(payload);
+    } catch (err) {
+      console.error("list-bluebook-videos refresh failed:", err);
+      // Rate-limited or upstream hiccup: serve the last good tree rather than an error.
+      if (cache) return json(cache.payload, { stale: true });
+      throw err;
+    }
   } catch (err) {
     console.error("list-bluebook-videos error:", err);
-    // Upstream hiccup: serve the last good tree (even if stale) rather than breaking the page.
-    if (cache) {
-      return new Response(JSON.stringify({ ...(cache.payload as object), stale: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
 });

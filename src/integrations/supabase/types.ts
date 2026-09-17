@@ -604,6 +604,24 @@ export type Database = {
         }
         Relationships: []
       }
+      bluebook_video_cache: {
+        Row: {
+          key: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_bans: {
         Row: {
           banned_until: string
