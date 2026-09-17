@@ -21,7 +21,53 @@ interface DriveFile {
 
 // simple in-memory cache (per warm instance)
 let cache: { at: number; payload: unknown } | null = null;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 30 * 60 * 1000;
+// Shared cache row so cold instances don't re-scan Drive on every request.
+const DB_CACHE_KEY = "tree";
+let inflight: Promise<unknown> | null = null;
+
+async function readDbCache(): Promise<{ at: number; payload: unknown } | null> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/bluebook_video_cache?key=eq.${DB_CACHE_KEY}&select=payload,updated_at`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return { at: new Date(rows[0].updated_at).getTime(), payload: rows[0].payload };
+  } catch (_err) {
+    return null;
+  }
+}
+
+async function writeDbCache(payload: unknown): Promise<void> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return;
+  try {
+    await fetch(`${url}/rest/v1/bluebook_video_cache?on_conflict=key`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates",
+      },
+      body: JSON.stringify({
+        key: DB_CACHE_KEY,
+        payload,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  } catch (_err) {
+    // cache write failures must never break the response
+  }
+}
+
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
