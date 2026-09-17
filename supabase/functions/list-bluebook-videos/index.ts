@@ -178,7 +178,7 @@ async function buildTree(projectRef: string) {
         .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
         .sort((a, b) => naturalSort(a.name, b.name));
 
-      const modules = await mapLimit(moduleFolders, 4, async (mf) => {
+      const modules = await mapLimit(moduleFolders, 2, async (mf) => {
           const moduleNumber = parseModuleNumber(mf.name);
           const files = (await listChildren(mf.id, "id,name,mimeType,thumbnailLink,modifiedTime"))
             .filter((f) => f.mimeType.startsWith("video/"))
