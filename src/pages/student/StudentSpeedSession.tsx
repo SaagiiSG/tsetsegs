@@ -684,7 +684,7 @@ export default function StudentSpeedSession() {
 
             {/* Star Rating + Score Tiers */}
             <Card className="border-border/50">
-              <CardContent className="p-4 space-y-4">
+              <CardContent className="p-3 space-y-4">
                 {/* Current stars */}
                 <div className="flex items-center justify-center gap-1">
                   {[0, 1, 2].map((i) => (
