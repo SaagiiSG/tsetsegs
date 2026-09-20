@@ -10,7 +10,23 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, User, GraduationCap, ChevronLeft, ChevronRight, Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { InlineScorePrediction } from '@/components/admin/InlineScorePrediction';
+import { useIsDevAccount } from '@/lib/devAccount';
 import { toast } from 'sonner';
+
+// Fetch IDs of international batches once; regular admins never see these students.
+async function fetchIntlBatchIds(): Promise<string[]> {
+  const { data } = await supabase
+    .from('batches')
+    .select('id')
+    .eq('is_international', true);
+  return (data || []).map(b => b.id);
+}
+
+// PostgREST filter that keeps null-batch students but excludes international batches.
+function intlExclusionOr(ids: string[]): string | null {
+  if (ids.length === 0) return null;
+  return `batch_id.is.null,batch_id.not.in.(${ids.join(',')})`;
+}
 
 
 
