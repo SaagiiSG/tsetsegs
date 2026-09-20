@@ -23,6 +23,7 @@ import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollm
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { QuestionFigures } from "@/components/QuestionFigures";
+import { normaliseChoices } from '@/lib/bluebookReview';
 
 interface Question {
   id: string;
@@ -32,6 +33,7 @@ interface Question {
   answer: string;
   question_type: string;
   multiple_choice_options: Record<string, string> | null;
+  choice_images: Record<string, string> | null;
   category: { name: string } | null;
   question_image_url: string | null;
   question_image_url_2: string | null;
@@ -133,7 +135,7 @@ export default function StudentSpeedSession() {
         .from('questions')
         .select(`
           id, question_id, question_text, passage_text, answer, alternate_answers, question_type,
-          multiple_choice_options,
+          multiple_choice_options, choice_images,
           question_image_url, question_image_url_2, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
         `)
@@ -477,8 +479,10 @@ export default function StudentSpeedSession() {
   }
 
   const totalQuestions = Math.min(questions.length, maxQuestions);
-  const options = currentQuestion?.multiple_choice_options as Record<string, string> | null;
-  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && options;
+  const choices = currentQuestion
+    ? normaliseChoices(currentQuestion.multiple_choice_options, currentQuestion.choice_images)
+    : [];
+  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && choices.length > 0;
 
   // Determine current star tier based on elapsed time
   const currentTier = scoreTiers.findIndex(t => questionElapsed <= t.maxTime);
@@ -487,13 +491,13 @@ export default function StudentSpeedSession() {
     <SecurityWrapper>
       <DesmosCalculator />
       <ReferenceSheet />
-      <div 
-        className="min-h-screen bg-background p-3 md:p-6 select-none"
-        style={{ 
-          marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
-          marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
-          width: calculatorSnapSide ? '60vw' : '100%'
-        }}
+      <div
+        className={cn(
+          "min-h-screen min-w-0 bg-background p-3 transition-all duration-300 select-none md:p-6",
+          calculatorSnapSide === 'left' && "md:ml-[40vw] md:w-[60vw]",
+          calculatorSnapSide === 'right' && "md:mr-[40vw] md:w-[60vw]",
+          !calculatorSnapSide && "w-full",
+        )}
       >
         {/* Tool Bar */}
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -510,9 +514,9 @@ export default function StudentSpeedSession() {
         </div>
 
         {/* Two-column layout */}
-        <div className="flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto">
+        <div className="flex flex-col xl:flex-row gap-4 max-w-6xl mx-auto min-w-0">
           {/* Left: Question area (60-65%) */}
-          <div className="flex-1 lg:w-[62%] space-y-4">
+          <div className="flex-1 xl:w-[62%] min-w-0 space-y-4">
             <Card className="border-border/50">
               <CardContent className="p-5 space-y-5">
                 {/* Question header */}
@@ -527,23 +531,23 @@ export default function StudentSpeedSession() {
 
                 {/* Passage (English questions) */}
                 {currentQuestion?.passage_text && (
-                  <div className="prose prose-sm dark:prose-invert max-w-none rounded-lg border border-border/60 bg-muted/30 p-4 max-h-64 overflow-y-auto">
-                    <MathText text={currentQuestion.passage_text} />
+                  <div className="max-h-72 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 p-4 text-sm leading-7 whitespace-normal break-words">
+                    <MathText text={currentQuestion.passage_text} className="block min-w-0" />
                   </div>
                 )}
 
                 {/* Question text */}
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <MathText text={currentQuestion?.question_text || ''} />
+                <div className="min-w-0 text-sm leading-7 whitespace-normal break-words">
+                  <MathText text={currentQuestion?.question_text || ''} className="block min-w-0" />
                 </div>
 
                 {/* Figure (SVG or image) */}
                 {currentQuestion?.figure_svg ? (
                   <div
-                    className="flex justify-center py-2 [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:max-h-72"
+                    className="flex min-w-0 justify-center overflow-x-auto py-2 [&_svg]:block [&_svg]:h-auto [&_svg]:max-h-72 [&_svg]:max-w-full [&_svg]:shrink-0"
                     dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
                   />
-                ) : currentQuestion?.question_image_url ? (
+                ) : currentQuestion?.question_image_url || currentQuestion?.question_image_url_2 ? (
                   <QuestionFigures
                     url1={currentQuestion.question_image_url}
                     url2={currentQuestion.question_image_url_2}
@@ -555,9 +559,8 @@ export default function StudentSpeedSession() {
 
                 {/* Answer options */}
                 {isMultipleChoice ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {['A', 'B', 'C', 'D'].map((letter) => {
-                      if (!options?.[letter]) return null;
+                  <div className={cn("grid min-w-0 grid-cols-1 gap-3", subject === 'math' && "sm:grid-cols-2")}>
+                    {choices.map(({ letter, text, image }) => {
                       const isSelected = selectedAnswer === letter;
                       const showCorrect = showResult && letter === currentQuestion?.answer;
                       const showWrong = showResult && isSelected && !isCorrect;
@@ -568,15 +571,25 @@ export default function StudentSpeedSession() {
                           variant="outline"
                           disabled={showResult}
                           className={cn(
-                            "h-auto py-3 px-4 justify-start text-left transition-all",
+                            "h-auto min-h-12 min-w-0 items-start justify-start whitespace-normal py-3 px-4 text-left transition-all",
                             showCorrect && 'border-green-500 bg-green-500/10',
                             showWrong && 'border-destructive bg-destructive/10',
                             isSelected && !showResult && 'border-primary bg-primary/10',
                           )}
                           onClick={() => setSelectedAnswer(letter)}
                         >
-                          <span className="font-bold mr-2 text-muted-foreground">{letter}.</span>
-                          <MathText text={options[letter]} />
+                          <span className="shrink-0 font-bold text-muted-foreground">{letter}.</span>
+                          <span className="min-w-0 flex-1">
+                            {text ? <MathText text={text} className="block break-words leading-6" /> : null}
+                            {image ? (
+                              <img
+                                src={image}
+                                alt={`Answer choice ${letter}`}
+                                loading="eager"
+                                className={cn("max-h-40 max-w-full rounded-md border bg-background object-contain", text && "mt-2")}
+                              />
+                            ) : null}
+                          </span>
                         </Button>
                       );
                     })}
@@ -658,7 +671,7 @@ export default function StudentSpeedSession() {
           </div>
 
           {/* Right: Timer + Score tiers (35-40%) */}
-          <div className="lg:w-[38%] space-y-4">
+          <div className="xl:w-[38%] space-y-4">
             {/* Circular Timer Card */}
             <Card className="border-border/50">
               <CardContent className="p-6 flex flex-col items-center">
