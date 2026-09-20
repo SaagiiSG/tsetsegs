@@ -19,6 +19,7 @@ import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, Ch
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Cohort } from '@/lib/cohort';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
 const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
