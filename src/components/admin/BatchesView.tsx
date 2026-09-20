@@ -18,10 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, parseISO } from 'date-fns';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
-export function BatchesView({ internationalOnly = false }: { internationalOnly?: boolean } = {}) {
-  const isDev = useIsDevAccount();
+export function BatchesView() {
+  const { cohort } = useAdminCohort();
   const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<any[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
@@ -37,7 +37,7 @@ export function BatchesView({ internationalOnly = false }: { internationalOnly?:
 
   useEffect(() => {
     fetchBatches();
-  }, []);
+  }, [cohort]);
 
   useEffect(() => {
     if (batches.length > 0) {
@@ -57,13 +57,9 @@ export function BatchesView({ internationalOnly = false }: { internationalOnly?:
     const { data } = await supabase
       .from('batches')
       .select('*')
+      .eq('is_international', cohort === 'intl')
       .order('start_date', { ascending: false });
-    if (!data) return;
-    if (internationalOnly) {
-      setBatches(data.filter((b: any) => b.is_international));
-      return;
-    }
-    setBatches(isDev ? data : data.filter((b: any) => !b.is_international));
+    setBatches(data || []);
   };
 
   const fetchStudentCounts = async () => {
@@ -258,7 +254,7 @@ export function BatchesView({ internationalOnly = false }: { internationalOnly?:
       {/* Batch List grouped by month */}
       <Card>
         <CardHeader>
-          <CardTitle>{internationalOnly ? 'International Batches' : 'All Batches'}</CardTitle>
+          <CardTitle>{cohort === 'intl' ? 'International Batches' : 'All Batches'}</CardTitle>
           <CardDescription>
             Showing {filteredBatches.length} of {batches.length} batch{batches.length !== 1 ? 'es' : ''}
           </CardDescription>
