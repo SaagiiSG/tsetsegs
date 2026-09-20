@@ -204,7 +204,7 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        q = applyCohortFilter(q, intlIds);
         const result = await q;
         data = result.data;
         error = result.error;
@@ -221,9 +221,9 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        // Name match (OR across fields) AND not an international student (id never null).
+        // Name match (OR across fields) AND cohort filter.
         q = q.or(nameOr);
-        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        q = applyCohortFilter(q, intlIds);
         const result = await q;
         data = result.data;
         error = result.error;
