@@ -214,12 +214,9 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        // Name match AND (not in an international batch): one nested and/or filter.
-        if (intlOr) {
-          q = q.and(`or(${nameOr}),or(${intlOr})`);
-        } else {
-          q = q.or(nameOr);
-        }
+        // Name match (OR across fields) AND not an international student (id never null).
+        q = q.or(nameOr);
+        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
         const result = await q;
         data = result.data;
         error = result.error;
