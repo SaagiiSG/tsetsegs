@@ -213,22 +213,13 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        // Combine name matching with the international-batch exclusion (AND semantics).
-        q = intlOr ? q.or(nameOr).or(intlOr.replace(/^/, '')) && q : q;
-        const result = await (intlOr
-          ? supabase
-              .from('students')
-              .select(`
-                id, name, first_name, last_name, phone, parent_phone,
-                school_name, grade, math_level, english_level, sat_test_month, created_at,
-                batch:batches(id, batch_name, course_type, teacher, start_date)
-              `)
-              .eq('is_ghost', false)
-              .or(nameOr)
-              .or(intlOr)
-              .order('created_at', { ascending: false })
-              .limit(30)
-          : q.or(nameOr));
+        // Name match AND (not in an international batch): one nested and/or filter.
+        if (intlOr) {
+          q = q.and(`or(${nameOr}),or(${intlOr})`);
+        } else {
+          q = q.or(nameOr);
+        }
+        const result = await q;
         data = result.data;
         error = result.error;
       }
