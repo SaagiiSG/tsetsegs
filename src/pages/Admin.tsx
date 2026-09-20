@@ -26,7 +26,8 @@ import BugReports from '@/pages/admin/BugReports';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import BurnerAdmin from '@/pages/admin/BurnerAdmin';
-import InternationalView from '@/pages/admin/InternationalView';
+import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
+import { CohortSwitcher } from '@/components/admin/CohortSwitcher';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -63,7 +64,6 @@ const Admin = () => {
       <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
       <Route path="batches" element={<BatchesView />} />
       <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
-      <Route path="international" element={<DevOnlyRoute><InternationalView /></DevOnlyRoute>} />
       <Route path="questions" element={<QuestionBank />} />
       <Route path="question-search" element={<QuestionSearch />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
@@ -85,10 +85,15 @@ const Admin = () => {
   );
 
   if (isMobile) {
-    return <MobileAdminShell>{routesEl}</MobileAdminShell>;
+    return (
+      <AdminCohortProvider>
+        <MobileAdminShell>{routesEl}</MobileAdminShell>
+      </AdminCohortProvider>
+    );
   }
 
   return (
+    <AdminCohortProvider>
     <SidebarProvider>
       <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
         <div className="flex w-full min-h-screen">
@@ -101,6 +106,9 @@ const Admin = () => {
                   DEV MODE
                 </span>
               )}
+              <div className="ml-auto">
+                <CohortSwitcher />
+              </div>
             </header>
             <main className="flex-1 container mx-auto px-4 py-8">
               {routesEl}
