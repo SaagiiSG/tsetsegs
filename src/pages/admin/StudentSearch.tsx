@@ -197,7 +197,7 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        if (intlOr) q = q.or(intlOr);
+        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
         const result = await q;
         data = result.data;
         error = result.error;
