@@ -10,7 +10,23 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, User, GraduationCap, ChevronLeft, ChevronRight, Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { InlineScorePrediction } from '@/components/admin/InlineScorePrediction';
+import { useIsDevAccount } from '@/lib/devAccount';
 import { toast } from 'sonner';
+
+// Fetch IDs of students in international batches; regular admins never see them.
+async function fetchIntlStudentIds(): Promise<string[]> {
+  const { data: intlBatches } = await supabase
+    .from('batches')
+    .select('id')
+    .eq('is_international', true);
+  const batchIds = (intlBatches || []).map(b => b.id);
+  if (batchIds.length === 0) return [];
+  const { data: intlStudents } = await supabase
+    .from('students')
+    .select('id')
+    .in('batch_id', batchIds);
+  return (intlStudents || []).map(s => s.id);
+}
 
 
 
@@ -45,6 +61,18 @@ export default function StudentSearch() {
   const [isPending, startTransition] = useTransition();
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
+  const isDev = useIsDevAccount();
+  const intlStudentIdsRef = useRef<string[] | null>(null);
+
+  // Regular admins never see international-batch students; dev account sees everyone.
+  // Returns IDs to exclude (empty array = exclude nothing).
+  const getIntlExcludedIds = async (): Promise<string[]> => {
+    if (isDev) return [];
+    if (intlStudentIdsRef.current === null) {
+      intlStudentIdsRef.current = await fetchIntlStudentIds();
+    }
+    return intlStudentIdsRef.current;
+  };
 
   // All students state
   const [allStudents, setAllStudents] = useState<StudentResult[]>([]);
@@ -65,11 +93,15 @@ export default function StudentSearch() {
   const fetchAllStudents = async () => {
     setIsLoadingAll(true);
     try {
+      const excludedIds = await getIntlExcludedIds();
+
       // Get total count
-      const { count } = await supabase
+      let countQuery = supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('is_ghost', false);
+      if (excludedIds.length) countQuery = countQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      const { count } = await countQuery;
 
       setTotalCount(count || 0);
 
@@ -77,7 +109,7 @@ export default function StudentSearch() {
       const from = (currentPage - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
+      let listQuery = supabase
         .from('students')
         .select(`
           id,
@@ -97,6 +129,8 @@ export default function StudentSearch() {
         .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
+      if (excludedIds.length) listQuery = listQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      const { data, error } = await listQuery;
 
       if (error) throw error;
 
@@ -144,14 +178,15 @@ export default function StudentSearch() {
     try {
       const trimmedQuery = query.trim();
       const isNumeric = /^\d+$/.test(trimmedQuery.replace(/[-\s]/g, ''));
-      
+      const excludedIds = await getIntlExcludedIds();
+
       let data;
       let error;
-      
+
       if (isNumeric) {
         // Phone number search - prefix match
         const cleanedQuery = trimmedQuery.replace(/[-\s]/g, '');
-        const result = await supabase
+        let q = supabase
           .from('students')
           .select(`
             id, name, first_name, last_name, phone, parent_phone,
@@ -162,21 +197,27 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
+        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        const result = await q;
         data = result.data;
         error = result.error;
       } else {
         // Name search - match first_name or last_name
-        const result = await supabase
+        const nameOr = `first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`;
+        let q = supabase
           .from('students')
           .select(`
             id, name, first_name, last_name, phone, parent_phone,
             school_name, grade, math_level, english_level, sat_test_month, created_at,
             batch:batches(id, batch_name, course_type, teacher, start_date)
           `)
-          .or(`first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`)
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
+        // Name match (OR across fields) AND not an international student (id never null).
+        q = q.or(nameOr);
+        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        const result = await q;
         data = result.data;
         error = result.error;
       }

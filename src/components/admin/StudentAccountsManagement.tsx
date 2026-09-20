@@ -38,6 +38,7 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
+import { useIsDevAccount } from '@/lib/devAccount';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -115,6 +116,7 @@ function parseUserAgent(userAgent: string | null): { device: string; browser: st
 export function StudentAccountsManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isDev = useIsDevAccount();
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,12 +139,14 @@ export function StudentAccountsManagement() {
     try {
       setIsLoading(true);
       
-      // Fetch all student accounts
-      const { data: accountsData, error: accountsError } = await supabase
+      // Fetch all student accounts (regular admins only see the Mongolian cohort)
+      let accountsQuery = supabase
         .from('student_accounts')
         .select('*')
         .eq('is_ghost', false)
         .order('last_login', { ascending: false, nullsFirst: false });
+      if (!isDev) accountsQuery = accountsQuery.eq('cohort', 'mn');
+      const { data: accountsData, error: accountsError } = await accountsQuery;
       
       if (accountsError) throw accountsError;
       

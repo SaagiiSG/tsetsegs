@@ -53,11 +53,16 @@ export function useTeacherDashboardData(teacherName: string | null) {
     queryFn: async (): Promise<DashboardBatch[]> => {
       if (!teacherName) return [];
 
-      const { data: batches, error: bErr } = await supabase
+      // International batches are only visible to Saran-Ochir
+      let batchesQuery = supabase
         .from("batches")
         .select("id, batch_name, nickname, schedule, room, start_date, course_type")
         .ilike("teacher", `%${teacherName}%`)
         .order("start_date", { ascending: false });
+      if (teacherName !== "Saran-Ochir") {
+        batchesQuery = batchesQuery.eq("is_international", false);
+      }
+      const { data: batches, error: bErr } = await batchesQuery;
       if (bErr) throw bErr;
       if (!batches || batches.length === 0) return [];
 
