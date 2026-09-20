@@ -178,7 +178,7 @@ export default function StudentSearch() {
     try {
       const trimmedQuery = query.trim();
       const isNumeric = /^\d+$/.test(trimmedQuery.replace(/[-\s]/g, ''));
-      const intlOr = await getIntlExclusion();
+      const excludedIds = await getIntlExcludedIds();
 
       let data;
       let error;
