@@ -93,14 +93,14 @@ export default function StudentSearch() {
   const fetchAllStudents = async () => {
     setIsLoadingAll(true);
     try {
-      const intlOr = await getIntlExclusion();
+      const excludedIds = await getIntlExcludedIds();
 
       // Get total count
       let countQuery = supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('is_ghost', false);
-      if (intlOr) countQuery = countQuery.or(intlOr);
+      if (excludedIds.length) countQuery = countQuery.not('id', 'in', `(${excludedIds.join(',')})`);
       const { count } = await countQuery;
 
       setTotalCount(count || 0);
