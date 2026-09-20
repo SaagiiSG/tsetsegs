@@ -514,9 +514,9 @@ export default function StudentSpeedSession() {
         </div>
 
         {/* Two-column layout */}
-        <div className="flex flex-col xl:flex-row gap-4 max-w-6xl mx-auto min-w-0">
-          {/* Left: Question area (60-65%) */}
-          <div className="flex-1 xl:w-[62%] min-w-0 space-y-4">
+        <div className="flex flex-col xl:flex-row gap-4 max-w-7xl mx-auto min-w-0">
+          {/* Left: Question area (72%) */}
+          <div className="flex-1 xl:w-[72%] min-w-0 space-y-4">
             <Card className="border-border/50">
               <CardContent className="p-5 space-y-5">
                 {/* Question header */}
@@ -531,7 +531,7 @@ export default function StudentSpeedSession() {
 
                 {/* Passage (English questions) */}
                 {currentQuestion?.passage_text && (
-                  <div className="max-h-72 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 p-4 text-sm leading-7 whitespace-normal break-words">
+                  <div className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm leading-7 whitespace-normal break-words">
                     <MathText text={currentQuestion.passage_text} className="block min-w-0" />
                   </div>
                 )}
@@ -670,13 +670,13 @@ export default function StudentSpeedSession() {
             </div>
           </div>
 
-          {/* Right: Timer + Score tiers (35-40%) */}
-          <div className="xl:w-[38%] space-y-4">
+          {/* Right: Timer + Score tiers (28%) */}
+          <div className="xl:w-[28%] space-y-4">
             {/* Circular Timer Card */}
             <Card className="border-border/50">
-              <CardContent className="p-6 flex flex-col items-center">
-                <CircularTimer timeLeft={timeLeft} duration={duration} size={180} />
-                <p className="text-sm text-muted-foreground mt-3">
+              <CardContent className="p-4 flex flex-col items-center">
+                <CircularTimer timeLeft={timeLeft} duration={duration} size={140} />
+                <p className="text-sm text-muted-foreground mt-2">
                   Q {currentIndex + 1} / {totalQuestions}
                 </p>
               </CardContent>
@@ -684,7 +684,7 @@ export default function StudentSpeedSession() {
 
             {/* Star Rating + Score Tiers */}
             <Card className="border-border/50">
-              <CardContent className="p-5 space-y-4">
+              <CardContent className="p-4 space-y-4">
                 {/* Current stars */}
                 <div className="flex items-center justify-center gap-1">
                   {[0, 1, 2].map((i) => (
