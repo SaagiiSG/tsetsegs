@@ -674,9 +674,9 @@ export default function StudentSpeedSession() {
           <div className="xl:w-[28%] space-y-4">
             {/* Circular Timer Card */}
             <Card className="border-border/50">
-              <CardContent className="p-6 flex flex-col items-center">
-                <CircularTimer timeLeft={timeLeft} duration={duration} size={180} />
-                <p className="text-sm text-muted-foreground mt-3">
+              <CardContent className="p-4 flex flex-col items-center">
+                <CircularTimer timeLeft={timeLeft} duration={duration} size={140} />
+                <p className="text-sm text-muted-foreground mt-2">
                   Q {currentIndex + 1} / {totalQuestions}
                 </p>
               </CardContent>
@@ -684,7 +684,7 @@ export default function StudentSpeedSession() {
 
             {/* Star Rating + Score Tiers */}
             <Card className="border-border/50">
-              <CardContent className="p-5 space-y-4">
+              <CardContent className="p-4 space-y-4">
                 {/* Current stars */}
                 <div className="flex items-center justify-center gap-1">
                   {[0, 1, 2].map((i) => (
