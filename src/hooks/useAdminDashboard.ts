@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, format, getDay, getHours } from 'date-fns';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 interface DashboardStats {
   activeToday: number;
@@ -49,19 +49,23 @@ interface AtRiskStudent {
 }
 
 export function useAdminDashboard() {
-  const isDev = useIsDevAccount();
+  const { cohort } = useAdminCohort();
   const now = new Date();
   const sevenDaysAgo = subDays(now, 7);
   const todayStart = startOfDay(now);
 
+  // student_attempts rows belong to a cohort through their student account.
+  const cohortJoin = 'student_account:student_accounts!inner(cohort)';
+
   // Fetch core stats
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['admin-dashboard-stats'],
+    queryKey: ['admin-dashboard-stats', cohort],
     queryFn: async (): Promise<DashboardStats> => {
       // Active today - unique students who attempted today
       const { data: todayAttempts } = await supabase
         .from('student_attempts')
-        .select('student_account_id')
+        .select(`student_account_id, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', todayStart.toISOString());
 
       const activeToday = new Set(todayAttempts?.map(a => a.student_account_id) || []).size;
@@ -69,13 +73,15 @@ export function useAdminDashboard() {
       // Weekly attempts count
       const { count: weeklyAttempts } = await supabase
         .from('student_attempts')
-        .select('*', { count: 'exact', head: true })
+        .select(cohortJoin, { count: 'exact', head: true })
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       // Platform accuracy (7-day rolling)
       const { data: accuracyData } = await supabase
         .from('student_attempts')
-        .select('is_correct')
+        .select(`is_correct, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const correct = accuracyData?.filter(a => a.is_correct).length || 0;
@@ -87,7 +93,7 @@ export function useAdminDashboard() {
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .eq('cohort', 'mn')
+        .eq('cohort', cohort)
         .maybeSingle();
 
       let sprintParticipants = { active: 0, total: 0 };
@@ -100,7 +106,8 @@ export function useAdminDashboard() {
         const { count: totalAccounts } = await supabase
           .from('student_accounts')
           .select('*', { count: 'exact', head: true })
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('cohort', cohort);
 
         sprintParticipants = {
           active: rankings?.filter(r => r.total_points > 0).length || 0,
@@ -111,7 +118,8 @@ export function useAdminDashboard() {
       // Total questions solved all time
       const { count: totalQuestionsSolved } = await supabase
         .from('student_attempts')
-        .select('*', { count: 'exact', head: true })
+        .select(cohortJoin, { count: 'exact', head: true })
+        .eq('student_account.cohort', cohort)
         .eq('is_correct', true);
 
       return {
