@@ -116,7 +116,7 @@ function parseUserAgent(userAgent: string | null): { device: string; browser: st
 export function StudentAccountsManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isDev = useIsDevAccount();
+  const { cohort } = useAdminCohort();
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,20 +133,19 @@ export function StudentAccountsManagement() {
 
   useEffect(() => {
     fetchAccounts();
-  }, []);
+  }, [cohort]);
 
   const fetchAccounts = async () => {
     try {
       setIsLoading(true);
       
-      // Fetch all student accounts (regular admins only see the Mongolian cohort)
-      let accountsQuery = supabase
+      // Fetch student accounts for the selected cohort
+      const { data: accountsData, error: accountsError } = await supabase
         .from('student_accounts')
         .select('*')
         .eq('is_ghost', false)
+        .eq('cohort', cohort)
         .order('last_login', { ascending: false, nullsFirst: false });
-      if (!isDev) accountsQuery = accountsQuery.eq('cohort', 'mn');
-      const { data: accountsData, error: accountsError } = await accountsQuery;
       
       if (accountsError) throw accountsError;
       
