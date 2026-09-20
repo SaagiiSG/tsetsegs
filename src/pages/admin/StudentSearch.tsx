@@ -62,15 +62,16 @@ export default function StudentSearch() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
   const isDev = useIsDevAccount();
-  const intlBatchIdsRef = useRef<string[] | null>(null);
+  const intlStudentIdsRef = useRef<string[] | null>(null);
 
   // Regular admins never see international-batch students; dev account sees everyone.
-  const getIntlExclusion = async (): Promise<string | null> => {
-    if (isDev) return null;
-    if (intlBatchIdsRef.current === null) {
-      intlBatchIdsRef.current = await fetchIntlBatchIds();
+  // Returns IDs to exclude (empty array = exclude nothing).
+  const getIntlExcludedIds = async (): Promise<string[]> => {
+    if (isDev) return [];
+    if (intlStudentIdsRef.current === null) {
+      intlStudentIdsRef.current = await fetchIntlStudentIds();
     }
-    return intlExclusionOr(intlBatchIdsRef.current);
+    return intlStudentIdsRef.current;
   };
 
   // All students state
