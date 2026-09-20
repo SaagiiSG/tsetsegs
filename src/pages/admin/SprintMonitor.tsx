@@ -19,6 +19,7 @@ import { Trophy, Users, Clock, Calendar, ChevronDown, ChevronUp, ChevronLeft, Ch
 import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Cohort } from '@/lib/cohort';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 const TIER_ORDER = ['unranked', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'] as const;
 const MAX_GROUP_SIZE = 40; // Aligned with sprintEnrollment.ts (target 40)
@@ -108,7 +109,8 @@ export default function SprintMonitor() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  const [cohort, setCohort] = useState<Cohort>('mn');
+  // Follows the global admin cohort switcher (header dropdown).
+  const { cohort, setCohort } = useAdminCohort();
   const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [showSeasonBuilder, setShowSeasonBuilder] = useState(false);
   const [isCreating, setIsCreating] = useState(false);

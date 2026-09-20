@@ -23,6 +23,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 interface BatchStats {
   id: string;
@@ -39,6 +40,7 @@ interface BatchStats {
 const ITEMS_PER_PAGE = 9;
 
 export function BatchOverview() {
+  const { cohort } = useAdminCohort();
   const [batches, setBatches] = useState<BatchStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -99,7 +101,7 @@ export function BatchOverview() {
 
   useEffect(() => {
     fetchBatchStats();
-  }, []);
+  }, [cohort]);
 
   const fetchBatchStats = async () => {
     try {
@@ -108,6 +110,7 @@ export function BatchOverview() {
       const { data: batchesData, error: batchError } = await supabase
         .from('batches')
         .select('*')
+        .eq('is_international', cohort === 'intl')
         .order('start_date', { ascending: false });
 
       if (batchError) throw batchError;

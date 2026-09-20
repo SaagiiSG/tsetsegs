@@ -10,7 +10,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, User, GraduationCap, ChevronLeft, ChevronRight, Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { InlineScorePrediction } from '@/components/admin/InlineScorePrediction';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 import { toast } from 'sonner';
 
 // Fetch IDs of students in international batches; regular admins never see them.
@@ -61,17 +61,24 @@ export default function StudentSearch() {
   const [isPending, startTransition] = useTransition();
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
-  const isDev = useIsDevAccount();
+  const { cohort } = useAdminCohort();
   const intlStudentIdsRef = useRef<string[] | null>(null);
 
-  // Regular admins never see international-batch students; dev account sees everyone.
-  // Returns IDs to exclude (empty array = exclude nothing).
-  const getIntlExcludedIds = async (): Promise<string[]> => {
-    if (isDev) return [];
+  // Cohort scoping: 'mn' excludes international-batch students, 'intl' shows
+  // only international-batch students.
+  const getIntlIds = async (): Promise<string[]> => {
     if (intlStudentIdsRef.current === null) {
       intlStudentIdsRef.current = await fetchIntlStudentIds();
     }
     return intlStudentIdsRef.current;
+  };
+
+  // Applies the cohort filter to a students query.
+  const applyCohortFilter = <T extends { not: any; in: any }>(q: T, intlIds: string[]): T => {
+    if (cohort === 'intl') {
+      return intlIds.length ? q.in('id', intlIds) : q.in('id', ['00000000-0000-0000-0000-000000000000']);
+    }
+    return intlIds.length ? q.not('id', 'in', `(${intlIds.join(',')})`) : q;
   };
 
   // All students state
@@ -88,19 +95,19 @@ export default function StudentSearch() {
   // Fetch all students with pagination
   useEffect(() => {
     fetchAllStudents();
-  }, [currentPage]);
+  }, [currentPage, cohort]);
 
   const fetchAllStudents = async () => {
     setIsLoadingAll(true);
     try {
-      const excludedIds = await getIntlExcludedIds();
+      const intlIds = await getIntlIds();
 
       // Get total count
       let countQuery = supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('is_ghost', false);
-      if (excludedIds.length) countQuery = countQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      countQuery = applyCohortFilter(countQuery, intlIds);
       const { count } = await countQuery;
 
       setTotalCount(count || 0);
@@ -129,7 +136,7 @@ export default function StudentSearch() {
         .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
-      if (excludedIds.length) listQuery = listQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      listQuery = applyCohortFilter(listQuery, intlIds);
       const { data, error } = await listQuery;
 
       if (error) throw error;
@@ -172,13 +179,13 @@ export default function StudentSearch() {
     startTransition(() => {
       performSearch(debouncedQuery);
     });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, cohort]);
 
   const performSearch = async (query: string) => {
     try {
       const trimmedQuery = query.trim();
       const isNumeric = /^\d+$/.test(trimmedQuery.replace(/[-\s]/g, ''));
-      const excludedIds = await getIntlExcludedIds();
+      const intlIds = await getIntlIds();
 
       let data;
       let error;
@@ -197,7 +204,7 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        q = applyCohortFilter(q, intlIds);
         const result = await q;
         data = result.data;
         error = result.error;
@@ -214,9 +221,9 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
-        // Name match (OR across fields) AND not an international student (id never null).
+        // Name match (OR across fields) AND cohort filter.
         q = q.or(nameOr);
-        if (excludedIds.length) q = q.not('id', 'in', `(${excludedIds.join(',')})`);
+        q = applyCohortFilter(q, intlIds);
         const result = await q;
         data = result.data;
         error = result.error;

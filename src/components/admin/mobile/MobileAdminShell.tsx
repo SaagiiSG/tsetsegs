@@ -6,6 +6,7 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { CommandSheet } from "./CommandSheet";
 import { MoreSheet } from "./MoreSheet";
 import { usePageTitle } from "./usePageTitle";
+import { CohortSwitcher } from "@/components/admin/CohortSwitcher";
 import flowersLogo from "@/assets/flowers-logo.png";
 
 interface MobileAdminShellProps {
@@ -41,6 +42,7 @@ export function MobileAdminShell({ children }: MobileAdminShellProps) {
             DEV
           </span>
         )}
+        <CohortSwitcher />
       </header>
 
       {/* Content */}

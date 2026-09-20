@@ -4,21 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Loader2 } from 'lucide-react';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 export function StudentsTab() {
-  const isDev = useIsDevAccount();
+  const { cohort } = useAdminCohort();
   // Fetch student accounts with progress summary
   const { data: students, isLoading } = useQuery({
-    queryKey: ['practice-students-detailed', isDev],
+    queryKey: ['practice-students-detailed', cohort],
     queryFn: async () => {
-      // Regular admins only see the Mongolian cohort; dev sees everyone
-      let accountsQuery = supabase
+      // Only accounts from the selected cohort
+      const { data: studentAccounts, error } = await supabase
         .from('student_accounts')
         .select('*')
+        .eq('cohort', cohort)
         .order('last_login', { ascending: false });
-      if (!isDev) accountsQuery = accountsQuery.eq('cohort', 'mn');
-      const { data: studentAccounts, error } = await accountsQuery;
 
       if (error) throw error;
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, format, getDay, getHours } from 'date-fns';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 interface DashboardStats {
   activeToday: number;
@@ -49,19 +49,23 @@ interface AtRiskStudent {
 }
 
 export function useAdminDashboard() {
-  const isDev = useIsDevAccount();
+  const { cohort } = useAdminCohort();
   const now = new Date();
   const sevenDaysAgo = subDays(now, 7);
   const todayStart = startOfDay(now);
 
+  // student_attempts rows belong to a cohort through their student account.
+  const cohortJoin = 'student_account:student_accounts!inner(cohort)';
+
   // Fetch core stats
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['admin-dashboard-stats'],
+    queryKey: ['admin-dashboard-stats', cohort],
     queryFn: async (): Promise<DashboardStats> => {
       // Active today - unique students who attempted today
       const { data: todayAttempts } = await supabase
         .from('student_attempts')
-        .select('student_account_id')
+        .select(`student_account_id, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', todayStart.toISOString());
 
       const activeToday = new Set(todayAttempts?.map(a => a.student_account_id) || []).size;
@@ -69,13 +73,15 @@ export function useAdminDashboard() {
       // Weekly attempts count
       const { count: weeklyAttempts } = await supabase
         .from('student_attempts')
-        .select('*', { count: 'exact', head: true })
+        .select(cohortJoin, { count: 'exact', head: true })
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       // Platform accuracy (7-day rolling)
       const { data: accuracyData } = await supabase
         .from('student_attempts')
-        .select('is_correct')
+        .select(`is_correct, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const correct = accuracyData?.filter(a => a.is_correct).length || 0;
@@ -87,7 +93,7 @@ export function useAdminDashboard() {
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .eq('cohort', 'mn')
+        .eq('cohort', cohort)
         .maybeSingle();
 
       let sprintParticipants = { active: 0, total: 0 };
@@ -100,7 +106,8 @@ export function useAdminDashboard() {
         const { count: totalAccounts } = await supabase
           .from('student_accounts')
           .select('*', { count: 'exact', head: true })
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('cohort', cohort);
 
         sprintParticipants = {
           active: rankings?.filter(r => r.total_points > 0).length || 0,
@@ -111,7 +118,8 @@ export function useAdminDashboard() {
       // Total questions solved all time
       const { count: totalQuestionsSolved } = await supabase
         .from('student_attempts')
-        .select('*', { count: 'exact', head: true })
+        .select(cohortJoin, { count: 'exact', head: true })
+        .eq('student_account.cohort', cohort)
         .eq('is_correct', true);
 
       return {
@@ -127,16 +135,17 @@ export function useAdminDashboard() {
 
   // Fetch 7-day sparkline data
   const { data: sparklineData } = useQuery({
-    queryKey: ['admin-dashboard-sparkline'],
+    queryKey: ['admin-dashboard-sparkline', cohort],
     queryFn: async () => {
       const days = [];
       for (let i = 6; i >= 0; i--) {
         const dayStart = startOfDay(subDays(now, i));
         const dayEnd = startOfDay(subDays(now, i - 1));
-        
+
         const { count } = await supabase
           .from('student_attempts')
-          .select('*', { count: 'exact', head: true })
+          .select(cohortJoin, { count: 'exact', head: true })
+          .eq('student_account.cohort', cohort)
           .gte('attempted_at', dayStart.toISOString())
           .lt('attempted_at', dayEnd.toISOString());
         
@@ -152,11 +161,12 @@ export function useAdminDashboard() {
 
   // Fetch activity heatmap data (7 days x 24 hours)
   const { data: heatmapData } = useQuery({
-    queryKey: ['admin-dashboard-heatmap'],
+    queryKey: ['admin-dashboard-heatmap', cohort],
     queryFn: async (): Promise<HeatmapCell[]> => {
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('attempted_at')
+        .select(`attempted_at, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const heatmap: Record<string, number> = {};
@@ -183,14 +193,16 @@ export function useAdminDashboard() {
 
   // Fetch topic accuracy data
   const { data: topicData } = useQuery({
-    queryKey: ['admin-dashboard-topics'],
+    queryKey: ['admin-dashboard-topics', cohort],
     queryFn: async (): Promise<TopicAccuracy[]> => {
       const { data: attempts } = await supabase
         .from('student_attempts')
         .select(`
           is_correct,
-          question:questions(category:question_categories(name))
+          question:questions(category:question_categories(name)),
+          ${cohortJoin}
         `)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const categoryStats: Record<string, { correct: number; total: number }> = {};
@@ -220,13 +232,13 @@ export function useAdminDashboard() {
 
   // Fetch sprint leaders
   const { data: sprintLeaders } = useQuery({
-    queryKey: ['admin-dashboard-sprint-leaders'],
+    queryKey: ['admin-dashboard-sprint-leaders', cohort],
     queryFn: async (): Promise<SprintLeader[]> => {
       const { data: activeSprint } = await supabase
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .eq('cohort', 'mn')
+        .eq('cohort', cohort)
         .maybeSingle();
 
       if (!activeSprint) return [];
@@ -259,14 +271,14 @@ export function useAdminDashboard() {
 
   // Fetch recent batches
   const { data: recentBatches } = useQuery({
-    queryKey: ['admin-dashboard-recent-batches', isDev],
+    queryKey: ['admin-dashboard-recent-batches', cohort],
     queryFn: async (): Promise<RecentBatch[]> => {
-      let query = supabase
+      const { data: batches } = await supabase
         .from('batches')
         .select('id, batch_name, teacher, course_type, start_date, is_international, students(id)')
-        .order('created_at', { ascending: false });
-      if (!isDev) query = query.eq('is_international', false);
-      const { data: batches } = await query.limit(6);
+        .eq('is_international', cohort === 'intl')
+        .order('created_at', { ascending: false })
+        .limit(6);
 
       return batches?.map(b => ({
         id: b.id,
@@ -282,7 +294,7 @@ export function useAdminDashboard() {
 
   // Fetch at-risk students
   const { data: atRiskStudents } = useQuery({
-    queryKey: ['admin-dashboard-at-risk'],
+    queryKey: ['admin-dashboard-at-risk', cohort],
     queryFn: async (): Promise<AtRiskStudent[]> => {
       const { data: accounts } = await supabase
         .from('student_accounts')
@@ -292,7 +304,8 @@ export function useAdminDashboard() {
           last_login,
           linked_student:students(name)
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('cohort', cohort);
 
       const atRisk = accounts?.map(acc => {
         const lastLogin = acc.last_login ? new Date(acc.last_login) : new Date(0);
