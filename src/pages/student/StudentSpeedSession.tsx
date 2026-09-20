@@ -491,13 +491,13 @@ export default function StudentSpeedSession() {
     <SecurityWrapper>
       <DesmosCalculator />
       <ReferenceSheet />
-      <div 
-        className="min-h-screen bg-background p-3 md:p-6 select-none"
-        style={{ 
-          marginLeft: calculatorSnapSide === 'left' ? '40vw' : 0,
-          marginRight: calculatorSnapSide === 'right' ? '40vw' : 0,
-          width: calculatorSnapSide ? '60vw' : '100%'
-        }}
+      <div
+        className={cn(
+          "min-h-screen min-w-0 bg-background p-3 transition-all duration-300 select-none md:p-6",
+          calculatorSnapSide === 'left' && "md:ml-[40vw] md:w-[60vw]",
+          calculatorSnapSide === 'right' && "md:mr-[40vw] md:w-[60vw]",
+          !calculatorSnapSide && "w-full",
+        )}
       >
         {/* Tool Bar */}
         <div className="flex items-center justify-center gap-2 mb-4">
