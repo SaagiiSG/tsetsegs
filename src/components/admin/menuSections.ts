@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Globe,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -36,6 +36,7 @@ export const menuSections: MenuSection[] = [
     items: [
       { title: "All Batches", url: "/admin/batches", icon: GraduationCap },
       { title: "Create Batch", url: "/admin/create", icon: Plus },
+      { title: "International", url: "/admin/international", icon: Globe, devOnly: true },
     ],
     defaultOpen: true,
   },

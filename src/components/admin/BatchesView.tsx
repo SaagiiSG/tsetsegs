@@ -20,7 +20,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useIsDevAccount } from '@/lib/devAccount';
 
-export function BatchesView() {
+export function BatchesView({ internationalOnly = false }: { internationalOnly?: boolean } = {}) {
   const isDev = useIsDevAccount();
   const [searchParams, setSearchParams] = useSearchParams();
   const [batches, setBatches] = useState<any[]>([]);
@@ -58,7 +58,12 @@ export function BatchesView() {
       .from('batches')
       .select('*')
       .order('start_date', { ascending: false });
-    if (data) setBatches(isDev ? data : data.filter((b: any) => !b.is_international));
+    if (!data) return;
+    if (internationalOnly) {
+      setBatches(data.filter((b: any) => b.is_international));
+      return;
+    }
+    setBatches(isDev ? data : data.filter((b: any) => !b.is_international));
   };
 
   const fetchStudentCounts = async () => {
@@ -253,7 +258,7 @@ export function BatchesView() {
       {/* Batch List grouped by month */}
       <Card>
         <CardHeader>
-          <CardTitle>All Batches</CardTitle>
+          <CardTitle>{internationalOnly ? 'International Batches' : 'All Batches'}</CardTitle>
           <CardDescription>
             Showing {filteredBatches.length} of {batches.length} batch{batches.length !== 1 ? 'es' : ''}
           </CardDescription>
