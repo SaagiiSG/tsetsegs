@@ -26,6 +26,7 @@ import BugReports from '@/pages/admin/BugReports';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import BurnerAdmin from '@/pages/admin/BurnerAdmin';
+import InternationalView from '@/pages/admin/InternationalView';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -62,6 +63,7 @@ const Admin = () => {
       <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
       <Route path="batches" element={<BatchesView />} />
       <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
+      <Route path="international" element={<DevOnlyRoute><InternationalView /></DevOnlyRoute>} />
       <Route path="questions" element={<QuestionBank />} />
       <Route path="question-search" element={<QuestionSearch />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
