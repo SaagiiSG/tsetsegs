@@ -28,6 +28,7 @@ interface Question {
   id: string;
   question_id: string;
   question_text: string;
+  passage_text: string | null;
   answer: string;
   question_type: string;
   multiple_choice_options: Record<string, string> | null;
@@ -131,7 +132,7 @@ export default function StudentSpeedSession() {
       let query = supabase
         .from('questions')
         .select(`
-          id, question_id, question_text, answer, alternate_answers, question_type,
+          id, question_id, question_text, passage_text, answer, alternate_answers, question_type,
           multiple_choice_options,
           question_image_url, question_image_url_2, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
@@ -523,6 +524,13 @@ export default function StudentSpeedSession() {
                     {currentQuestion?.category?.name}
                   </span>
                 </div>
+
+                {/* Passage (English questions) */}
+                {currentQuestion?.passage_text && (
+                  <div className="prose prose-sm dark:prose-invert max-w-none rounded-lg border border-border/60 bg-muted/30 p-4 max-h-64 overflow-y-auto">
+                    <MathText text={currentQuestion.passage_text} />
+                  </div>
+                )}
 
                 {/* Question text */}
                 <div className="prose prose-sm dark:prose-invert max-w-none">
