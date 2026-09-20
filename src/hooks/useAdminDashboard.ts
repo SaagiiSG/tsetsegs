@@ -232,13 +232,13 @@ export function useAdminDashboard() {
 
   // Fetch sprint leaders
   const { data: sprintLeaders } = useQuery({
-    queryKey: ['admin-dashboard-sprint-leaders'],
+    queryKey: ['admin-dashboard-sprint-leaders', cohort],
     queryFn: async (): Promise<SprintLeader[]> => {
       const { data: activeSprint } = await supabase
         .from('sprints')
         .select('id')
         .eq('is_active', true)
-        .eq('cohort', 'mn')
+        .eq('cohort', cohort)
         .maybeSingle();
 
       if (!activeSprint) return [];
@@ -271,14 +271,14 @@ export function useAdminDashboard() {
 
   // Fetch recent batches
   const { data: recentBatches } = useQuery({
-    queryKey: ['admin-dashboard-recent-batches', isDev],
+    queryKey: ['admin-dashboard-recent-batches', cohort],
     queryFn: async (): Promise<RecentBatch[]> => {
-      let query = supabase
+      const { data: batches } = await supabase
         .from('batches')
         .select('id, batch_name, teacher, course_type, start_date, is_international, students(id)')
-        .order('created_at', { ascending: false });
-      if (!isDev) query = query.eq('is_international', false);
-      const { data: batches } = await query.limit(6);
+        .eq('is_international', cohort === 'intl')
+        .order('created_at', { ascending: false })
+        .limit(6);
 
       return batches?.map(b => ({
         id: b.id,
@@ -294,7 +294,7 @@ export function useAdminDashboard() {
 
   // Fetch at-risk students
   const { data: atRiskStudents } = useQuery({
-    queryKey: ['admin-dashboard-at-risk'],
+    queryKey: ['admin-dashboard-at-risk', cohort],
     queryFn: async (): Promise<AtRiskStudent[]> => {
       const { data: accounts } = await supabase
         .from('student_accounts')
@@ -304,7 +304,8 @@ export function useAdminDashboard() {
           last_login,
           linked_student:students(name)
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('cohort', cohort);
 
       const atRisk = accounts?.map(acc => {
         const lastLogin = acc.last_login ? new Date(acc.last_login) : new Date(0);
