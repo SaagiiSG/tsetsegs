@@ -23,6 +23,7 @@ import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollm
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { QuestionFigures } from "@/components/QuestionFigures";
+import { normaliseChoices } from '@/lib/bluebookReview';
 
 interface Question {
   id: string;
@@ -32,6 +33,7 @@ interface Question {
   answer: string;
   question_type: string;
   multiple_choice_options: Record<string, string> | null;
+  choice_images: Record<string, string> | null;
   category: { name: string } | null;
   question_image_url: string | null;
   question_image_url_2: string | null;
@@ -133,7 +135,7 @@ export default function StudentSpeedSession() {
         .from('questions')
         .select(`
           id, question_id, question_text, passage_text, answer, alternate_answers, question_type,
-          multiple_choice_options,
+          multiple_choice_options, choice_images,
           question_image_url, question_image_url_2, has_figure, figure_svg, figure_type, figure_description,
           category:question_categories(name)
         `)
@@ -477,8 +479,10 @@ export default function StudentSpeedSession() {
   }
 
   const totalQuestions = Math.min(questions.length, maxQuestions);
-  const options = currentQuestion?.multiple_choice_options as Record<string, string> | null;
-  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && options;
+  const choices = currentQuestion
+    ? normaliseChoices(currentQuestion.multiple_choice_options, currentQuestion.choice_images)
+    : [];
+  const isMultipleChoice = currentQuestion?.question_type === 'multiple_choice' && choices.length > 0;
 
   // Determine current star tier based on elapsed time
   const currentTier = scoreTiers.findIndex(t => questionElapsed <= t.maxTime);
@@ -556,8 +560,7 @@ export default function StudentSpeedSession() {
                 {/* Answer options */}
                 {isMultipleChoice ? (
                   <div className={cn("grid min-w-0 grid-cols-1 gap-3", subject === 'math' && "sm:grid-cols-2")}>
-                    {['A', 'B', 'C', 'D'].map((letter) => {
-                      if (!options?.[letter]) return null;
+                    {choices.map(({ letter, text, image }) => {
                       const isSelected = selectedAnswer === letter;
                       const showCorrect = showResult && letter === currentQuestion?.answer;
                       const showWrong = showResult && isSelected && !isCorrect;
@@ -576,7 +579,17 @@ export default function StudentSpeedSession() {
                           onClick={() => setSelectedAnswer(letter)}
                         >
                           <span className="shrink-0 font-bold text-muted-foreground">{letter}.</span>
-                          <MathText text={options[letter]} className="min-w-0 flex-1 break-words leading-6" />
+                          <span className="min-w-0 flex-1">
+                            {text ? <MathText text={text} className="block break-words leading-6" /> : null}
+                            {image ? (
+                              <img
+                                src={image}
+                                alt={`Answer choice ${letter}`}
+                                loading="eager"
+                                className={cn("max-h-40 max-w-full rounded-md border bg-background object-contain", text && "mt-2")}
+                              />
+                            ) : null}
+                          </span>
                         </Button>
                       );
                     })}
