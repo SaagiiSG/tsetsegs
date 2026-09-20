@@ -515,8 +515,8 @@ export default function StudentSpeedSession() {
 
         {/* Two-column layout */}
         <div className="flex flex-col xl:flex-row gap-4 max-w-7xl mx-auto min-w-0">
-          {/* Left: Question area (72%) */}
-          <div className="flex-1 xl:w-[72%] min-w-0 space-y-4">
+          {/* Left: Question area (82%) */}
+          <div className="flex-1 xl:w-[82%] min-w-0 space-y-4">
             <Card className="border-border/50">
               <CardContent className="p-5 space-y-5">
                 {/* Question header */}
@@ -670,8 +670,8 @@ export default function StudentSpeedSession() {
             </div>
           </div>
 
-          {/* Right: Timer + Score tiers (28%) */}
-          <div className="xl:w-[28%] space-y-4">
+          {/* Right: Timer + Score tiers (18%) */}
+          <div className="xl:w-[18%] min-w-0 space-y-4">
             {/* Circular Timer Card */}
             <Card className="border-border/50">
               <CardContent className="p-4 flex flex-col items-center">
