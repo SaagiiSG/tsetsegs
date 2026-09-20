@@ -38,7 +38,7 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
-import { useIsDevAccount } from '@/lib/devAccount';
+import { useAdminCohort } from '@/contexts/AdminCohortContext';
 
 const ITEMS_PER_PAGE = 15;
 
