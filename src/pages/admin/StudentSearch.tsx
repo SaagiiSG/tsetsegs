@@ -95,19 +95,19 @@ export default function StudentSearch() {
   // Fetch all students with pagination
   useEffect(() => {
     fetchAllStudents();
-  }, [currentPage]);
+  }, [currentPage, cohort]);
 
   const fetchAllStudents = async () => {
     setIsLoadingAll(true);
     try {
-      const excludedIds = await getIntlExcludedIds();
+      const intlIds = await getIntlIds();
 
       // Get total count
       let countQuery = supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('is_ghost', false);
-      if (excludedIds.length) countQuery = countQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      countQuery = applyCohortFilter(countQuery, intlIds);
       const { count } = await countQuery;
 
       setTotalCount(count || 0);
@@ -136,7 +136,7 @@ export default function StudentSearch() {
         .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
-      if (excludedIds.length) listQuery = listQuery.not('id', 'in', `(${excludedIds.join(',')})`);
+      listQuery = applyCohortFilter(listQuery, intlIds);
       const { data, error } = await listQuery;
 
       if (error) throw error;
@@ -179,13 +179,13 @@ export default function StudentSearch() {
     startTransition(() => {
       performSearch(debouncedQuery);
     });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, cohort]);
 
   const performSearch = async (query: string) => {
     try {
       const trimmedQuery = query.trim();
       const isNumeric = /^\d+$/.test(trimmedQuery.replace(/[-\s]/g, ''));
-      const excludedIds = await getIntlExcludedIds();
+      const intlIds = await getIntlIds();
 
       let data;
       let error;
