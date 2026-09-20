@@ -137,12 +137,14 @@ export function StudentAccountsManagement() {
     try {
       setIsLoading(true);
       
-      // Fetch all student accounts
-      const { data: accountsData, error: accountsError } = await supabase
+      // Fetch all student accounts (regular admins only see the Mongolian cohort)
+      let accountsQuery = supabase
         .from('student_accounts')
         .select('*')
         .eq('is_ghost', false)
         .order('last_login', { ascending: false, nullsFirst: false });
+      if (!isDev) accountsQuery = accountsQuery.eq('cohort', 'mn');
+      const { data: accountsData, error: accountsError } = await accountsQuery;
       
       if (accountsError) throw accountsError;
       

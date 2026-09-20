@@ -4,16 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Loader2 } from 'lucide-react';
+import { useIsDevAccount } from '@/lib/devAccount';
 
 export function StudentsTab() {
+  const isDev = useIsDevAccount();
   // Fetch student accounts with progress summary
   const { data: students, isLoading } = useQuery({
-    queryKey: ['practice-students-detailed'],
+    queryKey: ['practice-students-detailed', isDev],
     queryFn: async () => {
-      const { data: studentAccounts, error } = await supabase
+      // Regular admins only see the Mongolian cohort; dev sees everyone
+      let accountsQuery = supabase
         .from('student_accounts')
         .select('*')
         .order('last_login', { ascending: false });
+      if (!isDev) accountsQuery = accountsQuery.eq('cohort', 'mn');
+      const { data: studentAccounts, error } = await accountsQuery;
 
       if (error) throw error;
 
