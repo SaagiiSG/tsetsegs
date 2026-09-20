@@ -674,8 +674,8 @@ export default function StudentSpeedSession() {
           <div className="xl:w-[18%] min-w-0 space-y-4">
             {/* Circular Timer Card */}
             <Card className="border-border/50">
-              <CardContent className="p-4 flex flex-col items-center">
-                <CircularTimer timeLeft={timeLeft} duration={duration} size={140} />
+              <CardContent className="p-3 flex flex-col items-center">
+                <CircularTimer timeLeft={timeLeft} duration={duration} size={120} />
                 <p className="text-sm text-muted-foreground mt-2">
                   Q {currentIndex + 1} / {totalQuestions}
                 </p>
