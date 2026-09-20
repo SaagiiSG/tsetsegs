@@ -135,16 +135,17 @@ export function useAdminDashboard() {
 
   // Fetch 7-day sparkline data
   const { data: sparklineData } = useQuery({
-    queryKey: ['admin-dashboard-sparkline'],
+    queryKey: ['admin-dashboard-sparkline', cohort],
     queryFn: async () => {
       const days = [];
       for (let i = 6; i >= 0; i--) {
         const dayStart = startOfDay(subDays(now, i));
         const dayEnd = startOfDay(subDays(now, i - 1));
-        
+
         const { count } = await supabase
           .from('student_attempts')
-          .select('*', { count: 'exact', head: true })
+          .select(cohortJoin, { count: 'exact', head: true })
+          .eq('student_account.cohort', cohort)
           .gte('attempted_at', dayStart.toISOString())
           .lt('attempted_at', dayEnd.toISOString());
         
@@ -160,11 +161,12 @@ export function useAdminDashboard() {
 
   // Fetch activity heatmap data (7 days x 24 hours)
   const { data: heatmapData } = useQuery({
-    queryKey: ['admin-dashboard-heatmap'],
+    queryKey: ['admin-dashboard-heatmap', cohort],
     queryFn: async (): Promise<HeatmapCell[]> => {
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('attempted_at')
+        .select(`attempted_at, ${cohortJoin}`)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const heatmap: Record<string, number> = {};
@@ -191,14 +193,16 @@ export function useAdminDashboard() {
 
   // Fetch topic accuracy data
   const { data: topicData } = useQuery({
-    queryKey: ['admin-dashboard-topics'],
+    queryKey: ['admin-dashboard-topics', cohort],
     queryFn: async (): Promise<TopicAccuracy[]> => {
       const { data: attempts } = await supabase
         .from('student_attempts')
         .select(`
           is_correct,
-          question:questions(category:question_categories(name))
+          question:questions(category:question_categories(name)),
+          ${cohortJoin}
         `)
+        .eq('student_account.cohort', cohort)
         .gte('attempted_at', sevenDaysAgo.toISOString());
 
       const categoryStats: Record<string, { correct: number; total: number }> = {};
