@@ -60,11 +60,15 @@ export function StudentSearchCommand({ open, onOpenChange }: StudentSearchComman
     try {
       setIsLoading(true);
       
-      // Fetch batches for this teacher
-      const { data: batches, error: batchesError } = await supabase
+      // Fetch batches for this teacher (international batches only for Saran-Ochir)
+      let batchesQuery = supabase
         .from('batches')
         .select('id, batch_name, course_type')
         .ilike('teacher', `%${teacherName}%`);
+      if (teacherName !== 'Saran-Ochir') {
+        batchesQuery = batchesQuery.eq('is_international', false);
+      }
+      const { data: batches, error: batchesError } = await batchesQuery;
       
       if (batchesError) throw batchesError;
       if (!batches || batches.length === 0) {
