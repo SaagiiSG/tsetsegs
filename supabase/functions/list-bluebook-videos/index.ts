@@ -167,6 +167,29 @@ async function buildStreamUrl(fileId: string, projectRef: string): Promise<strin
   return `https://${projectRef}.supabase.co/functions/v1/stream-bluebook-video?id=${encodeURIComponent(fileId)}&exp=${exp}&sig=${sig}`;
 }
 
+interface CachedVideo { id: string; streamUrl?: string; [k: string]: unknown }
+interface CachedModule { videos?: CachedVideo[]; [k: string]: unknown }
+interface CachedTest { modules?: CachedModule[]; [k: string]: unknown }
+
+// Stale cache payloads contain stream URLs signed hours ago — re-sign them so
+// students don't get a video list full of expired links.
+async function reSignStreamUrls(payload: unknown, projectRef: string): Promise<unknown> {
+  try {
+    const tree = payload as { tests?: CachedTest[] };
+    if (!tree?.tests) return payload;
+    await Promise.all(tree.tests.flatMap((t) =>
+      (t.modules ?? []).flatMap((m) =>
+        (m.videos ?? []).map(async (v) => {
+          if (v.id) v.streamUrl = await buildStreamUrl(v.id, projectRef);
+        })
+      )
+    ));
+  } catch (_err) {
+    // signing failure must not break the stale fallback
+  }
+  return payload;
+}
+
 async function buildTree(projectRef: string) {
   const testFolders = (await listChildren(ROOT_FOLDER_ID, "id,name,mimeType"))
     .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
@@ -255,7 +278,7 @@ Deno.serve(async (req) => {
     } catch (err) {
       console.error("list-bluebook-videos refresh failed:", err);
       // Rate-limited or upstream hiccup: serve the last good tree rather than an error.
-      if (cache) return json(cache.payload, { stale: true });
+      if (cache) return json(await reSignStreamUrls(cache.payload, projectRef), { stale: true });
       throw err;
     }
   } catch (err) {
