@@ -38,6 +38,7 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { StudentAuthMigrationPanel } from './StudentAuthMigrationPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
+import { useIsDevAccount } from '@/lib/devAccount';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -115,6 +116,7 @@ function parseUserAgent(userAgent: string | null): { device: string; browser: st
 export function StudentAccountsManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isDev = useIsDevAccount();
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
