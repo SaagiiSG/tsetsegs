@@ -62,7 +62,7 @@ export default function InternationalView() {
       const [{ data: studentRows }, { data: accountRows }] = await Promise.all([
         supabase
           .from('students')
-          .select('id, first_name, last_name, phone, school, grade, batch_id, created_at')
+          .select('id, first_name, last_name, phone, school_name, grade, batch_id, created_at')
           .in('batch_id', batchIds)
           .order('created_at', { ascending: false }),
         supabase
@@ -83,7 +83,7 @@ export default function InternationalView() {
             first_name: s.first_name,
             last_name: s.last_name,
             phone: s.phone,
-            school: s.school,
+            school: s.school_name,
             grade: s.grade,
             batch_name: batchNames.get(s.batch_id) || null,
             created_at: s.created_at,
