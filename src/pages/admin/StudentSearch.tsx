@@ -92,11 +92,15 @@ export default function StudentSearch() {
   const fetchAllStudents = async () => {
     setIsLoadingAll(true);
     try {
+      const intlOr = await getIntlExclusion();
+
       // Get total count
-      const { count } = await supabase
+      let countQuery = supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('is_ghost', false);
+      if (intlOr) countQuery = countQuery.or(intlOr);
+      const { count } = await countQuery;
 
       setTotalCount(count || 0);
 
@@ -104,7 +108,7 @@ export default function StudentSearch() {
       const from = (currentPage - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
+      let listQuery = supabase
         .from('students')
         .select(`
           id,
@@ -124,6 +128,8 @@ export default function StudentSearch() {
         .eq('is_ghost', false)
         .order('created_at', { ascending: false })
         .range(from, to);
+      if (intlOr) listQuery = listQuery.or(intlOr);
+      const { data, error } = await listQuery;
 
       if (error) throw error;
 
@@ -171,14 +177,15 @@ export default function StudentSearch() {
     try {
       const trimmedQuery = query.trim();
       const isNumeric = /^\d+$/.test(trimmedQuery.replace(/[-\s]/g, ''));
-      
+      const intlOr = await getIntlExclusion();
+
       let data;
       let error;
-      
+
       if (isNumeric) {
         // Phone number search - prefix match
         const cleanedQuery = trimmedQuery.replace(/[-\s]/g, '');
-        const result = await supabase
+        let q = supabase
           .from('students')
           .select(`
             id, name, first_name, last_name, phone, parent_phone,
@@ -189,21 +196,39 @@ export default function StudentSearch() {
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
+        if (intlOr) q = q.or(intlOr);
+        const result = await q;
         data = result.data;
         error = result.error;
       } else {
         // Name search - match first_name or last_name
-        const result = await supabase
+        const nameOr = `first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`;
+        let q = supabase
           .from('students')
           .select(`
             id, name, first_name, last_name, phone, parent_phone,
             school_name, grade, math_level, english_level, sat_test_month, created_at,
             batch:batches(id, batch_name, course_type, teacher, start_date)
           `)
-          .or(`first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%`)
           .eq('is_ghost', false)
           .order('created_at', { ascending: false })
           .limit(30);
+        // Combine name matching with the international-batch exclusion (AND semantics).
+        q = intlOr ? q.or(nameOr).or(intlOr.replace(/^/, '')) && q : q;
+        const result = await (intlOr
+          ? supabase
+              .from('students')
+              .select(`
+                id, name, first_name, last_name, phone, parent_phone,
+                school_name, grade, math_level, english_level, sat_test_month, created_at,
+                batch:batches(id, batch_name, course_type, teacher, start_date)
+              `)
+              .eq('is_ghost', false)
+              .or(nameOr)
+              .or(intlOr)
+              .order('created_at', { ascending: false })
+              .limit(30)
+          : q.or(nameOr));
         data = result.data;
         error = result.error;
       }
