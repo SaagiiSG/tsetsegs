@@ -117,6 +117,7 @@ const Admin = () => {
         </div>
       </div>
     </SidebarProvider>
+    </AdminCohortProvider>
   );
 };
 
