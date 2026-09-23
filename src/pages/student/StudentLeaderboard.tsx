@@ -322,7 +322,7 @@ export default function StudentLeaderboard() {
                 onWindowChange={setAllTimeWindow}
                 limit={allTimeLimit}
                 onLimitChange={setAllTimeLimit}
-                showYesh={cohort === 'mn'}
+                showEysh={cohort === 'mn'}
               />
 
             </motion.div>
