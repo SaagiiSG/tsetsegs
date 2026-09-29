@@ -316,6 +316,50 @@ export default function QuestionBank() {
     }
   };
 
+  // Update mode: overwrite already-imported questions with edits from the external DB.
+  // Internal IDs never change, so student progress stays linked.
+  const handleUpdateSync = async (dryRun: boolean) => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const baseBody = {
+        subject: syncSubject === 'all' ? undefined : syncSubject,
+        category: syncSubject === 'math' && syncCategory !== 'all' ? syncCategory : undefined,
+        dry_run: dryRun,
+        mode: 'update',
+      };
+      let offset = 0, hasMore = true;
+      const agg = { mode: 'update', preview: dryRun, total_found: 0, updated: 0, unchanged: 0, not_found: 0, errors: 0, changes: [] as any[], error_details: [] as string[] };
+      while (hasMore) {
+        setSyncProgress(`${dryRun ? 'Checking' : 'Updating'}… ${agg.total_found} questions scanned`);
+        const { data, error } = await supabase.functions.invoke('sync-external-questions', {
+          body: { ...baseBody, offset, limit: 200 },
+        });
+        if (error) throw error;
+        if (!data) throw new Error('No response data');
+        agg.total_found += data.total_found || 0;
+        agg.updated += data.updated || 0;
+        agg.unchanged += data.unchanged || 0;
+        agg.not_found += data.not_found || 0;
+        agg.errors += data.errors || 0;
+        agg.changes.push(...(data.changes || []));
+        agg.error_details.push(...(data.error_details || []));
+        hasMore = data.has_more === true;
+        offset = data.next_offset || offset + 200;
+      }
+      setSyncResult(agg);
+      if (!dryRun) {
+        queryClient.invalidateQueries({ queryKey: ['questions'] });
+        toast({ title: 'Update complete', description: `${agg.updated} questions updated. Student progress kept.` });
+      }
+    } catch (err: any) {
+      toast({ title: 'Update failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSyncing(false);
+      setSyncProgress('');
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
@@ -406,6 +450,15 @@ export default function QuestionBank() {
                 {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
                 Import Now
               </Button>
+              <Button
+                variant="secondary"
+                onClick={() => handleUpdateSync(true)}
+                disabled={syncing}
+                title="Check which already-imported questions were edited in the external database"
+              >
+                {syncing ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Check for edits
+              </Button>
             </div>
           </div>
 
@@ -417,7 +470,53 @@ export default function QuestionBank() {
           <div className="flex-1 overflow-y-auto min-h-0 mt-4">
             {syncResult && (
               <>
-                {syncResult.preview ? (
+                {syncResult.mode === 'update' ? (
+                  <Card>
+                    <CardContent className="pt-6 space-y-3 text-sm">
+                      <p className="font-medium">
+                        {syncResult.preview ? 'Edits found in the external database' : '✓ Update complete'}
+                      </p>
+                      <p className="text-muted-foreground">
+                        Questions keep their same code (e.g. EXT0042), so every student's history, points and review queue stay intact.
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div><p className="text-xs text-muted-foreground">Checked</p><p className="font-mono">{syncResult.total_found}</p></div>
+                        <div><p className="text-xs text-muted-foreground">{syncResult.preview ? 'Will update' : 'Updated'}</p><p className="font-mono">{syncResult.updated}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Unchanged</p><p className="font-mono">{syncResult.unchanged}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Not imported yet</p><p className="font-mono">{syncResult.not_found}</p></div>
+                      </div>
+                      {syncResult.errors > 0 && (
+                        <div className="text-destructive text-xs space-y-1">
+                          <p>Errors: {syncResult.errors}</p>
+                          {syncResult.error_details?.map((e: string, i: number) => <p key={i} className="font-mono">{e}</p>)}
+                        </div>
+                      )}
+                      {syncResult.preview && syncResult.updated > 0 && (
+                        <Button onClick={() => handleUpdateSync(false)} disabled={syncing}>
+                          Apply {syncResult.updated} update{syncResult.updated === 1 ? '' : 's'}
+                        </Button>
+                      )}
+                      {syncResult.changes?.length > 0 && (
+                        <div className="space-y-2 pt-2">
+                          {syncResult.changes.map((c: any) => (
+                            <div key={c.question_id} className="rounded-md border p-3 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="outline" className="font-mono">{c.question_id}</Badge>
+                                {c.fields.map((f: string) => <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>)}
+                              </div>
+                              {c.fields.includes('question_text') && (
+                                <div className="grid md:grid-cols-2 gap-2 text-xs">
+                                  <p className="text-muted-foreground line-clamp-4"><span className="font-medium">Before: </span>{c.before_text}</p>
+                                  <p className="line-clamp-4"><span className="font-medium">After: </span>{c.after_text}</p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : syncResult.preview ? (
                   <div className="space-y-4">
                     <p className="font-medium text-sm">Preview: {syncResult.total_found} questions found</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
