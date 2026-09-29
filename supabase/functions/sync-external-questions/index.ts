@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
       for (const q of filteredQuestions) {
         const cbId = q.original_cb_id as string | null;
         const key = cbId || `ext_${q.question_id}`;
-        const id = existingCbIds.get(key) ?? (cbId ? null : null);
+        const id = existingCbIds.get(key) ?? null;
         if (id) matches.push({ internalId: id, ext: q });
         else notFound++;
       }
