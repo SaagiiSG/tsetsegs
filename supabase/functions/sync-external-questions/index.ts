@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
 
 
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set } = body;
+    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set, mode } = body;
+    const isUpdate = mode === "update";
 
     // Optional custom code prefix (e.g. "ANP") and target question_set label for this import
     const codePrefix = typeof id_prefix === "string" && /^[A-Z]{2,5}$/.test(id_prefix) ? id_prefix : "EXT";
@@ -236,7 +237,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (dry_run) {
+    if (dry_run && !isUpdate) {
       return new Response(
         JSON.stringify({
           preview: true,
@@ -291,6 +292,78 @@ Deno.serve(async (req) => {
     const existingCbIds = new Map(
       allExistingQuestions.filter((q) => q.original_cb_id).map((q) => [q.original_cb_id!, q.id])
     );
+
+    // ── UPDATE MODE: overwrite content of already-imported questions in place ──
+    // Keeps the internal id + question_id, so student attempts/progress stay linked.
+    if (isUpdate) {
+      const CONTENT_FIELDS = [
+        "question_text", "answer", "multiple_choice_options", "rationale", "passage_text",
+        "alternate_answers", "question_image_url", "choice_images", "video_url",
+        "has_figure", "figure_type", "figure_description", "figure_svg", "difficulty_level",
+      ] as const;
+      const norm = (v: unknown) => JSON.stringify(v ?? null);
+
+      // Match each external question to an internal row
+      const matches: { internalId: string; ext: any }[] = [];
+      let notFound = 0;
+      for (const q of filteredQuestions) {
+        const cbId = q.original_cb_id as string | null;
+        const key = cbId || `ext_${q.question_id}`;
+        const id = existingCbIds.get(key) ?? null;
+        if (id) matches.push({ internalId: id, ext: q });
+        else notFound++;
+      }
+
+      let updated = 0, unchanged = 0, errors = 0;
+      const errorDetails: string[] = [];
+      const changes: any[] = [];
+
+      for (let i = 0; i < matches.length; i += 50) {
+        const chunk = matches.slice(i, i + 50);
+        const { data: rows, error: rowsErr } = await adminClient
+          .from("questions")
+          .select(`id, question_id, ${CONTENT_FIELDS.join(", ")}`)
+          .in("id", chunk.map((m) => m.internalId));
+        if (rowsErr) { errors += chunk.length; errorDetails.push(rowsErr.message); continue; }
+        const byId = new Map((rows || []).map((r: any) => [r.id, r]));
+
+        for (const m of chunk) {
+          const cur: any = byId.get(m.internalId);
+          if (!cur) { notFound++; continue; }
+          const next: any = normalizeQuestion(m.ext, {}, null);
+          const patch: Record<string, unknown> = {};
+          for (const f of CONTENT_FIELDS) {
+            if (norm(cur[f]) !== norm(next[f])) patch[f] = next[f] ?? null;
+          }
+          const changed = Object.keys(patch);
+          if (changed.length === 0) { unchanged++; continue; }
+
+          if (changes.length < 200) {
+            changes.push({
+              question_id: cur.question_id,
+              fields: changed,
+              before_text: cur.question_text,
+              after_text: next.question_text,
+            });
+          }
+          if (dry_run) { updated++; continue; }
+
+          const { error: upErr } = await adminClient.from("questions").update(patch).eq("id", m.internalId);
+          if (upErr) { errors++; errorDetails.push(`${cur.question_id}: ${upErr.message}`); }
+          else updated++;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          mode: "update", preview: dry_run, success: true,
+          total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, errors,
+          changes, has_more: hasMore, next_offset: offset + safeLimit,
+          error_details: errorDetails.slice(0, 10),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Find highest EXT number
     const extIds = allExistingQuestions
