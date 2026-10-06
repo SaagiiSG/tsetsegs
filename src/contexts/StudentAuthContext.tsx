@@ -249,41 +249,13 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // If session was killed (e.g. by another login), only kick the user out
-      // when this isn't the same hardware. Same-fingerprint = silent re-issue.
-      let activeSessionId = session?.id ?? null;
-      if (!session) {
-        const currentFp = generateFingerprint();
-        const storedFp = (studentAccount as any).device_fingerprint as string | null;
-        if (storedFp && storedFp === currentFp) {
-          const deviceId = await getDeviceIdAsync();
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 35);
-          const { data: revived } = await supabase
-            .from('student_sessions')
-            .upsert({
-              student_account_id: studentAccount.id,
-              device_id: deviceId,
-              login_timestamp: new Date().toISOString(),
-              expires_at: expiresAt.toISOString(),
-              is_active: true,
-              user_agent: navigator.userAgent,
-            }, { onConflict: 'student_account_id,device_id' })
-            .select()
-            .single();
-          if (revived?.id) {
-            activeSessionId = revived.id;
-            localStorage.setItem('student_session_id', revived.id);
-          }
-        }
-
-        if (!activeSessionId) {
-          // Different hardware — log them out.
-          localStorage.removeItem('student_session_id');
-          localStorage.removeItem('student_id');
-          setIsLoading(false);
-          return;
-        }
+      // Session closed (e.g. signed in elsewhere) → sign out. No silent revival.
+      const activeSessionId = session?.id ?? null;
+      if (!activeSessionId) {
+        localStorage.removeItem('student_session_id');
+        localStorage.removeItem('student_id');
+        setIsLoading(false);
+        return;
       }
 
       // Fetch ALL student records matching this phone (with batch course_type), then pick SAT as primary.
@@ -608,7 +580,9 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       const storedFingerprint = (studentAccount as any).device_fingerprint as string | null;
       const fingerprintMatches = storedFingerprint && storedFingerprint === fingerprint;
       
-      if (!isDevAccount && !bypassDeviceLock && studentAccount.registered_device_id && studentAccount.device_registered_at) {
+      // A correct password does NOT bypass the device lock — the lock is the point.
+      void bypassDeviceLock;
+      if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
         const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
         const deviceIdMatches = studentAccount.registered_device_id === deviceId;
         
@@ -658,17 +632,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
             .update({ device_fingerprint: fingerprint })
             .eq('id', studentAccount.id);
         }
-      } else if (bypassDeviceLock && studentAccount.registered_device_id !== deviceId) {
-        // Password-authenticated login from changed device ID — re-register
-        await supabase
-          .from('student_accounts')
-          .update({
-            registered_device_id: deviceId,
-            device_registered_at: new Date().toISOString(),
-            device_fingerprint: fingerprint
-          })
-          .eq('id', studentAccount.id);
-      } else if (!studentAccount.registered_device_id) {
+      } else if (!studentAccount.registered_device_id || (isDevAccount && studentAccount.registered_device_id !== deviceId)) {
         // First time device registration
         await supabase
           .from('student_accounts')
@@ -826,6 +790,33 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     setStudent(null);
     resetAuthFlow();
   };
+
+  // Live single-session enforcement: if this device's session was closed by a
+  // sign-in elsewhere, sign out here within ~30s instead of waiting for a reload.
+  useEffect(() => {
+    if (!student || (student as any).is_dev_account) return;
+    const check = async () => {
+      const sessionId = localStorage.getItem('student_session_id');
+      if (!sessionId) return;
+      const { data, error } = await supabase
+        .from('student_sessions')
+        .select('is_active')
+        .eq('id', sessionId)
+        .maybeSingle();
+      if (error) return; // network hiccup — don't kick
+      if (!data || !data.is_active) {
+        localStorage.removeItem('student_session_id');
+        localStorage.removeItem('student_id');
+        setStudent(null);
+        resetAuthFlow();
+        window.location.href = '/practice?signed_out_elsewhere=1';
+      }
+    };
+    const id = setInterval(check, 30000);
+    const onVis = () => { if (!document.hidden) check(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
+  }, [student?.id]);
 
   return (
     <StudentAuthContext.Provider value={{ 
