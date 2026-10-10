@@ -104,7 +104,7 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <SidebarHeader className={cn('gap-0 p-0', collapsed ? 'px-0 py-4' : 'px-4 h-14 justify-center')}>
+      <SidebarHeader className={cn('gap-0 p-0', collapsed ? 'px-0 py-4' : 'px-4 h-14 justify-center pt-2')}>
         <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
           <CenterLogo center={center} className="h-9 w-9 shrink-0" />
           {!collapsed && (
