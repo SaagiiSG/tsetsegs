@@ -19,7 +19,7 @@ import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
-import { isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { isAcceptedFillBlankAnswer, cn } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
@@ -447,7 +447,11 @@ export default function StudentEnglishQuestion() {
           </Button>
         </div>
 
-        <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
+        <main className={cn(
+          "container mx-auto px-4 py-6 max-w-3xl space-y-6",
+          submitted && question.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+        )}>
+          <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
           {question.passage_text && (
             <Card>
@@ -559,9 +563,11 @@ export default function StudentEnglishQuestion() {
               )}
             </CardContent>
           </Card>
+          </div>
 
-          {/* Explanation */}
+          {/* Explanation — left column on desktop, below the question on mobile */}
           {submitted && question.rationale && (
+            <div className="order-2 lg:order-1 lg:sticky lg:top-20">
             <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
               <Card>
                 <CollapsibleTrigger asChild>
@@ -574,11 +580,14 @@ export default function StudentEnglishQuestion() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <ExplanationView text={question.rationale} />
+                    <ScrollArea className="lg:max-h-[calc(100vh-11rem)] lg:pr-3">
+                      <ExplanationView text={question.rationale} />
+                    </ScrollArea>
                   </CardContent>
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+            </div>
           )}
         </main>
 
