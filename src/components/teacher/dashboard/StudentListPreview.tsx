@@ -42,15 +42,15 @@ export function StudentListPreview({ students, total, batchId }: Props) {
   return (
     <div className="flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-[11px] uppercase tracking-wide text-muted-foreground/80 inline-flex items-center gap-1.5">
+        <div className="text-[11px] uppercase tracking-wide text-foreground/65 inline-flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" /> Students
         </div>
-        <span className="text-[11px] text-muted-foreground tabular-nums">{total} total</span>
+        <span className="text-[11px] text-foreground/55 tabular-nums">{total} total</span>
       </div>
 
       {students.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center rounded-xl bg-muted/40 border border-border/60">
-          <p className="text-xs text-muted-foreground/70">No students enrolled yet</p>
+        <div className="flex-1 flex items-center justify-center rounded-xl border border-border/50">
+          <p className="text-xs text-foreground/60">No students enrolled yet</p>
         </div>
       ) : (
         <div ref={containerRef} className="flex-1 overflow-y-auto pr-1 space-y-1">
@@ -67,7 +67,7 @@ export function StudentListPreview({ students, total, batchId }: Props) {
             </button>
           ))}
           {remaining > 0 && (
-            <div className="text-[11px] text-muted-foreground/70 px-2.5 py-1.5">
+            <div className="text-[11px] text-foreground/60 px-2.5 py-1.5">
               +{remaining} more
             </div>
           )}
