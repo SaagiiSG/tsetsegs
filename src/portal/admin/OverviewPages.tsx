@@ -6,6 +6,8 @@ import { STATUS_LABEL, STATUS_STYLE } from '../centerContext';
 import { localDate } from '../centerApi';
 import { useCenterAdminData, useQuestionTopics, pct, money } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
+import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
+import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 
 const ATTENDED = new Set(['present', 'late']);
 
@@ -132,7 +134,8 @@ export function ClassOverviewPage() {
           const roster = data.students.filter(s => s.class_id === c.id && s.active);
           const rows = data.attendance.filter(a => a.class_id === c.id && a.session_date === today);
           const counts = Object.entries(rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.status]: (m[r.status] ?? 0) + 1 }), {}));
-          return <div key={c.id} className="admin-glass-card admin-glass-card-glow rounded-xl border p-4">
+          return <div key={c.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-card-glow admin-glass-liquid rounded-xl border p-4">
+            <LiquidGlassFX />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-chillax font-semibold truncate">{c.name}</p>

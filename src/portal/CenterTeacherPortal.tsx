@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { PortalShell, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, useCenter } from './centerContext';
 import { localDate } from './centerApi';
+import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
+import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 
 export default function CenterTeacherPortal() {
   const { center, role, userId } = useCenter();
@@ -67,7 +69,8 @@ export default function CenterTeacherPortal() {
           </div>
           <div className="flex items-end gap-3"><div className="space-y-1"><Label htmlFor="att-date">Session date</Label><Input id="att-date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" /></div>
             <p className="text-xs text-muted-foreground pb-2">Tap a status to cycle it.</p></div>
-          <div className="admin-glass-card admin-glass-card-glow rounded-xl border p-4 overflow-x-auto">
+          <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-card-glow admin-glass-liquid rounded-xl border p-4 overflow-x-auto">
+            <LiquidGlassFX />
           <table className="w-full text-sm"><thead className="text-xs text-muted-foreground border-b"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th></tr></thead>
             <tbody className="divide-y">{roster.data?.students.map(s => {
               const st = roster.data.att[s.id]; const p = stats[s.id];
