@@ -115,7 +115,7 @@ const Admin = () => {
           <AdminSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <header
-              className="admin-glass-bar h-14 flex items-center gap-3 px-4 sticky top-0 z-10"
+              className="admin-glass-bar admin-glass-bar--page h-14 flex items-center gap-3 px-4 sticky top-0 z-10"
               style={{ "--section-glow": sectionGlow } as React.CSSProperties}
             >
               <SidebarTrigger />
