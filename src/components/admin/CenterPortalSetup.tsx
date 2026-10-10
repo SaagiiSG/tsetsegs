@@ -65,13 +65,13 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
           </section>
           <section className="space-y-3 border-t pt-4">
             <h3 className="text-sm font-medium">Center admins & teachers</h3>
-            <ul className="text-sm divide-y">{members.data?.map(m => <li key={m.id} className="py-2 flex justify-between gap-2"><span>{m.display_name} <span className="text-xs text-muted-foreground">{m.email}</span></span><span className="text-xs text-muted-foreground">{m.role === 'center_admin' ? 'Admin' : 'Teacher'}{m.active ? '' : ' · off'}</span></li>)}</ul>
+            <ul className="text-sm divide-y">{members.data?.map(m => <li key={m.id} className="py-2 flex justify-between items-center gap-2"><span>{m.display_name} <span className="text-xs text-muted-foreground">{m.email}</span></span><span className="flex items-center gap-2"><span className="text-xs text-muted-foreground">{m.role === 'center_admin' ? 'Admin' : 'Teacher'}{m.active ? '' : ' · off'}</span><Button size="sm" variant="outline" className="h-7 text-xs" onClick={async () => { try { const r = await centerAccounts({ action: 'reset_member_password', institution_id: customer.id, member_id: m.id }); setCred({ email: m.email, temporaryPassword: r.temporaryPassword }); } catch (err) { toast.error((err as Error).message); } }}>New password</Button></span></li>)}</ul>
             <form onSubmit={createAdmin} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
               <div className="space-y-1"><Label htmlFor="ca-name">Name</Label><Input id="ca-name" value={name} onChange={e => setName(e.target.value)} required /></div>
               <div className="space-y-1"><Label htmlFor="ca-email">Email</Label><Input id="ca-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
               <Button><Plus className="h-4 w-4" />Center admin</Button>
             </form>
-            {cred && <div className="rounded-md border p-3 font-mono text-xs space-y-1"><p className="font-sans text-muted-foreground">Share once — not shown again:</p><p>{cred.email}</p><p>{cred.temporaryPassword}</p></div>}
+            {cred && <div className="rounded-md border border-primary/40 bg-muted/50 p-3 font-mono text-xs space-y-1"><p className="font-sans font-medium text-foreground">Login created — share once, not shown again:</p><p>{cred.email}</p><p className="text-sm font-semibold select-all">{cred.temporaryPassword}</p><Button size="sm" variant="outline" className="h-7 text-xs font-sans" onClick={() => { navigator.clipboard.writeText(`${cred.email}\n${cred.temporaryPassword}`); toast.success('Copied'); }}><Copy className="h-3 w-3" />Copy login</Button></div>}
           </section>
         </div>
       </DialogContent>
