@@ -9,4 +9,4 @@
 - [ ] Center portals: mock tests, concept videos.
 - [x] Activate the supplied Apple Design and Liquid Glass skills.
 - [x] Prepare a platform-wide web adaptation preserving branding and learning flows.
-- [x] Fix the missing Concept Videos link in the admin sidebar and verify navigation.
+- [x] Center admin workspace pages (`src/portal/admin/*`) read only `tenant_*` tables — no, wait.
