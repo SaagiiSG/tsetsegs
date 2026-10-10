@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       if (!inst) return json({ error: 'Center not found' }, 404)
       let created: { user: { id: string } | null } | undefined
       let password = ''
+      let existing = false
       try {
         const r = await withFreshPassword((pw) => admin.auth.admin.createUser({
           email, password: pw, email_confirm: true, user_metadata: { display_name: name, tenant_institution_id: institutionId },
@@ -98,20 +99,32 @@ Deno.serve(async (req) => {
         password = r.password
       } catch (e) {
         const msg = (e as Error).message ?? 'Could not create account'
-        return json({ error: msg.includes('already') ? 'That email already has an account.' : msg }, 400)
+        if (!/already/i.test(msg)) return json({ error: msg }, 400)
+        // Email already has a login: platform admins may attach that login without touching its password.
+        if (!isPlatformAdmin) return json({ error: 'That email already has an account. Use a different email.' }, 400)
+        const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
+        if (linkErr || !link?.user) return json({ error: 'That email already has an account, but it could not be attached.' }, 400)
+        created = { user: { id: link.user.id } }
+        existing = true
       }
       if (!created?.user) return json({ error: 'Could not create account' }, 400)
+      const { data: dup } = await admin.from('tenant_members').select('id').eq('institution_id', institutionId).eq('user_id', created.user.id).maybeSingle()
+      if (dup) return json({ error: 'This person is already a member of this center.' }, 400)
       const { error: insErr } = await admin.from('tenant_members').insert({
         institution_id: institutionId, user_id: created.user.id, role, display_name: name, email,
       })
-      if (insErr) { await admin.auth.admin.deleteUser(created.user.id); throw insErr }
-      return json({ email, temporaryPassword: password })
+      if (insErr) { if (!existing) await admin.auth.admin.deleteUser(created.user.id); throw insErr }
+      return json(existing ? { email, existingAccount: true } : { email, temporaryPassword: password })
     }
 
     if (action === 'reset_member_password') {
       const { data: member } = await admin.from('tenant_members').select('user_id, role, institution_id').eq('id', body.member_id).maybeSingle()
       if (!member || member.institution_id !== institutionId) return json({ error: 'Not found' }, 404)
       if (!isPlatformAdmin && !(isCenterAdmin && member.role === 'teacher')) return json({ error: 'Not allowed' }, 403)
+      // Never reset a login that existed before it was attached to this center (e.g. a platform account).
+      const { data: u } = await admin.auth.admin.getUserById(member.user_id)
+      if (u?.user?.user_metadata?.tenant_institution_id !== institutionId)
+        return json({ error: 'This person uses their existing login. Their password can only be changed by them.' }, 400)
       const { password } = await withFreshPassword((pw) => admin.auth.admin.updateUserById(member.user_id, { password: pw }))
       return json({ temporaryPassword: password })
     }
