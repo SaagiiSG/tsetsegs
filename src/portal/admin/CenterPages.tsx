@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
-import { Copy, KeyRound, Plus, Upload, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Copy, KeyRound, Moon, Plus, Sun, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { centerPortalUrl } from '@/lib/tenant';
@@ -135,6 +137,9 @@ export function SettingsPage() {
         </Section>
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
+      <Section title="Appearance">
+        <DarkModeSetting />
+      </Section>
       <Section title="Portal address">
         <p className="text-sm"><span className="font-mono">{centerPortalUrl(center.slug)}</span></p>
       </Section>
@@ -145,6 +150,36 @@ export function SettingsPage() {
         ))}</tbody></table> : <Empty>No payments on file.</Empty>}
         <p className="text-xs text-muted-foreground">Questions about billing? Contact your Tsetsegs account manager.</p>
       </Section>
+    </div>
+  );
+}
+
+/** Light/dark toggle for the center portals; persists with the rest of the theme preferences. */
+export function DarkModeSetting({ compact = false }: { compact?: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
+  if (compact) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      >
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+        <div>
+          <Label htmlFor="center-dark-mode" className="text-base font-medium cursor-pointer">Dark mode</Label>
+          <p className="text-sm text-muted-foreground">Switch the portal between light and dark themes</p>
+        </div>
+      </div>
+      <Switch id="center-dark-mode" checked={isDark} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
     </div>
   );
 }

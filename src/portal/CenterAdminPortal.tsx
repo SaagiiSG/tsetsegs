@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { useCenterAdminData } from './admin/useCenterAdminData';
+import { DarkModeSetting } from './admin/CenterPages';
 import { DashboardPage, AnalyticsPage, ClassOverviewPage } from './admin/OverviewPages';
 import { BatchesPage, CreateBatchPage } from './admin/BatchPages';
 import { StudentsPage, StudentDetailPage, RegistrationsPage } from './admin/StudentPages';
@@ -120,6 +121,7 @@ export default function CenterAdminPortal() {
         <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
         <CenterLogo center={center} className="h-7 w-7" />
         <span className="font-chillax font-semibold truncate">{centerDisplayName(center)}</span>
+        <div className="ml-auto"><DarkModeSetting compact /></div>
       </header>
       {/* Desktop glass top bar: same material, section glow and rounded leading
           corner as the main admin workspace. */}
@@ -129,6 +131,7 @@ export default function CenterAdminPortal() {
       >
         <CenterLogo center={center} className="h-6 w-6" />
         <span className="text-sm text-muted-foreground">{section.label}</span>
+        <div className="ml-auto"><DarkModeSetting compact /></div>
       </header>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0 w-72"><SheetTitle className="sr-only">Menu</SheetTitle><Sidebar onNavigate={() => setOpen(false)} /></SheetContent>
