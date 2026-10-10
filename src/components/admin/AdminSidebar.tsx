@@ -52,7 +52,7 @@ export function AdminSidebar() {
   return (
     <MotionConfig reducedMotion="user" transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
     <Sidebar className="border-r" collapsible="icon">
-      <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto scrollbar-hide">
+      <SidebarContent className="pt-4 admin-glass flex flex-col flex-1 overflow-y-auto scrollbar-hide">
         {/* Logo and Title */}
         <motion.div 
           className="px-3 pb-4 mb-2"
@@ -152,7 +152,7 @@ export function AdminSidebar() {
                                 aria-label={item.title}
                                 end={item.end}
                                 className={cn(
-                                  "admin-control hover:bg-muted/50 group/item relative",
+                                  "admin-control admin-glass-item group/item relative",
                                   open ? "pl-6" : "justify-center"
                                 )}
                                 activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
@@ -195,7 +195,7 @@ export function AdminSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t border-border/50 bg-sidebar">
+      <SidebarFooter className="p-2 border-t border-border/50 admin-glass">
         <Button
           variant="ghost"
           onClick={signOut}
