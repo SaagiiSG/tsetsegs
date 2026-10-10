@@ -65,16 +65,16 @@ export default function CenterTeacherPortal() {
         <div className="space-y-6">
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Classes">
             {data.map(c => <button key={c.id} role="tab" aria-selected={c.id === classId} onClick={() => setClassId(c.id)}
-              className={`rounded-lg px-3 py-1.5 text-sm transition-colors active:scale-[0.97] admin-control admin-glass-item admin-section-item ${c.id === classId ? 'admin-section-active font-medium' : 'text-muted-foreground hover:text-foreground'}`}>{c.name}</button>)}
+              className={`rounded-lg px-3 py-1.5 text-sm transition-colors active:scale-[0.97] admin-control admin-glass-item admin-section-item ${c.id === classId ? 'admin-section-active font-medium' : 'text-foreground/65 hover:text-foreground'}`}>{c.name}</button>)}
           </div>
           <div className="flex items-end gap-3"><div className="space-y-1"><Label htmlFor="att-date">Session date</Label><Input id="att-date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" /></div>
-            <p className="text-xs text-muted-foreground pb-2">Tap a status to cycle it.</p></div>
+            <p className="text-xs text-foreground/65 pb-2">Tap a status to cycle it.</p></div>
           <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-card-glow admin-glass-liquid rounded-xl border p-4 overflow-x-auto">
             <LiquidGlassFX />
-          <table className="w-full text-sm"><thead className="text-xs text-muted-foreground border-b"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th></tr></thead>
+          <table className="w-full text-sm"><thead className="text-xs text-foreground/65 border-b"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th></tr></thead>
             <tbody className="divide-y">{roster.data?.students.map(s => {
               const st = roster.data.att[s.id]; const p = stats[s.id];
-              return <tr key={s.id}><td className="py-3">{s.name}{!s.user_id && <span className="ml-2 text-xs text-muted-foreground">not signed up</span>}</td>
+              return <tr key={s.id}><td className="py-3">{s.name}{!s.user_id && <span className="ml-2 text-xs text-foreground/60">not signed up</span>}</td>
                 <td><button onClick={() => cycle(s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
                 <td className="font-mono">{p?.n ?? 0}</td><td className="font-mono">{p ? `${Math.round(100 * p.c / p.n)}%` : '—'}</td></tr>;
             })}</tbody></table>

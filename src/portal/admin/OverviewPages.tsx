@@ -139,13 +139,13 @@ export function ClassOverviewPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-chillax font-semibold truncate">{c.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{c.schedule || 'No schedule'}</p>
+                <p className="text-xs text-foreground/65 mt-0.5">{c.schedule || 'No schedule'}</p>
               </div>
-              <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{rows.length}/{roster.length} marked</span>
+              <span className="font-mono text-xs text-foreground/70 whitespace-nowrap">{rows.length}/{roster.length} marked</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
+            <p className="text-xs text-foreground/65 mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
             <div className="flex flex-wrap gap-1 mt-3">
-              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-muted-foreground">Attendance not taken yet</span>}
+              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-foreground/65">Attendance not taken yet</span>}
             </div>
           </div>;
         })}</div> : <Empty>No batches yet.</Empty>}
