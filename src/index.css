@@ -122,6 +122,72 @@ All colors MUST be HSL.
 }
 
 /* Color Themes - Outside @layer for higher specificity */
+/* Admin-only tokens also reach portalled menus/dialogs; removed on leaving admin. */
+body.admin-theme {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
+  --primary: 0 0% 15%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 20%;
+  --accent: 0 0% 94%;
+  --accent-foreground: 0 0% 13%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 46%;
+  --border: 0 0% 90%;
+  --input: 0 0% 86%;
+  --ring: 0 0% 45%;
+  --radius: 0.5rem;
+  --sidebar-background: 0 0% 97%;
+  --sidebar-foreground: 0 0% 30%;
+  --sidebar-primary: 0 0% 15%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 92%;
+  --sidebar-accent-foreground: 0 0% 13%;
+  --sidebar-border: 0 0% 90%;
+  --sidebar-ring: 0 0% 45%;
+  --status-healthy: 155 48% 32%;
+  --status-watch: 38 85% 34%;
+  --status-risk: 345 67% 45%;
+  --status-info: 244 42% 46%;
+  --shadow-soft: 0 2px 8px hsl(0 0% 0% / 0.04);
+  --shadow-glow: 0 0 0 transparent;
+}
+.dark body.admin-theme, body.admin-theme.dark {
+  --background: 0 0% 9%;
+  --foreground: 0 0% 92%;
+  --card: 0 0% 11%;
+  --card-foreground: 0 0% 92%;
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 92%;
+  --primary: 0 0% 90%;
+  --primary-foreground: 0 0% 10%;
+  --secondary: 0 0% 17%;
+  --secondary-foreground: 0 0% 92%;
+  --accent: 0 0% 18%;
+  --accent-foreground: 0 0% 92%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 62%;
+  --border: 0 0% 22%;
+  --input: 0 0% 26%;
+  --ring: 0 0% 65%;
+  --sidebar-background: 0 0% 11%;
+  --sidebar-foreground: 0 0% 75%;
+  --sidebar-primary: 0 0% 92%;
+  --sidebar-primary-foreground: 0 0% 10%;
+  --sidebar-accent: 0 0% 18%;
+  --sidebar-accent-foreground: 0 0% 92%;
+  --sidebar-border: 0 0% 22%;
+  --status-healthy: 155 45% 62%;
+  --status-watch: 38 85% 65%;
+  --status-risk: 345 75% 70%;
+  --status-info: 244 65% 76%;
+}
+
 :root.theme-rose,
 .theme-rose {
   --primary: 345 75% 65% !important;

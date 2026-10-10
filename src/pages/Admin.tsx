@@ -28,6 +28,8 @@ import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
 import QuestionSyncProgress from '@/pages/admin/QuestionSyncProgress';
+import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
+import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
 import { CohortSwitcher } from '@/components/admin/CohortSwitcher';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
@@ -41,6 +43,12 @@ const Admin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const pageTitle = usePageTitle();
+
+  useEffect(() => {
+    document.body.classList.add('admin-theme');
+    return () => document.body.classList.remove('admin-theme');
+  }, []);
 
   useEffect(() => {
     checkIfTeacher();
@@ -61,6 +69,7 @@ const Admin = () => {
   const routesEl = (
     <Routes>
       <Route index element={<DashboardStats />} />
+      <Route path="customers" element={<InstitutionCustomers />} />
       <Route path="analytics" element={<AnalyticsDashboard />} />
       <Route path="overview" element={<BatchOverview />} />
       <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
@@ -99,14 +108,15 @@ const Admin = () => {
   return (
     <AdminCohortProvider>
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+      <div className="min-h-screen w-full bg-background text-foreground">
         <div className="flex w-full min-h-screen">
           <AdminSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <header className="h-14 flex items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4 sticky top-0 z-10">
               <SidebarTrigger />
+              <span className="text-sm text-muted-foreground">{pageTitle}</span>
               {import.meta.env.DEV && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/30">
+                <span className="px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded border">
                   DEV MODE
                 </span>
               )}
@@ -114,7 +124,7 @@ const Admin = () => {
                 <CohortSwitcher />
               </div>
             </header>
-            <main className="flex-1 container mx-auto px-4 py-8">
+            <main className="flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8">
               {routesEl}
             </main>
           </div>

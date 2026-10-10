@@ -49,7 +49,7 @@ export function AdminSidebar() {
   }, [pathname]);
 
   return (
-    <Sidebar className="border-r-0" collapsible="icon">
+    <Sidebar className="border-r" collapsible="icon">
       <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto">
         {/* Logo and Title */}
         <motion.div 
@@ -61,7 +61,7 @@ export function AdminSidebar() {
           <div className="flex items-center gap-3">
             <motion.img
               src={flowersLogo}
-              alt="Flowers Talent Agency"
+              alt="Tsetsegs"
               className="w-10 h-10 rounded-lg flex-shrink-0 object-contain"
               whileHover={{ scale: 1.05, rotate: 2 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -74,8 +74,8 @@ export function AdminSidebar() {
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <h2 className="font-bold text-sm">Flowers Talent Agency</h2>
-                  <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+                  <h2 className="font-semibold text-sm font-chillax">Tsetsegs</h2>
+                  <p className="text-xs text-muted-foreground">Workspace</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -108,7 +108,7 @@ export function AdminSidebar() {
                       <AnimatePresence mode="wait">
                         {open && (
                           <motion.span 
-                            className="text-xs font-medium uppercase tracking-wider"
+                            className="text-xs font-medium"
                             initial={{ opacity: 0, x: -5 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -5 }}
@@ -153,7 +153,7 @@ export function AdminSidebar() {
                                   "hover:bg-muted/50 transition-all duration-200 group/item relative",
                                   open ? "pl-6" : "justify-center"
                                 )}
-                                activeClassName="bg-primary/10 text-primary font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
                               >
                                 {/* Active indicator dot */}
                                 <motion.span 

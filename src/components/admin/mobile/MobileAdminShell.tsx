@@ -38,7 +38,7 @@ export function MobileAdminShell({ children }: MobileAdminShellProps) {
         )}
         <h1 className="text-sm font-semibold flex-1 truncate">{title}</h1>
         {import.meta.env.DEV && (
-          <span className="px-1.5 py-0.5 text-[9px] font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded border border-amber-500/30">
+          <span className="px-1.5 py-0.5 text-[9px] font-medium bg-muted text-muted-foreground rounded border">
             DEV
           </span>
         )}

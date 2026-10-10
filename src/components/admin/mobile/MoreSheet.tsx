@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsDevAccount } from "@/lib/devAccount";
 import {
   CalendarDays, QrCode, FileQuestion, BookOpen, Trophy,
-  Armchair, Bug, UserPlus, Users, Settings, ClipboardList, LineChart, UserCheck,
+  Armchair, Bug, UserPlus, Users, Settings, ClipboardList, LineChart, UserCheck, Building2,
 } from "lucide-react";
 
 interface MoreSheetProps {
@@ -15,6 +15,7 @@ interface MoreSheetProps {
 }
 
 const moreItems = [
+  { title: "International Customers", url: "/admin/customers", icon: Building2 },
   { title: "Analytics", url: "/admin/analytics", icon: LineChart },
   { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
   { title: "Accounts", url: "/admin/students", icon: UserCheck },

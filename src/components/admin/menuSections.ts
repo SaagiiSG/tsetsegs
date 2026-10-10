@@ -1,5 +1,5 @@
 import {
-  Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap,
+  Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, Building2,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
   Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard, RefreshCw,
 } from "lucide-react";
@@ -27,6 +27,7 @@ export const menuSections: MenuSection[] = [
       { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
       { title: "Analytics", url: "/admin/analytics", icon: LineChart },
       { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
+      { title: "International Customers", url: "/admin/customers", icon: Building2 },
     ],
     defaultOpen: true,
   },
