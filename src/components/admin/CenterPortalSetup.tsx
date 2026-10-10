@@ -18,7 +18,9 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(customer.contact_name);
   const [email, setEmail] = useState(customer.contact_email);
-  const [cred, setCred] = useState<{ email: string; temporaryPassword: string } | null>(null);
+  const [cred, setCred] = useState<{ email: string; temporaryPassword?: string; existingAccount?: boolean } | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const members = useQuery({
     queryKey: ['center-members', customer.id],
     queryFn: async () => (await supabase.from('tenant_members').select('*').eq('institution_id', customer.id).order('created_at')).data ?? [],
@@ -28,6 +30,7 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
     queryFn: async () => (await supabase.from('tenant_students').select('id', { count: 'exact', head: true }).eq('institution_id', customer.id)).count ?? 0,
   });
   useEffect(() => { if (!customer.slug) setSlug(customer.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30)); }, [customer]);
+  useEffect(() => { if (cred || accountError) document.getElementById('center-account-result')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [cred, accountError]);
 
   const valid = /^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/.test(slug) && !['www', 'app', 'admin', 'api'].includes(slug);
   const save = async () => {
@@ -37,10 +40,15 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
     if (error) return toast.error(error.code === '23505' ? 'That address is already taken.' : error.message);
     toast.success('Portal saved'); onSaved();
   };
-  const createAdmin = async (e: React.FormEvent) => {
+  const run = async (fn: () => Promise<NonNullable<typeof cred>>) => {
+    setAccountError(null); setCred(null); setCreating(true);
+    try { setCred(await fn()); members.refetch(); }
+    catch (err) { setAccountError((err as Error).message); }
+    finally { setCreating(false); }
+  };
+  const createAdmin = (e: React.FormEvent) => {
     e.preventDefault();
-    try { setCred(await centerAccounts({ action: 'create_member', institution_id: customer.id, role: 'center_admin', name, email })); members.refetch(); }
-    catch (err) { toast.error((err as Error).message); }
+    run(() => centerAccounts({ action: 'create_member', institution_id: customer.id, role: 'center_admin', name, email }));
   };
   const url = centerPortalUrl(slug || 'your-center');
   const previewUrl = `${window.location.origin}/?center=${slug}`;
