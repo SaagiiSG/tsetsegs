@@ -55,11 +55,22 @@ export function CenterLogo({ center, className = 'h-8 w-8' }: { center: Center; 
     : <span aria-hidden className={`${className} rounded-md bg-primary text-primary-foreground grid place-items-center font-chillax font-semibold text-sm`}>{label.slice(0, 1).toUpperCase()}</span>;
 }
 
-export function PortalShell({ title, nav, children }: { title: string; nav?: ReactNode; children: ReactNode }) {
+export function PortalShell({ title, nav, glass = false, children }: { title: string; nav?: ReactNode; glass?: boolean; children: ReactNode }) {
   const { center, name, signOut } = useCenter();
+  // Glass mode opts into the liquid-glass admin theme for this page's lifetime.
+  useEffect(() => {
+    if (!glass) return;
+    document.body.classList.add('admin-theme');
+    return () => document.body.classList.remove('admin-theme');
+  }, [glass]);
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+    <div
+      className={`min-h-screen bg-background text-foreground ${glass ? 'admin-glow-scope' : ''}`}
+      style={glass ? ({ '--section-glow': '152 60% 42%' } as React.CSSProperties) : undefined}
+    >
+      <header className={glass
+        ? 'sticky top-0 z-20 admin-glass-bar'
+        : 'sticky top-0 z-20 border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70'}>
         <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-3">
           <CenterLogo center={center} />
           <div className="min-w-0">
