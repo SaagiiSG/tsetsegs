@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -66,7 +66,7 @@ export function PortalShell({ title, nav, glass = false, children }: { title: st
   return (
     <div
       className={`min-h-screen bg-background text-foreground ${glass ? 'admin-glow-scope' : ''}`}
-      style={glass ? ({ '--section-glow': '152 60% 42%' } as React.CSSProperties) : undefined}
+      style={glass ? ({ '--section-glow': '152 60% 42%' } as CSSProperties) : undefined}
     >
       <header className={glass
         ? 'sticky top-0 z-20 admin-glass-bar'
@@ -82,7 +82,7 @@ export function PortalShell({ title, nav, glass = false, children }: { title: st
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Sign out</span></Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <main className={`mx-auto max-w-6xl px-4 py-6 ${glass ? 'admin-main-glow' : ''}`}>{children}</main>
     </div>
   );
 }
