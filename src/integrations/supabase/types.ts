@@ -1728,6 +1728,95 @@ export type Database = {
           },
         ]
       }
+      institution_customers: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          country: string
+          created_at: string
+          health: string
+          health_notes: string
+          id: string
+          last_check_in: string | null
+          name: string
+          next_check_in: string | null
+          notes: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string
+          contact_name?: string
+          country?: string
+          created_at?: string
+          health?: string
+          health_notes?: string
+          id?: string
+          last_check_in?: string | null
+          name: string
+          next_check_in?: string | null
+          notes?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          country?: string
+          created_at?: string
+          health?: string
+          health_notes?: string
+          id?: string
+          last_check_in?: string | null
+          name?: string
+          next_check_in?: string | null
+          notes?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      institution_payment_dues: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_id: string
+          description: string
+          due_date: string
+          id: string
+          paid_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          customer_id: string
+          description?: string
+          due_date: string
+          id?: string
+          paid_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          description?: string
+          due_date?: string
+          id?: string
+          paid_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_payment_dues_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intense_prep_groups: {
         Row: {
           created_at: string

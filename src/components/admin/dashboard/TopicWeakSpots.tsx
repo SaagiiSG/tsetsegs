@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
 interface TopicAccuracy {
@@ -12,50 +11,50 @@ interface TopicWeakSpotsProps {
 }
 
 function getAccuracyColor(accuracy: number): string {
-  if (accuracy >= 70) return 'bg-emerald-500';
-  if (accuracy >= 55) return 'bg-amber-500';
-  return 'bg-rose-500';
+  if (accuracy >= 70) return 'bg-status-healthy';
+  if (accuracy >= 55) return 'bg-status-watch';
+  return 'bg-status-risk';
 }
 
 function getAccuracyTextColor(accuracy: number): string {
-  if (accuracy >= 70) return 'text-emerald-400';
-  if (accuracy >= 55) return 'text-amber-400';
-  return 'text-rose-400';
+  if (accuracy >= 70) return 'text-status-healthy';
+  if (accuracy >= 55) return 'text-status-watch';
+  return 'text-status-risk';
 }
 
 export function TopicWeakSpots({ data }: TopicWeakSpotsProps) {
   if (data.length === 0) {
     return (
-      <Card className="bg-card/50 backdrop-blur-sm border-border/50 animate-fade-in" style={{ animationDelay: '200ms' }}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+      <section className="min-w-0 border-t py-5">
+        <div className="pb-4">
+          <h2 className="text-sm font-medium flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-status-watch" />
             Topic Weak Spots
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h2>
+        </div>
+        <div>
           <p className="text-sm text-muted-foreground text-center py-8">
             No topic data available yet
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     );
   }
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border/50 animate-fade-in" style={{ animationDelay: '200ms' }}>
-      <CardHeader className="pb-3">
+    <section className="min-w-0 border-t py-5">
+      <div className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <h2 className="text-sm font-medium flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-status-watch" />
             Topic Weak Spots
-          </CardTitle>
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+          </h2>
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-normal">
             Lowest accuracy
           </span>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         <div className="space-y-3">
           {data.map((topic, index) => (
             <div key={topic.category} className="space-y-1.5">
@@ -84,7 +83,7 @@ export function TopicWeakSpots({ data }: TopicWeakSpotsProps) {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

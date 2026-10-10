@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Activity } from 'lucide-react';
 
@@ -18,10 +17,10 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 function getIntensityClass(count: number, maxCount: number): string {
   if (count === 0) return 'bg-muted/30';
   const ratio = count / maxCount;
-  if (ratio > 0.75) return 'bg-cyan-500';
-  if (ratio > 0.5) return 'bg-cyan-500/70';
-  if (ratio > 0.25) return 'bg-cyan-500/40';
-  return 'bg-cyan-500/20';
+  if (ratio > 0.75) return 'bg-foreground';
+  if (ratio > 0.5) return 'bg-foreground/70';
+  if (ratio > 0.25) return 'bg-foreground/40';
+  return 'bg-foreground/20';
 }
 
 export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
@@ -33,19 +32,19 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   };
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border/50 animate-fade-in" style={{ animationDelay: '150ms' }}>
-      <CardHeader className="pb-3">
+    <section className="min-w-0 border-t py-5">
+      <div className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Activity className="w-4 h-4 text-cyan-400" />
+          <h2 className="text-sm font-medium flex items-center gap-2">
+            <Activity className="w-4 h-4 text-muted-foreground" />
             Activity Heatmap
-          </CardTitle>
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+          </h2>
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-normal">
             Last 7 days
           </span>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         <TooltipProvider>
           <div className="overflow-x-auto scrollbar-hide">
             <div className="min-w-[500px]">
@@ -85,7 +84,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                             </TooltipTrigger>
                             <TooltipContent side="top" className="font-mono text-xs">
                               <p>{dayName} {hour.toString().padStart(2, '0')}:00</p>
-                              <p className="text-cyan-400 font-bold">{count} attempts</p>
+                              <p className="text-muted-foreground font-bold">{count} attempts</p>
                             </TooltipContent>
                           </Tooltip>
                         );
@@ -100,17 +99,17 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                 <span className="text-[9px] font-mono text-muted-foreground">Less</span>
                 <div className="flex gap-[2px]">
                   <div className="w-3 h-3 rounded-sm bg-muted/30" />
-                  <div className="w-3 h-3 rounded-sm bg-cyan-500/20" />
-                  <div className="w-3 h-3 rounded-sm bg-cyan-500/40" />
-                  <div className="w-3 h-3 rounded-sm bg-cyan-500/70" />
-                  <div className="w-3 h-3 rounded-sm bg-cyan-500" />
+                  <div className="w-3 h-3 rounded-sm bg-foreground/20" />
+                  <div className="w-3 h-3 rounded-sm bg-foreground/40" />
+                  <div className="w-3 h-3 rounded-sm bg-foreground/70" />
+                  <div className="w-3 h-3 rounded-sm bg-foreground" />
                 </div>
                 <span className="text-[9px] font-mono text-muted-foreground">More</span>
               </div>
             </div>
           </div>
         </TooltipProvider>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

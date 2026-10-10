@@ -17,6 +17,12 @@ export default {
         chillax: ['Chillax', 'sans-serif'],
       },
       colors: {
+        status: {
+          healthy: "hsl(var(--status-healthy))",
+          watch: "hsl(var(--status-watch))",
+          risk: "hsl(var(--status-risk))",
+          info: "hsl(var(--status-info))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

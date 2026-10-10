@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, ChevronRight, Users } from 'lucide-react';
@@ -22,13 +21,13 @@ export function RecentClasses({ batches }: RecentClassesProps) {
   const navigate = useNavigate();
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border/50 animate-fade-in" style={{ animationDelay: '300ms' }}>
-      <CardHeader className="pb-3">
+    <section className="min-w-0 border-t py-5">
+      <div className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-purple-400" />
+          <h2 className="text-sm font-medium flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-muted-foreground" />
             Recent Classes
-          </CardTitle>
+          </h2>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -39,8 +38,8 @@ export function RecentClasses({ batches }: RecentClassesProps) {
             <ChevronRight className="w-3 h-3 ml-1" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {batches.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">
             No classes yet
@@ -58,8 +57,8 @@ export function RecentClasses({ batches }: RecentClassesProps) {
                   variant="outline" 
                   className={`text-[10px] font-mono ${
                     batch.courseType === 'SAT' 
-                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
-                      : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                      ? 'bg-status-info/20 text-status-info border-status-info/30' 
+                      : 'bg-status-info/20 text-muted-foreground border-status-info/30'
                   }`}
                 >
                   {batch.courseType}
@@ -86,7 +85,7 @@ export function RecentClasses({ batches }: RecentClassesProps) {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

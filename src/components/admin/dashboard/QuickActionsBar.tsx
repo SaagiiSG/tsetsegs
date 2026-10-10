@@ -14,37 +14,37 @@ const actions = [
     label: 'Analytics',
     icon: BarChart3,
     path: '/admin/analytics',
-    color: 'hover:text-cyan-400 hover:border-cyan-400/50'
+    color: 'hover:text-foreground hover:border-input'
   },
   {
     label: 'Search',
     icon: Search,
     path: '/admin/search',
-    color: 'hover:text-amber-400 hover:border-amber-400/50'
+    color: 'hover:text-foreground hover:border-input'
   },
   {
     label: 'Sprints',
     icon: Trophy,
     path: '/admin/sprint-monitor',
-    color: 'hover:text-yellow-400 hover:border-yellow-400/50'
+    color: 'hover:text-foreground hover:border-input'
   },
   {
     label: 'Questions',
     icon: BookOpen,
     path: '/admin/questions',
-    color: 'hover:text-emerald-400 hover:border-emerald-400/50'
+    color: 'hover:text-foreground hover:border-input'
   },
   {
     label: 'Students',
     icon: Users,
     path: '/admin/students',
-    color: 'hover:text-purple-400 hover:border-purple-400/50'
+    color: 'hover:text-foreground hover:border-input'
   },
   {
     label: 'SAT Schedule',
     icon: Calendar,
     path: '/admin/sat-schedule',
-    color: 'hover:text-rose-400 hover:border-rose-400/50'
+    color: 'hover:text-foreground hover:border-input'
   }
 ];
 
@@ -59,18 +59,19 @@ export function QuickActionsBar() {
           return (
             <Button
               key={action.path}
+              title={action.label}
               variant="outline"
               size="sm"
               className={`
                 flex-shrink-0 gap-2 
-                bg-card/50 backdrop-blur-sm border-border/50
+                bg-background border-border
                 transition-all duration-200
                 ${action.color}
               `}
               onClick={() => navigate(action.path)}
             >
               <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{action.label}</span>
+              <span>{action.label}</span>
             </Button>
           );
         })}
