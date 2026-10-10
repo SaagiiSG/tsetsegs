@@ -168,7 +168,10 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     } else if (nextQuestionId) {
       form.setValue('question_id', nextQuestionId);
     }
-  }, [editingQuestion, nextQuestionId, form]);
+    // Only reload when a different question (or a fresh open) arrives — background
+    // refetches (e.g. returning from Desmos) must not wipe unsaved typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingQuestion?.id, editingQuestion?.updated_at, open, nextQuestionId, form]);
 
   // Upload image mutation
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -500,7 +503,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           {/* Form Section - Full width on mobile */}
           <ScrollArea className="flex-1 px-4 md:px-6 md:border-r">
             <Form {...form}>
-              <form id="question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
+              <form id="question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data), (errs) => toast({ title: "Not saved — please fix the form", description: Object.entries(errs).map(([k, v]: any) => `${k}: ${v?.message || "invalid"}`).join(", "), variant: "destructive" }))} className="space-y-4 py-4">
               {/* Basic Info Row - Stack on mobile */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               {/* Question ID */}
