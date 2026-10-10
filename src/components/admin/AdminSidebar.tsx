@@ -147,6 +147,7 @@ export function AdminSidebar() {
                           <SidebarMenuButton asChild tooltip={item.title}>
                               <NavLink
                                 to={item.url}
+                                aria-label={item.title}
                                 end={item.end}
                                 className={cn(
                                   "hover:bg-muted/50 transition-all duration-200 group/item relative",
