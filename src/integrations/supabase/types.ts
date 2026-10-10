@@ -1231,6 +1231,48 @@ export type Database = {
           },
         ]
       }
+      concept_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          domain: string
+          duration_minutes: number | null
+          id: string
+          is_published: boolean
+          module: string | null
+          order_index: number
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          domain?: string
+          duration_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          module?: string | null
+          order_index?: number
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          domain?: string
+          duration_minutes?: number | null
+          id?: string
+          is_published?: boolean
+          module?: string | null
+          order_index?: number
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       curriculum_sessions: {
         Row: {
           created_at: string
