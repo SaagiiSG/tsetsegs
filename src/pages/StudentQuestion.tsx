@@ -359,9 +359,9 @@ export default function StudentQuestion() {
     if (existingProgress?.video_watched) {
       setVideoWatched(true);
     }
-    // If the explanation was opened in a previous session, keep the forfeit and re-show it.
+    // If the explanation was opened in a previous session the forfeit stays, but the
+    // panel is not popped back open — the student may have deliberately hidden it.
     if (existingProgress?.explanation_viewed) {
-      setExplanationRevealed(true);
       setExplanationOpened(true);
     }
   }, [existingProgress]);
