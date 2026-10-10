@@ -10,8 +10,20 @@ const json = (body: unknown, status = 200) =>
 const digits = (v: unknown) => String(v ?? '').replace(/\D/g, '')
 const tempPassword = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  const bytes = crypto.getRandomValues(new Uint8Array(12))
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
   return Array.from(bytes, (b) => chars[b % chars.length]).join('') + '!7'
+}
+// Retry when the auth provider rejects a generated password as weak/leaked.
+const withFreshPassword = async <T>(fn: (password: string) => Promise<{ data?: T; error: { message?: string } | null }>): Promise<{ password: string; data?: T }> => {
+  let lastError: { message?: string } | null = null
+  for (let i = 0; i < 4; i++) {
+    const password = tempPassword()
+    const { data, error } = await fn(password)
+    if (!error) return { password, data }
+    lastError = error
+    if (!/weak|easy to guess|leaked|compromised/i.test(error.message ?? '')) throw new Error(error.message ?? 'Could not set password')
+  }
+  throw new Error(lastError?.message ?? 'Could not set password')
 }
 
 Deno.serve(async (req) => {
