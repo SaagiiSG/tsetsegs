@@ -70,9 +70,9 @@ export function DashboardStats() {
   return (
     <div className="space-y-6 min-h-[calc(100vh-8rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between animate-fade-in">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-normal text-foreground">
+          <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground">
             Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

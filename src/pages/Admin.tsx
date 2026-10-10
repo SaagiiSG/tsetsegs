@@ -112,7 +112,7 @@ const Admin = () => {
         <div className="flex w-full min-h-screen">
           <AdminSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="h-14 flex items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4 sticky top-0 z-10">
+            <header className="admin-navigation-material h-14 flex items-center gap-3 border-b px-4 sticky top-0 z-10">
               <SidebarTrigger />
               <span className="text-sm text-muted-foreground">{pageTitle}</span>
               {import.meta.env.DEV && (
