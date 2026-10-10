@@ -1,4 +1,5 @@
 # UI work
+- [x] Fix admin light-mode contrast and adapt Resend's Atmospheric Glows reference without coloring data surfaces; verify signed-in dashboard in both appearances.
 - [x] Refine admin using active Apple Design/Liquid Glass skills and the Vercel design reference; verify navigation and accessibility.
 - [x] Confirm admin Concept Videos is visible again (user confirmed).
 - [x] Update the admin dashboard and navigation to a monochrome Notion/Linear direction.

@@ -124,7 +124,10 @@ All colors MUST be HSL.
 /* Color Themes - Outside @layer for higher specificity */
 /* Admin-only tokens also reach portalled menus/dialogs; removed on leaving admin. */
 body.admin-theme {
-  --background: 0 0% 98%;
+  color-scheme: light;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  --background: 0 0% 99%;
   --foreground: 0 0% 9%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 13%;
@@ -136,9 +139,9 @@ body.admin-theme {
   --secondary-foreground: 0 0% 20%;
   --accent: 0 0% 94%;
   --accent-foreground: 0 0% 13%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 40%;
-  --border: 0 0% 92%;
+  --muted: 0 0% 94%;
+  --muted-foreground: 0 0% 35%;
+  --border: 0 0% 86%;
   --input: 0 0% 86%;
   --ring: 0 0% 45%;
   --radius: 0.375rem;
@@ -158,8 +161,12 @@ body.admin-theme {
   --shadow-glow: 0 0 0 transparent;
   --admin-chrome-opacity: 0.9;
   --admin-chrome-shadow: 0 1px 0 hsl(var(--border) / 0.8);
+  --admin-atmosphere: 345 67% 55%;
+  --admin-atmosphere-strength: 0.035;
+  --admin-atmosphere-wash: linear-gradient(110deg, hsl(var(--admin-atmosphere) / var(--admin-atmosphere-strength)), transparent 60%);
 }
 .dark body.admin-theme, body.admin-theme.dark {
+  color-scheme: dark;
   --background: 0 0% 9%;
   --foreground: 0 0% 92%;
   --card: 0 0% 11%;
@@ -188,11 +195,13 @@ body.admin-theme {
   --status-watch: 38 85% 65%;
   --status-risk: 345 75% 70%;
   --status-info: 244 65% 76%;
+  --admin-atmosphere-strength: 0.09;
 }
 
 /* One translucent navigation layer; dashboard data remains on solid surfaces. */
 .admin-navigation-material {
-  background: hsl(var(--card) / var(--admin-chrome-opacity));
+  background-color: hsl(var(--card) / var(--admin-chrome-opacity));
+  background-image: var(--admin-atmosphere-wash);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: var(--admin-chrome-shadow);
