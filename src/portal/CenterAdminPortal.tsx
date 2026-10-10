@@ -204,6 +204,7 @@ function CenterSidebar() {
 
 export default function CenterAdminPortal() {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const { center } = useCenter();
   const { pathname } = useLocation();
   const section = useCenterSection();
@@ -215,7 +216,10 @@ export default function CenterAdminPortal() {
   }, []);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      open={!collapsed}
+      onOpenChange={(expanded) => { setCollapsed(!expanded); writeCollapsed(!expanded); }}
+    >
       <div className="flex min-h-screen w-full bg-background text-foreground">
         <CenterSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
