@@ -47,6 +47,11 @@ export default function StudentEnglishQuestion() {
   const [flagReason, setFlagReason] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanationRevealed, setExplanationRevealed] = useState(false);
+  // Stays true once the explanation has been opened, even after hiding it again —
+  // so the points forfeit can't be undone by closing the panel before answering.
+  const [explanationOpened, setExplanationOpened] = useState(false);
+  // True when the student deliberately closed the explanation panel.
+  const [explanationDismissed, setExplanationDismissed] = useState(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   useEffect(() => {
@@ -180,6 +185,9 @@ export default function StudentEnglishQuestion() {
 
   useEffect(() => {
     setShowExplanation(false);
+    setExplanationRevealed(false);
+    setExplanationOpened(false);
+    setExplanationDismissed(false);
   }, [questionId]);
 
   useEffect(() => {
@@ -201,10 +209,24 @@ export default function StudentEnglishQuestion() {
   }, [questionId, existingAttempts]);
 
   // Explanation forfeit: true once recorded server-side or revealed this session.
-  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+  const explanationForfeited = explanationOpened || !!existingProgress?.explanation_viewed;
+
+  // Whether the explanation panel is on screen right now: opened by the student,
+  // or shown automatically after submitting — unless they have hidden it again.
+  const explanationVisible = !!question?.rationale && (explanationRevealed || submitted) && !explanationDismissed;
+
+  // Hiding only clears the panel — the forfeit stays recorded, so points can't
+  // be reclaimed by closing the explanation before answering.
+  const handleHideExplanation = () => {
+    setExplanationRevealed(false);
+    setExplanationDismissed(true);
+    setShowExplanation(false);
+  };
 
   const handleRevealExplanation = () => {
     setExplanationRevealed(true);
+    setExplanationOpened(true);
+    setExplanationDismissed(false);
     setShowExplanation(true);
     logActivity('explanation_viewed', { question_id: questionId });
     if (student && questionId && !existingProgress?.explanation_viewed) {
@@ -492,7 +514,7 @@ export default function StudentEnglishQuestion() {
 
         <main className={cn(
           "container mx-auto px-4 py-6 max-w-3xl space-y-6",
-          question.rationale && (submitted || explanationRevealed) && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+          explanationVisible && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
         )}>
           <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
@@ -608,9 +630,10 @@ export default function StudentEnglishQuestion() {
               {/* Explanation — available anytime; opening it forfeits remaining points */}
               <ShowExplanation
                 explanation={question.rationale}
-                revealed={explanationRevealed}
+                revealed={explanationVisible}
                 onReveal={handleRevealExplanation}
-                forfeitApplies={!isCorrect}
+                onHide={handleHideExplanation}
+                forfeitApplies={!isCorrect && !explanationRevealed && !submitted}
                 forfeited={explanationForfeited}
                 inlineCard={false}
               />
@@ -620,9 +643,9 @@ export default function StudentEnglishQuestion() {
 
           {/* Explanation — left column on desktop, below the question on mobile.
               Shows after submit, or earlier once the student opens it themselves. */}
-          {question.rationale && (explanationRevealed || submitted) && (
+          {explanationVisible && (
             <div className="order-2 lg:order-1 lg:sticky lg:top-20">
-            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationRevealed}>
+            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationVisible}>
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">

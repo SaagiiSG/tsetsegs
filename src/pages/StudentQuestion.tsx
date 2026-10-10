@@ -81,6 +81,9 @@ export default function StudentQuestion() {
   const [drawingData, setDrawingData] = useState<string | null>(null);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
   const [explanationRevealed, setExplanationRevealed] = useState(false);
+  // Stays true once the explanation has been opened, even after hiding it again —
+  // so the points forfeit can't be undone by closing the panel before answering.
+  const [explanationOpened, setExplanationOpened] = useState(false);
 
   // Security: Prevent screenshots
   useEffect(() => {
@@ -356,9 +359,10 @@ export default function StudentQuestion() {
     if (existingProgress?.video_watched) {
       setVideoWatched(true);
     }
-    // If the explanation was opened in a previous session, keep the forfeit and re-show it.
+    // If the explanation was opened in a previous session the forfeit stays, but the
+    // panel is not popped back open — the student may have deliberately hidden it.
     if (existingProgress?.explanation_viewed) {
-      setExplanationRevealed(true);
+      setExplanationOpened(true);
     }
   }, [existingProgress]);
 
@@ -380,10 +384,15 @@ export default function StudentQuestion() {
   }, [currentVariationIndex, currentQuestion?.id, existingAttempts]);
 
   // Explanation forfeit: true once recorded server-side or revealed this session.
-  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+  const explanationForfeited = explanationOpened || !!existingProgress?.explanation_viewed;
+
+  // Hiding only clears the panel — the forfeit stays recorded, so points can't
+  // be reclaimed by closing the explanation before answering.
+  const handleHideExplanation = () => setExplanationRevealed(false);
 
   const handleRevealExplanation = () => {
     setExplanationRevealed(true);
+    setExplanationOpened(true);
     logActivity('explanation_viewed', { question_id: questionId });
     if (student && questionId && !existingProgress?.explanation_viewed) {
       supabase
@@ -1080,6 +1089,7 @@ export default function StudentQuestion() {
                     explanation={(currentQuestion as any).rationale}
                     revealed={explanationRevealed}
                     onReveal={handleRevealExplanation}
+                    onHide={handleHideExplanation}
                     forfeitApplies={!(submitted && isCorrect)}
                     forfeited={explanationForfeited}
                     inlineCard={false}
