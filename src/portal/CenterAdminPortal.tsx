@@ -119,7 +119,7 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
       <nav aria-label="Center admin" className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-2 py-2 space-y-1">
         {SECTIONS.map((s) => (
           <SidebarGroup key={s.title} className="p-0 py-0.5" style={{ '--section-glow': s.glow } as React.CSSProperties}>
-            <SidebarGroupLabel className="h-6 px-2 pb-1 uppercase tracking-wider">
+            <SidebarGroupLabel className={cn('h-6 px-2 pb-1 uppercase tracking-wider', collapsed && 'hidden')}>
               {s.title}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -153,7 +153,7 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
         ))}
 
         <SidebarGroup className="p-0 py-0.5">
-          <SidebarGroupLabel className="h-6 px-2 pb-1 uppercase tracking-wider">Switch</SidebarGroupLabel>
+          <SidebarGroupLabel className={cn('h-6 px-2 pb-1 uppercase tracking-wider', collapsed && 'hidden')}>Switch</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               <SidebarMenuItem>
