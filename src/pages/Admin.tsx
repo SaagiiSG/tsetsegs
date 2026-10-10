@@ -37,6 +37,7 @@ import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DevOnlyRoute } from '@/components/admin/DevOnlyRoute';
 import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
+import { useSectionGlow } from '@/components/admin/pageGlow';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
@@ -44,6 +45,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const pageTitle = usePageTitle();
+  const sectionGlow = useSectionGlow();
 
   useEffect(() => {
     document.body.classList.add('admin-theme');
@@ -124,7 +126,10 @@ const Admin = () => {
                 <CohortSwitcher />
               </div>
             </header>
-            <main className="flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8">
+            <main
+              className="admin-glow-scope admin-main-glow relative flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8"
+              style={{ "--section-glow": sectionGlow } as React.CSSProperties}
+            >
               {routesEl}
             </main>
           </div>

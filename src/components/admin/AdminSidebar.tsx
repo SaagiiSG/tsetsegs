@@ -91,7 +91,6 @@ export function AdminSidebar() {
             initial={false}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.15 }}
-            className="admin-section-glow"
             style={{ "--section-glow": section.glow } as React.CSSProperties}
           >
             <SidebarGroup className="py-0">
