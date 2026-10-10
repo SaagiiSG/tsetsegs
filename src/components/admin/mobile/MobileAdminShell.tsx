@@ -28,7 +28,7 @@ export function MobileAdminShell({ children }: MobileAdminShellProps) {
       style={{ "--section-glow": sectionGlow } as React.CSSProperties}
     >
       {/* Compact header */}
-      <header className="sticky top-0 z-30 h-12 bg-background/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2">
+      <header className="admin-glass-bar sticky top-0 z-30 h-12 flex items-center px-3 gap-2">
         {isHome ? (
           <img src={flowersLogo} alt="" className="w-7 h-7 rounded object-contain" />
         ) : (

@@ -51,7 +51,7 @@ export function AdminSidebar() {
 
   return (
     <MotionConfig reducedMotion="user" transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
-    <Sidebar className="border-r" collapsible="icon">
+    <Sidebar className="admin-sidebar-float" variant="floating" collapsible="icon">
       <SidebarContent className="pt-4 admin-glass flex flex-col flex-1 overflow-y-auto scrollbar-hide">
         {/* Logo and Title */}
         <motion.div 
