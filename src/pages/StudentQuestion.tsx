@@ -33,6 +33,8 @@ import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 import { ShowExplanation } from '@/components/student/ShowExplanation';
+import { ExplanationView } from '@/components/explanation/ExplanationView';
+import { cn } from '@/lib/utils';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -915,8 +917,12 @@ export default function StudentQuestion() {
         </header>
 
 
-        <main className="container mx-auto px-2.5 py-3 md:px-4 md:py-6 pb-24 max-w-3xl space-y-3 md:space-y-6">
+        <main className={cn(
+          "container mx-auto px-2.5 py-3 md:px-4 md:py-6 pb-24 max-w-3xl space-y-3 md:space-y-6",
+          explanationRevealed && (currentQuestion as any)?.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-6 lg:space-y-0"
+        )}>
 
+          <div className="min-w-0 space-y-3 md:space-y-6">
           {/* Video Section */}
           {videoId && !videoWatched && (
             <Card>
@@ -1076,7 +1082,17 @@ export default function StudentQuestion() {
                     onReveal={handleRevealExplanation}
                     forfeitApplies={!(submitted && isCorrect)}
                     forfeited={explanationForfeited}
+                    inlineCard={false}
                   />
+                  {/* Mobile: explanation below the question (desktop shows it in the right column) */}
+                  {explanationRevealed && (currentQuestion as any).rationale && (
+                    <div className="lg:hidden">
+                      {explanationForfeited && !(submitted && isCorrect) && (
+                        <p className="mb-2 text-xs text-muted-foreground">Explanation opened — this question no longer awards points.</p>
+                      )}
+                      <ExplanationView text={(currentQuestion as any).rationale} />
+                    </div>
+                  )}
 
                 </CardContent>
               </Card>
@@ -1143,6 +1159,22 @@ export default function StudentQuestion() {
                 </CollapsibleContent>
               </Collapsible>
             </>
+          )}
+          </div>
+
+          {/* Explanation — right column on desktop, sticky with its own scroll */}
+          {explanationRevealed && (currentQuestion as any)?.rationale && (
+            <Card className="hidden lg:block lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Explanation</CardTitle>
+                {explanationForfeited && !(submitted && isCorrect) && (
+                  <p className="text-xs text-muted-foreground">Explanation opened — this question no longer awards points.</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <ExplanationView text={(currentQuestion as any).rationale} />
+              </CardContent>
+            </Card>
           )}
         </main>
 
