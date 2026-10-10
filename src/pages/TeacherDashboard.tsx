@@ -69,6 +69,14 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
   const navigate = useNavigate();
   const haptic = useHaptics();
 
+  // Liquid glass admin theme, scoped to this page's lifetime.
+  useEffect(() => {
+    document.body.classList.add("admin-theme");
+    return () => document.body.classList.remove("admin-theme");
+  }, []);
+
+  const sectionGlow = MODE_GLOW[activeMode];
+
   const { data: allBatches = [], isLoading } = useTeacherDashboardData(teacherName);
 
   // Handle mode change with direction tracking
