@@ -48,6 +48,15 @@ const MODE_META: Partial<Record<DashboardMode, { title: string; subtitle: string
 };
 
 
+const MODE_GLOW: Record<DashboardMode, string> = {
+  dashboard: "217 91% 60%",
+  analytics: "262 83% 62%",
+  practice: "152 60% 42%",
+  tests: "32 95% 50%",
+  intense: "32 95% 50%",
+  proctor: "345 75% 55%",
+};
+
 export default function TeacherDashboard({ initialMode = "dashboard" }: { initialMode?: DashboardMode } = {}) {
   const { teacherName, signOut, isLoading: authLoading } = useTeacherAuth();
   const [selectedIntake, setSelectedIntake] = useState<string>("current");
