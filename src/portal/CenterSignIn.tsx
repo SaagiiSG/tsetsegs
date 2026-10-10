@@ -50,7 +50,11 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
     if (error) throw error;
   });
   const staffSignIn = run(async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: staffPassword });
+    // Tolerate pasting "email + password" together into the password box.
+    const em = email.trim();
+    let pw = staffPassword.trim();
+    if (em && pw.toLowerCase().startsWith(em.toLowerCase()) && pw.length > em.length) pw = pw.slice(em.length).trim();
+    const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
     if (error) throw new Error('Email or password is incorrect.');
   });
 
