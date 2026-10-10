@@ -322,6 +322,60 @@ body.admin-theme [data-radix-popper-content-wrapper] {
   .admin-glow-scope h1 { text-shadow: none; }
   .admin-section-active { background-color: hsl(var(--sidebar-accent)); box-shadow: none; }
 }
+/* Liquid glass buttons & cards across the admin workspace.
+   Scoped to body.admin-theme so student/teacher surfaces stay solid. */
+body.admin-theme .admin-glass-card {
+  background-color: hsl(var(--card) / 0.55);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-color: hsl(0 0% 100% / 0.5);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.55), 0 8px 24px -12px hsl(0 0% 0% / 0.12);
+}
+.dark body.admin-theme .admin-glass-card, body.admin-theme.dark .admin-glass-card {
+  background-color: hsl(var(--card) / 0.45);
+  border-color: hsl(0 0% 100% / 0.08);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 8px 24px -12px hsl(0 0% 0% / 0.5);
+}
+body.admin-theme .admin-glass-btn {
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.35);
+  transition: background-color 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out, transform 100ms ease-out;
+}
+body.admin-theme .admin-glass-btn:active {
+  transform: scale(0.98);
+}
+/* Solid variants keep their color but read as tinted glass. */
+body.admin-theme .admin-glass-btn.bg-primary {
+  background-color: hsl(var(--primary) / 0.88);
+}
+body.admin-theme .admin-glass-btn.bg-primary:hover {
+  background-color: hsl(var(--primary) / 0.95);
+}
+body.admin-theme .admin-glass-btn.bg-destructive {
+  background-color: hsl(var(--destructive) / 0.88);
+}
+body.admin-theme .admin-glass-btn.bg-destructive:hover {
+  background-color: hsl(var(--destructive) / 0.95);
+}
+body.admin-theme .admin-glass-btn.bg-secondary {
+  background-color: hsl(var(--secondary) / 0.6);
+}
+body.admin-theme .admin-glass-btn.bg-background {
+  background-color: hsl(var(--background) / 0.5);
+}
+.dark body.admin-theme .admin-glass-btn, body.admin-theme.dark .admin-glass-btn {
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.08);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body.admin-theme .admin-glass-card, body.admin-theme .admin-glass-btn {
+    background-color: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  body.admin-theme .admin-glass-btn.bg-primary { background-color: hsl(var(--primary)); }
+  body.admin-theme .admin-glass-btn.bg-destructive { background-color: hsl(var(--destructive)); }
+}
 .admin-control {
   touch-action: manipulation;
   transition: background-color 120ms ease-out, border-color 120ms ease-out;
