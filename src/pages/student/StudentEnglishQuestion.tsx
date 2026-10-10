@@ -26,6 +26,7 @@ import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { ShowExplanation } from '@/components/student/ShowExplanation';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -45,6 +46,7 @@ export default function StudentEnglishQuestion() {
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [explanationRevealed, setExplanationRevealed] = useState(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   useEffect(() => {
@@ -159,6 +161,26 @@ export default function StudentEnglishQuestion() {
     },
     enabled: !!student && !!questionId
   });
+
+  // Fetch existing progress (explanation forfeit lives here)
+  const { data: existingProgress } = useQuery({
+    queryKey: ['english-question-progress', questionId, student?.id],
+    queryFn: async () => {
+      if (!student || !questionId) return null;
+      const { data } = await supabase
+        .from('student_progress')
+        .select('explanation_viewed')
+        .eq('student_account_id', student.id)
+        .eq('question_id', questionId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!student && !!questionId
+  });
+
+  useEffect(() => {
+    setShowExplanation(false);
+  }, [questionId]);
 
   useEffect(() => {
     if (existingAttempts?.length) {
