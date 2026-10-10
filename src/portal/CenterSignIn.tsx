@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { phoneDigits } from '@/lib/tenant';
 import { useCenter } from './centerContext';
+import { PasswordInput } from './PasswordInput';
 
 export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithoutAccess: boolean }) {
   const { center, signOut } = useCenter();
@@ -84,7 +85,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
               {stage === 'password' && (
                 <form onSubmit={studentSignIn} className="space-y-4">
                   <div className="space-y-2"><Label htmlFor="cp-pw">Password</Label>
-                    <Input id="cp-pw" type="password" autoComplete="current-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required /></div>
+                    <PasswordInput id="cp-pw" autoComplete="current-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required /></div>
                   <Button className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
                   <Button type="button" variant="ghost" className="w-full" onClick={() => { setStage('phone'); setPassword(''); }}>Use a different number</Button>
                 </form>
@@ -93,9 +94,9 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                 <form onSubmit={createPassword} className="space-y-4">
                   <p className="text-sm text-muted-foreground">First time here — create a password (8+ characters, letters and numbers).</p>
                   <div className="space-y-2"><Label htmlFor="cp-new">New password</Label>
-                    <Input id="cp-new" type="password" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
+                    <PasswordInput id="cp-new" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
                   <div className="space-y-2"><Label htmlFor="cp-confirm">Confirm password</Label>
-                    <Input id="cp-confirm" type="password" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} required /></div>
+                    <PasswordInput id="cp-confirm" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} required /></div>
                   <Button className="w-full" disabled={busy}>{busy ? 'Creating…' : 'Create password'}</Button>
                   <Button type="button" variant="ghost" className="w-full" onClick={() => setStage('phone')}>Back</Button>
                 </form>
@@ -106,7 +107,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                 <div className="space-y-2"><Label htmlFor="cp-email">Email</Label>
                   <Input id="cp-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
                 <div className="space-y-2"><Label htmlFor="cp-spw">Password</Label>
-                  <Input id="cp-spw" type="password" autoComplete="current-password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)} required /></div>
+                  <PasswordInput id="cp-spw" autoComplete="current-password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)} required /></div>
                 <Button className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
               </form>
             </TabsContent>
