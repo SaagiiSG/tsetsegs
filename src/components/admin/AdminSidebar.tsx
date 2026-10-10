@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ import { useIsDevAccount } from "@/lib/devAccount";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
+  const reduceMotion = useReducedMotion();
   const { signOut } = useAuth();
   const isDev = useIsDevAccount();
   const { pathname } = useLocation();
@@ -49,12 +50,13 @@ export function AdminSidebar() {
   }, [pathname]);
 
   return (
+    <MotionConfig reducedMotion="user" transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
     <Sidebar className="border-r" collapsible="icon">
       <SidebarContent className="pt-4 bg-sidebar flex flex-col flex-1 overflow-y-auto">
         {/* Logo and Title */}
         <motion.div 
           className="px-3 pb-4 mb-2"
-          initial={{ opacity: 0, y: -10 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
@@ -63,13 +65,13 @@ export function AdminSidebar() {
               src={flowersLogo}
               alt="Tsetsegs"
               className="w-10 h-10 rounded-lg flex-shrink-0 object-contain"
-              whileHover={{ scale: 1.05, rotate: 2 }}
+              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             />
             <AnimatePresence mode="wait">
               {open && (
                 <motion.div
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
@@ -83,12 +85,12 @@ export function AdminSidebar() {
         </motion.div>
 
         {/* Menu Sections */}
-        {menuSections.map((section, sectionIndex) => (
+        {menuSections.map((section) => (
           <motion.div
             key={section.label}
-            initial={{ opacity: 0, x: -20 }}
+            initial={false}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: sectionIndex * 0.05 }}
+            transition={{ duration: 0.15 }}
           >
             <SidebarGroup className="py-0">
               <Collapsible
@@ -100,7 +102,7 @@ export function AdminSidebar() {
                   <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:bg-muted/50 rounded-md transition-all duration-200">
                     <div className="flex items-center gap-2">
                       <motion.div
-                        whileHover={{ scale: 1.1 }}
+                        whileHover={reduceMotion ? undefined : { scale: 1.03 }}
                         transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       >
                         <section.icon className="h-4 w-4 text-muted-foreground" />
@@ -133,15 +135,15 @@ export function AdminSidebar() {
                     </AnimatePresence>
                   </CollapsibleTrigger>
                 </SidebarGroupLabel>
-                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up motion-reduce:animate-none overflow-hidden">
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {section.items.filter((item) => !item.devOnly || isDev).map((item, itemIndex) => (
+                      {section.items.filter((item) => !item.devOnly || isDev).map((item) => (
                         <motion.div
                           key={item.title}
-                          initial={{ opacity: 0, x: -10 }}
+                          initial={false}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2, delay: itemIndex * 0.03 }}
+                          transition={{ duration: 0.15 }}
                         >
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild tooltip={item.title}>
@@ -150,7 +152,7 @@ export function AdminSidebar() {
                                 aria-label={item.title}
                                 end={item.end}
                                 className={cn(
-                                  "hover:bg-muted/50 transition-all duration-200 group/item relative",
+                                  "admin-control hover:bg-muted/50 group/item relative",
                                   open ? "pl-6" : "justify-center"
                                 )}
                                 activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
@@ -161,7 +163,7 @@ export function AdminSidebar() {
                                   layoutId="activeDot"
                                 />
                                 <motion.div
-                                  whileHover={{ scale: 1.1 }}
+                                  whileHover={reduceMotion ? undefined : { scale: 1.03 }}
                                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                 >
                                   <item.icon className="h-4 w-4 flex-shrink-0 transition-colors group-hover/item:text-primary" />
@@ -198,7 +200,7 @@ export function AdminSidebar() {
           variant="ghost"
           onClick={signOut}
           className={cn(
-            "w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            "admin-control w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
             !open && "justify-center px-0"
           )}
         >
@@ -221,5 +223,6 @@ export function AdminSidebar() {
 
     <SidebarRail />
   </Sidebar>
+  </MotionConfig>
   );
 }
