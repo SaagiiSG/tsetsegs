@@ -151,6 +151,11 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         video_url: editingQuestion.video_url || '',
         alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
+      // Restore an unsaved explanation draft (survives tab/question switches)
+      const draft = localStorage.getItem(`cbform:explanation-draft:${editingQuestion.id}`);
+      if (draft && draft !== (editingQuestion.rationale || '')) {
+        form.setValue('rationale', draft, { shouldDirty: true });
+      }
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
       }

@@ -157,6 +157,11 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         generate_variations: false,
         alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
+      // Restore an unsaved explanation draft (survives tab/question switches)
+      const draft = localStorage.getItem(`qform:explanation-draft:${editingQuestion.id}`);
+      if (draft && draft !== (editingQuestion.rationale || '')) {
+        form.setValue('rationale', draft, { shouldDirty: true });
+      }
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
       }
