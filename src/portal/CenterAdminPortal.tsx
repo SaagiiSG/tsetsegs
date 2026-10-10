@@ -104,7 +104,7 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <SidebarHeader className={cn('gap-0 p-0', collapsed ? 'px-0 py-4' : 'px-4 h-16')}>
+      <SidebarHeader className={cn('gap-0 p-0', collapsed ? 'px-0 py-4' : 'px-4 h-14')}>
         <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
           <CenterLogo center={center} className="h-9 w-9 shrink-0" />
           {!collapsed && (
@@ -116,14 +116,14 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </SidebarHeader>
 
-      <nav aria-label="Center admin" className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-2 py-3 space-y-3">
+      <nav aria-label="Center admin" className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-2 py-2 space-y-1">
         {SECTIONS.map((s) => (
-          <SidebarGroup key={s.title} className="p-0 py-1" style={{ '--section-glow': s.glow } as React.CSSProperties}>
-            <SidebarGroupLabel className="px-2 pb-1 uppercase tracking-wider">
+          <SidebarGroup key={s.title} className="p-0 py-0.5" style={{ '--section-glow': s.glow } as React.CSSProperties}>
+            <SidebarGroupLabel className="h-6 px-2 pb-1 uppercase tracking-wider">
               {s.title}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {s.items.map((i) => {
                   const isActive = activeTo === i.to;
                   const badge = i.to === 'registrations' ? data?.pendingRegistrations : undefined;
@@ -152,10 +152,10 @@ function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
           </SidebarGroup>
         ))}
 
-        <SidebarGroup className="p-0 py-1">
-          <SidebarGroupLabel className="px-2 pb-1 uppercase tracking-wider">Switch</SidebarGroupLabel>
+        <SidebarGroup className="p-0 py-0.5">
+          <SidebarGroupLabel className="h-6 px-2 pb-1 uppercase tracking-wider">Switch</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={SWITCH_ITEM.label}>
                   <NavLink
