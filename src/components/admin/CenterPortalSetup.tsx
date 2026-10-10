@@ -59,7 +59,8 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
         <DialogHeader><DialogTitle>Portal · {customer.name}</DialogTitle><DialogDescription>Separate login and data for this center's admins, teachers and students.</DialogDescription></DialogHeader>
         <div className="space-y-6">
           <section className="space-y-3">
-            <div className="space-y-1"><Label htmlFor="slug">Web address</Label>
+            <h3 className="text-sm font-medium">Step 1 · Web address</h3>
+            <div className="space-y-1"><Label htmlFor="slug">Address</Label>
               <div className="flex items-center gap-1"><Input id="slug" value={slug} onChange={e => setSlug(e.target.value.toLowerCase())} className="font-mono" /><span className="text-sm text-muted-foreground whitespace-nowrap">.flowersos.co</span></div>
               {!valid && <p className="text-xs text-destructive">Lowercase letters, numbers and dashes only.</p>}</div>
             <div className="flex items-center justify-between"><Label htmlFor="portal-on">Portal open</Label><Switch id="portal-on" checked={enabled} onCheckedChange={setEnabled} /></div>
@@ -72,13 +73,17 @@ export function CenterPortalSetup({ customer, onClose, onSaved }: { customer: In
             <p className="text-xs text-muted-foreground">Students enrolled: <span className="font-mono">{counts.data ?? '—'}</span></p>
           </section>
           <section className="space-y-3 border-t pt-4">
-            <h3 className="text-sm font-medium">Center admins & teachers</h3>
-            {members.data?.length === 0 && <p className="text-xs text-muted-foreground">No admins yet. Add the first center admin below.</p>}
-            <ul className="text-sm divide-y">{members.data?.map(m => <li key={m.id} className="py-2 flex justify-between items-center gap-2"><span>{m.display_name} <span className="text-xs text-muted-foreground">{m.email}</span></span><span className="flex items-center gap-2"><span className="text-xs text-muted-foreground">{m.role === 'center_admin' ? 'Admin' : 'Teacher'}{m.active ? '' : ' · off'}</span><Button size="sm" variant="outline" className="h-7 text-xs" disabled={creating} onClick={() => run(async () => { const r = await centerAccounts({ action: 'reset_member_password', institution_id: customer.id, member_id: m.id }); return { email: m.email, temporaryPassword: r.temporaryPassword }; })}>New password</Button></span></li>)}</ul>
-            <form onSubmit={createAdmin} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
-              <div className="space-y-1"><Label htmlFor="ca-name">Name</Label><Input id="ca-name" value={name} onChange={e => setName(e.target.value)} required /></div>
-              <div className="space-y-1"><Label htmlFor="ca-email">Email</Label><Input id="ca-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-              <Button disabled={creating}><Plus className="h-4 w-4" />{creating ? 'Working…' : 'Center admin'}</Button>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">Step 2 · Create the center admin login</h3>
+              <p className="text-xs text-muted-foreground">Check the name and email, then press <span className="font-medium text-foreground">Create login & show password</span>. The password appears right below.</p>
+            </div>
+            {members.data && members.data.length > 0 && <ul className="text-sm divide-y rounded-md border px-3">{members.data.map(m => <li key={m.id} className="py-2 flex justify-between items-center gap-2"><span>{m.display_name} <span className="text-xs text-muted-foreground">{m.email}</span></span><span className="flex items-center gap-2"><span className="text-xs text-muted-foreground">{m.role === 'center_admin' ? 'Admin' : 'Teacher'}{m.active ? '' : ' · off'}</span><Button size="sm" variant="outline" className="h-7 text-xs" disabled={creating} onClick={() => run(async () => { const r = await centerAccounts({ action: 'reset_member_password', institution_id: customer.id, member_id: m.id }); return { email: m.email, temporaryPassword: r.temporaryPassword }; })}>New password</Button></span></li>)}</ul>}
+            <form onSubmit={createAdmin} className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1"><Label htmlFor="ca-name">Admin name</Label><Input id="ca-name" value={name} onChange={e => setName(e.target.value)} required /></div>
+                <div className="space-y-1"><Label htmlFor="ca-email">Admin email</Label><Input id="ca-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+              </div>
+              <Button type="submit" className="w-full" disabled={creating}><Plus className="h-4 w-4" />{creating ? 'Creating…' : 'Create login & show password'}</Button>
             </form>
             <div id="center-account-result" aria-live="polite">
               {accountError && <p role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{accountError}</p>}
