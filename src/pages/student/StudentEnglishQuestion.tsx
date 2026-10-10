@@ -198,8 +198,29 @@ export default function StudentEnglishQuestion() {
       setSelectedAnswer(null);
     }
     setStartTime(Date.now());
-    setShowExplanation(false);
   }, [questionId, existingAttempts]);
+
+  // Explanation forfeit: true once recorded server-side or revealed this session.
+  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+
+  const handleRevealExplanation = () => {
+    setExplanationRevealed(true);
+    setShowExplanation(true);
+    logActivity('explanation_viewed', { question_id: questionId });
+    if (student && questionId && !existingProgress?.explanation_viewed) {
+      supabase
+        .from('student_progress')
+        .upsert({
+          student_account_id: student.id,
+          question_id: questionId,
+          explanation_viewed: true,
+          explanation_viewed_at: new Date().toISOString(),
+        } as any, { onConflict: 'student_account_id,question_id' })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['english-question-progress', questionId, student.id] });
+        });
+    }
+  };
 
   const submitMutation = useMutation({
     mutationFn: async ({ answer, questionId }: { answer: string; questionId: string }) => {
@@ -241,10 +262,10 @@ export default function StudentEnglishQuestion() {
         attempt_number: attemptNumber
       });
 
-      // Award points for correct answers
+      // Award points for correct answers — viewing the explanation forfeits them
       let enrollmentSnapshot: SprintEnrollmentSnapshot | null = null;
       let pointsAwarded = 0;
-      if (correct) {
+      if (correct && !explanationForfeited) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         pointsAwarded = points;
 
