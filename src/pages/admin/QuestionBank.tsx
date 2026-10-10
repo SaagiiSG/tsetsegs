@@ -177,6 +177,27 @@ export default function QuestionBank() {
     }
   };
 
+  // Deep-link support: /admin/questions?edit=CB0067 opens that question's editor
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (!editId) return;
+    setSearchParams({}, { replace: true });
+    (async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('question_id', editId)
+        .maybeSingle();
+      if (error || !data) {
+        toast({ title: 'Question not found', description: editId, variant: 'destructive' });
+        return;
+      }
+      handleEdit(data);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const handleFormClose = (open: boolean) => {
     setFormOpen(open);
     if (!open) {
