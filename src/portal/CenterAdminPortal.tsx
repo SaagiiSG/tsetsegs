@@ -6,6 +6,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarHeader, SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem,
+  SidebarProvider, SidebarTrigger, useSidebar,
+} from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { useCenterAdminData } from './admin/useCenterAdminData';
 import { DarkModeSetting } from './admin/CenterPages';
@@ -15,7 +22,7 @@ import { StudentsPage, StudentDetailPage, RegistrationsPage } from './admin/Stud
 import { QuestionsPage, SprintsPage, AnnouncementsPage } from './admin/ToolPages';
 import { TeamPage, SettingsPage } from './admin/CenterPages';
 
-type Item = { to: string; label: string; icon: typeof LayoutDashboard; badge?: number };
+type Item = { to: string; label: string; icon: typeof LayoutDashboard };
 type Section = { title: string; glow: string; items: Item[] };
 
 /** Section glow hues mirror the main admin workspace. */
@@ -44,12 +51,19 @@ const SECTIONS: Section[] = [
   ] },
 ];
 
+const SWITCH_ITEM = { to: '/teacher', label: 'Teacher view', icon: ExternalLink };
+
 const DEFAULT_GLOW = '345 75% 55%';
+
+/** Route path relative to the portal root, e.g. "students/abc". */
+function relativePath(pathname: string) {
+  return pathname.replace(/^\/admin\/?/, '');
+}
 
 /** Resolves the current route's section glow and page label so page chrome can match it. */
 function useCenterSection(): { glow: string; label: string } {
   const { pathname } = useLocation();
-  const rel = pathname.replace(/^\/admin\/?/, '');
+  const rel = relativePath(pathname);
   const section = SECTIONS.find((s) =>
     s.items.some((i) => rel === i.to || rel.startsWith(`${i.to}/`))
   );
@@ -59,42 +73,123 @@ function useCenterSection(): { glow: string; label: string } {
   return { glow: section?.glow ?? DEFAULT_GLOW, label: item?.label ?? 'Dashboard' };
 }
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+/**
+ * The navigation list, shared by the collapsible desktop sidebar and the
+ * mobile drawer. Built on the same sidebar primitives as the main admin so
+ * collapsed icons, tooltips and glass hover states behave identically.
+ */
+function CenterNavList({ onNavigate }: { onNavigate?: () => void }) {
   const { center, name, signOut } = useCenter();
+  const { state } = useSidebar();
+  const isMobile = useIsMobile();
+  // The mobile drawer always shows full labels, even if the desktop bar is collapsed.
+  const collapsed = state === 'collapsed' && !isMobile;
   const { data } = useCenterAdminData();
-  const badgeFor = (to: string) => (to === 'registrations' ? data?.pendingRegistrations : undefined);
+  const { pathname } = useLocation();
+  const rel = relativePath(pathname);
+
+  // Longest match wins, so "Create Batch" doesn't light up "All Batches" too.
+  const activeTo = SECTIONS.flatMap((s) => s.items)
+    .filter((i) => rel === i.to || rel.startsWith(`${i.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0]?.to;
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-4 h-16">
-        <CenterLogo center={center} className="h-9 w-9" />
-        <div className="min-w-0"><p className="font-chillax font-semibold truncate leading-tight">{centerDisplayName(center)}</p><p className="text-xs text-muted-foreground">Center admin</p></div>
-      </div>
-      <nav aria-label="Center admin" className="flex-1 overflow-y-auto scrollbar-hide px-2 py-3 space-y-4">
-        {SECTIONS.map(s => (
-          <div key={s.title} style={{ '--section-glow': s.glow } as React.CSSProperties}>
-            <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{s.title}</p>
-            <ul className="space-y-0.5">{s.items.map(i => {
-              const badge = badgeFor(i.to);
-              return (
-              <li key={i.to}><NavLink to={`/admin/${i.to}`} end onClick={onNavigate}
-                className={({ isActive }) => `admin-control admin-glass-item admin-section-item flex items-center gap-2.5 rounded-lg px-2 h-8 text-sm transition-colors ${isActive ? 'admin-section-active text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'}`}>
-                <i.icon className="h-4 w-4 shrink-0" /><span className="flex-1 truncate">{i.label}</span>
-                {!!badge && <span className="rounded-full bg-primary text-primary-foreground px-1.5 text-[11px] font-mono">{badge}</span>}
-              </NavLink></li>
-              );
-            })}</ul>
-          </div>
-        ))}
-        <div>
-          <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Switch</p>
-          <NavLink to="/teacher" onClick={onNavigate} className="admin-control admin-glass-item flex items-center gap-2.5 rounded-lg px-2 h-8 text-sm text-muted-foreground hover:text-foreground"><ExternalLink className="h-4 w-4" />Teacher view</NavLink>
+    <>
+      <SidebarHeader className={cn('gap-0 p-0', collapsed ? 'px-0 py-4' : 'px-4 h-16')}>
+        <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
+          <CenterLogo center={center} className="h-9 w-9 shrink-0" />
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="font-chillax font-semibold truncate leading-tight">{centerDisplayName(center)}</p>
+              <p className="text-xs text-muted-foreground">Center admin</p>
+            </div>
+          )}
         </div>
+      </SidebarHeader>
+
+      <nav aria-label="Center admin" className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-2 py-3 space-y-3">
+        {SECTIONS.map((s) => (
+          <SidebarGroup key={s.title} className="p-0 py-1" style={{ '--section-glow': s.glow } as React.CSSProperties}>
+            <SidebarGroupLabel className="px-2 pb-1 uppercase tracking-wider">
+              {s.title}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {s.items.map((i) => {
+                  const isActive = activeTo === i.to;
+                  const badge = i.to === 'registrations' ? data?.pendingRegistrations : undefined;
+                  return (
+                    <SidebarMenuItem key={i.to}>
+                      <SidebarMenuButton asChild tooltip={i.label} isActive={isActive}>
+                        <NavLink
+                          to={`/admin/${i.to}`}
+                          onClick={onNavigate}
+                          aria-label={i.label}
+                          className={cn(
+                            'admin-control admin-glass-item admin-section-item rounded-lg',
+                            isActive ? 'admin-section-active text-foreground font-medium' : 'text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          <i.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{i.label}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                      {!!badge && <SidebarMenuBadge className="font-mono">{badge}</SidebarMenuBadge>}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+
+        <SidebarGroup className="p-0 py-1">
+          <SidebarGroupLabel className="px-2 pb-1 uppercase tracking-wider">Switch</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={SWITCH_ITEM.label}>
+                  <NavLink
+                    to={SWITCH_ITEM.to}
+                    onClick={onNavigate}
+                    aria-label={SWITCH_ITEM.label}
+                    className="admin-control admin-glass-item rounded-lg text-muted-foreground hover:text-foreground"
+                  >
+                    <SWITCH_ITEM.icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{SWITCH_ITEM.label}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </nav>
-      <div className="border-t border-border/50 p-3 flex items-center gap-2">
-        <span className="flex-1 truncate text-sm text-muted-foreground">{name}</span>
-        <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="h-4 w-4" />Sign out</Button>
-      </div>
-    </div>
+
+      <SidebarFooter className="border-t border-border/50 gap-1">
+        {!collapsed && <p className="px-2 pt-1 truncate text-sm text-muted-foreground">{name}</p>}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={signOut}
+          aria-label="Sign out"
+          className={cn('admin-control w-full justify-start gap-2', collapsed && 'justify-center px-0')}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="truncate text-sm font-medium">Sign out</span>}
+        </Button>
+      </SidebarFooter>
+    </>
+  );
+}
+
+/** Desktop sidebar: a floating glass card that collapses to an icon strip. */
+function CenterSidebar() {
+  const isMobile = useIsMobile();
+  if (isMobile) return null;
+  return (
+    <Sidebar className="admin-sidebar-float" variant="floating" collapsible="icon">
+      <CenterNavList />
+    </Sidebar>
   );
 }
 
@@ -111,55 +206,65 @@ export default function CenterAdminPortal() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
-      <aside className="hidden lg:block sticky top-3 h-[calc(100vh-1.5rem)] ml-3 rounded-2xl overflow-hidden admin-glass shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.22)]"><Sidebar /></aside>
-      <div className="flex min-w-0 flex-col lg:pl-3">
-      <header
-        className="lg:hidden sticky top-0 z-20 h-14 flex items-center gap-3 px-3 admin-glass-bar"
-        style={{ '--section-glow': section.glow } as React.CSSProperties}
-      >
-        <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
-        <CenterLogo center={center} className="h-7 w-7" />
-        <span className="font-chillax font-semibold truncate">{centerDisplayName(center)}</span>
-        <div className="ml-auto"><DarkModeSetting compact /></div>
-      </header>
-      {/* Desktop glass top bar: same material, section glow and rounded leading
-          corner as the main admin workspace. */}
-      <header
-        className="admin-glass-bar admin-glass-bar--page hidden lg:flex h-14 items-center gap-3 px-4 sticky top-0 z-10"
-        style={{ '--section-glow': section.glow } as React.CSSProperties}
-      >
-        <CenterLogo center={center} className="h-6 w-6" />
-        <span className="text-sm text-muted-foreground">{section.label}</span>
-        <div className="ml-auto"><DarkModeSetting compact /></div>
-      </header>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="p-0 w-72"><SheetTitle className="sr-only">Menu</SheetTitle><Sidebar onNavigate={() => setOpen(false)} /></SheetContent>
-      </Sheet>
-      <main
-        key={pathname}
-        className="admin-glow-scope admin-main-glow min-w-0 px-4 py-6 lg:px-10 lg:py-8 max-w-6xl"
-        style={{ '--section-glow': section.glow } as React.CSSProperties}
-      >
-        <Routes>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="class-overview" element={<ClassOverviewPage />} />
-          <Route path="batches" element={<BatchesPage />} />
-          <Route path="batches/new" element={<CreateBatchPage />} />
-          <Route path="students" element={<StudentsPage />} />
-          <Route path="students/:studentId" element={<StudentDetailPage />} />
-          <Route path="registrations" element={<RegistrationsPage />} />
-          <Route path="questions" element={<QuestionsPage />} />
-          <Route path="sprints" element={<SprintsPage />} />
-          <Route path="announcements" element={<AnnouncementsPage />} />
-          <Route path="team" element={<TeamPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="dashboard" replace />} />
-        </Routes>
-      </main>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background text-foreground">
+        <CenterSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header
+            className="md:hidden sticky top-0 z-20 h-14 flex items-center gap-3 px-3 admin-glass-bar"
+            style={{ '--section-glow': section.glow } as React.CSSProperties}
+          >
+            <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
+            <CenterLogo center={center} className="h-7 w-7" />
+            <span className="font-chillax font-semibold truncate">{centerDisplayName(center)}</span>
+            <div className="ml-auto"><DarkModeSetting compact /></div>
+          </header>
+          {/* Desktop glass top bar: same material, section glow and rounded leading
+              corner as the main admin workspace. */}
+          <header
+            className="admin-glass-bar admin-glass-bar--page hidden md:flex h-14 items-center gap-3 px-4 sticky top-0 z-10"
+            style={{ '--section-glow': section.glow } as React.CSSProperties}
+          >
+            <SidebarTrigger aria-label="Toggle sidebar" />
+            <CenterLogo center={center} className="h-6 w-6" />
+            <span className="text-sm text-muted-foreground">{section.label}</span>
+            <div className="ml-auto"><DarkModeSetting compact /></div>
+          </header>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetContent side="left" className="p-0 w-72">
+              <SheetTitle className="sr-only">Menu</SheetTitle>
+              <SidebarProvider className="min-h-0 w-full">
+                <div className="flex h-full min-h-0 w-full flex-col">
+                  <CenterNavList onNavigate={() => setOpen(false)} />
+                </div>
+              </SidebarProvider>
+            </SheetContent>
+          </Sheet>
+          <main
+            key={pathname}
+            className="admin-glow-scope admin-main-glow min-w-0 px-4 py-6 md:px-10 md:py-8 max-w-6xl"
+            style={{ '--section-glow': section.glow } as React.CSSProperties}
+          >
+            <Routes>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="class-overview" element={<ClassOverviewPage />} />
+              <Route path="batches" element={<BatchesPage />} />
+              <Route path="batches/new" element={<CreateBatchPage />} />
+              <Route path="students" element={<StudentsPage />} />
+              <Route path="students/:studentId" element={<StudentDetailPage />} />
+              <Route path="registrations" element={<RegistrationsPage />} />
+              <Route path="questions" element={<QuestionsPage />} />
+              <Route path="sprints" element={<SprintsPage />} />
+              <Route path="announcements" element={<AnnouncementsPage />} />
+              <Route path="team" element={<TeamPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
