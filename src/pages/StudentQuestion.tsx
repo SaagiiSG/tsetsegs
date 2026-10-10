@@ -362,6 +362,7 @@ export default function StudentQuestion() {
     // If the explanation was opened in a previous session, keep the forfeit and re-show it.
     if (existingProgress?.explanation_viewed) {
       setExplanationRevealed(true);
+      setExplanationOpened(true);
     }
   }, [existingProgress]);
 
@@ -383,10 +384,15 @@ export default function StudentQuestion() {
   }, [currentVariationIndex, currentQuestion?.id, existingAttempts]);
 
   // Explanation forfeit: true once recorded server-side or revealed this session.
-  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+  const explanationForfeited = explanationOpened || !!existingProgress?.explanation_viewed;
+
+  // Hiding only clears the panel — the forfeit stays recorded, so points can't
+  // be reclaimed by closing the explanation before answering.
+  const handleHideExplanation = () => setExplanationRevealed(false);
 
   const handleRevealExplanation = () => {
     setExplanationRevealed(true);
+    setExplanationOpened(true);
     logActivity('explanation_viewed', { question_id: questionId });
     if (student && questionId && !existingProgress?.explanation_viewed) {
       supabase
@@ -1083,6 +1089,7 @@ export default function StudentQuestion() {
                     explanation={(currentQuestion as any).rationale}
                     revealed={explanationRevealed}
                     onReveal={handleRevealExplanation}
+                    onHide={handleHideExplanation}
                     forfeitApplies={!(submitted && isCorrect)}
                     forfeited={explanationForfeited}
                     inlineCard={false}
