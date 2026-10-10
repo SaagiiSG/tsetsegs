@@ -514,7 +514,7 @@ export default function StudentEnglishQuestion() {
 
         <main className={cn(
           "container mx-auto px-4 py-6 max-w-3xl space-y-6",
-          question.rationale && (submitted || explanationRevealed) && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+          explanationVisible && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
         )}>
           <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
@@ -630,9 +630,10 @@ export default function StudentEnglishQuestion() {
               {/* Explanation — available anytime; opening it forfeits remaining points */}
               <ShowExplanation
                 explanation={question.rationale}
-                revealed={explanationRevealed}
+                revealed={explanationVisible}
                 onReveal={handleRevealExplanation}
-                forfeitApplies={!isCorrect}
+                onHide={handleHideExplanation}
+                forfeitApplies={!isCorrect && !explanationRevealed && !submitted}
                 forfeited={explanationForfeited}
                 inlineCard={false}
               />
@@ -642,9 +643,9 @@ export default function StudentEnglishQuestion() {
 
           {/* Explanation — left column on desktop, below the question on mobile.
               Shows after submit, or earlier once the student opens it themselves. */}
-          {question.rationale && (explanationRevealed || submitted) && (
+          {explanationVisible && (
             <div className="order-2 lg:order-1 lg:sticky lg:top-20">
-            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationRevealed}>
+            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationVisible}>
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
