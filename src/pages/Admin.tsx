@@ -37,6 +37,7 @@ import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DevOnlyRoute } from '@/components/admin/DevOnlyRoute';
 import { MobileAdminShell } from '@/components/admin/mobile/MobileAdminShell';
+import { useSectionGlow } from '@/components/admin/pageGlow';
 
 const Admin = () => {
   const [isTeacher, setIsTeacher] = useState(false);
