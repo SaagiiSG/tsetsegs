@@ -129,7 +129,18 @@ export function StepExplanationEditor({ value, onChange }: Props) {
             {k.label}
           </Button>
         ))}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="ml-auto h-7 gap-1 px-2 text-xs"
+          onClick={toggleCalculator}
+          title="Open the graphing calculator — drag it to either screen edge to snap it, then screenshot your graph and paste it into a step"
+        >
+          <Calculator className="h-3.5 w-3.5" /> Calculator
+        </Button>
       </div>
+      <DesmosCalculator />
 
       {blocks.map((b, i) => {
         const num = b.kind === 'step' ? ++stepNo : null;
