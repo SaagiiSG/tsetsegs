@@ -19,7 +19,7 @@ import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { QuestionNavigatorDialog, toggleQuestionMark, useMarkedQuestions } from '@/components/student/QuestionNavigatorDialog';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
-import { isAcceptedFillBlankAnswer } from '@/lib/utils';
+import { isAcceptedFillBlankAnswer, cn } from '@/lib/utils';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
