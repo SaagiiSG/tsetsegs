@@ -16,6 +16,11 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.body.classList.add('admin-theme');
+    return () => document.body.classList.remove('admin-theme');
+  }, []);
+
+  useEffect(() => {
     supabase.rpc('tenant_lookup', { _slug: slug }).then(({ data }) => setCenter(data?.[0] ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
