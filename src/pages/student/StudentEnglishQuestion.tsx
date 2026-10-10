@@ -580,11 +580,14 @@ export default function StudentEnglishQuestion() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <ExplanationView text={question.rationale} />
+                    <ScrollArea className="lg:max-h-[calc(100vh-11rem)] lg:pr-3">
+                      <ExplanationView text={question.rationale} />
+                    </ScrollArea>
                   </CardContent>
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+            </div>
           )}
         </main>
 
