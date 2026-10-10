@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
-import { Copy, KeyRound, Plus, Upload, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Copy, KeyRound, Moon, Plus, Sun, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { centerPortalUrl } from '@/lib/tenant';
