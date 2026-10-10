@@ -112,13 +112,23 @@ export default function CenterAdminPortal() {
   return (
     <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
       <aside className="hidden lg:block sticky top-3 h-[calc(100vh-1.5rem)] ml-3 rounded-2xl overflow-hidden admin-glass shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.22)]"><Sidebar /></aside>
+      <div className="flex min-w-0 flex-col lg:pl-3">
       <header
         className="lg:hidden sticky top-0 z-20 h-14 flex items-center gap-3 px-3 admin-glass-bar"
-        style={{ '--section-glow': sectionGlow } as React.CSSProperties}
+        style={{ '--section-glow': section.glow } as React.CSSProperties}
       >
         <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
         <CenterLogo center={center} className="h-7 w-7" />
         <span className="font-chillax font-semibold truncate">{centerDisplayName(center)}</span>
+      </header>
+      {/* Desktop glass top bar: same material, section glow and rounded leading
+          corner as the main admin workspace. */}
+      <header
+        className="admin-glass-bar admin-glass-bar--page hidden lg:flex h-14 items-center gap-3 px-4 sticky top-0 z-10"
+        style={{ '--section-glow': section.glow } as React.CSSProperties}
+      >
+        <CenterLogo center={center} className="h-6 w-6" />
+        <span className="text-sm text-muted-foreground">{section.label}</span>
       </header>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0 w-72"><SheetTitle className="sr-only">Menu</SheetTitle><Sidebar onNavigate={() => setOpen(false)} /></SheetContent>
@@ -126,7 +136,7 @@ export default function CenterAdminPortal() {
       <main
         key={pathname}
         className="admin-glow-scope admin-main-glow min-w-0 px-4 py-6 lg:px-10 lg:py-8 max-w-6xl"
-        style={{ '--section-glow': sectionGlow } as React.CSSProperties}
+        style={{ '--section-glow': section.glow } as React.CSSProperties}
       >
         <Routes>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -146,6 +156,7 @@ export default function CenterAdminPortal() {
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>
+      </div>
     </div>
   );
 }
