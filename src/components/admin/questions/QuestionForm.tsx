@@ -119,7 +119,6 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       option_d: '',
       video_url: '',
       rationale: '',
-      rationale: '',
       generate_variations: false,
       manual_variations: [],
       alternate_answers: [],
