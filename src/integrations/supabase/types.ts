@@ -1741,6 +1741,8 @@ export type Database = {
           name: string
           next_check_in: string | null
           notes: string
+          portal_enabled: boolean
+          slug: string | null
           status: string
           updated_at: string
         }
@@ -1756,6 +1758,8 @@ export type Database = {
           name: string
           next_check_in?: string | null
           notes?: string
+          portal_enabled?: boolean
+          slug?: string | null
           status?: string
           updated_at?: string
         }
@@ -1771,6 +1775,8 @@ export type Database = {
           name?: string
           next_check_in?: string | null
           notes?: string
+          portal_enabled?: boolean
+          slug?: string | null
           status?: string
           updated_at?: string
         }
@@ -4541,6 +4547,241 @@ export type Database = {
           },
         ]
       }
+      tenant_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          is_correct: boolean
+          question_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          is_correct: boolean
+          question_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          is_correct?: boolean
+          question_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_attempts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_attendance: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          institution_id: string
+          session_date: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          institution_id: string
+          session_date: string
+          status: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          institution_id?: string
+          session_date?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_attendance_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_classes: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          name: string
+          schedule: string
+          starts_on: string | null
+          teacher_member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          name: string
+          schedule?: string
+          starts_on?: string | null
+          teacher_member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          schedule?: string
+          starts_on?: string | null
+          teacher_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_classes_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_classes_teacher_member_id_fkey"
+            columns: ["teacher_member_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_members: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          institution_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          institution_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          institution_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_students: {
+        Row: {
+          active: boolean
+          class_id: string | null
+          created_at: string
+          id: string
+          institution_id: string
+          name: string
+          phone: string
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          institution_id: string
+          name: string
+          phone: string
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          phone?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_students_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -5109,6 +5350,20 @@ export type Database = {
         Args: { phone: string; student_id: string }
         Returns: boolean
       }
+      tenant_has_role: {
+        Args: { _institution: string; _role: string }
+        Returns: boolean
+      }
+      tenant_lookup: {
+        Args: { _slug: string }
+        Returns: {
+          country: string
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
+      tenant_my_student_id: { Args: { _institution: string }; Returns: string }
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
