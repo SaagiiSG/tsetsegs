@@ -563,9 +563,11 @@ export default function StudentEnglishQuestion() {
               )}
             </CardContent>
           </Card>
+          </div>
 
-          {/* Explanation */}
+          {/* Explanation — left column on desktop, below the question on mobile */}
           {submitted && question.rationale && (
+            <div className="order-2 lg:order-1 lg:sticky lg:top-20">
             <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
               <Card>
                 <CollapsibleTrigger asChild>
