@@ -1160,6 +1160,22 @@ export default function StudentQuestion() {
               </Collapsible>
             </>
           )}
+          </div>
+
+          {/* Explanation — right column on desktop, sticky with its own scroll */}
+          {explanationRevealed && (currentQuestion as any)?.rationale && (
+            <Card className="hidden lg:block lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Explanation</CardTitle>
+                {explanationForfeited && !(submitted && isCorrect) && (
+                  <p className="text-xs text-muted-foreground">Explanation opened — this question no longer awards points.</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <ExplanationView text={(currentQuestion as any).rationale} />
+              </CardContent>
+            </Card>
+          )}
         </main>
 
         {/* Flag Dialog */}
