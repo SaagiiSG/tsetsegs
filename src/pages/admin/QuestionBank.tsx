@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -741,7 +742,7 @@ export default function QuestionBank() {
                     {previewQuestion.rationale && (
                       <div className="bg-muted/50 p-3 rounded text-sm mt-2">
                         <p className="font-medium mb-1">Rationale:</p>
-                        <MathText text={previewQuestion.rationale} />
+                        <ExplanationView text={previewQuestion.rationale} />
                       </div>
                     )}
                   </div>

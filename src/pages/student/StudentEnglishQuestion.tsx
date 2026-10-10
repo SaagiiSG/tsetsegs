@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -573,9 +574,7 @@ export default function StudentEnglishQuestion() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {question.rationale}
-                    </p>
+                    <ExplanationView text={question.rationale} />
                   </CardContent>
                 </CollapsibleContent>
               </Card>

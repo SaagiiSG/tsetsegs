@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MathText } from '@/components/MathText';
@@ -186,7 +187,7 @@ export function ProctorReview({ rows, onBack }: Props) {
           {showAnswers && row.rationale && (
             <div className="rounded-lg bg-muted/40 p-3 text-sm leading-relaxed">
               <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Explanation</div>
-              <MathText text={row.rationale} />
+              <ExplanationView text={row.rationale} />
             </div>
           )}
 

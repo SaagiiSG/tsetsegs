@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -152,7 +153,7 @@ function QuestionPreviewDialog({
               {question.rationale && (
                 <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
                   <p className="text-xs font-medium text-blue-400 mb-2 uppercase tracking-wide">Rationale</p>
-                  <MathText text={question.rationale} className="text-sm text-muted-foreground" />
+                  <ExplanationView text={question.rationale} />
                 </div>
               )}
             </div>

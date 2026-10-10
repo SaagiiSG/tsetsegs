@@ -1,3 +1,4 @@
+import { StepExplanationEditor } from '@/components/explanation/StepExplanationEditor';
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,6 +39,7 @@ const questionSchema = z.object({
   option_c: z.string().optional(),
   option_d: z.string().optional(),
   video_url: z.string().optional(),
+  rationale: z.string().optional(),
   generate_variations: z.boolean().default(false),
   manual_variations: z.array(variationSchema).default([]),
   alternate_answers: z.array(z.object({ value: z.string() })).default([]),
@@ -116,6 +118,8 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       option_c: '',
       option_d: '',
       video_url: '',
+      rationale: '',
+      rationale: '',
       generate_variations: false,
       manual_variations: [],
       alternate_answers: [],
@@ -150,6 +154,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         option_c: options.C || '',
         option_d: options.D || '',
         video_url: editingQuestion.video_url || '',
+        rationale: editingQuestion.rationale || '',
         generate_variations: false,
         alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
@@ -232,6 +237,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         answer: data.answer,
         question_image_url: imageUrl,
         video_url: data.video_url || null,
+        rationale: data.rationale?.trim() ? data.rationale : null,
         multiple_choice_options: data.question_type === 'multiple_choice' 
           ? { A: data.option_a, B: data.option_b, C: data.option_c, D: data.option_d }
           : null,
@@ -795,6 +801,21 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
                 )}
               </div>
             )}
+
+            {/* Step-by-step explanation */}
+            <FormField
+              control={form.control}
+              name="rationale"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Step-by-step explanation (optional)</FormLabel>
+                  <FormControl>
+                    <StepExplanationEditor value={field.value || ''} onChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* YouTube Video URL */}
             <FormField
