@@ -47,6 +47,11 @@ export default function StudentEnglishQuestion() {
   const [flagReason, setFlagReason] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanationRevealed, setExplanationRevealed] = useState(false);
+  // Stays true once the explanation has been opened, even after hiding it again —
+  // so the points forfeit can't be undone by closing the panel before answering.
+  const [explanationOpened, setExplanationOpened] = useState(false);
+  // True when the student deliberately closed the explanation panel.
+  const [explanationDismissed, setExplanationDismissed] = useState(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   useEffect(() => {
@@ -180,6 +185,9 @@ export default function StudentEnglishQuestion() {
 
   useEffect(() => {
     setShowExplanation(false);
+    setExplanationRevealed(false);
+    setExplanationOpened(false);
+    setExplanationDismissed(false);
   }, [questionId]);
 
   useEffect(() => {
@@ -201,10 +209,24 @@ export default function StudentEnglishQuestion() {
   }, [questionId, existingAttempts]);
 
   // Explanation forfeit: true once recorded server-side or revealed this session.
-  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+  const explanationForfeited = explanationOpened || !!existingProgress?.explanation_viewed;
+
+  // Whether the explanation panel is on screen right now: opened by the student,
+  // or shown automatically after submitting — unless they have hidden it again.
+  const explanationVisible = !!question?.rationale && (explanationRevealed || submitted) && !explanationDismissed;
+
+  // Hiding only clears the panel — the forfeit stays recorded, so points can't
+  // be reclaimed by closing the explanation before answering.
+  const handleHideExplanation = () => {
+    setExplanationRevealed(false);
+    setExplanationDismissed(true);
+    setShowExplanation(false);
+  };
 
   const handleRevealExplanation = () => {
     setExplanationRevealed(true);
+    setExplanationOpened(true);
+    setExplanationDismissed(false);
     setShowExplanation(true);
     logActivity('explanation_viewed', { question_id: questionId });
     if (student && questionId && !existingProgress?.explanation_viewed) {
