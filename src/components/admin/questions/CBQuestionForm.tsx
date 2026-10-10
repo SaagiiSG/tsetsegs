@@ -162,7 +162,10 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
     } else if (nextQuestionId) {
       form.setValue('question_id', nextQuestionId);
     }
-  }, [editingQuestion, nextQuestionId, form]);
+    // Only reload when a different question (or a fresh open) arrives — background
+    // refetches (e.g. returning from Desmos) must not wipe unsaved typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingQuestion?.id, editingQuestion?.updated_at, open, nextQuestionId, form]);
 
   // Upload image
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -415,7 +418,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
           {/* Left Side - Form */}
           <ScrollArea className="flex-1 px-6 border-r">
             <Form {...form}>
-              <form id="cb-question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4 py-4">
+              <form id="cb-question-form" onSubmit={form.handleSubmit((data) => saveMutation.mutate(data), (errs) => toast({ title: "Not saved — please fix the form", description: Object.entries(errs).map(([k, v]: any) => `${k}: ${v?.message || "invalid"}`).join(", "), variant: "destructive" }))} className="space-y-4 py-4">
                 {/* ID Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
