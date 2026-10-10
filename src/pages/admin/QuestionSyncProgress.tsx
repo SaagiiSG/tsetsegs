@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Database, CheckCircle2, ImageOff, PencilLine } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 
 type Change = {
   question_id: string;
@@ -38,6 +39,31 @@ export default function QuestionSyncProgress() {
   const [result, setResult] = useState<Agg>(EMPTY);
   const [applied, setApplied] = useState(0);
   const [days, setDays] = useState(1);
+
+  // Inline editing — same editors the Question Bank uses, opened here
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [cbFormOpen, setCbFormOpen] = useState(false);
+
+  const openEditor = async (questionId: string) => {
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('question_id', questionId)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ title: 'Question not found', description: questionId, variant: 'destructive' });
+      return;
+    }
+    if (data.question_set === 'CollegeBoard') {
+      setEditingCBQuestion(data);
+      setCbFormOpen(true);
+    } else {
+      setEditingQuestion(data);
+      setFormOpen(true);
+    }
+  };
 
   const run = async (dryRun: boolean) => {
     setRunning(true);
