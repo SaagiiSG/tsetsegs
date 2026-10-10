@@ -51,7 +51,10 @@ export function MobileAdminShell({ children }: MobileAdminShellProps) {
       </header>
 
       {/* Content */}
-      <main className="px-3 py-3 pb-24">{children}</main>
+      <main
+        className="admin-main-glow px-3 py-3 pb-24"
+        style={{ "--section-glow": sectionGlow } as React.CSSProperties}
+      >{children}</main>
 
       {/* Bottom nav */}
       <MobileBottomNav
