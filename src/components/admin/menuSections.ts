@@ -58,6 +58,7 @@ export const menuSections: MenuSection[] = [
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
       { title: "Search Questions", url: "/admin/question-search", icon: Search },
       { title: "Concept Videos", url: "/admin/concept-videos", icon: Clapperboard },
+      { title: "External DB Update", url: "/admin/question-sync", icon: RefreshCw },
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },
