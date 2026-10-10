@@ -91,6 +91,8 @@ export function AdminSidebar() {
             initial={false}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.15 }}
+            className="admin-section-glow"
+            style={{ "--section-glow": section.glow } as React.CSSProperties}
           >
             <SidebarGroup className="py-0">
               <Collapsible
@@ -152,10 +154,10 @@ export function AdminSidebar() {
                                 aria-label={item.title}
                                 end={item.end}
                                 className={cn(
-                                  "admin-control admin-glass-item group/item relative",
+                                  "admin-control admin-glass-item admin-section-item group/item relative",
                                   open ? "pl-6" : "justify-center"
                                 )}
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
+                                activeClassName="admin-section-active text-sidebar-accent-foreground font-medium [&_.active-dot]:opacity-100 [&_.active-dot]:scale-100"
                               >
                                 {/* Active indicator dot */}
                                 <motion.span 
