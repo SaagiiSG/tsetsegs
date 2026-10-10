@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowUp, Calculator, ImagePlus, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react';
 import { ExplanationBlock, parseExplanation, serializeExplanation } from '@/lib/explanationFormat';
 import { ExplanationView } from './ExplanationView';
@@ -40,27 +41,47 @@ export function StepExplanationEditor({ value, onChange }: Props) {
     return p.length ? p : [blank()];
   });
   const [uploading, setUploading] = useState<number | null>(null);
+  // Which step a picture is currently hovering over, so the card can light up.
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
   const areas = useRef<Record<number, HTMLTextAreaElement | null>>({});
   const lastFocus = useRef(0);
   const lastEmitted = useRef(value);
+  const blocksRef = useRef(blocks);
+  const dragDepth = useRef<Record<number, number>>({});
 
   // Re-sync when the form loads a different question.
   useEffect(() => {
     if (value !== lastEmitted.current) {
       const p = parseExplanation(value);
-      setBlocks(p.length ? p : [blank()]);
+      const next = p.length ? p : [blank()];
+      blocksRef.current = next;
+      setBlocks(next);
       lastEmitted.current = value;
     }
   }, [value]);
 
-  const commit = (next: ExplanationBlock[]) => {
-    setBlocks(next);
-    const s = serializeExplanation(next);
+  const commit = (next: ExplanationBlock[] | ((prev: ExplanationBlock[]) => ExplanationBlock[])) => {
+    const resolved = typeof next === 'function' ? next(blocksRef.current) : next;
+    blocksRef.current = resolved;
+    setBlocks(resolved);
+    const s = serializeExplanation(resolved);
     lastEmitted.current = s;
     onChange(s);
   };
   const update = (i: number, patch: Partial<ExplanationBlock>) =>
-    commit(blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)));
+    commit((prev) => prev.map((b, j) => (j === i ? { ...b, ...patch } : b)));
+
+  /** Adds a picture to a step: at the cursor when known, otherwise at the end. */
+  const addPicture = (i: number, url: string, at: number | null) =>
+    commit((prev) =>
+      prev.map((b, j) => {
+        if (j !== i) return b;
+        const pos = at ?? b.body.length;
+        const before = b.body.slice(0, pos);
+        const line = `${before && !before.endsWith('\n') ? '\n' : ''}![](${url})\n`;
+        return { ...b, body: before + line + b.body.slice(pos) };
+      })
+    );
 
   const insertAt = (i: number, text: string, caret?: number) => {
     const el = areas.current[i];
