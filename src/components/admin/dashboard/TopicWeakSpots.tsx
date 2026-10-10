@@ -10,12 +10,6 @@ interface TopicWeakSpotsProps {
   data: TopicAccuracy[];
 }
 
-function getAccuracyColor(accuracy: number): string {
-  if (accuracy >= 70) return 'bg-status-healthy';
-  if (accuracy >= 55) return 'bg-status-watch';
-  return 'bg-status-risk';
-}
-
 function getAccuracyTextColor(accuracy: number): string {
   if (accuracy >= 70) return 'text-status-healthy';
   if (accuracy >= 55) return 'text-status-watch';
@@ -71,9 +65,9 @@ export function TopicWeakSpots({ data }: TopicWeakSpotsProps) {
                   </span>
                 </div>
               </div>
-              <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${getAccuracyColor(topic.accuracy)}`}
+                  className="h-full bg-foreground/60 rounded-full transition-all duration-500 motion-reduce:transition-none"
                   style={{ 
                     width: `${topic.accuracy}%`,
                     transitionDelay: `${index * 50}ms`

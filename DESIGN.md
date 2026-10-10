@@ -1,6 +1,7 @@
 # Admin design reference
 
 Adapted from the Vercel analysis retrieved with `npx getdesign@latest add vercel`, together with the active Apple Design and Liquid Glass skills.
+Resend's reference was also retrieved with `npx getdesign@latest add resend`; its Atmospheric Glows treatment informs a low-opacity, edge-anchored navigation wash, not decorative blobs or colored data surfaces.
 
 ## Application scope
 - Admin only. Keep existing workflows, role boundaries and student/teacher styling unchanged.
@@ -16,6 +17,7 @@ Adapted from the Vercel analysis retrieved with `npx getdesign@latest add vercel
 - Use critically damped, interruptible motion where motion is useful; respect reduced motion.
 - Use a single subtle translucent navigation material. Content and data surfaces stay solid; do not stack glass.
 - Reduced transparency and increased contrast use solid navigation backgrounds.
+- Light mode explicitly declares its color scheme and inherited ink color, with stronger neutral dividers and secondary text. Atmospheric lighting stays at 3.5% in light mode and 9% in dark mode; preserve Chillax rather than Resend's serif typography.
 - Sidebar routes remain reachable when collapsed, and the active section expands when navigating.
 
 Native SwiftUI APIs in Liquid Glass are conceptual references only; this React application uses web equivalents.
