@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -57,6 +57,7 @@ export const menuSections: MenuSection[] = [
       { title: "Registration", url: "/register/admin", icon: QrCode },
       { title: "Question Bank", url: "/admin/questions", icon: FileQuestion },
       { title: "Search Questions", url: "/admin/question-search", icon: Search },
+      { title: "Concept Videos", url: "/admin/concept-videos", icon: Clapperboard },
       { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
       { title: "Sprint Monitor", url: "/admin/sprint-monitor", icon: Trophy },
       { title: "Review Sessions", url: "/admin/review-sessions", icon: Armchair },

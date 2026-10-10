@@ -67,6 +67,7 @@ import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 import StudentExamResults from "./pages/student/StudentExamResults";
 import StudentQuestionSearch from "./pages/student/StudentQuestionSearch";
+import StudentConceptVideos from "./pages/student/StudentConceptVideos";
 import StudentProctorResults from "./pages/student/StudentProctorResults";
 
 // Mini Challenges
@@ -268,6 +269,7 @@ const App = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="search" element={<StudentQuestionSearch />} />
+                    <Route path="concept-videos" element={<StudentConceptVideos />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="proctor-results" element={<StudentProctorResults />} />
