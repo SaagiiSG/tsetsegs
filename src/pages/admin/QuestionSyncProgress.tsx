@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Database, CheckCircle2, ImageOff, PencilLine } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 
 type Change = {
   question_id: string;
@@ -38,6 +39,31 @@ export default function QuestionSyncProgress() {
   const [result, setResult] = useState<Agg>(EMPTY);
   const [applied, setApplied] = useState(0);
   const [days, setDays] = useState(1);
+
+  // Inline editing — same editors the Question Bank uses, opened here
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [cbFormOpen, setCbFormOpen] = useState(false);
+
+  const openEditor = async (questionId: string) => {
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('question_id', questionId)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ title: 'Question not found', description: questionId, variant: 'destructive' });
+      return;
+    }
+    if (data.question_set === 'CollegeBoard') {
+      setEditingCBQuestion(data);
+      setCbFormOpen(true);
+    } else {
+      setEditingQuestion(data);
+      setFormOpen(true);
+    }
+  };
 
   const run = async (dryRun: boolean) => {
     setRunning(true);
@@ -173,10 +199,8 @@ export default function QuestionSyncProgress() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="font-mono">{c.question_id}</Badge>
                   {c.fields.map((f) => <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>)}
-                  <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
-                    <Link to={`/admin/questions?edit=${encodeURIComponent(c.question_id)}`}>
-                      <PencilLine className="h-3.5 w-3.5" /> Open editor
-                    </Link>
+                  <Button variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => openEditor(c.question_id)}>
+                    <PencilLine className="h-3.5 w-3.5" /> Open editor
                   </Button>
                 </div>
                 {c.fields.includes('question_text') && (
@@ -191,14 +215,28 @@ export default function QuestionSyncProgress() {
         </Card>
       )}
 
-      {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} />}
+      {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} onOpenEditor={openEditor} />}
+
+      {/* Inline Question Form Dialog */}
+      <QuestionForm
+        open={formOpen}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingQuestion(null); }}
+        editingQuestion={editingQuestion}
+      />
+
+      {/* Inline CB Question Form Dialog */}
+      <CBQuestionForm
+        open={cbFormOpen}
+        onOpenChange={(open) => { setCbFormOpen(open); if (!open) setEditingCBQuestion(null); }}
+        editingQuestion={editingCBQuestion}
+      />
     </div>
   );
 }
 
 type Recent = { question_id: string; question_text: string | null; updated_at: string; rationale: string | null; question_set: string | null };
 
-function RecentlyUpdated({ days, setDays }: { days: number; setDays: (d: number) => void }) {
+function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDays: (d: number) => void; onOpenEditor: (id: string) => void }) {
   const [rows, setRows] = useState<Recent[] | null>(null);
   useEffect(() => {
     setRows(null);
@@ -235,10 +273,8 @@ function RecentlyUpdated({ days, setDays }: { days: number; setDays: (d: number)
                 ? <Badge variant="secondary" className="text-[10px]">Has explanation</Badge>
                 : <Badge variant="destructive" className="text-[10px]">No explanation</Badge>}
               <span className="text-[11px] text-muted-foreground">{new Date(r.updated_at).toLocaleString()}</span>
-              <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
-                <Link to={`/admin/questions?edit=${encodeURIComponent(r.question_id)}`}>
-                  <PencilLine className="h-3.5 w-3.5" /> Open editor
-                </Link>
+              <Button variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => onOpenEditor(r.question_id)}>
+                <PencilLine className="h-3.5 w-3.5" /> Open editor
               </Button>
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{r.question_text}</p>
