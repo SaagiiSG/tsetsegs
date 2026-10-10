@@ -18,6 +18,18 @@ export default function InstitutionCustomers() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [portalFor, setPortalFor] = useState<InstitutionCustomer | null>(null);
+  const [deleteFor, setDeleteFor] = useState<InstitutionCustomer | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  async function deleteCustomer() {
+    if (!deleteFor || deleting) return;
+    setDeleting(true);
+    const { error: payErr } = await supabase.from('institution_payment_dues').delete().eq('customer_id', deleteFor.id);
+    const { error } = payErr ? { error: payErr } : await supabase.from('institution_customers').delete().eq('id', deleteFor.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${deleteFor.name} deleted`);
+    setDeleteFor(null); refresh();
+  }
   const today = localToday();
   const unpaid = payments.filter(p => !p.paid_at);
   const balances = unpaid.reduce<Record<string, number>>((totals, p) => ({ ...totals, [p.currency]: (totals[p.currency] ?? 0) + Number(p.amount) }), {});
