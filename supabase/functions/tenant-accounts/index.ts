@@ -112,9 +112,7 @@ Deno.serve(async (req) => {
       const { data: member } = await admin.from('tenant_members').select('user_id, role, institution_id').eq('id', body.member_id).maybeSingle()
       if (!member || member.institution_id !== institutionId) return json({ error: 'Not found' }, 404)
       if (!isPlatformAdmin && !(isCenterAdmin && member.role === 'teacher')) return json({ error: 'Not allowed' }, 403)
-      const password = tempPassword()
-      const { error } = await admin.auth.admin.updateUserById(member.user_id, { password })
-      if (error) throw error
+      const { password } = await withFreshPassword((pw) => admin.auth.admin.updateUserById(member.user_id, { password: pw }))
       return json({ temporaryPassword: password })
     }
 
