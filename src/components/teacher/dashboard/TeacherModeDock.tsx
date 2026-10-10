@@ -120,7 +120,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
               type="button"
               onClick={() => setExpanded(true)}
               aria-label="Expand dock"
-              className="h-11 w-11 rounded-full bg-card/95 backdrop-blur-sm border shadow-lg flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              className="h-11 w-11 rounded-full admin-glass border shadow-lg flex items-center justify-center text-foreground transition-colors"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -137,7 +137,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
               exit={{ opacity: 0, scale: 0.9 }}
               transition={SPRING}
               className={cn(
-                "flex items-center gap-1 bg-card/95 backdrop-blur-sm border shadow-lg rounded-full p-1",
+                "flex items-center gap-1 admin-glass border shadow-lg rounded-full p-1",
                 isVertical ? "flex-col" : "flex-row"
               )}
             >
@@ -263,7 +263,7 @@ export function TeacherModeDock({ activeMode, onChange, onOpenHandbook, onOpenTe
           <Button
             variant="default"
             size="icon"
-            className="md:hidden h-11 w-11 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border text-foreground hover:bg-card"
+            className="md:hidden h-11 w-11 rounded-full shadow-lg admin-glass border text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onOpenHandbook();

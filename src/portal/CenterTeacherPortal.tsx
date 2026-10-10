@@ -58,15 +58,16 @@ export default function CenterTeacherPortal() {
   };
 
   return (
-    <PortalShell title="Teacher" nav={role === 'center_admin' ? <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">Admin view</Link> : null}>
+    <PortalShell glass title="Teacher" nav={role === 'center_admin' ? <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">Admin view</Link> : null}>
       {!data ? <p className="text-sm text-muted-foreground">Loading…</p> : !data.length ? <p className="text-sm text-muted-foreground">No classes assigned to you yet. Ask your center admin.</p> : (
         <div className="space-y-6">
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Classes">
             {data.map(c => <button key={c.id} role="tab" aria-selected={c.id === classId} onClick={() => setClassId(c.id)}
-              className={`rounded-md px-3 py-1.5 text-sm border transition-colors active:scale-[0.97] ${c.id === classId ? 'bg-foreground text-background' : 'hover:bg-muted'}`}>{c.name}</button>)}
+              className={`rounded-lg px-3 py-1.5 text-sm transition-colors active:scale-[0.97] admin-control admin-glass-item admin-section-item ${c.id === classId ? 'admin-section-active font-medium' : 'text-muted-foreground hover:text-foreground'}`}>{c.name}</button>)}
           </div>
           <div className="flex items-end gap-3"><div className="space-y-1"><Label htmlFor="att-date">Session date</Label><Input id="att-date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" /></div>
             <p className="text-xs text-muted-foreground pb-2">Tap a status to cycle it.</p></div>
+          <div className="admin-glass-card admin-glass-card-glow rounded-xl border p-4 overflow-x-auto">
           <table className="w-full text-sm"><thead className="text-xs text-muted-foreground border-b"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th></tr></thead>
             <tbody className="divide-y">{roster.data?.students.map(s => {
               const st = roster.data.att[s.id]; const p = stats[s.id];
@@ -74,6 +75,7 @@ export default function CenterTeacherPortal() {
                 <td><button onClick={() => cycle(s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
                 <td className="font-mono">{p?.n ?? 0}</td><td className="font-mono">{p ? `${Math.round(100 * p.c / p.n)}%` : '—'}</td></tr>;
             })}</tbody></table>
+          </div>
           {roster.data && !roster.data.students.length && <p className="text-sm text-muted-foreground">No students in this class yet.</p>}
         </div>
       )}
