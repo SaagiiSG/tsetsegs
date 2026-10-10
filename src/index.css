@@ -288,6 +288,23 @@ body.admin-theme .admin-glass-bar--page {
 .admin-main-glow {
   position: relative;
 }
+/* Unified page atmosphere: one continuous glow layer fixed behind the whole
+   page, so the top bar, filter bars and cards all float over a single
+   background with no visible seams between sections. */
+.admin-page-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(80% 60% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.1), transparent 70%),
+    var(--admin-atmosphere-wash);
+}
+.dark body.admin-theme .admin-page-atmosphere, body.admin-theme.dark .admin-page-atmosphere {
+  background:
+    radial-gradient(80% 65% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.16), transparent 70%),
+    var(--admin-atmosphere-wash);
+}
 .admin-main-glow::before {
   content: "";
   position: absolute;
