@@ -10,4 +10,5 @@
 - [x] Activate the supplied Apple Design and Liquid Glass skills.
 - [x] Prepare a platform-wide web adaptation preserving branding and learning flows.
 - [x] Fix the missing Concept Videos link in the admin sidebar and verify navigation.
-- [x] Center admin sidebar collapses to a floating icon rail with remembered state, tooltips and a working mobile drawer.- [x] Step-by-step explanations accept photos by dragging them onto any step (one or many), with a clear drop highlight; verified in the live editor.
+- [x] Center admin sidebar collapses to a floating icon rail with remembered state, tooltips and a working mobile drawer.
+- [x] Step-by-step explanations accept photos by dragging them onto any step (one or many), with a clear drop highlight; verified in the live editor.
