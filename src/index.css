@@ -223,8 +223,26 @@ body.admin-theme .admin-sidebar-float > div {
   background: transparent;
   border: 1px solid hsl(0 0% 100% / 0.45);
   border-radius: 1rem;
-  overflow: hidden;
+  /* Visible so collapsed-state tooltips escape the card edge. */
+  overflow: visible;
   box-shadow: 0 16px 40px -16px hsl(0 0% 0% / 0.22), 0 2px 8px -2px hsl(0 0% 0% / 0.08);
+}
+/* Keep the glass corners rounded without clipping tooltips. */
+body.admin-theme .admin-sidebar-float [data-sidebar="content"] {
+  border-radius: 1rem 1rem 0 0;
+}
+body.admin-theme .admin-sidebar-float [data-sidebar="footer"] {
+  border-radius: 0 0 1rem 1rem;
+}
+/* Collapsed: the mini card floats over the page with a small breathing gap
+   so it never reads as blocking the content. */
+body.admin-theme .admin-sidebar-float[data-state="collapsed"] {
+  padding-right: 0.75rem;
+}
+/* Tooltips always float above the glass card. */
+body.admin-theme [data-sidebar="menu-button"] [data-radix-popper-content-wrapper],
+body.admin-theme [data-radix-popper-content-wrapper] {
+  z-index: 60;
 }
 .dark body.admin-theme .admin-sidebar-float > div, body.admin-theme.dark .admin-sidebar-float > div {
   border-color: hsl(0 0% 100% / 0.08);
