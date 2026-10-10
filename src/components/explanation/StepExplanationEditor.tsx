@@ -97,7 +97,7 @@ export function StepExplanationEditor({ value, onChange }: Props) {
     });
   };
 
-  const uploadImage = async (i: number, file: File) => {
+  const uploadImage = async (i: number, file: File, at: number | null) => {
     if (!file.type.startsWith('image/')) return;
     if (file.size > 8 * 1024 * 1024) {
       toast({ title: 'Picture too large', description: 'Please use a picture under 8 MB.', variant: 'destructive' });
@@ -110,17 +110,54 @@ export function StepExplanationEditor({ value, onChange }: Props) {
       const { error } = await supabase.storage.from('question-images').upload(path, file, { contentType: file.type });
       if (error) throw error;
       const { data } = supabase.storage.from('question-images').getPublicUrl(path);
-      const body = blocks[i].body;
-      const el = areas.current[i];
-      const pos = el?.selectionStart ?? body.length;
-      const before = body.slice(0, pos);
-      const line = `${before && !before.endsWith('\n') ? '\n' : ''}![](${data.publicUrl})\n`;
-      update(i, { body: before + line + body.slice(pos) });
+      addPicture(i, data.publicUrl, at);
     } catch (e: any) {
       toast({ title: 'Upload failed', description: e?.message ?? 'Try again', variant: 'destructive' });
     } finally {
       setUploading(null);
     }
+  };
+
+  /** One picture or many — each lands in the step it was dropped on. */
+  const uploadPictures = async (i: number, files: File[]) => {
+    const at = files.length === 1 ? areas.current[i]?.selectionStart ?? null : null;
+    for (const f of files) await uploadImage(i, f, at);
+  };
+
+  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
+
+  const onDragEnter = (i: number) => (e: DragEvent) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth.current[i] = (dragDepth.current[i] ?? 0) + 1;
+    setDropTarget(i);
+  };
+
+  const onDragOver = (i: number) => (e: DragEvent) => {
+    if (!hasFiles(e)) return;
+    // Without this the browser never fires drop — it opens the picture instead.
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDropTarget(i);
+  };
+
+  const onDragLeave = (i: number) => (e: DragEvent) => {
+    if (!hasFiles(e)) return;
+    dragDepth.current[i] = Math.max(0, (dragDepth.current[i] ?? 1) - 1);
+    if (!dragDepth.current[i]) setDropTarget((t) => (t === i ? null : t));
+  };
+
+  const onDropStep = (i: number) => (e: DragEvent) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth.current[i] = 0;
+    setDropTarget(null);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+    if (!files.length) {
+      toast({ title: 'Only pictures', description: 'Drop a PNG or JPG photo here.', variant: 'destructive' });
+      return;
+    }
+    uploadPictures(i, files);
   };
 
   const move = (i: number, d: -1 | 1) => {
