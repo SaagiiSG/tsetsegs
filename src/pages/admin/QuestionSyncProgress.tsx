@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ export default function QuestionSyncProgress() {
   const [phase, setPhase] = useState<'idle' | 'checking' | 'checked' | 'applying' | 'done'>('idle');
   const [result, setResult] = useState<Agg>(EMPTY);
   const [applied, setApplied] = useState(0);
+  const [days, setDays] = useState(1);
 
   const run = async (dryRun: boolean) => {
     setRunning(true);
@@ -189,6 +190,61 @@ export default function QuestionSyncProgress() {
           </CardContent>
         </Card>
       )}
+
+      {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} />}
     </div>
+  );
+}
+
+type Recent = { question_id: string; question_text: string | null; updated_at: string; rationale: string | null; question_set: string | null };
+
+function RecentlyUpdated({ days, setDays }: { days: number; setDays: (d: number) => void }) {
+  const [rows, setRows] = useState<Recent[] | null>(null);
+  useEffect(() => {
+    setRows(null);
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    supabase
+      .from('questions')
+      .select('question_id, question_text, updated_at, rationale, question_set')
+      .gte('updated_at', since)
+      .order('updated_at', { ascending: false })
+      .limit(500)
+      .then(({ data }) => setRows((data as Recent[]) || []));
+  }, [days]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+        <CardTitle className="text-base">Recently updated questions {rows ? `(${rows.length})` : ''}</CardTitle>
+        <div className="flex gap-1">
+          {[1, 7, 30].map((d) => (
+            <Button key={d} size="sm" variant={days === d ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setDays(d)}>
+              {d === 1 ? 'Today' : `${d} days`}
+            </Button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 max-h-[65vh] overflow-y-auto">
+        {!rows && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {rows && rows.length === 0 && <p className="text-sm text-muted-foreground">No questions updated in this period.</p>}
+        {rows?.map((r) => (
+          <div key={r.question_id} className="rounded-md border p-3 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="font-mono">{r.question_id}</Badge>
+              {r.rationale?.trim()
+                ? <Badge variant="secondary" className="text-[10px]">Has explanation</Badge>
+                : <Badge variant="destructive" className="text-[10px]">No explanation</Badge>}
+              <span className="text-[11px] text-muted-foreground">{new Date(r.updated_at).toLocaleString()}</span>
+              <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
+                <Link to={`/admin/questions?edit=${encodeURIComponent(r.question_id)}`}>
+                  <PencilLine className="h-3.5 w-3.5" /> Open editor
+                </Link>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-2">{r.question_text}</p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
