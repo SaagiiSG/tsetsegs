@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDown, ArrowUp, ImagePlus, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Calculator, ImagePlus, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react';
 import { ExplanationBlock, parseExplanation, serializeExplanation } from '@/lib/explanationFormat';
 import { ExplanationView } from './ExplanationView';
+import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 
 interface Props {
   value: string;
@@ -128,7 +129,18 @@ export function StepExplanationEditor({ value, onChange }: Props) {
             {k.label}
           </Button>
         ))}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="ml-auto h-7 gap-1 px-2 text-xs"
+          onClick={toggleCalculator}
+          title="Open the graphing calculator — drag it to either screen edge to snap it, then screenshot your graph and paste it into a step"
+        >
+          <Calculator className="h-3.5 w-3.5" /> Calculator
+        </Button>
       </div>
+      <DesmosCalculator />
 
       {blocks.map((b, i) => {
         const num = b.kind === 'step' ? ++stepNo : null;

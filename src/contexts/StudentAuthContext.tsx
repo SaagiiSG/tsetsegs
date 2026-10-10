@@ -845,3 +845,9 @@ export function useStudentAuth() {
   }
   return context;
 }
+
+// Safe variant for surfaces mounted outside StudentAuthProvider (e.g. admin
+// pages using the Desmos calculator). Returns null instead of throwing.
+export function useOptionalStudentAuth() {
+  return useContext(StudentAuthContext) ?? null;
+}
