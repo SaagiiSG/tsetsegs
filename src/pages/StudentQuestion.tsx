@@ -33,6 +33,8 @@ import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
 import { ShowExplanation } from '@/components/student/ShowExplanation';
+import { ExplanationView } from '@/components/explanation/ExplanationView';
+import { cn } from '@/lib/utils';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -920,6 +922,7 @@ export default function StudentQuestion() {
           explanationRevealed && (currentQuestion as any)?.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-6 lg:space-y-0"
         )}>
 
+          <div className="min-w-0 space-y-3 md:space-y-6">
           {/* Video Section */}
           {videoId && !videoWatched && (
             <Card>
