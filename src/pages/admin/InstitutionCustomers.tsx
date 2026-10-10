@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Building2, Plus, Search, Pencil, Check, RotateCcw, Globe } from 'lucide-react';
+import { Building2, Plus, Search, Pencil, Check, RotateCcw, Globe, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { CenterPortalSetup } from '@/components/admin/CenterPortalSetup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
