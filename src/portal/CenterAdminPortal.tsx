@@ -131,6 +131,7 @@ export default function CenterAdminPortal() {
       >
         <CenterLogo center={center} className="h-6 w-6" />
         <span className="text-sm text-muted-foreground">{section.label}</span>
+        <div className="ml-auto"><DarkModeSetting compact /></div>
       </header>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0 w-72"><SheetTitle className="sr-only">Menu</SheetTitle><Sidebar onNavigate={() => setOpen(false)} /></SheetContent>
