@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ChevronRight, Clock } from 'lucide-react';
@@ -17,9 +16,9 @@ interface AtRiskQuickViewProps {
 }
 
 function getRiskBadgeStyle(riskScore: number): string {
-  if (riskScore >= 80) return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-  if (riskScore >= 50) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-  return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+  if (riskScore >= 80) return 'bg-status-risk/20 text-status-risk border-status-risk/30';
+  if (riskScore >= 50) return 'bg-status-watch/20 text-status-watch border-status-watch/30';
+  return 'bg-status-watch/20 text-status-watch border-status-watch/30';
 }
 
 function getRiskLabel(riskScore: number): string {
@@ -32,13 +31,13 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
   const navigate = useNavigate();
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border/50 animate-fade-in" style={{ animationDelay: '350ms' }}>
-      <CardHeader className="pb-3">
+    <section className="min-w-0 border-t py-5">
+      <div className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+          <h2 className="text-sm font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-status-risk" />
             At-Risk Students
-          </CardTitle>
+          </h2>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -49,11 +48,11 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
             <ChevronRight className="w-3 h-3 ml-1" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {students.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm text-emerald-400 font-medium">All students active!</p>
+            <p className="text-sm text-status-healthy font-medium">All students active!</p>
             <p className="text-xs text-muted-foreground mt-1">No at-risk students detected</p>
           </div>
         ) : (
@@ -88,7 +87,7 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
