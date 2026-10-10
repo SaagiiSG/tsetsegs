@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Calculator, X, Minus, Maximize2, Minimize2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useOptionalStudentAuth } from '@/contexts/StudentAuthContext';
 import { getDesmosContext } from '@/lib/desmosTracking';
 import { useIsMobile } from '@/hooks/use-mobile';
 
