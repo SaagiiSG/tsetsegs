@@ -38,7 +38,7 @@ Solid buttons read as tinted glass; outline/ghost as clear glass; all get a pres
 
 - The center admin shell (`src/portal/CenterAdminPortal.tsx`) **reuses the main admin's sidebar primitives** (`SidebarProvider`/`Sidebar`, floating + icon-collapsible) so both workspaces share collapse behavior, tooltips, and the glass card. Extend the shared primitives — never fork a second nav implementation.
 - Center portals have their own dark mode toggle (Settings → Appearance + top-bar sun/moon) and per-center branding from `institution_customers.portal_settings`.
-- Exception: `PortalShell` in `centerContext.tsx` keeps plain `bg-background/85 backdrop-blur-md` — do NOT apply admin-theme there.
+- `PortalShell` in `centerContext.tsx` has an opt-in `glass` prop: when true it adds the admin-theme lifecycle, an `admin-glass-bar` header and a green (152 60% 42%) section glow. Used by the center teacher portal; the center student portal stays plain. The main teacher dashboard (`TeacherDashboard.tsx`) also uses the admin-theme lifecycle with per-mode glows (dashboard 217, analytics 262, practice 152, tests/intense 32, proctor 345).
 - Center pages read only `tenant_*` tables plus the shared read-only question bank; never mount main admin pages inside a portal.
 
 ## Process habits
