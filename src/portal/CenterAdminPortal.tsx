@@ -55,6 +55,15 @@ const SWITCH_ITEM = { to: '/teacher', label: 'Teacher view', icon: ExternalLink 
 
 const DEFAULT_GLOW = '345 75% 55%';
 
+/** Remember whether the desktop sidebar was collapsed, per browser. */
+const COLLAPSE_KEY = 'center:sidebar:collapsed';
+const readCollapsed = () => {
+  try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
+};
+const writeCollapsed = (isCollapsed: boolean) => {
+  try { localStorage.setItem(COLLAPSE_KEY, isCollapsed ? '1' : '0'); } catch { /* storage unavailable */ }
+};
+
 /** Route path relative to the portal root, e.g. "students/abc". */
 function relativePath(pathname: string) {
   return pathname.replace(/^\/admin\/?/, '');
