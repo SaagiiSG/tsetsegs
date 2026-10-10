@@ -1742,6 +1742,7 @@ export type Database = {
           next_check_in: string | null
           notes: string
           portal_enabled: boolean
+          portal_settings: Json
           slug: string | null
           status: string
           updated_at: string
@@ -1759,6 +1760,7 @@ export type Database = {
           next_check_in?: string | null
           notes?: string
           portal_enabled?: boolean
+          portal_settings?: Json
           slug?: string | null
           status?: string
           updated_at?: string
@@ -1776,6 +1778,7 @@ export type Database = {
           next_check_in?: string | null
           notes?: string
           portal_enabled?: boolean
+          portal_settings?: Json
           slug?: string | null
           status?: string
           updated_at?: string
@@ -4547,6 +4550,94 @@ export type Database = {
           },
         ]
       }
+      tenant_announcement_reads: {
+        Row: {
+          announcement_id: string
+          institution_id: string
+          read_at: string
+          student_id: string
+        }
+        Insert: {
+          announcement_id: string
+          institution_id: string
+          read_at?: string
+          student_id: string
+        }
+        Update: {
+          announcement_id?: string
+          institution_id?: string
+          read_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_announcement_reads_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_announcement_reads_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_announcements: {
+        Row: {
+          body: string
+          class_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          institution_id: string
+          title: string
+        }
+        Insert: {
+          body?: string
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          institution_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          institution_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_announcements_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_announcements_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_attempts: {
         Row: {
           created_at: string
@@ -4653,6 +4744,7 @@ export type Database = {
           created_at: string
           id: string
           institution_id: string
+          join_code: string
           name: string
           schedule: string
           starts_on: string | null
@@ -4662,6 +4754,7 @@ export type Database = {
           created_at?: string
           id?: string
           institution_id: string
+          join_code?: string
           name: string
           schedule?: string
           starts_on?: string | null
@@ -4671,6 +4764,7 @@ export type Database = {
           created_at?: string
           id?: string
           institution_id?: string
+          join_code?: string
           name?: string
           schedule?: string
           starts_on?: string | null
@@ -4727,6 +4821,101 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tenant_members_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_registrations: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          email: string
+          grade: string
+          id: string
+          institution_id: string
+          name: string
+          phone: string
+          reviewed_at: string | null
+          school: string
+          status: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          email?: string
+          grade?: string
+          id?: string
+          institution_id: string
+          name: string
+          phone: string
+          reviewed_at?: string | null
+          school?: string
+          status?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          email?: string
+          grade?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          phone?: string
+          reviewed_at?: string | null
+          school?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_registrations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_registrations_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_sprints: {
+        Row: {
+          created_at: string
+          ends_on: string
+          id: string
+          institution_id: string
+          name: string
+          starts_on: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          id?: string
+          institution_id: string
+          name: string
+          starts_on: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          starts_on?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sprints_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institution_customers"
@@ -5354,16 +5543,38 @@ export type Database = {
         Args: { _institution: string; _role: string }
         Returns: boolean
       }
+      tenant_join_lookup: {
+        Args: { _code: string; _slug: string }
+        Returns: {
+          class_id: string
+          class_name: string
+        }[]
+      }
       tenant_lookup: {
         Args: { _slug: string }
         Returns: {
           country: string
           id: string
           name: string
+          portal_settings: Json
           slug: string
         }[]
       }
       tenant_my_student_id: { Args: { _institution: string }; Returns: string }
+      tenant_sprint_leaderboard: {
+        Args: { _sprint: string }
+        Returns: {
+          answered: number
+          class_name: string
+          name: string
+          points: number
+          student_id: string
+        }[]
+      }
+      tenant_update_settings: {
+        Args: { _institution: string; _settings: Json }
+        Returns: Json
+      }
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
