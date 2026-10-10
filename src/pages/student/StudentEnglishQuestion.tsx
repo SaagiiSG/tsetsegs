@@ -618,10 +618,11 @@ export default function StudentEnglishQuestion() {
           </Card>
           </div>
 
-          {/* Explanation — left column on desktop, below the question on mobile */}
-          {submitted && question.rationale && (
+          {/* Explanation — left column on desktop, below the question on mobile.
+              Shows after submit, or earlier once the student opens it themselves. */}
+          {question.rationale && (explanationRevealed || submitted) && (
             <div className="order-2 lg:order-1 lg:sticky lg:top-20">
-            <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
+            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationRevealed}>
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -632,7 +633,12 @@ export default function StudentEnglishQuestion() {
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 space-y-2">
+                    {explanationForfeited && (
+                      <p className="text-xs text-muted-foreground">
+                        Explanation opened — this question no longer awards points.
+                      </p>
+                    )}
                     <ScrollArea className="lg:max-h-[calc(100vh-11rem)] lg:pr-3">
                       <ExplanationView text={question.rationale} />
                     </ScrollArea>
