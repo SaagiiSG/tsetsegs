@@ -45,6 +45,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const pageTitle = usePageTitle();
+  const sectionGlow = useSectionGlow();
 
   useEffect(() => {
     document.body.classList.add('admin-theme');
@@ -125,7 +126,10 @@ const Admin = () => {
                 <CohortSwitcher />
               </div>
             </header>
-            <main className="flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8">
+            <main
+              className="admin-page-glow relative flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8"
+              style={{ "--section-glow": sectionGlow } as React.CSSProperties}
+            >
               {routesEl}
             </main>
           </div>
