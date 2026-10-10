@@ -201,9 +201,12 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden">
-        <div className={`w-full max-w-[1600px] mx-auto p-3 md:p-6 lg:p-8 pb-24 transition-[padding] duration-300 ${activeMode === "practice" ? "md:pl-20" : ""}`}>
-          <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
+      <div
+        className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden admin-glow-scope"
+        style={{ "--section-glow": sectionGlow } as React.CSSProperties}
+      >
+        <div className="sticky top-0 z-30 admin-glass-bar">
+          <div className="w-full max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h1 className="text-lg md:text-2xl lg:text-3xl font-bold truncate">Welcome, {teacherName}!</h1>
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5 hidden sm:block">Manage your classes and track attendance</p>
