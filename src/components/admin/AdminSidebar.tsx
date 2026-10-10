@@ -99,7 +99,7 @@ export function AdminSidebar() {
                 className="group/collapsible"
               >
                 <SidebarGroupLabel asChild className={cn("px-2", !open && "hidden")}>
-                  <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:bg-muted/50 rounded-md transition-all duration-200">
+                  <CollapsibleTrigger className="admin-glass-item flex w-full items-center justify-between py-2 rounded-md transition-all duration-200">
                     <div className="flex items-center gap-2">
                       <motion.div
                         whileHover={reduceMotion ? undefined : { scale: 1.03 }}
