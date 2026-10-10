@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { phoneDigits } from '@/lib/tenant';
-import { useCenter } from './centerContext';
+import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { PasswordInput } from './PasswordInput';
 
 export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithoutAccess: boolean }) {
@@ -62,13 +62,14 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
   return (
     <main className="min-h-screen grid place-items-center p-4 bg-muted/30">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="font-chillax text-3xl font-semibold tracking-tight">{center.name}</h1>
+        <div className="text-center space-y-1 flex flex-col items-center">
+          <CenterLogo center={center} className="h-12 w-12 mb-2" />
+          <h1 className="font-chillax text-3xl font-semibold tracking-tight">{centerDisplayName(center)}</h1>
           <p className="text-sm text-muted-foreground">SAT prep portal</p>
         </div>
         {signedInWithoutAccess ? (
           <div className="rounded-lg border bg-card p-5 space-y-3 text-sm">
-            <p>This account doesn't have access to {center.name}.</p>
+            <p>This account doesn't have access to {centerDisplayName(center)}.</p>
             <Button variant="outline" className="w-full" onClick={signOut}>Use a different account</Button>
           </div>
         ) : (
