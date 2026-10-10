@@ -1,4 +1,6 @@
 import { ChevronDown, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +32,21 @@ export function AdminSidebar() {
   const { open } = useSidebar();
   const { signOut } = useAuth();
   const isDev = useIsDevAccount();
+  const { pathname } = useLocation();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(menuSections.map((section) => [section.label, section.defaultOpen]))
+  );
+
+  useEffect(() => {
+    const activeSection = menuSections.find((section) =>
+      section.items.some((item) => item.end
+        ? pathname === item.url
+        : pathname === item.url || pathname.startsWith(`${item.url}/`))
+    );
+    if (activeSection) {
+      setExpandedSections((current) => ({ ...current, [activeSection.label]: true }));
+    }
+  }, [pathname]);
 
   return (
     <Sidebar className="border-r-0" collapsible="icon">
@@ -74,7 +91,11 @@ export function AdminSidebar() {
             transition={{ duration: 0.3, delay: sectionIndex * 0.05 }}
           >
             <SidebarGroup className="py-0">
-              <Collapsible defaultOpen={section.defaultOpen} className="group/collapsible">
+              <Collapsible
+                open={!open || expandedSections[section.label]}
+                onOpenChange={(expanded) => setExpandedSections((current) => ({ ...current, [section.label]: expanded }))}
+                className="group/collapsible"
+              >
                 <SidebarGroupLabel asChild className="px-2">
                   <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:bg-muted/50 rounded-md transition-all duration-200">
                     <div className="flex items-center gap-2">
@@ -126,6 +147,7 @@ export function AdminSidebar() {
                           <SidebarMenuButton asChild tooltip={item.title}>
                               <NavLink
                                 to={item.url}
+                                aria-label={item.title}
                                 end={item.end}
                                 className={cn(
                                   "hover:bg-muted/50 transition-all duration-200 group/item relative",
