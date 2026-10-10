@@ -492,7 +492,7 @@ export default function StudentEnglishQuestion() {
 
         <main className={cn(
           "container mx-auto px-4 py-6 max-w-3xl space-y-6",
-          submitted && question.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+          question.rationale && (submitted || explanationRevealed) && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
         )}>
           <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
@@ -604,6 +604,16 @@ export default function StudentEnglishQuestion() {
                   Attempts: {attemptCount}/3 • {isCorrect ? '✓ Correct!' : 'Keep trying!'}
                 </p>
               )}
+
+              {/* Explanation — available anytime; opening it forfeits remaining points */}
+              <ShowExplanation
+                explanation={question.rationale}
+                revealed={explanationRevealed}
+                onReveal={handleRevealExplanation}
+                forfeitApplies={!isCorrect}
+                forfeited={explanationForfeited}
+                inlineCard={false}
+              />
             </CardContent>
           </Card>
           </div>
