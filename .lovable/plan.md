@@ -1,29 +1,50 @@
-# Apple-style UI across Tsetsegs
+# Center Admin Workspace — parity with the main admin
 
-## Direction
-Apply **Apple Design** interaction principles and a web adaptation of **Liquid Glass** across the platform. Keep coral pink/deep indigo branding, Chillax headings, existing tier themes, and current page names and workflows.
+Give each center admin a full workspace like ours, with a sidebar and the center's own brand. Every page only ever shows that center's data.
 
-Liquid Glass's supplied implementation is for native SwiftUI apps. On this web platform, use restrained frosted materials rather than claiming native optical refraction.
+## What the center admin will see
 
-## Changes
-1. **Shared design foundations:** consistent control sizes, typography hierarchy, immediate press feedback, focus states, and restrained transitions.
-2. **Navigation:** unify admin/teacher/student headers, sidebars, docks, tabs, and floating controls with glass-inspired surfaces. Preserve collapse/reopen controls and current-page highlighting.
-3. **Content:** keep questions, passages, answer choices, explanations, tables, charts, and videos on readable solid surfaces—not glass. Preserve all existing math rendering and exam layouts.
-4. **Interactions:** improve sheets, menus, dialogs, and draggable tools with consistent opening/closing paths and interruptible motion where gestures already exist. No new gestures or workflow changes.
-5. **Accessibility/performance:** honor reduced motion, reduced transparency, and increased contrast; provide opaque fallbacks where blur is unsupported. Avoid stacked blur and blur-heavy exam content.
+A sidebar with the center's logo and name at the top, grouped like our admin:
 
-## Technical approach
-- Define semantic material/elevation tokens in global CSS for light/dark and tier themes.
-- Apply shared component variants and explicit navigation classes, not broad CSS selectors that restyle every card or page.
-- Use the existing motion and UI libraries; do not introduce native SwiftUI code or change data/auth/business rules.
-- Record shared UI architecture rules in AGENTS.md.
+```text
+[Logo] Center name
+Overview     Dashboard · Analytics · Class Overview
+Batches      All Batches · Create Batch
+Students     Search Accounts · Registration Queue
+Tools        Search Questions · Sprint Monitor · Announcements
+Center       Team · Settings (brand details)
+```
 
-## Verification
-- Review signed-in admin, teacher, and student navigation, including Concept Videos.
-- Exercise question editing, practice answer/review, explanation display, video navigation, and exam review without altering real student answers or active exams.
-- Check desktop and narrow layouts, long English passages, figures, fractions, sidebar collapse, keyboard focus, and reduced-motion/transparency fallbacks.
-- Run relevant existing tests and inspect preview diagnostics; name any role-specific checks unavailable to test.
+- **Dashboard**: student count, active this week, accuracy, attendance rate, upcoming payments and quick actions.
+- **Analytics**: accuracy trends, questions answered per day, weak topics, and attendance by class.
+- **Class Overview**: today's classes with attendance status, and students who have missed 3 or more classes.
+- **All Batches / Create Batch**: the center's classes with teacher, schedule, start date and student count. Create Batch is a form for adding a new class.
+- **Search Accounts**: search students by name or phone and open a student page (progress, attendance, reset password, move class, remove access).
+- **Registration Queue**: a QR or link sign-up page for each class. New students wait here until the center admin approves them.
+- **Search Questions**: the shared question bank (read-only, BBK hidden), using the same search we already have.
+- **Sprint Monitor**: weekly points sprints and a leaderboard for that center's students only. The admin can start, pause or finish a sprint.
+- **Announcements**: post a message to all students or one class. Students see it on their portal, with a read count.
+- **Team**: teachers and admins, with add, deactivate, a role and **New password** (the same flow we just fixed).
+- **Settings**: brand name, logo upload, brand color (used for buttons and accents in all three of the center's portals), contact email, time zone and a read-only billing summary.
 
-## Already completed
-- Both supplied skills are activated for relevant future requests and can be browsed with `/` in chat.
-- Concept Videos was located under Admin → Tools. Sidebar expansion now follows the active page so the current section stays discoverable.
+The teacher and student portals pick up the brand automatically. Students see announcements and the sprint leaderboard.
+
+## Build order
+
+1. The sidebar, Settings (brand) and Team. The current tabs move onto pages.
+2. All Batches, Create Batch, Search Accounts and the student detail page.
+3. Dashboard, Analytics and Class Overview.
+4. Registration Queue, Announcements and Sprint Monitor, plus the student-side views.
+5. Test every page with a test center: a center admin cannot see another center's data or our main students.
+
+## Technical details
+
+- Reuse the shared building blocks from our admin (sidebar look, cards, tables, search panel). Do not reuse the main admin pages themselves, because they read the main `batches`/`students` tables. Center pages read only `tenant_*` tables, so isolation holds.
+- New tables, all with `institution_id` and RLS through `tenant_has_role` plus platform-admin access:
+  - `tenant_registrations` (pending sign-ups, class, token)
+  - `tenant_announcements` and `tenant_announcement_reads`
+  - `tenant_sprints` and `tenant_sprint_points`
+- `institution_customers.portal_settings` (jsonb) stores `logo_url`, `brand_color`, `display_name` and `timezone`. Logos go in a public `center-branding` storage bucket, with uploads restricted to that center's admins.
+- The brand color is applied as a CSS variable on the portal root, so dialogs inherit it and the main app is untouched.
+- Public registration goes through the `tenant-accounts` function (new `register` action, validated and rate-limited), never direct table access.
+- Analytics come from `tenant_attempts` and `tenant_attendance`, using paginated or aggregated reads.
