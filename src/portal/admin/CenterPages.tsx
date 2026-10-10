@@ -137,6 +137,9 @@ export function SettingsPage() {
         </Section>
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
+      <Section title="Appearance">
+        <DarkModeSetting />
+      </Section>
       <Section title="Portal address">
         <p className="text-sm"><span className="font-mono">{centerPortalUrl(center.slug)}</span></p>
       </Section>
