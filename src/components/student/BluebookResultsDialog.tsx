@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -300,7 +301,7 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                         Explanation
                       </p>
                       <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <MathText text={selectedQuestion.rationale} />
+                        <ExplanationView text={selectedQuestion.rationale} />
                       </div>
                     </div>
                   )}

@@ -1,3 +1,5 @@
+import { StepExplanationEditor } from '@/components/explanation/StepExplanationEditor';
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -748,11 +750,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                     <FormItem>
                       <FormLabel>Rationale / Explanation (optional)</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Explain why the correct answer is correct..."
-                          className="min-h-[80px]"
-                        />
+                        <StepExplanationEditor value={field.value || ''} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -889,7 +887,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
                 {watchedValues.rationale && (
                   <div className="border-t pt-3 mt-3">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Rationale:</p>
-                    <p className="text-sm text-muted-foreground">{watchedValues.rationale}</p>
+                    <ExplanationView text={watchedValues.rationale} />
                   </div>
                 )}
               </div>

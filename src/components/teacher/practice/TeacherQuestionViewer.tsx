@@ -1,3 +1,4 @@
+import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -378,7 +379,7 @@ export function TeacherQuestionViewer({
                   {submitted && question.rationale && (
                     <div className="bg-accent/50 border border-accent rounded-lg p-5">
                       <p className="text-xs font-medium text-accent-foreground mb-2 uppercase tracking-wide">Rationale</p>
-                      <MathText text={question.rationale} className="text-sm text-muted-foreground leading-relaxed" />
+                      <ExplanationView text={question.rationale} />
                     </div>
                   )}
 
