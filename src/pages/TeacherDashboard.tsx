@@ -127,7 +127,7 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
 
   const DashboardContent = () => (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 p-2 md:p-3 bg-card/60 backdrop-blur rounded-2xl border">
+      <div className="flex items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
         <Select
           value={selectedIntake}
           onValueChange={(v) => {

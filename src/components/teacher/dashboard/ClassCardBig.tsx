@@ -41,7 +41,7 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
       transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.9, delay: index * 0.03 }}
       className="snap-center shrink-0 w-[92vw] md:w-[85vw] lg:w-[85vw] xl:w-[85vw] max-w-[1400px]"
     >
-      <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 bg-card/95 backdrop-blur flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]">
+      <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 admin-glass-card admin-glass-card-glow flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
