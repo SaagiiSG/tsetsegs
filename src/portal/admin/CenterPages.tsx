@@ -153,3 +153,33 @@ export function SettingsPage() {
     </div>
   );
 }
+
+/** Light/dark toggle for the center portals; persists with the rest of the theme preferences. */
+export function DarkModeSetting({ compact = false }: { compact?: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
+  if (compact) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      >
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+        <div>
+          <Label htmlFor="center-dark-mode" className="text-base font-medium cursor-pointer">Dark mode</Label>
+          <p className="text-sm text-muted-foreground">Switch the portal between light and dark themes</p>
+        </div>
+      </div>
+      <Switch id="center-dark-mode" checked={isDark} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
+    </div>
+  );
+}
