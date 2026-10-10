@@ -187,10 +187,6 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       localStorage.removeItem(key);
     }
   }, [rationaleValue, editingQuestion]);
-    // Only reload when a different question (or a fresh open) arrives — background
-    // refetches (e.g. returning from Desmos) must not wipe unsaved typing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingQuestion?.id, editingQuestion?.updated_at, open, nextQuestionId, form]);
 
   // Upload image mutation
   const uploadImage = async (file: File): Promise<string | null> => {
