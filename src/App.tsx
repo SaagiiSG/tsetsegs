@@ -14,6 +14,8 @@ import { StudentAuthProvider } from "./contexts/StudentAuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
+import { resolveCenterSlug } from "./lib/tenant";
+import CenterPortalApp from "./portal/CenterPortalApp";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
@@ -104,7 +106,7 @@ const queryClient = new QueryClient();
 const savedColorTheme = localStorage.getItem("color-theme") || "rose";
 document.documentElement.classList.add(`theme-${savedColorTheme}`);
 
-const App = () => (
+const MainApp = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
@@ -337,5 +339,25 @@ const App = () => (
     </ThemeProvider>
   </QueryClientProvider>
 );
+
+const App = () => {
+  const centerSlug = resolveCenterSlug();
+  if (centerSlug) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <CenterPortalApp slug={centerSlug} />
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
+  }
+  return <MainApp />;
+};
 
 export default App;

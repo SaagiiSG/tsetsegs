@@ -220,8 +220,6 @@ export function AdminSidebar() {
         </AnimatePresence>
       </Button>
     </SidebarFooter>
-
-    <SidebarRail />
   </Sidebar>
   </MotionConfig>
   );
