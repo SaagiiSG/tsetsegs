@@ -151,6 +151,11 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
         video_url: editingQuestion.video_url || '',
         alternate_answers: existingAlternates.map(a => ({ value: a })),
       });
+      // Restore an unsaved explanation draft (survives tab/question switches)
+      const draft = localStorage.getItem(`cbform:explanation-draft:${editingQuestion.id}`);
+      if (draft && draft !== (editingQuestion.rationale || '')) {
+        form.setValue('rationale', draft, { shouldDirty: true });
+      }
       if (editingQuestion.question_image_url) {
         setImagePreview(editingQuestion.question_image_url);
       }
@@ -165,7 +170,19 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
     // Only reload when a different question (or a fresh open) arrives — background
     // refetches (e.g. returning from Desmos) must not wipe unsaved typing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingQuestion?.id, editingQuestion?.updated_at, open, nextQuestionId, form]);
+  }, [editingQuestion?.id, open, nextQuestionId]);
+
+  // Persist the explanation draft as it's typed so switching questions/tabs never erases it
+  const rationaleValue = form.watch('rationale');
+  useEffect(() => {
+    if (!editingQuestion) return;
+    const key = `cbform:explanation-draft:${editingQuestion.id}`;
+    if (rationaleValue && rationaleValue !== (editingQuestion.rationale || '')) {
+      localStorage.setItem(key, rationaleValue);
+    } else {
+      localStorage.removeItem(key);
+    }
+  }, [rationaleValue, editingQuestion]);
 
   // Upload image
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -271,6 +288,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
       }
     },
     onSuccess: () => {
+      if (editingQuestion) localStorage.removeItem(`cbform:explanation-draft:${editingQuestion.id}`);
       toast({
         title: editingQuestion ? 'Question updated' : 'CB Question created',
         description: 'The CollegeBoard question has been saved successfully',
