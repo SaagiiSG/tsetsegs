@@ -88,11 +88,19 @@ Deno.serve(async (req) => {
       if (name.length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Enter a name and a valid email.' }, 400)
       const { data: inst } = await admin.from('institution_customers').select('id').eq('id', institutionId).maybeSingle()
       if (!inst) return json({ error: 'Center not found' }, 404)
-      const password = tempPassword()
-      const { data: created, error } = await admin.auth.admin.createUser({
-        email, password, email_confirm: true, user_metadata: { display_name: name, tenant_institution_id: institutionId },
-      })
-      if (error || !created.user) return json({ error: error?.message?.includes('already') ? 'That email already has an account.' : (error?.message ?? 'Could not create account') }, 400)
+      let created: { user: { id: string } | null } | undefined
+      let password = ''
+      try {
+        const r = await withFreshPassword((pw) => admin.auth.admin.createUser({
+          email, password: pw, email_confirm: true, user_metadata: { display_name: name, tenant_institution_id: institutionId },
+        }))
+        created = r.data as typeof created
+        password = r.password
+      } catch (e) {
+        const msg = (e as Error).message ?? 'Could not create account'
+        return json({ error: msg.includes('already') ? 'That email already has an account.' : msg }, 400)
+      }
+      if (!created?.user) return json({ error: 'Could not create account' }, 400)
       const { error: insErr } = await admin.from('tenant_members').insert({
         institution_id: institutionId, user_id: created.user.id, role, display_name: name, email,
       })
