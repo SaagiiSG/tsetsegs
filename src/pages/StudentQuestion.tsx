@@ -32,6 +32,7 @@ import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollm
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { DifficultyDots } from '@/components/student/practice/DifficultyDots';
+import { ShowExplanation } from '@/components/student/ShowExplanation';
 
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
@@ -77,6 +78,7 @@ export default function StudentQuestion() {
   const [noteTab, setNoteTab] = useState<'text' | 'draw'>('text');
   const [drawingData, setDrawingData] = useState<string | null>(null);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
+  const [explanationRevealed, setExplanationRevealed] = useState(false);
 
   // Security: Prevent screenshots
   useEffect(() => {
@@ -352,6 +354,10 @@ export default function StudentQuestion() {
     if (existingProgress?.video_watched) {
       setVideoWatched(true);
     }
+    // If the explanation was opened in a previous session, keep the forfeit and re-show it.
+    if (existingProgress?.explanation_viewed) {
+      setExplanationRevealed(true);
+    }
   }, [existingProgress]);
 
   useEffect(() => {
@@ -370,6 +376,27 @@ export default function StudentQuestion() {
     setFillAnswer('');
     setStartTime(Date.now());
   }, [currentVariationIndex, currentQuestion?.id, existingAttempts]);
+
+  // Explanation forfeit: true once recorded server-side or revealed this session.
+  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+
+  const handleRevealExplanation = () => {
+    setExplanationRevealed(true);
+    logActivity('explanation_viewed', { question_id: questionId });
+    if (student && questionId && !existingProgress?.explanation_viewed) {
+      supabase
+        .from('student_progress')
+        .upsert({
+          student_account_id: student.id,
+          question_id: questionId,
+          explanation_viewed: true,
+          explanation_viewed_at: new Date().toISOString(),
+        } as any, { onConflict: 'student_account_id,question_id' })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['question-progress', questionId, student.id] });
+        });
+    }
+  };
 
   // Mark video as watched mutation
   const markVideoWatchedMutation = useMutation({
@@ -452,9 +479,10 @@ export default function StudentQuestion() {
       });
 
       // Award points for correct answers (first 3 attempts only: 1st = 10 pts, 2nd = 5 pts, 3rd = 2 pts)
+      // Viewing the explanation forfeits the points for this question.
       let enrollmentSnapshot: SprintEnrollmentSnapshot | null = null;
       let pointsAwarded = 0;
-      if (correct && attemptNumber <= 3) {
+      if (correct && attemptNumber <= 3 && !explanationForfeited) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         pointsAwarded = points;
 
@@ -1040,6 +1068,15 @@ export default function StudentQuestion() {
                       </div>
                     </div>
                   )}
+
+                  {/* Explanation — available anytime; opening it forfeits remaining points */}
+                  <ShowExplanation
+                    explanation={(currentQuestion as any).rationale}
+                    revealed={explanationRevealed}
+                    onReveal={handleRevealExplanation}
+                    forfeitApplies={!(submitted && isCorrect)}
+                    forfeited={explanationForfeited}
+                  />
 
                 </CardContent>
               </Card>

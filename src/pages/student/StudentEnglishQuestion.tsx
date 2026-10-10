@@ -26,6 +26,7 @@ import { usePracticeRecents } from '@/hooks/usePracticeRecents';
 import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
+import { ShowExplanation } from '@/components/student/ShowExplanation';
 
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
@@ -45,6 +46,7 @@ export default function StudentEnglishQuestion() {
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [explanationRevealed, setExplanationRevealed] = useState(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
 
   useEffect(() => {
@@ -160,6 +162,26 @@ export default function StudentEnglishQuestion() {
     enabled: !!student && !!questionId
   });
 
+  // Fetch existing progress (explanation forfeit lives here)
+  const { data: existingProgress } = useQuery({
+    queryKey: ['english-question-progress', questionId, student?.id],
+    queryFn: async () => {
+      if (!student || !questionId) return null;
+      const { data } = await supabase
+        .from('student_progress')
+        .select('explanation_viewed')
+        .eq('student_account_id', student.id)
+        .eq('question_id', questionId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!student && !!questionId
+  });
+
+  useEffect(() => {
+    setShowExplanation(false);
+  }, [questionId]);
+
   useEffect(() => {
     if (existingAttempts?.length) {
       setAttemptCount(existingAttempts[0].attempt_number);
@@ -176,8 +198,29 @@ export default function StudentEnglishQuestion() {
       setSelectedAnswer(null);
     }
     setStartTime(Date.now());
-    setShowExplanation(false);
   }, [questionId, existingAttempts]);
+
+  // Explanation forfeit: true once recorded server-side or revealed this session.
+  const explanationForfeited = explanationRevealed || !!existingProgress?.explanation_viewed;
+
+  const handleRevealExplanation = () => {
+    setExplanationRevealed(true);
+    setShowExplanation(true);
+    logActivity('explanation_viewed', { question_id: questionId });
+    if (student && questionId && !existingProgress?.explanation_viewed) {
+      supabase
+        .from('student_progress')
+        .upsert({
+          student_account_id: student.id,
+          question_id: questionId,
+          explanation_viewed: true,
+          explanation_viewed_at: new Date().toISOString(),
+        } as any, { onConflict: 'student_account_id,question_id' })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['english-question-progress', questionId, student.id] });
+        });
+    }
+  };
 
   const submitMutation = useMutation({
     mutationFn: async ({ answer, questionId }: { answer: string; questionId: string }) => {
@@ -219,10 +262,10 @@ export default function StudentEnglishQuestion() {
         attempt_number: attemptNumber
       });
 
-      // Award points for correct answers
+      // Award points for correct answers — viewing the explanation forfeits them
       let enrollmentSnapshot: SprintEnrollmentSnapshot | null = null;
       let pointsAwarded = 0;
-      if (correct) {
+      if (correct && !explanationForfeited) {
         const points = attemptNumber === 1 ? 10 : attemptNumber === 2 ? 5 : 2;
         pointsAwarded = points;
 
@@ -449,7 +492,7 @@ export default function StudentEnglishQuestion() {
 
         <main className={cn(
           "container mx-auto px-4 py-6 max-w-3xl space-y-6",
-          submitted && question.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+          question.rationale && (submitted || explanationRevealed) && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
         )}>
           <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
@@ -561,14 +604,25 @@ export default function StudentEnglishQuestion() {
                   Attempts: {attemptCount}/3 • {isCorrect ? '✓ Correct!' : 'Keep trying!'}
                 </p>
               )}
+
+              {/* Explanation — available anytime; opening it forfeits remaining points */}
+              <ShowExplanation
+                explanation={question.rationale}
+                revealed={explanationRevealed}
+                onReveal={handleRevealExplanation}
+                forfeitApplies={!isCorrect}
+                forfeited={explanationForfeited}
+                inlineCard={false}
+              />
             </CardContent>
           </Card>
           </div>
 
-          {/* Explanation — left column on desktop, below the question on mobile */}
-          {submitted && question.rationale && (
+          {/* Explanation — left column on desktop, below the question on mobile.
+              Shows after submit, or earlier once the student opens it themselves. */}
+          {question.rationale && (explanationRevealed || submitted) && (
             <div className="order-2 lg:order-1 lg:sticky lg:top-20">
-            <Collapsible open={showExplanation} onOpenChange={setShowExplanation}>
+            <Collapsible open={showExplanation} onOpenChange={setShowExplanation} defaultOpen={explanationRevealed}>
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -579,7 +633,12 @@ export default function StudentEnglishQuestion() {
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 space-y-2">
+                    {explanationForfeited && (
+                      <p className="text-xs text-muted-foreground">
+                        Explanation opened — this question no longer awards points.
+                      </p>
+                    )}
                     <ScrollArea className="lg:max-h-[calc(100vh-11rem)] lg:pr-3">
                       <ExplanationView text={question.rationale} />
                     </ScrollArea>
