@@ -121,6 +121,7 @@ export default function CenterAdminPortal() {
         <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
         <CenterLogo center={center} className="h-7 w-7" />
         <span className="font-chillax font-semibold truncate">{centerDisplayName(center)}</span>
+        <div className="ml-auto"><DarkModeSetting compact /></div>
       </header>
       {/* Desktop glass top bar: same material, section glow and rounded leading
           corner as the main admin workspace. */}
