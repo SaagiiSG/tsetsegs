@@ -24,7 +24,7 @@ export function MobileAdminShell({ children }: MobileAdminShellProps) {
 
   return (
     <div
-      className="admin-page-glow min-h-screen w-full bg-background"
+      className="admin-glow-scope min-h-screen w-full bg-background"
       style={{ "--section-glow": sectionGlow } as React.CSSProperties}
     >
       {/* Compact header */}

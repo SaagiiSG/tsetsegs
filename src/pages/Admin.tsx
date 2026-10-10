@@ -127,7 +127,7 @@ const Admin = () => {
               </div>
             </header>
             <main
-              className="admin-page-glow relative flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8"
+              className="admin-glow-scope admin-main-glow relative flex-1 w-full max-w-[1440px] mx-auto px-6 py-7 lg:px-8"
               style={{ "--section-glow": sectionGlow } as React.CSSProperties}
             >
               {routesEl}
