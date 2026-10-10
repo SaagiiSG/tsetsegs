@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Database, CheckCircle2, ImageOff } from 'lucide-react';
+import { RefreshCw, Database, CheckCircle2, ImageOff, PencilLine } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 type Change = {
   question_id: string;
@@ -160,7 +161,7 @@ export default function QuestionSyncProgress() {
         </CardContent>
       </Card>
 
-      {result.changes.length > 0 && phase !== 'done' && (
+      {result.changes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Changed questions ({result.changes.length})</CardTitle>
@@ -171,6 +172,11 @@ export default function QuestionSyncProgress() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="font-mono">{c.question_id}</Badge>
                   {c.fields.map((f) => <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>)}
+                  <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
+                    <Link to={`/admin/questions?edit=${encodeURIComponent(c.question_id)}`}>
+                      <PencilLine className="h-3.5 w-3.5" /> Open editor
+                    </Link>
+                  </Button>
                 </div>
                 {c.fields.includes('question_text') && (
                   <div className="grid md:grid-cols-2 gap-2 text-xs">

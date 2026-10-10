@@ -1,5 +1,6 @@
 import { ExplanationView } from '@/components/explanation/ExplanationView';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -175,6 +176,27 @@ export default function QuestionBank() {
       setFormOpen(true);
     }
   };
+
+  // Deep-link support: /admin/questions?edit=CB0067 opens that question's editor
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (!editId) return;
+    setSearchParams({}, { replace: true });
+    (async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('question_id', editId)
+        .maybeSingle();
+      if (error || !data) {
+        toast({ title: 'Question not found', description: editId, variant: 'destructive' });
+        return;
+      }
+      handleEdit(data);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleFormClose = (open: boolean) => {
     setFormOpen(open);
