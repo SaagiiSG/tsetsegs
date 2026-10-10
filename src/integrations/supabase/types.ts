@@ -4011,6 +4011,8 @@ export type Database = {
       student_progress: {
         Row: {
           created_at: string
+          explanation_viewed: boolean
+          explanation_viewed_at: string | null
           id: string
           question_id: string
           student_account_id: string
@@ -4020,6 +4022,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          explanation_viewed?: boolean
+          explanation_viewed_at?: string | null
           id?: string
           question_id: string
           student_account_id: string
@@ -4029,6 +4033,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          explanation_viewed?: boolean
+          explanation_viewed_at?: string | null
           id?: string
           question_id?: string
           student_account_id?: string

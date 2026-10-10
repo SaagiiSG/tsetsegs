@@ -29,6 +29,13 @@
       "when": 1791616935052,
       "tag": "0003_center_workspace",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791623584736,
+      "tag": "0004_student_progress_explanation_viewed",
+      "breakpoints": true
     }
   ]
 }
