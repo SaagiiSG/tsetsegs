@@ -297,13 +297,13 @@ body.admin-theme .admin-glass-bar--page {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(130% 110% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.12), transparent 78%),
-    linear-gradient(160deg, hsl(var(--admin-atmosphere) / var(--admin-atmosphere-strength)), hsl(var(--admin-atmosphere) / 0.03) 55%, hsl(var(--admin-atmosphere) / 0.05));
+    radial-gradient(140% 150% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.12), transparent 85%),
+    linear-gradient(160deg, hsl(var(--section-glow, var(--admin-atmosphere)) / var(--admin-atmosphere-strength)), hsl(var(--section-glow, var(--admin-atmosphere)) / 0.03) 55%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.05));
 }
 .dark body.admin-theme .admin-page-atmosphere, body.admin-theme.dark .admin-page-atmosphere {
   background:
-    radial-gradient(130% 115% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.18), transparent 78%),
-    linear-gradient(160deg, hsl(var(--admin-atmosphere) / var(--admin-atmosphere-strength)), hsl(var(--admin-atmosphere) / 0.04) 55%, hsl(var(--admin-atmosphere) / 0.07));
+    radial-gradient(150% 160% at 12% 0%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.18), transparent 85%),
+    linear-gradient(160deg, hsl(var(--section-glow, var(--admin-atmosphere)) / var(--admin-atmosphere-strength)), hsl(var(--section-glow, var(--admin-atmosphere)) / 0.04) 55%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.07));
 }
 .admin-main-glow::before {
   content: "";
