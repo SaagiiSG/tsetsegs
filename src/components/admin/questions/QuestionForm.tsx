@@ -372,6 +372,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       }
     },
     onSuccess: () => {
+      if (editingQuestion) localStorage.removeItem(`qform:explanation-draft:${editingQuestion.id}`);
       toast({
         title: editingQuestion ? 'Question updated' : 'Question created',
         description: 'The question has been saved successfully',

@@ -288,6 +288,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
       }
     },
     onSuccess: () => {
+      if (editingQuestion) localStorage.removeItem(`cbform:explanation-draft:${editingQuestion.id}`);
       toast({
         title: editingQuestion ? 'Question updated' : 'CB Question created',
         description: 'The CollegeBoard question has been saved successfully',
