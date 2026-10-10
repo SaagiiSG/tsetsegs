@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -20,12 +20,31 @@ interface Props {
 /**
  * Student-initiated explanation reveal. Available anytime while solving; opening
  * it while the question can still award points forfeits those points (with a
- * confirmation so it never happens by accident).
+ * confirmation so it never happens by accident). The button is always visible —
+ * on questions without a written explanation it shows a note instead, without
+ * forfeiting points.
  */
 export function ShowExplanation({ explanation, revealed, onReveal, forfeitApplies, forfeited, inlineCard = true }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [emptyShown, setEmptyShown] = useState(false);
 
-  if (!explanation) return null;
+  useEffect(() => {
+    setEmptyShown(false);
+  }, [explanation]);
+
+  if (!explanation) {
+    return emptyShown ? (
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <Lightbulb className="h-3.5 w-3.5 shrink-0" />
+        No explanation has been written for this question yet.
+      </p>
+    ) : (
+      <Button variant="outline" onClick={() => setEmptyShown(true)} className="w-full gap-2">
+        <Lightbulb className="h-4 w-4 text-primary" />
+        Show explanation
+      </Button>
+    );
+  }
 
   const handleOpen = () => {
     if (forfeitApplies && !forfeited) {
