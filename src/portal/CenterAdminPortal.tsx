@@ -60,7 +60,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data } = useCenterAdminData();
   const badgeFor = (to: string) => (to === 'registrations' ? data?.pendingRegistrations : undefined);
   return (
-    <div className="flex h-full flex-col admin-glass">
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 px-4 h-16">
         <CenterLogo center={center} className="h-9 w-9" />
         <div className="min-w-0"><p className="font-chillax font-semibold truncate leading-tight">{centerDisplayName(center)}</p><p className="text-xs text-muted-foreground">Center admin</p></div>
