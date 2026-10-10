@@ -273,7 +273,7 @@ export function StepExplanationEditor({ value, onChange }: Props) {
             />
             <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
               {uploading === i ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-              Add picture
+              Add picture <span className="opacity-70">— or drag one anywhere into this step</span>
               <input
                 type="file"
                 accept="image/*"
