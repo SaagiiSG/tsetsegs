@@ -203,7 +203,22 @@ export function StepExplanationEditor({ value, onChange }: Props) {
       {blocks.map((b, i) => {
         const num = b.kind === 'step' ? ++stepNo : null;
         return (
-          <div key={i} className="space-y-2 rounded-lg border p-3">
+          <div
+            key={i}
+            onDragEnter={onDragEnter(i)}
+            onDragOver={onDragOver(i)}
+            onDragLeave={onDragLeave(i)}
+            onDrop={onDropStep(i)}
+            className={cn(
+              'relative space-y-2 rounded-lg border p-3 transition-colors',
+              dropTarget === i && 'border-primary bg-primary/5 ring-2 ring-primary/30'
+            )}
+          >
+            {dropTarget === i && (
+              <p className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-background/85 text-sm font-medium text-primary">
+                {num !== null ? `Drop the picture into step ${num}` : 'Drop the picture here'}
+              </p>
+            )}
             <div className="flex items-center gap-2">
               {b.kind === 'intro' ? (
                 <span className="text-xs font-medium text-muted-foreground">Intro</span>
@@ -250,17 +265,10 @@ export function StepExplanationEditor({ value, onChange }: Props) {
                 const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'));
                 if (file) {
                   e.preventDefault();
-                  uploadImage(i, file);
+                  uploadImage(i, file, e.currentTarget.selectionStart ?? null);
                 }
               }}
-              onDrop={(e) => {
-                const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
-                if (file) {
-                  e.preventDefault();
-                  uploadImage(i, file);
-                }
-              }}
-              placeholder="Type the explanation. Use $\frac{1}{2}$ or x^2, √3. Paste or drop a Desmos screenshot / handwritten photo."
+              placeholder="Type the explanation. Use $\frac{1}{2}$ or x^2, √3. Drag a Desmos screenshot / handwritten photo in, or paste it."
               className="min-h-[80px] font-mono text-sm"
             />
             <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
@@ -272,7 +280,7 @@ export function StepExplanationEditor({ value, onChange }: Props) {
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) uploadImage(i, f);
+                  if (f) uploadPictures(i, [f]);
                   e.target.value = '';
                 }}
               />
