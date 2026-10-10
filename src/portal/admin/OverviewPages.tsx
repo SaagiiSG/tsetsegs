@@ -128,15 +128,24 @@ export function ClassOverviewPage() {
     <div className="space-y-10">
       <PageHeader title="Class Overview" description={`Today, ${today}`} />
       <Section title="Today's attendance">
-        {data.classes.length ? <table className="w-full text-sm"><thead className="text-xs text-muted-foreground border-b"><tr><th className="text-left py-2">Batch</th><th className="text-left">Teacher</th><th className="text-left">Marked</th><th className="text-left">Status</th></tr></thead>
-          <tbody className="divide-y">{data.classes.map(c => {
-            const roster = data.students.filter(s => s.class_id === c.id && s.active);
-            const rows = data.attendance.filter(a => a.class_id === c.id && a.session_date === today);
-            const counts = Object.entries(rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.status]: (m[r.status] ?? 0) + 1 }), {}));
-            return <tr key={c.id}><td className="py-3">{c.name}<p className="text-xs text-muted-foreground">{c.schedule || 'No schedule'}</p></td><td className="text-muted-foreground">{teacher(c.teacher_member_id)}</td>
-              <td className="font-mono text-xs">{rows.length}/{roster.length}</td>
-              <td><span className="flex flex-wrap gap-1">{counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-muted-foreground">Not taken</span>}</span></td></tr>;
-          })}</tbody></table> : <Empty>No batches yet.</Empty>}
+        {data.classes.length ? <div className="grid gap-4 md:grid-cols-2">{data.classes.map(c => {
+          const roster = data.students.filter(s => s.class_id === c.id && s.active);
+          const rows = data.attendance.filter(a => a.class_id === c.id && a.session_date === today);
+          const counts = Object.entries(rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.status]: (m[r.status] ?? 0) + 1 }), {}));
+          return <div key={c.id} className="admin-glass-card admin-glass-card-glow rounded-xl border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-chillax font-semibold truncate">{c.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{c.schedule || 'No schedule'}</p>
+              </div>
+              <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{rows.length}/{roster.length} marked</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
+            <div className="flex flex-wrap gap-1 mt-3">
+              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-muted-foreground">Attendance not taken yet</span>}
+            </div>
+          </div>;
+        })}</div> : <Empty>No batches yet.</Empty>}
       </Section>
       <Section title="Students who missed 3+ classes (30 days)">
         {missed.length ? <ul className="divide-y text-sm">{missed.map(({ s, absent }) => (
