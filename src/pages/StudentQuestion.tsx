@@ -1079,8 +1079,17 @@ export default function StudentQuestion() {
                     onReveal={handleRevealExplanation}
                     forfeitApplies={!(submitted && isCorrect)}
                     forfeited={explanationForfeited}
-                    inlineCard={!explanationRevealed || !(currentQuestion as any).rationale || window.innerWidth < 1024}
+                    inlineCard={false}
                   />
+                  {/* Mobile: explanation below the question (desktop shows it in the right column) */}
+                  {explanationRevealed && (currentQuestion as any).rationale && (
+                    <div className="lg:hidden">
+                      {explanationForfeited && !(submitted && isCorrect) && (
+                        <p className="mb-2 text-xs text-muted-foreground">Explanation opened — this question no longer awards points.</p>
+                      )}
+                      <ExplanationView text={(currentQuestion as any).rationale} />
+                    </div>
+                  )}
 
                 </CardContent>
               </Card>
