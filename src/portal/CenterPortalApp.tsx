@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { CenterContext, type Center, type CenterRole } from './centerContext';
+import { CenterContext, useCenterBrand, type Center, type CenterRole } from './centerContext';
+import CenterJoin from './CenterJoin';
 import CenterSignIn from './CenterSignIn';
 import CenterAdminPortal from './CenterAdminPortal';
 import CenterTeacherPortal from './CenterTeacherPortal';
@@ -20,8 +21,10 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     return () => document.body.classList.remove('admin-theme');
   }, []);
 
+  const loadCenter = () => supabase.rpc('tenant_lookup', { _slug: slug }).then(({ data }) => setCenter((data?.[0] as Center) ?? null));
+  useCenterBrand(center);
   useEffect(() => {
-    supabase.rpc('tenant_lookup', { _slug: slug }).then(({ data }) => setCenter(data?.[0] ?? null));
+    loadCenter();
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
@@ -63,8 +66,9 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
 
   const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? '/student' : '/';
   return (
-    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut }}>
+    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut, reloadCenter: loadCenter }}>
       <Routes>
+        <Route path="/join/:code" element={<CenterJoin />} />
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />

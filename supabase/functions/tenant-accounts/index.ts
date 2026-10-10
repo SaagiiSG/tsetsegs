@@ -41,6 +41,31 @@ Deno.serve(async (req) => {
       return data && data.portal_enabled && data.status !== 'churned' ? data : null
     }
 
+    // ---------- Public registration (class join link) ----------
+    if (action === 'register') {
+      const tenant = await findTenant(body.slug)
+      if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
+      const code = String(body.code ?? '').trim()
+      const { data: cls } = await admin.from('tenant_classes').select('id').eq('institution_id', tenant.id).eq('join_code', code).maybeSingle()
+      if (!cls) return json({ error: 'This sign-up link is not valid. Ask your center for a new one.' }, 404)
+      const name = String(body.name ?? '').trim().slice(0, 100)
+      const phone = digits(body.phone)
+      const email = String(body.email ?? '').trim().toLowerCase().slice(0, 200)
+      const school = String(body.school ?? '').trim().slice(0, 120)
+      const grade = String(body.grade ?? '').trim().slice(0, 20)
+      if (name.length < 2) return json({ error: 'Enter your full name.' }, 400)
+      if (phone.length < 6 || phone.length > 15) return json({ error: 'Enter a valid phone number.' }, 400)
+      if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Enter a valid email or leave it empty.' }, 400)
+      const since = new Date(Date.now() - 3600e3).toISOString()
+      const { count } = await admin.from('tenant_registrations').select('id', { count: 'exact', head: true }).eq('institution_id', tenant.id).gte('created_at', since)
+      if ((count ?? 0) > 200) return json({ error: 'Too many sign-ups right now. Please try again later.' }, 429)
+      const { data: existing } = await admin.from('tenant_students').select('id').eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
+      if (existing) return json({ error: 'This phone number is already registered. Sign in instead.' }, 409)
+      const { error } = await admin.from('tenant_registrations').insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email, school, grade })
+      if (error) return json({ error: error.code === '23505' ? 'You already signed up — your center will review it soon.' : 'Could not submit. Try again.' }, 400)
+      return json({ ok: true })
+    }
+
     // ---------- Public student actions ----------
     if (action === 'student_lookup' || action === 'student_activate') {
       const tenant = await findTenant(body.slug)

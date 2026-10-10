@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { MathText } from '@/components/MathText';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { PortalShell, STATUS_LABEL, useCenter } from './centerContext';
+import { StudentAnnouncements, StudentSprint } from './StudentExtras';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const norm = (v: string) => v.trim().toLowerCase().replace(/\s+/g, '');
@@ -96,12 +97,14 @@ export default function CenterStudentPortal() {
             )}
           </section>
           <aside className="space-y-6">
+            <StudentAnnouncements studentId={me.data.student.id} />
             <div><p className="text-xs text-muted-foreground">Class</p><p className="font-medium">{me.data.cls?.name ?? 'Not assigned'}</p>{me.data.cls?.schedule && <p className="text-xs text-muted-foreground">{me.data.cls.schedule}</p>}</div>
             <div className="grid grid-cols-2 gap-4 border-y py-4">
               <div><p className="text-xs text-muted-foreground">Answered</p><p className="font-mono text-xl">{total}</p></div>
               <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-xl">{total ? `${Math.round(100 * correct / total)}%` : '—'}</p></div>
               <div><p className="text-xs text-muted-foreground">Attended</p><p className="font-mono text-xl">{present}/{me.data.att.length}</p></div>
             </div>
+            <StudentSprint studentId={me.data.student.id} />
             {me.data.att.length > 0 && <ul className="text-sm space-y-1">{me.data.att.slice(0, 8).map(a => <li key={a.session_date} className="flex justify-between"><span className="font-mono text-xs">{a.session_date}</span><span className="text-muted-foreground">{STATUS_LABEL[a.status]}</span></li>)}</ul>}
           </aside>
         </div>
