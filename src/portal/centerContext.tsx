@@ -68,6 +68,7 @@ export function PortalShell({ title, nav, glass = false, children }: { title: st
       className={`min-h-screen bg-background text-foreground ${glass ? 'admin-glow-scope' : ''}`}
       style={glass ? ({ '--section-glow': '152 60% 42%' } as CSSProperties) : undefined}
     >
+      {glass && <div aria-hidden className="admin-page-atmosphere" />}
       <header className={glass
         ? 'sticky top-0 z-20 admin-glass-bar'
         : 'sticky top-0 z-20 border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70'}>
@@ -82,7 +83,7 @@ export function PortalShell({ title, nav, glass = false, children }: { title: st
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Sign out</span></Button>
         </div>
       </header>
-      <main className={`mx-auto max-w-6xl px-4 py-6 ${glass ? 'admin-main-glow' : ''}`}>{children}</main>
+      <main className={`mx-auto max-w-6xl px-4 py-6 ${glass ? 'relative' : ''}`}>{children}</main>
     </div>
   );
 }
