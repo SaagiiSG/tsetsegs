@@ -236,7 +236,7 @@ export default function QuestionSyncProgress() {
 
 type Recent = { question_id: string; question_text: string | null; updated_at: string; rationale: string | null; question_set: string | null };
 
-function RecentlyUpdated({ days, setDays }: { days: number; setDays: (d: number) => void }) {
+function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDays: (d: number) => void; onOpenEditor: (id: string) => void }) {
   const [rows, setRows] = useState<Recent[] | null>(null);
   useEffect(() => {
     setRows(null);
@@ -273,10 +273,8 @@ function RecentlyUpdated({ days, setDays }: { days: number; setDays: (d: number)
                 ? <Badge variant="secondary" className="text-[10px]">Has explanation</Badge>
                 : <Badge variant="destructive" className="text-[10px]">No explanation</Badge>}
               <span className="text-[11px] text-muted-foreground">{new Date(r.updated_at).toLocaleString()}</span>
-              <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
-                <Link to={`/admin/questions?edit=${encodeURIComponent(r.question_id)}`}>
-                  <PencilLine className="h-3.5 w-3.5" /> Open editor
-                </Link>
+              <Button variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => onOpenEditor(r.question_id)}>
+                <PencilLine className="h-3.5 w-3.5" /> Open editor
               </Button>
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{r.question_text}</p>
