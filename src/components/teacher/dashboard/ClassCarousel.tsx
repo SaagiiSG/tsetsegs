@@ -191,11 +191,15 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
   return (
     <div className="relative">
       {/* Full-viewport scrollable strip (breaks out of parent width) */}
-      <div className="relative w-screen left-1/2 -translate-x-1/2">
-        {/* Smooth iOS-style edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-r from-background via-background/40 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-10 md:w-16 lg:w-24 z-20 bg-gradient-to-l from-background via-background/40 to-transparent" />
-
+      <div
+        className="relative w-screen left-1/2 -translate-x-1/2"
+        style={{
+          // Fade the cards themselves at the edges instead of painting an
+          // opaque overlay, so the page atmosphere stays continuous behind.
+          maskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
+        }}
+      >
         <div
           ref={ref}
           className="flex items-center gap-6 overflow-x-auto snap-x snap-proximity py-6 min-h-[62vh] px-[12vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
