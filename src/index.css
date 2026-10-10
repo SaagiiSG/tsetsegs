@@ -312,7 +312,7 @@ body.admin-theme .admin-sidebar-float > div {
   transform: scale(0.98);
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .admin-navigation-material, .admin-glass {
+  .admin-navigation-material, .admin-glass, .admin-glass-bar {
     background: hsl(var(--card));
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
