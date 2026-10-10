@@ -1,4 +1,5 @@
 # UI work
+- [ ] Refine admin using active Apple Design/Liquid Glass skills and the Vercel design reference; verify navigation and accessibility.
 - [x] Confirm admin Concept Videos is visible again (user confirmed).
 - [x] Update the admin dashboard and navigation to a monochrome Notion/Linear direction.
 - [x] Add international institution customer tracking with health, payment dues and admin editing.

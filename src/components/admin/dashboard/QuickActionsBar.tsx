@@ -52,8 +52,8 @@ export function QuickActionsBar() {
   const navigate = useNavigate();
 
   return (
-    <div className="animate-fade-in" style={{ animationDelay: '400ms' }}>
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+    <nav aria-label="Dashboard shortcuts">
+      <div className="flex flex-wrap items-center gap-2">
         {actions.map((action) => {
           const Icon = action.icon;
           return (
@@ -63,9 +63,8 @@ export function QuickActionsBar() {
               variant="outline"
               size="sm"
               className={`
-                flex-shrink-0 gap-2 
-                bg-background border-border
-                transition-all duration-200
+                admin-control flex-shrink-0 gap-2
+                bg-card border-border
                 ${action.color}
               `}
               onClick={() => navigate(action.path)}
@@ -76,6 +75,6 @@ export function QuickActionsBar() {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
