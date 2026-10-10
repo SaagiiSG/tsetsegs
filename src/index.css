@@ -400,6 +400,105 @@ body.admin-theme .admin-glass-card {
   border-color: hsl(0 0% 100% / 0.08);
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 8px 24px -12px hsl(0 0% 0% / 0.5);
 }
+/* Liquid cards: thinner frost so the page behind actually reads through,
+   plus a specular highlight that tracks the pointer (see useLiquidHighlight). */
+body.admin-theme .admin-glass-card.admin-glass-liquid {
+  --lx: 50%;
+  --ly: -25%;
+  background-color: hsl(var(--card) / 0.27);
+  background-image:
+    radial-gradient(320px 220px at var(--lx) var(--ly), hsl(0 0% 100% / 0.42), transparent 72%),
+    radial-gradient(120% 95% at 100% 115%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.14), transparent 68%);
+  backdrop-filter: blur(10px) saturate(2.3) brightness(1.04);
+  -webkit-backdrop-filter: blur(10px) saturate(2.3) brightness(1.04);
+  border-color: hsl(0 0% 100% / 0.6);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.65),
+    inset 0 0 30px -10px hsl(0 0% 100% / 0.4),
+    0 18px 44px -22px hsl(0 0% 0% / 0.22);
+}
+.dark body.admin-theme .admin-glass-card.admin-glass-liquid, body.admin-theme.dark .admin-glass-card.admin-glass-liquid {
+  background-color: hsl(var(--card) / 0.22);
+  background-image:
+    radial-gradient(320px 220px at var(--lx) var(--ly), hsl(0 0% 100% / 0.14), transparent 72%),
+    radial-gradient(120% 95% at 100% 115%, hsl(var(--section-glow, var(--admin-atmosphere)) / 0.2), transparent 68%);
+  border-color: hsl(0 0% 100% / 0.14);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.16),
+    inset 0 0 34px -12px hsl(0 0% 100% / 0.14),
+    0 18px 44px -22px hsl(0 0% 0% / 0.65);
+}
+/* A light drifting slowly inside the glass. */
+body.admin-theme .admin-glass-card-glow > .admin-liquid-sheen {
+  position: absolute;
+  inset: -45%;
+  z-index: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    hsl(0 0% 100% / 0.1) 50deg,
+    transparent 130deg,
+    hsl(var(--section-glow, var(--admin-atmosphere)) / 0.16) 230deg,
+    transparent 330deg
+  );
+  filter: blur(34px);
+  opacity: 0.8;
+  animation: admin-liquid-drift 22s linear infinite;
+}
+.dark body.admin-theme .admin-glass-card-glow > .admin-liquid-sheen, body.admin-theme.dark .admin-glass-card-glow > .admin-liquid-sheen {
+  opacity: 1;
+}
+@keyframes admin-liquid-drift {
+  from { transform: rotate(0deg) scale(1.05); }
+  to { transform: rotate(360deg) scale(1.05); }
+}
+/* Specular rim: one bright edge that fades into the section glow's colour. */
+body.admin-theme .admin-glass-card-glow > .admin-liquid-rim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    hsl(0 0% 100% / 0.8),
+    hsl(0 0% 100% / 0.08) 26%,
+    transparent 46%,
+    hsl(var(--section-glow, var(--admin-atmosphere)) / 0.5) 86%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.admin-theme .admin-liquid-sheen { animation: none; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body.admin-theme .admin-glass-card.admin-glass-liquid {
+    background-color: hsl(var(--card));
+    background-image: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  body.admin-theme .admin-liquid-sheen, body.admin-theme .admin-liquid-rim { display: none; }
+}
+/* A quieter second glass layer inside a liquid card: dense text and thin muted
+   labels sit here, so thinning the card's frost never costs legibility.
+   It reads on opacity alone — no second blur, so stacked-blur cost stays down. */
+body.admin-theme .admin-glass-inner {
+  background-color: hsl(var(--background) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.9rem;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.45);
+}
+.dark body.admin-theme .admin-glass-inner, body.admin-theme.dark .admin-glass-inner {
+  background-color: hsl(var(--card) / 0.42);
+  border-color: hsl(0 0% 100% / 0.1);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.08);
+}
 body.admin-theme .admin-glass-btn {
   backdrop-filter: blur(12px) saturate(1.5);
   -webkit-backdrop-filter: blur(12px) saturate(1.5);

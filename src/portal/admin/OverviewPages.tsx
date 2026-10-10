@@ -6,6 +6,8 @@ import { STATUS_LABEL, STATUS_STYLE } from '../centerContext';
 import { localDate } from '../centerApi';
 import { useCenterAdminData, useQuestionTopics, pct, money } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
+import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
+import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 
 const ATTENDED = new Set(['present', 'late']);
 
@@ -132,17 +134,18 @@ export function ClassOverviewPage() {
           const roster = data.students.filter(s => s.class_id === c.id && s.active);
           const rows = data.attendance.filter(a => a.class_id === c.id && a.session_date === today);
           const counts = Object.entries(rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.status]: (m[r.status] ?? 0) + 1 }), {}));
-          return <div key={c.id} className="admin-glass-card admin-glass-card-glow rounded-xl border p-4">
+          return <div key={c.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-card-glow admin-glass-liquid rounded-xl border p-4">
+            <LiquidGlassFX />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-chillax font-semibold truncate">{c.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{c.schedule || 'No schedule'}</p>
+                <p className="text-xs text-foreground/65 mt-0.5">{c.schedule || 'No schedule'}</p>
               </div>
-              <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{rows.length}/{roster.length} marked</span>
+              <span className="font-mono text-xs text-foreground/70 whitespace-nowrap">{rows.length}/{roster.length} marked</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
+            <p className="text-xs text-foreground/65 mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
             <div className="flex flex-wrap gap-1 mt-3">
-              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-muted-foreground">Attendance not taken yet</span>}
+              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-foreground/65">Attendance not taken yet</span>}
             </div>
           </div>;
         })}</div> : <Empty>No batches yet.</Empty>}

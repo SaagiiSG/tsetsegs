@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScheduleGlyph } from "./ScheduleGlyph";
 import { ClassCardAnalyticsPreview } from "./ClassCardAnalyticsPreview";
 import { StudentListPreview } from "./StudentListPreview";
+import { LiquidGlassFX } from "@/components/admin/LiquidGlassFX";
+import { useLiquidHighlight } from "@/hooks/useLiquidHighlight";
 import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { useHaptics } from "@/hooks/useHaptics";
 
@@ -23,9 +25,9 @@ interface Props {
 export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR }: Props) {
   const navigate = useNavigate();
   const haptic = useHaptics();
+  const liquid = useLiquidHighlight<HTMLDivElement>();
   const m = batch.metrics;
   const displayName = batch.nickname || batch.batch_name;
-  
 
   return (
     <motion.div
@@ -41,7 +43,11 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
       transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.9, delay: index * 0.03 }}
       className="snap-center shrink-0 w-[92vw] md:w-[85vw] lg:w-[85vw] xl:w-[85vw] max-w-[1400px]"
     >
-      <Card className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 admin-glass-card admin-glass-card-glow flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]">
+      <Card
+        {...liquid}
+        className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 admin-glass-card admin-glass-card-glow admin-glass-liquid flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]"
+      >
+        <LiquidGlassFX />
 
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
@@ -119,29 +125,26 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
           )}
         </div>
 
-
-
         {/* Analytics preview + student list — fills the mid-card space on tablet/desktop */}
         <div className="hidden md:flex flex-1 min-h-0 mt-5 overflow-hidden">
           {isActive ? (
-            <div className="grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-5 w-full min-h-0">
-              <StudentListPreview
-                students={batch.metrics.students}
-                total={batch.metrics.studentCount}
-                batchId={batch.id}
-              />
-              <div className="min-h-0 overflow-y-auto">
+            <div className="grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-4 w-full min-h-0">
+              <div className="admin-glass-inner flex min-h-0 flex-col p-3">
+                <StudentListPreview
+                  students={batch.metrics.students}
+                  total={batch.metrics.studentCount}
+                  batchId={batch.id}
+                />
+              </div>
+              <div className="admin-glass-inner min-h-0 overflow-y-auto p-3">
                 <ClassCardAnalyticsPreview batchId={batch.id} />
               </div>
             </div>
           ) : null}
         </div>
 
-
       </Card>
     </motion.div>
 
   );
 }
-
-

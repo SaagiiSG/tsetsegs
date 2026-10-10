@@ -30,6 +30,16 @@ Each nav section has a signature HSL glow (Overview 217 91% 60%, Batches 262 83%
 
 Batch/card glow variant: `.admin-glass-card-glow` rises from the card's **left edge** (gradient wash + 2px glowing edge, content at z-index 1, stronger alphas in dark mode).
 
+### Liquid (hero) cards
+
+Cards meant to feel like poured glass (teacher class cards, center batch/roster cards) add `.admin-glass-liquid` on top of `.admin-glass-card`: a near-transparent fill (0.27 light / 0.22 dark), `blur(10px) saturate(2.3) brightness(1.04)`, a white specular border, a pointer-tracked specular (`--lx/--ly`), a drifting conic `.admin-liquid-sheen` and a masked 1px `.admin-liquid-rim`. Use `useLiquidHighlight` (cards) or `liquidTrack`/`liquidRest` (list items) from `src/hooks/useLiquidHighlight.ts` and render `<LiquidGlassFX />` inside the card — never hand-roll pointer handlers or a second sheen implementation.
+
+**Legibility floor — never trade contrast for frost.** Thin glass over a moving background washes small text out:
+- Keep the card fill ≥ ~0.25 alpha with blur ≥ 10px; below that, secondary text disappears.
+- Give dense columns their own inner glass layer (`.admin-glass-inner`): a low-alpha fill, hairline border and specular top edge, **no second blur** — stacked blur costs performance.
+- Micro-labels (≤12px) must not use `text-muted-foreground` at a fractional opacity; the admin theme's muted-foreground is only ~3:1 on light surfaces. Use `text-foreground/65…/70`, which reads correctly in both modes.
+- Verify with computed contrast (element color composited over the sampled background pixel) in both modes, every label ≥ 4.5:1. A screenshot alone hides this class of failure — measure it.
+
 ## Buttons and controls
 
 Solid buttons read as tinted glass; outline/ghost as clear glass; all get a press-down spring feel. Show/hide password toggles use `src/portal/PasswordInput.tsx`.
