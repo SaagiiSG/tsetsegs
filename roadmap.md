@@ -12,3 +12,4 @@
 - [x] Fix the missing Concept Videos link in the admin sidebar and verify navigation.
 - [x] Center admin sidebar collapses to a floating icon rail with remembered state, tooltips and a working mobile drawer.
 - [x] Step-by-step explanations accept photos by dragging them onto any step (one or many), with a clear drop highlight; verified in the live editor.
+- [x] Center admin sidebar: customer logo no longer touches the card edge — header content vertically centered; verified live expanded and collapsed.
