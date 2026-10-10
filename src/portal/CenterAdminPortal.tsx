@@ -45,14 +45,17 @@ const SECTIONS: Section[] = [
 
 const DEFAULT_GLOW = '345 75% 55%';
 
-/** Resolves the current route's section glow so page chrome can match it. */
-function useCenterSectionGlow(): string {
+/** Resolves the current route's section glow and page label so page chrome can match it. */
+function useCenterSection(): { glow: string; label: string } {
   const { pathname } = useLocation();
   const rel = pathname.replace(/^\/admin\/?/, '');
   const section = SECTIONS.find((s) =>
     s.items.some((i) => rel === i.to || rel.startsWith(`${i.to}/`))
   );
-  return section?.glow ?? DEFAULT_GLOW;
+  const item = [...(section?.items ?? [])]
+    .filter((i) => rel === i.to || rel.startsWith(`${i.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  return { glow: section?.glow ?? DEFAULT_GLOW, label: item?.label ?? 'Dashboard' };
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -98,7 +101,7 @@ export default function CenterAdminPortal() {
   const [open, setOpen] = useState(false);
   const { center } = useCenter();
   const { pathname } = useLocation();
-  const sectionGlow = useCenterSectionGlow();
+  const section = useCenterSection();
 
   // Reuse the admin theme tokens so the glass/glow styles apply here too.
   useEffect(() => {
