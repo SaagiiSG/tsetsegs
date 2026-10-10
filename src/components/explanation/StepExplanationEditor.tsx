@@ -211,13 +211,16 @@ export function StepExplanationEditor({ value, onChange }: Props) {
             onDrop={onDropStep(i)}
             className={cn(
               'relative space-y-2 rounded-lg border p-3 transition-colors',
-              dropTarget === i && 'border-primary bg-primary/5 ring-2 ring-primary/30'
+              dropTarget === i && 'border-dashed border-primary bg-primary/10 ring-2 ring-primary/40'
             )}
           >
             {dropTarget === i && (
-              <p className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-background/85 text-sm font-medium text-primary">
-                {num !== null ? `Drop the picture into step ${num}` : 'Drop the picture here'}
-              </p>
+              <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-lg bg-background">
+                <span className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                  <ImagePlus className="h-4 w-4" />
+                  {num !== null ? `Drop the picture into step ${num}` : 'Drop the picture here'}
+                </span>
+              </div>
             )}
             <div className="flex items-center gap-2">
               {b.kind === 'intro' ? (
