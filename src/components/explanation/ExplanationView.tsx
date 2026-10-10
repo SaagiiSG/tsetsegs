@@ -44,25 +44,45 @@ export function ExplanationView({ text, className }: Props) {
                 </span>
               </div>
             )}
-            <div className="space-y-2 text-muted-foreground">
-              {parts.map((p, j) =>
-                p.type === 'image' ? (
-                  <button
-                    key={j}
-                    type="button"
-                    onClick={() => setZoom(p.value)}
-                    className="block overflow-hidden rounded-md border bg-background"
-                    aria-label="Enlarge picture"
-                  >
-                    <img src={p.value} alt="" loading="lazy" className="max-h-72 w-auto max-w-full object-contain" />
-                  </button>
-                ) : (
-                  <div key={j} className="min-w-0 break-words">
-                    <MathText text={p.value} />
+            {(() => {
+              const images = parts.filter((p) => p.type === 'image');
+              const texts = parts.filter((p) => p.type !== 'image');
+              if (images.length === 0) {
+                return (
+                  <div className="space-y-2 text-muted-foreground">
+                    {texts.map((p, j) => (
+                      <div key={j} className="min-w-0 break-words">
+                        <MathText text={p.value} />
+                      </div>
+                    ))}
                   </div>
-                ),
-              )}
-            </div>
+                );
+              }
+              return (
+                <div className="flex flex-col gap-3 text-muted-foreground sm:flex-row sm:items-start">
+                  <div className="flex shrink-0 flex-col gap-2 sm:max-w-[45%]">
+                    {images.map((p, j) => (
+                      <button
+                        key={j}
+                        type="button"
+                        onClick={() => setZoom(p.value)}
+                        className="block overflow-hidden rounded-md border bg-background"
+                        aria-label="Enlarge picture"
+                      >
+                        <img src={p.value} alt="" loading="lazy" className="max-h-72 w-auto max-w-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    {texts.map((p, j) => (
+                      <div key={j} className="min-w-0 break-words">
+                        <MathText text={p.value} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       })}
