@@ -81,6 +81,9 @@ export default function StudentQuestion() {
   const [drawingData, setDrawingData] = useState<string | null>(null);
   const [enrollmentDialog, setEnrollmentDialog] = useState<{ open: boolean; snapshot: SprintEnrollmentSnapshot | null; pointsEarned: number }>({ open: false, snapshot: null, pointsEarned: 0 });
   const [explanationRevealed, setExplanationRevealed] = useState(false);
+  // Stays true once the explanation has been opened, even after hiding it again —
+  // so the points forfeit can't be undone by closing the panel before answering.
+  const [explanationOpened, setExplanationOpened] = useState(false);
 
   // Security: Prevent screenshots
   useEffect(() => {
