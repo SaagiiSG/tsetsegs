@@ -242,7 +242,9 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
               </Button>
             </div>
           </div>
+        </div>
 
+        <div className={`w-full max-w-[1600px] mx-auto p-3 md:p-6 lg:p-8 pb-24 transition-[padding] duration-300 admin-main-glow ${activeMode === "practice" ? "md:pl-20" : ""}`}>
           <StudentSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
           <div className="relative">
