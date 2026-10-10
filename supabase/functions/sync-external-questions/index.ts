@@ -314,7 +314,8 @@ Deno.serve(async (req) => {
         else notFound++;
       }
 
-      let updated = 0, unchanged = 0, errors = 0;
+      const skipImageDiffs = body.skip_image_diffs === true;
+      let updated = 0, unchanged = 0, errors = 0, skippedImages = 0;
       const errorDetails: string[] = [];
       const changes: any[] = [];
 
@@ -337,6 +338,8 @@ Deno.serve(async (req) => {
           }
           const changed = Object.keys(patch);
           if (changed.length === 0) { unchanged++; continue; }
+          // Skip questions whose figure link differs — our hosted images win over external links
+          if (skipImageDiffs && changed.includes("question_image_url")) { skippedImages++; continue; }
 
           if (changes.length < 200) {
             changes.push({
@@ -357,7 +360,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           mode: "update", preview: dry_run, success: true,
-          total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, errors,
+          total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, errors, skipped_images: skippedImages,
           changes, has_more: hasMore, next_offset: offset + safeLimit,
           error_details: errorDetails.slice(0, 10),
         }),

@@ -27,6 +27,7 @@ import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
 import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
+import QuestionSyncProgress from '@/pages/admin/QuestionSyncProgress';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
 import { CohortSwitcher } from '@/components/admin/CohortSwitcher';
 import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
@@ -68,6 +69,7 @@ const Admin = () => {
       <Route path="questions" element={<QuestionBank />} />
       <Route path="question-search" element={<QuestionSearch />} />
       <Route path="concept-videos" element={<ConceptVideosAdmin />} />
+      <Route path="question-sync" element={<QuestionSyncProgress />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />
