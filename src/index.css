@@ -308,17 +308,13 @@ body.admin-theme .admin-glass-bar--page {
 .admin-main-glow::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(70% 100% at 10% 0%, hsl(var(--section-glow) / 0.1), transparent 70%);
+  background: radial-gradient(80% 90% at 10% 0%, hsl(var(--section-glow) / 0.1), transparent 70%);
 }
 .dark body.admin-theme .admin-main-glow::before, body.admin-theme.dark .admin-main-glow::before {
-  height: 260px;
-  background: radial-gradient(70% 100% at 10% 0%, hsl(var(--section-glow) / 0.16), transparent 70%);
+  background: radial-gradient(85% 95% at 10% 0%, hsl(var(--section-glow) / 0.16), transparent 72%);
 }
 .admin-main-glow > * {
   position: relative;
