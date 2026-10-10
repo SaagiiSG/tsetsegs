@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { useCenterAdminData } from './admin/useCenterAdminData';
+import { DarkModeSetting } from './admin/CenterPages';
 import { DashboardPage, AnalyticsPage, ClassOverviewPage } from './admin/OverviewPages';
 import { BatchesPage, CreateBatchPage } from './admin/BatchPages';
 import { StudentsPage, StudentDetailPage, RegistrationsPage } from './admin/StudentPages';
