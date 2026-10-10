@@ -54,7 +54,7 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
           <div className="text-[11px] uppercase tracking-wide text-foreground/65 inline-flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" /> Math domains · last 30 days
           </div>
-          <span className="text-[11px] text-foreground/55 tabular-nums">needs more data</span>
+          <span className="text-[11px] text-foreground/70 tabular-nums">needs more data</span>
         </div>
 
         <div className="space-y-1.5">

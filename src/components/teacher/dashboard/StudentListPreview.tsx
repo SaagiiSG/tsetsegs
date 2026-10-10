@@ -45,7 +45,7 @@ export function StudentListPreview({ students, total, batchId }: Props) {
         <div className="text-[11px] uppercase tracking-wide text-foreground/65 inline-flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" /> Students
         </div>
-        <span className="text-[11px] text-foreground/55 tabular-nums">{total} total</span>
+        <span className="text-[11px] text-foreground/70 tabular-nums">{total} total</span>
       </div>
 
       {students.length === 0 ? (
