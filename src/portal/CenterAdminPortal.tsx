@@ -49,7 +49,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <CenterLogo center={center} className="h-9 w-9" />
         <div className="min-w-0"><p className="font-chillax font-semibold truncate leading-tight">{centerDisplayName(center)}</p><p className="text-xs text-muted-foreground">Center admin</p></div>
       </div>
-      <nav aria-label="Center admin" className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+      <nav aria-label="Center admin" className="flex-1 overflow-y-auto scrollbar-hide px-2 py-3 space-y-4">
         {sections.map(s => (
           <div key={s.title}>
             <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{s.title}</p>
