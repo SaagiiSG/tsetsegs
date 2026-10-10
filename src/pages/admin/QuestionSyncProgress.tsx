@@ -199,10 +199,8 @@ export default function QuestionSyncProgress() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="font-mono">{c.question_id}</Badge>
                   {c.fields.map((f) => <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>)}
-                  <Button asChild variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs">
-                    <Link to={`/admin/questions?edit=${encodeURIComponent(c.question_id)}`}>
-                      <PencilLine className="h-3.5 w-3.5" /> Open editor
-                    </Link>
+                  <Button variant="ghost" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => openEditor(c.question_id)}>
+                    <PencilLine className="h-3.5 w-3.5" /> Open editor
                   </Button>
                 </div>
                 {c.fields.includes('question_text') && (
@@ -217,7 +215,21 @@ export default function QuestionSyncProgress() {
         </Card>
       )}
 
-      {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} />}
+      {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} onOpenEditor={openEditor} />}
+
+      {/* Inline Question Form Dialog */}
+      <QuestionForm
+        open={formOpen}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingQuestion(null); }}
+        editingQuestion={editingQuestion}
+      />
+
+      {/* Inline CB Question Form Dialog */}
+      <CBQuestionForm
+        open={cbFormOpen}
+        onOpenChange={(open) => { setCbFormOpen(open); if (!open) setEditingCBQuestion(null); }}
+        editingQuestion={editingCBQuestion}
+      />
     </div>
   );
 }
