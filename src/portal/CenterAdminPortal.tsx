@@ -233,11 +233,9 @@ export default function CenterAdminPortal() {
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetContent side="left" className="p-0 w-72">
               <SheetTitle className="sr-only">Menu</SheetTitle>
-              <SidebarProvider className="min-h-0 w-full">
-                <div className="flex h-full min-h-0 w-full flex-col">
-                  <CenterNavList onNavigate={() => setOpen(false)} />
-                </div>
-              </SidebarProvider>
+              <div className="flex h-full w-full flex-col">
+                <CenterNavList onNavigate={() => setOpen(false)} />
+              </div>
             </SheetContent>
           </Sheet>
           <main
