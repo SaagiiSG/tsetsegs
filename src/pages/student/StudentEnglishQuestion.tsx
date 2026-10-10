@@ -447,7 +447,11 @@ export default function StudentEnglishQuestion() {
           </Button>
         </div>
 
-        <main className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
+        <main className={cn(
+          "container mx-auto px-4 py-6 max-w-3xl space-y-6",
+          submitted && question.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6 lg:space-y-0"
+        )}>
+          <div className="order-1 lg:order-2 space-y-6 min-w-0">
           {/* Passage */}
           {question.passage_text && (
             <Card>
