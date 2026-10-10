@@ -173,6 +173,20 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     } else if (nextQuestionId) {
       form.setValue('question_id', nextQuestionId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingQuestion?.id, nextQuestionId]);
+
+  // Persist the explanation draft as it's typed so switching questions/tabs never erases it
+  const rationaleValue = form.watch('rationale');
+  useEffect(() => {
+    if (!editingQuestion) return;
+    const key = `qform:explanation-draft:${editingQuestion.id}`;
+    if (rationaleValue && rationaleValue !== (editingQuestion.rationale || '')) {
+      localStorage.setItem(key, rationaleValue);
+    } else {
+      localStorage.removeItem(key);
+    }
+  }, [rationaleValue, editingQuestion]);
     // Only reload when a different question (or a fresh open) arrives — background
     // refetches (e.g. returning from Desmos) must not wipe unsaved typing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
