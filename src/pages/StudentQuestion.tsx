@@ -915,7 +915,10 @@ export default function StudentQuestion() {
         </header>
 
 
-        <main className="container mx-auto px-2.5 py-3 md:px-4 md:py-6 pb-24 max-w-3xl space-y-3 md:space-y-6">
+        <main className={cn(
+          "container mx-auto px-2.5 py-3 md:px-4 md:py-6 pb-24 max-w-3xl space-y-3 md:space-y-6",
+          explanationRevealed && (currentQuestion as any)?.rationale && "lg:max-w-6xl lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-6 lg:space-y-0"
+        )}>
 
           {/* Video Section */}
           {videoId && !videoWatched && (
@@ -1076,6 +1079,7 @@ export default function StudentQuestion() {
                     onReveal={handleRevealExplanation}
                     forfeitApplies={!(submitted && isCorrect)}
                     forfeited={explanationForfeited}
+                    inlineCard={!explanationRevealed || !(currentQuestion as any).rationale || window.innerWidth < 1024}
                   />
 
                 </CardContent>
