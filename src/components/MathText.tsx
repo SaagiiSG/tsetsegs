@@ -20,7 +20,8 @@ interface MathTextProps {
  * Anything between delimiters is sent to KaTeX as-is. No prose-detection
  * heuristics — if you wrote $\frac{1}{2}$ it renders as math. Outside of
  * math spans we run a small auto-detect pass for unicode/caret shorthand
- * (x², √3, π, x^2) so authors can keep writing the easy stuff plainly.
+ * (x², √3, π, x^2) and plain slash fractions (b/5, 3/4, x/2) so authors
+ * can keep writing the easy stuff plainly.
  *
  * Currency: a bare `$96` with no matching closing `$` stays literal because
  * step 2 only extracts *paired* delimiters. To force literal `$` inside
@@ -191,6 +192,16 @@ function autoDetectMath(text: string, tokens: MathToken[]): string {
   );
   result = result.replace(/([a-zA-Z0-9)]+)\^([a-zA-Z0-9])(?![{(])/g, (_, base, exp) =>
     pushInline(`${base}^{${exp}}`),
+  );
+
+  // Slash fractions: b/5, 3/4, x/2, 1.5/3 → \frac{}{}.
+  // Deliberately conservative — numerator/denominator must be a bare number
+  // or single letter, and the match is refused when it would tear apart
+  // words ("and/or"), units ("km/h"), URLs, money ("$3/4") or date-style
+  // chains ("12/5/2026"). Anything richer should use $ ... $ delimiters.
+  result = result.replace(
+    /(^|[^a-zA-Z0-9.$/])(\d+(?:\.\d+)?|[a-zA-Z])\/(\d+(?:\.\d+)?|[a-zA-Z])(?![a-zA-Z0-9/])/g,
+    (_, pre: string, num: string, den: string) => `${pre}${pushInline(`\\frac{${num}}{${den}}`)}`,
   );
 
   // Symbols
