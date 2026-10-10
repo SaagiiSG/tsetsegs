@@ -96,7 +96,7 @@ export function AdminSidebar() {
                 onOpenChange={(expanded) => setExpandedSections((current) => ({ ...current, [section.label]: expanded }))}
                 className="group/collapsible"
               >
-                <SidebarGroupLabel asChild className="px-2">
+                <SidebarGroupLabel asChild className={cn("px-2", !open && "hidden")}>
                   <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:bg-muted/50 rounded-md transition-all duration-200">
                     <div className="flex items-center gap-2">
                       <motion.div
