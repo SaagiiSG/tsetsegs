@@ -72,7 +72,7 @@ export function DesmosCalculator() {
   const windowRef = useRef<HTMLDivElement>(null);
   const mobilePaneRef = useRef<HTMLDivElement | null>(null);
 
-  const { student } = useStudentAuth();
+  const student = useOptionalStudentAuth()?.student ?? null;
   const usageEventIdRef = useRef<string | null>(null);
   const usageOpenedAtRef = useRef<number | null>(null);
   const studentIdRef = useRef<string | null>(null);
