@@ -11,3 +11,4 @@
 
 - Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank.
 - Concept videos are international-only (nav filtered and route guarded by `student.cohort`).
+- Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
