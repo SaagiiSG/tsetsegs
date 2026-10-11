@@ -342,6 +342,9 @@ export default function CenterTeacherPortal() {
   const [renameValue, setRenameValue] = useState('');
   const [inspect, setInspect] = useState<string | null>(null);
   const [liveClassId, setLiveClassId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hubId = matchPath('/teacher/class/:id', location.pathname)?.params.id ?? null;
 
   // Liquid glass admin theme, scoped to this page's lifetime.
   useEffect(() => {
@@ -511,6 +514,7 @@ export default function CenterTeacherPortal() {
       date={date}
       onCycle={cycle}
       onInspect={setInspect}
+      onOpen={() => navigate(`/teacher/class/${c.id}`)}
       onInvite={() => setInvite(c)}
       onRename={() => { setRename(c); setRenameValue(c.name); }}
       canRename={role === 'center_admin'}
@@ -562,7 +566,7 @@ export default function CenterTeacherPortal() {
           <div className="relative">
             <AnimatePresence mode="wait" custom={slideDirection}>
               <motion.div
-                key={mode}
+                key={hubClass ? `hub-${hubClass.id}` : mode}
                 custom={slideDirection}
                 variants={slideVariants}
                 initial="enter"
@@ -570,7 +574,22 @@ export default function CenterTeacherPortal() {
                 exit="exit"
                 transition={slideTransition}
               >
-                {mode === 'dashboard' && (
+                {hubClass && (
+                  <ClassHub
+                    cls={hubClass}
+                    students={allStudents.filter(s => s.class_id === hubClass.id)}
+                    statsMap={statsMap}
+                    history={historyQuery.data?.att ?? []}
+                    attMap={attByClass[hubClass.id] ?? {}}
+                    date={date}
+                    onCycle={cycle}
+                    onInspect={setInspect}
+                    onInvite={() => setInvite(hubClass)}
+                    onBack={() => navigate('/teacher')}
+                    onLive={() => { setLiveClassId(hubClass.id); navigate('/teacher'); handleModeChange('live'); }}
+                  />
+                )}
+                {!hubClass && mode === 'dashboard' && (
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
                       <Select value={intake} onValueChange={v => setIntake(v as typeof intake)}>
@@ -661,7 +680,7 @@ export default function CenterTeacherPortal() {
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => handleModeChange(key)}
+              onClick={() => { if (hubClass) navigate('/teacher'); handleModeChange(key); }}
               aria-pressed={mode === key}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >
