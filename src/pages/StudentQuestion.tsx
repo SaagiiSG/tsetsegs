@@ -37,6 +37,8 @@ import { ShowExplanation } from '@/components/student/ShowExplanation';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { cn } from '@/lib/utils';
 
+const catName = (c: any): string | undefined => (Array.isArray(c) ? c[0]?.name : c?.name);
+
 // SM-2 spaced repetition algorithm helper
 const calculateNextReview = (quality: number, easeFactor: number, interval: number) => {
   // quality: 0-2 = wrong, 3 = barely correct, 4-5 = correct
@@ -900,7 +902,7 @@ export default function StudentQuestion() {
             </Button>
             <div className="flex items-center gap-1.5 md:gap-2 min-w-0 overflow-hidden">
               <Badge variant="outline" className="font-mono shrink-0">{question.question_id}</Badge>
-              <Badge variant="secondary" className="hidden sm:inline-flex">{question.category?.name}</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex">{catName(question.category)}</Badge>
               {(question as any).difficulty_level && (
                 <Badge variant="outline" className="gap-1.5 shrink-0">
                   <DifficultyDots level={(question as any).difficulty_level} />

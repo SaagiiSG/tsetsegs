@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const catName = (c: any): string | undefined => (Array.isArray(c) ? c[0]?.name : c?.name);
+
 const ENGLISH_CATEGORIES = [
   'Information and Ideas',
   'Craft and Structure',
@@ -265,9 +267,9 @@ export default function StudentEnglishPractice() {
                       </div>
                       <Badge 
                         variant="outline" 
-                        className={`text-[10px] truncate max-w-full ${getCategoryColor(question.category?.name || '')}`}
+                        className={`text-[10px] truncate max-w-full ${getCategoryColor(catName(question.category) || '')}`}
                       >
-                        {question.category?.name?.split(' ')[0] || 'N/A'}
+                        {catName(question.category)?.split(' ')[0] || 'N/A'}
                       </Badge>
                       {question.passage_text && (
                         <span className="text-[10px] text-muted-foreground block">Has passage</span>

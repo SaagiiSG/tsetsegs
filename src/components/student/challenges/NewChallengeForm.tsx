@@ -84,7 +84,7 @@ export default function NewChallengeForm({ preselectFriend, onCreated }: Props) 
       target_value: format === 'time_sprint' ? null : target,
       duration_seconds: format === 'time_sprint' ? duration : null,
       invited_account_ids: Array.from(selected),
-    });
+    }, student.cohort);
     setCreating(false);
     if (error || !id) {
       toast.error(error ?? 'Could not create challenge');

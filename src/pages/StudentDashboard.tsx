@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const catName = (c: any): string | undefined => (Array.isArray(c) ? c[0]?.name : c?.name);
+
 type QuestionSet = '68' | 'CB';
 
 export default function StudentDashboard() {
@@ -456,9 +458,9 @@ export default function StudentDashboard() {
                         </div>
                         <Badge 
                           variant="outline" 
-                          className={`text-[10px] truncate max-w-full ${getCategoryColor(question.category?.name || '')}`}
+                          className={`text-[10px] truncate max-w-full ${getCategoryColor(catName(question.category) || '')}`}
                         >
-                          {question.category?.name?.split(' ')[0] || 'N/A'}
+                          {catName(question.category)?.split(' ')[0] || 'N/A'}
                         </Badge>
                       </CardContent>
                     </Card>

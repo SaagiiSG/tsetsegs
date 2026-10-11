@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { questionTableFor } from '@/lib/questionTable';
+import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,8 @@ const fetchAllPracticeQuestionRows = async <T,>(
   selectColumns: string,
   questionSet: QuestionSet,
   subject: Subject,
-  orderColumn: string = 'id'
+  orderColumn: string = 'id',
+  qTable: QuestionTable = 'questions'
 ) => {
   const allRows: T[] = [];
 
@@ -202,7 +203,7 @@ export default function StudentPractice() {
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['practice-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
-      const data = await fetchAllPracticeQuestionRows<any>(PRACTICE_QUESTION_SELECT, questionSet, subject, 'question_id');
+      const data = await fetchAllPracticeQuestionRows<any>(PRACTICE_QUESTION_SELECT, questionSet, subject, 'question_id', qTable);
       
       // Filter out bluebook questions
       if (bluebookQuestionIds && data) {
@@ -218,11 +219,11 @@ export default function StudentPractice() {
     queryKey: ['question-set-counts', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       const [set68Rows, cbRows, englishRows, set150Rows, anpRows] = await Promise.all([
-        fetchAllPracticeQuestionRows<{ id: string }>('id', '68', 'math'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'math'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'english'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math'),
-        fetchAllPracticeQuestionRows<{ id: string }>('id', 'ANP', 'math')
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '68', 'math', 'id', qTable),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'math', 'id', qTable),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'CB', 'english', 'id', qTable),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', '150', 'math', 'id', qTable),
+        fetchAllPracticeQuestionRows<{ id: string }>('id', 'ANP', 'math', 'id', qTable)
       ]);
       
       const filterBluebook = (data: { id: string }[]) => {

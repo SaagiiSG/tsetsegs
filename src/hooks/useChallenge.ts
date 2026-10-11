@@ -163,6 +163,7 @@ export async function createChallenge(
   hostAccountId: string,
   hostDisplayName: string,
   args: CreateChallengeArgs,
+  cohort?: string | null,
 ): Promise<{ id: string | null; error: string | null }> {
   // 0. Enforce one active challenge per student (host)
   const { data: existing } = await supabase
@@ -179,7 +180,7 @@ export async function createChallenge(
   try {
     const desiredPool =
       args.format === 'fixed_set' ? args.target_value ?? 10 : args.format === 'first_to_correct' ? Math.max(60, (args.target_value ?? 25) * 2) : 60;
-    poolIds = await fetchQuestionPool(args.subject, args.question_set, desiredPool, questionTableFor(student?.cohort));
+    poolIds = await fetchQuestionPool(args.subject, args.question_set, desiredPool, questionTableFor(cohort));
   } catch (e: any) {
     return { id: null, error: e.message ?? 'Could not fetch questions' };
   }

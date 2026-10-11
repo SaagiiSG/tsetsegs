@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { questionTableFor } from '@/lib/questionTable';
+import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 
 export interface SetCounts {
   total: number;
@@ -20,6 +20,7 @@ const empty = (): SetCounts => ({ total: 0, completed: 0, pct: 0 });
 async function countSet(
   studentAccountId: string,
   questionSet: string | { exclude: string[]; subject?: 'math' | 'english' },
+  qTable: QuestionTable = 'questions',
 ): Promise<SetCounts> {
   // Collect ALL matching question ids (Supabase caps rows at ~1000 per request),
   // so we page through until we have everything.
@@ -81,9 +82,9 @@ export function useSetProgress() {
     queryFn: async (): Promise<SetProgress> => {
       if (!student?.id) return { s68: empty(), s150: empty(), cb: empty() };
       const [s68, s150, cb] = await Promise.all([
-        countSet(student.id, '68'),
-        countSet(student.id, 'SATMathTraining800'),
-        countSet(student.id, { exclude: ['68', 'SATMathTraining800', 'ANP120Aug3'], subject: 'math' }),
+        countSet(student.id, '68', qTable),
+        countSet(student.id, 'SATMathTraining800', qTable),
+        countSet(student.id, { exclude: ['68', 'SATMathTraining800', 'ANP120Aug3'], subject: 'math' }, qTable),
       ]);
       return { s68, s150, cb };
     },
