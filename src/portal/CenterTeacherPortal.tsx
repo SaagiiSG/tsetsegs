@@ -170,6 +170,87 @@ function CenterClassCard({
 }
 
 /** Per-class domain mastery, loaded lazily when the Analytics tab opens. */
+/** Dedicated class hub — full attendance grid, roster with risk, domain mastery and live launcher. */
+function ClassHub({
+  cls, students, statsMap, history, attMap, date, onCycle, onInspect, onInvite, onBack, onLive,
+}: {
+  cls: CenterClass; students: CenterStudent[]; statsMap: Record<string, StudentStats>;
+  history: AttRow[]; attMap: Record<string, string>; date: string;
+  onCycle: (classId: string, studentId: string) => void; onInspect: (id: string) => void;
+  onInvite: () => void; onBack: () => void; onLive: () => void;
+}) {
+  const classHistory = history.filter(a => a.class_id === cls.id);
+  const dates = [...new Set([date, ...classHistory.map(a => a.session_date)])].sort().reverse().slice(0, 12).reverse();
+  const cell: Record<string, string> = {};
+  for (const a of classHistory) cell[`${a.student_id}|${a.session_date}`] = a.status;
+  for (const [sid, st] of Object.entries(attMap)) cell[`${sid}|${date}`] = st;
+  const totals = students.reduce((t, s) => { const st = statsMap[s.id]; return { n: t.n + (st?.n ?? 0), c: t.c + (st?.c ?? 0), p: t.p + (st?.present ?? 0), s: t.s + (st?.sessions ?? 0) }; }, { n: 0, c: 0, p: 0, s: 0 });
+  const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6';
+  const short = (d: string) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
+      </div>
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} flex flex-wrap items-start justify-between gap-4`}>
+        <LiquidGlassFX />
+        <div className="relative min-w-0">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{cls.name}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{cls.schedule || 'No schedule set'}{cls.starts_on ? ` · started ${cls.starts_on}` : ''}</p>
+        </div>
+        <div className="relative flex flex-wrap items-center gap-2">
+          <button onClick={() => { navigator.clipboard.writeText(cls.join_code); toast.success('Join code copied'); }} className="font-mono text-sm border rounded-full px-3 py-1 hover:bg-muted flex items-center gap-1.5"><Copy className="h-3.5 w-3.5" />{cls.join_code}</button>
+          <Button variant="outline" size="sm" onClick={onInvite}><QrCode className="h-4 w-4" />Invite</Button>
+          <Button size="sm" onClick={onLive}><Radio className="h-4 w-4" />Start live session</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[['Students', students.length], ['Questions', totals.n], ['Accuracy', totals.n ? `${pct(totals.c, totals.n)}%` : '—'], ['Attendance', totals.s ? `${pct(totals.p, totals.s)}%` : '—']].map(([l, v]) => (
+          <div key={l as string} className="admin-glass-card rounded-2xl border p-4"><p className="text-xs text-muted-foreground">{l}</p><p className="font-mono text-2xl">{v}</p></div>
+        ))}
+      </div>
+
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
+        <LiquidGlassFX />
+        <div className="relative flex items-center justify-between"><p className="font-medium">Attendance</p><p className="text-xs text-muted-foreground">Tap the {short(date)} column to mark</p></div>
+        <div className="relative overflow-x-auto">
+          {!students.length ? <p className="text-sm text-muted-foreground">No students yet — share the class QR code.</p> : (
+            <table className="w-full text-sm">
+              <thead><tr className="text-xs text-foreground/65 border-b border-border/60">
+                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 backdrop-blur">Student</th>
+                {dates.map(d => <th key={d} className={`px-1.5 font-mono font-normal whitespace-nowrap ${d === date ? 'text-foreground' : ''}`}>{short(d)}</th>)}
+                <th className="text-left pl-3">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th>
+              </tr></thead>
+              <tbody className="divide-y divide-border/50">{students.map(s => {
+                const p = statsMap[s.id]; const risk = riskOf(p);
+                return <tr key={s.id}>
+                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
+                  {dates.map(d => { const st = cell[`${s.id}|${d}`]; return (
+                    <td key={d} className="px-1.5 text-center">{d === date
+                      ? <button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2 py-1 text-xs min-w-14 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button>
+                      : <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${st ? STATUS_STYLE[st] : 'text-muted-foreground/40'}`}>{st ? STATUS_LABEL[st][0] : '·'}</span>}</td>
+                  ); })}
+                  <td className="pl-3 font-mono">{p?.n ?? 0}</td>
+                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
+                  <td className="text-xs whitespace-nowrap">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
+        <LiquidGlassFX />
+        <p className="relative font-medium">Domain mastery</p>
+        <div className="relative"><ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} /></div>
+      </div>
+    </div>
+  );
+}
+
 function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: string[] }) {
   const { data } = useQuery({
     enabled: studentIds.length > 0,
