@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame,
+  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -85,7 +85,7 @@ function DomainBars({ stats }: { stats: DomainStat[] }) {
 
 /** Big liquid class card with Students / Analytics tabs — mirrors the main dashboard's ClassCardBig. */
 function CenterClassCard({
-  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename,
+  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename, onOpen,
 }: {
   cls: CenterClass;
   students: CenterStudent[];
@@ -97,6 +97,7 @@ function CenterClassCard({
   onInvite: () => void;
   onRename: () => void;
   canRename: boolean;
+  onOpen: () => void;
 }) {
   const [tab, setTab] = useState<'students' | 'analytics'>('students');
   const totals = students.reduce((t, s) => {
@@ -107,19 +108,20 @@ function CenterClassCard({
 
   return (
     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest}
-      className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4">
+      className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4 transition-transform hover:-translate-y-0.5">
       <LiquidGlassFX />
       <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-lg truncate">{cls.name}</h3>
+        <button onClick={onOpen} className="min-w-0 text-left group" aria-label={`Open ${cls.name}`}>
+          <h3 className="font-semibold text-lg truncate group-hover:underline underline-offset-4 flex items-center gap-1.5">{cls.name}<ChevronRight className="h-4 w-4 opacity-50 group-hover:translate-x-0.5 transition-transform" /></h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {cls.schedule || 'No schedule set'}{cls.starts_on ? ` · starts ${cls.starts_on}` : ''}
           </p>
-        </div>
+        </button>
         <div className="flex items-center gap-1 shrink-0">
           <span className="font-mono text-xs text-foreground/50 border rounded-full px-2 py-0.5">{cls.join_code}</span>
           {canRename && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRename} title="Rename class"><Pencil className="h-3.5 w-3.5" /></Button>}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onInvite} title="Invite students"><QrCode className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" className="h-8 rounded-full" onClick={onOpen}>Open class</Button>
         </div>
       </div>
 
@@ -168,6 +170,87 @@ function CenterClassCard({
 }
 
 /** Per-class domain mastery, loaded lazily when the Analytics tab opens. */
+/** Dedicated class hub — full attendance grid, roster with risk, domain mastery and live launcher. */
+function ClassHub({
+  cls, students, statsMap, history, attMap, date, onCycle, onInspect, onInvite, onBack, onLive,
+}: {
+  cls: CenterClass; students: CenterStudent[]; statsMap: Record<string, StudentStats>;
+  history: AttRow[]; attMap: Record<string, string>; date: string;
+  onCycle: (classId: string, studentId: string) => void; onInspect: (id: string) => void;
+  onInvite: () => void; onBack: () => void; onLive: () => void;
+}) {
+  const classHistory = history.filter(a => a.class_id === cls.id);
+  const dates = [...new Set([date, ...classHistory.map(a => a.session_date)])].sort().reverse().slice(0, 12).reverse();
+  const cell: Record<string, string> = {};
+  for (const a of classHistory) cell[`${a.student_id}|${a.session_date}`] = a.status;
+  for (const [sid, st] of Object.entries(attMap)) cell[`${sid}|${date}`] = st;
+  const totals = students.reduce((t, s) => { const st = statsMap[s.id]; return { n: t.n + (st?.n ?? 0), c: t.c + (st?.c ?? 0), p: t.p + (st?.present ?? 0), s: t.s + (st?.sessions ?? 0) }; }, { n: 0, c: 0, p: 0, s: 0 });
+  const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6';
+  const short = (d: string) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
+      </div>
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} flex flex-wrap items-start justify-between gap-4`}>
+        <LiquidGlassFX />
+        <div className="relative min-w-0">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{cls.name}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{cls.schedule || 'No schedule set'}{cls.starts_on ? ` · started ${cls.starts_on}` : ''}</p>
+        </div>
+        <div className="relative flex flex-wrap items-center gap-2">
+          <button onClick={() => { navigator.clipboard.writeText(cls.join_code); toast.success('Join code copied'); }} className="font-mono text-sm border rounded-full px-3 py-1 hover:bg-muted flex items-center gap-1.5"><Copy className="h-3.5 w-3.5" />{cls.join_code}</button>
+          <Button variant="outline" size="sm" onClick={onInvite}><QrCode className="h-4 w-4" />Invite</Button>
+          <Button size="sm" onClick={onLive}><Radio className="h-4 w-4" />Start live session</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[['Students', students.length], ['Questions', totals.n], ['Accuracy', totals.n ? `${pct(totals.c, totals.n)}%` : '—'], ['Attendance', totals.s ? `${pct(totals.p, totals.s)}%` : '—']].map(([l, v]) => (
+          <div key={l as string} className="admin-glass-card rounded-2xl border p-4"><p className="text-xs text-muted-foreground">{l}</p><p className="font-mono text-2xl">{v}</p></div>
+        ))}
+      </div>
+
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
+        <LiquidGlassFX />
+        <div className="relative flex items-center justify-between"><p className="font-medium">Attendance</p><p className="text-xs text-muted-foreground">Tap the {short(date)} column to mark</p></div>
+        <div className="relative overflow-x-auto">
+          {!students.length ? <p className="text-sm text-muted-foreground">No students yet — share the class QR code.</p> : (
+            <table className="w-full text-sm">
+              <thead><tr className="text-xs text-foreground/65 border-b border-border/60">
+                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 backdrop-blur">Student</th>
+                {dates.map(d => <th key={d} className={`px-1.5 font-mono font-normal whitespace-nowrap ${d === date ? 'text-foreground' : ''}`}>{short(d)}</th>)}
+                <th className="text-left pl-3">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th>
+              </tr></thead>
+              <tbody className="divide-y divide-border/50">{students.map(s => {
+                const p = statsMap[s.id]; const risk = riskOf(p);
+                return <tr key={s.id}>
+                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
+                  {dates.map(d => { const st = cell[`${s.id}|${d}`]; return (
+                    <td key={d} className="px-1.5 text-center">{d === date
+                      ? <button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2 py-1 text-xs min-w-14 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button>
+                      : <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${st ? STATUS_STYLE[st] : 'text-muted-foreground/40'}`}>{st ? STATUS_LABEL[st][0] : '·'}</span>}</td>
+                  ); })}
+                  <td className="pl-3 font-mono">{p?.n ?? 0}</td>
+                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
+                  <td className="text-xs whitespace-nowrap">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
+        <LiquidGlassFX />
+        <p className="relative font-medium">Domain mastery</p>
+        <div className="relative"><ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} /></div>
+      </div>
+    </div>
+  );
+}
+
 function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: string[] }) {
   const { data } = useQuery({
     enabled: studentIds.length > 0,
@@ -259,6 +342,9 @@ export default function CenterTeacherPortal() {
   const [renameValue, setRenameValue] = useState('');
   const [inspect, setInspect] = useState<string | null>(null);
   const [liveClassId, setLiveClassId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hubId = matchPath('/teacher/class/:id', location.pathname)?.params.id ?? null;
 
   // Liquid glass admin theme, scoped to this page's lifetime.
   useEffect(() => {
@@ -294,6 +380,7 @@ export default function CenterTeacherPortal() {
   });
 
   const classIds = useMemo(() => classes?.map(c => c.id) ?? [], [classes]);
+  const hubClass = hubId ? classes?.find(c => c.id === hubId) ?? null : null;
 
   // All students across the teacher's classes.
   const studentsQuery = useQuery({
@@ -428,6 +515,7 @@ export default function CenterTeacherPortal() {
       date={date}
       onCycle={cycle}
       onInspect={setInspect}
+      onOpen={() => navigate(`/teacher/class/${c.id}`)}
       onInvite={() => setInvite(c)}
       onRename={() => { setRename(c); setRenameValue(c.name); }}
       canRename={role === 'center_admin'}
@@ -479,7 +567,7 @@ export default function CenterTeacherPortal() {
           <div className="relative">
             <AnimatePresence mode="wait" custom={slideDirection}>
               <motion.div
-                key={mode}
+                key={hubClass ? `hub-${hubClass.id}` : mode}
                 custom={slideDirection}
                 variants={slideVariants}
                 initial="enter"
@@ -487,7 +575,22 @@ export default function CenterTeacherPortal() {
                 exit="exit"
                 transition={slideTransition}
               >
-                {mode === 'dashboard' && (
+                {hubClass && (
+                  <ClassHub
+                    cls={hubClass}
+                    students={allStudents.filter(s => s.class_id === hubClass.id)}
+                    statsMap={statsMap}
+                    history={historyQuery.data?.att ?? []}
+                    attMap={attByClass[hubClass.id] ?? {}}
+                    date={date}
+                    onCycle={cycle}
+                    onInspect={setInspect}
+                    onInvite={() => setInvite(hubClass)}
+                    onBack={() => navigate('/teacher')}
+                    onLive={() => { setLiveClassId(hubClass.id); navigate('/teacher'); handleModeChange('live'); }}
+                  />
+                )}
+                {!hubClass && mode === 'dashboard' && (
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
                       <Select value={intake} onValueChange={v => setIntake(v as typeof intake)}>
@@ -578,7 +681,7 @@ export default function CenterTeacherPortal() {
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => handleModeChange(key)}
+              onClick={() => { if (hubClass) navigate('/teacher'); handleModeChange(key); }}
               aria-pressed={mode === key}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >
