@@ -212,7 +212,6 @@ export default function StudentPortal() {
   const renderLoginStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">Student sign in</p>
         <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
         <p className="text-sm text-white/50">
           Enter your phone number and password to access practice questions
