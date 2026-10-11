@@ -16,8 +16,8 @@ interface AuthSplitLayoutProps {
 }
 
 /**
- * 50/50 auth layout: form on the left, Linear-style dark graphics panel on the right.
- * The graphics panel collapses on mobile, leaving the form full-width.
+ * 50/50 auth layout matching the landing page: obsidian/silver monochrome.
+ * Left — dark form column; right — Linear-style graphics panel (collapses on mobile).
  */
 export function AuthSplitLayout({
   children,
@@ -28,33 +28,51 @@ export function AuthSplitLayout({
   className,
 }: AuthSplitLayoutProps) {
   return (
-    <div className={cn("min-h-screen grid lg:grid-cols-2 bg-background", className)}>
-      {/* Left — form column */}
-      <div className="relative flex flex-col min-h-screen lg:min-h-0">
-        <header className="flex items-center justify-between px-6 sm:px-10 pt-6">
+    <div className={cn("min-h-screen grid lg:grid-cols-2 bg-[#0B0C0F] text-white", className)}>
+      {/* Left — form column (dark, landing-matched) */}
+      <div className="relative flex flex-col min-h-screen lg:min-h-0 overflow-hidden">
+        {/* subtle atmosphere so the two halves feel like one surface */}
+        <div
+          aria-hidden
+          className="absolute -top-32 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(148,163,184,0.4), transparent 65%)" }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+            maskImage: "radial-gradient(ellipse 80% 70% at 40% 30%, black 20%, transparent 70%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 70% at 40% 30%, black 20%, transparent 70%)",
+          }}
+        />
+
+        <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <BrandMark className="h-7 w-7 text-foreground transition-transform duration-300 group-hover:scale-105" />
-            <span className="font-semibold tracking-tight text-lg">flowersos</span>
+            <BrandMark className="h-7 w-7 text-white transition-transform duration-300 group-hover:scale-105" />
+            <span className="font-semibold tracking-tight text-lg text-white">flowersos</span>
           </Link>
           <Link
             to="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-white/50 hover:text-white transition-colors"
           >
             ← Back to site
           </Link>
         </header>
 
-        <main className="flex-1 flex items-center justify-center px-6 sm:px-10 py-10">
+        <main className="relative z-10 flex-1 flex items-center justify-center px-6 sm:px-10 py-10">
           <div className="w-full max-w-md">{children}</div>
         </main>
 
-        <footer className="px-6 sm:px-10 pb-6 text-xs text-muted-foreground">
+        <footer className="relative z-10 px-6 sm:px-10 pb-6 text-xs text-white/35">
           © {new Date().getFullYear()} flowersos — Tsetsegs Talent Agency
         </footer>
       </div>
 
       {/* Right — Linear-style graphics panel */}
-      <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#07080A] text-white">
+      <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#07080A] text-white border-l border-white/[0.06]">
         {/* atmosphere: grid + glow + flowing lines */}
         <div
           aria-hidden
@@ -116,6 +134,35 @@ export function AuthSplitLayout({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Shared dark glass card + field styling for auth forms, matching the landing page.
+ * Use AuthGlassCard around the form and authInputClasses on Inputs.
+ */
+export const authInputClasses =
+  "bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-white/25 focus-visible:border-white/25 rounded-xl h-11";
+
+export const authLabelClasses = "text-[13px] font-medium text-white/60";
+
+export const authPrimaryButtonClasses =
+  "w-full h-11 rounded-xl bg-white text-black font-semibold hover:bg-white/90 transition-colors";
+
+export const authGhostButtonClasses =
+  "w-full h-11 rounded-xl text-sm text-white/55 hover:text-white hover:bg-white/[0.06]";
+
+export function AuthGlassCard({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl",
+        "shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)]",
+        className
+      )}
+    >
+      {children}
     </div>
   );
 }
