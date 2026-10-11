@@ -17,7 +17,6 @@ import AuthSplitLayout, {
   authPrimaryButtonClasses,
   authGhostButtonClasses,
 } from '@/components/auth/AuthSplitLayout';
-import BrandMark from '@/components/BrandMark';
 
 
 // Password validation rules
