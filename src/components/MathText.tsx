@@ -45,7 +45,7 @@ function normalizeMathSrc(src: string): string {
   return src
     .replace(/(^|[^\\])~/g, '$1\\sim ')
     .replace(/(^|[^\\a-zA-Z_])([xy])(\d)(?![\d.])/g, '$1$2_{$3}')
-    .replace(/(^|[^\\a-zA-Z0-9.}])(\d+(?:\.\d+)?|[a-zA-Z])\/(\d+(?:\.\d+)?|[a-zA-Z])(?![a-zA-Z0-9/])/g, '$1\\frac{$2}{$3}');
+    .replace(/(^|[^\\a-zA-Z0-9.}^_])(\d+(?:\.\d+)?|[a-zA-Z])\/(\d+(?:\.\d+)?|[a-zA-Z])(?![a-zA-Z0-9/^_])/g, '$1\\frac{$2}{$3}');
 }
 
 function renderKatex(src: string, display: boolean): string {

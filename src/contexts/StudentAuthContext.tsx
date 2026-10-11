@@ -433,7 +433,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       // Check if password is set
       if (studentAccount.password_hash) {
         setAuthStep('password');
-        return { error: null, needsPassword: true };
+        return { error: null, needsPassword: true, account: studentAccount as StudentAccount };
       } else {
         setAuthStep('set_password');
         return { error: null, needsSetup: true };
@@ -503,9 +503,15 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginWithPassword = async (password: string): Promise<{ error: string | null }> => {
+  const loginWithPassword = async (
+    password: string,
+    accountOverride?: StudentAccount,
+  ): Promise<{ error: string | null }> => {
+    // Same-handler callers (phone+password on one screen) pass the account
+    // returned by checkPhone, since pending state hasn't re-rendered yet.
+    const pendingStudentAccount = accountOverride ?? pendingStudentAccountState;
     try {
-      if (!pendingStudentAccount || !pendingPhone) {
+      if (!pendingStudentAccount) {
         return { error: 'Session expired. Please start over.' };
       }
 
