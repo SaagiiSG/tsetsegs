@@ -51,32 +51,22 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
 
   if (step === 'sent') {
     return (
-      <AuthGlassCard className="p-6 sm:p-8">
-        <div className="space-y-1 pb-5">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">Request sent</h2>
+      <AuthGlassCard>
+        <div className="space-y-3 pb-8">
+          <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7 text-emerald-400" />
           </div>
+          <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request sent</h2>
+          <p className="text-sm text-white/50">
+            Хүсэлт админд илгээгдлээ ({phone})
+          </p>
         </div>
-        <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
-            <div className="space-y-1 text-sm">
-              <p className="font-medium text-white">Хүсэлт админд илгээгдлээ ({phone})</p>
-              <p className="text-white/50">
-                Админ таны нэвтрэх эрхийг цоожгүй болгосны дараа та дугаараа оруулаад шинэ нууц үг
-                тохируулна.
-              </p>
-            </div>
-          </div>
-          <Button className={cn(authPrimaryButtonClasses, "h-12 text-base")} onClick={onBack}>
+        <div className="space-y-6">
+          <p className="text-sm text-white/50 border-b border-white/10 pb-4">
+            Админ таны нэвтрэх эрхийг цоожгүй болгосны дараа та дугаараа оруулаад шинэ нууц үг
+            тохируулна.
+          </p>
+          <Button className={authPrimaryButtonClasses} onClick={onBack}>
             Back to sign in
           </Button>
         </div>
@@ -85,40 +75,37 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
   }
 
   return (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Reset Password</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Reset Password</h2>
+        <p className="text-sm text-white/50">
           Админд нууц үг сэргээх хүсэлт илгээнэ
         </p>
       </div>
-      <form onSubmit={handleRequest} className="space-y-4">
+      <form onSubmit={handleRequest} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="reset-phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="reset-phone"
               type="tel"
               placeholder="99112233"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
               maxLength={8}
             />
           </div>
         </div>
-        <div className="flex items-start gap-2 rounded-xl bg-white/[0.04] border border-white/[0.08] p-3 text-xs text-white/50">
+        <div className="flex items-start gap-2 text-xs text-white/40">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Хүсэлтийг админ баталгаажуулсны дараа та дугаараа оруулаад шинэ нууц үг тохируулах
@@ -127,7 +114,7 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
         </div>
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={loading || phone.length !== 8}
         >
           {loading ? (
