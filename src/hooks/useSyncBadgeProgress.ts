@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { calculateAllBadgeProgress, BadgeProgressResult } from './useBadgeProgressCalculator';
+import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { badgeDefinitions } from '@/data/badgeDefinitions';
 
 /**
@@ -38,7 +39,8 @@ export function useSyncBadgeProgress() {
       // Calculate progress for all badges
       const progressResults = await calculateAllBadgeProgress(
         student.id,
-        student.linked_student_id || undefined
+        student.linked_student_id || undefined,
+        questionTableFor(student.cohort)
       );
 
       // Get badge name to ID mapping from database
@@ -130,7 +132,8 @@ export function useSyncBadgeProgress() {
       const result = await calculateBadgeProgress(
         student.id,
         badge,
-        student.linked_student_id || undefined
+        student.linked_student_id || undefined,
+        questionTableFor(student.cohort)
       );
 
       // Get badge ID from database
@@ -186,12 +189,14 @@ export function useSyncBadgeProgress() {
  */
 export async function syncBadgeProgressForStudent(
   studentAccountId: string,
-  linkedStudentId?: string
+  linkedStudentId?: string,
+  qTable: QuestionTable = 'questions'
 ): Promise<string[]> {
   try {
     const progressResults = await calculateAllBadgeProgress(
       studentAccountId,
-      linkedStudentId
+      linkedStudentId,
+      qTable
     );
 
     const { data: dbBadges } = await supabase

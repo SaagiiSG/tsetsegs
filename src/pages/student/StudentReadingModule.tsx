@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { recordAmbientChallengeAttempt } from '@/lib/challengeAmbient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ interface PassageGroup {
 export default function StudentReadingModule() {
   const navigate = useNavigate();
   const { student, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const [selectedPassage, setSelectedPassage] = useState<PassageGroup | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export default function StudentReadingModule() {
     queryKey: ['reading-passage-questions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select(`
           id,
           question_id,

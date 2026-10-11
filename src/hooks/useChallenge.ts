@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 
 export interface Challenge {
   id: string;
@@ -41,8 +42,8 @@ interface CreateChallengeArgs {
   invited_account_ids: string[]; // friend account ids
 }
 
-async function fetchQuestionPool(subject: string, question_set: string, limit = 60) {
-  let q = supabase.from('questions').select('id').eq('is_active', true).eq('hide_from_practice', false).eq('question_type', 'multiple_choice');
+async function fetchQuestionPool(subject: string, question_set: string, limit = 60, table: QuestionTable = 'questions') {
+  let q = supabase.from(table).select('id').eq('is_active', true).eq('hide_from_practice', false).eq('question_type', 'multiple_choice');
   if (subject === 'english' || question_set === 'English') {
     q = q.eq('subject', 'english');
   } else {
@@ -178,7 +179,7 @@ export async function createChallenge(
   try {
     const desiredPool =
       args.format === 'fixed_set' ? args.target_value ?? 10 : args.format === 'first_to_correct' ? Math.max(60, (args.target_value ?? 25) * 2) : 60;
-    poolIds = await fetchQuestionPool(args.subject, args.question_set, desiredPool);
+    poolIds = await fetchQuestionPool(args.subject, args.question_set, desiredPool, questionTableFor(student?.cohort));
   } catch (e: any) {
     return { id: null, error: e.message ?? 'Could not fetch questions' };
   }

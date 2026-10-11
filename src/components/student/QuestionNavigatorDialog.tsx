@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronUp, Bookmark, CheckCircle2, XCircle, X } from 'lucide-react';
@@ -72,6 +73,7 @@ export function QuestionNavigatorDialog({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const markedQuestions = useMarkedQuestions();
 
   // Fetch bluebook question IDs to exclude
@@ -94,7 +96,7 @@ export function QuestionNavigatorDialog({
     queryKey: ['navigator-questions', questionSet, subject, bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(qTable)
         .select('id, question_id, question_set')
         .eq('is_active', true)
         .eq('hide_from_practice', false)

@@ -24,7 +24,7 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   const { student } = useStudentAuth();
   const accountId = student?.id;
   const studentId = student?.linked_student?.id ?? student?.linked_student_id ?? undefined;
-  const { data: prediction, isLoading } = useScorePrediction(studentId);
+  const { data: prediction, isLoading } = useScorePrediction(studentId, student?.cohort);
   const { data: drawerSolved = 0 } = useQuery({
     queryKey: ['sat-simulation-drawer-progress', accountId],
     enabled: mode === 'drawer' && !!accountId,

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ type QuestionSet = '68' | 'CB';
 
 export default function StudentDashboard() {
   const { student, logout, isLoading: authLoading, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [questionSet, setQuestionSet] = useState<QuestionSet>('68');
@@ -43,7 +45,7 @@ export default function StudentDashboard() {
     queryKey: ['practice-questions', questionSet],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(qTable)
         .select(`
           id,
           question_id,
@@ -74,13 +76,13 @@ export default function StudentDashboard() {
     queryFn: async () => {
       const [set68Result, cbResult] = await Promise.all([
         supabase
-          .from('questions')
+          .from(qTable)
           .select('id', { count: 'exact', head: true })
           .eq('is_original', true)
           .eq('is_active', true)
           .eq('question_set', '68'),
         supabase
-          .from('questions')
+          .from(qTable)
           .select('id', { count: 'exact', head: true })
           .eq('is_original', true)
           .eq('is_active', true)

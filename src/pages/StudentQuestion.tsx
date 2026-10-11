@@ -4,6 +4,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,7 @@ export default function StudentQuestion() {
   const { questionId } = useParams();
   const navigate = useNavigate();
   const { student, isLoading: authLoading, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const calculatorSnapSide = useCalculatorSnap();
@@ -135,7 +137,7 @@ export default function StudentQuestion() {
       // Hard stop at 10k just in case
       while (from < 10000) {
         const { data, error } = await supabase
-          .from('questions')
+          .from(qTable)
           .select('id, question_id')
           .eq('is_original', true)
           .eq('is_active', true)
@@ -182,7 +184,7 @@ export default function StudentQuestion() {
         queryKey: ['question', id],
         queryFn: async () => {
           const { data, error } = await supabase
-            .from('questions')
+            .from(qTable)
             .select(`
               *,
               category:question_categories(name)
@@ -204,7 +206,7 @@ export default function StudentQuestion() {
     queryKey: ['question', questionId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select(`
           *,
           category:question_categories(name)
@@ -232,7 +234,7 @@ export default function StudentQuestion() {
       
       // Get approved variations that are children of this original question
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('*')
         .eq('parent_question_id', questionId)
         .eq('is_active', true)

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,7 @@ const scoreTiers = [
 
 export default function StudentSpeedSession() {
   const { student, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -132,7 +134,7 @@ export default function StudentSpeedSession() {
     queryKey: ['speed-questions', categoryId, subject, maxQuestions],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(qTable)
         .select(`
           id, question_id, question_text, passage_text, answer, alternate_answers, question_type,
           multiple_choice_options, choice_images,

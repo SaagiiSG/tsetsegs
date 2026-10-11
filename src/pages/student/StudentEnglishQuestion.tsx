@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -32,6 +33,7 @@ export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
   const navigate = useNavigate();
   const { student, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -79,7 +81,7 @@ export default function StudentEnglishQuestion() {
     queryKey: ['all-english-questions', bluebookQuestionIds ? 'filtered' : 'pending'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('id, question_id')
         .eq('is_original', true)
         .eq('is_active', true)
@@ -118,7 +120,7 @@ export default function StudentEnglishQuestion() {
         queryKey: ['english-question', id],
         queryFn: async () => {
           const { data, error } = await supabase
-            .from('questions')
+            .from(qTable)
             .select(`*, category:question_categories(name)`)
             .eq('id', id)
             .single();
@@ -136,7 +138,7 @@ export default function StudentEnglishQuestion() {
     queryKey: ['english-question', questionId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select(`*, category:question_categories(name)`)
         .eq('id', questionId)
         .single();
