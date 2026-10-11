@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 
 export interface SetCounts {
   total: number;
@@ -28,7 +29,7 @@ async function countSet(
   // eslint-disable-next-line no-constant-condition
   while (true) {
     let q = supabase
-      .from('questions')
+      .from(qTable)
       .select('id')
       .eq('is_active', true)
       .eq('hide_from_practice', false)
@@ -71,6 +72,7 @@ async function countSet(
 
 export function useSetProgress() {
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   return useQuery({
     queryKey: ['set-progress', student?.id],
     enabled: !!student?.id,

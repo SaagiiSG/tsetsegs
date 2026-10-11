@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,7 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
           .eq('participant_id', participantId),
         questionIds.length
           ? supabase
-              .from('questions')
+              .from(qTable)
               .select('id, question_id, question_text, question_image_url, question_image_url_2, answer')
               .in('id', questionIds)
           : Promise.resolve({ data: [] as QuestionRow[] }),
@@ -137,6 +138,7 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
 
 export default function StudentExamResults() {
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const navigate = useNavigate();
   const [openId, setOpenId] = useState<string | null>(null);
 

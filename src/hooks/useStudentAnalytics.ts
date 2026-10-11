@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { subDays, format, startOfWeek, getHours } from 'date-fns';
 
 export interface TopicAccuracy {
@@ -84,6 +85,7 @@ const TOPIC_SUBJECTS: Record<string, 'Math' | 'English'> = {
 
 export function useStudentAnalytics(subject: 'math' | 'english' | 'all' = 'all'): StudentAnalytics {
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
 
   // Fetch all attempts with question details
   const { data: attempts, isLoading: attemptsLoading } = useQuery({
@@ -120,7 +122,7 @@ export function useStudentAnalytics(subject: 'math' | 'english' | 'all' = 'all')
     queryKey: ['analytics-questions-count', subject],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(qTable)
         .select('id, category:question_categories(name), difficulty_level, subject')
         .eq('is_original', true)
         .eq('is_active', true);

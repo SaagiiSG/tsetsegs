@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const ENGLISH_CATEGORIES = [
 
 export default function StudentEnglishPractice() {
   const { student, logActivity } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
 
@@ -36,7 +38,7 @@ export default function StudentEnglishPractice() {
     queryKey: ['english-practice-questions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(qTable)
         .select(`
           id,
           question_id,

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionTableFor } from '@/lib/questionTable';
 import { useMemo, useState } from 'react';
 import { 
   selectAdaptiveQuestions, 
@@ -21,6 +22,7 @@ interface AdaptiveQuestion {
 
 export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questionSet: '68' | 'CB' | '150' = '68') {
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const queryClient = useQueryClient();
   const [sessionQuestions, setSessionQuestions] = useState<AdaptiveQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,7 +32,7 @@ export function useAdaptivePractice(subject: 'math' | 'english' = 'math', questi
     queryKey: ['adaptive-questions', subject, questionSet],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(qTable)
         .select('id, question_id, category_id, subtopic, difficulty_level')
         .eq('is_active', true)
         .eq('hide_from_practice', false)
