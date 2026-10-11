@@ -11,11 +11,12 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TeacherAuthProvider } from "./contexts/TeacherAuthContext";
 import { StudentAuthProvider, useStudentAuth } from "./contexts/StudentAuthContext";
+import type { ReactNode } from "react";
 
 // Concept videos are international-only: Mongolian students get redirected away.
-function IntlOnlyRoute({ children }: { children: React.ReactNode }) {
-  const { student, loading } = useStudentAuth();
-  if (loading) return null;
+function IntlOnlyRoute({ children }: { children: ReactNode }) {
+  const { student, isLoading } = useStudentAuth();
+  if (isLoading) return null;
   if (student?.cohort !== 'intl') return <Navigate to="/practice/home" replace />;
   return <>{children}</>;
 }
