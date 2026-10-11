@@ -1987,6 +1987,8 @@ export type Database = {
           content_updated_at: string | null
           created_at: string
           difficulty_level: string | null
+          ext_question_id: string | null
+          ext_variant: boolean
           figure_description: string | null
           figure_svg: string | null
           figure_type: string | null
@@ -2020,6 +2022,8 @@ export type Database = {
           content_updated_at?: string | null
           created_at?: string
           difficulty_level?: string | null
+          ext_question_id?: string | null
+          ext_variant?: boolean
           figure_description?: string | null
           figure_svg?: string | null
           figure_type?: string | null
@@ -2053,6 +2057,8 @@ export type Database = {
           content_updated_at?: string | null
           created_at?: string
           difficulty_level?: string | null
+          ext_question_id?: string | null
+          ext_variant?: boolean
           figure_description?: string | null
           figure_svg?: string | null
           figure_type?: string | null

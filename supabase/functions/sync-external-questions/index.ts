@@ -370,10 +370,33 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Tag every matched flagged question + insert the ones intDB doesn't have yet
+      let inserted = 0;
+      if (!dry_run && QT === "intl_questions") {
+        for (const m of matches) {
+          await adminClient.from(QT).update({ ext_variant: true, ext_question_id: m.ext.question_id }).eq("id", m.internalId);
+        }
+        const matchedExt = new Set(matches.map((m) => m.ext.question_id));
+        const missing = filteredQuestions.filter((q: any) => !matchedExt.has(q.question_id));
+        if (missing.length) {
+          const nums = allExistingQuestions.map((q) => q.question_id)
+            .filter((id) => id?.startsWith(codePrefix))
+            .map((id) => parseInt(id.replace(codePrefix, ""), 10)).filter((n) => !isNaN(n));
+          let n = nums.length ? Math.max(...nums) + 1 : 1;
+          const rows = missing.map((q: any) => ({
+            ...normalizeQuestion(q, {}, targetSet),
+            question_id: `${codePrefix}${String(n++).padStart(4, "0")}`,
+            ext_variant: true, ext_question_id: q.question_id,
+          }));
+          const { error: insErr } = await adminClient.from(QT).insert(rows);
+          if (insErr) errorDetails.push(`insert: ${insErr.message}`); else inserted = rows.length;
+        }
+      }
+
       return new Response(
         JSON.stringify({
           mode: "update", preview: dry_run, success: true,
-          total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, errors, skipped_images: skippedImages,
+          total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, inserted, errors, skipped_images: skippedImages,
           changes, has_more: hasMore, next_offset: offset + safeLimit,
           error_details: errorDetails.slice(0, 10),
         }),
