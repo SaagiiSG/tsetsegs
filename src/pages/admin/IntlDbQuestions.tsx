@@ -23,8 +23,13 @@ export default function IntlDbQuestions() {
   const [q, setQ] = useState('');
   const [subject, setSubject] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [cbFormOpen, setCbFormOpen] = useState(false);
 
-  const { data = [], isLoading } = useQuery({
+  const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
     queryFn: async () => {
       const { data, error } = await (supabase.from('intl_questions') as any)
