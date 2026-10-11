@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,7 +10,13 @@ import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 import { digitsOnly, sanitizePhoneInput } from '@/lib/phone';
-import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
+import AuthSplitLayout, {
+  AuthGlassCard,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+  authGhostButtonClasses,
+} from '@/components/auth/AuthSplitLayout';
 import BrandMark from '@/components/BrandMark';
 
 
@@ -206,52 +211,49 @@ export default function StudentPortal() {
   const passwordValidation = validatePassword(password);
 
   const renderPhoneStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Student Login</CardTitle>
-        <CardDescription className="text-center">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
+        <h2 className="text-2xl font-semibold tracking-tight text-white text-center">Student Login</h2>
+        <p className="text-sm text-white/50 text-center">
           Enter your phone number to access practice questions
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handlePhoneSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="99112233"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-                className="pl-10 text-lg tracking-wider"
-                maxLength={20}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Use the phone number registered with your class.
-            </p>
+        </p>
+      </div>
+      <form onSubmit={handlePhoneSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="99112233"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              maxLength={20}
+            />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || digitsOnly(phoneNumber).length < 8}
-          >
+          <p className="text-xs text-white/40">
+            Use the phone number registered with your class.
+          </p>
+        </div>
 
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking...
-              </>
-            ) : (
-              'Continue'
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || digitsOnly(phoneNumber).length < 8}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Checking...
+            </>
+          ) : (
+            'Continue'
+          )}
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 
   const renderRegistrationRequestStep = () => (
