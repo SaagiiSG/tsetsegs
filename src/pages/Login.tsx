@@ -214,8 +214,8 @@ export default function Login() {
               </TabsList>
 
               {/* Admin Login Form */}
-              <TabsContent value="admin" className="mt-6">
-                <form onSubmit={handleAdminSubmit} className="space-y-4">
+              <TabsContent value="admin" className="mt-8">
+                <form onSubmit={handleAdminSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="admin-email" className={authLabelClasses}>
                       Email
@@ -269,8 +269,8 @@ export default function Login() {
               </TabsContent>
 
               {/* Teacher Login Form */}
-              <TabsContent value="teacher" className="mt-6">
-                <form onSubmit={handleTeacherSubmit} className="space-y-4">
+              <TabsContent value="teacher" className="mt-8">
+                <form onSubmit={handleTeacherSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="teacher-username" className={authLabelClasses}>
                       Username

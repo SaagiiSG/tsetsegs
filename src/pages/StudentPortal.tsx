@@ -211,25 +211,26 @@ export default function StudentPortal() {
   const passwordValidation = validatePassword(password);
 
   const renderPhoneStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <h2 className="text-2xl font-semibold tracking-tight text-white text-center">Student Login</h2>
-        <p className="text-sm text-white/50 text-center">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">Student sign in</p>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
+        <p className="text-sm text-white/50">
           Enter your phone number to access practice questions
         </p>
       </div>
-      <form onSubmit={handlePhoneSubmit} className="space-y-4">
+      <form onSubmit={handlePhoneSubmit} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="phone"
               type="tel"
               placeholder="99112233"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
               maxLength={20}
             />
           </div>
@@ -240,7 +241,7 @@ export default function StudentPortal() {
 
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={isLoading || digitsOnly(phoneNumber).length < 8}
         >
           {isLoading ? (
