@@ -210,16 +210,16 @@ export default function StudentPortal() {
 
   const passwordValidation = validatePassword(password);
 
-  const renderPhoneStep = () => (
+  const renderLoginStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">Student sign in</p>
         <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
         <p className="text-sm text-white/50">
-          Enter your phone number to access practice questions
+          Enter your phone number and password to access practice questions
         </p>
       </div>
-      <form onSubmit={handlePhoneSubmit} className="space-y-8">
+      <form onSubmit={handleLogin} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
@@ -239,20 +239,54 @@ export default function StudentPortal() {
           </p>
         </div>
 
-        <Button
-          type="submit"
-          className={authPrimaryButtonClasses}
-          disabled={isLoading || digitsOnly(phoneNumber).length < 8}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Checking...
-            </>
-          ) : (
-            'Continue'
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-7 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Button
+            type="submit"
+            className={authPrimaryButtonClasses}
+            disabled={isLoading || digitsOnly(phoneNumber).length < 8 || !password}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className={authGhostButtonClasses}
+            onClick={() => setForgotPassword(true)}
+          >
+            Forgot password?
+          </Button>
+        </div>
       </form>
     </AuthGlassCard>
   );
