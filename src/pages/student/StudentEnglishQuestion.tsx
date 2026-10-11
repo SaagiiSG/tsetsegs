@@ -29,6 +29,8 @@ import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { ShowExplanation } from '@/components/student/ShowExplanation';
 
+const catName = (c: any): string | undefined => (Array.isArray(c) ? c[0]?.name : c?.name);
+
 export default function StudentEnglishQuestion() {
   const { questionId } = useParams();
   const navigate = useNavigate();
@@ -458,7 +460,7 @@ export default function StudentEnglishQuestion() {
             </Button>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="font-mono">{question.question_id}</Badge>
-              <Badge variant="secondary">{question.category?.name}</Badge>
+              <Badge variant="secondary">{catName(question.category)}</Badge>
               {allQuestions && (
                 <span className="text-xs text-muted-foreground">
                   ({currentQuestionIndex + 1}/{allQuestions.length})
