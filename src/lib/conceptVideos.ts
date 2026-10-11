@@ -18,6 +18,7 @@ export interface ConceptVideo {
   duration_minutes: number | null;
   order_index: number;
   is_published: boolean;
+  subtitles_vtt?: string | null;
 }
 
 /** Uploaded files are stored as `storage:<path>` in the private concept-videos bucket. */
@@ -42,7 +43,7 @@ export async function resolveVideo(url: string): Promise<ResolvedVideo> {
     return { kind: 'file', src: data.signedUrl };
   }
   const id = youtubeId(url);
-  if (id) return { kind: 'youtube', src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1` };
+  if (id) return { kind: 'youtube', src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&cc_load_policy=1&cc_lang_pref=en&hl=en` };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) return { kind: 'file', src: url };
   return { kind: 'link', src: url };
 }

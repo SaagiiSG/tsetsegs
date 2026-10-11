@@ -536,7 +536,7 @@ function VideosPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Concept videos</h1>
-      {video && <Glass className="space-y-3"><p className="font-medium">{video.title}</p><ConceptVideoPlayer url={(video as any).video_url} /></Glass>}
+      {video && <Glass className="space-y-3"><p className="font-medium">{video.title}</p><ConceptVideoPlayer url={(video as any).video_url} subtitles={(video as any).subtitles_vtt} /></Glass>}
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? <Glass><p className="text-sm text-muted-foreground">No videos yet.</p></Glass> : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.map(v => (
           <button key={v.id} onClick={() => { setOpen(v.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left">

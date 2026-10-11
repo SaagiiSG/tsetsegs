@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { resolveVideo, ResolvedVideo } from '@/lib/conceptVideos';
 
-export function ConceptVideoPlayer({ url }: { url: string }) {
+export function ConceptVideoPlayer({ url, subtitles }: { url: string; subtitles?: string | null }) {
+  const trackSrc = useMemo(() => (subtitles?.trim() ? URL.createObjectURL(new Blob([subtitles], { type: 'text/vtt' })) : null), [subtitles]);
+  useEffect(() => () => { if (trackSrc) URL.revokeObjectURL(trackSrc); }, [trackSrc]);
   const [v, setV] = useState<ResolvedVideo | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -43,8 +45,11 @@ export function ConceptVideoPlayer({ url }: { url: string }) {
           preload="metadata"
           controlsList="nodownload"
           onContextMenu={(e) => e.preventDefault()}
+          crossOrigin="anonymous"
           className="absolute inset-0 h-full w-full bg-background"
-        />
+        >
+          {trackSrc && <track kind="subtitles" src={trackSrc} srcLang="en" label="English" default />}
+        </video>
       )}
       {v?.kind === 'link' && (
         <iframe src={v.src} className="absolute inset-0 h-full w-full" allow="autoplay; fullscreen" allowFullScreen title="Concept video" />

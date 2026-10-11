@@ -1,0 +1,1 @@
+ALTER TABLE public.concept_videos ADD COLUMN IF NOT EXISTS subtitles_vtt text;

@@ -13,13 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Pencil, Plus, Trash2, Upload, PlayCircle } from 'lucide-react';
-import { CONCEPT_DOMAINS, ConceptVideo, STORAGE_PREFIX } from '@/lib/conceptVideos';
+import { CONCEPT_DOMAINS, ConceptVideo, STORAGE_PREFIX, resolveVideo, youtubeId } from '@/lib/conceptVideos';
+import { generateSubtitles } from '@/lib/subtitles';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 
 type Draft = Omit<ConceptVideo, 'id'> & { id?: string };
 const empty: Draft = {
   title: '', description: '', domain: CONCEPT_DOMAINS[0], module: '', video_url: '',
-  duration_minutes: null, order_index: 0, is_published: false,
+  duration_minutes: null, order_index: 0, is_published: false, subtitles_vtt: null,
 };
 
 export default function ConceptVideosAdmin() {
@@ -27,7 +28,21 @@ export default function ConceptVideosAdmin() {
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; vtt?: string | null } | null>(null);
+  const [subPct, setSubPct] = useState<number | null>(null);
+  const runSubtitles = async () => {
+    if (!draft) return;
+    setSubPct(0);
+    try {
+      const v = await resolveVideo(draft.video_url.trim());
+      if (v.kind !== 'file') throw new Error('Subtitles can only be generated for uploaded or direct video files.');
+      const vtt = await generateSubtitles(v.src, setSubPct);
+      setDraft((d) => (d ? { ...d, subtitles_vtt: vtt } : d));
+      toast({ title: 'Subtitles ready', description: 'Review them, then press Save.' });
+    } catch (e: any) {
+      toast({ title: 'Could not generate subtitles', description: e.message, variant: 'destructive' });
+    } finally { setSubPct(null); }
+  };
 
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ['concept-videos-admin'],
@@ -44,6 +59,7 @@ export default function ConceptVideosAdmin() {
         title: d.title.trim(), description: d.description?.trim() || null, domain: d.domain,
         module: d.module?.trim() || null, video_url: d.video_url.trim(),
         duration_minutes: d.duration_minutes || null, order_index: d.order_index || 0, is_published: d.is_published,
+        subtitles_vtt: d.subtitles_vtt?.trim() || null,
       };
       const q = d.id
         ? supabase.from('concept_videos').update({ ...row, updated_at: new Date().toISOString() }).eq('id', d.id)
@@ -137,7 +153,7 @@ export default function ConceptVideosAdmin() {
                       </div>
                       <Badge variant={v.is_published ? 'default' : 'secondary'}>{v.is_published ? 'Published' : 'Draft'}</Badge>
                       <Switch checked={v.is_published} onCheckedChange={() => togglePublish(v)} aria-label="Published" />
-                      <Button size="icon" variant="ghost" onClick={() => setPreview(v.video_url)} aria-label="Preview"><PlayCircle className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => setPreview({ url: v.video_url, vtt: v.subtitles_vtt })} aria-label="Preview"><PlayCircle className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => setDraft(v)} aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => confirm(`Delete "${v.title}"?`) && remove.mutate(v)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
                     </CardContent>
@@ -189,6 +205,22 @@ export default function ConceptVideosAdmin() {
                 <div className="space-y-1"><Label>Minutes</Label><Input type="number" value={draft.duration_minutes ?? ''} onChange={(e) => setDraft({ ...draft, duration_minutes: e.target.value ? Number(e.target.value) : null })} /></div>
               </div>
               <div className="space-y-1"><Label>Description</Label><Textarea value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} className="min-h-[60px]" /></div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Subtitles</Label>
+                  {youtubeId(draft.video_url) ? (
+                    <span className="text-xs text-muted-foreground">YouTube captions turn on automatically</span>
+                  ) : (
+                    <Button type="button" size="sm" variant="outline" disabled={!draft.video_url.trim() || subPct !== null || uploadPct !== null} onClick={runSubtitles}>
+                      {subPct !== null ? <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> {subPct}%</> : draft.subtitles_vtt ? 'Regenerate subtitles' : 'Generate subtitles'}
+                    </Button>
+                  )}
+                </div>
+                {subPct !== null && <Progress value={subPct} />}
+                {!youtubeId(draft.video_url) && (
+                  <Textarea value={draft.subtitles_vtt ?? ''} onChange={(e) => setDraft({ ...draft, subtitles_vtt: e.target.value })} placeholder="WEBVTT — generate automatically or paste your own" className="min-h-[90px] font-mono text-xs" />
+                )}
+              </div>
               <div className="flex items-center gap-2"><Switch checked={draft.is_published} onCheckedChange={(c) => setDraft({ ...draft, is_published: c })} /><Label>Visible to students</Label></div>
             </div>
           )}
@@ -196,7 +228,7 @@ export default function ConceptVideosAdmin() {
             <Button variant="outline" onClick={() => setDraft(null)} disabled={uploadPct !== null}>Cancel</Button>
             <Button
               onClick={() => draft && save.mutate(draft)}
-              disabled={!draft?.title.trim() || !draft?.video_url.trim() || uploadPct !== null || save.isPending}
+              disabled={!draft?.title.trim() || !draft?.video_url.trim() || uploadPct !== null || subPct !== null || save.isPending}
             >
               {save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Save
             </Button>
@@ -205,7 +237,7 @@ export default function ConceptVideosAdmin() {
       </Dialog>
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent className="max-w-3xl">{preview && <ConceptVideoPlayer url={preview} />}</DialogContent>
+        <DialogContent className="max-w-3xl">{preview && <ConceptVideoPlayer url={preview.url} subtitles={preview.vtt} />}</DialogContent>
       </Dialog>
     </div>
   );
