@@ -66,7 +66,7 @@ export function PortalShell({ title, nav, glass = false, children }: { title: st
   return (
     <div
       className={`min-h-screen bg-background text-foreground ${glass ? 'admin-glow-scope' : ''}`}
-      style={glass ? ({ '--section-glow': '152 60% 42%' } as CSSProperties) : undefined}
+      style={glass ? ({ '--section-glow': (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || '152 60% 42%' } as CSSProperties) : undefined}
     >
       {glass && <div aria-hidden className="admin-page-atmosphere" />}
       <header className={glass
