@@ -347,6 +347,8 @@ Deno.serve(async (req) => {
           const next: any = normalizeQuestion(m.ext, {}, null);
           const patch: Record<string, unknown> = {};
           for (const f of CONTENT_FIELDS) {
+            // Never wipe an explanation written locally when the external copy has none
+            if ((f === "rationale" || f === "explanation_steps") && !norm(next[f]) && norm(cur[f])) continue;
             if (norm(cur[f]) !== norm(next[f])) patch[f] = next[f] ?? null;
           }
           const changed = Object.keys(patch);
