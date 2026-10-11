@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Bold, Italic, Subscript, Superscript, Pi, Eye, Calculator } from 'lucide-react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { MathText } from '@/components/MathText';
 import { addStyles, EditableMathField } from 'react-mathquill';
 
 // Initialize MathQuill styles
@@ -287,7 +288,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minHei
         <div className={`p-3 border rounded-md bg-background ${className}`} style={{ minHeight }}>
           {value ? (
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              {renderPreview(value)}
+              <MathText text={value} />
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
