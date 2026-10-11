@@ -195,7 +195,7 @@ function PracticeBrowser() {
     queryKey: ['center-practice', q, subject, difficulty],
     queryFn: async () => {
       let query = supabase.from('intl_questions')
-        .select('id, question_text, subject, domain, difficulty_level, source_tag')
+        .select('id, question_text, subject, subtopic, difficulty_level, question_set')
         .order('created_at', { ascending: false }).limit(50);
       if (q.trim()) query = query.ilike('question_text', `%${q.trim()}%`);
       if (subject !== 'all') query = query.eq('subject', subject);
@@ -232,9 +232,9 @@ function PracticeBrowser() {
               <div className="relative space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
                   <span className="capitalize border rounded-full px-2 py-0.5">{question.subject}</span>
-                  {question.domain && <span className="border rounded-full px-2 py-0.5">{question.domain}</span>}
+                  {question.subtopic && <span className="border rounded-full px-2 py-0.5">{question.subtopic}</span>}
                   {question.difficulty_level && <span className="capitalize border rounded-full px-2 py-0.5">{question.difficulty_level}</span>}
-                  {question.source_tag && <span className="font-mono">{question.source_tag}</span>}
+                  {question.question_set && <span className="font-mono">{question.question_set}</span>}
                 </div>
                 <div className="text-sm leading-relaxed"><MathText text={question.question_text ?? ''} /></div>
               </div>
