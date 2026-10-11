@@ -343,161 +343,158 @@ export default function StudentPortal() {
   );
 
   const renderPasswordStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
             onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Enter Password</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Enter Password</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           Phone: {pendingPhone}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handlePasswordLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handlePasswordLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || !password}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="link"
-            className="w-full text-sm text-muted-foreground"
-            onClick={() => setForgotPassword(true)}
-          >
-            Forgot password?
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || !password}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            'Sign In'
+          )}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className={authGhostButtonClasses}
+          onClick={() => setForgotPassword(true)}
+        >
+          Forgot password?
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 
   const renderSetPasswordStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
             onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Set Your Password</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Set Your Password</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           Create a password for your account ({pendingPhone})
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSetPassword} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="new-password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="new-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handleSetPassword} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="new-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create a strong password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
           </div>
+        </div>
 
-          {/* Password requirements */}
-          <div className="space-y-1.5 text-xs">
-            <p className="text-muted-foreground font-medium">Password must have:</p>
-            <div className="grid grid-cols-2 gap-1">
-              <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
-              <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
-              <PasswordRule met={passwordValidation.hasLowercase} text="Lowercase letter" />
-              <PasswordRule met={passwordValidation.hasNumber} text="Number" />
-              <PasswordRule met={passwordValidation.hasSpecial} text="Special character" />
-            </div>
+        {/* Password requirements */}
+        <div className="space-y-1.5 text-xs">
+          <p className="text-white/50 font-medium">Password must have:</p>
+          <div className="grid grid-cols-2 gap-1">
+            <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
+            <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
+            <PasswordRule met={passwordValidation.hasLowercase} text="Lowercase letter" />
+            <PasswordRule met={passwordValidation.hasNumber} text="Number" />
+            <PasswordRule met={passwordValidation.hasSpecial} text="Special character" />
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {confirmPassword && password !== confirmPassword && (
-              <p className="text-xs text-destructive">Passwords do not match</p>
-            )}
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password" className={authLabelClasses}>Confirm Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="confirm-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10")}
+            />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || !isPasswordValid(password) || password !== confirmPassword}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Setting up...
-              </>
-            ) : (
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-xs text-red-400">Passwords do not match</p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || !isPasswordValid(password) || password !== confirmPassword}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Setting up...
+            </>
+          ) : (
               'Create Account & Start Practicing'
             )}
           </Button>
