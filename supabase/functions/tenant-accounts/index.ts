@@ -61,9 +61,24 @@ Deno.serve(async (req) => {
       if ((count ?? 0) > 200) return json({ error: 'Too many sign-ups right now. Please try again later.' }, 429)
       const { data: existing } = await admin.from('tenant_students').select('id').eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
       if (existing) return json({ error: 'This phone number is already registered. Sign in instead.' }, 409)
-      const { error } = await admin.from('tenant_registrations').insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email, school, grade })
-      if (error) return json({ error: error.code === '23505' ? 'You already signed up — your center will review it soon.' : 'Could not submit. Try again.' }, 400)
-      return json({ ok: true })
+      const password = String(body.password ?? '')
+      if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password))
+        return json({ error: 'Use at least 8 characters with letters and numbers.' }, 400)
+      // Instant enrollment: the class code itself is the invitation.
+      const { data: student, error: sErr } = await admin.from('tenant_students')
+        .insert({ institution_id: tenant.id, class_id: cls.id, name, phone }).select('id').single()
+      if (sErr || !student) return json({ error: 'Could not create your account. Try again.' }, 400)
+      const loginEmail = `s-${student.id}@students.flowersos.co`
+      const { data: created, error: uErr } = await admin.auth.admin.createUser({
+        email: loginEmail, password, email_confirm: true, user_metadata: { tenant_student_id: student.id },
+      })
+      if (uErr || !created.user) {
+        await admin.from('tenant_students').delete().eq('id', student.id)
+        return json({ error: /weak|leaked|compromised|guess/i.test(uErr?.message ?? '') ? 'That password is too easy to guess. Pick another.' : 'Could not create your account. Try again.' }, 400)
+      }
+      await admin.from('tenant_students').update({ user_id: created.user.id }).eq('id', student.id)
+      await admin.from('tenant_registrations').insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email, school, grade, status: 'approved', reviewed_at: new Date().toISOString() })
+      return json({ email: loginEmail })
     }
 
     // ---------- Public student actions ----------
