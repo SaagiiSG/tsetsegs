@@ -40,7 +40,16 @@ function protectEscapedDollars(input: string): string {
 }
 
 /** Render LaTeX with KaTeX. Returns KaTeX's error HTML on failure (visible, not silent). */
+/** Desmos-style typing inside math: x1 → x_1, ~ → \sim, 3/4 → \frac{3}{4}. */
+function normalizeMathSrc(src: string): string {
+  return src
+    .replace(/(^|[^\\])~/g, '$1\\sim ')
+    .replace(/(^|[^\\a-zA-Z_])([xy])(\d)(?![\d.])/g, '$1$2_{$3}')
+    .replace(/(^|[^\\a-zA-Z0-9.}])(\d+(?:\.\d+)?|[a-zA-Z])\/(\d+(?:\.\d+)?|[a-zA-Z])(?![a-zA-Z0-9/])/g, '$1\\frac{$2}{$3}');
+}
+
 function renderKatex(src: string, display: boolean): string {
+  src = normalizeMathSrc(src);
   try {
     return katex.renderToString(src, {
       throwOnError: false,
@@ -169,6 +178,11 @@ function autoDetectMath(text: string, tokens: MathToken[]): string {
     const sub = (subs as string).split('').map((c) => subMap[c] ?? c).join('');
     return pushInline(`${base}_{${sub}}`);
   });
+
+  // Desmos-style subscripts: x1, y2, x_1 → x₁ (only x/y, standalone)
+  result = result.replace(/(^|[^a-zA-Z0-9_\\])([xy])_?(\d)(?![a-zA-Z0-9.])/g, (_, pre, v, d) =>
+    `${pre}${pushInline(`${v}_{${d}}`)}`,
+  );
 
   // Cube roots
   result = result.replace(/∛\(([^)]+)\)/g, (_, inner) => pushInline(`\\sqrt[3]{${inner}}`));
