@@ -1978,6 +1978,105 @@ export type Database = {
           },
         ]
       }
+      intl_questions: {
+        Row: {
+          alternate_answers: string[] | null
+          answer: string
+          category_id: string | null
+          choice_images: Json | null
+          created_at: string
+          difficulty_level: string | null
+          figure_description: string | null
+          figure_svg: string | null
+          figure_type: string | null
+          has_figure: boolean | null
+          hide_from_practice: boolean
+          id: string
+          is_active: boolean
+          is_original: boolean
+          multiple_choice_options: Json | null
+          original_cb_id: string | null
+          parent_question_id: string | null
+          passage_text: string | null
+          question_id: string
+          question_image_url: string | null
+          question_image_url_2: string | null
+          question_set: string | null
+          question_text: string
+          question_type: string
+          rationale: string | null
+          skill: string | null
+          subject: string | null
+          subtopic: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          alternate_answers?: string[] | null
+          answer: string
+          category_id?: string | null
+          choice_images?: Json | null
+          created_at?: string
+          difficulty_level?: string | null
+          figure_description?: string | null
+          figure_svg?: string | null
+          figure_type?: string | null
+          has_figure?: boolean | null
+          hide_from_practice?: boolean
+          id?: string
+          is_active?: boolean
+          is_original?: boolean
+          multiple_choice_options?: Json | null
+          original_cb_id?: string | null
+          parent_question_id?: string | null
+          passage_text?: string | null
+          question_id: string
+          question_image_url?: string | null
+          question_image_url_2?: string | null
+          question_set?: string | null
+          question_text: string
+          question_type: string
+          rationale?: string | null
+          skill?: string | null
+          subject?: string | null
+          subtopic?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          alternate_answers?: string[] | null
+          answer?: string
+          category_id?: string | null
+          choice_images?: Json | null
+          created_at?: string
+          difficulty_level?: string | null
+          figure_description?: string | null
+          figure_svg?: string | null
+          figure_type?: string | null
+          has_figure?: boolean | null
+          hide_from_practice?: boolean
+          id?: string
+          is_active?: boolean
+          is_original?: boolean
+          multiple_choice_options?: Json | null
+          original_cb_id?: string | null
+          parent_question_id?: string | null
+          passage_text?: string | null
+          question_id?: string
+          question_image_url?: string | null
+          question_image_url_2?: string | null
+          question_set?: string | null
+          question_text?: string
+          question_type?: string
+          rationale?: string | null
+          skill?: string | null
+          subject?: string | null
+          subtopic?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       live_session_answers: {
         Row: {
           answer: string
@@ -4681,7 +4780,7 @@ export type Database = {
             foreignKeyName: "tenant_attempts_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "questions"
+            referencedRelation: "intl_questions"
             referencedColumns: ["id"]
           },
           {
