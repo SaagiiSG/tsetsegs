@@ -1241,6 +1241,7 @@ export type Database = {
           is_published: boolean
           module: string | null
           order_index: number
+          subtitles_vtt: string | null
           title: string
           updated_at: string
           video_url: string
@@ -1254,6 +1255,7 @@ export type Database = {
           is_published?: boolean
           module?: string | null
           order_index?: number
+          subtitles_vtt?: string | null
           title: string
           updated_at?: string
           video_url: string
@@ -1267,6 +1269,7 @@ export type Database = {
           is_published?: boolean
           module?: string | null
           order_index?: number
+          subtitles_vtt?: string | null
           title?: string
           updated_at?: string
           video_url?: string
