@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Phone, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import {
+  AuthGlassCard,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+} from '@/components/auth/AuthSplitLayout';
 
 interface Props {
   initialPhone?: string;
@@ -45,83 +51,95 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
 
   if (step === 'sent') {
     return (
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="space-y-1">
+      <AuthGlassCard className="p-6 sm:p-8">
+        <div className="space-y-1 pb-5">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
+              onClick={onBack}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl">Request sent</CardTitle>
+            <h2 className="text-2xl font-semibold tracking-tight text-white">Request sent</h2>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-3 rounded-lg bg-primary/5 p-4">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
             <div className="space-y-1 text-sm">
-              <p className="font-medium">Хүсэлт админд илгээгдлээ ({phone})</p>
-              <p className="text-muted-foreground">
+              <p className="font-medium text-white">Хүсэлт админд илгээгдлээ ({phone})</p>
+              <p className="text-white/50">
                 Админ таны нэвтрэх эрхийг цоожгүй болгосны дараа та дугаараа оруулаад шинэ нууц үг
                 тохируулна.
               </p>
             </div>
           </div>
-          <Button className="w-full h-12 text-lg" onClick={onBack}>
+          <Button className={cn(authPrimaryButtonClasses, "h-12 text-base")} onClick={onBack}>
             Back to sign in
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </AuthGlassCard>
     );
   }
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Reset Password</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           Админд нууц үг сэргээх хүсэлт илгээнэ
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleRequest} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reset-phone">Phone Number</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="reset-phone"
-                type="tel"
-                placeholder="99112233"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                className="pl-10 text-lg tracking-wider"
-                maxLength={8}
-              />
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handleRequest} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="reset-phone" className={authLabelClasses}>Phone Number</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="reset-phone"
+              type="tel"
+              placeholder="99112233"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              maxLength={8}
+            />
           </div>
-          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              Хүсэлтийг админ баталгаажуулсны дараа та дугаараа оруулаад шинэ нууц үг тохируулах
-              боломжтой болно.
-            </span>
-          </div>
-          <Button type="submit" className="w-full h-12 text-lg" disabled={loading || phone.length !== 8}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              'Request password reset'
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+        <div className="flex items-start gap-2 rounded-xl bg-white/[0.04] border border-white/[0.08] p-3 text-xs text-white/50">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Хүсэлтийг админ баталгаажуулсны дараа та дугаараа оруулаад шинэ нууц үг тохируулах
+            боломжтой болно.
+          </span>
+        </div>
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={loading || phone.length !== 8}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            'Request password reset'
+          )}
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 }
