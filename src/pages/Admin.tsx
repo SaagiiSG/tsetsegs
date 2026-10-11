@@ -28,6 +28,7 @@ import DatabaseHealth from '@/pages/admin/DatabaseHealth';
 import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
 import QuestionSyncProgress from '@/pages/admin/QuestionSyncProgress';
+import QuestionImport from '@/pages/admin/QuestionImport';
 import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
 import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
@@ -81,6 +82,7 @@ const Admin = () => {
       <Route path="question-search" element={<QuestionSearch />} />
       <Route path="concept-videos" element={<ConceptVideosAdmin />} />
       <Route path="question-sync" element={<QuestionSyncProgress />} />
+      <Route path="question-import" element={<QuestionImport />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />
