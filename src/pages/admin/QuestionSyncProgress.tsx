@@ -285,7 +285,8 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{r.question_text}</p>
           </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );
