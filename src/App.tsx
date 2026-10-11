@@ -10,7 +10,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TeacherAuthProvider } from "./contexts/TeacherAuthContext";
-import { StudentAuthProvider } from "./contexts/StudentAuthContext";
+import { StudentAuthProvider, useStudentAuth } from "./contexts/StudentAuthContext";
+
+// Concept videos are international-only: Mongolian students get redirected away.
+function IntlOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { student, loading } = useStudentAuth();
+  if (loading) return null;
+  if (student?.cohort !== 'intl') return <Navigate to="/practice/home" replace />;
+  return <>{children}</>;
+}
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
