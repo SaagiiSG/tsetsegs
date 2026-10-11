@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { questionTableFor } from "@/lib/questionTable";
 import { CALIBRATION_REQUIRED } from "./useCalibrationProgress";
 import {
   buildSimHistory,

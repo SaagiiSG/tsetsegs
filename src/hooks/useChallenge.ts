@@ -163,6 +163,7 @@ export async function createChallenge(
   hostAccountId: string,
   hostDisplayName: string,
   args: CreateChallengeArgs,
+  cohort?: string | null,
 ): Promise<{ id: string | null; error: string | null }> {
   // 0. Enforce one active challenge per student (host)
   const { data: existing } = await supabase
