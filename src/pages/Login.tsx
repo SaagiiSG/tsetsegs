@@ -4,12 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShieldCheck, GraduationCap, BarChart3, Users, Sparkles } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
-import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
+import AuthSplitLayout, {
+  AuthGlassCard,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+  authGhostButtonClasses,
+} from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
   const navigate = useNavigate();
