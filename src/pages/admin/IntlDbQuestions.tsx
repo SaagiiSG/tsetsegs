@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MathText } from '@/components/MathText';
-import { ChevronDown, ChevronUp, PencilLine, Search } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, CircleDashed, PencilLine, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
@@ -22,6 +22,7 @@ type Row = {
 export default function IntlDbQuestions() {
   const [q, setQ] = useState('');
   const [subject, setSubject] = useState('all');
+  const [expl, setExpl] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
   const { toast } = useToast();
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
@@ -41,14 +42,18 @@ export default function IntlDbQuestions() {
     },
   });
 
+  const hasExpl = (r: Row) => !!r.rationale && r.rationale.trim().length > 0;
+
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return data.filter((r) =>
       (subject === 'all' || r.subject === subject) &&
+      (expl === 'all' || (expl === 'yes' ? hasExpl(r) : !hasExpl(r))) &&
       (!s || [r.question_id, r.ext_question_id, r.question_text, r.question_set].some((v) => v?.toLowerCase().includes(s))));
-  }, [data, q, subject]);
+  }, [data, q, subject, expl]);
 
   const math = data.filter((r) => r.subject === 'math').length;
+  const explained = data.filter((r) => hasExpl(r)).length;
 
   const openEditor = async (row: Row) => {
     const { data: full, error } = await supabase
@@ -78,8 +83,8 @@ export default function IntlDbQuestions() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        {[['Total', data.length], ['Math', math], ['English', data.length - math]].map(([l, v]) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[['Total', data.length], ['Math', math], ['English', data.length - math], ['With explanation', explained]].map(([l, v]) => (
           <Card key={l as string}><CardContent className="p-4">
             <div className="text-xs text-muted-foreground">{l}</div>
             <div className="text-2xl font-mono font-semibold">{v}</div>
@@ -100,6 +105,14 @@ export default function IntlDbQuestions() {
             <SelectItem value="english">English</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={expl} onValueChange={setExpl}>
+          <SelectTrigger className="sm:w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Explanation: any</SelectItem>
+            <SelectItem value="yes">Has explanation</SelectItem>
+            <SelectItem value="no">Missing explanation</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : (
@@ -114,7 +127,10 @@ export default function IntlDbQuestions() {
                   <button className="w-full flex items-start gap-3 text-left" onClick={() => setOpen(isOpen ? null : r.id)}>
                     <span className="font-mono text-sm font-semibold shrink-0">{r.question_id}</span>
                     <span className="flex-1 text-sm text-muted-foreground line-clamp-2">{r.question_text}</span>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
+                      {hasExpl(r)
+                        ? <Badge variant="secondary" className="gap-1"><CheckCircle2 className="h-3 w-3" />Explained</Badge>
+                        : <Badge variant="outline" className="gap-1 text-muted-foreground"><CircleDashed className="h-3 w-3" />No explanation</Badge>}
                       {r.subject && <Badge variant="outline">{r.subject}</Badge>}
                       {r.question_set && <Badge variant="secondary">{r.question_set}</Badge>}
                       {r.difficulty_level && <Badge variant="outline">{r.difficulty_level}</Badge>}
@@ -142,7 +158,9 @@ export default function IntlDbQuestions() {
                         </ul>
                       )}
                       <p><span className="text-muted-foreground">Answer:</span> <span className="font-mono">{r.answer}</span></p>
-                      {r.rationale && <div className="rounded-md border p-3"><MathText text={r.rationale} /></div>}
+                      {hasExpl(r)
+                        ? <div className="rounded-md border p-3"><MathText text={r.rationale || ''} /></div>
+                        : <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">No explanation yet — use "Edit question" to add one.</p>}
                     </div>
                   )}
                 </CardContent>
