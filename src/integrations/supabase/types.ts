@@ -5089,6 +5089,44 @@ export type Database = {
           },
         ]
       }
+      tenant_speed_runs: {
+        Row: {
+          correct: number
+          created_at: string
+          id: string
+          institution_id: string
+          student_id: string
+          subject: string
+          total: number
+        }
+        Insert: {
+          correct?: number
+          created_at?: string
+          id?: string
+          institution_id: string
+          student_id: string
+          subject?: string
+          total?: number
+        }
+        Update: {
+          correct?: number
+          created_at?: string
+          id?: string
+          institution_id?: string
+          student_id?: string
+          subject?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_speed_runs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_sprints: {
         Row: {
           created_at: string
@@ -5123,6 +5161,47 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_student_goals: {
+        Row: {
+          hard: number
+          institution_id: string
+          intensity: string | null
+          medium: number
+          sat_date: string | null
+          set_at: string
+          speed: number
+          student_id: string
+        }
+        Insert: {
+          hard?: number
+          institution_id: string
+          intensity?: string | null
+          medium?: number
+          sat_date?: string | null
+          set_at?: string
+          speed?: number
+          student_id: string
+        }
+        Update: {
+          hard?: number
+          institution_id?: string
+          intensity?: string | null
+          medium?: number
+          sat_date?: string | null
+          set_at?: string
+          speed?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_student_goals_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "tenant_students"
             referencedColumns: ["id"]
           },
         ]

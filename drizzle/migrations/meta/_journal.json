@@ -57,6 +57,13 @@
       "when": 1791689536320,
       "tag": "0007_global_tenant_join_code_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791694081014,
+      "tag": "0008_tenant_student_goals_and_speed_runs",
+      "breakpoints": true
     }
   ]
 }
