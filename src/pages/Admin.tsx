@@ -29,6 +29,7 @@ import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
 import QuestionSyncProgress from '@/pages/admin/QuestionSyncProgress';
 import QuestionImport from '@/pages/admin/QuestionImport';
+import IntlDbQuestions from '@/pages/admin/IntlDbQuestions';
 import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
 import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
@@ -83,6 +84,7 @@ const Admin = () => {
       <Route path="concept-videos" element={<ConceptVideosAdmin />} />
       <Route path="question-sync" element={<QuestionSyncProgress />} />
       <Route path="question-import" element={<QuestionImport />} />
+      <Route path="intl-questions" element={<IntlDbQuestions />} />
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />
