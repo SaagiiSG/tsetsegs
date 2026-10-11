@@ -7,7 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MathText } from '@/components/MathText';
-import { ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, PencilLine, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { QuestionForm } from '@/components/admin/questions/QuestionForm';
+import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
 
 type Row = {
   id: string; question_id: string; ext_question_id: string | null; subject: string | null;
@@ -20,8 +23,13 @@ export default function IntlDbQuestions() {
   const [q, setQ] = useState('');
   const [subject, setSubject] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [cbFormOpen, setCbFormOpen] = useState(false);
 
-  const { data = [], isLoading } = useQuery({
+  const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
     queryFn: async () => {
       const { data, error } = await (supabase.from('intl_questions') as any)
@@ -41,6 +49,25 @@ export default function IntlDbQuestions() {
   }, [data, q, subject]);
 
   const math = data.filter((r) => r.subject === 'math').length;
+
+  const openEditor = async (row: Row) => {
+    const { data: full, error } = await supabase
+      .from('intl_questions')
+      .select('*')
+      .eq('id', row.id)
+      .maybeSingle();
+    if (error || !full) {
+      toast({ title: 'Question not found', description: row.question_id, variant: 'destructive' });
+      return;
+    }
+    if ((full as any).question_set === 'CollegeBoard') {
+      setEditingCBQuestion(full);
+      setCbFormOpen(true);
+    } else {
+      setEditingQuestion(full);
+      setFormOpen(true);
+    }
+  };
 
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
@@ -96,7 +123,12 @@ export default function IntlDbQuestions() {
                   </button>
                   {isOpen && (
                     <div className="space-y-3 pt-2 border-t text-sm">
-                      {r.ext_question_id && <p className="text-xs text-muted-foreground font-mono">External ID: {r.ext_question_id}</p>}
+                      <div className="flex items-center gap-2">
+                        {r.ext_question_id && <p className="text-xs text-muted-foreground font-mono">External ID: {r.ext_question_id}</p>}
+                        <Button variant="outline" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => openEditor(r)}>
+                          <PencilLine className="h-3.5 w-3.5" /> Edit question
+                        </Button>
+                      </div>
                       {r.passage_text && <div className="rounded-md bg-muted p-3"><MathText text={r.passage_text} /></div>}
                       {r.question_image_url && <img src={r.question_image_url} alt="" className="max-h-64 rounded-md" />}
                       <MathText text={r.question_text || ''} />
@@ -120,6 +152,19 @@ export default function IntlDbQuestions() {
           {rows.length === 0 && <Button variant="ghost" disabled>No questions match.</Button>}
         </div>
       )}
+
+      <QuestionForm
+        table="intl_questions"
+        open={formOpen}
+        onOpenChange={(o) => { setFormOpen(o); if (!o) { setEditingQuestion(null); refetch(); } }}
+        editingQuestion={editingQuestion}
+      />
+      <CBQuestionForm
+        table="intl_questions"
+        open={cbFormOpen}
+        onOpenChange={(o) => { setCbFormOpen(o); if (!o) { setEditingCBQuestion(null); refetch(); } }}
+        editingQuestion={editingCBQuestion}
+      />
     </div>
   );
 }
