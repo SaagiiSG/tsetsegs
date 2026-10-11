@@ -110,7 +110,11 @@ export default function SprintMonitor() {
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   // Follows the global admin cohort switcher (header dropdown).
-  const { cohort, setCohort } = useAdminCohort();
+  // Dev accounts follow the header switcher; other admins keep a local choice.
+  const adminCohort = useAdminCohort();
+  const [localCohort, setLocalCohort] = useState<Cohort>('mn');
+  const cohort = adminCohort.canSwitch ? adminCohort.cohort : localCohort;
+  const setCohort = adminCohort.canSwitch ? adminCohort.setCohort : setLocalCohort;
   const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [showSeasonBuilder, setShowSeasonBuilder] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
