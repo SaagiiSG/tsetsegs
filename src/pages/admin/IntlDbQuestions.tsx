@@ -50,6 +50,25 @@ export default function IntlDbQuestions() {
 
   const math = data.filter((r) => r.subject === 'math').length;
 
+  const openEditor = async (row: Row) => {
+    const { data: full, error } = await supabase
+      .from('intl_questions')
+      .select('*')
+      .eq('id', row.id)
+      .maybeSingle();
+    if (error || !full) {
+      toast({ title: 'Question not found', description: row.question_id, variant: 'destructive' });
+      return;
+    }
+    if ((full as any).question_set === 'CollegeBoard') {
+      setEditingCBQuestion(full);
+      setCbFormOpen(true);
+    } else {
+      setEditingQuestion(full);
+      setFormOpen(true);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       <div>
