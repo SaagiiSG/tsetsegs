@@ -85,7 +85,7 @@ function DomainBars({ stats }: { stats: DomainStat[] }) {
 
 /** Big liquid class card with Students / Analytics tabs — mirrors the main dashboard's ClassCardBig. */
 function CenterClassCard({
-  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename,
+  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename, onOpen,
 }: {
   cls: CenterClass;
   students: CenterStudent[];
@@ -97,6 +97,7 @@ function CenterClassCard({
   onInvite: () => void;
   onRename: () => void;
   canRename: boolean;
+  onOpen: () => void;
 }) {
   const [tab, setTab] = useState<'students' | 'analytics'>('students');
   const totals = students.reduce((t, s) => {
@@ -107,19 +108,20 @@ function CenterClassCard({
 
   return (
     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest}
-      className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4">
+      className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4 transition-transform hover:-translate-y-0.5">
       <LiquidGlassFX />
       <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-lg truncate">{cls.name}</h3>
+        <button onClick={onOpen} className="min-w-0 text-left group" aria-label={`Open ${cls.name}`}>
+          <h3 className="font-semibold text-lg truncate group-hover:underline underline-offset-4 flex items-center gap-1.5">{cls.name}<ChevronRight className="h-4 w-4 opacity-50 group-hover:translate-x-0.5 transition-transform" /></h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {cls.schedule || 'No schedule set'}{cls.starts_on ? ` · starts ${cls.starts_on}` : ''}
           </p>
-        </div>
+        </button>
         <div className="flex items-center gap-1 shrink-0">
           <span className="font-mono text-xs text-foreground/50 border rounded-full px-2 py-0.5">{cls.join_code}</span>
           {canRename && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRename} title="Rename class"><Pencil className="h-3.5 w-3.5" /></Button>}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onInvite} title="Invite students"><QrCode className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" className="h-8 rounded-full" onClick={onOpen}>Open class</Button>
         </div>
       </div>
 
