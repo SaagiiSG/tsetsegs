@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         return json({ error: 'Use at least 8 characters with letters and numbers.' }, 400)
       // Instant enrollment: the class code itself is the invitation.
       const { data: student, error: sErr } = await admin.from('tenant_students')
-        .insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email: email || null }).select('id').single()
+        .insert({ institution_id: tenant.id, class_id: cls.id, name, phone }).select('id').single()
       if (sErr || !student) return json({ error: 'Could not create your account. Try again.' }, 400)
       const loginEmail = `s-${student.id}@students.flowersos.co`
       const { data: created, error: uErr } = await admin.auth.admin.createUser({
