@@ -149,29 +149,35 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const isServiceCall = authHeader.replace("Bearer ", "").trim() === serviceKey;
 
-    // Admin role check
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      serviceKey,
     );
-    const { data: adminRole } = await adminClient.from('user_roles')
-      .select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
-    if (!adminRole) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+    if (!isServiceCall) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Admin role check
+      const { data: adminRole } = await adminClient.from('user_roles')
+        .select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
+      if (!adminRole) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
 
     const body = await req.json().catch(() => ({}));
-    const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set, mode } = body;
+    const { subject, since_date, since_updated, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set, mode } = body;
     const isUpdate = mode === "update";
     // External updates feed the international bank (intDB); Mongolian bank stays untouched unless target="mn".
     const QT = body.target === "mn" ? "questions" : "intl_questions";
@@ -211,6 +217,7 @@ Deno.serve(async (req) => {
 
     if (subject) query = query.eq("subject", subject);
     if (since_date) query = query.gt("created_at", since_date);
+    if (since_updated) query = query.gt("updated_at", since_updated);
 
     const { data: externalQuestions, error: extError } = await query;
 
