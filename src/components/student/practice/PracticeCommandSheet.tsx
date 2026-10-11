@@ -1,3 +1,4 @@
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CommandDialog,
@@ -140,7 +141,7 @@ export function PracticeCommandSheet() {
               </CommandItem>
             </>
           )}
-          {QUICK_ROUTES.filter((r) => r.group === 'tools').map((r) => (
+          {QUICK_ROUTES.filter((r) => r.group === 'tools' && (r.path !== '/practice/concept-videos' || student?.cohort === 'intl')).map((r) => (
             <CommandItem key={r.path} onSelect={() => go(r.path, r.label)}>
               <r.icon className="mr-2 h-4 w-4" />
               <span>{r.label}</span>

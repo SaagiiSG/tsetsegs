@@ -116,7 +116,8 @@ function loadEdge(): DockEdge {
 export function StudentIPadDock() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [edge, setEdge] = useState<DockEdge>(() => loadEdge());
-  const { logout } = useStudentAuth();
+  const { logout, student } = useStudentAuth();
+  const isIntl = student?.cohort === 'intl';
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const dragControls = useDragControls();
@@ -237,7 +238,7 @@ export function StudentIPadDock() {
                       {group.label}
                     </p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {group.items.map((item) => {
+                      {group.items.filter((item) => item.to !== '/practice/concept-videos' || isIntl).map((item) => {
                         const Icon = item.icon;
                         return (
                           <NavLink
