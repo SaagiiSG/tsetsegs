@@ -8,3 +8,6 @@
 - Center admin workspace pages (`src/portal/admin/*`) read only `tenant_*` tables and shared read-only resources (question bank); never mount main admin pages inside a portal, because they query the main cohort tables.
 - The center admin shell reuses the main admin's sidebar primitives (`SidebarProvider`/`Sidebar` floating + icon-collapsible) so both workspaces collapse to the same icon rail, tooltips and glass card; keep them in sync rather than forking a second navigation implementation.
 - Center branding lives in `institution_customers.portal_settings` (written only via `tenant_update_settings`), with logos stored as small data URLs because the workspace blocks public storage buckets.
+
+- Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank.
+- Concept videos are international-only (nav filtered and route guarded by `student.cohort`).

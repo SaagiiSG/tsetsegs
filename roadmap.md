@@ -14,3 +14,6 @@
 - [x] Step-by-step explanations accept photos by dragging them onto any step (one or many), with a clear drop highlight; verified in the live editor.
 - [x] Center admin sidebar: customer logo no longer touches the card edge — header content vertically centered; verified live expanded and collapsed.
 - [x] Teacher class cards and center batch/roster cards read as liquid glass (thinner frost, pointer specular, drifting sheen, masked rim) with an inner glass layer keeping every label ≥4.5:1 in both appearances.
+
+- [ ] International main-platform /practice (intl cohort, non-center) still reads the Mongolian bank — switch to intDB next
+- [ ] Concept videos inside center student portals
