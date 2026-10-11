@@ -45,7 +45,7 @@ export function ClassCardBig({ batch, index, isActive = true, onRename, onShowQR
     >
       <Card
         {...liquid}
-        className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 admin-glass-card admin-glass-card-glow admin-glass-liquid flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]"
+        className="relative overflow-hidden rounded-3xl border-border/60 shadow-sm hover:shadow-lg transition-shadow p-5 md:p-8 admin-glass-card admin-glass-card-glow admin-glass-liquid admin-glass-neutral flex flex-col md:min-h-[62vh] md:max-h-[calc(100vh-220px)]"
       >
         <LiquidGlassFX />
 

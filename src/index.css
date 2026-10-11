@@ -386,6 +386,15 @@ body.admin-theme .admin-glass-card-glow > * {
   .admin-glass-card-glow::before { background: hsl(var(--section-glow, var(--admin-atmosphere)) / 0.08); }
   .admin-glass-card-glow::after { box-shadow: none; }
 }
+/* Neutral glass: keeps every liquid layer (left wash, specular rim, drifting
+   sheen, pointer highlight) but drops the section hue, so data-dense surfaces
+   like the class cards stay monochrome while the page header keeps its glow. */
+body.admin-theme .admin-glass-neutral {
+  --section-glow: 220 12% 55%;
+}
+.dark body.admin-theme .admin-glass-neutral, body.admin-theme.dark .admin-glass-neutral {
+  --section-glow: 220 10% 80%;
+}
 /* Liquid glass buttons & cards across the admin workspace.
    Scoped to body.admin-theme so student/teacher surfaces stay solid. */
 body.admin-theme .admin-glass-card {
