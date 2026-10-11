@@ -74,7 +74,7 @@ import sat1500_2 from "@/assets/sat-1500-2.jpg";
 import sat1480_2 from "@/assets/sat-1480-2.jpg";
 import sat1430 from "@/assets/sat-1430.jpg";
 
-import heroOrigami from "@/assets/hero-origami.jpg.asset.json";
+import heroOrigami from "@/assets/hero-origami.jpg";
 import { BrandMark } from "@/components/BrandMark";
 import { ArrowRight } from "lucide-react";
 
@@ -310,7 +310,7 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[100svh] overflow-hidden">
         <img
-          src={heroOrigami.url}
+          src={heroOrigami}
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-[70%_center] md:object-right"
