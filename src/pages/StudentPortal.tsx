@@ -258,35 +258,32 @@ export default function StudentPortal() {
   );
 
   const renderRegistrationRequestStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Request Access</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request Access</h2>
+        <p className="text-sm text-white/50">
           This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
         </p>
       </div>
-      <form onSubmit={handleRegistrationRequest} className="space-y-4">
+      <form onSubmit={handleRegistrationRequest} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="fullName" className={authLabelClasses}>Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <User className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="fullName"
               type="text"
               placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={cn(authInputClasses, "pl-10")}
+              className={cn(authInputClasses, "pl-7")}
               maxLength={100}
             />
           </div>
@@ -297,7 +294,7 @@ export default function StudentPortal() {
 
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={isLoading || fullName.trim().length < 2}
         >
           {isLoading ? (
@@ -314,20 +311,18 @@ export default function StudentPortal() {
   );
 
   const renderPendingApprovalStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 text-center pb-5">
-        <div className="flex justify-center mb-3">
-          <div className="h-16 w-16 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-            <Clock className="h-8 w-8 text-white/70" />
-          </div>
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
+          <Clock className="h-7 w-7 text-white/70" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">Pending Approval</h2>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Pending Approval</h2>
         <p className="text-sm text-white/50">
           Your registration request has been submitted. Your teacher will review it shortly.
         </p>
       </div>
-      <div className="space-y-4">
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 text-center">
+      <div className="space-y-6">
+        <div className="border-b border-white/10 pb-4">
           <p className="text-sm text-white/50">Phone: <span className="font-mono font-medium text-white">{pendingPhone}</span></p>
           <p className="text-xs text-white/40 mt-1">You'll be able to log in once approved</p>
         </div>
