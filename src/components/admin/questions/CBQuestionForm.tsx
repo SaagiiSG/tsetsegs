@@ -42,12 +42,14 @@ const cbQuestionSchema = z.object({
 type CBQuestionFormData = z.infer<typeof cbQuestionSchema>;
 
 interface CBQuestionFormProps {
+  /** Which bank to write: Mongolian 'questions' (default) or international 'intl_questions'. */
+  table?: 'questions' | 'intl_questions';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingQuestion?: any;
 }
 
-export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuestionFormProps) {
+export function CBQuestionForm({ open, onOpenChange, editingQuestion, table = 'questions' }: CBQuestionFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -79,7 +81,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
     queryKey: ['next-cb-question-id'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(table as 'questions')
         .select('question_id')
         .eq('question_set', 'CollegeBoard')
         .eq('is_original', true)
@@ -276,13 +278,13 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion }: CBQuesti
 
       if (editingQuestion) {
         const { error } = await supabase
-          .from('questions')
+          .from(table as 'questions')
           .update(questionData)
           .eq('id', editingQuestion.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('questions')
+          .from(table as 'questions')
           .insert(questionData);
         if (error) throw error;
       }

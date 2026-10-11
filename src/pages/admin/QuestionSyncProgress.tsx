@@ -48,7 +48,7 @@ export default function QuestionSyncProgress() {
 
   const openEditor = async (questionId: string) => {
     const { data, error } = await supabase
-      .from('questions')
+      .from('intl_questions')
       .select('*')
       .eq('question_id', questionId)
       .maybeSingle();
@@ -218,14 +218,14 @@ export default function QuestionSyncProgress() {
       {result.changes.length === 0 && <RecentlyUpdated days={days} setDays={setDays} onOpenEditor={openEditor} />}
 
       {/* Inline Question Form Dialog */}
-      <QuestionForm
+      <QuestionForm table="intl_questions"
         open={formOpen}
         onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingQuestion(null); }}
         editingQuestion={editingQuestion}
       />
 
       {/* Inline CB Question Form Dialog */}
-      <CBQuestionForm
+      <CBQuestionForm table="intl_questions"
         open={cbFormOpen}
         onOpenChange={(open) => { setCbFormOpen(open); if (!open) setEditingCBQuestion(null); }}
         editingQuestion={editingCBQuestion}
@@ -242,7 +242,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
     setRows(null);
     const since = new Date(Date.now() - days * 86400000).toISOString();
     supabase
-      .from('questions')
+      .from('intl_questions')
       .select('question_id, question_text, updated_at, rationale, question_set')
       .gte('updated_at', since)
       .order('updated_at', { ascending: false })

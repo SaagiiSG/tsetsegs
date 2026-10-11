@@ -37,9 +37,9 @@ export default function CenterStudentPortal() {
   const loadQuestion = useCallback(async () => {
     setResult(null); setPicked(''); setTyped(''); setTries(0);
     const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const { count } = await supabase.from('questions').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
+    const { count } = await supabase.from('intl_questions').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
     const offset = Math.floor(Math.random() * Math.max(1, count ?? 1));
-    const { data } = await supabase.from('questions').select('id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text')
+    const { data } = await supabase.from('intl_questions').select('id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text')
       .eq('is_active', true).eq('hide_from_practice', false).in('subject', sub).range(offset, offset);
     setQ((data?.[0] as Q) ?? null);
   }, [subject]);
