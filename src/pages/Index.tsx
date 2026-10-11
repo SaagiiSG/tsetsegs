@@ -271,9 +271,9 @@ const Index = () => {
             boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.1), 0 12px 40px hsl(0 0% 0% / 0.4)",
           }}
         >
-          <a href="/" className="flex items-center gap-2.5" aria-label="floweros home">
+          <a href="/" className="flex items-center gap-2.5" aria-label="flowersos home">
             <BrandMark className="h-7 w-7" />
-            <span className="text-xl font-medium tracking-tight" style={{ fontFamily: "'Chillax', sans-serif" }}>floweros</span>
+            <span className="text-xl font-medium tracking-tight" style={{ fontFamily: "'Chillax', sans-serif" }}>flowersos</span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-sm" style={{ color: "hsl(0 0% 85%)" }}>
             <a href="#features" className="hover:text-foreground transition-colors">{lang === 'mon' ? 'Сургалт' : 'Courses'}</a>
