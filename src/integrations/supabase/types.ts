@@ -4892,6 +4892,105 @@ export type Database = {
           },
         ]
       }
+      tenant_live_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          institution_id: string
+          is_correct: boolean
+          question_id: string
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          institution_id: string
+          is_correct?: boolean
+          question_id: string
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          institution_id?: string
+          is_correct?: boolean
+          question_id?: string
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_live_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_live_answers_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_live_sessions: {
+        Row: {
+          class_id: string
+          created_at: string
+          current_index: number
+          host_user_id: string
+          id: string
+          institution_id: string
+          question_ids: string[]
+          revealed: boolean
+          status: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          current_index?: number
+          host_user_id?: string
+          id?: string
+          institution_id: string
+          question_ids?: string[]
+          revealed?: boolean
+          status?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          current_index?: number
+          host_user_id?: string
+          id?: string
+          institution_id?: string
+          question_ids?: string[]
+          revealed?: boolean
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_live_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_live_sessions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_members: {
         Row: {
           active: boolean
