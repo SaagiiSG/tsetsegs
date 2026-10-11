@@ -234,7 +234,7 @@ export default function QuestionSyncProgress() {
   );
 }
 
-type Recent = { question_id: string; question_text: string | null; content_updated_at: string; rationale: string | null; question_set: string | null };
+type Recent = { question_id: string; question_text: string | null; content_updated_at: string; created_at: string; rationale: string | null; question_set: string | null };
 
 function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDays: (d: number) => void; onOpenEditor: (id: string) => void }) {
   const [rows, setRows] = useState<Recent[] | null>(null);
@@ -243,7 +243,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
     const since = new Date(Date.now() - days * 86400000).toISOString();
     supabase
       .from('intl_questions')
-      .select('question_id, question_text, content_updated_at, rationale, question_set')
+      .select('question_id, question_text, content_updated_at, created_at, rationale, question_set')
       .gte('content_updated_at', since)
       .order('content_updated_at', { ascending: false })
       .limit(500)
@@ -255,7 +255,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Recently updated questions {rows ? `(${rows.length})` : ''}</CardTitle>
         <div className="flex gap-1">
-          {[1, 7, 30].map((d) => (
+          {[1, 7, 30, 90].map((d) => (
             <Button key={d} size="sm" variant={days === d ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setDays(d)}>
               {d === 1 ? 'Today' : `${d} days`}
             </Button>
