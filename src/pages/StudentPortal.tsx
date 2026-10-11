@@ -339,41 +339,38 @@ export default function StudentPortal() {
   );
 
   const renderPasswordStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Enter Password</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Enter Password</h2>
+        <p className="text-sm text-white/50">
           Phone: {pendingPhone}
         </p>
       </div>
-      <form onSubmit={handlePasswordLogin} className="space-y-4">
+      <form onSubmit={handlePasswordLogin} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="password" className={authLabelClasses}>Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-10 pr-10")}
+              className={cn(authInputClasses, "pl-7 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -381,28 +378,30 @@ export default function StudentPortal() {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
-          disabled={isLoading || !password}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
-            </>
-          ) : (
-            'Sign In'
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className={authGhostButtonClasses}
-          onClick={() => setForgotPassword(true)}
-        >
-          Forgot password?
-        </Button>
+        <div className="space-y-3">
+          <Button
+            type="submit"
+            className={authPrimaryButtonClasses}
+            disabled={isLoading || !password}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className={authGhostButtonClasses}
+            onClick={() => setForgotPassword(true)}
+          >
+            Forgot password?
+          </Button>
+        </div>
       </form>
     </AuthGlassCard>
   );
