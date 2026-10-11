@@ -119,7 +119,7 @@ export default function StudentPortal() {
       return;
     }
 
-    const { error } = await loginWithPassword(password);
+    const { error } = await loginWithPassword(password, result.account);
 
     if (error) {
       toast({

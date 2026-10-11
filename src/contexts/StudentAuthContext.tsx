@@ -50,9 +50,9 @@ interface StudentAuthContextType {
   authStep: AuthStep;
   pendingPhone: string | null;
   pendingStudentAccount: StudentAccount | null;
-  checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }>;
+  checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean; account?: StudentAccount }>;
   submitRegistrationRequest: (fullName: string) => Promise<{ error: string | null }>;
-  loginWithPassword: (password: string) => Promise<{ error: string | null }>;
+  loginWithPassword: (password: string, account?: StudentAccount) => Promise<{ error: string | null }>;
   setPassword: (password: string) => Promise<{ error: string | null }>;
   resetAuthFlow: () => void;
   logout: () => void;
@@ -334,7 +334,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean }> => {
+  const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean; account?: StudentAccount }> => {
     try {
       // Normalize: students may type with/without "+", spaces, or dashes.
       // Match against exact input, digits-only, and E.164 ("+digits") variants
@@ -503,13 +503,14 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const pendingAccountSnapshot = pendingStudentAccount;
   const loginWithPassword = async (
     password: string,
     accountOverride?: StudentAccount,
   ): Promise<{ error: string | null }> => {
     // Same-handler callers (phone+password on one screen) pass the account
     // returned by checkPhone, since pending state hasn't re-rendered yet.
-    const pendingStudentAccount = accountOverride ?? pendingStudentAccountState;
+    const pendingStudentAccount = accountOverride ?? pendingAccountSnapshot;
     try {
       if (!pendingStudentAccount) {
         return { error: 'Session expired. Please start over.' };
