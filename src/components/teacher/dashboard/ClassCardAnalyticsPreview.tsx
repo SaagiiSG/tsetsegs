@@ -6,13 +6,8 @@ interface Props {
   batchId: string;
 }
 
-const DOMAIN_TONE: Record<DomainKey, string> = {
-  algebra: "bg-primary",
-  advanced: "bg-accent",
-  data: "bg-emerald-500",
-  geometry: "bg-orange-500",
-  other: "bg-muted-foreground",
-};
+/* Domain bars stay monochrome — the accuracy number carries the meaning. */
+const BAR_TONE = "bg-foreground/70";
 
 export function ClassCardAnalyticsPreview({ batchId }: Props) {
   const { data, isLoading } = useTeacherMathAnalytics({
@@ -109,7 +104,7 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
             <span className="w-32 shrink-0 text-xs text-foreground/70 truncate">{r.label}</span>
             <div className="relative flex-1 h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className={`absolute inset-y-0 left-0 ${DOMAIN_TONE[r.key]} rounded-full transition-all`}
+                className={`absolute inset-y-0 left-0 ${BAR_TONE} rounded-full transition-all`}
                 style={{ width: r.attempts ? `${Math.max(3, r.accuracy)}%` : "0%" }}
               />
             </div>
@@ -122,8 +117,8 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
 
       <div className="grid grid-cols-2 gap-2 pt-1">
         {strong && (
-          <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
+          <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-foreground/60 inline-flex items-center gap-1">
               <Sparkles className="h-3 w-3" /> Strong
             </div>
             <div className="text-xs font-medium truncate mt-0.5">{strong.topic}</div>
@@ -133,8 +128,8 @@ export function ClassCardAnalyticsPreview({ batchId }: Props) {
           </div>
         )}
         {focus && (
-          <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-orange-600 dark:text-orange-400 inline-flex items-center gap-1">
+          <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-foreground/60 inline-flex items-center gap-1">
               <Target className="h-3 w-3" /> Focus
             </div>
             <div className="text-xs font-medium truncate mt-0.5">{focus.topic}</div>

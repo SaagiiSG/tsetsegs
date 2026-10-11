@@ -60,7 +60,7 @@ export function StudentListPreview({ students, total, batchId }: Props) {
               onClick={() => navigate(`/teacher/students/${batchId}?student=${s.id}`)}
               className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-muted/60 transition-colors"
             >
-              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-semibold text-primary">
+              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 text-[10px] font-semibold text-foreground/70">
                 {initials(s.name)}
               </div>
               <span className="text-xs font-medium truncate">{s.name}</span>
