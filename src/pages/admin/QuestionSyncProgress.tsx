@@ -234,7 +234,7 @@ export default function QuestionSyncProgress() {
   );
 }
 
-type Recent = { question_id: string; question_text: string | null; updated_at: string; rationale: string | null; question_set: string | null };
+type Recent = { question_id: string; question_text: string | null; content_updated_at: string; rationale: string | null; question_set: string | null };
 
 function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDays: (d: number) => void; onOpenEditor: (id: string) => void }) {
   const [rows, setRows] = useState<Recent[] | null>(null);
@@ -243,9 +243,9 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
     const since = new Date(Date.now() - days * 86400000).toISOString();
     supabase
       .from('intl_questions')
-      .select('question_id, question_text, updated_at, rationale, question_set')
-      .gte('updated_at', since)
-      .order('updated_at', { ascending: false })
+      .select('question_id, question_text, content_updated_at, rationale, question_set')
+      .gte('content_updated_at', since)
+      .order('content_updated_at', { ascending: false })
       .limit(500)
       .then(({ data }) => setRows((data as Recent[]) || []));
   }, [days]);
