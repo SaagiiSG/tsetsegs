@@ -20,7 +20,7 @@ function JoinLinkDialog({ cls, onClose }: { cls: CenterAdminData['classes'][numb
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle>Sign-up link · {cls.name}</DialogTitle><DialogDescription>Students who use this link land in your Registration Queue for approval.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Sign-up link · {cls.name}</DialogTitle><DialogDescription>Students who use this link are enrolled in this class right away.</DialogDescription></DialogHeader>
         <img src={qr} alt={`QR code for ${cls.name} sign-up`} className="mx-auto h-60 w-60 rounded-md border bg-background p-2" />
         <p className="font-mono text-xs break-all rounded-md border p-2">{url}</p>
         <Button onClick={() => { navigator.clipboard.writeText(url); toast.success('Link copied'); }}><Copy className="h-4 w-4" />Copy link</Button>
