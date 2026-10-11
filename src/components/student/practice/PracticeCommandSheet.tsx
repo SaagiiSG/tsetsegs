@@ -55,6 +55,7 @@ const QUICK_ROUTES: QuickRoute[] = [
 
 export function PracticeCommandSheet() {
   const { open, setOpen } = usePracticeCommandSheet();
+  const { student } = useStudentAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { recents, recordRoute } = usePracticeRecents();
