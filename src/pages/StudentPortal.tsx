@@ -496,35 +496,6 @@ export default function StudentPortal() {
           </>
         )}
 
-        {/* Features Preview - only show on phone step */}
-        {authStep === 'phone' && (
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <BookOpen className="h-5 w-5 text-white/70" />
-              </div>
-              <p className="text-xs text-white/45">68 Questions</p>
-            </div>
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                </svg>
-              </div>
-              <p className="text-xs text-white/45">Video Lessons</p>
-            </div>
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <p className="text-xs text-white/45">Track Progress</p>
-            </div>
-          </div>
-        )}
-
         <div className="text-center space-y-1">
           <Link to="/student-register" className="text-sm text-white/80 hover:text-white hover:underline">
             Шинээр бүртгүүлэх
