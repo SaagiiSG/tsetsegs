@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck, GraduationCap, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import flowersLogo from "@/assets/flowers-logo.png";
+import { Loader2, ShieldCheck, GraduationCap, BarChart3, Users, Sparkles } from "lucide-react";
+import BrandMark from "@/components/BrandMark";
+import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -168,12 +168,21 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <div className="w-full max-w-md">
-        <Card className="border-2 shadow-lg">
+    <AuthSplitLayout
+      eyebrow="STAFF WORKSPACE"
+      headline={"Run the whole\noperation from\none place."}
+      subline="Batches, attendance, question banks, sprints and analytics — everything your team needs, behind one sign-in."
+      features={[
+        { icon: <BarChart3 className="h-3.5 w-3.5" />, label: "Live analytics" },
+        { icon: <Users className="h-3.5 w-3.5" />, label: "Class management" },
+        { icon: <Sparkles className="h-3.5 w-3.5" />, label: "Question banks" },
+      ]}
+    >
+      <div className="space-y-6">
+        <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              <img src={flowersLogo} alt="Flowers Logo" className="h-16 w-16 object-contain" />
+              <BrandMark className="h-12 w-12 text-foreground" />
             </div>
             <CardTitle className="text-2xl font-bold">
               {activeTab === "admin" ? (isSignUp ? "Create Account" : "Admin Login") : "Teacher Login"}
@@ -299,18 +308,9 @@ export default function Login() {
               </TabsContent>
             </Tabs>
 
-            <div className="pt-4 border-t">
-              <Link
-                to="/"
-                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to main site
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
