@@ -203,13 +203,17 @@ Deno.serve(async (req) => {
     // Build query with offset/limit pagination
     let query = externalClient
       .from("questions")
-      .select("question_id, question_text, answer, multiple_choice_options, difficulty_level, subject, question_type, rationale, passage_text, original_cb_id, question_set, subtopic, alternate_answers, question_image_url, choice_images, video_url, skill, has_figure, figure_type, figure_description, figure_svg")
+      .select("question_id, question_text, answer, multiple_choice_options, difficulty_level, subject, question_type, rationale, passage_text, original_cb_id, question_set, subtopic, alternate_answers, question_image_url, choice_images, video_url, skill, has_figure, figure_type, figure_description, figure_svg, is_variant")
       .eq("is_active", true)
       .order("created_at", { ascending: true })
       .range(offset, offset + safeLimit - 1);
 
-    // Filter by question_set if specified, otherwise only fetch originals (skip for english)
-    if (question_set) {
+    // Update mode: only pull questions the external DB flags as overwritten variants
+    // (is_variant = true). Timestamps are unreliable — bulk touches inflate counts.
+    if (isUpdate) {
+      query = query.eq("is_variant", true);
+    } else if (question_set) {
+      // Filter by question_set if specified, otherwise only fetch originals (skip for english)
       query = query.eq("question_set", question_set);
     } else if (subject !== 'english') {
       query = query.eq("is_original", true);
@@ -217,7 +221,7 @@ Deno.serve(async (req) => {
 
     if (subject) query = query.eq("subject", subject);
     if (since_date) query = query.gt("created_at", since_date);
-    if (since_updated) query = query.gt("updated_at", since_updated);
+    if (since_updated && !isUpdate) query = query.gt("updated_at", since_updated);
 
     const { data: externalQuestions, error: extError } = await query;
 
