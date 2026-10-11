@@ -10,7 +10,16 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TeacherAuthProvider } from "./contexts/TeacherAuthContext";
-import { StudentAuthProvider } from "./contexts/StudentAuthContext";
+import { StudentAuthProvider, useStudentAuth } from "./contexts/StudentAuthContext";
+import type { ReactNode } from "react";
+
+// Concept videos are international-only: Mongolian students get redirected away.
+function IntlOnlyRoute({ children }: { children: ReactNode }) {
+  const { student, isLoading } = useStudentAuth();
+  if (isLoading) return null;
+  if (student?.cohort !== 'intl') return <Navigate to="/practice/home" replace />;
+  return <>{children}</>;
+}
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
@@ -271,7 +280,7 @@ const MainApp = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="search" element={<StudentQuestionSearch />} />
-                    <Route path="concept-videos" element={<StudentConceptVideos />} />
+                    <Route path="concept-videos" element={<IntlOnlyRoute><StudentConceptVideos /></IntlOnlyRoute>} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="proctor-results" element={<StudentProctorResults />} />
