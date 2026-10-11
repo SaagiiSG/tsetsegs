@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type QMeta = { id: string; subject: string | null; skill: string | null; category_id: string | null; domain: string };
+export type QMeta = { id: string; subject: string | null; skill: string | null; category_id: string | null; difficulty_level?: string | null; domain: string };
 
 /** Loads subject/domain/skill for a set of intl question ids (chunked to keep URLs short). */
 export async function loadQuestionMeta(ids: string[]): Promise<Record<string, QMeta>> {
@@ -8,7 +8,7 @@ export async function loadQuestionMeta(ids: string[]): Promise<Record<string, QM
   const [{ data: cats }, ...chunks] = await Promise.all([
     supabase.from('question_categories').select('id, name'),
     ...Array.from({ length: Math.ceil(uniq.length / 150) }, (_, i) =>
-      supabase.from('intl_questions').select('id, subject, skill, category_id').in('id', uniq.slice(i * 150, i * 150 + 150))),
+      supabase.from('intl_questions').select('id, subject, skill, category_id, difficulty_level').in('id', uniq.slice(i * 150, i * 150 + 150))),
   ]);
   const catName = Object.fromEntries((cats ?? []).map(c => [c.id, c.name]));
   const out: Record<string, QMeta> = {};
