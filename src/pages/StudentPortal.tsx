@@ -78,9 +78,9 @@ export default function StudentPortal() {
     );
   }
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (digitsOnly(phoneNumber).length < 8) {
       toast({
         title: 'Invalid phone number',
@@ -90,25 +90,6 @@ export default function StudentPortal() {
       return;
     }
 
-
-    setIsLoading(true);
-    
-    const { error } = await checkPhone(phoneNumber);
-    
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error,
-        variant: 'destructive'
-      });
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
     if (!password) {
       toast({
         title: 'Password required',
@@ -119,9 +100,28 @@ export default function StudentPortal() {
     }
 
     setIsLoading(true);
-    
+
+    const result = await checkPhone(phoneNumber);
+
+    if (result.error) {
+      toast({
+        title: 'Error',
+        description: result.error,
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // First-time / unregistered / pending flows move to their own steps.
+    if (result.needsSetup || result.needsRegistration || result.pendingApproval) {
+      setPassword('');
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await loginWithPassword(password);
-    
+
     if (error) {
       toast({
         title: 'Login failed',
@@ -129,7 +129,7 @@ export default function StudentPortal() {
         variant: 'destructive'
       });
     }
-    
+
     setIsLoading(false);
   };
 
