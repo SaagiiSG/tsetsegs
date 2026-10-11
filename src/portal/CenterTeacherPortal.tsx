@@ -380,6 +380,7 @@ export default function CenterTeacherPortal() {
   });
 
   const classIds = useMemo(() => classes?.map(c => c.id) ?? [], [classes]);
+  const hubClass = hubId ? classes?.find(c => c.id === hubId) ?? null : null;
 
   // All students across the teacher's classes.
   const studentsQuery = useQuery({
