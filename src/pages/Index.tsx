@@ -938,16 +938,6 @@ const Index = () => {
         </motion.div>
       </footer>
 
-      {/* GradualBlur at bottom */}
-      <GradualBlur 
-        position="bottom"
-        height="10rem"
-        strength={3}
-        divCount={6}
-        curve="ease-out"
-        target="page"
-        zIndex={50}
-      />
     </div>
   );
 };
