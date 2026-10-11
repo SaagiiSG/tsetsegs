@@ -133,6 +133,7 @@ const MainApp = () => (
                   <Route path="/exam/:joinCode" element={<ClassExam />} />
                   <Route path="/proctor/:joinCode" element={<ProctorExam />} />
                   <Route path="/prep/:joinCode" element={<PrepClassJoin />} />
+                  <Route path="/join/:code" element={<CenterJoinRedirect />} />
                   <Route path="/lectures" element={<LecturesHub />} />
                   <Route path="/unsubscribe" element={<Unsubscribe />} />
 
