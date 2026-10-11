@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,7 +10,13 @@ import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 import { digitsOnly, sanitizePhoneInput } from '@/lib/phone';
-import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
+import AuthSplitLayout, {
+  AuthGlassCard,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+  authGhostButtonClasses,
+} from '@/components/auth/AuthSplitLayout';
 import BrandMark from '@/components/BrandMark';
 
 
@@ -206,304 +211,295 @@ export default function StudentPortal() {
   const passwordValidation = validatePassword(password);
 
   const renderPhoneStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Student Login</CardTitle>
-        <CardDescription className="text-center">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
+        <h2 className="text-2xl font-semibold tracking-tight text-white text-center">Student Login</h2>
+        <p className="text-sm text-white/50 text-center">
           Enter your phone number to access practice questions
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handlePhoneSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="99112233"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-                className="pl-10 text-lg tracking-wider"
-                maxLength={20}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Use the phone number registered with your class.
-            </p>
+        </p>
+      </div>
+      <form onSubmit={handlePhoneSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="99112233"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              maxLength={20}
+            />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || digitsOnly(phoneNumber).length < 8}
-          >
+          <p className="text-xs text-white/40">
+            Use the phone number registered with your class.
+          </p>
+        </div>
 
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking...
-              </>
-            ) : (
-              'Continue'
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || digitsOnly(phoneNumber).length < 8}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Checking...
+            </>
+          ) : (
+            'Continue'
+          )}
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 
   const renderRegistrationRequestStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
             onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Request Access</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Request Access</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleRegistrationRequest} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="pl-10"
-                maxLength={100}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Use the name your teacher knows you by
-            </p>
+        </p>
+      </div>
+      <form onSubmit={handleRegistrationRequest} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className={authLabelClasses}>Full Name</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="Enter your full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className={cn(authInputClasses, "pl-10")}
+              maxLength={100}
+            />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || fullName.trim().length < 2}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              'Request Access'
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-white/40">
+            Use the name your teacher knows you by
+          </p>
+        </div>
+
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || fullName.trim().length < 2}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            'Request Access'
+          )}
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 
   const renderPendingApprovalStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex justify-center mb-2">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Clock className="h-8 w-8 text-primary" />
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 text-center pb-5">
+        <div className="flex justify-center mb-3">
+          <div className="h-16 w-16 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
+            <Clock className="h-8 w-8 text-white/70" />
           </div>
         </div>
-        <CardTitle className="text-2xl">Pending Approval</CardTitle>
-        <CardDescription>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Pending Approval</h2>
+        <p className="text-sm text-white/50">
           Your registration request has been submitted. Your teacher will review it shortly.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-muted/50 rounded-lg p-4 text-center">
-          <p className="text-sm text-muted-foreground">Phone: <span className="font-mono font-medium text-foreground">{pendingPhone}</span></p>
-          <p className="text-xs text-muted-foreground mt-1">You'll be able to log in once approved</p>
+        </p>
+      </div>
+      <div className="space-y-4">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 text-center">
+          <p className="text-sm text-white/50">Phone: <span className="font-mono font-medium text-white">{pendingPhone}</span></p>
+          <p className="text-xs text-white/40 mt-1">You'll be able to log in once approved</p>
         </div>
-        <Button 
-          variant="outline"
-          className="w-full"
+        <Button
+          variant="ghost"
+          className={authGhostButtonClasses}
           onClick={handleBack}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Login
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </AuthGlassCard>
   );
 
   const renderPasswordStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
             onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Enter Password</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Enter Password</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           Phone: {pendingPhone}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handlePasswordLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handlePasswordLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || !password}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="link"
-            className="w-full text-sm text-muted-foreground"
-            onClick={() => setForgotPassword(true)}
-          >
-            Forgot password?
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || !password}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            'Sign In'
+          )}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className={authGhostButtonClasses}
+          onClick={() => setForgotPassword(true)}
+        >
+          Forgot password?
+        </Button>
+      </form>
+    </AuthGlassCard>
   );
 
   const renderSetPasswordStep = () => (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="space-y-1">
+    <AuthGlassCard className="p-6 sm:p-8">
+      <div className="space-y-1 pb-5">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
             onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-2xl">Set Your Password</CardTitle>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Set Your Password</h2>
         </div>
-        <CardDescription className="pl-10">
+        <p className="text-sm text-white/50 pl-10">
           Create a password for your account ({pendingPhone})
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSetPassword} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="new-password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="new-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handleSetPassword} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="new-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create a strong password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
           </div>
+        </div>
 
-          {/* Password requirements */}
-          <div className="space-y-1.5 text-xs">
-            <p className="text-muted-foreground font-medium">Password must have:</p>
-            <div className="grid grid-cols-2 gap-1">
-              <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
-              <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
-              <PasswordRule met={passwordValidation.hasLowercase} text="Lowercase letter" />
-              <PasswordRule met={passwordValidation.hasNumber} text="Number" />
-              <PasswordRule met={passwordValidation.hasSpecial} text="Special character" />
-            </div>
+        {/* Password requirements */}
+        <div className="space-y-1.5 text-xs">
+          <p className="text-white/50 font-medium">Password must have:</p>
+          <div className="grid grid-cols-2 gap-1">
+            <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
+            <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
+            <PasswordRule met={passwordValidation.hasLowercase} text="Lowercase letter" />
+            <PasswordRule met={passwordValidation.hasNumber} text="Number" />
+            <PasswordRule met={passwordValidation.hasSpecial} text="Special character" />
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {confirmPassword && password !== confirmPassword && (
-              <p className="text-xs text-destructive">Passwords do not match</p>
-            )}
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password" className={authLabelClasses}>Confirm Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="confirm-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-10")}
+            />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-lg"
-            disabled={isLoading || !isPasswordValid(password) || password !== confirmPassword}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Setting up...
-              </>
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-xs text-red-400">Passwords do not match</p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          disabled={isLoading || !isPasswordValid(password) || password !== confirmPassword}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Setting up...
+            </>
             ) : (
               'Create Account & Start Practicing'
             )}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+    </AuthGlassCard>
   );
 
   return (
@@ -521,10 +517,10 @@ export default function StudentPortal() {
         {/* Logo/Brand Section */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <BrandMark className="h-14 w-14 text-foreground" />
+            <BrandMark className="h-14 w-14 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">SAT Practice</h1>
-          <p className="text-muted-foreground">Tsetsegs Talent Agency</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">SAT Practice</h1>
+          <p className="text-white/50">Tsetsegs Talent Agency</p>
         </div>
 
         {/* Auth Step Cards */}
@@ -556,36 +552,36 @@ export default function StudentPortal() {
         {authStep === 'phone' && (
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <BookOpen className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
+                <BookOpen className="h-5 w-5 text-white/70" />
               </div>
-              <p className="text-xs text-muted-foreground">68 Questions</p>
+              <p className="text-xs text-white/45">68 Questions</p>
             </div>
             <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="currentColor">
+              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
+                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
                 </svg>
               </div>
-              <p className="text-xs text-muted-foreground">Video Lessons</p>
+              <p className="text-xs text-white/45">Video Lessons</p>
             </div>
             <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
+                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
               </div>
-              <p className="text-xs text-muted-foreground">Track Progress</p>
+              <p className="text-xs text-white/45">Track Progress</p>
             </div>
           </div>
         )}
 
         <div className="text-center space-y-1">
-          <Link to="/student-register" className="text-sm text-primary hover:underline">
+          <Link to="/student-register" className="text-sm text-white/80 hover:text-white hover:underline">
             Шинээр бүртгүүлэх
           </Link>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-white/40">
             Having trouble logging in? Contact your teacher.
           </p>
         </div>
@@ -598,11 +594,11 @@ function PasswordRule({ met, text }: { met: boolean; text: string }) {
   return (
     <div className={cn(
       "flex items-center gap-1.5 transition-colors",
-      met ? "text-primary" : "text-muted-foreground"
+      met ? "text-emerald-400" : "text-white/40"
     )}>
       <CheckCircle2 className={cn(
         "h-3 w-3",
-        met ? "text-primary" : "text-muted-foreground/50"
+        met ? "text-emerald-400" : "text-white/25"
       )} />
       <span>{text}</span>
     </div>

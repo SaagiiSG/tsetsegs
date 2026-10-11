@@ -4,12 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTeacherAuth } from "@/contexts/TeacherAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShieldCheck, GraduationCap, BarChart3, Users, Sparkles } from "lucide-react";
-import BrandMark from "@/components/BrandMark";
-import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
+import AuthSplitLayout, {
+  AuthGlassCard,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+  authGhostButtonClasses,
+} from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -179,31 +183,26 @@ export default function Login() {
       ]}
     >
       <div className="space-y-6">
-        <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
-          <CardHeader className="text-center space-y-4">
-            <div className="flex justify-center">
-              <BrandMark className="h-12 w-12 text-foreground" />
-            </div>
-            <CardTitle className="text-2xl font-bold">
-              {activeTab === "admin" ? (isSignUp ? "Create Account" : "Admin Login") : "Teacher Login"}
-            </CardTitle>
-            <CardDescription>
-              {activeTab === "admin"
-                ? isSignUp
-                  ? "Sign up for a new admin account"
-                  : "Sign in to access the admin dashboard"
-                : "Sign in to access your classes"}
-            </CardDescription>
-          </CardHeader>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-white">Welcome back</h1>
+          <p className="text-sm text-white/50">Sign in to the flowersos staff workspace.</p>
+        </div>
 
-          <CardContent className="space-y-6">
+        <AuthGlassCard className="p-6 sm:p-8">
+          <div className="space-y-6">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "teacher")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="admin" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-2 bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 h-auto">
+                <TabsTrigger
+                  value="admin"
+                  className="flex items-center gap-2 rounded-lg py-2 text-white/55 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none"
+                >
                   <ShieldCheck className="h-4 w-4" />
                   Admin
                 </TabsTrigger>
-                <TabsTrigger value="teacher" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="teacher"
+                  className="flex items-center gap-2 rounded-lg py-2 text-white/55 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none"
+                >
                   <GraduationCap className="h-4 w-4" />
                   Teacher
                 </TabsTrigger>
@@ -213,7 +212,7 @@ export default function Login() {
               <TabsContent value="admin" className="mt-6">
                 <form onSubmit={handleAdminSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="admin-email" className="text-sm font-medium">
+                    <label htmlFor="admin-email" className={authLabelClasses}>
                       Email
                     </label>
                     <Input
@@ -223,10 +222,11 @@ export default function Login() {
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
                       disabled={adminLoading}
+                      className={authInputClasses}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="admin-password" className="text-sm font-medium">
+                    <label htmlFor="admin-password" className={authLabelClasses}>
                       Password
                     </label>
                     <Input
@@ -236,9 +236,10 @@ export default function Login() {
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       disabled={adminLoading}
+                      className={authInputClasses}
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={adminLoading}>
+                  <Button type="submit" className={authPrimaryButtonClasses} disabled={adminLoading}>
                     {adminLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -253,7 +254,7 @@ export default function Login() {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="w-full text-sm"
+                    className={authGhostButtonClasses}
                     onClick={() => setIsSignUp(!isSignUp)}
                     disabled={adminLoading}
                   >
@@ -266,7 +267,7 @@ export default function Login() {
               <TabsContent value="teacher" className="mt-6">
                 <form onSubmit={handleTeacherSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="teacher-username" className="text-sm font-medium">
+                    <label htmlFor="teacher-username" className={authLabelClasses}>
                       Username
                     </label>
                     <Input
@@ -276,10 +277,11 @@ export default function Login() {
                       value={teacherUsername}
                       onChange={(e) => setTeacherUsername(e.target.value)}
                       disabled={teacherLoading}
+                      className={authInputClasses}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="teacher-password" className="text-sm font-medium">
+                    <label htmlFor="teacher-password" className={authLabelClasses}>
                       Password
                     </label>
                     <Input
@@ -289,9 +291,10 @@ export default function Login() {
                       value={teacherPassword}
                       onChange={(e) => setTeacherPassword(e.target.value)}
                       disabled={teacherLoading}
+                      className={authInputClasses}
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={teacherLoading}>
+                  <Button type="submit" className={authPrimaryButtonClasses} disabled={teacherLoading}>
                     {teacherLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -301,15 +304,14 @@ export default function Login() {
                       "Sign In"
                     )}
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-xs text-white/40 text-center">
                     Contact admin if you need account access
                   </p>
                 </form>
               </TabsContent>
             </Tabs>
-
-          </CardContent>
-        </Card>
+          </div>
+        </AuthGlassCard>
       </div>
     </AuthSplitLayout>
   );
