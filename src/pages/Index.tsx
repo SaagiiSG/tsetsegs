@@ -74,16 +74,20 @@ import sat1500_2 from "@/assets/sat-1500-2.jpg";
 import sat1480_2 from "@/assets/sat-1480-2.jpg";
 import sat1430 from "@/assets/sat-1430.jpg";
 
-// Golden color palette - independent of app themes
+import heroOrigami from "@/assets/hero-origami.jpg";
+import { BrandMark } from "@/components/BrandMark";
+import { ArrowRight } from "lucide-react";
+
+// Monochrome obsidian/silver palette (floweros brand) - independent of app themes
 const GOLD = {
-  primary: "43 88% 50%",
-  light: "45 90% 65%",
-  dark: "40 85% 40%",
-  glow: "43 95% 70%",
-  bg: "45 30% 6%",
-  cardBg: "42 25% 10%",
-  text: "45 20% 95%",
-  muted: "43 15% 60%",
+  primary: "0 0% 78%",
+  light: "0 0% 92%",
+  dark: "0 0% 55%",
+  glow: "0 0% 98%",
+  bg: "240 6% 4%",
+  cardBg: "240 4% 9%",
+  text: "0 0% 96%",
+  muted: "0 0% 62%",
 };
 
 // Translation dictionary
@@ -257,253 +261,154 @@ const Index = () => {
         fontFamily: "'Nunito', sans-serif",
       }}
     >
-      {/* Language Toggle - Fixed top-right */}
-      <div className="fixed top-4 right-4 z-50">
-        <div 
-          className="flex rounded-full p-1 backdrop-blur-md"
+      {/* Floating glass header */}
+      <header className="fixed top-3 md:top-5 inset-x-3 md:inset-x-8 z-50">
+        <nav
+          className="mx-auto max-w-7xl flex items-center justify-between gap-3 rounded-full pl-4 pr-2 py-2 backdrop-blur-xl"
           style={{
-            background: `hsl(${GOLD.cardBg} / 0.9)`,
-            border: `1px solid hsl(${GOLD.primary} / 0.3)`,
+            background: "hsl(240 4% 8% / 0.55)",
+            border: "1px solid hsl(0 0% 100% / 0.08)",
+            boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.1), 0 12px 40px hsl(0 0% 0% / 0.4)",
           }}
         >
-          <button
-            onClick={() => setLang('mon')}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
-            style={{
-              background: lang === 'mon' ? `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))` : 'transparent',
-              color: lang === 'mon' ? 'hsl(0 0% 5%)' : `hsl(${GOLD.muted})`,
-            }}
-          >
-            МОН
-          </button>
-          <button
-            onClick={() => setLang('eng')}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
-            style={{
-              background: lang === 'eng' ? `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))` : 'transparent',
-              color: lang === 'eng' ? 'hsl(0 0% 5%)' : `hsl(${GOLD.muted})`,
-            }}
-          >
-            ENG
-          </button>
-        </div>
-      </div>
-
-      {/* Floating Lines Background - Fixed across all sections */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <FloatingLines 
-          linesGradient={["#D4A853", "#B8902D", "#E6C570"]}
-          enabledWaves={['top', 'middle', 'bottom']}
-          lineCount={[8, 10, 6]}
-          lineDistance={[4, 5, 3]}
-          animationSpeed={0.8}
-          interactive={true}
-          parallax={true}
-          parallaxStrength={0.15}
-          mixBlendMode="screen"
-        />
-        {/* Golden gradient overlays for top and bottom */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ 
-            background: `linear-gradient(to bottom, hsl(${GOLD.primary} / 0.3), transparent)` 
-          }}
-        />
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ 
-            background: `linear-gradient(to top, hsl(${GOLD.primary} / 0.3), transparent)` 
-          }}
-        />
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-screen">
-
-        {/* Animated grid background with golden tint */}
-        <div 
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(to right, hsl(${GOLD.primary} / 0.3) 1px, transparent 1px), linear-gradient(to bottom, hsl(${GOLD.primary} / 0.3) 1px, transparent 1px)`,
-            backgroundSize: "4rem 4rem",
-            maskImage: "radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%)",
-          }}
-        />
-        
-        {/* Golden gradient orbs - hidden on mobile to avoid overflow */}
-        <div 
-          className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
-          style={{ background: `hsl(${GOLD.primary} / 0.2)` }}
-        />
-        <div 
-          className="absolute top-[40%] -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse pointer-events-none hidden md:block"
-          style={{ background: `hsl(${GOLD.light} / 0.15)`, animationDelay: "1s" }}
-        />
-
-        {/* Hero Content */}
-        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16 md:py-20">
-          <div className="w-full max-w-6xl mx-auto text-center space-y-6 md:space-y-8">
-            {/* Top Badge - Outside frosted glass */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
-              style={{
-                background: `linear-gradient(135deg, hsl(${GOLD.primary} / 0.2), hsl(${GOLD.dark} / 0.3))`,
-                border: `1px solid hsl(${GOLD.primary} / 0.4)`,
-                color: `hsl(${GOLD.light})`,
-              }}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>{t('badge')}</span>
-            </motion.div>
-
-            {/* Frosted Glass Container - Only wraps headline and subtitle */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="backdrop-blur-xl rounded-2xl md:rounded-3xl px-4 py-8 md:px-12 md:py-14 w-full"
-              style={{
-                background: `linear-gradient(135deg, hsl(${GOLD.bg} / 0.7), hsl(${GOLD.cardBg} / 0.5))`,
-                border: `1px solid hsl(${GOLD.primary} / 0.2)`,
-                boxShadow: `0 8px 32px hsl(${GOLD.bg} / 0.5), inset 0 1px 0 hsl(${GOLD.light} / 0.1)`,
-              }}
-            >
-              {/* Main headline with animated text */}
-              <div className="space-y-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                <h1 
-                  className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight"
-                  style={{ color: `hsl(${GOLD.text})` }}
+          <a href="/" className="flex items-center gap-2.5" aria-label="floweros home">
+            <BrandMark className="h-7 w-7" />
+            <span className="text-xl font-medium tracking-tight" style={{ fontFamily: "'Chillax', sans-serif" }}>floweros</span>
+          </a>
+          <div className="hidden md:flex items-center gap-10 text-sm" style={{ color: "hsl(0 0% 85%)" }}>
+            <a href="#features" className="hover:text-foreground transition-colors">{lang === 'mon' ? 'Сургалт' : 'Courses'}</a>
+            <a href="#achievements" className="hover:text-foreground transition-colors">{lang === 'mon' ? 'Амжилт' : 'Results'}</a>
+            <a href="#team" className="hover:text-foreground transition-colors">{lang === 'mon' ? 'Бидний тухай' : 'About'}</a>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-full p-0.5" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+              {(['mon', 'eng'] as const).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider transition-colors active:scale-95"
+                  style={{
+                    background: lang === l ? "hsl(0 0% 100% / 0.14)" : "transparent",
+                    color: lang === l ? "hsl(0 0% 98%)" : "hsl(0 0% 60%)",
+                  }}
                 >
-                  <SplitText
-                    text={t('heroTitle')}
-                    className="block"
-                    delay={30}
-                    duration={0.5}
-                    splitType="chars"
-                  />
-                </h1>
-                <div className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold">
-                  <GradientText
-                    colors={[`hsl(${GOLD.light})`, `hsl(${GOLD.primary})`, `hsl(${GOLD.glow})`, `hsl(${GOLD.light})`]}
-                    animationSpeed={6}
-                    className="font-bold"
-                  >
-                    {t('heroGradient')}
-                  </GradientText>
+                  {l === 'mon' ? 'МОН' : 'ENG'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate("/login")}
+              className="rounded-full px-5 py-2 text-sm font-medium transition-transform duration-100 active:scale-[0.97]"
+              style={{ background: "hsl(0 0% 98%)", color: "hsl(240 6% 8%)" }}
+            >
+              {t('getStarted')}
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero */}
+      <section className="relative min-h-[100svh] overflow-hidden">
+        <img
+          src={heroOrigami}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-[70%_center] md:object-right"
+        />
+        {/* Vignette so copy stays legible over the sculpture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, hsl(240 6% 4%) 0%, hsl(240 6% 4% / 0.85) 30%, hsl(240 6% 4% / 0.2) 60%, transparent 100%), linear-gradient(to top, hsl(240 6% 4%) 0%, transparent 25%)",
+          }}
+        />
+
+        <div className="relative z-10 mx-auto max-w-7xl min-h-[100svh] px-6 md:px-12 flex flex-col justify-center pt-28 pb-12">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.6 }}
+            className="text-[11px] md:text-xs uppercase tracking-[0.4em]"
+            style={{ color: "hsl(0 0% 70%)" }}
+          >
+            {lang === 'mon' ? 'Боловсролын платформ' : 'Educational Platform'}
+          </motion.p>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.8, delay: 0.08 }}
+            className="mt-6 font-semibold text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
+            style={{ fontFamily: "'Chillax', sans-serif", lineHeight: 1.02, letterSpacing: "-0.03em", color: "hsl(0 0% 98%)" }}
+          >
+            {lang === 'mon' ? (<>Сур<br />Бүтээ<br />Хамтдаа өс.</>) : (<>Learn<br />Build<br />Grow Together.</>)}
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.8, delay: 0.16 }}
+            className="mt-6 max-w-md text-lg md:text-2xl font-light"
+            style={{ color: "hsl(0 0% 72%)", lineHeight: 1.35 }}
+          >
+            {lang === 'mon' ? 'Илүү сайн маргаашийн төлөөх боловсролын платформ.' : 'An educational platform for a better tomorrow.'}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.8, delay: 0.24 }}
+            className="mt-10 flex flex-wrap items-center gap-3"
+          >
+            <button
+              onClick={() => navigate("/practice")}
+              className="group inline-flex items-center gap-3 rounded-full pl-7 pr-6 py-4 text-base font-medium transition-transform duration-100 active:scale-[0.97]"
+              style={{ background: "hsl(0 0% 98%)", color: "hsl(240 6% 8%)", boxShadow: "0 10px 40px hsl(0 0% 100% / 0.08)" }}
+            >
+              {t('studentPortal')}
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </button>
+            <button
+              onClick={() => navigate("/login")}
+              className="rounded-full px-6 py-4 text-base font-medium backdrop-blur-md transition-transform duration-100 active:scale-[0.97]"
+              style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.14)", color: "hsl(0 0% 92%)" }}
+            >
+              {t('staffLogin')}
+            </button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-16 md:mt-24 flex items-stretch"
+          >
+            {[
+              { icon: BookOpen, value: 2600, suffix: "+", label: lang === 'mon' ? 'Бодлого' : 'Problems' },
+              { icon: Users, value: 1000, suffix: "+", label: lang === 'mon' ? 'Сурагчид' : 'Learners' },
+              { icon: BarChart3, value: 660, suffix: "+", label: lang === 'mon' ? 'Дундаж мат оноо' : 'Avg Math Score' },
+            ].map((s, i) => (
+              <div
+                key={s.label}
+                className={`pr-6 md:pr-10 ${i > 0 ? 'pl-6 md:pl-10' : ''}`}
+                style={i > 0 ? { borderLeft: "1px solid hsl(0 0% 100% / 0.12)" } : undefined}
+              >
+                <s.icon className="h-6 w-6" strokeWidth={1.25} style={{ color: "hsl(0 0% 70%)" }} />
+                <div className="mt-3 text-3xl md:text-4xl font-medium tabular-nums" style={{ color: "hsl(0 0% 96%)", letterSpacing: "-0.02em" }}>
+                  <Counter value={s.value} suffix={s.suffix} duration={2} />
+                </div>
+                <div className="mt-1 text-[10px] md:text-[11px] uppercase tracking-[0.25em]" style={{ color: "hsl(0 0% 62%)" }}>
+                  {s.label}
                 </div>
               </div>
-
-              {/* Subtitle */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-                className="mt-6"
-                style={{ color: `hsl(${GOLD.muted})` }}
-              >
-                <BlurText
-                  text={t('heroSubtitle')}
-                  className="text-base md:text-xl max-w-3xl mx-auto"
-                  delay={20}
-                  animateBy="words"
-                />
-              </motion.div>
-            </motion.div>
-
-            {/* CTA Buttons - Outside frosted glass */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
-            >
-              <ClickSpark sparkColor={`hsl(${GOLD.glow})`}>
-                <Magnet strength={0.3}>
-                  <Button
-                    size="lg"
-                    className="text-lg px-8 py-6 rounded-full transition-all hover:scale-105"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(${GOLD.primary}), hsl(${GOLD.dark}))`,
-                      color: "hsl(0 0% 5%)",
-                      boxShadow: `0 0 40px hsl(${GOLD.primary} / 0.4)`,
-                    }}
-                    onClick={() => navigate("/practice")}
-                  >
-                    <GraduationCap className="mr-2 h-5 w-5" />
-                    {t('studentPortal')}
-                    <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Magnet>
-              </ClickSpark>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg px-8 py-6 rounded-full border-2"
-                style={{
-                  borderColor: `hsl(${GOLD.primary} / 0.5)`,
-                  color: `hsl(${GOLD.light})`,
-                  background: "transparent",
-                }}
-                onClick={() => navigate("/login")}
-              >
-                <Users className="mr-2 h-5 w-5" />
-                {t('staffLogin')}
-              </Button>
-            </motion.div>
-
-            {/* Stats with Counter animation - Outside frosted glass */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5, duration: 0.5 }}
-              className="grid grid-cols-3 gap-4 md:gap-8 pt-6 md:pt-8 max-w-3xl mx-auto"
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.labelKey}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.5 + index * 0.1, duration: 0.4 }}
-                  className="text-center"
-                >
-                  <div 
-                    className="text-2xl md:text-5xl font-bold"
-                    style={{ color: `hsl(${GOLD.light})` }}
-                  >
-                    <Counter 
-                      value={stat.value} 
-                      suffix={stat.suffix}
-                      duration={2.5}
-                    />
-                  </div>
-                  <div 
-                    className="text-sm mt-1 flex items-center justify-center gap-1"
-                    style={{ color: `hsl(${GOLD.muted})` }}
-                  >
-                    <stat.icon className="w-3 h-3" />
-                    {t(stat.labelKey)}
-                  </div>
-                  {stat.subKey && (
-                    <div
-                      className="text-[11px] md:text-xs mt-0.5"
-                      style={{ color: `hsl(${GOLD.muted} / 0.75)` }}
-                    >
-                      {t(stat.subKey)}
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="features" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-6xl mx-auto"
           initial="hidden"
@@ -600,7 +505,7 @@ const Index = () => {
       </section>
 
       {/* Student Success Section with DomeGallery */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="achievements" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
@@ -729,7 +634,7 @@ const Index = () => {
       </section>
 
       {/* IELTS Achievements Section */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="team" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
@@ -1033,16 +938,6 @@ const Index = () => {
         </motion.div>
       </footer>
 
-      {/* GradualBlur at bottom */}
-      <GradualBlur 
-        position="bottom"
-        height="10rem"
-        strength={3}
-        divCount={6}
-        curve="ease-out"
-        target="page"
-        zIndex={50}
-      />
     </div>
   );
 };
