@@ -72,7 +72,7 @@ function ConceptVideosInner() {
       {active && (
         <Card>
           <CardContent className="space-y-2 p-3">
-            <ConceptVideoPlayer url={active.video_url} />
+            <ConceptVideoPlayer url={active.video_url} subtitles={active.subtitles_vtt} />
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-semibold">{active.title}</p>
