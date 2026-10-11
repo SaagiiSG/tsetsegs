@@ -122,9 +122,9 @@ export default function QuestionSyncProgress() {
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">External DB Update</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">External DB Update <span className="ml-2 align-middle rounded-md border px-2 py-0.5 text-xs font-mono">intDB</span></h1>
         <p className="text-sm text-muted-foreground">
-          Temporary page — pulls edits from the external question database into ours. Question codes never change, so student history stays linked. Questions whose figure link differs are skipped.
+          Temporary page — pulls edits from the external question database into the International question bank (intDB). The Mongolian question bank is never changed here. Question codes never change, so student history stays linked. Questions whose figure link differs are skipped.
         </p>
       </div>
 
