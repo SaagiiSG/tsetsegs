@@ -79,7 +79,7 @@ export default function StudentReadingModule() {
         .order('question_id');
       
       if (error) throw error;
-      return (data || []) as unknown as PassageGroup['questions'];
+      return (data || []) as unknown as (PassageGroup['questions'][number] & { passage_text: string | null })[];
     },
     enabled: !!student,
   });
