@@ -350,6 +350,28 @@ const MainApp = () => (
   </QueryClientProvider>
 );
 
+// Standalone join links (/join/:code without a center host or ?center=) resolve
+// the class's center via a global lookup, remember the slug, then reload into the portal.
+const CenterJoinRedirect = () => {
+  const { code } = useParams<{ code: string }>();
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!code) { setFailed(true); return; }
+    supabase.rpc("tenant_join_lookup_global", { _code: code }).then(({ data, error }) => {
+      const row = data?.[0];
+      if (error || !row?.slug) { setFailed(true); return; }
+      sessionStorage.setItem("center-portal-preview-slug", row.slug);
+      window.location.reload();
+    });
+  }, [code]);
+  if (failed) return <NotFound />;
+  return (
+    <div className="min-h-screen grid place-items-center bg-background">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+};
+
 const App = () => {
   const centerSlug = resolveCenterSlug();
   if (centerSlug) {
