@@ -17,7 +17,6 @@ import AuthSplitLayout, {
   authPrimaryButtonClasses,
   authGhostButtonClasses,
 } from '@/components/auth/AuthSplitLayout';
-import BrandMark from '@/components/BrandMark';
 
 
 // Password validation rules
@@ -78,9 +77,9 @@ export default function StudentPortal() {
     );
   }
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (digitsOnly(phoneNumber).length < 8) {
       toast({
         title: 'Invalid phone number',
@@ -90,25 +89,6 @@ export default function StudentPortal() {
       return;
     }
 
-
-    setIsLoading(true);
-    
-    const { error } = await checkPhone(phoneNumber);
-    
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error,
-        variant: 'destructive'
-      });
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
     if (!password) {
       toast({
         title: 'Password required',
@@ -119,9 +99,28 @@ export default function StudentPortal() {
     }
 
     setIsLoading(true);
-    
+
+    const result = await checkPhone(phoneNumber);
+
+    if (result.error) {
+      toast({
+        title: 'Error',
+        description: result.error,
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // First-time / unregistered / pending flows move to their own steps.
+    if (result.needsSetup || result.needsRegistration || result.pendingApproval) {
+      setPassword('');
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await loginWithPassword(password);
-    
+
     if (error) {
       toast({
         title: 'Login failed',
@@ -129,7 +128,7 @@ export default function StudentPortal() {
         variant: 'destructive'
       });
     }
-    
+
     setIsLoading(false);
   };
 
@@ -210,16 +209,16 @@ export default function StudentPortal() {
 
   const passwordValidation = validatePassword(password);
 
-  const renderPhoneStep = () => (
+  const renderLoginStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">Student sign in</p>
         <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
         <p className="text-sm text-white/50">
-          Enter your phone number to access practice questions
+          Enter your phone number and password to access practice questions
         </p>
       </div>
-      <form onSubmit={handlePhoneSubmit} className="space-y-8">
+      <form onSubmit={handleLogin} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
@@ -239,20 +238,54 @@ export default function StudentPortal() {
           </p>
         </div>
 
-        <Button
-          type="submit"
-          className={authPrimaryButtonClasses}
-          disabled={isLoading || digitsOnly(phoneNumber).length < 8}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Checking...
-            </>
-          ) : (
-            'Continue'
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputClasses, "pl-7 pr-10")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Button
+            type="submit"
+            className={authPrimaryButtonClasses}
+            disabled={isLoading || digitsOnly(phoneNumber).length < 8 || !password}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className={authGhostButtonClasses}
+            onClick={() => setForgotPassword(true)}
+          >
+            Forgot password?
+          </Button>
+        </div>
       </form>
     </AuthGlassCard>
   );
@@ -335,74 +368,6 @@ export default function StudentPortal() {
           Back to Login
         </Button>
       </div>
-    </AuthGlassCard>
-  );
-
-  const renderPasswordStep = () => (
-    <AuthGlassCard>
-      <div className="space-y-3 pb-8">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Enter Password</h2>
-        <p className="text-sm text-white/50">
-          Phone: {pendingPhone}
-        </p>
-      </div>
-      <form onSubmit={handlePasswordLogin} className="space-y-8">
-        <div className="space-y-2">
-          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
-            <Input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7 pr-10")}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Button
-            type="submit"
-            className={authPrimaryButtonClasses}
-            disabled={isLoading || !password}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className={authGhostButtonClasses}
-            onClick={() => setForgotPassword(true)}
-          >
-            Forgot password?
-          </Button>
-        </div>
-      </form>
     </AuthGlassCard>
   );
 
@@ -506,15 +471,6 @@ export default function StudentPortal() {
       ]}
     >
       <div className="w-full space-y-6">
-        {/* Logo/Brand Section */}
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <BrandMark className="h-14 w-14 text-white" />
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">SAT Practice</h1>
-          <p className="text-white/50">Tsetsegs Talent Agency</p>
-        </div>
-
         {/* Auth Step Cards */}
         {forgotPassword ? (
           <ForgotPasswordCard
@@ -532,41 +488,11 @@ export default function StudentPortal() {
           />
         ) : (
           <>
-            {authStep === 'phone' && renderPhoneStep()}
-            {authStep === 'password' && renderPasswordStep()}
+            {(authStep === 'phone' || authStep === 'password') && renderLoginStep()}
             {authStep === 'set_password' && renderSetPasswordStep()}
             {authStep === 'request_registration' && renderRegistrationRequestStep()}
             {authStep === 'pending_approval' && renderPendingApprovalStep()}
           </>
-        )}
-
-        {/* Features Preview - only show on phone step */}
-        {authStep === 'phone' && (
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <BookOpen className="h-5 w-5 text-white/70" />
-              </div>
-              <p className="text-xs text-white/45">68 Questions</p>
-            </div>
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                </svg>
-              </div>
-              <p className="text-xs text-white/45">Video Lessons</p>
-            </div>
-            <div className="space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center mx-auto">
-                <svg className="h-5 w-5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <p className="text-xs text-white/45">Track Progress</p>
-            </div>
-          </div>
         )}
 
         <div className="text-center space-y-1">

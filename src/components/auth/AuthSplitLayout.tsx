@@ -66,7 +66,6 @@ export function AuthSplitLayout({
         {/* brand mark top */}
         <div className="relative z-10 px-12 pt-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-            <BrandMark className="h-4 w-4 text-white" />
             <span className="text-[11px] font-medium tracking-[0.22em] text-white/80">{eyebrow}</span>
           </div>
         </div>
