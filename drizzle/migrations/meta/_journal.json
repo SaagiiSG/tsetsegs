@@ -50,6 +50,13 @@
       "when": 1791687289118,
       "tag": "0006_tenant_live_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791689536320,
+      "tag": "0007_global_tenant_join_code_lookup",
+      "breakpoints": true
     }
   ]
 }

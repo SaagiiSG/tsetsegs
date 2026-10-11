@@ -5754,6 +5754,14 @@ export type Database = {
           class_name: string
         }[]
       }
+      tenant_join_lookup_global: {
+        Args: { _code: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          slug: string
+        }[]
+      }
       tenant_lookup: {
         Args: { _slug: string }
         Returns: {
