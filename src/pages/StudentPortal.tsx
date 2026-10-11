@@ -11,6 +11,8 @@ import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 import { digitsOnly, sanitizePhoneInput } from '@/lib/phone';
+import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
+import BrandMark from '@/components/BrandMark';
 
 
 // Password validation rules
@@ -505,14 +507,21 @@ export default function StudentPortal() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <AuthSplitLayout
+      eyebrow="STUDENT PORTAL"
+      headline={"Learn.\nBuild.\nGrow Together."}
+      subline="Your practice, sprints, badges and score prediction — all in one place."
+      features={[
+        { icon: <BookOpen className="h-3.5 w-3.5" />, label: "2,600+ problems" },
+        { icon: <GraduationCap className="h-3.5 w-3.5" />, label: "Video lessons" },
+        { icon: <CheckCircle2 className="h-3.5 w-3.5" />, label: "Track progress" },
+      ]}
+    >
+      <div className="w-full space-y-6">
         {/* Logo/Brand Section */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <GraduationCap className="h-8 w-8 text-primary" />
-            </div>
+            <BrandMark className="h-14 w-14 text-foreground" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">SAT Practice</h1>
           <p className="text-muted-foreground">Tsetsegs Talent Agency</p>
@@ -581,7 +590,7 @@ export default function StudentPortal() {
           </p>
         </div>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
 
