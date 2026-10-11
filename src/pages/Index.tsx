@@ -408,7 +408,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="features" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <motion.div 
           className="max-w-6xl mx-auto"
           initial="hidden"
@@ -505,7 +505,7 @@ const Index = () => {
       </section>
 
       {/* Student Success Section with DomeGallery */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="achievements" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.05), transparent)` }}
@@ -634,7 +634,7 @@ const Index = () => {
       </section>
 
       {/* IELTS Achievements Section */}
-      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <section id="team" className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ background: `linear-gradient(180deg, transparent, hsl(${GOLD.primary} / 0.08), transparent)` }}
