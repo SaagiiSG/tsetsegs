@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck, GraduationCap, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import flowersLogo from "@/assets/flowers-logo.png";
+import { Loader2, ShieldCheck, GraduationCap, BarChart3, Users, Sparkles } from "lucide-react";
+import BrandMark from "@/components/BrandMark";
+import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
   const navigate = useNavigate();
