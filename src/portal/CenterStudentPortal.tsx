@@ -21,6 +21,9 @@ import { StudentAnnouncements } from './StudentExtras';
 import { SprintLeaderboard, useCenterSprints } from './admin/ToolPages';
 import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
+import { DailyRing } from '@/components/student/dashboard/DailyRing';
+import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
+import { Flame as FlameIcon, Star } from 'lucide-react';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -178,21 +181,37 @@ function HomePage({ me }: { me: Me }) {
     return n;
   }, [me]);
   const first = me.student.name.split(' ')[0];
+  const goals = useCenterGoals(me.student.id);
+  const prog = useCenterDailyProgress(me.student.id, me.attempts, me.meta);
+  const [goalOpen, setGoalOpen] = useState(false);
+  useEffect(() => {
+    const key = `center_goals_seen_${me.student.id}`;
+    if (goals.data && !goals.data.isSet && !localStorage.getItem(key)) { setGoalOpen(true); localStorage.setItem(key, '1'); }
+  }, [goals.data, me.student.id]);
+  const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first} 👋</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{todayList.length >= DAILY_GOAL ? 'Daily goal done — keep the streak going.' : "Let's close today's ring."}</p>
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border px-3 py-1.5 admin-glass">
+          <FlameIcon className="h-4 w-4" /><span className="font-mono text-sm">{streak}</span><span className="text-xs text-muted-foreground">day streak</span>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-12">
-        <Glass className="md:col-span-4 lg:col-span-3 flex flex-col items-center justify-center">
-          <Ring value={todayList.length} goal={DAILY_GOAL} label="Questions today" />
-          <div className="grid grid-cols-2 gap-6 text-center mt-2">
-            <div><p className="font-mono text-xl">{streak}🔥</p><p className="text-xs text-muted-foreground">Day streak</p></div>
-            <div><p className="font-mono text-xl">{todayList.length ? `${pct(todayList.filter(a => a.is_correct).length, todayList.length)}%` : '—'}</p><p className="text-xs text-muted-foreground">Today</p></div>
-          </div>
-        </Glass>
+        <div className="md:col-span-4 lg:col-span-3 md:min-h-[320px]">
+          <DailyRing
+            speed={{ current: prog.speed, goal: g.speed }}
+            hard={{ current: prog.hard, goal: g.hard }}
+            medium={{ current: prog.medium, goal: g.medium }}
+            onEditGoals={() => setGoalOpen(true)}
+          />
+        </div>
+        <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-4 sm:grid-cols-3">
           {SETS.map(s => {
             const ids = totals.data?.[s.key] ?? [];
@@ -384,6 +403,13 @@ function SpeedPage({ me }: { me: Me }) {
   };
   const q = qs?.[i];
   const done = qs && i >= qs.length;
+  const { center } = useCenter();
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!done || !qs?.length) return;
+    supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: qs.length })
+      .then(() => qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }));
+  }, [done]);
   const answer = useCallback(async (given: string) => {
     if (!q) return;
     const ok = !!given && isCorrect(q, given);
@@ -414,7 +440,7 @@ function SpeedPage({ me }: { me: Me }) {
     const stars = c >= 9 ? 3 : c >= 7 ? 2 : c >= 5 ? 1 : 0;
     return (
       <Glass className="max-w-xl text-center space-y-3">
-        <p className="text-4xl">{'★'.repeat(stars)}<span className="text-muted-foreground/30">{'★'.repeat(3 - stars)}</span></p>
+        <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
         <p className="text-sm text-muted-foreground">{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
         <div className="flex justify-center gap-2"><Button onClick={start}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Change subject</Button></div>
