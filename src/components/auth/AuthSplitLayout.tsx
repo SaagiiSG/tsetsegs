@@ -12,6 +12,8 @@ interface AuthSplitLayoutProps {
   subline?: string;
   /** Small feature bullets rendered on the graphics panel */
   features?: { icon?: ReactNode; label: string }[];
+  /** Optional accent color (any CSS color) tints the graphics-panel glow — used for center branding. */
+  accent?: string;
   className?: string;
 }
 
@@ -25,6 +27,7 @@ export function AuthSplitLayout({
   headline,
   subline,
   features,
+  accent,
   className,
 }: AuthSplitLayoutProps) {
   return (
@@ -51,7 +54,7 @@ export function AuthSplitLayout({
         <div
           aria-hidden
           className="absolute -bottom-48 -right-32 h-[480px] w-[480px] rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(244,114,182,0.35), transparent 65%)" }}
+          style={{ background: `radial-gradient(circle, ${accent ?? "rgba(244,114,182,0.35)"}, transparent 65%)` }}
         />
         <div aria-hidden className="absolute inset-0 opacity-60 motion-reduce:hidden">
           <AdminBackgroundPaths className="absolute inset-0 text-white/25" />
