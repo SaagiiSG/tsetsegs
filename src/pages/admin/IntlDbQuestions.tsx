@@ -123,7 +123,12 @@ export default function IntlDbQuestions() {
                   </button>
                   {isOpen && (
                     <div className="space-y-3 pt-2 border-t text-sm">
-                      {r.ext_question_id && <p className="text-xs text-muted-foreground font-mono">External ID: {r.ext_question_id}</p>}
+                      <div className="flex items-center gap-2">
+                        {r.ext_question_id && <p className="text-xs text-muted-foreground font-mono">External ID: {r.ext_question_id}</p>}
+                        <Button variant="outline" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={() => openEditor(r)}>
+                          <PencilLine className="h-3.5 w-3.5" /> Edit question
+                        </Button>
+                      </div>
                       {r.passage_text && <div className="rounded-md bg-muted p-3"><MathText text={r.passage_text} /></div>}
                       {r.question_image_url && <img src={r.question_image_url} alt="" className="max-h-64 rounded-md" />}
                       <MathText text={r.question_text || ''} />
