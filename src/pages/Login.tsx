@@ -182,26 +182,31 @@ export default function Login() {
         { icon: <Sparkles className="h-3.5 w-3.5" />, label: "Question banks" },
       ]}
     >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Welcome back</h1>
+      <div className="space-y-10">
+        <div className="space-y-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
+            Staff sign in
+          </p>
+          <h1 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">
+            Welcome back
+          </h1>
           <p className="text-sm text-white/50">Sign in to the flowersos staff workspace.</p>
         </div>
 
-        <AuthGlassCard className="p-6 sm:p-8">
-          <div className="space-y-6">
+        <AuthGlassCard>
+          <div className="space-y-8">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "teacher")}>
-              <TabsList className="grid w-full grid-cols-2 bg-white/[0.05] border border-white/[0.08] rounded-xl p-1 h-auto">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent border-b border-white/10 rounded-none p-0 h-auto gap-6">
                 <TabsTrigger
                   value="admin"
-                  className="flex items-center gap-2 rounded-lg py-2 text-white/55 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Admin
                 </TabsTrigger>
                 <TabsTrigger
                   value="teacher"
-                  className="flex items-center gap-2 rounded-lg py-2 text-white/55 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <GraduationCap className="h-4 w-4" />
                   Teacher
@@ -209,8 +214,8 @@ export default function Login() {
               </TabsList>
 
               {/* Admin Login Form */}
-              <TabsContent value="admin" className="mt-6">
-                <form onSubmit={handleAdminSubmit} className="space-y-4">
+              <TabsContent value="admin" className="mt-8">
+                <form onSubmit={handleAdminSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="admin-email" className={authLabelClasses}>
                       Email
@@ -264,8 +269,8 @@ export default function Login() {
               </TabsContent>
 
               {/* Teacher Login Form */}
-              <TabsContent value="teacher" className="mt-6">
-                <form onSubmit={handleTeacherSubmit} className="space-y-4">
+              <TabsContent value="teacher" className="mt-8">
+                <form onSubmit={handleTeacherSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="teacher-username" className={authLabelClasses}>
                       Username

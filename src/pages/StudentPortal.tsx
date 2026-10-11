@@ -211,25 +211,26 @@ export default function StudentPortal() {
   const passwordValidation = validatePassword(password);
 
   const renderPhoneStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <h2 className="text-2xl font-semibold tracking-tight text-white text-center">Student Login</h2>
-        <p className="text-sm text-white/50 text-center">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">Student sign in</p>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
+        <p className="text-sm text-white/50">
           Enter your phone number to access practice questions
         </p>
       </div>
-      <form onSubmit={handlePhoneSubmit} className="space-y-4">
+      <form onSubmit={handlePhoneSubmit} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="phone"
               type="tel"
               placeholder="99112233"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
               maxLength={20}
             />
           </div>
@@ -240,7 +241,7 @@ export default function StudentPortal() {
 
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={isLoading || digitsOnly(phoneNumber).length < 8}
         >
           {isLoading ? (
@@ -257,35 +258,32 @@ export default function StudentPortal() {
   );
 
   const renderRegistrationRequestStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Request Access</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request Access</h2>
+        <p className="text-sm text-white/50">
           This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
         </p>
       </div>
-      <form onSubmit={handleRegistrationRequest} className="space-y-4">
+      <form onSubmit={handleRegistrationRequest} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="fullName" className={authLabelClasses}>Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <User className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="fullName"
               type="text"
               placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={cn(authInputClasses, "pl-10")}
+              className={cn(authInputClasses, "pl-7")}
               maxLength={100}
             />
           </div>
@@ -296,7 +294,7 @@ export default function StudentPortal() {
 
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={isLoading || fullName.trim().length < 2}
         >
           {isLoading ? (
@@ -313,20 +311,18 @@ export default function StudentPortal() {
   );
 
   const renderPendingApprovalStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 text-center pb-5">
-        <div className="flex justify-center mb-3">
-          <div className="h-16 w-16 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-            <Clock className="h-8 w-8 text-white/70" />
-          </div>
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
+          <Clock className="h-7 w-7 text-white/70" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">Pending Approval</h2>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Pending Approval</h2>
         <p className="text-sm text-white/50">
           Your registration request has been submitted. Your teacher will review it shortly.
         </p>
       </div>
-      <div className="space-y-4">
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 text-center">
+      <div className="space-y-6">
+        <div className="border-b border-white/10 pb-4">
           <p className="text-sm text-white/50">Phone: <span className="font-mono font-medium text-white">{pendingPhone}</span></p>
           <p className="text-xs text-white/40 mt-1">You'll be able to log in once approved</p>
         </div>
@@ -343,41 +339,38 @@ export default function StudentPortal() {
   );
 
   const renderPasswordStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Enter Password</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Enter Password</h2>
+        <p className="text-sm text-white/50">
           Phone: {pendingPhone}
         </p>
       </div>
-      <form onSubmit={handlePasswordLogin} className="space-y-4">
+      <form onSubmit={handlePasswordLogin} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="password" className={authLabelClasses}>Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-10 pr-10")}
+              className={cn(authInputClasses, "pl-7 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -385,68 +378,67 @@ export default function StudentPortal() {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
-          disabled={isLoading || !password}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
-            </>
-          ) : (
-            'Sign In'
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className={authGhostButtonClasses}
-          onClick={() => setForgotPassword(true)}
-        >
-          Forgot password?
-        </Button>
+        <div className="space-y-3">
+          <Button
+            type="submit"
+            className={authPrimaryButtonClasses}
+            disabled={isLoading || !password}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className={authGhostButtonClasses}
+            onClick={() => setForgotPassword(true)}
+          >
+            Forgot password?
+          </Button>
+        </div>
       </form>
     </AuthGlassCard>
   );
 
   const renderSetPasswordStep = () => (
-    <AuthGlassCard className="p-6 sm:p-8">
-      <div className="space-y-1 pb-5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/[0.06]"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">Set Your Password</h2>
-        </div>
-        <p className="text-sm text-white/50 pl-10">
+    <AuthGlassCard>
+      <div className="space-y-3 pb-8">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Set Your Password</h2>
+        <p className="text-sm text-white/50">
           Create a password for your account ({pendingPhone})
         </p>
       </div>
-      <form onSubmit={handleSetPassword} className="space-y-4">
+      <form onSubmit={handleSetPassword} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="new-password" className={authLabelClasses}>Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="new-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-10 pr-10")}
+              className={cn(authInputClasses, "pl-7 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-white/[0.06]"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -469,14 +461,14 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="confirm-password" className={authLabelClasses}>Confirm Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
             <Input
               id="confirm-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-10")}
+              className={cn(authInputClasses, "pl-7")}
             />
           </div>
           {confirmPassword && password !== confirmPassword && (
@@ -486,7 +478,7 @@ export default function StudentPortal() {
 
         <Button
           type="submit"
-          className={cn(authPrimaryButtonClasses, "h-12 text-base")}
+          className={authPrimaryButtonClasses}
           disabled={isLoading || !isPasswordValid(password) || password !== confirmPassword}
         >
           {isLoading ? (
