@@ -152,9 +152,10 @@ function trendSlope(tests: { test_number: number; score: number }[]): number {
   return den === 0 ? 0 : num / den;
 }
 
-export function useScorePrediction(studentId: string | undefined) {
+export function useScorePrediction(studentId: string | undefined, cohort?: string | null) {
+  const qTable = questionTableFor(cohort);
   return useQuery({
-    queryKey: ['score-prediction', studentId],
+    queryKey: ['score-prediction', studentId, qTable],
     queryFn: async (): Promise<ScorePredictionResult | null> => {
       if (!studentId) return null;
 
@@ -260,7 +261,7 @@ export function useScorePrediction(studentId: string | undefined) {
           for (let i = 0; i < questionIds.length; i += 500) {
             const batch = questionIds.slice(i, i + 500);
             const { data: qData } = await supabase
-              .from('questions')
+              .from(qTable)
               .select('id, difficulty_level')
               .in('id', batch);
             if (qData) allQuestions.push(...qData);

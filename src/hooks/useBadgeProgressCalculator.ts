@@ -1,3 +1,4 @@
+import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { supabase } from '@/integrations/supabase/client';
 import { badgeDefinitions, BadgeDefinition, BadgeRequirement } from '@/data/badgeDefinitions';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -37,7 +38,8 @@ async function calculateRequirementProgress(
   studentAccountId: string,
   req: BadgeRequirement,
   studentId?: string,
-  badgeName?: string
+  badgeName?: string,
+  qTable: QuestionTable = 'questions'
 ): Promise<{ current: number; target: number; percentage: number }> {
   const target = req.target;
   let current = 0;
@@ -80,7 +82,7 @@ async function calculateRequirementProgress(
 
     case 'all_68_questions': {
       const { data: questions68 } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('id')
         .eq('question_set', '68')
         .eq('is_active', true);
@@ -101,7 +103,7 @@ async function calculateRequirementProgress(
 
     case 'all_cb_problems': {
       const { data: cbQuestions } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('id')
         .eq('question_set', 'CollegeBoard')
         .eq('is_active', true);
@@ -231,7 +233,7 @@ async function calculateRequirementProgress(
 
     case 'all_english_questions': {
       const { data: englishQuestions } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('id')
         .ilike('subject', 'english')
         .eq('is_active', true);
@@ -359,7 +361,7 @@ async function calculateRequirementProgress(
     case 'all_english_bank': {
       // FIX: Filter attempts by English subject via question join
       const { data: englishQuestions } = await supabase
-        .from('questions')
+        .from(qTable)
         .select('id')
         .ilike('subject', 'english')
         .eq('is_active', true);
@@ -724,14 +726,15 @@ function calculateConsecutiveDaysBoth(
  */
 export async function calculateAllBadgeProgress(
   studentAccountId: string,
-  studentId?: string
+  studentId?: string,
+  qTable: QuestionTable = 'questions'
 ): Promise<BadgeProgressResult[]> {
   const results: BadgeProgressResult[] = [];
 
   for (const badge of badgeDefinitions) {
     const requirementsProgress = await Promise.all(
       badge.requirements.map(async req => {
-        const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name);
+        const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name, qTable);
         return {
           type: req.type,
           ...progress
@@ -765,11 +768,12 @@ export async function calculateAllBadgeProgress(
 export async function calculateBadgeProgress(
   studentAccountId: string,
   badge: BadgeDefinition,
-  studentId?: string
+  studentId?: string,
+  qTable: QuestionTable = 'questions'
 ): Promise<BadgeProgressResult> {
   const requirementsProgress = await Promise.all(
     badge.requirements.map(async req => {
-      const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name);
+      const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name, qTable);
       return {
         type: req.type,
         ...progress
