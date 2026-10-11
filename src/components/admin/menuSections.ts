@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, Building2,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard, RefreshCw,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard, RefreshCw, Download,
 } from "lucide-react";
 
 export type MenuItem = {
