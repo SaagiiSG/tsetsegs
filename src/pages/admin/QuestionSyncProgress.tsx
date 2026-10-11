@@ -247,7 +247,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
       .gte('content_updated_at', since)
       .order('content_updated_at', { ascending: false })
       .limit(500)
-      .then(({ data }) => setRows((data as Recent[]) || []));
+      .then(({ data }) => setRows((data as unknown as Recent[]) || []));
   }, [days]);
 
   return (
