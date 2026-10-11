@@ -152,6 +152,19 @@ export default function IntlDbQuestions() {
           {rows.length === 0 && <Button variant="ghost" disabled>No questions match.</Button>}
         </div>
       )}
+
+      <QuestionForm
+        table="intl_questions"
+        open={formOpen}
+        onOpenChange={(o) => { setFormOpen(o); if (!o) { setEditingQuestion(null); refetch(); } }}
+        editingQuestion={editingQuestion}
+      />
+      <CBQuestionForm
+        table="intl_questions"
+        open={cbFormOpen}
+        onOpenChange={(o) => { setCbFormOpen(o); if (!o) { setEditingCBQuestion(null); refetch(); } }}
+        editingQuestion={editingCBQuestion}
+      />
     </div>
   );
 }
