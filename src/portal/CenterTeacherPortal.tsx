@@ -2,31 +2,57 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard } from 'lucide-react';
+import {
+  Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
+  Search, Pencil, BookOpen, Flame,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { CenterLogo, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { localDate } from './centerApi';
 import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
+import { MathText } from '@/components/MathText';
 import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionMeta';
 import { TeacherLive } from './LiveSession';
 
-type Tab = 'roster' | 'analytics' | 'live';
-
-const TAB_GLOW: Record<Tab, string> = {
-  roster: '217 91% 60%',
+type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
+const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
+const MODE_GLOW: Record<Mode, string> = {
+  dashboard: '217 91% 60%',
   analytics: '262 83% 62%',
+  practice: '152 60% 42%',
   live: '345 75% 55%',
 };
 
-const TAB_ORDER: Tab[] = ['roster', 'analytics', 'live'];
+type CenterClass = {
+  id: string; name: string; join_code: string; schedule: string | null;
+  starts_on: string | null; created_at: string; studentCount: number;
+};
+type CenterStudent = { id: string; class_id: string | null; name: string; phone: string; user_id: string | null };
+type Attempt = { student_id: string; question_id: string; is_correct: boolean; created_at: string };
+type AttRow = { student_id: string; class_id: string; status: string; session_date: string };
+
+type StudentStats = { n: number; c: number; present: number; sessions: number; last?: string };
+
+const COMPLETED_AFTER_DAYS = 120;
+const isCompleted = (c: CenterClass) =>
+  !!c.starts_on && Date.now() - new Date(c.starts_on).getTime() > COMPLETED_AFTER_DAYS * 864e5;
+
+function riskOf(s: StudentStats | undefined) {
+  if (!s) return null;
+  const attRate = s.sessions ? s.present / s.sessions : 1;
+  const stale = !s.last || Date.now() - new Date(s.last).getTime() > 7 * 864e5;
+  return attRate < 0.7 || (s.n >= 10 && s.c / s.n < 0.5) || stale ? 'Needs attention' : null;
+}
 
 function InviteDialog({ name, code, onClose }: { name: string; code: string; onClose: () => void }) {
   const url = `${window.location.origin}/join/${code}`;
@@ -36,7 +62,7 @@ function InviteDialog({ name, code, onClose }: { name: string; code: string; onC
       <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>Invite students · {name}</DialogTitle>
           <DialogDescription>Students scan this code, create a password and land straight in this class.</DialogDescription></DialogHeader>
-        <img src={qr} alt={`QR code to join ${name}`} className="mx-auto h-64 w-64 rounded-md border bg-background p-2" />
+        <div className="flex justify-center"><div className="bg-white p-4 rounded-xl"><img src={qr} alt={`QR code to join ${name}`} className="h-56 w-56" /></div></div>
         <p className="text-center font-mono text-2xl tracking-[0.3em]">{code}</p>
         <p className="font-mono text-xs break-all rounded-md border p-2">{url}</p>
         <Button onClick={() => { navigator.clipboard.writeText(url); toast.success('Link copied'); }}><Copy className="h-4 w-4" />Copy link</Button>
@@ -57,15 +83,182 @@ function DomainBars({ stats }: { stats: DomainStat[] }) {
   );
 }
 
+/** Big liquid class card with Students / Analytics tabs — mirrors the main dashboard's ClassCardBig. */
+function CenterClassCard({
+  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename,
+}: {
+  cls: CenterClass;
+  students: CenterStudent[];
+  statsMap: Record<string, StudentStats>;
+  attMap: Record<string, string>;
+  date: string;
+  onCycle: (classId: string, studentId: string) => void;
+  onInspect: (id: string) => void;
+  onInvite: () => void;
+  onRename: () => void;
+  canRename: boolean;
+}) {
+  const [tab, setTab] = useState<'students' | 'analytics'>('students');
+  const totals = students.reduce((t, s) => {
+    const st = statsMap[s.id];
+    return { n: t.n + (st?.n ?? 0), c: t.c + (st?.c ?? 0) };
+  }, { n: 0, c: 0 });
+  const atRisk = students.filter(s => riskOf(statsMap[s.id])).length;
+
+  return (
+    <div onPointerMove={liquidTrack} onPointerLeave={liquidRest}
+      className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4">
+      <LiquidGlassFX />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-lg truncate">{cls.name}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {cls.schedule || 'No schedule set'}{cls.starts_on ? ` · starts ${cls.starts_on}` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="font-mono text-xs text-foreground/50 border rounded-full px-2 py-0.5">{cls.join_code}</span>
+          {canRename && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRename} title="Rename class"><Pencil className="h-3.5 w-3.5" /></Button>}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onInvite} title="Invite students"><QrCode className="h-4 w-4" /></Button>
+        </div>
+      </div>
+
+      <div className="relative flex items-center gap-4 text-sm text-foreground/70">
+        <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{students.length} student{students.length !== 1 ? 's' : ''}</span>
+        <span className="font-mono text-xs">{totals.n} questions · {totals.n ? `${pct(totals.c, totals.n)}%` : '—'} accuracy</span>
+        {atRisk > 0 && <span className="flex items-center gap-1 text-xs text-status-watch"><Flame className="h-3.5 w-3.5" />{atRisk} need{atRisk !== 1 ? '' : 's'} attention</span>}
+      </div>
+
+      <div className="relative flex gap-1 border-b border-border/60" role="tablist" aria-label={`${cls.name} details`}>
+        {([['students', 'Students'], ['analytics', 'Analytics']] as const).map(([k, l]) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`px-3 py-2 text-sm -mb-px border-b-2 transition-colors ${tab === k ? 'border-foreground text-foreground font-medium' : 'border-transparent text-foreground/60 hover:text-foreground'}`}>{l}</button>
+        ))}
+      </div>
+
+      {tab === 'students' && (
+        <div className="relative overflow-x-auto">
+          {students.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No students yet — share the class QR code to enroll them.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="text-xs text-foreground/65 border-b border-border/60"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th></tr></thead>
+              <tbody className="divide-y divide-border/50">{students.map(s => {
+                const st = attMap[s.id]; const p = statsMap[s.id]; const risk = riskOf(p);
+                return <tr key={s.id}>
+                  <td className="py-3"><button onClick={() => onInspect(s.id)} className="hover:underline text-left">{s.name}</button>{!s.user_id && <span className="ml-2 text-xs text-foreground/60">not signed up</span>}</td>
+                  <td><button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
+                  <td className="font-mono">{p?.n ?? 0}</td>
+                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
+                  <td className="text-xs">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {tab === 'analytics' && (
+        <div className="relative">
+          <ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Per-class domain mastery, loaded lazily when the Analytics tab opens. */
+function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: string[] }) {
+  const { data } = useQuery({
+    enabled: studentIds.length > 0,
+    queryKey: ['center-class-analytics', classId],
+    queryFn: async () => {
+      const { data: attempts } = await supabase.from('tenant_attempts')
+        .select('student_id, question_id, is_correct, created_at').in('student_id', studentIds)
+        .order('created_at', { ascending: false }).limit(20000);
+      const list = attempts ?? [];
+      const meta = await loadQuestionMeta(list.map(a => a.question_id));
+      return domainStats(list, meta);
+    },
+  });
+  if (!studentIds.length) return <p className="text-sm text-muted-foreground">No students in this class yet.</p>;
+  if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  return <DomainBars stats={data} />;
+}
+
+/** Read-only practice browser over the international question bank. */
+function PracticeBrowser() {
+  const [q, setQ] = useState('');
+  const [subject, setSubject] = useState<'all' | 'math' | 'english'>('all');
+  const [difficulty, setDifficulty] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  const { data, isLoading } = useQuery({
+    queryKey: ['center-practice', q, subject, difficulty],
+    queryFn: async () => {
+      let query = supabase.from('intl_questions')
+        .select('id, question_text, subject, domain, difficulty_level, source_tag')
+        .order('created_at', { ascending: false }).limit(50);
+      if (q.trim()) query = query.ilike('question_text', `%${q.trim()}%`);
+      if (subject !== 'all') query = query.eq('subject', subject);
+      if (difficulty !== 'all') query = query.eq('difficulty_level', difficulty);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search questions…" className="pl-9 border-0 bg-transparent" />
+        </div>
+        <Select value={subject} onValueChange={v => setSubject(v as typeof subject)}>
+          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="math">Math</SelectItem><SelectItem value="english">English</SelectItem></SelectContent>
+        </Select>
+        <Select value={difficulty} onValueChange={v => setDifficulty(v as typeof difficulty)}>
+          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All levels</SelectItem><SelectItem value="easy">Easy</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="hard">Hard</SelectItem></SelectContent>
+        </Select>
+      </div>
+      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? (
+        <p className="text-sm text-muted-foreground">No questions match.</p>
+      ) : (
+        <div className="grid gap-3">
+          {data.map(question => (
+            <div key={question.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest}
+              className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-2xl border p-4">
+              <LiquidGlassFX />
+              <div className="relative space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
+                  <span className="capitalize border rounded-full px-2 py-0.5">{question.subject}</span>
+                  {question.domain && <span className="border rounded-full px-2 py-0.5">{question.domain}</span>}
+                  {question.difficulty_level && <span className="capitalize border rounded-full px-2 py-0.5">{question.difficulty_level}</span>}
+                  {question.source_tag && <span className="font-mono">{question.source_tag}</span>}
+                </div>
+                <div className="text-sm leading-relaxed"><MathText text={question.question_text ?? ''} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CenterTeacherPortal() {
   const { center, role, userId, name, signOut } = useCenter();
   const qc = useQueryClient();
-  const [classId, setClassId] = useState<string | null>(null);
-  const [date, setDate] = useState(localDate());
-  const [tab, setTab] = useState<Tab>('roster');
+  const [mode, setMode] = useState<Mode>('dashboard');
   const [slideDirection, setSlideDirection] = useState(0);
-  const [invite, setInvite] = useState(false);
+  const [intake, setIntake] = useState<'current' | 'previous' | 'all'>('current');
+  const [date, setDate] = useState(localDate());
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [invite, setInvite] = useState<CenterClass | null>(null);
+  const [rename, setRename] = useState<CenterClass | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const [inspect, setInspect] = useState<string | null>(null);
+  const [liveClassId, setLiveClassId] = useState<string | null>(null);
 
   // Liquid glass admin theme, scoped to this page's lifetime.
   useEffect(() => {
@@ -73,89 +266,142 @@ export default function CenterTeacherPortal() {
     return () => document.body.classList.remove('admin-theme');
   }, []);
 
-  const brandGlow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || null;
-  const sectionGlow = brandGlow ?? TAB_GLOW[tab];
+  // ⌘K opens student search, like the main dashboard.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchOpen(true); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
-  const { data } = useQuery({
+  const brandGlow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || null;
+  const sectionGlow = brandGlow ?? MODE_GLOW[mode];
+
+  const { data: classes } = useQuery({
     queryKey: ['center-teacher', center.id, userId],
     queryFn: async () => {
       const { data: me } = await supabase.from('tenant_members').select('id').eq('institution_id', center.id).eq('user_id', userId!).maybeSingle();
       let q = supabase.from('tenant_classes').select('*').eq('institution_id', center.id).order('created_at');
       if (role !== 'center_admin') q = q.eq('teacher_member_id', me?.id ?? '00000000-0000-0000-0000-000000000000');
-      const { data: classes, error } = await q;
+      const { data: rows, error } = await q;
       if (error) throw error;
       const { data: students } = await supabase.from('tenant_students').select('id, class_id').eq('institution_id', center.id).eq('active', true);
       const counts: Record<string, number> = {};
       for (const s of students ?? []) if (s.class_id) counts[s.class_id] = (counts[s.class_id] ?? 0) + 1;
-      return classes.map(c => ({ ...c, studentCount: counts[c.id] ?? 0 }));
+      return rows.map(c => ({ ...c, studentCount: counts[c.id] ?? 0 })) as CenterClass[];
     },
   });
-  useEffect(() => { if (!classId && data?.length) setClassId(data[0].id); }, [data, classId]);
-  const cls = data?.find(c => c.id === classId);
 
-  const roster = useQuery({
-    enabled: !!classId,
-    queryKey: ['center-roster', classId, date],
+  const classIds = useMemo(() => classes?.map(c => c.id) ?? [], [classes]);
+
+  // All students across the teacher's classes.
+  const studentsQuery = useQuery({
+    enabled: classIds.length > 0,
+    queryKey: ['center-teacher-students', center.id, classIds.join(',')],
     queryFn: async () => {
-      const [students, att] = await Promise.all([
-        supabase.from('tenant_students').select('id, name, phone, user_id').eq('class_id', classId!).eq('active', true).order('name'),
-        supabase.from('tenant_attendance').select('student_id, status').eq('class_id', classId!).eq('session_date', date),
-      ]);
-      if (students.error) throw students.error;
-      return { students: students.data, att: Object.fromEntries((att.data ?? []).map(a => [a.student_id, a.status])) };
+      const { data, error } = await supabase.from('tenant_students')
+        .select('id, class_id, name, phone, user_id').eq('institution_id', center.id).eq('active', true).order('name');
+      if (error) throw error;
+      return data as CenterStudent[];
     },
   });
-  const studentIds = useMemo(() => roster.data?.students.map(s => s.id) ?? [], [roster.data]);
+  const allStudents = studentsQuery.data ?? [];
+  const allStudentIds = useMemo(() => allStudents.map(s => s.id), [allStudents]);
 
-  // Class-wide practice + attendance history powers analytics and student inspection.
-  const history = useQuery({
-    enabled: studentIds.length > 0,
-    queryKey: ['center-class-history', classId, studentIds.join(',')],
+  // Attendance for the picked date, across all classes.
+  const attQuery = useQuery({
+    enabled: classIds.length > 0,
+    queryKey: ['center-teacher-att', center.id, date, classIds.join(',')],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tenant_attendance')
+        .select('student_id, class_id, status').in('class_id', classIds).eq('session_date', date);
+      if (error) throw error;
+      return data as Pick<AttRow, 'student_id' | 'class_id' | 'status'>[];
+    },
+  });
+  const attByClass = useMemo(() => {
+    const m: Record<string, Record<string, string>> = {};
+    for (const a of attQuery.data ?? []) (m[a.class_id] ||= {})[a.student_id] = a.status;
+    return m;
+  }, [attQuery.data]);
+
+  // Practice + attendance history across all classes powers per-student stats.
+  const historyQuery = useQuery({
+    enabled: allStudentIds.length > 0,
+    queryKey: ['center-teacher-history', center.id, allStudentIds.join(',')],
     queryFn: async () => {
       const [attempts, att] = await Promise.all([
-        supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at').in('student_id', studentIds).order('created_at', { ascending: false }).limit(20000),
-        supabase.from('tenant_attendance').select('student_id, status, session_date').eq('class_id', classId!).order('session_date', { ascending: false }).limit(5000),
+        supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at')
+          .in('student_id', allStudentIds).order('created_at', { ascending: false }).limit(30000),
+        supabase.from('tenant_attendance').select('student_id, class_id, status, session_date')
+          .in('class_id', classIds).order('session_date', { ascending: false }).limit(10000),
       ]);
-      const list = attempts.data ?? [];
+      const list = (attempts.data ?? []) as Attempt[];
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
-      return { attempts: list, att: att.data ?? [], meta };
+      return { attempts: list, att: (att.data ?? []) as AttRow[], meta };
     },
   });
 
-  const perStudent = useMemo(() => {
-    const m: Record<string, { n: number; c: number; present: number; sessions: number; last?: string }> = {};
-    for (const id of studentIds) m[id] = { n: 0, c: 0, present: 0, sessions: 0 };
-    for (const a of history.data?.attempts ?? []) { const s = m[a.student_id]; if (!s) continue; s.n++; if (a.is_correct) s.c++; s.last ??= a.created_at; }
-    for (const a of history.data?.att ?? []) { const s = m[a.student_id]; if (!s) continue; s.sessions++; if (a.status === 'present' || a.status === 'late') s.present++; }
+  const statsMap = useMemo(() => {
+    const m: Record<string, StudentStats> = {};
+    for (const id of allStudentIds) m[id] = { n: 0, c: 0, present: 0, sessions: 0 };
+    for (const a of historyQuery.data?.attempts ?? []) { const s = m[a.student_id]; if (!s) continue; s.n++; if (a.is_correct) s.c++; s.last ??= a.created_at; }
+    for (const a of historyQuery.data?.att ?? []) { const s = m[a.student_id]; if (!s) continue; s.sessions++; if (a.status === 'present' || a.status === 'late') s.present++; }
     return m;
-  }, [history.data, studentIds]);
-  const riskOf = (id: string) => {
-    const s = perStudent[id]; if (!s) return null;
-    const attRate = s.sessions ? s.present / s.sessions : 1;
-    const stale = !s.last || Date.now() - new Date(s.last).getTime() > 7 * 864e5;
-    return attRate < 0.7 || (s.n >= 10 && s.c / s.n < 0.5) || stale ? 'Needs attention' : null;
-  };
+  }, [historyQuery.data, allStudentIds]);
 
-  const cycle = async (studentId: string) => {
-    const cur = roster.data?.att[studentId];
+  const cycle = async (classId: string, studentId: string) => {
+    const cur = attByClass[classId]?.[studentId];
     const next = STATUS_ORDER[(cur ? STATUS_ORDER.indexOf(cur) + 1 : 0) % STATUS_ORDER.length];
-    qc.setQueryData(['center-roster', classId, date], (old: any) => old && { ...old, att: { ...old.att, [studentId]: next } });
+    qc.setQueryData(['center-teacher-att', center.id, date, classIds.join(',')], (old: any) =>
+      old ? [...old.filter((a: any) => !(a.student_id === studentId && a.class_id === classId)), { student_id: studentId, class_id: classId, status: next }] : old);
     const { error } = await supabase.from('tenant_attendance').upsert(
-      { institution_id: center.id, class_id: classId!, student_id: studentId, session_date: date, status: next },
+      { institution_id: center.id, class_id: classId, student_id: studentId, session_date: date, status: next },
       { onConflict: 'student_id,class_id,session_date' });
-    if (error) { toast.error('Could not save attendance'); qc.invalidateQueries({ queryKey: ['center-roster', classId, date] }); }
-    else qc.invalidateQueries({ queryKey: ['center-class-history', classId] });
+    if (error) { toast.error('Could not save attendance'); qc.invalidateQueries({ queryKey: ['center-teacher-att', center.id, date] }); }
+    else qc.invalidateQueries({ queryKey: ['center-teacher-history', center.id] });
   };
 
-  const classDomains = useMemo(() => history.data ? domainStats(history.data.attempts, history.data.meta) : [], [history.data]);
-  const inspected = roster.data?.students.find(s => s.id === inspect);
-  const inspectedDomains = useMemo(() => history.data && inspect ? domainStats(history.data.attempts.filter(a => a.student_id === inspect), history.data.meta) : [], [history.data, inspect]);
+  const saveRename = async () => {
+    if (!rename || !renameValue.trim()) return;
+    const { error } = await supabase.from('tenant_classes').update({ name: renameValue.trim() }).eq('id', rename.id);
+    if (error) toast.error('Could not rename class');
+    else { toast.success('Class renamed'); qc.invalidateQueries({ queryKey: ['center-teacher', center.id] }); }
+    setRename(null);
+  };
 
-  const totals = Object.values(perStudent).reduce((t, s) => ({ n: t.n + s.n, c: t.c + s.c, p: t.p + s.present, s: t.s + s.sessions }), { n: 0, c: 0, p: 0, s: 0 });
+  const filteredClasses = useMemo(() => {
+    const list = classes ?? [];
+    if (intake === 'current') return list.filter(c => !isCompleted(c));
+    if (intake === 'previous') return list.filter(isCompleted);
+    return list;
+  }, [classes, intake]);
 
-  const handleTabChange = (next: Tab) => {
-    setSlideDirection(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? 1 : -1);
-    setTab(next);
+  const groupedClasses = useMemo(() => {
+    if (intake !== 'all') return { ungrouped: filteredClasses };
+    const groups: Record<string, CenterClass[]> = {};
+    filteredClasses.forEach(c => {
+      const d = new Date(c.starts_on ?? c.created_at);
+      const key = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+      (groups[key] ||= []).push(c);
+    });
+    return groups;
+  }, [filteredClasses, intake]);
+
+  // Aggregate analytics across every class.
+  const allDomains = useMemo(() => historyQuery.data ? domainStats(historyQuery.data.attempts, historyQuery.data.meta) : [], [historyQuery.data]);
+  const grandTotals = Object.values(statsMap).reduce((t, s) => ({ n: t.n + s.n, c: t.c + s.c, p: t.p + s.present, s: t.s + s.sessions }), { n: 0, c: 0, p: 0, s: 0 });
+  const atRiskStudents = allStudents.filter(s => riskOf(statsMap[s.id]));
+
+  const inspected = allStudents.find(s => s.id === inspect);
+  const inspectedDomains = useMemo(() => historyQuery.data && inspect
+    ? domainStats(historyQuery.data.attempts.filter(a => a.student_id === inspect), historyQuery.data.meta)
+    : [], [historyQuery.data, inspect]);
+
+  const handleModeChange = (next: Mode) => {
+    setSlideDirection(MODE_ORDER.indexOf(next) > MODE_ORDER.indexOf(mode) ? 1 : -1);
+    setMode(next);
   };
 
   const slideVariants = {
@@ -165,11 +411,28 @@ export default function CenterTeacherPortal() {
   };
   const slideTransition = { type: 'spring' as const, stiffness: 200, damping: 27, mass: 1.2 };
 
-  const dockItems: { key: Tab; label: string; icon: typeof Users }[] = [
-    { key: 'roster', label: 'Roster', icon: Users },
+  const dockItems: { key: Mode; label: string; icon: typeof Users }[] = [
+    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { key: 'practice', label: 'Practice', icon: BookOpen },
     { key: 'live', label: 'Live', icon: Radio },
   ];
+
+  const renderCard = (c: CenterClass) => (
+    <CenterClassCard
+      key={c.id}
+      cls={c}
+      students={allStudents.filter(s => s.class_id === c.id)}
+      statsMap={statsMap}
+      attMap={attByClass[c.id] ?? {}}
+      date={date}
+      onCycle={cycle}
+      onInspect={setInspect}
+      onInvite={() => setInvite(c)}
+      onRename={() => { setRename(c); setRenameValue(c.name); }}
+      canRename={role === 'center_admin'}
+    />
+  );
 
   return (
     <div
@@ -190,14 +453,14 @@ export default function CenterTeacherPortal() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" onClick={() => setSearchOpen(true)}>
+              <Search className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline text-xs">Search</span>
+              <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">⌘K</kbd>
+            </Button>
             {role === 'center_admin' && (
               <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
                 <Link to="/admin"><LayoutDashboard className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Admin view</span></Link>
-              </Button>
-            )}
-            {cls && (
-              <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={() => setInvite(true)}>
-                <QrCode className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Invite students</span>
               </Button>
             )}
             <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={signOut}>
@@ -208,119 +471,116 @@ export default function CenterTeacherPortal() {
       </div>
 
       <div className="relative w-full max-w-[1600px] mx-auto p-3 md:p-6 lg:p-8 pb-28">
-        {!data ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {[0, 1].map(i => <div key={i} className="h-44 rounded-3xl bg-gradient-to-br from-muted/50 to-muted/20 animate-pulse" />)}
-          </div>
-        ) : !data.length ? (
+        {!classes ? (
+          <div className="grid gap-4">{[0, 1].map(i => <div key={i} className="h-64 rounded-3xl bg-gradient-to-br from-muted/50 to-muted/20 animate-pulse" />)}</div>
+        ) : !classes.length ? (
           <p className="text-sm text-muted-foreground">No classes assigned to you yet. Ask your center admin.</p>
         ) : (
-          <div className="space-y-6">
-            {/* Liquid glass class cards — neutral data cards, like the main dashboard */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {data.map(c => {
-                const active = c.id === classId;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => { setClassId(c.id); setInspect(null); }}
-                    onPointerMove={liquidTrack}
-                    onPointerLeave={liquidRest}
-                    className={`relative text-left admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 transition-transform active:scale-[0.98] ${active ? 'ring-2 ring-foreground/25' : ''}`}
-                  >
-                    <LiquidGlassFX />
-                    <div className="relative space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-semibold truncate">{c.name}</p>
-                        {active && <span className="text-[10px] uppercase tracking-wider text-foreground/50 border rounded-full px-2 py-0.5 shrink-0">Selected</span>}
+          <div className="relative">
+            <AnimatePresence mode="wait" custom={slideDirection}>
+              <motion.div
+                key={mode}
+                custom={slideDirection}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={slideTransition}
+              >
+                {mode === 'dashboard' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
+                      <Select value={intake} onValueChange={v => setIntake(v as typeof intake)}>
+                        <SelectTrigger className="h-9 rounded-xl text-sm flex-1 md:max-w-xs border-0 bg-transparent"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="current" className="text-sm">Active Classes</SelectItem>
+                          <SelectItem value="previous" className="text-sm">Completed Classes</SelectItem>
+                          <SelectItem value="all" className="text-sm">All Classes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="space-y-1">
+                        <Label htmlFor="att-date" className="sr-only">Session date</Label>
+                        <Input id="att-date" type="date" value={date} onChange={e => setDate(e.target.value)} className="h-9 w-40 border-0 bg-transparent text-sm" />
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-foreground/70">
-                        <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{c.studentCount} student{c.studentCount !== 1 ? 's' : ''}</span>
-                        <span className="font-mono text-xs text-foreground/50">{c.join_code}</span>
-                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap pr-2">{filteredClasses.length} class{filteredClasses.length !== 1 ? 'es' : ''}</span>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
 
-            {/* Tab content with slide transitions */}
-            <div className="relative">
-              <AnimatePresence mode="wait" custom={slideDirection}>
-                <motion.div
-                  key={tab}
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={slideTransition}
-                >
-                  {tab === 'roster' && (
-                    <div className="space-y-4">
-                      <div className="flex items-end gap-3 flex-wrap">
-                        <div className="space-y-1"><Label htmlFor="att-date">Session date</Label><Input id="att-date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" /></div>
-                        <p className="text-xs text-foreground/65 pb-2">Tap a status to cycle it. Tap a name for details.</p>
+                    {filteredClasses.length === 0 ? (
+                      <div className="admin-glass-card rounded-3xl border py-12 text-center text-muted-foreground text-sm">
+                        No {intake === 'current' ? 'active' : intake === 'previous' ? 'completed' : ''} classes
                       </div>
-                      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-4 overflow-x-auto">
-                        <LiquidGlassFX />
-                        <table className="relative w-full text-sm"><thead className="text-xs text-foreground/65 border-b"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th></tr></thead>
-                          <tbody className="divide-y">{roster.data?.students.map(s => {
-                            const st = roster.data.att[s.id]; const p = perStudent[s.id]; const risk = riskOf(s.id);
-                            return <tr key={s.id}><td className="py-3"><button onClick={() => setInspect(s.id)} className="hover:underline text-left">{s.name}</button>{!s.user_id && <span className="ml-2 text-xs text-foreground/60">not signed up</span>}</td>
-                              <td><button onClick={() => cycle(s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
-                              <td className="font-mono">{p?.n ?? 0}</td><td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
-                              <td className="text-xs">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td></tr>;
-                          })}</tbody></table>
-                      </div>
-                      {roster.data && !roster.data.students.length && <p className="text-sm text-muted-foreground">No students yet — use "Invite students" to share the class QR code.</p>}
-                    </div>
-                  )}
-
-                  {tab === 'analytics' && (
-                    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-                      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-4">
-                        <LiquidGlassFX />
-                        <p className="relative font-medium">Domain mastery</p>
-                        <div className="relative"><DomainBars stats={classDomains} /></div>
-                      </div>
-                      <div className="space-y-4">
-                        <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 grid grid-cols-2 gap-4">
-                          <LiquidGlassFX />
-                          <div className="relative"><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-2xl">{totals.n}</p></div>
-                          <div className="relative"><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-2xl">{totals.n ? `${pct(totals.c, totals.n)}%` : '—'}</p></div>
-                          <div className="relative"><p className="text-xs text-muted-foreground">Attendance</p><p className="font-mono text-2xl">{totals.s ? `${pct(totals.p, totals.s)}%` : '—'}</p></div>
-                          <div className="relative"><p className="text-xs text-muted-foreground">Students</p><p className="font-mono text-2xl">{studentIds.length}</p></div>
-                        </div>
-                        <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-2">
-                          <LiquidGlassFX />
-                          <p className="relative font-medium text-sm">Needs attention</p>
-                          <div className="relative">
-                            {roster.data?.students.filter(s => riskOf(s.id)).map(s => <button key={s.id} onClick={() => setInspect(s.id)} className="block text-sm hover:underline">{s.name}</button>)}
-                            {!roster.data?.students.some(s => riskOf(s.id)) && <p className="text-sm text-muted-foreground">Everyone is on track.</p>}
+                    ) : intake === 'all' ? (
+                      <div className="space-y-6">
+                        {Object.entries(groupedClasses).map(([key, list]) => key !== 'ungrouped' && (
+                          <div key={key} className="space-y-3">
+                            <h4 className="text-xs font-medium text-muted-foreground px-1 sticky top-16 bg-background/80 backdrop-blur py-1 z-10">{key}</h4>
+                            <div className="grid gap-4">{list.map(renderCard)}</div>
                           </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">{filteredClasses.map(renderCard)}</div>
+                    )}
+                  </div>
+                )}
+
+                {mode === 'analytics' && (
+                  <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+                    <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-4">
+                      <LiquidGlassFX />
+                      <p className="relative font-medium">Domain mastery — all classes</p>
+                      <div className="relative"><DomainBars stats={allDomains} /></div>
+                    </div>
+                    <div className="space-y-4">
+                      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 grid grid-cols-2 gap-4">
+                        <LiquidGlassFX />
+                        <div className="relative"><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-2xl">{grandTotals.n}</p></div>
+                        <div className="relative"><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-2xl">{grandTotals.n ? `${pct(grandTotals.c, grandTotals.n)}%` : '—'}</p></div>
+                        <div className="relative"><p className="text-xs text-muted-foreground">Attendance</p><p className="font-mono text-2xl">{grandTotals.s ? `${pct(grandTotals.p, grandTotals.s)}%` : '—'}</p></div>
+                        <div className="relative"><p className="text-xs text-muted-foreground">Students</p><p className="font-mono text-2xl">{allStudents.length}</p></div>
+                      </div>
+                      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-2">
+                        <LiquidGlassFX />
+                        <p className="relative font-medium text-sm">Needs attention</p>
+                        <div className="relative">
+                          {atRiskStudents.map(s => <button key={s.id} onClick={() => setInspect(s.id)} className="block text-sm hover:underline">{s.name}</button>)}
+                          {!atRiskStudents.length && <p className="text-sm text-muted-foreground">Everyone is on track.</p>}
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {tab === 'live' && classId && <TeacherLive classId={classId} studentCount={studentIds.length} />}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                {mode === 'practice' && <PracticeBrowser />}
+
+                {mode === 'live' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
+                      <Select value={liveClassId ?? ''} onValueChange={setLiveClassId}>
+                        <SelectTrigger className="h-9 rounded-xl text-sm flex-1 md:max-w-xs border-0 bg-transparent"><SelectValue placeholder="Pick a class" /></SelectTrigger>
+                        <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    {liveClassId
+                      ? <TeacherLive classId={liveClassId} studentCount={allStudents.filter(s => s.class_id === liveClassId).length} />
+                      : <p className="text-sm text-muted-foreground">Pick a class to start a live session.</p>}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         )}
       </div>
 
       {/* Floating glass mode dock — mirrors the main teacher dashboard dock */}
-      {!!data?.length && (
+      {!!classes?.length && (
         <nav aria-label="Teacher tools" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-2 py-1.5 flex items-center gap-1">
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => handleTabChange(key)}
-              aria-pressed={tab === key}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${tab === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
+              onClick={() => handleModeChange(key)}
+              aria-pressed={mode === key}
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >
               <Icon className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
             </button>
@@ -328,7 +588,41 @@ export default function CenterTeacherPortal() {
         </nav>
       )}
 
-      {invite && cls && <InviteDialog name={cls.name} code={cls.join_code} onClose={() => setInvite(false)} />}
+      {/* Student search (⌘K) */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <Command>
+            <CommandInput placeholder="Search students by name or phone…" />
+            <CommandList>
+              <CommandEmpty>No students found.</CommandEmpty>
+              <CommandGroup heading="Students">
+                {allStudents.map(s => (
+                  <CommandItem key={s.id} value={`${s.name} ${s.phone}`} onSelect={() => { setSearchOpen(false); setInspect(s.id); }}>
+                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{s.name}</span>
+                    <span className="ml-auto font-mono text-xs text-muted-foreground">{s.phone}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
+
+      {invite && <InviteDialog name={invite.name} code={invite.join_code} onClose={() => setInvite(null)} />}
+
+      {/* Rename class */}
+      <Dialog open={!!rename} onOpenChange={o => !o && setRename(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Rename class</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input value={renameValue} onChange={e => setRenameValue(e.target.value)} placeholder="Class name" />
+            <Button className="w-full" onClick={saveRename} disabled={!renameValue.trim()}>Save</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Student inspection sheet */}
       <Sheet open={!!inspected} onOpenChange={o => !o && setInspect(null)}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           {inspected && <>
@@ -336,13 +630,13 @@ export default function CenterTeacherPortal() {
             <div className="mt-4 space-y-6">
               <p className="text-sm text-muted-foreground font-mono">{inspected.phone}{!inspected.user_id && ' · not signed up'}</p>
               <div className="grid grid-cols-3 gap-3">
-                <div><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-xl">{perStudent[inspected.id]?.n ?? 0}</p></div>
-                <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-xl">{perStudent[inspected.id]?.n ? `${pct(perStudent[inspected.id].c, perStudent[inspected.id].n)}%` : '—'}</p></div>
-                <div><p className="text-xs text-muted-foreground">Attended</p><p className="font-mono text-xl">{perStudent[inspected.id]?.present ?? 0}/{perStudent[inspected.id]?.sessions ?? 0}</p></div>
+                <div><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-xl">{statsMap[inspected.id]?.n ?? 0}</p></div>
+                <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-xl">{statsMap[inspected.id]?.n ? `${pct(statsMap[inspected.id].c, statsMap[inspected.id].n)}%` : '—'}</p></div>
+                <div><p className="text-xs text-muted-foreground">Attended</p><p className="font-mono text-xl">{statsMap[inspected.id]?.present ?? 0}/{statsMap[inspected.id]?.sessions ?? 0}</p></div>
               </div>
               <div className="space-y-3"><p className="text-sm font-medium">By domain</p><DomainBars stats={inspectedDomains} /></div>
               <div className="space-y-1"><p className="text-sm font-medium">Recent attendance</p>
-                {(history.data?.att ?? []).filter(a => a.student_id === inspected.id).slice(0, 10).map(a => <p key={a.session_date} className="flex justify-between text-sm"><span className="font-mono text-xs">{a.session_date}</span><span className="text-muted-foreground">{STATUS_LABEL[a.status]}</span></p>)}
+                {(historyQuery.data?.att ?? []).filter(a => a.student_id === inspected.id).slice(0, 10).map(a => <p key={a.session_date} className="flex justify-between text-sm"><span className="font-mono text-xs">{a.session_date}</span><span className="text-muted-foreground">{STATUS_LABEL[a.status]}</span></p>)}
               </div>
             </div>
           </>}
