@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MathText } from '@/components/MathText';
-import { CheckCircle2, ChevronDown, ChevronUp, CircleDashed, PencilLine, Search } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, CircleDashed, Download, PencilLine, RefreshCw, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
@@ -29,6 +29,8 @@ export default function IntlDbQuestions() {
   const [editingCBQuestion, setEditingCBQuestion] = useState<any>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [cbFormOpen, setCbFormOpen] = useState(false);
+  const [syncing, setSyncing] = useState<null | 'checking' | 'importing'>(null);
+  const [syncResult, setSyncResult] = useState<null | { found: number; changed: number; inserted: number; errors: number; dryRun: boolean }>(null);
 
   const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
@@ -74,14 +76,67 @@ export default function IntlDbQuestions() {
     }
   };
 
+  const runSync = async (dryRun: boolean) => {
+    setSyncing(dryRun ? 'checking' : 'importing');
+    const agg = { found: 0, changed: 0, inserted: 0, errors: 0 };
+    try {
+      let offset = 0, hasMore = true;
+      while (hasMore && offset <= 4000) {
+        const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
+          body: { mode: 'update', dry_run: dryRun, skip_image_diffs: true, offset, limit: 200 },
+        });
+        if (error) throw error;
+        agg.found += d?.total_found || 0;
+        agg.changed += d?.updated || 0;
+        agg.inserted += d?.inserted || 0;
+        agg.errors += d?.errors || 0;
+        setSyncResult({ ...agg, dryRun });
+        hasMore = d?.has_more === true;
+        offset = d?.next_offset || offset + 200;
+      }
+      setSyncResult({ ...agg, dryRun });
+      if (!dryRun) {
+        toast({ title: 'Imported into intDB', description: `${agg.changed} updated, ${agg.inserted} added.` });
+        refetch();
+      }
+    } catch (e: any) {
+      toast({ title: 'Sync failed', description: e.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSyncing(null);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">INT DB Questions</h1>
-        <p className="text-sm text-muted-foreground">
-          Every question flagged as an updated variant in the external database, pulled into the International bank (intDB).
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div className="flex-1">
+          <h1 className="text-2xl md:text-3xl font-bold">INT DB Questions</h1>
+          <p className="text-sm text-muted-foreground">
+            Every question flagged as an updated variant in the external database, pulled into the International bank (intDB).
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" disabled={!!syncing} onClick={() => runSync(true)}>
+            {syncing === 'checking' ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+            Check for updates
+          </Button>
+          <Button size="sm" disabled={!!syncing || !syncResult?.dryRun} onClick={() => runSync(false)}>
+            {syncing === 'importing' ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Import to intDB
+          </Button>
+        </div>
       </div>
+
+      {syncResult && (
+        <Card><CardContent className="p-4 text-sm flex flex-wrap gap-x-6 gap-y-1">
+          <span>{syncing ? 'Scanning…' : syncResult.dryRun ? 'Check complete' : 'Import complete'}</span>
+          <span className="text-muted-foreground">Flagged in external DB: <span className="font-mono">{syncResult.found}</span></span>
+          <span className="text-muted-foreground">{syncResult.dryRun ? 'Will update' : 'Updated'}: <span className="font-mono">{syncResult.changed}</span></span>
+          {!syncResult.dryRun && <span className="text-muted-foreground">Added: <span className="font-mono">{syncResult.inserted}</span></span>}
+          {syncResult.errors > 0 && <span className="text-destructive">Errors: {syncResult.errors}</span>}
+          {syncResult.dryRun && !syncing && syncResult.changed === 0 && <span className="text-muted-foreground">Everything is already up to date.</span>}
+        </CardContent></Card>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[['Total', data.length], ['Math', math], ['English', data.length - math], ['With explanation', explained]].map(([l, v]) => (
