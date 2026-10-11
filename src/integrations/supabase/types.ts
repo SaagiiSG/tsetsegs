@@ -1984,6 +1984,7 @@ export type Database = {
           answer: string
           category_id: string | null
           choice_images: Json | null
+          content_updated_at: string | null
           created_at: string
           difficulty_level: string | null
           figure_description: string | null
@@ -2016,6 +2017,7 @@ export type Database = {
           answer: string
           category_id?: string | null
           choice_images?: Json | null
+          content_updated_at?: string | null
           created_at?: string
           difficulty_level?: string | null
           figure_description?: string | null
@@ -2048,6 +2050,7 @@ export type Database = {
           answer?: string
           category_id?: string | null
           choice_images?: Json | null
+          content_updated_at?: string | null
           created_at?: string
           difficulty_level?: string | null
           figure_description?: string | null

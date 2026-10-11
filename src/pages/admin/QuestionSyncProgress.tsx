@@ -234,7 +234,7 @@ export default function QuestionSyncProgress() {
   );
 }
 
-type Recent = { question_id: string; question_text: string | null; content_updated_at: string; rationale: string | null; question_set: string | null };
+type Recent = { question_id: string; question_text: string | null; content_updated_at: string; created_at: string; rationale: string | null; question_set: string | null };
 
 function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDays: (d: number) => void; onOpenEditor: (id: string) => void }) {
   const [rows, setRows] = useState<Recent[] | null>(null);
@@ -243,7 +243,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
     const since = new Date(Date.now() - days * 86400000).toISOString();
     supabase
       .from('intl_questions')
-      .select('question_id, question_text, content_updated_at, rationale, question_set')
+      .select('question_id, question_text, content_updated_at, created_at, rationale, question_set')
       .gte('content_updated_at', since)
       .order('content_updated_at', { ascending: false })
       .limit(500)
@@ -255,7 +255,7 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Recently updated questions {rows ? `(${rows.length})` : ''}</CardTitle>
         <div className="flex gap-1">
-          {[1, 7, 30].map((d) => (
+          {[1, 7, 30, 90].map((d) => (
             <Button key={d} size="sm" variant={days === d ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setDays(d)}>
               {d === 1 ? 'Today' : `${d} days`}
             </Button>
@@ -265,10 +265,16 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
       <CardContent className="space-y-2 max-h-[65vh] overflow-y-auto">
         {!rows && <p className="text-sm text-muted-foreground">Loading…</p>}
         {rows && rows.length === 0 && <p className="text-sm text-muted-foreground">No questions updated in this period.</p>}
-        {rows?.map((r) => (
+        {rows?.map((r) => {
+          const isNew = Math.abs(new Date(r.content_updated_at).getTime() - new Date(r.created_at).getTime()) < 60000;
+          return (
           <div key={r.question_id} className="rounded-md border p-3 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="font-mono">{r.question_id}</Badge>
+              {isNew
+                ? <Badge className="text-[10px]">New question</Badge>
+                : <Badge variant="secondary" className="text-[10px]">Updated</Badge>}
+              {r.question_set && <Badge variant="outline" className="text-[10px]">{r.question_set}</Badge>}
               {r.rationale?.trim()
                 ? <Badge variant="secondary" className="text-[10px]">Has explanation</Badge>
                 : <Badge variant="destructive" className="text-[10px]">No explanation</Badge>}
@@ -279,7 +285,8 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{r.question_text}</p>
           </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );
