@@ -271,7 +271,7 @@ const MainApp = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="search" element={<StudentQuestionSearch />} />
-                    <Route path="concept-videos" element={<StudentConceptVideos />} />
+                    <Route path="concept-videos" element={<IntlOnlyRoute><StudentConceptVideos /></IntlOnlyRoute>} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="proctor-results" element={<StudentProctorResults />} />
