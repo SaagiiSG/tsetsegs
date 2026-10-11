@@ -265,10 +265,16 @@ function RecentlyUpdated({ days, setDays, onOpenEditor }: { days: number; setDay
       <CardContent className="space-y-2 max-h-[65vh] overflow-y-auto">
         {!rows && <p className="text-sm text-muted-foreground">Loading…</p>}
         {rows && rows.length === 0 && <p className="text-sm text-muted-foreground">No questions updated in this period.</p>}
-        {rows?.map((r) => (
+        {rows?.map((r) => {
+          const isNew = Math.abs(new Date(r.content_updated_at).getTime() - new Date(r.created_at).getTime()) < 60000;
+          return (
           <div key={r.question_id} className="rounded-md border p-3 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="font-mono">{r.question_id}</Badge>
+              {isNew
+                ? <Badge className="text-[10px]">New question</Badge>
+                : <Badge variant="secondary" className="text-[10px]">Updated</Badge>}
+              {r.question_set && <Badge variant="outline" className="text-[10px]">{r.question_set}</Badge>}
               {r.rationale?.trim()
                 ? <Badge variant="secondary" className="text-[10px]">Has explanation</Badge>
                 : <Badge variant="destructive" className="text-[10px]">No explanation</Badge>}
