@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +16,12 @@ const readWatched = (): string[] => {
 };
 
 export default function StudentConceptVideos() {
+  const { student } = useStudentAuth();
+  if (student && student.cohort !== 'intl') return <Navigate to="/practice/dashboard" replace />;
+  return <ConceptVideosInner />;
+}
+
+function ConceptVideosInner() {
   const [domain, setDomain] = useState<string>('All');
   const [active, setActive] = useState<ConceptVideo | null>(null);
   const [watched, setWatched] = useState<string[]>(readWatched);

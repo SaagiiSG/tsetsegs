@@ -265,7 +265,7 @@ export function StudentDashboardSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {toolsItems.map(renderNavItem)}
+                  {toolsItems.filter((i) => i.to !== '/practice/concept-videos' || student?.cohort === 'intl').map(renderNavItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>

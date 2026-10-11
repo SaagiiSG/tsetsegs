@@ -173,6 +173,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { subject, since_date, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set, mode } = body;
     const isUpdate = mode === "update";
+    // External updates feed the international bank (intDB); Mongolian bank stays untouched unless target="mn".
+    const QT = body.target === "mn" ? "questions" : "intl_questions";
 
     // Optional custom code prefix (e.g. "ANP") and target question_set label for this import
     const codePrefix = typeof id_prefix === "string" && /^[A-Z]{2,5}$/.test(id_prefix) ? id_prefix : "EXT";
@@ -275,7 +277,7 @@ Deno.serve(async (req) => {
     let dedupOffset = 0;
     while (true) {
       const { data: page, error: pageErr } = await adminClient
-        .from("questions")
+        .from(QT)
         .select("id, question_id, original_cb_id")
         .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1);
       if (pageErr) {
@@ -322,7 +324,7 @@ Deno.serve(async (req) => {
       for (let i = 0; i < matches.length; i += 50) {
         const chunk = matches.slice(i, i + 50);
         const { data: rows, error: rowsErr } = await adminClient
-          .from("questions")
+          .from(QT)
           .select(`id, question_id, ${CONTENT_FIELDS.join(", ")}`)
           .in("id", chunk.map((m) => m.internalId));
         if (rowsErr) { errors += chunk.length; errorDetails.push(rowsErr.message); continue; }
@@ -351,7 +353,7 @@ Deno.serve(async (req) => {
           }
           if (dry_run) { updated++; continue; }
 
-          const { error: upErr } = await adminClient.from("questions").update(patch).eq("id", m.internalId);
+          const { error: upErr } = await adminClient.from(QT).update(patch).eq("id", m.internalId);
           if (upErr) { errors++; errorDetails.push(`${cur.question_id}: ${upErr.message}`); }
           else updated++;
         }
@@ -407,7 +409,7 @@ Deno.serve(async (req) => {
       // Batch insert
       if (toInsert.length > 0) {
         const { error: insertError, data: insertedData } = await adminClient
-          .from("questions")
+          .from(QT)
           .insert(toInsert)
           .select("question_id, id, original_cb_id");
 

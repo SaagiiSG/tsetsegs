@@ -48,12 +48,14 @@ const questionSchema = z.object({
 type QuestionFormData = z.infer<typeof questionSchema>;
 
 interface QuestionFormProps {
+  /** Which bank to write: Mongolian 'questions' (default) or international 'intl_questions'. */
+  table?: 'questions' | 'intl_questions';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingQuestion?: any;
 }
 
-export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFormProps) {
+export function QuestionForm({ open, onOpenChange, editingQuestion, table = 'questions' }: QuestionFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -86,7 +88,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
     queryKey: ['next-question-id'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(table as 'questions')
         .select('question_id')
         .eq('is_original', true)
         .order('question_id', { ascending: false })
@@ -274,7 +276,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
         delete questionData.is_active;
 
         const { data: updated, error } = await supabase
-          .from('questions')
+          .from(table as 'questions')
           .update(questionData)
           .eq('id', editingQuestion.id)
           .select('id, answer');
@@ -288,7 +290,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       } else {
 
         const { data: insertedData, error } = await supabase
-          .from('questions')
+          .from(table as 'questions')
           .insert(questionData)
           .select()
           .single();
@@ -313,7 +315,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
           }));
 
           const { error: variationError } = await supabase
-            .from('questions')
+            .from(table as 'questions')
             .insert(variationsToInsert);
           
           if (variationError) {
@@ -330,7 +332,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion }: QuestionFo
       if (data.generate_variations && !editingQuestion) {
         // Get the inserted question ID
         const { data: insertedQuestion } = await supabase
-          .from('questions')
+          .from(table as 'questions')
           .select('id')
           .eq('question_id', data.question_id)
           .single();

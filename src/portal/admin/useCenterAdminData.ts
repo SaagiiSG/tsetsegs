@@ -50,7 +50,7 @@ export function useQuestionTopics(ids: string[]) {
     queryFn: async () => {
       const map = new Map<string, { subject: string; topic: string }>();
       for (let i = 0; i < unique.length; i += 300) {
-        const { data } = await supabase.from('questions').select('id, subject, subtopic, skill').in('id', unique.slice(i, i + 300));
+        const { data } = await supabase.from('intl_questions').select('id, subject, subtopic, skill').in('id', unique.slice(i, i + 300));
         data?.forEach(q => map.set(q.id, { subject: (q.subject ?? 'math').toLowerCase(), topic: q.subtopic || q.skill || 'Other' }));
       }
       return map;
