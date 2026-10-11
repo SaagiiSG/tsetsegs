@@ -472,15 +472,6 @@ export default function StudentPortal() {
       ]}
     >
       <div className="w-full space-y-6">
-        {/* Logo/Brand Section */}
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <BrandMark className="h-14 w-14 text-white" />
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">SAT Practice</h1>
-          <p className="text-white/50">Tsetsegs Talent Agency</p>
-        </div>
-
         {/* Auth Step Cards */}
         {forgotPassword ? (
           <ForgotPasswordCard
@@ -498,8 +489,7 @@ export default function StudentPortal() {
           />
         ) : (
           <>
-            {authStep === 'phone' && renderPhoneStep()}
-            {authStep === 'password' && renderPasswordStep()}
+            {(authStep === 'phone' || authStep === 'password') && renderLoginStep()}
             {authStep === 'set_password' && renderSetPasswordStep()}
             {authStep === 'request_registration' && renderRegistrationRequestStep()}
             {authStep === 'pending_approval' && renderPendingApprovalStep()}
