@@ -3,18 +3,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { phoneDigits } from '@/lib/tenant';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { PasswordInput } from './PasswordInput';
+import {
+  AuthSplitLayout,
+  authInputClasses,
+  authLabelClasses,
+  authPrimaryButtonClasses,
+  authGhostButtonClasses,
+} from '@/components/auth/AuthSplitLayout';
 
 export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithoutAccess: boolean }) {
   const { center, signOut } = useCenter();
+  const name = centerDisplayName(center);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'student' | 'staff'>('student');
   // student
   const [phone, setPhone] = useState('');
-  const [stage, setStage] = useState<'phone' | 'password' | 'create'>('phone');
+  const [stage, setStage] = useState<'signin' | 'create'>('signin');
   const [studentEmail, setStudentEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -36,12 +44,12 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
     try { await fn(); } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   };
 
-  const lookup = run(async () => {
-    const res = await call({ action: 'student_lookup', phone: phoneDigits(phone) });
-    if (res.activated) { setStudentEmail(res.email); setStage('password'); } else setStage('create');
-  });
+  // Combined phone + password: look the phone up, then sign in — first-time
+  // students move to the create-password step instead.
   const studentSignIn = run(async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email: studentEmail, password });
+    const res = await call({ action: 'student_lookup', phone: phoneDigits(phone) });
+    if (!res.activated) { setStudentEmail(''); setStage('create'); return; }
+    const { error } = await supabase.auth.signInWithPassword({ email: res.email, password });
     if (error) throw new Error('Wrong password. Ask your center admin to reset it if you forgot.');
   });
   const createPassword = run(async () => {
@@ -60,62 +68,101 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
   });
 
   return (
-    <main className="min-h-screen grid place-items-center p-4 bg-muted/30">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-1 flex flex-col items-center">
-          <CenterLogo center={center} className="h-12 w-12 mb-2" />
-          <h1 className="font-chillax text-3xl font-semibold tracking-tight">{centerDisplayName(center)}</h1>
-          <p className="text-sm text-muted-foreground">SAT prep portal</p>
+    <AuthSplitLayout
+      eyebrow={name.toUpperCase()}
+      headline={'Learn.\nBuild.\nGrow Together.'}
+      subline={`${name} SAT prep portal — sign in to practice, join live classes and track your progress.`}
+      accent={center.portal_settings?.brand_color || undefined}
+      features={[{ label: 'SAT prep' }, { label: 'Live classes' }, { label: 'Track progress' }]}
+    >
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <CenterLogo center={center} className="h-12 w-12" />
+          <h1 className="text-3xl font-semibold tracking-tight text-white">{name}</h1>
+          <p className="text-sm text-white/50">Sign in to your center portal</p>
         </div>
+
         {signedInWithoutAccess ? (
-          <div className="rounded-lg border bg-card p-5 space-y-3 text-sm">
-            <p>This account doesn't have access to {centerDisplayName(center)}.</p>
-            <Button variant="outline" className="w-full" onClick={signOut}>Use a different account</Button>
+          <div className="space-y-4">
+            <p className="text-sm text-white/60">This account doesn't have access to {name}.</p>
+            <Button className={authPrimaryButtonClasses} onClick={signOut}>Use a different account</Button>
           </div>
         ) : (
-          <Tabs defaultValue="student" onValueChange={() => setError('')} className="rounded-lg border bg-card p-5">
-            <TabsList className="grid grid-cols-2 w-full"><TabsTrigger value="student">Student</TabsTrigger><TabsTrigger value="staff">Teacher / Admin</TabsTrigger></TabsList>
-            <TabsContent value="student" className="mt-5">
-              {stage === 'phone' && (
-                <form onSubmit={lookup} className="space-y-4">
-                  <div className="space-y-2"><Label htmlFor="cp-phone">Phone number</Label>
-                    <Input id="cp-phone" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Use the phone number registered with your class" required /></div>
-                  <Button className="w-full" disabled={busy}>{busy ? 'Checking…' : 'Continue'}</Button>
-                </form>
-              )}
-              {stage === 'password' && (
-                <form onSubmit={studentSignIn} className="space-y-4">
-                  <div className="space-y-2"><Label htmlFor="cp-pw">Password</Label>
-                    <PasswordInput id="cp-pw" autoComplete="current-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required /></div>
-                  <Button className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
-                  <Button type="button" variant="ghost" className="w-full" onClick={() => { setStage('phone'); setPassword(''); }}>Use a different number</Button>
-                </form>
-              )}
-              {stage === 'create' && (
-                <form onSubmit={createPassword} className="space-y-4">
-                  <p className="text-sm text-muted-foreground">First time here — create a password (8+ characters, letters and numbers).</p>
-                  <div className="space-y-2"><Label htmlFor="cp-new">New password</Label>
-                    <PasswordInput id="cp-new" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
-                  <div className="space-y-2"><Label htmlFor="cp-confirm">Confirm password</Label>
-                    <PasswordInput id="cp-confirm" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} required /></div>
-                  <Button className="w-full" disabled={busy}>{busy ? 'Creating…' : 'Create password'}</Button>
-                  <Button type="button" variant="ghost" className="w-full" onClick={() => setStage('phone')}>Back</Button>
-                </form>
-              )}
-            </TabsContent>
-            <TabsContent value="staff" className="mt-5">
-              <form onSubmit={staffSignIn} className="space-y-4">
-                <div className="space-y-2"><Label htmlFor="cp-email">Email</Label>
-                  <Input id="cp-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-                <div className="space-y-2"><Label htmlFor="cp-spw">Password</Label>
-                  <PasswordInput id="cp-spw" autoComplete="current-password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)} required /></div>
-                <Button className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+          <>
+            {/* underline tabs, matching the staff login */}
+            <div className="flex gap-6 border-b border-white/10">
+              {(['student', 'staff'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTab(t); setError(''); }}
+                  className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                    tab === t ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
+                  }`}
+                >
+                  {t === 'student' ? 'Student' : 'Teacher / Admin'}
+                </button>
+              ))}
+            </div>
+
+            {tab === 'student' && stage === 'signin' && (
+              <form onSubmit={studentSignIn} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cp-phone" className={authLabelClasses}>Phone number</Label>
+                  <Input id="cp-phone" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="Phone registered with your class" required className={authInputClasses} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cp-pw" className={authLabelClasses}>Password</Label>
+                  <PasswordInput id="cp-pw" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
+                    required className={authInputClasses} />
+                  <p className="text-xs text-white/35">First time here? Enter your phone and any password — you'll create your real one next.</p>
+                </div>
+                <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
               </form>
-            </TabsContent>
-            {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
-          </Tabs>
+            )}
+
+            {tab === 'student' && stage === 'create' && (
+              <form onSubmit={createPassword} className="space-y-6">
+                <p className="text-sm text-white/60">First time here — create a password (8+ characters, letters and numbers).</p>
+                <div className="space-y-2">
+                  <Label htmlFor="cp-new" className={authLabelClasses}>New password</Label>
+                  <PasswordInput id="cp-new" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)}
+                    required minLength={8} className={authInputClasses} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cp-confirm" className={authLabelClasses}>Confirm password</Label>
+                  <PasswordInput id="cp-confirm" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)}
+                    required className={authInputClasses} />
+                </div>
+                <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? 'Creating…' : 'Create password'}</Button>
+                <Button type="button" variant="ghost" className={authGhostButtonClasses}
+                  onClick={() => { setStage('signin'); setPassword(''); setConfirm(''); }}>
+                  Back
+                </Button>
+              </form>
+            )}
+
+            {tab === 'staff' && (
+              <form onSubmit={staffSignIn} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cp-email" className={authLabelClasses}>Email</Label>
+                  <Input id="cp-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
+                    required className={authInputClasses} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cp-spw" className={authLabelClasses}>Password</Label>
+                  <PasswordInput id="cp-spw" autoComplete="current-password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)}
+                    required className={authInputClasses} />
+                </div>
+                <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+              </form>
+            )}
+
+            {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+          </>
         )}
       </div>
-    </main>
+    </AuthSplitLayout>
   );
 }
