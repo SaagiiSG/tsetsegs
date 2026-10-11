@@ -17,3 +17,9 @@
 
 - [ ] International main-platform /practice (intl cohort, non-center) still reads the Mongolian bank — switch to intDB next
 - [ ] Concept videos inside center student portals
+
+## Center portals — full replication (same pages, separate data; no SMS, no NGEE/review bookings)
+- [x] Student: daily ring + goal setup + streak, emoji-free speed mode
+- [ ] Student: remaining main features (badges/points, mock tests, vocabulary, stats, review queue parity)
+- [ ] Teacher dashboard: homework, intense prep, proctored tests, class wrapped
+- [ ] Center admin: batch analytics, student profiles parity
