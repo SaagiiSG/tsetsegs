@@ -39,6 +39,7 @@ export function ConceptVideoPlayer({ url, subtitles }: { url: string; subtitles?
       )}
       {v?.kind === 'file' && (
         <video
+          key={`${v.src}|${trackSrc ?? ''}`}
           src={v.src}
           controls
           playsInline
@@ -47,6 +48,10 @@ export function ConceptVideoPlayer({ url, subtitles }: { url: string; subtitles?
           onContextMenu={(e) => e.preventDefault()}
           crossOrigin="anonymous"
           className="absolute inset-0 h-full w-full bg-background"
+          onLoadedMetadata={(e) => {
+            const t = e.currentTarget.textTracks[0];
+            if (t) t.mode = 'showing';
+          }}
         >
           {trackSrc && <track kind="subtitles" src={trackSrc} srcLang="en" label="English" default />}
         </video>
