@@ -114,7 +114,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
               className="fill-muted-foreground"
               style={{ fontSize: size * 0.06 }}
             >
-              {allDone ? 'Crushed it 🔥' : 'today'}
+              {allDone ? 'Crushed it' : 'today'}
             </text>
           </svg>
         </div>
