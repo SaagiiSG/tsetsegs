@@ -1239,6 +1239,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_published: boolean
+          labels: string[]
           module: string | null
           order_index: number
           subtitles_vtt: string | null
@@ -1253,6 +1254,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_published?: boolean
+          labels?: string[]
           module?: string | null
           order_index?: number
           subtitles_vtt?: string | null
@@ -1267,6 +1269,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_published?: boolean
+          labels?: string[]
           module?: string | null
           order_index?: number
           subtitles_vtt?: string | null
