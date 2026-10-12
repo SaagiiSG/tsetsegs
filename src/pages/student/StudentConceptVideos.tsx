@@ -23,7 +23,7 @@ export default function StudentConceptVideos() {
 }
 
 function ConceptVideosInner() {
-  const [domain, setDomain] = useState<string>('All');
+  
   const [active, setActive] = useState<ConceptVideo | null>(null);
   const [watched, setWatched] = useState<string[]>(readWatched);
 
@@ -115,7 +115,7 @@ function ConceptVideosInner() {
                     {seen ? <CheckCircle2 className="h-6 w-6 shrink-0 text-primary" /> : <PlayCircle className="h-6 w-6 shrink-0 text-muted-foreground" />}
                     <div className="min-w-0">
                       <p className="truncate font-medium">{v.title}</p>
-                      <p className="text-xs text-muted-foreground">{v.duration_minutes ? `${v.duration_minutes} min` : 'Video'}</p>
+                      <p className="text-xs text-muted-foreground">{v.duration_minutes ? `${v.duration_minutes} min` : 'Video'}</p><LabelChips labels={v.labels} />
                     </div>
                   </button>
                 );
