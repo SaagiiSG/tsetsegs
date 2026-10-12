@@ -29,13 +29,19 @@ export function ConceptVideoPlayer({ url, subtitles }: { url: string; subtitles?
       )}
       {err && <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-muted-foreground">{err}</div>}
       {v?.kind === 'youtube' && (
-        <iframe
-          src={v.src}
-          className="absolute inset-0 h-full w-full"
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Concept video"
-        />
+        <>
+          <iframe
+            src={v.src}
+            className="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Concept video"
+          />
+          {/* Click shields: block the YouTube title bar (top) and the YouTube logo
+              (bottom-right) so students can't click through to youtube.com. */}
+          <div className="absolute inset-x-0 top-0 h-14" onClick={(e) => e.preventDefault()} />
+          <div className="absolute bottom-0 right-0 h-12 w-28" onClick={(e) => e.preventDefault()} />
+        </>
       )}
       {v?.kind === 'file' && (
         <video
