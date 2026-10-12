@@ -532,15 +532,20 @@ function VideosPage() {
     queryFn: async () => (await supabase.from('concept_videos').select('*').eq('is_published', true).order('order_index')).data ?? [],
   });
   const [open, setOpen] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [label, setLabel] = useState<string | null>(null);
   const video = data?.find(v => v.id === open);
+  const labels = useMemo(() => allLabels(data ?? []), [data]);
+  const shown = useMemo(() => filterVideos(data ?? [], query, label), [data, query, label]);
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Concept videos</h1>
       {video && <Glass className="space-y-3"><p className="font-medium">{video.title}</p><ConceptVideoPlayer url={(video as any).video_url} subtitles={(video as any).subtitles_vtt} /></Glass>}
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? <Glass><p className="text-sm text-muted-foreground">No videos yet.</p></Glass> : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.map(v => (
+      {!!data?.length && <VideoLabelFilter labels={labels} query={query} onQuery={setQuery} active={label} onActive={setLabel} />}
+      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? <Glass><p className="text-sm text-muted-foreground">No videos yet.</p></Glass> : !shown.length ? <Glass><p className="text-sm text-muted-foreground">No videos match.</p></Glass> : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{shown.map(v => (
           <button key={v.id} onClick={() => { setOpen(v.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left">
-            <Glass className={`h-full ${open === v.id ? 'ring-1 ring-foreground/40' : ''}`}><PlayCircle className="h-5 w-5 text-muted-foreground" /><p className="font-medium mt-2">{v.title}</p>{(v as any).description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{(v as any).description}</p>}</Glass>
+            <Glass className={`h-full ${open === v.id ? 'ring-1 ring-foreground/40' : ''}`}><PlayCircle className="h-5 w-5 text-muted-foreground" /><p className="font-medium mt-2">{v.title}</p>{(v as any).description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{(v as any).description}</p>}<LabelChips labels={v.labels} /></Glass>
           </button>))}</div>
       )}
     </div>
