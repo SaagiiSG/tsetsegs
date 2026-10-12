@@ -6,7 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, PlayCircle, CheckCircle2, Clapperboard } from 'lucide-react';
-import { CONCEPT_DOMAINS, ConceptVideo } from '@/lib/conceptVideos';
+import { ConceptVideo } from '@/lib/conceptVideos';
+import { VideoLabelFilter, LabelChips, allLabels, filterVideos } from '@/components/concept-videos/VideoLabelFilter';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +23,7 @@ export default function StudentConceptVideos() {
 }
 
 function ConceptVideosInner() {
-  const [domain, setDomain] = useState<string>('All');
+  
   const [active, setActive] = useState<ConceptVideo | null>(null);
   const [watched, setWatched] = useState<string[]>(readWatched);
 
@@ -36,8 +37,10 @@ function ConceptVideosInner() {
     },
   });
 
-  const domains = useMemo(() => CONCEPT_DOMAINS.filter((d) => videos.some((v) => v.domain === d)), [videos]);
-  const shown = domain === 'All' ? videos : videos.filter((v) => v.domain === domain);
+  const [query, setQuery] = useState('');
+  const [label, setLabel] = useState<string | null>(null);
+  const labels = useMemo(() => allLabels(videos), [videos]);
+  const shown = useMemo(() => filterVideos(videos, query, label), [videos, query, label]);
   const modules = useMemo(() => {
     const m = new Map<string, ConceptVideo[]>();
     for (const v of shown) {
@@ -84,13 +87,7 @@ function ConceptVideosInner() {
         </Card>
       )}
 
-      {domains.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {['All', ...domains].map((d) => (
-            <Button key={d} size="sm" variant={domain === d ? 'default' : 'outline'} onClick={() => setDomain(d)}>{d}</Button>
-          ))}
-        </div>
-      )}
+      {videos.length > 0 && <VideoLabelFilter labels={labels} query={query} onQuery={setQuery} active={label} onActive={setLabel} />}
 
       {isLoading ? (
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -118,7 +115,7 @@ function ConceptVideosInner() {
                     {seen ? <CheckCircle2 className="h-6 w-6 shrink-0 text-primary" /> : <PlayCircle className="h-6 w-6 shrink-0 text-muted-foreground" />}
                     <div className="min-w-0">
                       <p className="truncate font-medium">{v.title}</p>
-                      <p className="text-xs text-muted-foreground">{v.duration_minutes ? `${v.duration_minutes} min` : 'Video'}</p>
+                      <p className="text-xs text-muted-foreground">{v.duration_minutes ? `${v.duration_minutes} min` : 'Video'}</p><LabelChips labels={v.labels} />
                     </div>
                   </button>
                 );

@@ -13,15 +13,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Pencil, Plus, Trash2, Upload, PlayCircle } from 'lucide-react';
-import { CONCEPT_DOMAINS, ConceptVideo, STORAGE_PREFIX, resolveVideo, youtubeId } from '@/lib/conceptVideos';
+import { CONCEPT_DOMAINS, ConceptVideo, PRESET_LABELS, STORAGE_PREFIX, resolveVideo, youtubeId } from '@/lib/conceptVideos';
 import { generateSubtitles } from '@/lib/subtitles';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
+import { LabelChips } from '@/components/concept-videos/VideoLabelFilter';
+import { X } from 'lucide-react';
 
 type Draft = Omit<ConceptVideo, 'id'> & { id?: string };
 const empty: Draft = {
   title: '', description: '', domain: CONCEPT_DOMAINS[0], module: '', video_url: '',
-  duration_minutes: null, order_index: 0, is_published: false, subtitles_vtt: null,
+  duration_minutes: null, order_index: 0, is_published: false, subtitles_vtt: null, labels: [],
 };
+
+function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (l: string[]) => void }) {
+  const [text, setText] = useState('');
+  const toggle = (l: string) => onChange(labels.includes(l) ? labels.filter((x) => x !== l) : [...labels, l]);
+  const add = () => {
+    const parts = text.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) onChange([...new Set([...labels, ...parts])]);
+    setText('');
+  };
+  const custom = labels.filter((l) => !(PRESET_LABELS as readonly string[]).includes(l));
+  return (
+    <div className="space-y-2">
+      <Label>Labels</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {PRESET_LABELS.map((l) => (
+          <button key={l} type="button" onClick={() => toggle(l)}
+            className={`rounded-full border px-3 py-1 text-xs transition-colors ${labels.includes(l) ? 'bg-foreground text-background' : 'text-foreground/70 hover:bg-muted'}`}>{l}</button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} placeholder="Type a label, press Enter" />
+        <Button type="button" variant="outline" onClick={add} disabled={!text.trim()}>Add</Button>
+      </div>
+      {custom.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">{custom.map((l) => (
+          <span key={l} className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs">{l}
+            <button type="button" onClick={() => toggle(l)} aria-label={`Remove ${l}`}><X className="h-3 w-3" /></button></span>
+        ))}</div>
+      )}
+    </div>
+  );
+}
 
 export default function ConceptVideosAdmin() {
   const { toast } = useToast();
@@ -60,6 +94,7 @@ export default function ConceptVideosAdmin() {
         module: d.module?.trim() || null, video_url: d.video_url.trim(),
         duration_minutes: d.duration_minutes || null, order_index: d.order_index || 0, is_published: d.is_published,
         subtitles_vtt: d.subtitles_vtt?.trim() || null,
+        labels: [...new Set((d.labels ?? []).map((l) => l.trim()).filter(Boolean))],
       };
       const q = d.id
         ? supabase.from('concept_videos').update({ ...row, updated_at: new Date().toISOString() }).eq('id', d.id)
@@ -150,6 +185,7 @@ export default function ConceptVideosAdmin() {
                         <p className="truncate text-xs text-muted-foreground">
                           {v.module || 'No module'} · {v.duration_minutes ? `${v.duration_minutes} min` : '—'} · {v.video_url.startsWith(STORAGE_PREFIX) ? 'Uploaded file' : 'Link'}
                         </p>
+                        <LabelChips labels={v.labels} />
                       </div>
                       <Badge variant={v.is_published ? 'default' : 'secondary'}>{v.is_published ? 'Published' : 'Draft'}</Badge>
                       <Switch checked={v.is_published} onCheckedChange={() => togglePublish(v)} aria-label="Published" />
@@ -205,6 +241,7 @@ export default function ConceptVideosAdmin() {
                 <div className="space-y-1"><Label>Minutes</Label><Input type="number" value={draft.duration_minutes ?? ''} onChange={(e) => setDraft({ ...draft, duration_minutes: e.target.value ? Number(e.target.value) : null })} /></div>
               </div>
               <div className="space-y-1"><Label>Description</Label><Textarea value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} className="min-h-[60px]" /></div>
+              <LabelEditor labels={draft.labels ?? []} onChange={(labels) => setDraft({ ...draft, labels })} />
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Label>Subtitles</Label>

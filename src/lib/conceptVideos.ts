@@ -19,7 +19,11 @@ export interface ConceptVideo {
   order_index: number;
   is_published: boolean;
   subtitles_vtt?: string | null;
+  labels?: string[];
 }
+
+/** The 4 big SAT math domains plus Desmos — one click to apply in the admin editor. */
+export const PRESET_LABELS = ['Algebra', 'Advanced Math', 'Problem Solving & Data', 'Geometry & Trig', 'Desmos'] as const;
 
 /** Uploaded files are stored as `storage:<path>` in the private concept-videos bucket. */
 export const STORAGE_PREFIX = 'storage:';
