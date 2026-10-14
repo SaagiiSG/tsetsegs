@@ -8,9 +8,10 @@ import type { TopicAccuracy } from '@/hooks/useStudentAnalytics';
 
 interface PriorityAlertCardProps {
   weakestTopic: TopicAccuracy | null;
+  practiceLink?: string;
 }
 
-export function PriorityAlertCard({ weakestTopic }: PriorityAlertCardProps) {
+export function PriorityAlertCard({ weakestTopic, practiceLink = '/practice/dashboard' }: PriorityAlertCardProps) {
   const navigate = useNavigate();
 
   if (!weakestTopic) {
@@ -118,7 +119,7 @@ export function PriorityAlertCard({ weakestTopic }: PriorityAlertCardProps) {
                     ? 'bg-red-500 hover:bg-red-600' 
                     : 'bg-amber-500 hover:bg-amber-600 text-black'
                 }`}
-                onClick={() => navigate('/practice/dashboard')}
+                onClick={() => navigate(practiceLink)}
               >
                 Start Practice
                 <ArrowRight className="h-4 w-4" />
