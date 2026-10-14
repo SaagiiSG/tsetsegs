@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -63,7 +63,7 @@ export default function InvestorDemo() {
   const submitAnswer = async () => {
     if (!answer) return;
     const ok = await demo.action('attempt', { question: String(q), answer, seconds: String(Math.min(3600, Math.max(1, Math.round((Date.now() - started.current) / 1000)))) });
-    if (ok) setResult(undefined !== demo.session ? ['B', 'C', 'A', 'D', 'B', 'C'][q] === answer : false);
+    if (ok) setResult(['B', 'C', 'A', 'D', 'B', 'C'][q] === answer);
   };
   const roster = (attendance = false) => <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Accuracy</TableHead><TableHead>Rank</TableHead><TableHead>{attendance ? 'Attendance' : 'Points'}</TableHead></TableRow></TableHeader><TableBody>{demoStudents.map(s => <TableRow key={s.name}><TableCell className="font-medium">{s.name}</TableCell><TableCell>{s.accuracy}%</TableCell><TableCell><Badge variant="outline">{s.tier}</Badge></TableCell><TableCell>{attendance ? <Button disabled={demo.busy} variant="outline" size="sm" onClick={() => { const current = state?.attendance[s.name] ?? 'present'; void demo.action('attendance', { student: s.name, status: current === 'present' ? 'late' : current === 'late' ? 'absent' : 'present' }); }}>{state?.attendance[s.name] ?? 'present'}</Button> : s.points + (s.name === 'Alex Morgan' ? correct * 10 : 0)}</TableCell></TableRow>)}</TableBody></Table>;
   const practice = <Panel className="max-w-4xl mx-auto"><div className="flex justify-between gap-3 mb-6"><Badge variant="outline">DEMO{String(q + 1).padStart(3, '0')} · {demoQuestions[q].topic}</Badge>{speedActive && <span className="font-mono">{speedSeconds}s</span>}</div><div className="text-lg leading-relaxed mb-6"><MathText text={demoQuestions[q].text}/></div><div className="grid gap-3 sm:grid-cols-2">{demoQuestions[q].options.map((option, i) => { const letter = String.fromCharCode(65 + i); return <Button key={letter} variant={answer === letter ? 'default' : 'outline'} disabled={result !== null || demo.busy} className="h-auto min-h-14 justify-start whitespace-normal text-left" onClick={() => setAnswer(letter)}><span className="font-mono mr-2">{letter}</span><MathText text={option}/></Button>; })}</div><div className="flex gap-3 mt-6 flex-wrap"><Button disabled={!answer || demo.busy || result !== null} onClick={() => void submitAnswer()}>Check answer</Button><Button variant="outline" onClick={() => setExplanation(!explanation)}>{explanation ? 'Hide explanation' : 'Show explanation'}</Button>{result !== null && <Button variant="outline" onClick={() => resetQuestion((q + 1) % demoQuestions.length)}>Next question<ArrowRight className="h-4 w-4"/></Button>}</div>{result !== null && <p role="status" className="mt-4 font-medium">{result ? 'Correct! Your attempt has been saved.' : 'Incorrect. Try the next question or review the explanation.'}</p>}{explanation && <div className="mt-5 border-t pt-5"><MathText text={demoQuestions[q].explanation}/></div>}</Panel>;
@@ -94,7 +94,6 @@ export default function InvestorDemo() {
   </div>;
 }
 
-import { TabsContent } from '@/components/ui/tabs';
 function DemoRanks({ state }: { state: DemoState }) {
   const extra = state.attempts.filter(a => a.correct).length * 10;
   return <><TabsContent value="sprint"><p className="text-sm text-muted-foreground py-4">Sprint 3 · 5 days remaining · sample standings</p><RankTable extra={extra}/></TabsContent><TabsContent value="all"><p className="text-sm text-muted-foreground py-4">All-time · sample standings + demo points</p><RankTable extra={extra}/></TabsContent><TabsContent value="position"><div className="py-8 space-y-3"><p className="font-mono text-4xl">#2 · Gold</p><p>{2840+extra} points · {Math.max(0, 3120-2840-extra)} points to first place</p></div></TabsContent><TabsContent value="history">{['Sprint 1 · Bronze → Silver · #3','Sprint 2 · Silver → Gold · #2'].map(s => <p className="py-4 border-b" key={s}>{s}<span className="text-xs text-muted-foreground ml-2">sample</span></p>)}</TabsContent></>;

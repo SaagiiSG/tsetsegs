@@ -54,5 +54,5 @@ export function useDemoSession() {
     else accept(data);
     setBusy(false); return !failure;
   };
-  return { session, loading, busy, error, expired, start, end, action, remaining: session ? Math.max(0, Math.ceil((Date.parse(session.expiresAt) - now) / 1000)) : 0 };
+  return { session, loading, busy, error, expired, start, end, action, remaining: session ? Math.min(900, Math.max(0, Math.ceil((Date.parse(session.expiresAt) - now) / 1000))) : 0 };
 }
