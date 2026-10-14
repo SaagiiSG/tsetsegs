@@ -5109,31 +5109,40 @@ export type Database = {
       }
       tenant_speed_runs: {
         Row: {
+          category: string | null
           correct: number
           created_at: string
+          duration_seconds: number | null
           id: string
           institution_id: string
           student_id: string
           subject: string
           total: number
+          total_time_seconds: number | null
         }
         Insert: {
+          category?: string | null
           correct?: number
           created_at?: string
+          duration_seconds?: number | null
           id?: string
           institution_id: string
           student_id: string
           subject?: string
           total?: number
+          total_time_seconds?: number | null
         }
         Update: {
+          category?: string | null
           correct?: number
           created_at?: string
+          duration_seconds?: number | null
           id?: string
           institution_id?: string
           student_id?: string
           subject?: string
           total?: number
+          total_time_seconds?: number | null
         }
         Relationships: [
           {

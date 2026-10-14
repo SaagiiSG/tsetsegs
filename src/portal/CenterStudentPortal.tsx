@@ -28,6 +28,7 @@ import { Flame as FlameIcon, Star, BarChart3 } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
+import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -421,67 +422,67 @@ function PracticePage({ me }: { me: Me }) {
 
 /* ------------------------------ Speed mode ------------------------------ */
 
-const SPEED_COUNT = 10, SPEED_SECONDS = 90;
 function SpeedPage({ me }: { me: Me }) {
   const record = useRecordAttempt(me);
-  const [subject, setSubject] = useState<'math' | 'english'>('math');
+  const { center } = useCenter();
+  const qc = useQueryClient();
+  const [cfg, setCfg] = useState<SpeedConfig | null>(null);
+  const subject = cfg?.subject ?? 'math';
+  const SPEED_SECONDS = cfg?.duration ?? 120;
   const [qs, setQs] = useState<Q[] | null>(null);
   const [i, setI] = useState(0);
   const [left, setLeft] = useState(SPEED_SECONDS);
+  const [qStart, setQStart] = useState(SPEED_SECONDS);
   const [picked, setPicked] = useState(''); const [typed, setTyped] = useState('');
   const [score, setScore] = useState<boolean[]>([]);
+  const [timeUp, setTimeUp] = useState(false);
 
-  const start = async () => {
-    const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const { count } = await supabase.from('intl_questions').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
-    const off = Math.max(0, Math.floor(Math.random() * Math.max(1, (count ?? 0) - 60)));
-    const { data } = await supabase.from('intl_questions').select(COLS).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub).range(off, off + 59);
-    const pool = [...(data as Q[] ?? [])].sort(() => Math.random() - 0.5).slice(0, SPEED_COUNT);
-    setQs(pool); setI(0); setScore([]); setLeft(SPEED_SECONDS); setPicked(''); setTyped('');
+  const runs = useQuery({
+    queryKey: ['center-speed-runs', me.student.id, 'list'],
+    queryFn: async () => ((await supabase.from('tenant_speed_runs').select('id, created_at, subject, correct, total, duration_seconds, total_time_seconds, category').eq('student_id', me.student.id).order('created_at', { ascending: false }).limit(200)).data ?? []) as SpeedRun[],
+  });
+
+  const start = async (c: SpeedConfig = cfg!) => {
+    setCfg(c);
+    const sub = c.subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
+    const base = () => { let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub); if (c.category) b = b.eq('category_id', c.category); return b; };
+    const { count } = await base().range(0, 0);
+    const off = Math.max(0, Math.floor(Math.random() * Math.max(1, (count ?? 0) - 80)));
+    const { data } = await base().range(off, off + 79);
+    const pool = [...(data as Q[] ?? [])].sort(() => Math.random() - 0.5).slice(0, c.count);
+    setQs(pool); setI(0); setScore([]); setLeft(c.duration); setQStart(c.duration); setPicked(''); setTyped(''); setTimeUp(false);
   };
   const q = qs?.[i];
-  const done = qs && i >= qs.length;
-  const { center } = useCenter();
-  const qc = useQueryClient();
+  const done = qs && (i >= qs.length || timeUp);
   useEffect(() => {
-    if (!done || !qs?.length) return;
-    supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: qs.length })
+    if (!done || !qs?.length || !cfg) return;
+    supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: Math.max(score.length, 1), duration_seconds: cfg.duration, total_time_seconds: cfg.duration - left, category: cfg.category })
       .then(() => qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }));
   }, [done]);
   const answer = useCallback(async (given: string) => {
     if (!q) return;
     const ok = !!given && isCorrect(q, given);
-    record(q.id, ok, SPEED_SECONDS - left);
-    setScore(s => [...s, ok]); setI(n => n + 1); setLeft(SPEED_SECONDS); setPicked(''); setTyped('');
-  }, [q, record, left]);
+    record(q.id, ok, qStart - left);
+    setScore(s => [...s, ok]); setI(n => n + 1); setQStart(left); setPicked(''); setTyped('');
+  }, [q, record, left, qStart]);
   useEffect(() => {
-    if (!q) return;
-    if (left <= 0) { answer(''); return; }
+    if (!q || done) return;
+    if (left <= 0) { setTimeUp(true); return; }
     const t = setTimeout(() => setLeft(l => l - 1), 1000);
     return () => clearTimeout(t);
-  }, [left, q, answer]);
+  }, [left, q, done]);
 
-  if (!qs) return (
-    <div className="space-y-4 max-w-xl">
-      <h1 className="text-2xl font-bold tracking-tight">Speed mode</h1>
-      <Glass className="space-y-4">
-        <p className="text-sm text-muted-foreground">{SPEED_COUNT} questions, {SPEED_SECONDS} seconds each. Every answer counts toward your stats.</p>
-        <div className="flex gap-1 rounded-lg border p-1 w-fit">
-          {(['math', 'english'] as const).map(s => <button key={s} onClick={() => setSubject(s)} className={`rounded-md px-3 py-1 text-sm ${subject === s ? 'bg-foreground text-background' : 'text-foreground/70'}`}>{s === 'math' ? 'Math' : 'English'}</button>)}
-        </div>
-        <Button onClick={start}><Zap className="h-4 w-4" />Start</Button>
-      </Glass>
-    </div>
-  );
+  if (!qs) return <CenterSpeedLobby runs={runs.data ?? []} onStart={start} />;
   if (done) {
     const c = score.filter(Boolean).length;
-    const stars = c >= 9 ? 3 : c >= 7 ? 2 : c >= 5 ? 1 : 0;
+    const ratio = qs.length ? c / qs.length : 0;
+    const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : ratio >= 0.5 ? 1 : 0;
     return (
       <Glass className="max-w-xl text-center space-y-3">
         <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
-        <p className="text-sm text-muted-foreground">{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
-        <div className="flex justify-center gap-2"><Button onClick={start}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Change subject</Button></div>
+        <p className="text-sm text-muted-foreground">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
+        <div className="flex justify-center gap-2"><Button onClick={() => start()}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
       </Glass>
     );
   }
