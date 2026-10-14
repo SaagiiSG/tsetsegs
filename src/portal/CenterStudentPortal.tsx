@@ -100,7 +100,7 @@ export default function CenterStudentPortal() {
   const glow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || '217 91% 60%';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
       <div aria-hidden className="admin-page-atmosphere" />
       <AdminBackgroundPaths />
       <div className="relative flex">
