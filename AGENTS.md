@@ -1,4 +1,5 @@
 # UI architecture
+- Public investor demo renders outside main/tenant auth providers and uses only capability-scoped investor_demo RPCs with fictional sample content; no auth accounts, real question bank or customer privileges are created. Demo access expires server-side, and bounded cleanup wakes on creation and unschedules when empty.
 - Admin sidebar sections are controlled by route-aware expansion and remain available as icons when collapsed, so navigation cannot hide the current page or strand users.
 - Admin appearance uses a lifecycle-scoped body theme with semantic tokens so portalled dialogs inherit it without changing student or teacher pages.
 - Institution customer tracking and payment dues are admin-only records independent of competition cohorts; they do not grant tenant access or provision subdomains.
