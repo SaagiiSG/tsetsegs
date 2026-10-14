@@ -30,7 +30,7 @@ function compute(attempts: Attempt[], meta: Record<string, QMeta>, subject: 'mat
   }
   (Object.keys(diff) as (keyof DifficultyBreakdown)[]).forEach(k => { diff[k].accuracy = diff[k].total ? Math.round(100 * diff[k].correct / diff[k].total) : 0; });
   const topicAccuracy: TopicAccuracy[] = Object.entries(topics).filter(([n]) => n !== 'Other').map(([topicName, s]) => ({
-    topicName, subject: subject === 'math' ? 'Math' : 'English', accuracy: Math.round(100 * s.c / s.n), questionsAttempted: s.n, correctAnswers: s.c, averageTime: 0, optimalTime: 40,
+    topicName, subject: (subject === 'math' ? 'Math' : 'English') as 'Math' | 'English', accuracy: Math.round(100 * s.c / s.n), questionsAttempted: s.n, correctAnswers: s.c, averageTime: 0, optimalTime: 40,
   })).sort((a, b) => a.accuracy - b.accuracy);
 
   // Without timing data: repeated misses → conceptual; misses on easy → careless; rest → trap answers.
