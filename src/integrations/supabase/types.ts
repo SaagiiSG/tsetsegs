@@ -6036,6 +6036,12 @@ export type Database = {
         }[]
       }
       tenant_my_student_id: { Args: { _institution: string }; Returns: string }
+      tenant_sat_save: {
+        Args: { _advance?: boolean; _answers: Json; _attempt: string }
+        Returns: undefined
+      }
+      tenant_sat_start: { Args: { _institution: string }; Returns: string }
+      tenant_sat_state: { Args: { _attempt: string }; Returns: Json }
       tenant_sprint_leaderboard: {
         Args: { _sprint: string }
         Returns: {
