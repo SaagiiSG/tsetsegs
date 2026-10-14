@@ -12,3 +12,5 @@
 - Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank.
 - Concept videos are international-only (nav filtered and route guarded by `student.cohort`).
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
+- Center SAT simulations store immutable international-bank papers in tenant_sat_attempts; authenticated RPCs redact answer keys until completion and grade server-side, keeping results separate from main-site Bluebook attempts.
+- Center rankings derive points only from tenant attempts and snapshot tier progression when a center sprint finishes, so center rankings and history never query global student rankings.

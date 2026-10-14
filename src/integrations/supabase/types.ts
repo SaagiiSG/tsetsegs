@@ -5050,6 +5050,64 @@ export type Database = {
           },
         ]
       }
+      tenant_rank_history: {
+        Row: {
+          created_at: string
+          final_position: number
+          id: string
+          institution_id: string
+          next_tier: string
+          points: number
+          sprint_id: string
+          student_id: string
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          final_position: number
+          id?: string
+          institution_id: string
+          next_tier?: string
+          points?: number
+          sprint_id: string
+          student_id: string
+          tier?: string
+        }
+        Update: {
+          created_at?: string
+          final_position?: number
+          id?: string
+          institution_id?: string
+          next_tier?: string
+          points?: number
+          sprint_id?: string
+          student_id?: string
+          tier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_rank_history_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_rank_history_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_rank_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_registrations: {
         Row: {
           class_id: string | null
@@ -5103,6 +5161,69 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_sat_attempts: {
+        Row: {
+          answers: Json
+          break_until: string | null
+          completed_at: string | null
+          current_module: number
+          id: string
+          institution_id: string
+          math_score: number | null
+          module_started_at: string
+          paper: Json
+          rw_score: number | null
+          started_at: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          answers?: Json
+          break_until?: string | null
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          institution_id: string
+          math_score?: number | null
+          module_started_at?: string
+          paper?: Json
+          rw_score?: number | null
+          started_at?: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          answers?: Json
+          break_until?: string | null
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          institution_id?: string
+          math_score?: number | null
+          module_started_at?: string
+          paper?: Json
+          rw_score?: number | null
+          started_at?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sat_attempts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_sat_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
             referencedColumns: ["id"]
           },
         ]
@@ -5915,6 +6036,12 @@ export type Database = {
         }[]
       }
       tenant_my_student_id: { Args: { _institution: string }; Returns: string }
+      tenant_sat_save: {
+        Args: { _advance?: boolean; _answers: Json; _attempt: string }
+        Returns: undefined
+      }
+      tenant_sat_start: { Args: { _institution: string }; Returns: string }
+      tenant_sat_state: { Args: { _attempt: string }; Returns: Json }
       tenant_sprint_leaderboard: {
         Args: { _sprint: string }
         Returns: {
@@ -5923,6 +6050,18 @@ export type Database = {
           name: string
           points: number
           student_id: string
+        }[]
+      }
+      tenant_student_board: {
+        Args: { _institution: string; _sprint?: string }
+        Returns: {
+          answered: number
+          class_name: string
+          name: string
+          points: number
+          standing: number
+          student_id: string
+          tier: string
         }[]
       }
       tenant_update_settings: {

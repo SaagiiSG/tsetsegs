@@ -92,6 +92,27 @@
       "when": 1791988534924,
       "tag": "0012_tenant_speed_runs_details",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791989361659,
+      "tag": "0013_center_sat_rank_storage",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791989407993,
+      "tag": "0014_center_sat_secure_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791989681129,
+      "tag": "0015_protect_center_sat_answer_keys",
+      "breakpoints": true
     }
   ]
 }
