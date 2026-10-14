@@ -85,6 +85,13 @@
       "when": 1791987749741,
       "tag": "0011_tenant_answer_time_and_video_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791988534924,
+      "tag": "0012_tenant_speed_runs_details",
+      "breakpoints": true
     }
   ]
 }

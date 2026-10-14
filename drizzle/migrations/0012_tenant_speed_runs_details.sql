@@ -1,0 +1,1 @@
+ALTER TABLE public.tenant_speed_runs ADD COLUMN IF NOT EXISTS duration_seconds int, ADD COLUMN IF NOT EXISTS total_time_seconds int, ADD COLUMN IF NOT EXISTS category text;
