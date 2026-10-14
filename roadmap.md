@@ -1,4 +1,5 @@
 # UI work
+- [ ] Center student: SAT simulation with saved results and resume, center-only sprint/all-time/rank-history tabs, and a dashboard roadmap preview.
 - [x] Fix admin light-mode contrast and adapt Resend's Atmospheric Glows reference without coloring data surfaces; verify signed-in dashboard in both appearances.
 - [x] Refine admin using active Apple Design/Liquid Glass skills and the Vercel design reference; verify navigation and accessibility.
 - [x] Confirm admin Concept Videos is visible again (user confirmed).
