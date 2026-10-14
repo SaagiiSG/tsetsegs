@@ -3,7 +3,7 @@ import { VideoRoadmap } from './VideoRoadmap';
 import { NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, MoreHorizontal,
+  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, Timer, MoreHorizontal,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
