@@ -2092,6 +2092,30 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_demo_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          state: Json
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state?: Json
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state?: Json
+          token_hash?: string
+        }
+        Relationships: []
+      }
       live_session_answers: {
         Row: {
           answer: string
@@ -5754,6 +5778,14 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      investor_demo_action: {
+        Args: { _action: string; _payload: Json; _token: string }
+        Returns: Json
+      }
+      investor_demo_cleanup: { Args: never; Returns: undefined }
+      investor_demo_end: { Args: { _token: string }; Returns: undefined }
+      investor_demo_start: { Args: { _token: string }; Returns: Json }
+      investor_demo_state: { Args: { _token: string }; Returns: Json }
       is_challenge_participant: {
         Args: { _account_id: string; _challenge_id: string }
         Returns: boolean

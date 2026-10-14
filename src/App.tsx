@@ -28,6 +28,7 @@ import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
 import { resolveCenterSlug } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
+import InvestorDemo from './demo/InvestorDemo';
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
@@ -376,6 +377,9 @@ const CenterJoinRedirect = () => {
 };
 
 const App = () => {
+  if (window.location.pathname === '/demo' || window.location.pathname.startsWith('/demo/')) {
+    return <QueryClientProvider client={queryClient}><ThemeProvider attribute="class" defaultTheme="dark" enableSystem><TooltipProvider><BrowserRouter><InvestorDemo /></BrowserRouter></TooltipProvider></ThemeProvider></QueryClientProvider>;
+  }
   const centerSlug = resolveCenterSlug();
   if (centerSlug) {
     return (
