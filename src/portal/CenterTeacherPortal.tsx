@@ -524,7 +524,7 @@ export default function CenterTeacherPortal() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-hidden admin-glow-scope"
+      className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope"
       style={{ '--section-glow': sectionGlow } as React.CSSProperties}
     >
       <div aria-hidden className="admin-page-atmosphere" />
