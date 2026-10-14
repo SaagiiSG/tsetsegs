@@ -30,7 +30,8 @@ import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
-import { centerSatSimulation } from './centerSatSimulation';
+import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
+import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
 import { RoadmapPreview } from './RoadmapPreview';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -210,6 +211,7 @@ function HomePage({ me }: { me: Me }) {
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
   const simulation = useMemo(() => centerSatSimulation(me.attempts, me.meta), [me.attempts, me.meta]);
+  const simulationProgress = useMemo(() => centerSatProgress(me.attempts, me.meta), [me.attempts, me.meta]);
 
   return (
     <div className="space-y-5">
@@ -254,7 +256,7 @@ function HomePage({ me }: { me: Me }) {
           })}
         </div>
       </div>
-      {simulation && <SatSimulationIsland latest={simulation} />}
+      {simulation ? <SatSimulationIsland latest={simulation} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
       <div className="grid gap-4 lg:grid-cols-4">
         <Glass className="lg:col-span-2 space-y-3">
           <p className="font-medium">Domain mastery</p>
