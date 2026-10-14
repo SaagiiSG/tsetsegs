@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { VideoLabelFilter, LabelChips, allLabels, filterVideos } from '@/components/concept-videos/VideoLabelFilter';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { VideoRoadmap } from './VideoRoadmap';
 import { NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -55,11 +55,12 @@ function useMe() {
       const [cls, att, attempts] = await Promise.all([
         s.class_id ? supabase.from('tenant_classes').select('name, schedule').eq('id', s.class_id).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from('tenant_attendance').select('session_date, status').eq('student_id', s.id).order('session_date', { ascending: false }).limit(60),
-        supabase.from('tenant_attempts').select('question_id, is_correct, created_at').eq('student_id', s.id).order('created_at', { ascending: false }).limit(10000),
+        supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds').eq('student_id', s.id).order('created_at', { ascending: false }).limit(10000),
       ]);
       const list = attempts.data ?? [];
+      const vids = (await supabase.from('tenant_video_progress').select('video_id, completed_at').eq('student_id', s.id)).data ?? [];
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
-      return { student: s, cls: cls.data as { name: string; schedule: string | null } | null, att: att.data ?? [], attempts: list, meta };
+      return { student: s, cls: cls.data as { name: string; schedule: string | null } | null, att: att.data ?? [], attempts: list, meta, videosDone: vids.map(v => v.video_id) };
     },
   });
 }
@@ -133,7 +134,7 @@ export default function CenterStudentPortal() {
                 <Route path="review" element={<ReviewPage me={me.data} />} />
                 <Route path="analytics" element={<AnalyticsRoute me={me.data} />} />
                 <Route path="leaderboard" element={<LeaderboardPage me={me.data} />} />
-                <Route path="videos" element={<VideosPage />} />
+                <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
                 <Route path="announcements" element={<div className="max-w-2xl"><h1 className="text-2xl font-bold mb-4">Announcements</h1><StudentAnnouncements studentId={me.data.student.id} /></div>} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
@@ -196,6 +197,7 @@ function HomePage({ me }: { me: Me }) {
     if (goals.data && !goals.data.isSet && !localStorage.getItem(key)) { setGoalOpen(true); localStorage.setItem(key, '1'); }
   }, [goals.data, me.student.id]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const videoIds = (usePublishedVideos().data ?? []).map(v => v.id);
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
 
@@ -218,6 +220,7 @@ function HomePage({ me }: { me: Me }) {
             medium={{ current: prog.medium, goal: g.medium }}
             onEditGoals={() => setGoalOpen(true)}
             onShowHistory={() => setRingOpen(true)}
+            className="rounded-3xl admin-glass-card admin-glass-neutral"
           />
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
@@ -241,7 +244,7 @@ function HomePage({ me }: { me: Me }) {
           })}
         </div>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-4">
         <Glass className="lg:col-span-2 space-y-3">
           <p className="font-medium">Domain mastery</p>
           {!domains.length ? <p className="text-sm text-muted-foreground">Solve a few problems to see your strengths.</p> : domains.map(d => (
@@ -249,6 +252,14 @@ function HomePage({ me }: { me: Me }) {
               <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-foreground/70" style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
           ))}
         </Glass>
+        <button onClick={() => navigate('/student/videos')} className="text-left">
+          <Glass className="h-full space-y-3 hover:-translate-y-0.5 transition-transform">
+            <p className="text-xs text-muted-foreground">Concept videos</p>
+            <p className="font-mono text-3xl">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-base text-muted-foreground">/{videoIds.length || '…'}</span></p>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
+            <p className="text-xs text-muted-foreground">Continue your roadmap →</p>
+          </Glass>
+        </button>
         <Glass className="space-y-4">
           <div><p className="text-xs text-muted-foreground">Class</p><p className="font-medium">{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-xs text-muted-foreground">{me.cls.schedule}</p>}</div>
           <div className="grid grid-cols-3 gap-3 border-t pt-4">
@@ -268,8 +279,8 @@ function HomePage({ me }: { me: Me }) {
 function useRecordAttempt(me: Me) {
   const { center, userId } = useCenter();
   const qc = useQueryClient();
-  return async (questionId: string, ok: boolean) => {
-    await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok });
+  return async (questionId: string, ok: boolean, seconds?: number) => {
+    await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null });
     qc.invalidateQueries({ queryKey: ['center-student', center.id, userId] });
   };
 }
@@ -281,12 +292,13 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   const [tries, setTries] = useState(0);
   const [showExp, setShowExp] = useState(false);
   const [forfeit, setForfeit] = useState(false);
-  useEffect(() => { setPicked(''); setTyped(''); setResult(null); setTries(0); setShowExp(false); setForfeit(false); }, [q.id]);
+  const startedAt = useRef(Date.now());
+  useEffect(() => { setPicked(''); setTyped(''); setResult(null); setTries(0); setShowExp(false); setForfeit(false); startedAt.current = Date.now(); }, [q.id]);
   const choices = normaliseChoices(q.multiple_choice_options, q.choice_images);
   const submit = async () => {
     const ok = isCorrect(q, choices.length ? picked : typed);
     // Only the first try counts, and peeking at the explanation first forfeits it.
-    if (tries === 0 && !forfeit) await record(q.id, ok);
+    if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000);
     setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
   };
   const openExplanation = () => {
@@ -424,9 +436,9 @@ function SpeedPage({ me }: { me: Me }) {
   const answer = useCallback(async (given: string) => {
     if (!q) return;
     const ok = !!given && isCorrect(q, given);
-    record(q.id, ok);
+    record(q.id, ok, SPEED_SECONDS - left);
     setScore(s => [...s, ok]); setI(n => n + 1); setLeft(SPEED_SECONDS); setPicked(''); setTyped('');
-  }, [q, record]);
+  }, [q, record, left]);
   useEffect(() => {
     if (!q) return;
     if (left <= 0) { answer(''); return; }
@@ -537,30 +549,15 @@ function LeaderboardPage({ me }: { me: Me }) {
 
 /* ------------------------------ Concept videos ------------------------------ */
 
-function VideosPage() {
-  const { data, isLoading } = useQuery({
+function usePublishedVideos() {
+  return useQuery({
     queryKey: ['center-concept-videos'],
     queryFn: async () => (await supabase.from('concept_videos').select('*').eq('is_published', true).order('order_index')).data ?? [],
   });
-  const [open, setOpen] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [label, setLabel] = useState<string | null>(null);
-  const video = data?.find(v => v.id === open);
-  const labels = useMemo(() => allLabels(data ?? []), [data]);
-  const shown = useMemo(() => filterVideos(data ?? [], query, label), [data, query, label]);
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Concept videos</h1>
-      {video && <Glass className="space-y-3"><p className="font-medium">{video.title}</p><ConceptVideoPlayer url={(video as any).video_url} subtitles={(video as any).subtitles_vtt} /></Glass>}
-      {!!data?.length && <VideoLabelFilter labels={labels} query={query} onQuery={setQuery} active={label} onActive={setLabel} />}
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? <Glass><p className="text-sm text-muted-foreground">No videos yet.</p></Glass> : !shown.length ? <Glass><p className="text-sm text-muted-foreground">No videos match.</p></Glass> : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{shown.map(v => (
-          <button key={v.id} onClick={() => { setOpen(v.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left">
-            <Glass className={`h-full ${open === v.id ? 'ring-1 ring-foreground/40' : ''}`}><PlayCircle className="h-5 w-5 text-muted-foreground" /><p className="font-medium mt-2">{v.title}</p>{(v as any).description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{(v as any).description}</p>}<LabelChips labels={v.labels} /></Glass>
-          </button>))}</div>
-      )}
-    </div>
-  );
+}
+
+function VideosPage({ me }: { me: Me }) {
+  return <VideoRoadmap videos={usePublishedVideos()} me={me} />;
 }
 
 /* ------------------------------ Badges ------------------------------ */

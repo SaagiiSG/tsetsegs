@@ -11,6 +11,7 @@ interface DailyRingProps {
   onEditGoals?: () => void;
   onShowHistory?: () => void;
   size?: number;
+  className?: string;
 }
 
 const RING_COLORS = {
@@ -52,7 +53,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220 }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className }: DailyRingProps) {
   const cx = size / 2;
   const cy = size / 2;
   const stroke = Math.round(size * 0.085);
@@ -70,7 +71,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
   return (
     <Card
       className={cn(
-        'h-full relative overflow-hidden',
+        'h-full relative overflow-hidden', className,
         onShowHistory && 'cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
       )}
       onClick={onShowHistory ? () => onShowHistory() : undefined}
