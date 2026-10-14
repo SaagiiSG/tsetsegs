@@ -7,6 +7,7 @@ import { Activity, Lock, Sparkles } from "lucide-react";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
 import { useScorePrediction } from "@/hooks/useScorePrediction";
 import { supabase } from "@/integrations/supabase/client";
+import type { SimulationResult } from '@/lib/satSimulation';
 
 const UNLOCK_AT = 440;
 
@@ -103,7 +104,13 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   if (isLoading || !prediction || prediction.calibrationLocked || !unlocked) return null;
 
   // ---------- Unlocked state ----------
-  const { latest } = prediction.simulation!;
+  const latest = prediction.simulation?.latest;
+  if (!latest) return null;
+  return <SatSimulationIsland latest={latest} isFresh={isFresh} />;
+}
+
+/** Shared display only; each portal supplies its own isolated practice data. */
+export function SatSimulationIsland({ latest, isFresh = false }: { latest: SimulationResult; isFresh?: boolean }) {
   const confLabel = latest.confidence === "high" ? "High confidence" : latest.confidence === "med" ? "Medium" : "Low confidence";
 
   return (
