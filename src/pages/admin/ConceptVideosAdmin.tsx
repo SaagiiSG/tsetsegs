@@ -17,7 +17,8 @@ import { CONCEPT_DOMAINS, ConceptVideo, PRESET_LABELS, STORAGE_PREFIX, resolveVi
 import { generateSubtitles } from '@/lib/subtitles';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { LabelChips } from '@/components/concept-videos/VideoLabelFilter';
-import { X } from 'lucide-react';
+import { X, Route as RouteIcon } from 'lucide-react';
+import { RoadmapOrderDialog } from '@/components/concept-videos/RoadmapOrderDialog';
 
 type Draft = Omit<ConceptVideo, 'id'> & { id?: string };
 const empty: Draft = {
@@ -64,6 +65,7 @@ export default function ConceptVideosAdmin() {
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [preview, setPreview] = useState<{ url: string; vtt?: string | null } | null>(null);
   const [subPct, setSubPct] = useState<number | null>(null);
+  const [roadmapOpen, setRoadmapOpen] = useState(false);
   const runSubtitles = async () => {
     if (!draft) return;
     setSubPct(0);
@@ -161,9 +163,13 @@ export default function ConceptVideosAdmin() {
           <h1 className="text-2xl font-semibold">Concept Videos</h1>
           <p className="text-sm text-muted-foreground">Short math concept lessons, grouped by topic. Students only see published videos.</p>
         </div>
-        <Button onClick={() => setDraft({ ...empty, order_index: videos.length + 1 })}>
-          <Plus className="mr-1 h-4 w-4" /> Add video
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setRoadmapOpen(true)}><RouteIcon className="mr-1 h-4 w-4" /> Edit roadmap</Button>
+          <Button onClick={() => setDraft({ ...empty, order_index: videos.length + 1 })}>
+            <Plus className="mr-1 h-4 w-4" /> Add video
+          </Button>
+        </div>
+        <RoadmapOrderDialog open={roadmapOpen} onOpenChange={setRoadmapOpen} videos={videos} onSaved={() => { qc.invalidateQueries({ queryKey: ['concept-videos-admin'] }); qc.invalidateQueries({ queryKey: ['center-concept-videos'] }); toast({ title: 'Roadmap saved' }); }} />
       </div>
 
       {isLoading ? (
