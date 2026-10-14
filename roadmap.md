@@ -1,4 +1,5 @@
 # UI work
+- [ ] Public investor demo: isolated 15-minute stored sessions, fictional progress, student/teacher/admin experiences, automatic deletion, and end-to-end verification.
 - [x] Show a full-width SAT simulation locked island with distinct-question progress, remaining questions and a practice button in the customer student dashboard.
 - [x] Check existing demo access and provide the center testing sign-in link with its access limitation.
 - [x] Replace the mistaken center SAT test entry with the main dashboard's automatic data-based simulation island and shared algorithm.
