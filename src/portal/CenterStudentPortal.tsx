@@ -3,7 +3,7 @@ import { VideoRoadmap } from './VideoRoadmap';
 import { NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, Timer,
+  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, Timer, MoreHorizontal,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeed
 import { CenterSATList, CenterSATTest } from './CenterSAT';
 import { CenterRankings } from './CenterRankings';
 import { RoadmapPreview } from './RoadmapPreview';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -157,6 +158,7 @@ export default function CenterStudentPortal() {
         {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} aria-label={label} className={({ isActive }) => `rounded-full p-2.5 transition-colors ${isActive ? 'bg-foreground text-background' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
         ))}
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side="top" align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
       </nav>
     </div>
   );
