@@ -1,4 +1,6 @@
 # UI work
+- [x] Show a full-width SAT simulation locked island with distinct-question progress, remaining questions and a practice button in the customer student dashboard.
+- [x] Check existing demo access and provide the center testing sign-in link with its access limitation.
 - [x] Replace the mistaken center SAT test entry with the main dashboard's automatic data-based simulation island and shared algorithm.
 - [x] Center-only sprint/all-time/rank-history tabs and a dashboard roadmap preview.
 - [ ] Verify simulation island, ranking tabs and roadmap preview signed in as a center student — current requesting account has no center student access.

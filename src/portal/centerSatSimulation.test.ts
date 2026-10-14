@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { centerSatSimulation } from './centerSatSimulation';
+import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { calculateSimulation } from '@/lib/satSimulation';
 import type { QMeta } from './questionMeta';
 
@@ -7,6 +7,11 @@ const attempts = Array.from({ length: 440 }, (_, i) => ({ question_id: String(i)
 const meta: Record<string, QMeta> = Object.fromEntries(attempts.map(a => [a.question_id, { id: a.question_id, subject: 'math', skill: null, category_id: null, difficulty_level: 'hard', domain: 'Algebra' }]));
 
 describe('center dashboard SAT simulation', () => {
+  it('reports distinct Math progress for the locked island', () => {
+    expect(centerSatProgress([], meta)).toBe(0);
+    expect(centerSatProgress([...attempts.slice(0, 30), attempts[0]], meta)).toBe(30);
+    expect(centerSatProgress(attempts, meta)).toBe(440);
+  });
   it('stays hidden until 440 distinct Math questions', () => {
     expect(centerSatSimulation(attempts.slice(0, 439), meta)).toBeNull();
     expect(centerSatSimulation([...attempts.slice(0, 439), attempts[0]], meta)).toBeNull();
