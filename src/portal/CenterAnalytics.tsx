@@ -9,38 +9,42 @@ import { WeaknessIdentifier } from '@/components/student/analytics/WeaknessIdent
 import { DifficultyAnalysis } from '@/components/student/analytics/DifficultyAnalysis';
 import { ErrorPatternTracker } from '@/components/student/analytics/ErrorPatternTracker';
 import { ProgressVelocityGraph } from '@/components/student/analytics/ProgressVelocityGraph';
+import { TimeEfficiencyDashboard } from '@/components/student/analytics/TimeEfficiencyDashboard';
 import { ConsistencyScoreCard } from '@/components/student/analytics/ConsistencyScoreCard';
 import type { TopicAccuracy, DifficultyBreakdown, ErrorPatterns, ProgressHistory, ConsistencyMetrics } from '@/hooks/useStudentAnalytics';
 import type { QMeta } from './questionMeta';
 
-type Attempt = { question_id: string; is_correct: boolean; created_at: string };
+type Attempt = { question_id: string; is_correct: boolean; created_at: string; time_spent_seconds?: number | null };
 
 /** Same metrics as the main analytics page, computed from tenant attempts + intl question meta. */
 function compute(attempts: Attempt[], meta: Record<string, QMeta>, subject: 'math' | 'english') {
   const list = attempts.filter(a => (meta[a.question_id]?.subject ?? 'math').toLowerCase() === subject);
-  const topics: Record<string, { c: number; n: number }> = {};
+  const topics: Record<string, { c: number; n: number; times: number[] }> = {};
   const diff: DifficultyBreakdown = { easy: { total: 0, correct: 0, accuracy: 0 }, medium: { total: 0, correct: 0, accuracy: 0 }, hard: { total: 0, correct: 0, accuracy: 0 } };
   const wrongCount: Record<string, number> = {};
   for (const a of list) {
     const m = meta[a.question_id];
-    const t = (topics[m?.domain ?? 'Other'] ??= { c: 0, n: 0 }); t.n++; if (a.is_correct) t.c++;
+    const t = (topics[m?.domain ?? 'Other'] ??= { c: 0, n: 0, times: [] }); t.n++; if (a.is_correct) t.c++; if (a.time_spent_seconds) t.times.push(a.time_spent_seconds);
     const d = (m?.difficulty_level ?? 'medium').toLowerCase() as keyof DifficultyBreakdown;
     if (diff[d]) { diff[d].total++; if (a.is_correct) diff[d].correct++; }
     if (!a.is_correct) wrongCount[a.question_id] = (wrongCount[a.question_id] ?? 0) + 1;
   }
   (Object.keys(diff) as (keyof DifficultyBreakdown)[]).forEach(k => { diff[k].accuracy = diff[k].total ? Math.round(100 * diff[k].correct / diff[k].total) : 0; });
   const topicAccuracy: TopicAccuracy[] = Object.entries(topics).filter(([n]) => n !== 'Other').map(([topicName, s]) => ({
-    topicName, subject: (subject === 'math' ? 'Math' : 'English') as 'Math' | 'English', accuracy: Math.round(100 * s.c / s.n), questionsAttempted: s.n, correctAnswers: s.c, averageTime: 0, optimalTime: 40,
+    topicName, subject: (subject === 'math' ? 'Math' : 'English') as 'Math' | 'English', accuracy: Math.round(100 * s.c / s.n), questionsAttempted: s.n, correctAnswers: s.c, averageTime: s.times.length ? Math.round(s.times.reduce((x, y) => x + y, 0) / s.times.length) : 0, optimalTime: 40,
   })).sort((a, b) => a.accuracy - b.accuracy);
 
-  // Without timing data: repeated misses → conceptual; misses on easy → careless; rest → trap answers.
+  // Same rules as the main analytics: fast miss on easy → careless, >180s → time pressure, repeated miss → conceptual, else trap.
   const ep: ErrorPatterns = { careless: 0, conceptual: 0, timePressure: 0, trapAnswers: 0 };
   for (const a of list) {
     if (a.is_correct) continue;
     const d = (meta[a.question_id]?.difficulty_level ?? '').toLowerCase();
-    if (wrongCount[a.question_id] > 1) ep.conceptual++; else if (d === 'easy') ep.careless++; else ep.trapAnswers++;
+    const t = a.time_spent_seconds ?? null;
+    if (d === 'easy' && (t == null || t < 30)) ep.careless++;
+    else if (t != null && t > 180) ep.timePressure++;
+    else if (wrongCount[a.question_id] > 1) ep.conceptual++; else ep.trapAnswers++;
   }
-  const te = ep.careless + ep.conceptual + ep.trapAnswers;
+  const te = ep.careless + ep.conceptual + ep.timePressure + ep.trapAnswers;
   if (te) (Object.keys(ep) as (keyof ErrorPatterns)[]).forEach(k => { ep[k] = Math.round(100 * ep[k] / te); });
 
   const weeks: Record<string, { c: number; n: number }> = {}, days: Record<string, { c: number; n: number }> = {};
@@ -81,7 +85,7 @@ export function CenterAnalyticsPage({ attempts, meta, streak }: { attempts: Atte
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-analytics-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` },
-        body: JSON.stringify({ stats: { subject, totalAttempts: a.total, accuracy: a.overall, mastered: a.mastered, streak, topics: a.topicAccuracy.map(t => ({ t: t.topicName, acc: t.accuracy, n: t.questionsAttempted })), difficulty: a.diff, errorMix: a.ep, weekly: a.progressHistory.map(w => ({ w: w.date, acc: w.accuracy, n: w.questionsAttempted })) } }),
+        body: JSON.stringify({ stats: { subject, totalAttempts: a.total, accuracy: a.overall, mastered: a.mastered, streak, topics: a.topicAccuracy.map(t => ({ t: t.topicName, acc: t.accuracy, n: t.questionsAttempted, avgSec: t.averageTime })), difficulty: a.diff, errorMix: a.ep, weekly: a.progressHistory.map(w => ({ w: w.date, acc: w.accuracy, n: w.questionsAttempted })) } }),
       });
       if (!res.ok || !res.body) { const j = await res.json().catch(() => ({})); throw new Error(j.error ?? 'AI insights are unavailable right now.'); }
       const reader = res.body.getReader(), dec = new TextDecoder();
@@ -123,13 +127,16 @@ export function CenterAnalyticsPage({ attempts, meta, streak }: { attempts: Atte
       <PriorityAlertCard weakestTopic={a.topicAccuracy[0] ?? null} practiceLink={link} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <WeaknessIdentifier topicAccuracy={a.topicAccuracy} practiceLink={link} />
-        <DifficultyAnalysis difficultyBreakdown={a.diff} />
+        <TimeEfficiencyDashboard topicAccuracy={a.topicAccuracy} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DifficultyAnalysis difficultyBreakdown={a.diff} />
         <ErrorPatternTracker errorPatterns={a.ep} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProgressVelocityGraph progressHistory={a.progressHistory} currentScore={a.currentScore} targetScore={1400} />
         <ConsistencyScoreCard consistencyMetrics={a.consistency} />
       </div>
-      <ProgressVelocityGraph progressHistory={a.progressHistory} currentScore={a.currentScore} targetScore={1400} />
     </div>
   );
 }

@@ -78,6 +78,13 @@
       "when": 1791794645705,
       "tag": "0010_concept_video_labels",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791987749741,
+      "tag": "0011_tenant_answer_time_and_video_progress",
+      "breakpoints": true
     }
   ]
 }

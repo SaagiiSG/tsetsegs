@@ -4766,6 +4766,7 @@ export type Database = {
           is_correct: boolean
           question_id: string
           student_id: string
+          time_spent_seconds: number | null
         }
         Insert: {
           created_at?: string
@@ -4774,6 +4775,7 @@ export type Database = {
           is_correct: boolean
           question_id: string
           student_id: string
+          time_spent_seconds?: number | null
         }
         Update: {
           created_at?: string
@@ -4782,6 +4784,7 @@ export type Database = {
           is_correct?: boolean
           question_id?: string
           student_id?: string
+          time_spent_seconds?: number | null
         }
         Relationships: [
           {
@@ -5265,6 +5268,42 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_video_progress: {
+        Row: {
+          completed_at: string
+          institution_id: string
+          student_id: string
+          video_id: string
+        }
+        Insert: {
+          completed_at?: string
+          institution_id: string
+          student_id: string
+          video_id: string
+        }
+        Update: {
+          completed_at?: string
+          institution_id?: string
+          student_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_video_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_video_progress_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "concept_videos"
             referencedColumns: ["id"]
           },
         ]
