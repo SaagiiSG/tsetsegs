@@ -27,6 +27,7 @@ import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './Cent
 import { Flame as FlameIcon, Star, BarChart3 } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
+import { CenterPracticeBrowser } from './CenterPracticeBrowser';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -377,14 +378,28 @@ function PracticePage({ me }: { me: Me }) {
     const { data } = await base().range(offset, offset);
     setQ((data?.[0] as Q) ?? null);
   }, [subject, domain, difficulty, set, pinned]);
-  useEffect(() => { loadQuestion(); }, [loadQuestion]);
+  const solving = !!pinned || params.get('mode') === 'random';
+  useEffect(() => { if (solving) loadQuestion(); }, [loadQuestion, solving]);
 
   const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); v === 'all' ? p.delete('set') : p.set('set', v); setParams(p); setSubject('math'); };
-  const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); setParams(p); } else loadQuestion(); };
+  const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); p.set('mode', 'random'); setParams(p); } else loadQuestion(); };
+  const back = () => { const p = new URLSearchParams(params); p.delete('q'); p.delete('mode'); setParams(p); };
+
+  if (!solving) return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Practice</h1>
+      <CenterPracticeBrowser sets={SETS.map(s => ({ key: s.key, label: s.key === '68' ? '68' : s.key === 'SATMathTraining800' ? '150' : 'New 120' }))}
+        attempts={me.attempts} subject={subject} setKey={set}
+        onSubject={s => { setSubject(s); if (s === 'english') { const p = new URLSearchParams(params); p.delete('set'); setParams(p); } }}
+        onSet={setSet}
+        onOpen={id => { const p = new URLSearchParams(params); p.set('q', id); setParams(p); }}
+        onRandom={() => { const p = new URLSearchParams(params); p.set('mode', 'random'); setParams(p); }} />
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Practice</h1>
+      <div className="flex items-center gap-3"><Button variant="ghost" size="sm" onClick={back}>← All questions</Button><h1 className="text-2xl font-bold tracking-tight">Practice</h1></div>
       <div className="flex flex-wrap gap-2 items-center p-2 admin-glass rounded-xl border">
         <div className="flex gap-1 rounded-lg border p-1" role="tablist" aria-label="Subject">
           {(['math', 'english'] as const).map(s => <button key={s} role="tab" aria-selected={subject === s} onClick={() => { setSubject(s); if (s === 'english') setSet('all'); }}
