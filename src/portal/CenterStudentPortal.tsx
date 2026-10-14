@@ -3,7 +3,7 @@ import { VideoRoadmap } from './VideoRoadmap';
 import { NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, Timer, MoreHorizontal,
+  Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, MoreHorizontal,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenter
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
-import { CenterSATList, CenterSATTest } from './CenterSAT';
+import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
+import { centerSatSimulation } from './centerSatSimulation';
 import { CenterRankings } from './CenterRankings';
 import { RoadmapPreview } from './RoadmapPreview';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -92,7 +93,6 @@ const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
   { to: '/student/practice', label: 'Practice', icon: BookOpen },
   { to: '/student/speed', label: 'Speed mode', icon: Zap },
-  { to: '/student/sat', label: 'SAT simulation', icon: Timer },
   { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
   { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -138,8 +138,7 @@ export default function CenterStudentPortal() {
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
                 <Route path="speed" element={<SpeedPage me={me.data} />} />
-                <Route path="sat" element={<CenterSATList studentId={me.data.student.id} />} />
-                <Route path="sat/:attemptId" element={<CenterSATTest />} />
+                <Route path="sat/*" element={<Navigate to="/student" replace />} />
                 <Route path="review" element={<ReviewPage me={me.data} />} />
                 <Route path="analytics" element={<AnalyticsRoute me={me.data} />} />
                 <Route path="leaderboard" element={<CenterRankings studentId={me.data.student.id} />} />
@@ -210,6 +209,7 @@ function HomePage({ me }: { me: Me }) {
   const videoIds = (usePublishedVideos().data ?? []).map(v => v.id);
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
+  const simulation = useMemo(() => centerSatSimulation(me.attempts, me.meta), [me.attempts, me.meta]);
 
   return (
     <div className="space-y-5">
@@ -254,6 +254,7 @@ function HomePage({ me }: { me: Me }) {
           })}
         </div>
       </div>
+      {simulation && <SatSimulationIsland latest={simulation} />}
       <div className="grid gap-4 lg:grid-cols-4">
         <Glass className="lg:col-span-2 space-y-3">
           <p className="font-medium">Domain mastery</p>
