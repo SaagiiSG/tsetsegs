@@ -24,7 +24,9 @@ import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
-import { Flame as FlameIcon, Star } from 'lucide-react';
+import { Flame as FlameIcon, Star, BarChart3 } from 'lucide-react';
+import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
+import { CenterAnalyticsPage } from './CenterAnalytics';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -84,6 +86,7 @@ const NAV = [
   { to: '/student/practice', label: 'Practice', icon: BookOpen },
   { to: '/student/speed', label: 'Speed mode', icon: Zap },
   { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
+  { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/student/videos', label: 'Concept videos', icon: PlayCircle },
   { to: '/student/badges', label: 'Badges', icon: Award },
@@ -128,6 +131,7 @@ export default function CenterStudentPortal() {
                 <Route path="practice" element={<PracticePage me={me.data} />} />
                 <Route path="speed" element={<SpeedPage me={me.data} />} />
                 <Route path="review" element={<ReviewPage me={me.data} />} />
+                <Route path="analytics" element={<AnalyticsRoute me={me.data} />} />
                 <Route path="leaderboard" element={<LeaderboardPage me={me.data} />} />
                 <Route path="videos" element={<VideosPage />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
@@ -147,6 +151,11 @@ export default function CenterStudentPortal() {
       </nav>
     </div>
   );
+}
+
+function AnalyticsRoute({ me }: { me: Me }) {
+  const s = useCenterStreak(me.attempts);
+  return <CenterAnalyticsPage attempts={me.attempts} meta={me.meta} streak={s.current} />;
 }
 
 /* ------------------------------ Home ------------------------------ */
@@ -174,22 +183,20 @@ function HomePage({ me }: { me: Me }) {
   const present = me.att.filter(a => a.status === 'present' || a.status === 'late').length;
   const domains = useMemo(() => domainStats(me.attempts, me.meta), [me]);
   const solved = useMemo(() => new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)), [me]);
-  const streak = useMemo(() => {
-    const days = new Set(me.attempts.map(a => new Date(a.created_at).toDateString()));
-    let n = 0; const d = new Date();
-    if (!days.has(d.toDateString())) d.setDate(d.getDate() - 1);
-    while (days.has(d.toDateString())) { n++; d.setDate(d.getDate() - 1); }
-    return n;
-  }, [me]);
+  const streakInfo = useCenterStreak(me.attempts);
+  const streak = streakInfo.current;
   const first = me.student.name.split(' ')[0];
   const goals = useCenterGoals(me.student.id);
   const prog = useCenterDailyProgress(me.student.id, me.attempts, me.meta);
   const [goalOpen, setGoalOpen] = useState(false);
+  const [streakOpen, setStreakOpen] = useState(false);
+  const [ringOpen, setRingOpen] = useState(false);
   useEffect(() => {
     const key = `center_goals_seen_${me.student.id}`;
     if (goals.data && !goals.data.isSet && !localStorage.getItem(key)) { setGoalOpen(true); localStorage.setItem(key, '1'); }
   }, [goals.data, me.student.id]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
 
   return (
@@ -199,9 +206,9 @@ function HomePage({ me }: { me: Me }) {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border px-3 py-1.5 admin-glass">
+        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="flex items-center gap-2 rounded-full border px-3 py-1.5 admin-glass transition-transform active:scale-95 hover:bg-foreground/5">
           <FlameIcon className="h-4 w-4" /><span className="font-mono text-sm">{streak}</span><span className="text-xs text-muted-foreground">day streak</span>
-        </div>
+        </button>
       </div>
       <div className="grid gap-4 md:grid-cols-12">
         <div className="md:col-span-4 lg:col-span-3 md:min-h-[320px]">
@@ -210,8 +217,11 @@ function HomePage({ me }: { me: Me }) {
             hard={{ current: prog.hard, goal: g.hard }}
             medium={{ current: prog.medium, goal: g.medium }}
             onEditGoals={() => setGoalOpen(true)}
+            onShowHistory={() => setRingOpen(true)}
           />
         </div>
+        <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
+        <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-4 sm:grid-cols-3">
           {SETS.map(s => {

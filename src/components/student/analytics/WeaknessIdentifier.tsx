@@ -6,6 +6,7 @@ import { ActionBox } from './ActionBox';
 import type { TopicAccuracy } from '@/hooks/useStudentAnalytics';
 
 interface WeaknessIdentifierProps {
+  practiceLink?: string;
   topicAccuracy: TopicAccuracy[];
 }
 
@@ -21,7 +22,7 @@ const getAccuracyLabel = (accuracy: number) => {
   return 'Strong';
 };
 
-export function WeaknessIdentifier({ topicAccuracy }: WeaknessIdentifierProps) {
+export function WeaknessIdentifier({ topicAccuracy, practiceLink = '/practice/dashboard' }: WeaknessIdentifierProps) {
   const mathTopics = topicAccuracy.filter((t) => t.subject === 'Math');
   const englishTopics = topicAccuracy.filter((t) => t.subject === 'English');
 
@@ -124,7 +125,7 @@ export function WeaknessIdentifier({ topicAccuracy }: WeaknessIdentifierProps) {
               <ActionBox
                 message={actionMessage}
                 action={actionText}
-                link="/practice/dashboard"
+                link={practiceLink}
                 variant={weakestTopics.length > 0 ? 'urgent' : 'success'}
               />
             </>
