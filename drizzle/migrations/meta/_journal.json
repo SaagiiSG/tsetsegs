@@ -120,6 +120,13 @@
       "when": 1791991190702,
       "tag": "0016_public_investor_demo_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791991475236,
+      "tag": "0017_restrict_investor_demo_direct_access",
+      "breakpoints": true
     }
   ]
 }
