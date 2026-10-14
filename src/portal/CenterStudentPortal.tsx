@@ -29,6 +29,9 @@ import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenter
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
+import { CenterSATList, CenterSATTest } from './CenterSAT';
+import { CenterRankings } from './CenterRankings';
+import { RoadmapPreview } from './RoadmapPreview';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -88,6 +91,7 @@ const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
   { to: '/student/practice', label: 'Practice', icon: BookOpen },
   { to: '/student/speed', label: 'Speed mode', icon: Zap },
+  { to: '/student/sat', label: 'SAT simulation', icon: Timer },
   { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
   { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -133,9 +137,11 @@ export default function CenterStudentPortal() {
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
                 <Route path="speed" element={<SpeedPage me={me.data} />} />
+                <Route path="sat" element={<CenterSATList studentId={me.data.student.id} />} />
+                <Route path="sat/:attemptId" element={<CenterSATTest />} />
                 <Route path="review" element={<ReviewPage me={me.data} />} />
                 <Route path="analytics" element={<AnalyticsRoute me={me.data} />} />
-                <Route path="leaderboard" element={<LeaderboardPage me={me.data} />} />
+                <Route path="leaderboard" element={<CenterRankings studentId={me.data.student.id} />} />
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
                 <Route path="announcements" element={<div className="max-w-2xl"><h1 className="text-2xl font-bold mb-4">Announcements</h1><StudentAnnouncements studentId={me.data.student.id} /></div>} />
@@ -260,6 +266,7 @@ function HomePage({ me }: { me: Me }) {
             <p className="font-mono text-3xl">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-base text-muted-foreground">/{videoIds.length || '…'}</span></p>
             <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
             <p className="text-xs text-muted-foreground">Continue your roadmap →</p>
+            <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
           </Glass>
         </button>
         <Glass className="space-y-4">
