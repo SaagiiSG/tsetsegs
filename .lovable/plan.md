@@ -32,8 +32,16 @@ I read the research document and checked its biggest claims against the live dat
 4. Rebuild rank rules with a safe middle and one group size; fix the season bug.
 5. Turn badges into ladders and add personal records.
 
-## Decisions I need from you before step 4
-Sprint length (14 or 7 days), keep seasons or not, streak bonus in the league or not, badges paying points or not, Ruby Legend meaning, Emerald vs Platinum, and whether repeat answers pay.
+## Decisions made
+- Sprints last 7 days.
+- Seasons stay (3 sprints), and the end-of-season drop stays. The season bug gets fixed so the drop actually happens.
+- Tier 5 is called Platinum everywhere, shown in emerald green. All "Emerald" labels get renamed.
+- Repeat answers pay 0 points once a question has already paid.
+
+## Still open (asked before step 4)
+Streak bonus counted in the league or not, badges paying points or not, and what Ruby Legend means.
+
+These decisions will be saved to project memory when building starts.
 
 ## Technical notes
 - Live policies on point_transactions, student_badges, student_sprint_rankings, student_streaks, featured_badges, student_attempts use `true` for public insert/update.
