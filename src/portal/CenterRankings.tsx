@@ -1,61 +1,118 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, Medal, ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Trophy, Users, Crown, BarChart3, History, ArrowUpRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { useCenter } from './centerContext';
 import { useCenterSprints } from './admin/ToolPages';
-import { TIER_ORDER } from '@/data/badgeDefinitions';
+import { TIER_ORDER, TIER_PROMOTION_CUTOFFS, type TierType } from '@/data/badgeDefinitions';
 import { TierLadder } from '@/components/student/leaderboard/TierLadder';
+import { CurrentSprintTab, AllTimeTab, MyRankTab } from '@/components/student/leaderboard';
+import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit } from '@/hooks/useLeaderboard';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
+const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
+const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
 
+/** Customer leaderboard: same tabs and components as the main student leaderboard, fed only by tenant data. */
 export function CenterRankings({ studentId }: { studentId: string }) {
   const { center } = useCenter();
   const sprints = useCenterSprints();
-  const [selected, setSelected] = useState('');
-  const [tier, setTier] = useState('all');
-  const [limit, setLimit] = useState('100');
-  const sprint = sprints.data?.find(s => s.id === selected) ?? sprints.data?.find(s => s.status === 'active') ?? sprints.data?.[0];
-  const board = useQuery({ queryKey: ['center-board', center.id, sprint?.id], enabled: !!sprint,
-    queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: sprint?.id }); if (error) throw error; return data ?? []; } });
+  const [limit, setLimit] = useState<AllTimeLimit>(100);
+  const list = sprints.data ?? [];
+  const active = list.find(s => s.status === 'active') ?? null;
+  const board = useQuery({ queryKey: ['center-board', center.id, active?.id], enabled: !!active,
+    queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: active!.id }); if (error) throw error; return data ?? []; } });
   const allTime = useQuery({ queryKey: ['center-all-time', center.id],
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id }); if (error) throw error; return data ?? []; } });
   const history = useQuery({ queryKey: ['center-rank-history', center.id, studentId], queryFn: async () => {
     const { data, error } = await supabase.from('tenant_rank_history').select('*').eq('institution_id', center.id).eq('student_id', studentId).order('created_at', { ascending: false }).limit(100); if (error) throw error; return data ?? [];
   } });
-  const mine = board.data?.find(r => r.student_id === studentId);
-  const currentTier = history.data?.[0]?.next_tier ?? 'unranked';
+
+  const currentTier = asTier(history.data?.[0]?.next_tier);
   const unlockedAt: Record<string, string> = {};
   for (const h of [...(history.data ?? [])].reverse()) {
     if (h.tier && !unlockedAt[h.tier]) unlockedAt[h.tier] = h.created_at;
     if (h.next_tier && !unlockedAt[h.next_tier]) unlockedAt[h.next_tier] = h.created_at;
   }
-  const renderRows = (query: typeof board, filter: boolean) => {
-    if (query.isLoading) return <p className="py-8 text-muted-foreground">Loading standings…</p>;
-    if (query.error) return <p role="alert" className="py-8 text-destructive">Could not load standings. Please try again.</p>;
-    const rows = (query.data ?? []).filter(r => !filter || tier === 'all' || r.tier === tier).slice(0, Number(limit));
-    return !rows.length ? <p className="py-8 text-muted-foreground">No students in this ranking yet.</p> : <div className="divide-y">{rows.map(r => <div key={r.student_id} className={`grid grid-cols-[2rem_1fr_auto] items-center gap-3 py-4 px-3 rounded-xl ${r.student_id === studentId ? 'bg-foreground/5' : ''}`}>
-      <span className="font-mono text-muted-foreground">{r.standing}</span><div className="min-w-0"><p className="font-medium truncate">{r.name}{r.student_id === studentId ? ' · You' : ''}</p><p className="text-xs text-muted-foreground">{tierName(r.tier)}{r.class_name ? ` · ${r.class_name}` : ''}</p></div><div className="text-right"><p className="font-mono font-semibold">{r.points} pts</p><p className="text-xs text-muted-foreground">{r.answered} answered</p></div>
-    </div>)}</div>;
-  };
-  return <div className="space-y-6 max-w-5xl">
-    <header className="flex justify-between items-start gap-3"><div><h1 className="text-3xl font-bold">Leaderboard</h1><p className="text-sm text-muted-foreground mt-1">{center.name}</p></div><div className="flex items-center gap-2 admin-glass rounded-xl border px-4 py-3"><Medal className="h-5 w-5"/><span className="font-medium">{tierName(currentTier)}</span></div></header>
-    <Tabs defaultValue="sprint" className="space-y-5"><TabsList className="h-auto flex flex-wrap justify-start"><TabsTrigger value="sprint">Sprint</TabsTrigger><TabsTrigger value="position">My position</TabsTrigger><TabsTrigger value="all">All-time</TabsTrigger><TabsTrigger value="history">Rank history</TabsTrigger></TabsList>
-      <TabsContent value="sprint" className="space-y-4">
-        <div className="flex flex-wrap gap-3">{!!sprint && <Select value={sprint.id} onValueChange={setSelected}><SelectTrigger className="w-64"><SelectValue/></SelectTrigger><SelectContent>{sprints.data?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} · {s.status}</SelectItem>)}</SelectContent></Select>}
-          <Select value={tier} onValueChange={setTier}><SelectTrigger className="w-44"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">All ranks</SelectItem>{TIER_ORDER.map(t => <SelectItem key={t} value={t}>{tierName(t)}</SelectItem>)}</SelectContent></Select></div>
-        {sprint?.status === 'active' && <TierLadder currentTier={currentTier} unlockedAt={unlockedAt} standing={mine?.standing ?? null} />}
-        {sprint ? <><p className="text-sm text-muted-foreground">{sprint.starts_on} → {sprint.ends_on}</p>{renderRows(board, true)}</> : <p className="py-8 text-muted-foreground">Your center hasn't started a sprint yet.</p>}
-      </TabsContent>
-      <TabsContent value="position" className="space-y-6">
-        <div className="grid sm:grid-cols-3 gap-4">{[['Current position', mine ? `#${mine.standing}` : '—'], ['Sprint points', String(mine?.points ?? 0)], ['Your rank', tierName(currentTier)]].map(([label, value]) => <div key={label} className="admin-glass-card admin-glass-neutral rounded-3xl border p-6"><p className="text-sm text-muted-foreground">{label}</p><p className="font-mono text-3xl mt-3">{value}</p></div>)}</div>
-        <div className="flex gap-2 flex-wrap">{TIER_ORDER.map(t => <span key={t} className={`px-3 py-2 rounded-xl border text-sm ${currentTier === t ? 'bg-foreground text-background' : 'text-muted-foreground'}`}>{tierName(t)}</span>)}</div>
-        <p className="text-sm text-muted-foreground">Ranks update when your center finishes a sprint. Correct practice answers earn 10 points.</p>
-      </TabsContent>
-      <TabsContent value="all" className="space-y-3"><div className="flex items-center justify-between"><h2 className="font-semibold flex gap-2 items-center"><Trophy className="h-5 w-5"/>All-time standings</h2><Select value={limit} onValueChange={setLimit}><SelectTrigger className="w-28"><SelectValue/></SelectTrigger><SelectContent>{['10','50','100'].map(n => <SelectItem key={n} value={n}>Top {n}</SelectItem>)}</SelectContent></Select></div>{renderRows(allTime, false)}</TabsContent>
-      <TabsContent value="history">{history.isLoading ? <p>Loading history…</p> : history.error ? <p role="alert">Could not load rank history.</p> : !history.data?.length ? <p className="py-8 text-muted-foreground">Your rank history starts after your first completed sprint.</p> : <div className="divide-y">{history.data.map(h => <div key={h.id} className="flex justify-between gap-4 py-4"><div><p className="font-medium">{sprints.data?.find(s => s.id === h.sprint_id)?.name ?? 'Completed sprint'}</p><p className="text-sm text-muted-foreground">{tierName(h.tier)} <ArrowUpRight className="inline h-4 w-4"/> {tierName(h.next_tier)}</p></div><div className="text-right font-mono"><p>#{h.final_position}</p><p className="text-xs text-muted-foreground">{h.points} pts</p></div></div>)}</div>}</TabsContent>
-    </Tabs>
-  </div>;
+
+  const sprintInfo: SprintInfo | null = useMemo(() => {
+    if (!active) return null;
+    const end = new Date(`${active.ends_on}T23:59:59`);
+    const ms = Math.max(0, end.getTime() - Date.now());
+    return { id: active.id, sprintNumber: list.length - list.indexOf(active), seasonNumber: 1, startDate: active.starts_on, endDate: end.toISOString(),
+      daysRemaining: Math.floor(ms / 864e5), hoursRemaining: Math.floor(ms / 36e5) % 24, minutesRemaining: Math.floor(ms / 6e4) % 60, isActive: true };
+  }, [active, list]);
+
+  const entries: LeaderboardEntry[] = useMemo(() => (board.data ?? []).map(r => {
+    const tier = asTier(r.tier);
+    const cutoff = TIER_PROMOTION_CUTOFFS[tier] ?? 10;
+    return { rank: r.standing, userId: r.student_id, username: r.name, level: Math.max(1, Math.floor(Math.log2(r.points / 100 + 1)) + 1), totalPoints: r.points,
+      currentTier: tier, groupNumber: 1, isAdvancing: r.standing <= cutoff && r.points > 0, isAtRisk: false, isTop1: r.standing === 1 && r.points > 0,
+      reservedNextTier: null, pointsBreakdown: { ...EMPTY_BREAKDOWN, questions: r.points } };
+  }), [board.data]);
+
+  const allTimeEntries: AllTimeEntry[] = useMemo(() => (allTime.data ?? []).slice(0, limit).map(r => ({
+    userId: r.student_id, username: r.name, level: Math.max(1, Math.floor(Math.log2(r.points / 100 + 1)) + 1), totalPoints: r.points, highestTier: asTier(r.tier),
+    rubyWeeks: 0, isRubyLegend: false, satMathScore: null, satEnglishScore: null, satTotalScore: null, satScoreDate: null,
+  })), [allTime.data, limit]);
+
+  const me = entries.find(e => e.userId === studentId);
+  const cutoff = TIER_PROMOTION_CUTOFFS[me?.currentTier ?? 'unranked'] ?? 10;
+  const pointsToAdvance = me && me.rank > cutoff ? Math.max(0, (entries[cutoff - 1]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
+  const pointsToTop1 = me && me.rank > 1 ? Math.max(0, (entries[0]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
+  const ladder = <TierLadder currentTier={me?.currentTier ?? currentTier} unlockedAt={unlockedAt} standing={me?.rank ?? null} />;
+  const fade = { initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0 }, transition: { duration: 0.2 } };
+
+  return (
+    <div className="space-y-4 md:space-y-6 select-none">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-1 md:space-y-2">
+        <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2"><span className="sky-tile sky-tile-violet"><Trophy /></span>Leaderboard</h1>
+        <p className="text-lg sky-body">Compete with other students at {center.name} and climb the ranks</p>
+      </motion.div>
+
+      <Tabs defaultValue={active ? 'current' : 'alltime'} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-3 md:mb-4 h-auto">
+          <TabsTrigger value="current" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3"><Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Current Sprint</span><span className="sm:hidden">Sprint</span></TabsTrigger>
+          <TabsTrigger value="alltime" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3"><Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span>All-Time</span></TabsTrigger>
+          <TabsTrigger value="myrank" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3"><BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">My Rank</span><span className="sm:hidden">Rank</span></TabsTrigger>
+          <TabsTrigger value="history" className="gap-1 sm:gap-2 text-[11px] sm:text-sm py-1.5 px-1 sm:px-3"><History className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span>History</span></TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="current" className="mt-0"><motion.div {...fade}>
+          {active ? (
+            <CurrentSprintTab sprint={sprintInfo} leaderboard={entries} currentUserId={studentId} isLoading={board.isLoading} ladder={ladder} allowProfiles={false}
+              onSprintEnd={() => { sprints.refetch(); board.refetch(); }} />
+          ) : (
+            <div className="space-y-4">{ladder}<Card><CardContent className="py-10 text-center text-muted-foreground">
+              {list.length ? 'No sprint is running right now. Your center will start the next one soon.' : "Your center hasn't started a sprint yet."}
+            </CardContent></Card></div>
+          )}
+        </motion.div></TabsContent>
+
+        <TabsContent value="alltime" className="mt-0"><motion.div {...fade}>
+          <AllTimeTab leaderboard={allTimeEntries} currentUserId={studentId} isLoading={allTime.isLoading} window="all" onWindowChange={() => {}} hideWindow
+            limit={limit} onLimitChange={setLimit} showEysh={false} allowProfiles={false} />
+        </motion.div></TabsContent>
+
+        <TabsContent value="myrank" className="mt-0"><motion.div {...fade}>
+          <MyRankTab currentEntry={me} leaderboard={entries} pointsToAdvance={pointsToAdvance} pointsToTop1={pointsToTop1} sprint={sprintInfo} />
+        </motion.div></TabsContent>
+
+        <TabsContent value="history" className="mt-0"><motion.div {...fade}>
+          <Card><CardContent className="p-3 sm:p-6">
+            {history.isLoading ? <p className="py-8 text-muted-foreground">Loading history…</p>
+              : history.error ? <p role="alert" className="py-8 text-destructive">Could not load rank history.</p>
+              : !history.data?.length ? <p className="py-8 text-center text-muted-foreground">Your rank history starts after your first completed sprint.</p>
+              : <div className="divide-y">{history.data.map(h => <div key={h.id} className="flex justify-between gap-4 py-4">
+                  <div><p className="font-medium">{list.find(s => s.id === h.sprint_id)?.name ?? 'Completed sprint'}</p><p className="text-sm text-muted-foreground">{tierName(h.tier)} <ArrowUpRight className="inline h-4 w-4" /> {tierName(h.next_tier)}</p></div>
+                  <div className="text-right font-mono"><p>#{h.final_position}</p><p className="text-xs text-muted-foreground">{h.points} pts</p></div>
+                </div>)}</div>}
+          </CardContent></Card>
+        </motion.div></TabsContent>
+      </Tabs>
+    </div>
+  );
 }

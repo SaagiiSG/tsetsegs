@@ -27,6 +27,10 @@ interface AllTimeTabProps {
   onLimitChange: (l: 10 | 50 | 100) => void;
   /** Mongolian EYSH conversion is only meaningful for Mongolian students */
   showEysh?: boolean;
+  /** Main-app profile dialog reads main student records; customer portals turn it off. */
+  allowProfiles?: boolean;
+  /** Hide the all-time / last-30-days switch when the data source has no time window. */
+  hideWindow?: boolean;
 }
 
 // Convert SAT Math section score to Mongolian EYSH points
@@ -40,7 +44,7 @@ function satMathToEysh(mathScore: number | null): number | null {
   return null;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange, showEysh = true }: AllTimeTabProps) {
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange, showEysh = true, allowProfiles = true, hideWindow = false }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -50,7 +54,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
   const rubyLegends = leaderboard.filter(e => e.isRubyLegend);
 
   const handleProfileClick = (entry: AllTimeEntry) => {
-    if (entry.userId !== currentUserId) {
+    if (allowProfiles && entry.userId !== currentUserId) {
       setSelectedUserId(entry.userId);
       setSelectedUsername(entry.username);
       setProfileSheetOpen(true);
@@ -138,7 +142,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
             </button>
           ))}
         </div>
-        <Select value={timeWindow} onValueChange={(v) => onWindowChange(v as 'all' | 'last30')}>
+        {!hideWindow && <Select value={timeWindow} onValueChange={(v) => onWindowChange(v as 'all' | 'last30')}>
           <SelectTrigger className="w-[150px]">
             <SelectValue />
           </SelectTrigger>
@@ -146,7 +150,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
             <SelectItem value="all">All Time</SelectItem>
             <SelectItem value="last30">Last 30 Days</SelectItem>
           </SelectContent>
-        </Select>
+        </Select>}
 
       </div>
 
@@ -311,12 +315,12 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
       </Card>
 
       {/* Full Profile Dialog */}
-      <FullProfileDialog
+      {allowProfiles && <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}
         username={selectedUsername}
-      />
+      />}
     </div>
   );
 }
