@@ -1345,6 +1345,13 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 }
 .sky-wash > * { position: relative; z-index: 1; }
 .dark .sky-wash::before { opacity: .15; }
+/* Depth collection: aurora + coloured card waves, layered inside cards */
+.sky-decor::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: var(--wave, none); background-size: cover; background-position: bottom right;
+}
+.sky-decor > * { position: relative; z-index: 1; }
+.dark .sky-decor::after { opacity: .18; }
 
 /* Sidebar */
 .customer-student-theme .sky-sidebar {
