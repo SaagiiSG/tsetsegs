@@ -52,6 +52,18 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
 
   const signOut = async () => { await supabase.auth.signOut(); setRole(null); navigate('/'); };
 
+  // Center login security: students and teachers are signed out when their sign-in is older than the
+  // center's session length or predates an admin "sign everyone out". Center admins are never forced out.
+  useEffect(() => {
+    if (!center || !session || (role !== 'student' && role !== 'teacher')) return;
+    const ps = center.portal_settings ?? {};
+    const signedIn = new Date(session.user.last_sign_in_at ?? 0).getTime();
+    const tooOld = ps.session_days ? Date.now() - signedIn > ps.session_days * 864e5 : false;
+    const revoked = ps.signout_before ? signedIn < new Date(ps.signout_before).getTime() : false;
+    if (tooOld || revoked) void signOut();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center, session, role]);
+
   if (center === undefined || session === undefined || (session && role === undefined)) {
     return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading…</div>;
   }
