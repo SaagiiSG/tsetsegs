@@ -44,3 +44,5 @@
 - [x] Scoreboard locked: server grades answers, decides points, updates league totals
 - [x] Server-side badge checks (streak badges verified; others server-only), badge points paid once into the league, Week Warrior = 70
 - [ ] Add missing badges (speed, practice, monthly) to the database with server checks; store "celebration seen" on the server
+- [ ] SAT simulation: Math-only answers, first try per question only (both portals); save daily prediction snapshots + real SAT to compare; switch method only if record shows misses
+- [ ] Customer portal: server grading of practice answers, repeat answers pay 0, speed run checks, badge checks
