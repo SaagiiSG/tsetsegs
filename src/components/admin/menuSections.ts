@@ -56,7 +56,6 @@ export const menuSections: MenuSection[] = [
     icon: Wrench,
     glow: "32 95% 50%",
     items: [
-      { title: "Registration", url: "/register/admin", icon: QrCode },
       { title: "Search Questions", url: "/admin/question-search", icon: Search },
       { title: "Concept Videos", url: "/admin/concept-videos", icon: Clapperboard },
       { title: "INT DB Questions", url: "/admin/intl-questions", icon: Database },

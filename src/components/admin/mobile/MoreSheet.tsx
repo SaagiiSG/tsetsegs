@@ -5,7 +5,7 @@ import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsDevAccount } from "@/lib/devAccount";
 import {
-  CalendarDays, QrCode, FileQuestion, BookOpen, Trophy,
+  CalendarDays, FileQuestion, BookOpen, Trophy,
   Armchair, Bug, UserPlus, Users, Settings, ClipboardList, LineChart, UserCheck, Building2,
 } from "lucide-react";
 
@@ -22,7 +22,6 @@ const moreItems = [
   { title: "Accounts", url: "/admin/students", icon: UserCheck },
   { title: "Registration Queue", url: "/admin/students", icon: UserPlus },
   { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
-  { title: "Registration", url: "/register/admin", icon: QrCode },
   { title: "Questions", url: "/admin/questions", icon: FileQuestion },
   { title: "Bluebook", url: "/admin/bluebook", icon: BookOpen, devOnly: true },
   { title: "Sprints", url: "/admin/sprint-monitor", icon: Trophy },
