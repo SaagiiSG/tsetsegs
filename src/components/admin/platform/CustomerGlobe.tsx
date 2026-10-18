@@ -89,7 +89,7 @@ export function CustomerGlobe({ pins, onSelect }: { pins: GlobePin[]; onSelect: 
                   <button key={c.id} type="button" onClick={() => onSelect(c.id)}
                     className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-muted focus-visible:bg-muted outline-none">
                     <span className="truncate font-medium">{c.name}</span>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{c.students} students</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{c.students} {c.students === 1 ? "student" : "students"}</span>
                   </button>
                 ))}
               </div>
