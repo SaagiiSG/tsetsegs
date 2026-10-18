@@ -62,7 +62,10 @@ export function SatSchedulePage() {
   }, [isLoading, byMonth, months, selected]);
 
   const chart = months.map(mo => ({ label: mo.label, students: byMonth.get(mo.key)?.length ?? 0 }));
-  const list = (byMonth.get(selected) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const picked = (byMonth.get(selected) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  /** Empty month: fall back to active students with no SAT month so they can be assigned right here. */
+  const list = picked.length > 0 ? picked : students.filter(s => s.active && !s.sat_month).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const showingUnassigned = picked.length === 0;
   const unassigned = students.filter(s => s.active && !s.sat_month).length;
   const total = chart.reduce((s, c) => s + c.students, 0);
   const selLabel = months.find(m => m.key === selected)?.long ?? selected;
