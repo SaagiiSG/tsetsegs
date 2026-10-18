@@ -1231,6 +1231,60 @@ export type Database = {
           },
         ]
       }
+      concept_video_folder_items: {
+        Row: {
+          created_at: string
+          folder_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          folder_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          folder_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_video_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "concept_video_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_video_folder_items_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "concept_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concept_video_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_index: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_index?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_index?: number
+        }
+        Relationships: []
+      }
       concept_videos: {
         Row: {
           created_at: string

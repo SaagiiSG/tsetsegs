@@ -17,7 +17,9 @@ import { CONCEPT_DOMAINS, ConceptVideo, PRESET_LABELS, STORAGE_PREFIX, resolveVi
 import { generateSubtitles } from '@/lib/subtitles';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { LabelChips } from '@/components/concept-videos/VideoLabelFilter';
-import { X, Route as RouteIcon } from 'lucide-react';
+import { X, Route as RouteIcon, Folder, FolderPlus, Library, Inbox, MoreHorizontal, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { RoadmapOrderDialog } from '@/components/concept-videos/RoadmapOrderDialog';
 
 type Draft = Omit<ConceptVideo, 'id'> & { id?: string };
@@ -101,12 +103,14 @@ export default function ConceptVideosAdmin() {
       const q = d.id
         ? supabase.from('concept_videos').update({ ...row, updated_at: new Date().toISOString() }).eq('id', d.id)
         : supabase.from('concept_videos').insert(row);
-      const { error } = await q;
+      const { data: saved, error } = await q.select('id').single();
       if (error) throw error;
+      if (!d.id && pendingFolder && saved) await supabase.from('concept_video_folder_items').insert({ video_id: saved.id, folder_id: pendingFolder });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['concept-videos-admin'] });
       qc.invalidateQueries({ queryKey: ['concept-videos'] });
+      refreshFolders();
       setDraft(null);
       toast({ title: 'Video saved' });
     },
@@ -154,13 +158,56 @@ export default function ConceptVideosAdmin() {
     setDraft((d) => (d ? { ...d, video_url: STORAGE_PREFIX + path, title: d.title || file.name.replace(/\.[^.]+$/, '') } : d));
   };
 
-  const grouped = CONCEPT_DOMAINS.map((dom) => ({ dom, list: videos.filter((v) => v.domain === dom) }));
+  const { data: folders = [] } = useQuery({
+    queryKey: ['concept-video-folders'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('concept_video_folders').select('*').order('sort_index').order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+  const { data: items = [] } = useQuery({
+    queryKey: ['concept-video-folder-items'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('concept_video_folder_items').select('folder_id, video_id');
+      if (error) throw error;
+      return data;
+    },
+  });
+  const [folder, setFolder] = useState<string>('all');
+  const refreshFolders = () => { qc.invalidateQueries({ queryKey: ['concept-video-folders'] }); qc.invalidateQueries({ queryKey: ['concept-video-folder-items'] }); };
+  const foldersOf = (vid: string) => items.filter(i => i.video_id === vid).map(i => i.folder_id);
+  const inFolder = (vid: string, fid: string) => items.some(i => i.video_id === vid && i.folder_id === fid);
+  const toggleFolder = async (vid: string, fid: string) => {
+    const { error } = inFolder(vid, fid)
+      ? await supabase.from('concept_video_folder_items').delete().eq('video_id', vid).eq('folder_id', fid)
+      : await supabase.from('concept_video_folder_items').insert({ video_id: vid, folder_id: fid });
+    if (error) toast({ title: 'Could not update folder', description: error.message, variant: 'destructive' });
+    refreshFolders();
+  };
+  const newFolder = async () => {
+    const name = prompt('Folder name')?.trim(); if (!name) return;
+    const { data, error } = await supabase.from('concept_video_folders').insert({ name, sort_index: folders.length }).select().single();
+    if (error) return toast({ title: 'Could not create folder', description: error.message, variant: 'destructive' });
+    refreshFolders(); setFolder(data.id);
+  };
+  const renameFolder = async (f: { id: string; name: string }) => {
+    const name = prompt('Rename folder', f.name)?.trim(); if (!name || name === f.name) return;
+    await supabase.from('concept_video_folders').update({ name }).eq('id', f.id); refreshFolders();
+  };
+  const deleteFolder = async (f: { id: string; name: string }) => {
+    if (!confirm(`Delete folder "${f.name}"? The videos stay, only the folder goes.`)) return;
+    await supabase.from('concept_video_folders').delete().eq('id', f.id); setFolder('all'); refreshFolders();
+  };
+  const shown = folder === 'all' ? videos : folder === 'unfiled' ? videos.filter(v => foldersOf(v.id).length === 0) : videos.filter(v => inFolder(v.id, folder));
+  const grouped = CONCEPT_DOMAINS.map((dom) => ({ dom, list: shown.filter((v) => v.domain === dom) }));
+  const pendingFolder = folder !== 'all' && folder !== 'unfiled' ? folder : null;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Concept Videos</h1>
+          <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground [text-shadow:0_0_24px_hsl(var(--section-glow,32_95%_50%)/0.45)]">Concept Videos</h1>
           <p className="text-sm text-muted-foreground">Short math concept lessons, grouped by topic. Students only see published videos.</p>
         </div>
         <div className="flex gap-2">
@@ -172,10 +219,39 @@ export default function ConceptVideosAdmin() {
         <RoadmapOrderDialog open={roadmapOpen} onOpenChange={setRoadmapOpen} videos={videos} onSaved={() => { qc.invalidateQueries({ queryKey: ['concept-videos-admin'] }); qc.invalidateQueries({ queryKey: ['center-concept-videos'] }); toast({ title: 'Roadmap saved' }); }} />
       </div>
 
+      <div className="grid gap-4 md:grid-cols-[220px_1fr] items-start">
+        <aside className="admin-glass-card rounded-xl border p-2 md:sticky md:top-20 space-y-0.5">
+          {[{ id: 'all', name: 'All videos', icon: Library, n: videos.length }, { id: 'unfiled', name: 'Not in a folder', icon: Inbox, n: videos.filter(v => foldersOf(v.id).length === 0).length }].map(x => (
+            <button key={x.id} onClick={() => setFolder(x.id)} className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm ${folder === x.id ? 'bg-muted font-medium' : 'text-muted-foreground hover:bg-muted/60'}`}>
+              <x.icon className="h-4 w-4" /><span className="flex-1 text-left truncate">{x.name}</span><span className="font-mono text-xs">{x.n}</span>
+            </button>
+          ))}
+          <div className="flex items-center justify-between px-2.5 pt-3 pb-1">
+            <span className="text-xs text-muted-foreground">Folders</span>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={newFolder} aria-label="New folder"><FolderPlus className="h-3.5 w-3.5" /></Button>
+          </div>
+          {folders.length === 0 && <p className="px-2.5 pb-2 text-xs text-muted-foreground">Make a folder to group videos.</p>}
+          {folders.map(f => (
+            <div key={f.id} className={`group flex items-center rounded-lg ${folder === f.id ? 'bg-muted' : 'hover:bg-muted/60'}`}>
+              <button onClick={() => setFolder(f.id)} className={`flex flex-1 min-w-0 items-center gap-2 px-2.5 py-2 text-sm ${folder === f.id ? 'font-medium' : 'text-muted-foreground'}`}>
+                <Folder className="h-4 w-4 shrink-0" /><span className="flex-1 text-left truncate">{f.name}</span><span className="font-mono text-xs">{items.filter(i => i.folder_id === f.id).length}</span>
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={`Folder options for ${f.name}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => renameFolder(f)}>Rename</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onClick={() => deleteFolder(f)}>Delete folder</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ))}
+        </aside>
+        <div className="space-y-6 min-w-0">
+          {!isLoading && shown.length === 0 && <p className="text-sm text-muted-foreground py-10 text-center">{folder === 'all' ? 'No videos yet.' : 'This folder is empty. Use the folder button on any video to add it here.'}</p>}
       {isLoading ? (
         <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
-        grouped.map(({ dom, list }) => (
+        grouped.filter(g => folder === 'all' || g.list.length > 0).map(({ dom, list }) => (
           <section key={dom} className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground">{dom} <span className="font-mono">({list.length})</span></h2>
             {list.length === 0 ? (
@@ -192,9 +268,22 @@ export default function ConceptVideosAdmin() {
                           {v.module || 'No module'} · {v.duration_minutes ? `${v.duration_minutes} min` : '—'} · {v.video_url.startsWith(STORAGE_PREFIX) ? 'Uploaded file' : 'Link'}
                         </p>
                         <LabelChips labels={v.labels} />
+                        {foldersOf(v.id).length > 0 && <div className="mt-1 flex flex-wrap gap-1">{foldersOf(v.id).map(fid => <span key={fid} className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"><Folder className="h-3 w-3" />{folders.find(f => f.id === fid)?.name}</span>)}</div>}
                       </div>
                       <Badge variant={v.is_published ? 'default' : 'secondary'}>{v.is_published ? 'Published' : 'Draft'}</Badge>
                       <Switch checked={v.is_published} onCheckedChange={() => togglePublish(v)} aria-label="Published" />
+                      <Popover>
+                        <PopoverTrigger asChild><Button size="icon" variant="ghost" aria-label="Folders"><Folder className="h-4 w-4" /></Button></PopoverTrigger>
+                        <PopoverContent align="end" className="w-56 p-1">
+                          <p className="px-2 py-1.5 text-xs text-muted-foreground">Put in folders (pick as many as you like)</p>
+                          {folders.length === 0 && <p className="px-2 pb-2 text-xs text-muted-foreground">No folders yet.</p>}
+                          {folders.map(f => (
+                            <button key={f.id} onClick={() => toggleFolder(v.id, f.id)} className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                              <span className="truncate">{f.name}</span>{inFolder(v.id, f.id) && <Check className="h-3.5 w-3.5" />}
+                            </button>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                       <Button size="icon" variant="ghost" onClick={() => setPreview({ url: v.video_url, vtt: v.subtitles_vtt })} aria-label="Preview"><PlayCircle className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => setDraft(v)} aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => confirm(`Delete "${v.title}"?`) && remove.mutate(v)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
@@ -206,6 +295,9 @@ export default function ConceptVideosAdmin() {
           </section>
         ))
       )}
+
+        </div>
+      </div>
 
       <Dialog open={!!draft} onOpenChange={(o) => !o && uploadPct === null && setDraft(null)}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
