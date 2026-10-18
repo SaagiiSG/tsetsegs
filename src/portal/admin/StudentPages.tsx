@@ -13,6 +13,47 @@ import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { centerAccounts } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, pct } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section, StatRow } from './ui';
+import { PredictionVsReal } from '@/components/shared/PredictionVsReal';
+import { compareToReal, type PredictionPoint } from '@/lib/predictionAccuracy';
+
+type RealSatStudent = { id: string; real_sat_math: number | null; real_sat_total: number | null; real_sat_date: string | null };
+
+function RealSatEditor({ student, predictions, onSaved }: { student: RealSatStudent; predictions: PredictionPoint[]; onSaved: () => void }) {
+  const [math, setMath] = useState(student.real_sat_math?.toString() ?? '');
+  const [total, setTotal] = useState(student.real_sat_total?.toString() ?? '');
+  const [date, setDate] = useState(student.real_sat_date ?? '');
+  const [saving, setSaving] = useState(false);
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const m = math.trim() ? parseInt(math, 10) : null;
+    const t = total.trim() ? parseInt(total, 10) : null;
+    if (m != null && (m < 200 || m > 800)) return toast.error('Math must be between 200 and 800.');
+    if (t != null && (t < 400 || t > 1600)) return toast.error('Total must be between 400 and 1600.');
+    if (m != null && !date) return toast.error('Add the test date so we can check the prediction made before it.');
+    setSaving(true);
+    const { error } = await supabase.from('tenant_students').update({ real_sat_math: m, real_sat_total: t, real_sat_date: date || null } as any).eq('id', student.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    const cmp = compareToReal(predictions, m, date || null);
+    toast.success('Real SAT saved', {
+      description: cmp?.predicted != null ? `Prediction was ${cmp.predicted} vs real ${m} (${cmp.miss! > 0 ? '+' : ''}${cmp.miss}) — ${cmp.onTarget ? 'on target' : 'missed'}.` : undefined,
+    });
+    onSaved();
+  };
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={save} className="space-y-3">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1"><Label htmlFor="rs-math">Math</Label><Input id="rs-math" type="number" min={200} max={800} placeholder="200-800" value={math} onChange={e => setMath(e.target.value)} /></div>
+          <div className="space-y-1"><Label htmlFor="rs-total">Total</Label><Input id="rs-total" type="number" min={400} max={1600} placeholder="400-1600" value={total} onChange={e => setTotal(e.target.value)} /></div>
+          <div className="space-y-1"><Label htmlFor="rs-date">Test date</Label><Input id="rs-date" type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+        </div>
+        <Button size="sm" disabled={saving}><Check className="h-4 w-4" />{saving ? 'Saving…' : 'Save real SAT'}</Button>
+      </form>
+      <PredictionVsReal predictions={predictions} realMath={student.real_sat_math} realDate={student.real_sat_date} />
+    </div>
+  );
+}
 
 function ClassSelect({ value, onChange, classes, label, className = 'w-44' }: { value: string | null; onChange: (v: string | null) => void; classes: { id: string; name: string }[]; label: string; className?: string }) {
   return (
@@ -77,11 +118,15 @@ export function StudentDetailPage() {
   const history = useQuery({
     queryKey: ['center-student-history', studentId],
     queryFn: async () => {
-      const [att, attempts] = await Promise.all([
+      const [att, attempts, preds] = await Promise.all([
         supabase.from('tenant_attendance').select('session_date, status, class_id').eq('student_id', studentId).order('session_date', { ascending: false }).limit(200),
         supabase.from('tenant_attempts').select('is_correct, created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(5000),
+        supabase.from('tenant_sat_predictions' as any).select('snapshot_date, sim_score').eq('student_id', studentId).order('snapshot_date', { ascending: false }).limit(400),
       ]);
-      return { att: att.data ?? [], attempts: attempts.data ?? [] };
+      return {
+        att: att.data ?? [], attempts: attempts.data ?? [],
+        preds: ((preds.data as any[]) ?? []).map(r => ({ date: r.snapshot_date as string, score: r.sim_score as number | null })),
+      };
     },
   });
   const s = data?.students.find(x => x.id === studentId);
@@ -113,6 +158,9 @@ export function StudentDetailPage() {
           ['Attendance', pct(attended, h.att.length), `${attended}/${h.att.length} sessions`],
           ['Last practice', h.attempts[0] ? new Date(h.attempts[0].created_at).toLocaleDateString() : '—'],
         ]} />
+        <Section title="Real SAT vs predicted">
+          <RealSatEditor student={s as any} predictions={h.preds} onSaved={() => { refresh(); history.refetch(); }} />
+        </Section>
         <Section title="Attendance history">
           {h.att.length ? <ul className="divide-y text-sm">{h.att.slice(0, 40).map(a => (
             <li key={`${a.session_date}-${a.class_id}`} className="py-2 flex justify-between"><span className="font-mono text-xs">{a.session_date}</span><span className={`text-xs rounded px-2 py-0.5 ${STATUS_STYLE[a.status]}`}>{STATUS_LABEL[a.status]}</span></li>
