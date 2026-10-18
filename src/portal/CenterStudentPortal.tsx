@@ -280,7 +280,7 @@ function HomePage({ me }: { me: Me }) {
       </div>
       {simulation ? <SatSimulationIsland latest={simulation} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
       <div className="grid gap-3 lg:grid-cols-4">
-        <Glass className="sky-wash lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)' } as React.CSSProperties}>
+        <Glass className="sky-wash sky-decor lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)', '--wave': `url(${CARD_WAVES.blue})` } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <span className="sky-tile sky-tile-solid"><BarChart3 /></span>
             <div><p className="text-lg font-bold">Domain mastery</p><p className="text-sm text-muted-foreground">Your accuracy by topic</p></div>
