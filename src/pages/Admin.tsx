@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { DashboardStats } from '@/components/admin/DashboardStats';
+import { PlatformOverview } from '@/components/admin/platform/PlatformOverview';
 import { BatchOverview } from '@/components/admin/BatchOverview';
 import { BatchesView } from '@/components/admin/BatchesView';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
@@ -72,7 +73,8 @@ const Admin = () => {
 
   const routesEl = (
     <Routes>
-      <Route index element={<DashboardStats />} />
+      <Route index element={<PlatformOverview />} />
+      <Route path="tsetsegs/dashboard" element={<DashboardStats />} />
       <Route path="customers" element={<InstitutionCustomers />} />
       <Route path="analytics" element={<AnalyticsDashboard />} />
       <Route path="overview" element={<BatchOverview />} />
