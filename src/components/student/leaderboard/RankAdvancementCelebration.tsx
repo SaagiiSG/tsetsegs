@@ -5,6 +5,7 @@ import CountUp from 'react-countup';
 import { Button } from '@/components/ui/button';
 import { TierType, TIER_COLORS, TIER_DISPLAY_NAMES, BadgeDefinition } from '@/data/badgeDefinitions';
 import { LockFallAnimation } from './LockFallAnimation';
+import { TIER_ASSETS } from './tierAssets';
 import * as LucideIcons from 'lucide-react';
 
 type CelebrationPhase = 
@@ -184,6 +185,30 @@ export function RankAdvancementCelebration({
                     ))}
                   </motion.div>
                 )}
+
+                {/* Rank emblem: old emblem fades out, new one rises with a glow + shine */}
+                <div className="relative mx-auto h-40 w-40">
+                  {TIER_ASSETS[previousTier]?.image && (
+                    <motion.img src={TIER_ASSETS[previousTier].image} alt="" className="absolute inset-0 h-full w-full object-contain"
+                      initial={{ opacity: 1, scale: 1 }}
+                      animate={phase === 'darkening' ? { x: [0, -4, 4, -3, 3, 0] } : { opacity: 0, scale: 0.6, filter: 'blur(6px)' }}
+                      transition={{ duration: 0.5 }} />
+                  )}
+                  {TIER_ASSETS[newTier]?.image && (
+                    <motion.div className="absolute inset-0"
+                      initial={{ opacity: 0, y: 40, scale: 0.6 }}
+                      animate={phase !== 'darkening' ? { opacity: 1, y: 0, scale: 1 } : {}}
+                      transition={{ type: 'spring', damping: 14, stiffness: 120, delay: 0.15 }}
+                      style={{ filter: `drop-shadow(0 0 ${newTier === 'ruby' ? 36 : 22}px ${tierColor}aa)` }}>
+                      <img src={TIER_ASSETS[newTier].image} alt={tierName} className="h-full w-full object-contain" />
+                      <motion.div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full"
+                        initial={{ opacity: 0 }} animate={phase !== 'darkening' ? { opacity: [0, 1, 0] } : {}} transition={{ delay: 0.7, duration: 0.9 }}>
+                        <motion.div className="absolute inset-y-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/60 to-transparent"
+                          initial={{ x: '-150%' }} animate={phase !== 'darkening' ? { x: '350%' } : {}} transition={{ delay: 0.7, duration: 0.9 }} />
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </div>
 
                 {/* "You've Advanced!" text */}
                 <motion.p
