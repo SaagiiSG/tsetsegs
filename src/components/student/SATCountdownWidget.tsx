@@ -33,7 +33,7 @@ export function SATCountdownWidget({ variant = 'sidebar', className, onSetDate }
       <button
         onClick={onSetDate}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-dashed border-muted-foreground/30 text-xs text-muted-foreground hover:bg-muted transition-colors w-full",
+          "student-chip w-full justify-center border-dashed text-muted-foreground",
           className
         )}
       >
@@ -49,7 +49,7 @@ export function SATCountdownWidget({ variant = 'sidebar', className, onSetDate }
 
   if (variant === 'compact') {
     return (
-      <div className={cn("flex items-center gap-1.5 text-xs", className)}>
+      <div className={cn("student-chip", className)}>
         <CalendarClock className="h-3.5 w-3.5 text-primary" />
         <span className="font-bold">{days}d</span>
         <span className="text-muted-foreground">to SAT</span>
@@ -59,10 +59,14 @@ export function SATCountdownWidget({ variant = 'sidebar', className, onSetDate }
 
   return (
     <div className={cn(
-      "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10",
+      "student-chip gap-2.5 !px-3 !py-2 !rounded-2xl",
       className
     )}>
-      <CalendarClock className="h-5 w-5 text-primary flex-shrink-0" />
+      <svg viewBox="0 0 36 36" className="h-7 w-7 -rotate-90 flex-shrink-0" aria-hidden>
+        <circle cx="18" cy="18" r="15" fill="none" strokeWidth="4" className="stroke-muted" />
+        <circle cx="18" cy="18" r="15" fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-primary"
+          strokeDasharray={`${Math.max(4, 94 * (1 - Math.min(days, 180) / 180))} 94`} />
+      </svg>
       <div className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">SAT:</span>
         <span className="font-bold text-foreground">{days}d {hours}h</span>

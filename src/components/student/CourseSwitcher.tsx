@@ -34,7 +34,7 @@ export function CourseSwitcher({ current, className }: { current: CourseType; cl
       size="sm"
       onClick={handleSwitch}
       className={cn(
-        "gap-1.5 text-xs opacity-90 hover:opacity-100 hover:bg-muted/50 text-foreground",
+        "student-chip h-auto font-sans text-xs text-foreground",
         className
       )}
       title={`Switch to ${otherLabel}`}
