@@ -183,6 +183,13 @@
       "when": 1792360535488,
       "tag": "0025_student_self_block",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792360760580,
+      "tag": "0026_server_badge_checks_and_badge_league_points",
+      "breakpoints": true
     }
   ]
 }
