@@ -131,8 +131,11 @@ export function SatSchedulePage() {
       </section>
 
       <section className="admin-glass-card rounded-xl border p-5">
+        {showingUnassigned && (
+          <p className="text-sm text-muted-foreground mb-3">No students planned for {selLabel} yet — these students have no SAT month. Pick one to schedule them.</p>
+        )}
         {list.length === 0 ? (
-          <Empty>No students planned for {selLabel} yet — assign a month from any student in the list below.</Empty>
+          <Empty>No students in this center yet.</Empty>
         ) : (
           <Table>
             <TableHeader>
