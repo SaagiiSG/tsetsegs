@@ -104,11 +104,13 @@ const NAV = [
 export default function CenterStudentPortal() {
   const { center, name, signOut } = useCenter();
   const me = useMe();
-  useEffect(() => { document.body.classList.add('student-portal'); return () => document.body.classList.remove('student-portal'); }, []);
-  const glow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || '217 91% 60%';
+  useEffect(() => {
+    document.body.classList.add('student-portal', 'customer-student-portal');
+    return () => document.body.classList.remove('student-portal', 'customer-student-portal');
+  }, []);
 
   return (
-    <div className="student-theme min-h-screen overflow-x-clip admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
+    <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
       <div className="relative flex">
         <aside className="hidden md:flex sticky top-3 m-3 h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col student-card border p-3">
           <div className="flex items-center gap-2.5 px-2 pt-2 pb-4">
@@ -117,7 +119,7 @@ export default function CenterStudentPortal() {
           </div>
           <nav aria-label="Student" className="flex-1 space-y-0.5 overflow-y-auto">
             {NAV.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors active:scale-[0.98] ${isActive ? 'bg-primary text-primary-foreground font-semibold shadow-sm' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}>
+              <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors active:scale-[0.98] ${isActive ? 'bg-accent text-accent-foreground font-semibold shadow-sm' : 'text-foreground/70 hover:bg-muted hover:text-foreground'}`}>
                 <Icon className="h-4 w-4" />{label}
               </NavLink>
             ))}
