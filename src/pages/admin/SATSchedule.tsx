@@ -1,385 +1,173 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarDays, Users, Phone, GraduationCap, User, Award } from "lucide-react";
-import { format } from "date-fns";
+import { InlineScorePrediction } from "@/components/admin/InlineScorePrediction";
+import { useAdminCohort } from "@/contexts/AdminCohortContext";
 
-interface Student {
-  id: string;
-  name: string;
-  first_name: string;
-  last_name: string | null;
-  phone: string;
-  parent_phone: string | null;
-  review_teacher: string | null;
-  sat_test_month: string | null;
-  created_at: string;
-  math_level: string | null;
-  english_level: string | null;
-  has_taken_sat: boolean | null;
-  previous_sat_score: number | null;
-  school_name: string | null;
-  grade: string | null;
+const LEGACY: Record<string, string> = { march: "03", may: "05", june: "06", august: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
+const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+export function parseSatMonth(v: string | null): string | null {
+  if (!v) return null;
+  if (/^\d{4}-\d{2}$/.test(v)) return v;
+  const m = LEGACY[v.toLowerCase()];
+  return m ? `${new Date().getFullYear()}-${m}` : null;
 }
+const last8 = (p: string | null) => (p || "").replace(/\D/g, "").slice(-8);
+const levelLabel: Record<string, string> = { bad: "Weak", average: "Average", good: "Strong" };
 
-// Generate year-month options dynamically
-const generateYearMonthOptions = () => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  
-  const satMonths = [
-    { month: 3, label: "March" },
-    { month: 5, label: "May" },
-    { month: 6, label: "June" },
-    { month: 8, label: "August" },
-    { month: 9, label: "September" },
-    { month: 10, label: "October" },
-    { month: 11, label: "November" },
-    { month: 12, label: "December" },
-  ];
-  
-  const options: { value: string; label: string; shortLabel: string }[] = [];
-  
-  // Add dates for current year and next year
-  [currentYear, currentYear + 1].forEach(year => {
-    satMonths.forEach(({ month, label }) => {
-      options.push({
-        value: `${year}-${String(month).padStart(2, '0')}`,
-        label: `${label} ${year}`,
-        shortLabel: `${label.slice(0, 3)} ${String(year).slice(-2)}`,
-      });
-    });
-  });
-  
-  return options;
+type Student = {
+  id: string; first_name: string; last_name: string | null; phone: string; sat_test_month: string | null; grade: string | null;
+  math_level: string | null; english_level: string | null; has_taken_sat: boolean | null; previous_sat_score: number | null;
+  batch: { batch_name: string | null; course_type: string; is_international: boolean } | null;
 };
 
-const SAT_OPTIONS = generateYearMonthOptions();
-
 export default function SATSchedule() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(SAT_OPTIONS[0]?.value || "");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const navigate = useNavigate();
+  const { cohort } = useAdminCohort();
 
-  useEffect(() => {
-    fetchStudents();
+  const months = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 13 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return { key: ym(d), label: d.toLocaleDateString("en", { month: "short", year: "2-digit" }), long: d.toLocaleDateString("en", { month: "long", year: "numeric" }) };
+    });
   }, []);
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .not("sat_test_month", "is", null)
-      .order("created_at", { ascending: false });
+  const { data: students = [], isLoading } = useQuery({
+    queryKey: ["sat-schedule", cohort],
+    queryFn: async () => {
+      const out: Student[] = [];
+      for (let f = 0; ; f += 1000) {
+        const { data, error } = await supabase.from("students")
+          .select("id, first_name, last_name, phone, sat_test_month, grade, math_level, english_level, has_taken_sat, previous_sat_score, batch:batches(batch_name, course_type, is_international)")
+          .eq("is_ghost", false).not("sat_test_month", "is", null).range(f, f + 999);
+        if (error) throw error;
+        out.push(...(data as any[]).map(s => ({ ...s, batch: Array.isArray(s.batch) ? s.batch[0] : s.batch })));
+        if (data.length < 1000) break;
+      }
+      return out.filter(s => (cohort === "intl") === !!s.batch?.is_international);
+    },
+  });
 
-    if (error) {
-      console.error("Error fetching students:", error);
-    } else {
-      setStudents(data || []);
-    }
-    setLoading(false);
-  };
-
-  // Parse sat_test_month to match year-month format
-  const parseStudentMonth = (satMonth: string | null): string | null => {
-    if (!satMonth) return null;
-    
-    // If already in YYYY-MM format, return as-is
-    if (/^\d{4}-\d{2}$/.test(satMonth)) {
-      return satMonth;
-    }
-    
-    // Legacy format: convert month name to current year's date
-    const monthMap: Record<string, string> = {
-      march: "03", may: "05", june: "06", august: "08",
-      sep: "09", oct: "10", nov: "11", dec: "12",
-    };
-    
-    const monthNum = monthMap[satMonth.toLowerCase()];
-    if (monthNum) {
-      const currentYear = new Date().getFullYear();
-      return `${currentYear}-${monthNum}`;
-    }
-    
-    return null;
-  };
-
-  const getStudentsByTab = (tabValue: string) => {
-    return students.filter((s) => parseStudentMonth(s.sat_test_month) === tabValue);
-  };
-
-  const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    SAT_OPTIONS.forEach((opt) => {
-      counts[opt.value] = students.filter(
-        (s) => parseStudentMonth(s.sat_test_month) === opt.value
-      ).length;
-    });
-    return counts;
+  const byMonth = useMemo(() => {
+    const m = new Map<string, Student[]>();
+    students.forEach(s => { const k = parseSatMonth(s.sat_test_month); if (k) m.set(k, [...(m.get(k) ?? []), s]); });
+    return m;
   }, [students]);
 
-  // Filter tabs to only show those with students or future dates
-  const visibleTabs = useMemo(() => {
-    const now = new Date();
-    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    return SAT_OPTIONS.filter(opt => {
-      // Show if has students or is in the future
-      return tabCounts[opt.value] > 0 || opt.value >= currentYearMonth;
-    });
-  }, [tabCounts]);
+  const chart = months.map(mo => ({ label: mo.label, students: byMonth.get(mo.key)?.length ?? 0 }));
+  const [selected, setSelected] = useState<string>("");
+  useEffect(() => {
+    if (!selected && !isLoading) setSelected(months.find(m => byMonth.get(m.key)?.length)?.key ?? months[0].key);
+  }, [isLoading, byMonth, months, selected]);
 
-  const getLevelBadge = (level: string | null) => {
-    if (!level) return null;
-    const colors: Record<string, string> = {
-      bad: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-      average: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      good: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    };
-    const labels: Record<string, string> = {
-      bad: "Weak",
-      average: "Avg",
-      good: "Strong",
-    };
-    return (
-      <Badge variant="outline" className={colors[level]}>
-        {labels[level] || level}
-      </Badge>
-    );
-  };
+  const list = (byMonth.get(selected) ?? []).sort((a, b) => a.first_name.localeCompare(b.first_name));
+  const total = chart.reduce((s, c) => s + c.students, 0);
+
+  const { data: lastLogin = new Map<string, string | null>() } = useQuery({
+    queryKey: ["sat-schedule-logins", selected, list.length],
+    enabled: list.length > 0,
+    queryFn: async () => {
+      const keys = [...new Set(list.map(s => last8(s.phone)).filter(Boolean))];
+      const m = new Map<string, string | null>();
+      for (let i = 0; i < keys.length; i += 60) {
+        const { data } = await supabase.from("student_accounts").select("phone_number, last_login").or(keys.slice(i, i + 60).map(k => `phone_number.ilike.%${k}`).join(","));
+        (data ?? []).forEach(a => m.set(last8(a.phone_number), a.last_login));
+      }
+      return m;
+    },
+  });
+
+  const selLabel = months.find(m => m.key === selected)?.long ?? selected;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <CalendarDays className="h-6 w-6" />
-          SAT Schedule
-        </h1>
-        <p className="text-muted-foreground">
-          View students by their planned SAT test date
-        </p>
+        <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground [text-shadow:0_0_24px_hsl(var(--section-glow,32_95%_50%)/0.45)]">SAT Schedule</h1>
+        <p className="text-sm text-muted-foreground">When students plan to sit the SAT, this month and the next 12</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-        {visibleTabs.slice(0, 8).map((opt) => (
-          <Card
-            key={opt.value}
-            className={`cursor-pointer transition-all ${
-              activeTab === opt.value
-                ? "ring-2 ring-primary bg-primary/5"
-                : "hover:bg-muted/50"
-            }`}
-            onClick={() => setActiveTab(opt.value)}
-          >
-            <CardContent className="p-2 md:p-3 text-center">
-              <p className="text-xs font-medium text-muted-foreground truncate">
-                {opt.shortLabel}
-              </p>
-              <p className="text-xl md:text-2xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-7 w-6 mx-auto" />
-                ) : (
-                  tabCounts[opt.value]
-                )}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <section className="admin-glass-card rounded-xl border p-5">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Students taking the SAT</p>
+            {isLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <p className="font-mono text-2xl tabular-nums">{total.toLocaleString()}</p>}
+          </div>
+        </div>
+        <ChartContainer config={{ students: { label: "Students", color: "hsl(var(--foreground))" } }} className="h-64 w-full mt-4">
+          <AreaChart data={chart} margin={{ left: 0, right: 8, top: 8 }}>
+            <defs>
+              <linearGradient id="satFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-students)" stopOpacity={0.18} />
+                <stop offset="100%" stopColor="var(--color-students)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
+            <YAxis tickLine={false} axisLine={false} fontSize={11} width={32} allowDecimals={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Area type="monotone" dataKey="students" stroke="var(--color-students)" strokeWidth={2} fill="url(#satFill)" />
+          </AreaChart>
+        </ChartContainer>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex flex-wrap h-auto gap-1">
-          {visibleTabs.map((opt) => (
-            <TabsTrigger
-              key={opt.value}
-              value={opt.value}
-              className="relative text-xs md:text-sm"
-            >
-              {opt.label}
-              {tabCounts[opt.value] > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-1 h-5 min-w-5 px-1 text-xs"
-                >
-                  {tabCounts[opt.value]}
-                </Badge>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t mt-4 pt-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">SAT month</span>
+            <Select value={selected} onValueChange={setSelected}>
+              <SelectTrigger className="w-48 h-9"><SelectValue placeholder="Pick a month" /></SelectTrigger>
+              <SelectContent>
+                {months.map(m => (
+                  <SelectItem key={m.key} value={m.key}>
+                    <span className="flex w-full justify-between gap-6">{m.long}<span className="font-mono text-muted-foreground">{byMonth.get(m.key)?.length ?? 0}</span></span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <span className="text-sm font-mono text-muted-foreground">{list.length} students</span>
+        </div>
+      </section>
 
-        {visibleTabs.map((opt) => (
-          <TabsContent key={opt.value} value={opt.value}>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5" />
-                  {opt.label} SAT Takers
-                  <Badge variant="outline" className="ml-2">
-                    {getStudentsByTab(opt.value).length} students
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
-                  </div>
-                ) : getStudentsByTab(opt.value).length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <GraduationCap className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No students registered for {opt.label} SAT</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {getStudentsByTab(opt.value).map((student) => (
-                      <div
-                        key={student.id}
-                        onClick={() => setSelectedStudent(student)}
-                        className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors gap-2 cursor-pointer"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
-                            {student.first_name} {student.last_name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {student.phone}
-                            </span>
-                            {student.review_teacher && (
-                              <span className="truncate">Teacher: {student.review_teacher}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {student.has_taken_sat && student.previous_sat_score && (
-                            <Badge variant="secondary" className="flex items-center gap-1">
-                              <Award className="h-3 w-3" />
-                              {student.previous_sat_score}
-                            </Badge>
-                          )}
-                          {student.math_level && (
-                            <div className="flex items-center gap-1 text-xs">
-                              <span className="text-muted-foreground">M:</span>
-                              {getLevelBadge(student.math_level)}
-                            </div>
-                          )}
-                          {student.english_level && (
-                            <div className="flex items-center gap-1 text-xs">
-                              <span className="text-muted-foreground">E:</span>
-                              {getLevelBadge(student.english_level)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {/* Student Profile Dialog */}
-      <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Student Profile
-            </DialogTitle>
-          </DialogHeader>
-          {selectedStudent && (
-            <div className="space-y-4">
-              {/* Name & Basic Info */}
-              <div className="text-center pb-4 border-b">
-                <h3 className="text-xl font-semibold">
-                  {selectedStudent.first_name} {selectedStudent.last_name}
-                </h3>
-                {selectedStudent.school_name && (
-                  <p className="text-muted-foreground">{selectedStudent.school_name}</p>
-                )}
-                {selectedStudent.grade && (
-                  <Badge variant="outline" className="mt-2">Grade {selectedStudent.grade}</Badge>
-                )}
-              </div>
-
-              {/* Contact Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Phone</p>
-                  <p className="font-medium">{selectedStudent.phone}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Parent Phone</p>
-                  <p className="font-medium">{selectedStudent.parent_phone || "—"}</p>
-                </div>
-              </div>
-
-              {/* Teacher */}
-              <div className="text-sm">
-                <p className="text-muted-foreground">Teacher</p>
-                <p className="font-medium">{selectedStudent.review_teacher || "Not assigned"}</p>
-              </div>
-
-              {/* SAT Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
-                <div>
-                  <p className="text-muted-foreground">Planned SAT</p>
-                  <p className="font-medium">
-                    {selectedStudent.sat_test_month
-                      ? SAT_OPTIONS.find(o => o.value === parseStudentMonth(selectedStudent.sat_test_month))?.label ||
-                        selectedStudent.sat_test_month
-                      : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Previous Score</p>
-                  <p className="font-medium">
-                    {selectedStudent.has_taken_sat && selectedStudent.previous_sat_score
-                      ? selectedStudent.previous_sat_score
-                      : selectedStudent.has_taken_sat
-                        ? "Taken (no score)"
-                        : "First time"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Skill Levels */}
-              <div className="border-t pt-4">
-                <p className="text-muted-foreground text-sm mb-2">Skill Levels</p>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">Math:</span>
-                    {getLevelBadge(selectedStudent.math_level)}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">English:</span>
-                    {getLevelBadge(selectedStudent.english_level)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration Date */}
-              <div className="text-xs text-muted-foreground text-center border-t pt-4">
-                Registered {format(new Date(selectedStudent.created_at), "MMM d, yyyy 'at' h:mm a")}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <section className="admin-glass-card rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Batch</TableHead>
+              <TableHead>Grade</TableHead>
+              <TableHead>Math · English</TableHead>
+              <TableHead>Previous SAT</TableHead>
+              <TableHead>Last active</TableHead>
+              <TableHead>SAT prediction</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-5" /></TableCell></TableRow>)
+              : list.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-10">No students planning the {selLabel} SAT</TableCell></TableRow>
+              : list.map(s => {
+                const login = lastLogin.get(last8(s.phone));
+                return (
+                  <TableRow key={s.id} className="cursor-pointer" onClick={() => navigate(`/admin/student/${s.id}`)}>
+                    <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
+                    <TableCell className="text-sm max-w-[220px] truncate">{s.batch?.batch_name || <span className="text-muted-foreground">No batch</span>}</TableCell>
+                    <TableCell className="text-sm">{s.grade || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{levelLabel[s.math_level ?? ""] ?? "—"} · {levelLabel[s.english_level ?? ""] ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-sm">{s.has_taken_sat ? (s.previous_sat_score ?? "Taken") : <span className="text-muted-foreground font-sans">First time</span>}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{login ? formatDistanceToNow(new Date(login), { addSuffix: true }) : "Never signed in"}</TableCell>
+                    <TableCell><InlineScorePrediction studentId={s.id} courseType={s.batch?.course_type} /></TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </section>
     </div>
   );
 }
