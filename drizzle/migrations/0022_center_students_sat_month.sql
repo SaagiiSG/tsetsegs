@@ -1,0 +1,2 @@
+ALTER TABLE public.tenant_students ADD COLUMN sat_month text;
+COMMENT ON COLUMN public.tenant_students.sat_month IS 'Planned SAT sitting month for this center student, stored as YYYY-MM (null = not set yet)';

@@ -5450,6 +5450,7 @@ export type Database = {
           institution_id: string
           name: string
           phone: string
+          sat_month: string | null
           user_id: string | null
         }
         Insert: {
@@ -5460,6 +5461,7 @@ export type Database = {
           institution_id: string
           name: string
           phone: string
+          sat_month?: string | null
           user_id?: string | null
         }
         Update: {
@@ -5470,6 +5472,7 @@ export type Database = {
           institution_id?: string
           name?: string
           phone?: string
+          sat_month?: string | null
           user_id?: string | null
         }
         Relationships: [
