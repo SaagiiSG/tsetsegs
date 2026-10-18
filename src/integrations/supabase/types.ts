@@ -1736,6 +1736,7 @@ export type Database = {
       }
       institution_customers: {
         Row: {
+          access_blocked_at: string | null
           contact_email: string
           contact_name: string
           country: string
@@ -1744,9 +1745,11 @@ export type Database = {
           health_notes: string
           id: string
           last_check_in: string | null
+          last_warning_at: string | null
           name: string
           next_check_in: string | null
           notes: string
+          payment_warning_count: number
           portal_enabled: boolean
           portal_settings: Json
           slug: string | null
@@ -1754,6 +1757,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_blocked_at?: string | null
           contact_email?: string
           contact_name?: string
           country?: string
@@ -1762,9 +1766,11 @@ export type Database = {
           health_notes?: string
           id?: string
           last_check_in?: string | null
+          last_warning_at?: string | null
           name: string
           next_check_in?: string | null
           notes?: string
+          payment_warning_count?: number
           portal_enabled?: boolean
           portal_settings?: Json
           slug?: string | null
@@ -1772,6 +1778,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_blocked_at?: string | null
           contact_email?: string
           contact_name?: string
           country?: string
@@ -1780,9 +1787,11 @@ export type Database = {
           health_notes?: string
           id?: string
           last_check_in?: string | null
+          last_warning_at?: string | null
           name?: string
           next_check_in?: string | null
           notes?: string
+          payment_warning_count?: number
           portal_enabled?: boolean
           portal_settings?: Json
           slug?: string | null
@@ -5561,6 +5570,19 @@ export type Database = {
           max_connections: number
         }[]
       }
+      admin_customer_activity: {
+        Args: never
+        Returns: {
+          attempts_7d: number
+          institution_id: string
+          students: number
+        }[]
+      }
+      admin_customer_set_blocked: {
+        Args: { _blocked: boolean; _id: string }
+        Returns: undefined
+      }
+      admin_customer_warn: { Args: { _id: string }; Returns: number }
       admin_db_size: {
         Args: never
         Returns: {
@@ -6038,6 +6060,7 @@ export type Database = {
         Args: { phone: string; student_id: string }
         Returns: boolean
       }
+      tenant_access_status: { Args: { _slug: string }; Returns: Json }
       tenant_has_role: {
         Args: { _institution: string; _role: string }
         Returns: boolean
