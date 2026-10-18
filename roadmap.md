@@ -1,5 +1,5 @@
 # UI work
-- [ ] Match sign-in pages to landing style and persisted language; add Start free, educator and sign-in actions; require signup for practice from Start free demo.
+- [x] Match sign-in pages to landing style and persisted language; add Start free, educator and sign-in actions; require signup for practice from Start free demo; public entry flow and mobile signup checked.
 - [x] Landing background: superseded by cloud layers in the new landing page
 - [x] Redesign the public landing page with the customer student sky design; preserve bilingual navigation and achievement photos; verified desktop/mobile language switching, photo dialogs, sign-in links, and no horizontal overflow.
 - [x] Restyle customer student Practice in sky/purple and replicate main Review Mistakes graphs, breakdown and history sidebar using tenant-only data; isolated desktop/mobile checks and model tests pass.

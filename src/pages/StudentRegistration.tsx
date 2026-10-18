@@ -125,7 +125,7 @@ export default function StudentRegistration() {
               <Input
                 id="fullName"
                 type="text"
-                placeholder={text(text('Таны бүтэн нэр', 'Your full name'), 'Your full name')}
+                placeholder={text('Таны бүтэн нэр', 'Your full name')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="pl-10"
@@ -160,7 +160,7 @@ export default function StudentRegistration() {
               <Input
                 id="parentName"
                 type="text"
-                placeholder={text(text('Эцэг эсвэл эхийн нэр', 'Your parent’s name'), 'Your parent’s name')}
+                placeholder={text('Эцэг эсвэл эхийн нэр', 'Your parent’s name')}
                 value={parentName}
                 onChange={(e) => setParentName(e.target.value)}
                 className="pl-10"
