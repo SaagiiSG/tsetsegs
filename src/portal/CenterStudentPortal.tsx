@@ -36,6 +36,8 @@ import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -102,19 +104,78 @@ function useSetTotals() {
 const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
   { to: '/student/practice', label: 'Practice', icon: BookOpen },
-  { to: '/student/speed', label: 'Speed mode', icon: Zap },
-  { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
-  { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/student/videos', label: 'Concept videos', icon: PlayCircle },
+  { to: '/student/speed', label: 'Speed mode', icon: Zap },
+  { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
   { to: '/student/badges', label: 'Badges', icon: Award },
-  { to: '/student/announcements', label: 'Announcements', icon: Megaphone },
-  { to: '/student/settings', label: 'Settings', icon: SettingsIcon },
 ];
+
+/** Bottom-of-sidebar profile card; hovering (or focusing) reveals Settings, theme and Log out. */
+function ProfileCard({ collapsed }: { collapsed: boolean }) {
+  const { name, signOut } = useCenter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const dark = resolvedTheme === 'dark';
+  const item = 'sky-nav flex h-10 w-full items-center gap-3 rounded-full px-3 text-sm active:scale-[0.98]';
+  return (
+    <div className="group relative">
+      <div className={`absolute bottom-full z-30 pb-2 opacity-0 pointer-events-none translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 ${collapsed ? 'left-0 w-52' : 'inset-x-0'}`}>
+        <div className="sky-card !p-2 space-y-1">
+          <button type="button" className={item} onClick={() => navigate('/student/settings')}><SettingsIcon className="h-4 w-4" />Settings</button>
+          <button type="button" className={item} onClick={() => setTheme(dark ? 'light' : 'dark')}>{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{dark ? 'Light mode' : 'Dark mode'}</button>
+          <button type="button" className={`${item} text-destructive`} onClick={signOut}><LogOut className="h-4 w-4" />Log out</button>
+        </div>
+      </div>
+      <button type="button" aria-label="Profile menu" className={`flex w-full items-center gap-3 rounded-2xl bg-muted/50 p-2 text-left transition-colors hover:bg-muted ${collapsed ? 'justify-center' : ''}`}>
+        <span className="sky-avatar grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary font-semibold text-primary-foreground">{(name || '?').charAt(0).toUpperCase()}</span>
+        {!collapsed && <span className="min-w-0"><span className="block truncate font-semibold">{name}</span><span className="block text-xs text-muted-foreground">Settings &amp; more</span></span>}
+      </button>
+    </div>
+  );
+}
+
+/** Floating dock for phones/iPad that the student can drag out of the way; position is remembered. */
+function MovableDock() {
+  const key = 'center_dock_pos';
+  const [pos, setPos] = useState<{ x: number; y: number }>(() => { try { return JSON.parse(localStorage.getItem(key) || '') } catch { return { x: 0, y: 0 }; } });
+  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
+  const justDragged = useRef(false);
+  const onDown = (e: React.PointerEvent) => {
+    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, moved: false };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) < 10) return;
+    if (!d.moved) { d.moved = true; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); }
+    const mx = window.innerWidth / 2 - 40, my = window.innerHeight - 80;
+    setPos({ x: Math.max(-mx, Math.min(mx, d.ox + dx)), y: Math.max(-my, Math.min(0, d.oy + dy)) });
+  };
+  const onUp = (e: React.PointerEvent) => {
+    const d = drag.current; drag.current = null; justDragged.current = !!d?.moved;
+    if (d?.moved) { e.preventDefault(); localStorage.setItem(key, JSON.stringify(pos)); }
+  };
+  return (
+    <nav aria-label="Student" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onClickCapture={e => { if (justDragged.current) { e.preventDefault(); e.stopPropagation(); justDragged.current = false; } }}
+      style={{ transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)`, touchAction: 'none' }}
+      className="lg:hidden fixed bottom-3 left-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5 cursor-grab active:cursor-grabbing select-none">
+      <span aria-hidden className="mx-1 h-6 w-1 rounded-full bg-foreground/20" />
+      {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
+        <NavLink key={to} to={to} end={end} aria-label={label} draggable={false} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
+      ))}
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side="top" align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+    </nav>
+  );
+}
 
 export default function CenterStudentPortal() {
   const { center, name, signOut } = useCenter();
   const me = useMe();
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('center_sidebar_collapsed') === '1');
+  const [notesOpen, setNotesOpen] = useState(false);
+  const toggle = () => setCollapsed(c => { localStorage.setItem('center_sidebar_collapsed', c ? '0' : '1'); return !c; });
   useEffect(() => {
     document.body.classList.add('student-portal', 'customer-student-portal');
     return () => document.body.classList.remove('student-portal', 'customer-student-portal');
@@ -124,26 +185,32 @@ export default function CenterStudentPortal() {
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
       <SkyDepth />
       <div className="relative z-[1] flex">
-        <aside className="hidden md:flex sticky top-4 m-4 h-[calc(100vh-2rem)] w-60 shrink-0 flex-col sky-sidebar p-3">
-          <div className="flex items-center gap-3 px-2 pt-2 pb-4">
-            <CenterLogo center={center} className="h-11 w-11 sky-avatar" />
-            <div className="min-w-0"><p className="font-semibold truncate">{centerDisplayName(center)}</p><p className="text-sm text-muted-foreground truncate">{name}</p></div>
+        <aside className={`hidden lg:flex sticky top-4 m-4 h-[calc(100vh-2rem)] shrink-0 flex-col sky-sidebar p-3 transition-[width] duration-300 ${collapsed ? 'w-20' : 'w-60'}`}>
+          <div className={`flex items-center gap-3 px-1 pt-2 pb-4 ${collapsed ? 'flex-col' : ''}`}>
+            <CenterLogo center={center} className="h-11 w-11 shrink-0 sky-avatar" />
+            {!collapsed && <div className="min-w-0 flex-1"><p className="font-semibold truncate">{centerDisplayName(center)}</p></div>}
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={toggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </Button>
           </div>
           <nav aria-label="Student" className="flex-1 space-y-2 overflow-y-auto scrollbar-hide">
             {NAV.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => `sky-nav flex h-12 items-center gap-4 rounded-full px-4 text-base transition-colors active:scale-[0.98] ${isActive ? 'font-medium' : ''}`}>
-                <Icon className="h-5 w-5 shrink-0" />{label}
+              <NavLink key={to} to={to} end={end} title={collapsed ? label : undefined} className={({ isActive }) => `sky-nav flex h-12 items-center gap-4 rounded-full text-base transition-colors active:scale-[0.98] ${collapsed ? 'justify-center px-0' : 'px-4'} ${isActive ? 'font-medium' : ''}`}>
+                <Icon className="h-5 w-5 shrink-0" />{!collapsed && label}
               </NavLink>
             ))}
           </nav>
-          <div className="mx-4 my-2 h-px bg-border/60" />
-          <button type="button" className="sky-nav flex h-12 items-center gap-4 rounded-full px-4 text-base active:scale-[0.98]" onClick={signOut}><LogOut className="h-5 w-5" />Log out</button>
+          <div className="mx-2 my-2 h-px bg-border/60" />
+          <ProfileCard collapsed={collapsed} />
         </aside>
 
-        <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 md:pb-8">
-          <div className="md:hidden flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2"><CenterLogo center={center} className="h-8 w-8" /><p className="font-semibold">{centerDisplayName(center)}</p></div>
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
+        <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="lg:hidden flex items-center gap-2"><CenterLogo center={center} className="h-8 w-8" /><p className="font-semibold">{centerDisplayName(center)}</p></div>
+            <div className="ml-auto flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" className="lg:hidden rounded-full" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
+            </div>
           </div>
           {me.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !me.data ? <p className="text-sm">Your account isn't linked. Contact your center.</p> : (
             <div className="max-w-[1400px] mx-auto space-y-5">
@@ -158,7 +225,6 @@ export default function CenterStudentPortal() {
                 <Route path="leaderboard" element={<CenterRankings studentId={me.data.student.id} />} />
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
-                <Route path="announcements" element={<div className="max-w-2xl"><h1 className="text-2xl font-bold mb-4">Announcements</h1><StudentAnnouncements studentId={me.data.student.id} /></div>} />
                 <Route path="settings" element={<StudentSettingsPage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
               </Routes>
@@ -167,13 +233,14 @@ export default function CenterStudentPortal() {
         </main>
       </div>
 
-      {/* Mobile glass dock */}
-      <nav aria-label="Student" className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5">
-        {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} aria-label={label} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
-        ))}
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side="top" align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
-      </nav>
+      <Sheet open={notesOpen} onOpenChange={setNotesOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" />Announcements</SheetTitle></SheetHeader>
+          <div className="mt-4">{me.data ? <StudentAnnouncements studentId={me.data.student.id} /> : <p className="text-sm text-muted-foreground">Loading…</p>}</div>
+        </SheetContent>
+      </Sheet>
+
+      <MovableDock />
     </div>
   );
 }
