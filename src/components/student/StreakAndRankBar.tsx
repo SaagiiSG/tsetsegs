@@ -29,10 +29,8 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
         data-tour="streak-chip"
         title={isStreakActive ? `${currentStreak} day streak — tap for history` : 'Start your streak today'}
         className={cn(
-          'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono transition-all hover:scale-105 active:scale-95',
-          isStreakActive
-            ? 'bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30'
-            : 'bg-muted text-muted-foreground border border-border'
+          'student-chip',
+          isStreakActive ? 'student-chip-flame' : 'text-muted-foreground'
         )}
       >
         <motion.span
@@ -50,7 +48,7 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
           type="button"
           onClick={onStreakClick}
           title={`${freezersAvailable} streak freezer${freezersAvailable === 1 ? '' : 's'}`}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold font-mono bg-gradient-to-br from-sky-400/20 to-blue-500/20 text-sky-600 dark:text-sky-300 border border-sky-400/30 hover:scale-105 active:scale-95 transition-all"
+          className="student-chip text-primary"
         >
           <Snowflake className="w-3.5 h-3.5" />
           {freezersAvailable}
@@ -58,7 +56,7 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
       )}
 
       <div
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
+        className="student-chip text-[10px] uppercase"
         style={{
           backgroundColor: `${TIER_COLORS[tier]}20`,
           color: TIER_COLORS[tier],
@@ -72,7 +70,7 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
       <button
         type="button"
         onClick={() => navigate('/practice/leaderboard')}
-        className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border/60 bg-gradient-to-br from-amber-500/5 to-yellow-500/5 hover:from-amber-500/10 hover:to-yellow-500/10 transition-all"
+        className="student-chip"
         aria-label="View leaderboard"
       >
         <Trophy className="h-3 w-3 text-amber-500" />

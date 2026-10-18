@@ -59,8 +59,8 @@ function NavTab({ item }: { item: NavItemDef }) {
       {...longPressHandlers}
       className={cn(
         'flex flex-col items-center justify-center gap-0.5 px-2 py-2 min-w-[52px]',
-        'transition-colors',
-        active ? 'text-primary' : 'text-muted-foreground'
+        'transition-all duration-150',
+        active ? 'text-primary-foreground bg-primary rounded-full scale-105' : 'text-muted-foreground active:scale-90'
       )}
       aria-label={item.label}
     >
@@ -72,7 +72,7 @@ function NavTab({ item }: { item: NavItemDef }) {
 
 export function StudentBottomNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-50 safe-area-inset-bottom">
+    <nav className="md:hidden fixed bottom-3 left-3 right-3 rounded-full student-dock z-50 safe-area-inset-bottom">
       <div className="flex items-center justify-around h-14">
         <NavTab item={navItems[0]} />
         <NavTab item={navItems[1]} />

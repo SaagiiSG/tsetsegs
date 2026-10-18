@@ -126,7 +126,7 @@ function StudentLayoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex w-full">
+    <div className="student-theme min-h-screen flex w-full">
       <div className="hidden xl:contents">
         <StudentDashboardSidebar />
       </div>
@@ -137,7 +137,7 @@ function StudentLayoutContent() {
           <CheckInWidget variant="banner" />
         </div>
         {/* Header with sidebar trigger and tier badge */}
-        <div className="flex items-center justify-between px-2.5 py-2 md:p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+        <div className="flex items-center justify-between px-2.5 py-2 md:p-4 border-b student-header backdrop-blur-md sticky top-0 z-30">
           <div className="flex items-center gap-1.5 md:gap-2">
             <SidebarTrigger className="hidden xl:inline-flex" />
             <span className="font-semibold text-xs md:text-sm">SAT Practice</span>

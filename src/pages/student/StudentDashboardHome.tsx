@@ -22,7 +22,8 @@ import { StreakHistoryDialog } from '@/components/student/StreakHistoryDialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ClosingReportContent, useClosingReportData } from '@/pages/student/StudentClosingReport';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Play } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function StudentDashboardHome() {
   const { student } = useStudentAuth();
@@ -80,6 +81,7 @@ export default function StudentDashboardHome() {
     batchCompleted ? batchId : undefined,
   );
 
+  const navigate = useNavigate();
   const studentName = student?.linked_student?.first_name || 'there';
 
   return (
@@ -99,12 +101,18 @@ export default function StudentDashboardHome() {
             {goalsSet ? "Let's close those rings today." : 'Set up your daily ring to get started.'}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <Button size="lg" className="student-cta rounded-full font-semibold" onClick={() => navigate('/practice/dashboard')}>
+          <Play className="h-4 w-4 mr-1.5 fill-current" />
+          Continue practicing
+        </Button>
         {batchCompleted && closingReportData && (
           <Button variant="outline" size="sm" onClick={() => setShowClosingReport(true)}>
             <FileText className="h-3.5 w-3.5 mr-1.5" />
             View closing report
           </Button>
         )}
+        </div>
       </motion.div>
 
       {/* Row 1: 25% ring + 75% set progress */}
