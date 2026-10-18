@@ -1244,110 +1244,185 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 
-/* Customer students: restrained institutional gold, solid learning surfaces.
+/* Customer students: "Student Sky" (docs/design/student-sky.md). Pale sky page,
+   frosted near-white cards, four pastel families (blue/violet/pink/orange).
    Body scope lets portalled dialogs inherit the same palette. */
 body.customer-student-portal {
-  --primary: 45 92% 62% !important;
-  --primary-foreground: 40 45% 12% !important;
-  --ring: 44 82% 46% !important;
-  --background: 210 16% 97%;
-  --foreground: 220 12% 14%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 12% 14%;
+  --primary: 215 100% 65% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --ring: 215 100% 65% !important;
+  --background: 205 85% 95%;
+  --foreground: 232 29% 5%;
+  --card: 206 78% 98%;
+  --card-foreground: 232 29% 5%;
   --popover: 0 0% 100%;
-  --popover-foreground: 220 12% 14%;
-  --muted: 210 12% 94%;
-  --muted-foreground: 215 9% 40%;
-  --secondary: 210 12% 94%;
-  --secondary-foreground: 220 12% 20%;
-  --accent: 45 96% 95%;
-  --accent-foreground: 38 65% 25%;
-  --border: 210 12% 88%;
-  --input: 210 12% 85%;
-  --section-glow: 45 92% 62%; --gold-halo: 46 100% 82%;
-  --student-card: 0 0% 100%;
-  --student-card-border: 210 12% 88%;
-  --student-shadow: 0 1px 2px hsl(220 12% 14% / .03), 0 8px 28px -16px hsl(220 12% 14% / .16);
+  --popover-foreground: 232 29% 5%;
+  --muted: 212 60% 93%;
+  --muted-foreground: 223 6% 43%;
+  --secondary: 212 60% 93%;
+  --secondary-foreground: 232 20% 15%;
+  --accent: 205 85% 93%;
+  --accent-foreground: 216 70% 46%;
+  --border: 212 50% 90%;
+  --input: 212 45% 86%;
+  --section-glow: 215 100% 65%;
+  --radius: 1rem;
+  --sky-ink-soft: 225 3% 16%;
+  --sky-body: 226 6% 40%;
+  --sky-track: 213 66% 93%;
+  --shadow-card: 0 10px 24px -12px hsl(212 60% 45% / .22), 0 1px 2px hsl(212 60% 45% / .06);
+  --glow-blue: 0 8px 16px -6px hsl(215 100% 65% / .45);
+  --glow-violet: 0 8px 16px -6px hsl(240 90% 75% / .45);
+  --glow-pink: 0 8px 16px -6px hsl(304 70% 77% / .45);
+  --student-card: 206 78% 98%;
+  --student-card-border: 206 78% 98%;
+  --student-shadow: var(--shadow-card);
 }
 .student-theme.customer-student-theme {
-  --student-canvas: 210 16% 97%; --chip-flame: 40 92% 50%;
+  --student-canvas: 205 85% 95%; --student-chip-flame: 24 93% 55%;
   --student-card: var(--card);
-  --student-card-border: var(--border);
-  --student-shadow: 0 1px 2px hsl(var(--foreground) / .03), 0 8px 28px -16px hsl(var(--foreground) / .16);
-  --student-shadow-press: 0 2px 0 hsl(var(--ring) / .35);
-  background: hsl(var(--student-canvas));
+  --student-card-border: var(--card);
+  --student-shadow: var(--shadow-card);
+  background:
+    radial-gradient(ellipse 55% 45% at 100% 0%, hsl(283 70% 94%), hsl(250 90% 96% / .6) 45%, transparent 75%),
+    radial-gradient(ellipse 50% 40% at 0% 0%, hsl(213 80% 97%), transparent 70%),
+    linear-gradient(180deg, hsl(205 85% 95%), hsl(207 93% 94%));
+  background-attachment: fixed;
   color: hsl(var(--foreground));
 }
 body.customer-student-portal.dark, .dark body.customer-student-portal {
-  --primary: 45 90% 68% !important;
-  --ring: 45 85% 58% !important; --gold-halo: 46 95% 74%;
-  --background: 220 8% 9%;
-  --foreground: 210 12% 93%;
-  --card: 220 7% 13%;
-  --card-foreground: 210 12% 93%;
-  --popover: 220 7% 13%;
-  --popover-foreground: 210 12% 93%;
-  --muted: 220 6% 18%;
-  --muted-foreground: 210 8% 66%;
-  --secondary: 220 6% 18%;
-  --secondary-foreground: 210 12% 93%;
-  --accent: 42 34% 20%;
-  --accent-foreground: 44 92% 76%;
-  --border: 220 6% 24%;
-  --input: 220 6% 29%;
-  --student-card: 220 7% 13%;
-  --student-card-border: 220 6% 24%;
+  --primary: 215 100% 68% !important;
+  --ring: 215 100% 68% !important;
+  --background: 222 35% 9%;
+  --foreground: 210 30% 95%;
+  --card: 222 30% 13%;
+  --card-foreground: 210 30% 95%;
+  --popover: 222 30% 13%;
+  --popover-foreground: 210 30% 95%;
+  --muted: 222 22% 19%;
+  --muted-foreground: 215 14% 68%;
+  --secondary: 222 22% 19%;
+  --secondary-foreground: 210 30% 95%;
+  --accent: 216 40% 22%;
+  --accent-foreground: 213 100% 80%;
+  --border: 222 20% 24%;
+  --input: 222 20% 28%;
+  --sky-ink-soft: 210 20% 85%;
+  --sky-body: 215 14% 72%;
+  --sky-track: 222 22% 22%;
+  --shadow-card: 0 10px 24px -12px hsl(0 0% 0% / .55);
+  --student-card: 222 30% 13%;
+  --student-card-border: 222 30% 13%;
 }
 .dark .student-theme.customer-student-theme, .student-theme.customer-student-theme.dark {
-  --student-canvas: 220 8% 9%;
-  background: hsl(var(--student-canvas));
+  --student-canvas: 222 35% 9%;
+  background:
+    radial-gradient(ellipse 55% 45% at 100% 0%, hsl(270 40% 18% / .7), transparent 75%),
+    hsl(var(--student-canvas));
 }
-.customer-student-theme nav a[aria-current="page"] {
-  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .45), 0 0 20px -6px hsl(var(--gold-glow, 43 95% 68%) / .55);
-}
-.customer-student-theme nav a[aria-current="page"] svg { color: hsl(var(--accent-foreground)); }
-.customer-student-theme .student-dock a[aria-current="page"] svg { color: hsl(var(--primary-foreground)); }
 .customer-student-theme .admin-liquid-sheen,
 .customer-student-theme .admin-liquid-rim { display: none; }
 .customer-student-theme h1, .customer-student-theme h2,
 .customer-student-theme .font-mono { letter-spacing: 0; }
-body.customer-student-portal [role="dialog"] {
-  border-color: hsl(var(--border));
-  box-shadow: var(--student-shadow);
-}
+.customer-student-theme h1 { letter-spacing: -0.02em; }
 
-/* Brightened gold carries a soft warm halo. Scoped to the customer student
-   portal (body class) so portalled dialogs inherit it and other roles don't. */
-body.customer-student-portal .student-cta {
-  box-shadow:
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45),
-    0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .55), 0 0 34px hsl(var(--gold-halo, 46 100% 82%) / .3);
+/* Cards: no grey outline, 16px corners, soft blue shadow. */
+.customer-student-theme .student-card,
+.customer-student-theme .admin-glass-card,
+.customer-student-theme .rounded-lg.border.bg-card,
+.sky-card {
+  background: hsl(var(--card)) !important;
+  border-color: transparent !important;
+  border-radius: 1rem !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: none !important;
 }
-body.customer-student-portal .student-cta:active {
-  box-shadow:
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45), 0 0 12px hsl(var(--gold-halo, 46 100% 82%) / .4);
+.sky-card { position: relative; overflow: hidden; padding: 1.25rem; }
+.sky-wash::before {
+  content: ""; position: absolute; right: -30%; bottom: -45%; width: 110%; height: 90%;
+  border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(closest-side, var(--wash, hsl(207 90% 96%)), transparent);
 }
+.sky-wash > * { position: relative; z-index: 1; }
+.dark .sky-wash::before { opacity: .15; }
+
+/* Sidebar */
+.customer-student-theme .sky-sidebar {
+  background: hsl(0 0% 99%) !important; border: 0 !important; border-radius: 1rem !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.dark .customer-student-theme .sky-sidebar, .customer-student-theme.dark .sky-sidebar { background: hsl(var(--card)) !important; }
+.sky-nav { color: hsl(var(--sky-body)); }
+.sky-nav:hover { background: hsl(205 85% 95%); color: hsl(var(--foreground)); }
+.dark .sky-nav:hover { background: hsl(var(--muted)); }
+.sky-nav[aria-current="page"], .sky-btn-blue {
+  background: linear-gradient(180deg, #83B8FE, #5B9EFF); color: #fff; box-shadow: var(--glow-blue);
+}
+.sky-nav[aria-current="page"] svg { color: #fff; }
+.sky-avatar { border-radius: 1rem !important; background: linear-gradient(180deg, #6BB4FF, #59A1FF) !important; color: #fff !important; font-size: 1.1rem !important; }
+
+/* Icon tiles */
+.sky-tile { display: grid; place-items: center; flex-shrink: 0; height: 3rem; width: 3rem; border-radius: 1rem; }
+.sky-tile svg { height: 1.6rem; width: 1.6rem; }
+.sky-tile-blue   { background: linear-gradient(180deg, #CCF0FD, #A9D6FF); color: #1470E7; box-shadow: 0 6px 12px -8px #1470E7; }
+.sky-tile-violet { background: linear-gradient(180deg, #EDD8FF, #BCB6F9); color: #5A58E1; box-shadow: 0 6px 12px -8px #5A58E1; }
+.sky-tile-video  { background: linear-gradient(180deg, #EAE3FE, #CCC6FE); color: #5A58E1; box-shadow: 0 6px 12px -8px #5A58E1; }
+.sky-tile-pink   { background: linear-gradient(180deg, #FEE9F0, #F9C4EE); color: #D665B9; box-shadow: 0 6px 12px -8px #D665B9; }
+.sky-tile-orange { background: linear-gradient(180deg, #FBEDDF, #FBD9C3); color: #FA7433; box-shadow: 0 6px 12px -8px #FA7433; }
+.sky-tile-solid  { background: linear-gradient(180deg, #92CFFE, #5B9DFF); color: #fff; box-shadow: var(--glow-blue); }
+.sky-tile-solid svg { height: 1.4rem; width: 1.4rem; }
+.sky-tile-lock   { height: 2.75rem; width: 2.75rem; background: linear-gradient(180deg, #DAEDFC, #BDD9FB); color: #176ADC; }
+.sky-tile-lock svg { height: 1.4rem; width: 1.4rem; }
+
+/* Gradient pill buttons (white labels, as in the mockup) */
+.sky-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  height: 3rem; padding: 0 1.5rem; border-radius: 999px; font-weight: 500; font-size: 1rem; color: #fff;
+  position: relative; overflow: hidden; transition: transform .1s ease-out, filter .15s ease;
+}
+.sky-btn::after { content: ""; position: absolute; inset: 0 0 50% 0; background: linear-gradient(180deg, hsl(0 0% 100% / .22), transparent); pointer-events: none; }
+.sky-btn:hover { filter: brightness(1.04); }
+.sky-btn:active { transform: scale(.97); }
+.sky-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.sky-btn-blue   { background: linear-gradient(180deg, #74B3FF, #4B95FF); box-shadow: var(--glow-blue); }
+.sky-btn-violet { background: linear-gradient(170deg, #A3A0FC, #8C94FB 70%, #AC96FB); box-shadow: var(--glow-violet); }
+.sky-btn-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); box-shadow: var(--glow-pink); }
+
+/* Tracks, chips, small white pieces */
+.sky-track { height: 1rem; border-radius: 999px; background: hsl(var(--sky-track)); overflow: hidden; }
+.sky-track > div { height: 100%; border-radius: 999px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.sky-fill-blue   { background: linear-gradient(90deg, #74B3FF, #4B95FF); }
+.sky-fill-violet { background: linear-gradient(90deg, #A3A0FC, #8C94FB); }
+.sky-fill-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); }
+.sky-pct {
+  display: grid; place-items: center; flex-shrink: 0; height: 2.25rem; width: 2.25rem; border-radius: 999px;
+  background: hsl(0 0% 100%); color: #797C8B; font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 500;
+  box-shadow: 0 0 0 1px hsl(220 60% 92%), 0 2px 6px -2px hsl(212 60% 45% / .2);
+}
+.dark .sky-pct { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); box-shadow: none; }
+.sky-chip { display: inline-flex; align-items: center; height: 1.75rem; padding: 0 .75rem; border-radius: 999px; background: #E4EEFD; color: #235ECA; font-size: .875rem; font-weight: 600; }
+.sky-link { color: #3C7AD0; font-weight: 500; display: inline-flex; align-items: center; gap: .35rem; }
+.sky-pill {
+  display: inline-flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 1rem; border-radius: 999px;
+  background: hsl(0 0% 100% / .92); box-shadow: var(--shadow-card); transition: transform .1s ease-out;
+}
+.sky-pill:active { transform: scale(.97); }
+.dark .sky-pill { background: hsl(var(--card)); }
+.sky-ink-soft { color: hsl(var(--sky-ink-soft)); }
+.sky-body { color: hsl(var(--sky-body)); }
+
+/* Phone dock: blue active pill */
+.customer-student-theme .student-dock { border-color: transparent; box-shadow: var(--shadow-card); }
+.customer-student-theme .student-dock a[aria-current="page"] { background: linear-gradient(180deg, #83B8FE, #5B9EFF); color: #fff; box-shadow: var(--glow-blue); }
+
+body.customer-student-portal [role="dialog"] { border-color: transparent; border-radius: 1rem; box-shadow: var(--shadow-card), 0 30px 60px -30px hsl(212 60% 30% / .35); }
 body.customer-student-portal button.bg-primary,
-body.customer-student-portal a.bg-primary {
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / .4),
-    0 1px 2px hsl(var(--foreground) / .08),
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45),
-    0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .55), 0 0 34px hsl(var(--gold-halo, 46 100% 82%) / .3);
-}
-/* Small gold tiles (center logo / initials) need a tighter halo to read. */
-body.customer-student-portal span.bg-primary {
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / .4),
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .6), 0 0 12px hsl(var(--gold-halo, 46 100% 82%) / .65);
-}
-body.customer-student-portal [role="progressbar"] > div {
-  box-shadow: 0 0 8px hsl(var(--gold-halo, 46 100% 82%) / .6), 0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .35);
-}
-body.customer-student-portal [class~="max-h-[260px]"]:not([class*="drop-shadow-"]) {
-  filter: drop-shadow(0 0 16px hsl(45 95% 55% / .35));
-}
+body.customer-student-portal a.bg-primary { background-image: linear-gradient(180deg, #74B3FF, #4B95FF); box-shadow: var(--glow-blue); }
+
 @media (prefers-reduced-motion: reduce) {
-  body.customer-student-portal .student-cta,
-  body.customer-student-portal .student-cta:active { transition: none; transform: none; }
+  .sky-btn, .sky-pill, .sky-track > div { transition: none; }
+  .sky-btn:active, .sky-pill:active { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .student-theme.customer-student-theme { background: hsl(var(--student-canvas)); }
 }

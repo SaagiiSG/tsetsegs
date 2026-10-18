@@ -1,5 +1,5 @@
 # UI architecture
-- Customer student appearance is scoped to a lifecycle body class and shell class so gold tokens reach portalled controls without changing other roles or the main student portal.
+- Customer student appearance is scoped to a lifecycle body class and shell class (spec in `docs/design/student-sky.md`) so its tokens reach portalled controls without changing other roles or the main student portal; shared widgets like `DailyRing` take colours as props instead of being restyled globally.
 - Public investor demo renders outside main/tenant auth providers and uses only capability-scoped investor_demo RPCs with fictional sample content; no auth accounts, real question bank or customer privileges are created. Demo access expires server-side, and bounded cleanup wakes on creation and unschedules when empty.
 - Admin sidebar sections are controlled by route-aware expansion and remain available as icons when collapsed, so navigation cannot hide the current page or strand users.
 - Admin appearance uses a lifecycle-scoped body theme with semantic tokens so portalled dialogs inherit it without changing student or teacher pages.

@@ -1,3 +1,5 @@
+> Customer student portal design system: see `docs/design/student-sky.md` (mockup: `docs/design/home-mockup.png`). This file covers admin only.
+
 # Admin design reference
 
 Adapted from the Vercel analysis retrieved with `npx getdesign@latest add vercel`, together with the active Apple Design and Liquid Glass skills.

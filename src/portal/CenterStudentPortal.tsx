@@ -13,8 +13,6 @@ import { MathText } from '@/components/MathText';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
-import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
-import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { StudentAnnouncements } from './StudentExtras';
@@ -23,7 +21,7 @@ import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
-import { Flame as FlameIcon, Star, BarChart3 } from 'lucide-react';
+import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
@@ -32,7 +30,6 @@ import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSi
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
-import { RoadmapPreview } from './RoadmapPreview';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
@@ -45,11 +42,19 @@ const SETS = [
   { key: 'ANP120Aug3', label: 'Updated set', blurb: 'Freshly explained problems' },
 ] as const;
 const DAILY_GOAL = 20;
-const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5';
+const glass = 'sky-card';
 
-function Glass({ className = '', children }: { className?: string; children: React.ReactNode }) {
-  return <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} ${className}`}><LiquidGlassFX /><div className="relative">{children}</div></div>;
+function Glass({ className = '', style, children }: { className?: string; style?: React.CSSProperties; children: React.ReactNode }) {
+  return <div className={`${glass} ${className}`} style={style}>{children}</div>;
 }
+
+/** Sky family per position: 68 blue, 150 Hard violet, Updated set pink. */
+const SET_LOOK = {
+  '68': { family: 'blue', icon: Target, wash: 'hsl(207 90% 95%)' },
+  SATMathTraining800: { family: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)' },
+  ANP120Aug3: { family: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)' },
+} as const;
+const SKY_RING = { speed: '#5EBDFD', hard: '#D28CF5', medium: '#FBC2E5' };
 
 /** Everything the student pages share: profile, class, attendance, attempts + question meta. */
 function useMe() {
@@ -112,19 +117,20 @@ export default function CenterStudentPortal() {
   return (
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
       <div className="relative flex">
-        <aside className="hidden md:flex sticky top-3 m-3 h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col student-card border p-3">
-          <div className="flex items-center gap-2.5 px-2 pt-2 pb-4">
-            <CenterLogo center={center} className="h-8 w-8" />
-            <div className="min-w-0"><p className="text-sm font-semibold truncate">{centerDisplayName(center)}</p><p className="text-xs text-muted-foreground truncate">{name}</p></div>
+        <aside className="hidden md:flex sticky top-4 m-4 h-[calc(100vh-2rem)] w-60 shrink-0 flex-col sky-sidebar p-3">
+          <div className="flex items-center gap-3 px-2 pt-2 pb-4">
+            <CenterLogo center={center} className="h-11 w-11 sky-avatar" />
+            <div className="min-w-0"><p className="font-semibold truncate">{centerDisplayName(center)}</p><p className="text-sm text-muted-foreground truncate">{name}</p></div>
           </div>
-          <nav aria-label="Student" className="flex-1 space-y-0.5 overflow-y-auto">
+          <nav aria-label="Student" className="flex-1 space-y-2 overflow-y-auto scrollbar-hide">
             {NAV.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors active:scale-[0.98] ${isActive ? 'bg-accent text-accent-foreground font-semibold shadow-sm' : 'text-foreground/70 hover:bg-muted hover:text-foreground'}`}>
-                <Icon className="h-4 w-4" />{label}
+              <NavLink key={to} to={to} end={end} className={({ isActive }) => `sky-nav flex h-12 items-center gap-4 rounded-full px-4 text-base transition-colors active:scale-[0.98] ${isActive ? 'font-medium' : ''}`}>
+                <Icon className="h-5 w-5 shrink-0" />{label}
               </NavLink>
             ))}
           </nav>
-          <Button variant="ghost" size="sm" className="justify-start text-muted-foreground" onClick={signOut}><LogOut className="h-4 w-4" />Log out</Button>
+          <div className="mx-4 my-2 h-px bg-border/60" />
+          <button type="button" className="sky-nav flex h-12 items-center gap-4 rounded-full px-4 text-base active:scale-[0.98]" onClick={signOut}><LogOut className="h-5 w-5" />Log out</button>
         </aside>
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 md:pb-8">
@@ -217,11 +223,11 @@ function HomePage({ me }: { me: Me }) {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
+          <h1 className="text-3xl md:text-4xl font-bold">Hey {first} <span aria-hidden>👋</span></h1>
+          <p className="text-lg sky-body mt-1">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
-        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="student-chip student-chip-flame">
-          <FlameIcon className="h-4 w-4" /><span className="font-mono text-sm">{streak}</span><span className="text-xs text-muted-foreground">day streak</span>
+        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="sky-pill">
+          <FlameIcon className="h-5 w-5 text-[#F77B25]" /><span className="font-mono font-semibold text-[#E06D2A]">{streak}</span><span className="sky-body">day streak</span>
         </button>
       </div>
       <div className="grid gap-4 md:grid-cols-12">
@@ -232,24 +238,32 @@ function HomePage({ me }: { me: Me }) {
             medium={{ current: prog.medium, goal: g.medium }}
             onEditGoals={() => setGoalOpen(true)}
             onShowHistory={() => setRingOpen(true)}
-            className="rounded-3xl admin-glass-card admin-glass-neutral"
+            colors={SKY_RING}
+            className="sky-card !p-0"
           />
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
-        <div className="md:col-span-8 lg:col-span-9 grid gap-4 sm:grid-cols-3">
+        <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
           {SETS.map(s => {
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
+            const look = SET_LOOK[s.key];
+            const p = pct(done, ids.length);
             return (
-              <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left">
-                <Glass className="h-full hover:-translate-y-0.5 transition-transform">
-                  <p className="text-xs text-muted-foreground">{s.blurb}</p>
-                  <p className="text-lg font-semibold mt-1">{s.label}</p>
-                  <p className="font-mono text-3xl mt-6">{done}<span className="text-base text-muted-foreground">/{ids.length || '…'}</span></p>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-2"><div className="h-full rounded-full" style={{ width: `${pct(done, ids.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
-                  <p className="text-xs text-muted-foreground mt-3">Continue →</p>
+              <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left group">
+                <Glass className="sky-wash h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash } as React.CSSProperties}>
+                  <div className="flex items-center gap-3">
+                    <span className={`sky-tile sky-tile-${look.family}`}><look.icon /></span>
+                    <div className="min-w-0"><p className="font-semibold">{s.label}</p><p className="text-sm text-muted-foreground line-clamp-2" title={s.blurb}>{s.blurb}</p></div>
+                  </div>
+                  <p className="font-mono text-4xl font-bold mt-auto pt-10">{done}<span className="text-xl font-normal sky-ink-soft">/{ids.length || '…'}</span></p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="sky-track flex-1"><div className={`sky-fill-${look.family}`} style={{ width: `${p}%` }} /></div>
+                    <span className="sky-pct">{p}%</span>
+                  </div>
+                  <span className={`sky-btn sky-btn-${look.family} w-full mt-4`}>Continue<ArrowRight className="h-5 w-5" /></span>
                 </Glass>
               </button>
             );
@@ -257,31 +271,46 @@ function HomePage({ me }: { me: Me }) {
         </div>
       </div>
       {simulation ? <SatSimulationIsland latest={simulation} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
-      <div className="grid gap-4 lg:grid-cols-4">
-        <Glass className="lg:col-span-2 space-y-3">
-          <p className="font-medium">Domain mastery</p>
-          {!domains.length ? <p className="text-sm text-muted-foreground">Solve a few problems to see your strengths.</p> : domains.map(d => (
+      <div className="grid gap-3 lg:grid-cols-4">
+        <Glass className="sky-wash lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)' } as React.CSSProperties}>
+          <div className="flex items-center gap-3">
+            <span className="sky-tile sky-tile-solid"><BarChart3 /></span>
+            <div><p className="text-lg font-bold">Domain mastery</p><p className="text-sm text-muted-foreground">Your accuracy by topic</p></div>
+          </div>
+          {!domains.length ? (
+            <div className="relative min-h-[90px]">
+              <p className="sky-body">Solve a few problems to see your strengths.</p>
+              <div aria-hidden className="absolute right-0 bottom-0 flex items-end gap-2.5">
+                {[28, 42, 56, 76, 100].map(h => <span key={h} className="w-5 rounded-t-md" style={{ height: h, background: 'linear-gradient(180deg, #C7DBFE, transparent)' }} />)}
+              </div>
+            </div>
+          ) : domains.map(d => (
             <div key={d.domain} className="space-y-1"><div className="flex justify-between text-sm"><span>{d.domain} <span className="text-xs text-muted-foreground capitalize">· {d.subject}</span></span><span className="font-mono text-xs">{pct(d.c, d.n)}% <span className="text-muted-foreground">({d.n})</span></span></div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-foreground/70" style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
+              <div className="sky-track !h-2.5"><div className="sky-fill-blue" style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
           ))}
         </Glass>
-        <button onClick={() => navigate('/student/videos')} className="text-left">
-          <Glass className="h-full space-y-3 hover:-translate-y-0.5 transition-transform">
-            <p className="text-xs text-muted-foreground">Concept videos</p>
-            <p className="font-mono text-3xl">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-base text-muted-foreground">/{videoIds.length || '…'}</span></p>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
-            <p className="text-xs text-muted-foreground">Continue your roadmap →</p>
-            <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
+        <button onClick={() => navigate('/student/videos')} className="text-left group">
+          <Glass className="h-full space-y-4 transition-transform group-hover:-translate-y-0.5">
+            <div className="flex items-center gap-3">
+              <span className="sky-tile sky-tile-video"><PlayCircle /></span>
+              <div><p className="text-lg font-bold leading-tight">Concept videos</p><p className="text-sm text-muted-foreground">Your video roadmap</p></div>
+            </div>
+            <p className="font-mono text-4xl font-bold">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-xl font-normal sky-ink-soft">/{videoIds.length || '…'}</span></p>
+            <div className="sky-track"><div className="sky-fill-violet" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%` }} /></div>
+            <span className="sky-link">Continue your roadmap<ArrowRight className="h-4 w-4" /></span>
           </Glass>
         </button>
         <Glass className="space-y-4">
-          <div><p className="text-xs text-muted-foreground">Class</p><p className="font-medium">{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-xs text-muted-foreground">{me.cls.schedule}</p>}</div>
-          <div className="grid grid-cols-3 gap-3 border-t pt-4">
-            <div><p className="text-xs text-muted-foreground">Answered</p><p className="font-mono text-xl">{total}</p></div>
-            <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-xl">{total ? `${pct(correct, total)}%` : '—'}</p></div>
-            <div><p className="text-xs text-muted-foreground">Attended</p><p className="font-mono text-xl">{present}/{me.att.length}</p></div>
+          <div className="flex items-center gap-3">
+            <span className="sky-tile sky-tile-orange"><Users /></span>
+            <div className="min-w-0"><p className="text-lg font-bold truncate" title={me.cls?.name ?? undefined}>{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-sm text-muted-foreground truncate">{me.cls.schedule}</p>}</div>
           </div>
-          {me.att.length > 0 && <ul className="text-sm space-y-1 border-t pt-3">{me.att.slice(0, 6).map(a => <li key={a.session_date} className="flex justify-between"><span className="font-mono text-xs">{a.session_date}</span><span className="text-muted-foreground">{STATUS_LABEL[a.status]}</span></li>)}</ul>}
+          <div className="grid grid-cols-3 gap-2">
+            <div><p className="text-xs text-muted-foreground">Answered</p><p className="font-mono text-2xl font-medium">{total}</p></div>
+            <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-2xl font-medium">{total ? `${pct(correct, total)}%` : '–'}</p></div>
+            <div><p className="text-xs text-muted-foreground">Attended</p><p className="font-mono text-2xl font-medium">{present}/{me.att.length}</p></div>
+          </div>
+          {me.att[0] && <div className="flex justify-between text-sm"><span className="font-mono">{me.att[0].session_date}</span><span className="text-muted-foreground">{STATUS_LABEL[me.att[0].status]}</span></div>}
         </Glass>
       </div>
     </div>
