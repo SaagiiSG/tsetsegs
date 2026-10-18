@@ -1,8 +1,7 @@
 # UI architecture
-- Public landing and sign-in styling is scoped to `.landing-v2` and its own semantic tokens; this lets it follow the customer sky design without changing authenticated portal themes.
-- Public pages use static cloud assets and scoped semantic tokens so navigation never depends on GPU rendering.
-- Public language selection is shared through one persisted hook across landing and sign-in pages so navigation preserves the chosen language.
-- Start-free visitors use a query-scoped demo signup gate; normal investor demos remain interactive and signup uses the existing approval flow without granting automatic student access.
+- Landing and sign-in use `.landing-v2` semantic tokens and static clouds, isolating portal themes and avoiding GPU-dependent navigation.
+- Landing and sign-in share one persisted language hook so navigation preserves the selection.
+- Start-free uses a query-scoped demo signup gate; ordinary investor demos remain interactive. Signup retains approval requirements, never automatic student access.
 - Customer student appearance is scoped to a lifecycle body class and shell class (spec in `docs/design/student-sky.md`) so its tokens reach portalled controls without changing other roles or the main student portal; shared widgets like `DailyRing` take colours as props instead of being restyled globally.
 - Public investor demo renders outside main/tenant auth providers and uses only capability-scoped investor_demo RPCs with fictional sample content; no auth accounts, real question bank or customer privileges are created. Demo access expires server-side, and bounded cleanup wakes on creation and unschedules when empty.
 - Admin sidebar sections are controlled by route-aware expansion and remain available as icons when collapsed, so navigation cannot hide the current page or strand users.
@@ -10,7 +9,8 @@
 - Institution customer tracking and payment dues are admin-only records independent of competition cohorts; they do not grant tenant access or provision subdomains.
 - Institution customer lists and payment dues use paginated reads and shared query invalidation so dashboard summaries stay consistent after edits.
 - Admin navigation uses one lightweight translucent material with reduced-transparency/contrast fallbacks; data surfaces stay solid to preserve legibility and avoid stacked blur costs.
-- Admin atmospheric lighting is a semantic, navigation-only background layer with a solid accessibility fallback, so reference-inspired effects never reduce data contrast.- Course-center portals live in separate `tenant_*` tables scoped by `institution_id` and resolved from the `<slug>.flowersos.co` host (preview-only `?center=` override), so center data can never leak into the main Mongolian/intl cohorts, leaderboards or teacher views.
+- Admin atmospheric lighting is semantic and navigation-only with a solid accessibility fallback, preserving data contrast.
+- Center portals use separate `tenant_*` tables scoped by `institution_id`, resolved from `<slug>.flowersos.co` (preview-only `?center=` override), preventing leaks into main cohorts, leaderboards or teacher views.
 - Center admin workspace pages (`src/portal/admin/*`) read only `tenant_*` tables and shared read-only resources (question bank); never mount main admin pages inside a portal, because they query the main cohort tables.
 - The center admin shell reuses the main admin's sidebar primitives (`SidebarProvider`/`Sidebar` floating + icon-collapsible) so both workspaces collapse to the same icon rail, tooltips and glass card; keep them in sync rather than forking a second navigation implementation.
 - Center branding lives in `institution_customers.portal_settings` (written only via `tenant_update_settings`), with logos stored as small data URLs because the workspace blocks public storage buckets.
