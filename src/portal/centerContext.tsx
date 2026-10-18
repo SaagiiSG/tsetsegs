@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, type CSSProperties, type ReactNod
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export type PortalSettings = { display_name?: string; logo_url?: string; brand_color?: string; contact_email?: string; timezone?: string };
+export type PortalSettings = { display_name?: string; logo_url?: string; brand_color?: string; contact_email?: string; billing_email?: string; timezone?: string; session_days?: number; signout_before?: string; notify_new_students?: boolean; notify_overdue?: boolean; notify_inactive?: boolean };
 export type Center = { id: string; name: string; country: string; slug: string; portal_settings?: PortalSettings | null };
 export type CenterRole = 'center_admin' | 'teacher' | 'student';
 

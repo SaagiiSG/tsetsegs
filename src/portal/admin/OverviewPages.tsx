@@ -1,15 +1,45 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FolderPlus, Megaphone, UserPlus, Inbox } from 'lucide-react';
+import { FolderPlus, Megaphone, UserPlus, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { STATUS_LABEL, STATUS_STYLE } from '../centerContext';
+import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { localDate } from '../centerApi';
-import { useCenterAdminData, useQuestionTopics, pct, money } from './useCenterAdminData';
+import { useCenterAdminData, useQuestionTopics, pct, money, type CenterAdminData } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
 import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 
 const ATTENDED = new Set(['present', 'late']);
+
+/** In-app notifications on the center dashboard; each can be switched off in Settings. */
+function CenterAlerts({ data, today }: { data: CenterAdminData; today: string }) {
+  const { center } = useCenter();
+  const ps = center.portal_settings ?? {};
+  const week = Date.now() - 7 * 864e5;
+  const alerts: { text: string; to: string }[] = [];
+  if (ps.notify_new_students !== false) {
+    const n = data.students.filter(s => new Date(s.created_at).getTime() >= week).length;
+    if (n) alerts.push({ text: `${n} new student${n > 1 ? 's' : ''} joined this week`, to: '/admin/students' });
+  }
+  if (ps.notify_overdue !== false) {
+    const n = data.dues.filter(d => !d.paid_at && d.due_date < today).length;
+    if (n) alerts.push({ text: `${n} payment${n > 1 ? 's are' : ' is'} overdue`, to: '/admin/settings' });
+  }
+  if (ps.notify_inactive !== false) {
+    const activeIds = new Set(data.attempts.filter(a => new Date(a.created_at).getTime() >= week).map(a => a.student_id));
+    const n = data.students.filter(s => s.active && !activeIds.has(s.id)).length;
+    if (n) alerts.push({ text: `${n} student${n > 1 ? 's have' : ' has'} not practiced in 7 days`, to: '/admin/students' });
+  }
+  if (!alerts.length) return null;
+  return (
+    <ul aria-label="Notifications" className="space-y-2">
+      {alerts.map(a => (
+        <li key={a.text}><Link to={a.to} className="flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm hover:bg-muted/50">
+          <Bell className="h-4 w-4 text-muted-foreground" />{a.text}</Link></li>
+      ))}
+    </ul>
+  );
+}
 
 export function DashboardPage() {
   const { data, isLoading } = useCenterAdminData();
@@ -37,6 +67,7 @@ export function DashboardPage() {
         <Button asChild variant="outline" size="sm"><Link to="/admin/batches/new"><FolderPlus className="h-4 w-4" />Create batch</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/admin/announcements"><Megaphone className="h-4 w-4" />Post announcement</Link></Button>
       </nav>
+      <CenterAlerts data={data} today={today} />
       <div className="grid gap-8 lg:grid-cols-2">
         <Section title="Batches">
           {data.classes.length ? <ul className="divide-y text-sm">{data.classes.map(c => (
