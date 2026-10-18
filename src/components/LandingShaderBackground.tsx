@@ -45,7 +45,6 @@ export function LandingShaderBackground() {
         <Shader
           className={`landing-shader-canvas ${ready ? "is-ready" : ""}`}
           disableTelemetry
-          colorSpace="srgb"
           onReady={() => setReady(true)}
           onUnavailable={() => { setUnavailable(true); setReady(false); }}
         >
