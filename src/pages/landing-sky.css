@@ -1,0 +1,72 @@
+.landing-sky {
+  --background: 205 85% 95%;
+  --foreground: 232 29% 5%;
+  --card: 206 78% 98%;
+  --card-foreground: 232 29% 5%;
+  --primary: 248 88% 67%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 212 60% 93%;
+  --secondary-foreground: 232 29% 5%;
+  --muted: 212 60% 93%;
+  --muted-foreground: 223 6% 40%;
+  --accent: 250 75% 95%;
+  --accent-foreground: 250 60% 45%;
+  --border: 212 50% 87%;
+  --input: 212 45% 86%;
+  --ring: 248 88% 67%;
+  --radius: 1rem;
+  --landing-frost: 0 0% 100%;
+  --landing-primary-top: 250 94% 77%;
+  --landing-shadow: 0 10px 24px -12px hsl(212 60% 45% / .22), 0 1px 2px hsl(212 60% 45% / .06);
+  --landing-glow: 0 8px 16px -6px hsl(248 90% 68% / .4);
+  --landing-blue-light: 195 92% 89%;
+  --landing-blue: 215 83% 49%;
+  --landing-violet-light: 275 100% 93%;
+  --landing-violet: 241 70% 59%;
+  --landing-pink-light: 337 92% 96%;
+  --landing-pink: 311 58% 48%;
+  --landing-orange-light: 30 78% 93%;
+  --landing-orange: 21 88% 44%;
+  font-family: 'Nunito', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.landing-sky h1, .landing-sky h2, .landing-sky h3, .landing-sky button { letter-spacing: 0; }
+.landing-sky .font-mono { font-family: 'JetBrains Mono', monospace; }
+.landing-container { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 2rem; }
+.landing-nav { background: hsl(var(--landing-frost) / .83); border: 1px solid hsl(var(--landing-frost) / .7); box-shadow: var(--landing-shadow); backdrop-filter: blur(16px); }
+.landing-nav a { transition: color .15s; }
+.landing-nav a:hover { color: hsl(var(--primary)); }
+.landing-sky .landing-primary { background: linear-gradient(180deg, hsl(var(--landing-primary-top)), hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: var(--landing-glow); }
+.landing-primary:hover { filter: brightness(1.04); }
+.landing-hero { height: min(820px, 88svh); min-height: 650px; }
+.landing-hero-veil { background: linear-gradient(90deg, hsl(var(--background) / .92), hsl(var(--background) / .72) 42%, hsl(var(--background) / .06) 76%); }
+.landing-section { padding-block: 5rem; scroll-margin-top: 1.5rem; }
+.landing-eyebrow { color: hsl(var(--primary)); font-size: .875rem; font-weight: 700; }
+.landing-heading { font-family: 'Chillax', sans-serif; font-size: 2.5rem; font-weight: 600; line-height: 1.2; }
+.landing-feature { box-shadow: var(--landing-shadow); transition: transform .2s; }
+.landing-feature:hover { transform: translateY(-2px); }
+.landing-family-blue { --family-light: var(--landing-blue-light); --family-ink: var(--landing-blue); }
+.landing-family-violet { --family-light: var(--landing-violet-light); --family-ink: var(--landing-violet); }
+.landing-family-pink { --family-light: var(--landing-pink-light); --family-ink: var(--landing-pink); }
+.landing-family-orange { --family-light: var(--landing-orange-light); --family-ink: var(--landing-orange); }
+.landing-feature { background: linear-gradient(150deg, hsl(var(--card)) 65%, hsl(var(--family-light) / .65)); }
+.landing-feature-tile { background: hsl(var(--family-light)); color: hsl(var(--family-ink)); }
+.landing-results-band { background: hsl(var(--landing-frost) / .38); }
+.landing-result-photo { background: hsl(var(--card)); box-shadow: var(--landing-shadow); transition: transform .2s; }
+.landing-result-photo:hover { transform: translateY(-2px); }
+.landing-ielts-strip { scrollbar-color: hsl(var(--primary) / .4) hsl(var(--muted)); }
+.landing-cta { background: hsl(var(--accent) / .65); }
+@media (max-width: 767px) {
+  .landing-container { padding-inline: 1.5rem; }
+  .landing-hero { height: auto; min-height: 660px; }
+  .landing-hero > img { object-position: 58% center; }
+  .landing-hero-veil { background: hsl(var(--background) / .87); }
+  .landing-section { padding-block: 3.5rem; }
+  .landing-heading { font-size: 2rem; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .landing-nav { background: hsl(var(--card)); backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-sky *, .landing-sky *::before, .landing-sky *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

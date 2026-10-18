@@ -1,4 +1,5 @@
 # UI work
+- [x] Redesign the public landing page with the customer student sky design; preserve bilingual navigation and achievement photos; verified desktop/mobile language switching, photo dialogs, sign-in links, and no horizontal overflow.
 - [x] Restyle customer student Practice in sky/purple and replicate main Review Mistakes graphs, breakdown and history sidebar using tenant-only data; isolated desktop/mobile checks and model tests pass.
 - [ ] Verify customer Practice and Review Mistakes with a signed-in center student — available requesting account has no center student access; isolated layout checks do not verify real question loading.
 - [x] Public investor demo: isolated 15-minute stored sessions, fictional progress, student/teacher/admin experiences, automatic deletion, and end-to-end verification (answers, reload, attendance, classes, announcements, visitor isolation, mobile, cleanup and cleanup-job shutdown).
