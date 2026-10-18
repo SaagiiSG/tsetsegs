@@ -775,7 +775,7 @@ export default function QuestionBank() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
+      <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0">
         <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('questions-68')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs font-medium">68 Questions</CardTitle>
@@ -819,28 +819,6 @@ export default function QuestionBank() {
             <p className="text-xs text-muted-foreground hidden sm:block">R&W Questions</p>
           </CardContent>
         </Card>
-
-        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('students')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-            <CardTitle className="text-xs font-medium">Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{studentsCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground hidden sm:block">Registered</p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-md transition-shadow min-w-[140px] flex-shrink-0 md:min-w-0" onClick={() => setActiveTab('flags')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-            <CardTitle className="text-xs font-medium">Flagged</CardTitle>
-            <Flag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{flaggedCount ?? 0}</div>
-            <p className="text-xs text-muted-foreground hidden sm:block">Need attention</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Content Tabs */}
@@ -852,24 +830,6 @@ export default function QuestionBank() {
             <TabsTrigger value="questions-cb" className="text-xs md:text-sm px-2 md:px-3">CB ({questionsCBCount ?? 0})</TabsTrigger>
             <TabsTrigger value="questions-anp" className="text-xs md:text-sm px-2 md:px-3">New 120 ({questionsANPCount ?? 0})</TabsTrigger>
             <TabsTrigger value="questions-english" className="text-xs md:text-sm px-2 md:px-3">English ({questionsEnglishCount ?? 0})</TabsTrigger>
-            <TabsTrigger value="import" className="text-xs md:text-sm px-2 md:px-3">
-              <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              <span className="hidden sm:inline">Import </span>Math
-            </TabsTrigger>
-            <TabsTrigger value="import-english" className="text-xs md:text-sm px-2 md:px-3">
-              <Upload className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              <span className="hidden sm:inline">Import </span>Eng
-            </TabsTrigger>
-            <TabsTrigger value="variations" className="text-xs md:text-sm px-2 md:px-3">
-              AI
-              {(pendingVariationsCount ?? 0) > 0 && (
-                <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
-                  {pendingVariationsCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="students" className="text-xs md:text-sm px-2 md:px-3">Students</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs md:text-sm px-2 md:px-3">Analytics</TabsTrigger>
             <TabsTrigger value="flags" className="text-xs md:text-sm px-2 md:px-3">
               Flags
               {(flaggedCount ?? 0) > 0 && (
@@ -877,9 +837,6 @@ export default function QuestionBank() {
                   {flaggedCount}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs md:text-sm px-2 md:px-3">
-              <Settings className="h-3 w-3 md:h-4 md:w-4" />
             </TabsTrigger>
           </TabsList>
         </div>
@@ -914,33 +871,8 @@ export default function QuestionBank() {
           <QuestionList onEdit={handleEdit} questionSet="english" />
         </TabsContent>
 
-        <TabsContent value="import" className="space-y-4">
-          <CBQuestionImport />
-          <CBImportReviewSessions />
-        </TabsContent>
-
-        <TabsContent value="import-english" className="space-y-4">
-          <EnglishQuestionImport />
-        </TabsContent>
-
-        <TabsContent value="variations" className="space-y-4">
-          <VariationsReview />
-        </TabsContent>
-
-        <TabsContent value="students" className="space-y-4">
-          <StudentsTab />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <AnalyticsDashboard />
-        </TabsContent>
-
         <TabsContent value="flags" className="space-y-4">
           <FlaggedQuestions />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <CategoryManager />
         </TabsContent>
       </Tabs>
 
