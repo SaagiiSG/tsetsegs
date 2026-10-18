@@ -146,16 +146,16 @@ export function blendSimHistory(history: SimulationResult[]): number | null {
 }
 
 /**
- * Keep only the most recent attempt per question, preserving newest-first order.
- * Input must already be sorted newest-first by attempted_at.
+ * One row per question, scored on the student's FIRST attempt (a retry after
+ * a wrong answer must not count as right). Ordered newest-first by when the
+ * question was first answered. Input must be sorted newest-first.
  */
 export function dedupeDistinctNewestFirst(attempts: SimAttempt[]): SimAttempt[] {
-  const seen = new Set<string>();
-  const out: SimAttempt[] = [];
-  for (const a of attempts) {
-    if (seen.has(a.question_id)) continue;
-    seen.add(a.question_id);
-    out.push(a);
+  const first = new Map<string, SimAttempt>();
+  // Walk oldest → newest so the first seen per question is the first attempt.
+  for (let i = attempts.length - 1; i >= 0; i--) {
+    const a = attempts[i];
+    if (!first.has(a.question_id)) first.set(a.question_id, a);
   }
-  return out;
+  return [...first.values()].reverse();
 }

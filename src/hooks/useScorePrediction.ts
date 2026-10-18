@@ -263,20 +263,23 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
             const batch = questionIds.slice(i, i + 500);
             const { data: qData } = await supabase
               .from(qTable)
-              .select('id, difficulty_level')
+              .select('id, difficulty_level, subject')
               .in('id', batch);
             if (qData) allQuestions.push(...qData);
           }
 
           const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
+          const mathIds = new Set(
+            allQuestions.filter(q => (q.subject ?? 'math').toLowerCase() === 'math').map(q => q.id)
+          );
           attempts = attemptsData.map(a => ({
             ...a,
             difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
 
-          // Distinct (most-recent attempt per question), newest first — sim input
+          // Math only, first attempt per question, newest first — sim input
           simAttemptsNewestFirst = dedupeDistinctNewestFirst(
-            attempts.map((a) => ({
+            attempts.filter(a => mathIds.has(a.question_id)).map((a) => ({
               is_correct: a.is_correct,
               time_spent_seconds: a.time_spent_seconds,
               difficulty_level: a.difficulty_level,
@@ -417,6 +420,14 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
       if (confidence === 'high') halfRange = 15;
       else if (confidence === 'medium') halfRange = 17;
       else halfRange = 20;
+
+      // Save today's prediction (only works for the signed-in student themselves)
+      // so it can be compared with their real SAT score later.
+      supabase.rpc('save_sat_prediction', {
+        p_sim: simHistory.length > 0 && simBlend != null ? Math.round(simBlend) : null,
+        p_low: Math.max(200, predicted - halfRange),
+        p_high: Math.min(800, predicted + halfRange),
+      } as any).then(() => {});
 
       return {
         predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],

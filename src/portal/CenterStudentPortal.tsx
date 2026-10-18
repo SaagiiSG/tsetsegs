@@ -304,6 +304,12 @@ function HomePage({ me }: { me: Me }) {
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
   const simulation = useMemo(() => centerSatSimulation(me.attempts, me.meta), [me.attempts, me.meta]);
   const simulationProgress = useMemo(() => centerSatProgress(me.attempts, me.meta), [me.attempts, me.meta]);
+  // Save today's simulated score so it can be compared with the real SAT later.
+  const { center: simCenter } = useCenter();
+  useEffect(() => {
+    if (!simulation?.simScore) return;
+    supabase.rpc('tenant_save_sat_prediction', { _institution: simCenter.id, p_sim: simulation.simScore }).then(() => {});
+  }, [simulation?.simScore, simCenter.id]);
 
   return (
     <div className="space-y-5">
@@ -410,8 +416,9 @@ function HomePage({ me }: { me: Me }) {
 function useRecordAttempt(me: Me) {
   const { center, userId } = useCenter();
   const qc = useQueryClient();
-  return async (questionId: string, ok: boolean, seconds?: number) => {
-    await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null });
+  // The server grades `answer` and decides points; `ok` is display-only.
+  return async (questionId: string, ok: boolean, seconds?: number, answer?: string) => {
+    await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, answer: answer ?? '', time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null });
     qc.invalidateQueries({ queryKey: ['center-student', center.id, userId] });
   };
 }
@@ -427,9 +434,10 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   useEffect(() => { setPicked(''); setTyped(''); setResult(null); setTries(0); setShowExp(false); setForfeit(false); startedAt.current = Date.now(); }, [q.id]);
   const choices = normaliseChoices(q.multiple_choice_options, q.choice_images);
   const submit = async () => {
-    const ok = isCorrect(q, choices.length ? picked : typed);
+    const given = choices.length ? picked : typed;
+    const ok = isCorrect(q, given);
     // Only the first try counts, and peeking at the explanation first forfeits it.
-    if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000);
+    if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000, given);
     setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
   };
   const openExplanation = () => {
@@ -591,7 +599,7 @@ function SpeedPage({ me }: { me: Me }) {
   const answer = useCallback(async (given: string) => {
     if (!q) return;
     const ok = !!given && isCorrect(q, given);
-    record(q.id, ok, qStart - left);
+    record(q.id, ok, qStart - left, given);
     setScore(s => [...s, ok]); setI(n => n + 1); setQStart(left); setPicked(''); setTyped('');
   }, [q, record, left, qStart]);
   useEffect(() => {
