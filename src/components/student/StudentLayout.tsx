@@ -84,6 +84,12 @@ function StudentLayoutContent() {
     };
   }, [student, isTeacherOrAdmin]);
 
+  // Student look for pop-ups that render outside the page frame
+  useEffect(() => {
+    document.body.classList.add('student-portal');
+    return () => document.body.classList.remove('student-portal');
+  }, []);
+
   // Collapse sidebar when calculator snaps left
   useEffect(() => {
     const handleSnapChange = (e: CustomEvent<{ snapSide: SnapSide }>) => {
