@@ -1148,3 +1148,4 @@ button .math-inline .katex {
   .student-chip, .student-cta { transition: none; }
   .student-chip:active, .student-cta:active { transform: none; }
 }
+@keyframes ring-pop { 0% { transform: scale(.94); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
