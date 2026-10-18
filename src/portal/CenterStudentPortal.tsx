@@ -141,6 +141,7 @@ function MovableDock() {
   const key = 'center_dock_pos';
   const [pos, setPos] = useState<{ x: number; y: number }>(() => { try { return JSON.parse(localStorage.getItem(key) || '') } catch { return { x: 0, y: 0 }; } });
   const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
+  const justDragged = useRef(false);
   const onDown = (e: React.PointerEvent) => {
     drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, moved: false };
   };
@@ -153,11 +154,11 @@ function MovableDock() {
     setPos({ x: Math.max(-mx, Math.min(mx, d.ox + dx)), y: Math.max(-my, Math.min(0, d.oy + dy)) });
   };
   const onUp = (e: React.PointerEvent) => {
-    const d = drag.current; drag.current = null;
+    const d = drag.current; drag.current = null; justDragged.current = !!d?.moved;
     if (d?.moved) { e.preventDefault(); localStorage.setItem(key, JSON.stringify(pos)); }
   };
   return (
-    <nav aria-label="Student" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onClickCapture={e => { if (drag.current?.moved) e.preventDefault(); }}
+    <nav aria-label="Student" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onClickCapture={e => { if (justDragged.current) { e.preventDefault(); e.stopPropagation(); justDragged.current = false; } }}
       style={{ transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)`, touchAction: 'none' }}
       className="lg:hidden fixed bottom-3 left-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5 cursor-grab active:cursor-grabbing select-none">
       <span aria-hidden className="mx-1 h-6 w-1 rounded-full bg-foreground/20" />
