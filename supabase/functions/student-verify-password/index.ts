@@ -25,14 +25,16 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing credentials' }, 400)
     }
 
-    let query = admin.from('student_accounts').select('id, password_hash').limit(1)
+    let query = admin.from('student_accounts').select('id').limit(1)
     query = accountId ? query.eq('id', accountId) : query.eq('phone_number', phone!)
     const { data: acct, error: acctErr } = await query.maybeSingle()
     if (acctErr) throw acctErr
-    if (!acct || !acct.password_hash) return json({ error: 'Invalid credentials' }, 401)
+    if (!acct) return json({ error: 'Invalid credentials' }, 401)
+    const { data: cred } = await admin.from('student_credentials').select('password_hash').eq('student_account_id', acct.id).maybeSingle()
+    if (!cred?.password_hash) return json({ error: 'Invalid credentials' }, 401)
 
     const { data: ok, error: vErr } = await admin.rpc('verify_student_password', {
-      stored_hash: acct.password_hash,
+      stored_hash: cred.password_hash,
       input_password: password,
     })
     if (vErr) throw vErr

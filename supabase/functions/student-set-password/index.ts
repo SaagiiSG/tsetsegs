@@ -38,10 +38,11 @@ Deno.serve(async (req) => {
     if (!acct) return json({ error: 'Account not found' }, 404)
 
     // If a password already exists, require current password (change-password flow)
-    if (acct.password_hash) {
-      if (!currentPassword) return json({ error: 'Current password required' }, 400)
+    const { data: cred } = await admin.from('student_credentials').select('password_hash').eq('student_account_id', acct.id).maybeSingle()
+    if (acct.password_hash || cred?.password_hash) {
+      if (!currentPassword || !cred?.password_hash) return json({ error: 'Current password required' }, 400)
       const { data: ok, error: vErr } = await admin.rpc('verify_student_password', {
-        stored_hash: acct.password_hash,
+        stored_hash: cred.password_hash,
         input_password: currentPassword,
       })
       if (vErr) throw vErr
