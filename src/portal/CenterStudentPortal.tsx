@@ -31,6 +31,7 @@ import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
 import { RoadmapPreview } from './RoadmapPreview';
+import { SkyDepth } from './SkyDepth';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -120,7 +121,8 @@ export default function CenterStudentPortal() {
 
   return (
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
-      <div className="relative flex">
+      <SkyDepth />
+      <div className="relative z-[1] flex">
         <aside className="hidden md:flex sticky top-4 m-4 h-[calc(100vh-2rem)] w-60 shrink-0 flex-col sky-sidebar p-3">
           <div className="flex items-center gap-3 px-2 pt-2 pb-4">
             <CenterLogo center={center} className="h-11 w-11 sky-avatar" />
