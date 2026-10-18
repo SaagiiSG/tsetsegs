@@ -375,13 +375,13 @@ export default function StudentSpeedSession() {
 
       try {
         const { badgesUnlocked } = await checkSpeedBadgeProgress(student.id, { totalQuestions: results.length, correctCount, totalTimeSeconds, accuracy });
-        badgesUnlocked.forEach(badgeName => { toast.success(`🏆 Badge Unlocked: ${badgeName}!`, { description: 'Check your badges page!', duration: 5000 }); });
+        queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
         if (badgesUnlocked.length > 0) queryClient.invalidateQueries({ queryKey: ['student-badges'] });
       } catch (error) { console.error('Failed to check speed badge progress:', error); }
 
       try {
         const newBadges = await syncBadgeProgressForStudent(student.id, student.linked_student_id || undefined);
-        newBadges.forEach(badgeName => { toast.success(`🏆 Badge Unlocked: ${badgeName}!`, { description: 'Check your badges page!', duration: 5000 }); });
+        queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
         if (newBadges.length > 0) queryClient.invalidateQueries({ queryKey: ['student-badges'] });
       } catch (error) { console.error('Failed to sync badge progress:', error); }
     }
