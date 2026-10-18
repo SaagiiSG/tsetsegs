@@ -16,6 +16,7 @@ import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlay
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { StudentAnnouncements } from './StudentExtras';
+import { SkyHomeSkeleton, SkyListSkeleton, SkyCardSkeleton } from './SkySkeleton';
 import { SprintLeaderboard, useCenterSprints } from './admin/ToolPages';
 import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
@@ -222,7 +223,7 @@ export default function CenterStudentPortal() {
               <Button variant="ghost" size="icon" className="lg:hidden rounded-full" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
             </div>
           </div>
-          {me.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !me.data ? <p className="text-sm">Your account isn't linked. Contact your center.</p> : (
+          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? <p className="text-sm">Your account isn't linked. Contact your center.</p> : (
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <Routes>
@@ -246,7 +247,7 @@ export default function CenterStudentPortal() {
       <Sheet open={notesOpen} onOpenChange={setNotesOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" />Announcements</SheetTitle></SheetHeader>
-          <div className="mt-4">{me.data ? <StudentAnnouncements studentId={me.data.student.id} /> : <p className="text-sm text-muted-foreground">Loading…</p>}</div>
+          <div className="mt-4">{me.data ? <StudentAnnouncements studentId={me.data.student.id} /> : <SkyListSkeleton rows={3} />}</div>
         </SheetContent>
       </Sheet>
 
@@ -542,7 +543,7 @@ function PracticePage({ me }: { me: Me }) {
           <SelectContent>{DIFFS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select>
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
       </div>
-      {q === undefined ? <p className="text-sm text-muted-foreground">Loading question…</p> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
+      {q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
       {subject === 'math' && <DesmosCalculator />}
     </div>
   );

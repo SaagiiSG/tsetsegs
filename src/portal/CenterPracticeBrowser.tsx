@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Check, ChevronRight, CircleDot, FileText, Shuffle, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { SkyListSkeleton } from './SkySkeleton';
 
 type Row = { id: string; question_id: string | null; subject: string | null; question_set: string | null; category_id: string | null; skill: string | null };
 type Attempt = { question_id: string; is_correct: boolean };
@@ -114,7 +115,7 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
         </aside>
 
         <section className="sky-card lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          {data.isLoading ? <p className="p-4 text-sm text-muted-foreground">Loading questions…</p> : shown.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p> : (
+          {data.isLoading ? <div className="p-4"><SkyListSkeleton rows={5} /></div> : shown.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p> : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {shown.map(r => {
                 const s = status[r.id];

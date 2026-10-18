@@ -10,6 +10,7 @@ import { useCenterSprints } from './admin/ToolPages';
 import { TIER_ORDER, TIER_PROMOTION_CUTOFFS, type TierType } from '@/data/badgeDefinitions';
 import { TierLadder } from '@/components/student/leaderboard/TierLadder';
 import { CurrentSprintTab, AllTimeTab, MyRankTab } from '@/components/student/leaderboard';
+import { SkyListSkeleton } from './SkySkeleton';
 import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
 import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
 
@@ -107,7 +108,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
 
         <TabsContent value="history" className="mt-0"><motion.div {...fade}>
           <Card><CardContent className="p-3 sm:p-6">
-            {history.isLoading ? <p className="py-8 text-muted-foreground">Loading history…</p>
+            {history.isLoading ? <div className="py-6"><SkyListSkeleton rows={4} /></div>
               : history.error ? <p role="alert" className="py-8 text-destructive">Could not load rank history.</p>
               : !history.data?.length ? <p className="py-8 text-center text-muted-foreground">Your rank history starts after your first completed sprint.</p>
               : <div className="divide-y">{history.data.map(h => <div key={h.id} className="flex justify-between gap-4 py-4">
