@@ -43,6 +43,7 @@
 - [x] Student accounts and sign-in records locked; passwords moved to server-only store
 - [x] Scoreboard locked: server grades answers, decides points, updates league totals
 - [x] Server-side badge checks (streak badges verified; others server-only), badge points paid once into the league, Week Warrior = 70
-- [ ] Add missing badges (speed, practice, monthly) to the database with server checks; store "celebration seen" on the server
+- [x] Added 22 missing badges with server rules; celebration "seen" stored on the server; speed session totals checked against real answers
+- [ ] Server rules for test-based badges (Blitz, Flawless Execution, August Ascent, October Olympian, Penguins, God Amongst Human)
 - [ ] SAT simulation: Math-only answers, first try per question only (both portals); save daily prediction snapshots + real SAT to compare; switch method only if record shows misses
 - [ ] Customer portal: server grading of practice answers, repeat answers pay 0, speed run checks, badge checks
