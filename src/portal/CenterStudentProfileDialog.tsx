@@ -30,7 +30,8 @@ export function CenterStudentProfileDialog({ studentId, name, open, onOpenChange
   const p = q.data;
   const acc = p && p.practice_answered ? Math.round((p.practice_correct / p.practice_answered) * 100) : 0;
   const practicePts = (p?.practice_correct ?? 0) * 10, speedPts = (p?.speed_correct ?? 0) * 10;
-  const art = p ? (TIER_ASSETS as Record<string, { badge?: string } | undefined>)[p.tier]?.badge : undefined;
+  const tierAsset = p ? (TIER_ASSETS as Record<string, typeof TIER_ASSETS.unranked | undefined>)[p.tier] : undefined;
+  const TierIcon = tierAsset?.icon;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,7 +43,7 @@ export function CenterStudentProfileDialog({ studentId, name, open, onOpenChange
               <DialogTitle className="truncate">{name}</DialogTitle>
               <DialogDescription>{p ? [p.class_name, `${tierName(p.tier)} rank`].filter(Boolean).join(' · ') : center.name}</DialogDescription>
             </div>
-            {art && <img src={art} alt="" className="ml-auto h-12 w-12 object-contain" />}
+            {tierAsset?.image ? <img src={tierAsset.image} alt="" className="ml-auto h-12 w-12 object-contain" /> : TierIcon && <TierIcon className="ml-auto h-8 w-8 text-primary" />}
           </div>
         </DialogHeader>
 
