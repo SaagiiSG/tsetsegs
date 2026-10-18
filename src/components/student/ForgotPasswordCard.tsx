@@ -53,16 +53,16 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
     return (
       <AuthGlassCard>
         <div className="space-y-3 pb-8">
-          <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-            <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+          <div className="h-14 w-14 rounded-full bg-muted border border-border flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7 text-[hsl(var(--lv-green-ink))]" />
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request sent</h2>
-          <p className="text-sm text-white/50">
+          <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Request sent</h2>
+          <p className="text-sm text-muted-foreground">
             Хүсэлт админд илгээгдлээ ({phone})
           </p>
         </div>
         <div className="space-y-6">
-          <p className="text-sm text-white/50 border-b border-white/10 pb-4">
+          <p className="text-sm text-muted-foreground border-b border-border pb-4">
             Админ таны нэвтрэх эрхийг цоожгүй болгосны дараа та дугаараа оруулаад шинэ нууц үг
             тохируулна.
           </p>
@@ -80,12 +80,12 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Reset Password</h2>
-        <p className="text-sm text-white/50">
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Reset Password</h2>
+        <p className="text-sm text-muted-foreground">
           Админд нууц үг сэргээх хүсэлт илгээнэ
         </p>
       </div>
@@ -93,19 +93,19 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
         <div className="space-y-2">
           <Label htmlFor="reset-phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
-            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="reset-phone"
               type="tel"
               placeholder="99112233"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
               maxLength={8}
             />
           </div>
         </div>
-        <div className="flex items-start gap-2 text-xs text-white/40">
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Хүсэлтийг админ баталгаажуулсны дараа та дугаараа оруулаад шинэ нууц үг тохируулах

@@ -78,26 +78,26 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
       <div className="space-y-8">
         <div className="space-y-3">
           <CenterLogo center={center} className="h-12 w-12" />
-          <h1 className="text-3xl font-semibold tracking-tight text-white">{name}</h1>
-          <p className="text-sm text-white/50">Sign in to your center portal</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">{name}</h1>
+          <p className="text-sm text-muted-foreground">Sign in to your center portal</p>
         </div>
 
         {signedInWithoutAccess ? (
           <div className="space-y-4">
-            <p className="text-sm text-white/60">This account doesn't have access to {name}.</p>
+            <p className="text-sm text-muted-foreground">This account doesn't have access to {name}.</p>
             <Button className={authPrimaryButtonClasses} onClick={signOut}>Use a different account</Button>
           </div>
         ) : (
           <>
             {/* underline tabs, matching the staff login */}
-            <div className="flex gap-6 border-b border-white/10">
+            <div className="flex gap-6 border-b border-border">
               {(['student', 'staff'] as const).map(t => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => { setTab(t); setError(''); }}
                   className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                    tab === t ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
+                    tab === t ? 'text-foreground border-border' : 'text-muted-foreground border-transparent hover:text-muted-foreground'
                   }`}
                 >
                   {t === 'student' ? 'Student' : 'Teacher / Admin'}
@@ -116,7 +116,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                   <Label htmlFor="cp-pw" className={authLabelClasses}>Password</Label>
                   <PasswordInput id="cp-pw" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
                     required className={authInputClasses} />
-                  <p className="text-xs text-white/35">First time here? Enter your phone and any password — you'll create your real one next.</p>
+                  <p className="text-xs text-muted-foreground">First time here? Enter your phone and any password — you'll create your real one next.</p>
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
               </form>
@@ -124,7 +124,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
 
             {tab === 'student' && stage === 'create' && (
               <form onSubmit={createPassword} className="space-y-6">
-                <p className="text-sm text-white/60">First time here — create a password (8+ characters, letters and numbers).</p>
+                <p className="text-sm text-muted-foreground">First time here — create a password (8+ characters, letters and numbers).</p>
                 <div className="space-y-2">
                   <Label htmlFor="cp-new" className={authLabelClasses}>New password</Label>
                   <PasswordInput id="cp-new" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)}
@@ -159,7 +159,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
               </form>
             )}
 
-            {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           </>
         )}
       </div>

@@ -212,8 +212,8 @@ export default function StudentPortal() {
   const renderLoginStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
-        <p className="text-sm text-white/50">
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Student Login</h2>
+        <p className="text-sm text-muted-foreground">
           Enter your phone number and password to access practice questions
         </p>
       </div>
@@ -221,18 +221,18 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
           <div className="relative">
-            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="phone"
               type="tel"
               placeholder="99112233"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
               maxLength={20}
             />
           </div>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted-foreground">
             Use the phone number registered with your class.
           </p>
         </div>
@@ -240,20 +240,20 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="password" className={authLabelClasses}>Password</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7 pr-10")}
+              className={cn(authInputClasses, "pl-10 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -295,12 +295,12 @@ export default function StudentPortal() {
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request Access</h2>
-        <p className="text-sm text-white/50">
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Request Access</h2>
+        <p className="text-sm text-muted-foreground">
           This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
         </p>
       </div>
@@ -308,18 +308,18 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="fullName" className={authLabelClasses}>Full Name</Label>
           <div className="relative">
-            <User className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="fullName"
               type="text"
               placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={cn(authInputClasses, "pl-7")}
+              className={cn(authInputClasses, "pl-10")}
               maxLength={100}
             />
           </div>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted-foreground">
             Use the name your teacher knows you by
           </p>
         </div>
@@ -345,18 +345,18 @@ export default function StudentPortal() {
   const renderPendingApprovalStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-          <Clock className="h-7 w-7 text-white/70" />
+        <div className="h-14 w-14 rounded-full bg-muted border border-border flex items-center justify-center">
+          <Clock className="h-7 w-7 text-muted-foreground" />
         </div>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Pending Approval</h2>
-        <p className="text-sm text-white/50">
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Pending Approval</h2>
+        <p className="text-sm text-muted-foreground">
           Your registration request has been submitted. Your teacher will review it shortly.
         </p>
       </div>
       <div className="space-y-6">
-        <div className="border-b border-white/10 pb-4">
-          <p className="text-sm text-white/50">Phone: <span className="font-mono font-medium text-white">{pendingPhone}</span></p>
-          <p className="text-xs text-white/40 mt-1">You'll be able to log in once approved</p>
+        <div className="border-b border-border pb-4">
+          <p className="text-sm text-muted-foreground">Phone: <span className="font-mono font-medium text-foreground">{pendingPhone}</span></p>
+          <p className="text-xs text-muted-foreground mt-1">You'll be able to log in once approved</p>
         </div>
         <Button
           variant="ghost"
@@ -376,12 +376,12 @@ export default function StudentPortal() {
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Set Your Password</h2>
-        <p className="text-sm text-white/50">
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">Set Your Password</h2>
+        <p className="text-sm text-muted-foreground">
           Create a password for your account ({pendingPhone})
         </p>
       </div>
@@ -389,20 +389,20 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="new-password" className={authLabelClasses}>Password</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="new-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7 pr-10")}
+              className={cn(authInputClasses, "pl-10 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -412,7 +412,7 @@ export default function StudentPortal() {
 
         {/* Password requirements */}
         <div className="space-y-1.5 text-xs">
-          <p className="text-white/50 font-medium">Password must have:</p>
+          <p className="text-muted-foreground font-medium">Password must have:</p>
           <div className="grid grid-cols-2 gap-1">
             <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
             <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
@@ -425,18 +425,18 @@ export default function StudentPortal() {
         <div className="space-y-2">
           <Label htmlFor="confirm-password" className={authLabelClasses}>Confirm Password</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="confirm-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7")}
+              className={cn(authInputClasses, "pl-10")}
             />
           </div>
           {confirmPassword && password !== confirmPassword && (
-            <p className="text-xs text-red-400">Passwords do not match</p>
+            <p className="text-xs text-destructive">Passwords do not match</p>
           )}
         </div>
 
@@ -495,10 +495,10 @@ export default function StudentPortal() {
         )}
 
         <div className="text-center space-y-1">
-          <Link to="/student-register" className="text-sm text-white/80 hover:text-white hover:underline">
+          <Link to="/student-register" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
             Шинээр бүртгүүлэх
           </Link>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted-foreground">
             Having trouble logging in? Contact your teacher.
           </p>
         </div>
@@ -511,11 +511,11 @@ function PasswordRule({ met, text }: { met: boolean; text: string }) {
   return (
     <div className={cn(
       "flex items-center gap-1.5 transition-colors",
-      met ? "text-emerald-400" : "text-white/40"
+      met ? "text-[hsl(var(--lv-green-ink))]" : "text-muted-foreground"
     )}>
       <CheckCircle2 className={cn(
         "h-3 w-3",
-        met ? "text-emerald-400" : "text-white/25"
+        met ? "text-[hsl(var(--lv-green-ink))]" : "text-muted-foreground"
       )} />
       <span>{text}</span>
     </div>

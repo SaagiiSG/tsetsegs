@@ -184,29 +184,29 @@ export default function Login() {
     >
       <div className="space-y-10">
         <div className="space-y-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
             Staff sign in
           </p>
-          <h1 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">
             Welcome back
           </h1>
-          <p className="text-sm text-white/50">Sign in to the flowersos staff workspace.</p>
+          <p className="text-sm text-muted-foreground">Sign in to the flowersos staff workspace.</p>
         </div>
 
         <AuthGlassCard>
           <div className="space-y-8">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "teacher")}>
-              <TabsList className="grid w-full grid-cols-2 bg-transparent border-b border-white/10 rounded-none p-0 h-auto gap-6">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent border-b border-border rounded-none p-0 h-auto gap-6">
                 <TabsTrigger
                   value="admin"
-                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-muted-foreground border-b-2 border-transparent -mb-px data-[state=active]:border-border data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Admin
                 </TabsTrigger>
                 <TabsTrigger
                   value="teacher"
-                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-muted-foreground border-b-2 border-transparent -mb-px data-[state=active]:border-border data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <GraduationCap className="h-4 w-4" />
                   Teacher
@@ -309,7 +309,7 @@ export default function Login() {
                       "Sign In"
                     )}
                   </Button>
-                  <p className="text-xs text-white/40 text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Contact admin if you need account access
                   </p>
                 </form>
