@@ -19,7 +19,7 @@ const actions = [
   {
     label: 'Search',
     icon: Search,
-    path: '/admin/search',
+    path: '/admin/students',
     color: 'hover:text-foreground hover:border-input'
   },
   {
