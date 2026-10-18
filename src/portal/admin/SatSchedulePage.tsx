@@ -126,7 +126,7 @@ export function SatSchedulePage() {
               </SelectContent>
             </Select>
           </div>
-          <span className="text-sm font-mono text-muted-foreground">{list.length} students</span>
+          <span className="text-sm font-mono text-muted-foreground">{picked.length} students</span>
         </div>
       </section>
 

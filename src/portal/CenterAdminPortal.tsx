@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import {
-  BarChart3, CalendarCheck, FolderPlus, GraduationCap, Inbox, LayoutDashboard, LogOut, Megaphone, Menu,
+  BarChart3, CalendarCheck, CalendarClock, FolderPlus, GraduationCap, Inbox, LayoutDashboard, LogOut, Megaphone, Menu,
   Search, Settings, Trophy, Users, Layers, ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { DashboardPage, AnalyticsPage, ClassOverviewPage } from './admin/Overvie
 import { BatchesPage, CreateBatchPage } from './admin/BatchPages';
 import { StudentsPage, StudentDetailPage } from './admin/StudentPages';
 import { QuestionsPage, SprintsPage, AnnouncementsPage } from './admin/ToolPages';
+import { SatSchedulePage } from './admin/SatSchedulePage';
 import { TeamPage, SettingsPage } from './admin/CenterPages';
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard };
@@ -41,6 +42,7 @@ const SECTIONS: Section[] = [
   ] },
   { title: 'Tools', glow: '32 95% 50%', items: [
     { to: 'questions', label: 'Search Questions', icon: Search },
+    { to: 'sat-schedule', label: 'SAT Schedule', icon: CalendarClock },
     { to: 'sprints', label: 'Sprint Monitor', icon: Trophy },
     { to: 'announcements', label: 'Announcements', icon: Megaphone },
   ] },
@@ -266,6 +268,7 @@ export default function CenterAdminPortal() {
               <Route path="students/:studentId" element={<StudentDetailPage />} />
               <Route path="registrations" element={<Navigate to="/admin/students" replace />} />
               <Route path="questions" element={<QuestionsPage />} />
+              <Route path="sat-schedule" element={<SatSchedulePage />} />
               <Route path="sprints" element={<SprintsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="team" element={<TeamPage />} />
