@@ -172,11 +172,11 @@ export const CALIBRATION_OFFSET = 50; // 16 real SATs (Aug 2026): bank ran ~52 p
 
 /**
  * Score the last `batches × size` distinct questions as mini-SATs of `size`,
- * newest batch weighted most (weight = decay^i × batch confidence weight).
+ * newest batch weighted most, each older batch 22% less (weight = decay^i × batch confidence weight).
  */
 export function buildWeightedSim(
   distinctNewestFirst: SimAttempt[],
-  { batches = 10, size = 44, decay = 0.8, offset = CALIBRATION_OFFSET } = {},
+  { batches = 10, size = 44, decay = 0.78, offset = CALIBRATION_OFFSET } = {},
 ): WeightedSimResult | null {
   const conf = { high: 1.0, med: 0.7, low: 0.4 } as const;
   const out: SimulationResult[] = [];
