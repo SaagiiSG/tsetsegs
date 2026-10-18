@@ -36,7 +36,6 @@ export function DashboardPage() {
         <Button asChild variant="outline" size="sm"><Link to="/admin/students"><UserPlus className="h-4 w-4" />Add student</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/admin/batches/new"><FolderPlus className="h-4 w-4" />Create batch</Link></Button>
         <Button asChild variant="outline" size="sm"><Link to="/admin/announcements"><Megaphone className="h-4 w-4" />Post announcement</Link></Button>
-        <Button asChild variant="outline" size="sm"><Link to="/admin/registrations"><Inbox className="h-4 w-4" />Registration queue{data.pendingRegistrations ? ` (${data.pendingRegistrations})` : ''}</Link></Button>
       </nav>
       <div className="grid gap-8 lg:grid-cols-2">
         <Section title="Batches">

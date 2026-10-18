@@ -18,7 +18,7 @@ import { useCenterAdminData } from './admin/useCenterAdminData';
 import { DarkModeSetting } from './admin/CenterPages';
 import { DashboardPage, AnalyticsPage, ClassOverviewPage } from './admin/OverviewPages';
 import { BatchesPage, CreateBatchPage } from './admin/BatchPages';
-import { StudentsPage, StudentDetailPage, RegistrationsPage } from './admin/StudentPages';
+import { StudentsPage, StudentDetailPage } from './admin/StudentPages';
 import { QuestionsPage, SprintsPage, AnnouncementsPage } from './admin/ToolPages';
 import { TeamPage, SettingsPage } from './admin/CenterPages';
 
@@ -38,7 +38,6 @@ const SECTIONS: Section[] = [
   ] },
   { title: 'Students', glow: '152 60% 42%', items: [
     { to: 'students', label: 'Search Accounts', icon: GraduationCap },
-    { to: 'registrations', label: 'Registration Queue', icon: Inbox },
   ] },
   { title: 'Tools', glow: '32 95% 50%', items: [
     { to: 'questions', label: 'Search Questions', icon: Search },
@@ -265,7 +264,7 @@ export default function CenterAdminPortal() {
               <Route path="batches/new" element={<CreateBatchPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="students/:studentId" element={<StudentDetailPage />} />
-              <Route path="registrations" element={<RegistrationsPage />} />
+              <Route path="registrations" element={<Navigate to="/admin/students" replace />} />
               <Route path="questions" element={<QuestionsPage />} />
               <Route path="sprints" element={<SprintsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
