@@ -22,7 +22,7 @@ export function CenterSatUnlockIsland({ distinct }: { distinct: number }) {
       </div>
       <div className="mt-5 flex items-center gap-4">
         <div role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={CENTER_SAT_UNLOCK_AT} aria-label="Questions toward SAT simulation" className="sky-track !h-3.5 flex-1">
-          <div className="sky-fill-blue" style={{ width: `${p}%` }} />
+          <div className="sky-fill-accent" style={{ width: `${p}%` }} />
         </div>
         <span className="shrink-0 font-mono font-medium">{progress} / {CENTER_SAT_UNLOCK_AT}</span>
       </div>

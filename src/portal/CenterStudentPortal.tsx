@@ -58,7 +58,7 @@ const SET_LOOK = {
   SATMathTraining800: { family: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
   ANP120Aug3: { family: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
 } as const;
-const SKY_RING = { speed: '#5EBDFD', hard: '#D28CF5', medium: '#FBC2E5' };
+const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
 
 /** Everything the student pages share: profile, class, attendance, attempts + question meta. */
 function useMe() {
