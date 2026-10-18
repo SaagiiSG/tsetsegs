@@ -15,6 +15,7 @@ import {
   EpicBadgeUnlock,
   RankAdvancementCelebration
 } from '@/components/student/leaderboard';
+import { MyTierLadder } from '@/components/student/leaderboard/MyTierLadder';
 import { CalibrationProgressCard } from '@/components/student/CalibrationProgressCard';
 import { TierType, badgeDefinitions, BadgeDefinition, TIER_ORDER, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
 
@@ -288,11 +289,14 @@ export default function StudentLeaderboard() {
               transition={{ duration: 0.2 }}
             >
               {noActiveSprint ? (
-                <NoActiveSprintCard
-                  lastEndedSprint={lastEndedSprint}
-                  nextSprint={nextSprint}
-                  lastSprintResults={lastSprintResults}
-                />
+                <div className="space-y-4 sm:space-y-6">
+                  <NoActiveSprintCard
+                    lastEndedSprint={lastEndedSprint}
+                    nextSprint={nextSprint}
+                    lastSprintResults={lastSprintResults}
+                  />
+                  <MyTierLadder studentId={student?.id} />
+                </div>
               ) : (
                 <CurrentSprintTab
                   sprint={activeSprint}
