@@ -1317,3 +1317,7 @@ body.student-portal [role="dialog"] h2 { font-family: 'Geist', sans-serif; lette
   .ds-bar > span { transition: none; }
   .student-theme button.bg-primary:active, .ds-btn:active, .student-theme .student-chip:hover { transform: none; }
 }
+.student-theme .admin-glass-card { background-image: none !important; }
+.student-theme .admin-glass-card > [class*="liquid"], .student-theme .liquid-glass-fx { display: none; }
+.student-theme aside nav { display: flex; flex-direction: column; gap: 4px; }
+.student-theme aside nav a { min-height: 44px; }
