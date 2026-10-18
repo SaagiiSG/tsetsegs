@@ -168,7 +168,7 @@ export interface WeightedSimResult {
 }
 
 /** Fitted from real SAT results (see sat_prediction_accuracy). Our bank is harder than the real SAT. */
-export const CALIBRATION_OFFSET = 0;
+export const CALIBRATION_OFFSET = 50; // 16 real SATs (Aug 2026): bank ran ~52 pts low; recheck as real scores come in
 
 /**
  * Score the last `batches × size` distinct questions as mini-SATs of `size`,
