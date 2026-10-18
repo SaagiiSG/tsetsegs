@@ -6165,16 +6165,22 @@ export type Database = {
         }[]
       }
       tenant_student_board: {
-        Args: { _institution: string; _sprint?: string }
+        Args: { _institution: string; _since?: string; _sprint?: string }
         Returns: {
           answered: number
           class_name: string
           name: string
           points: number
+          practice_points: number
+          speed_points: number
           standing: number
           student_id: string
           tier: string
         }[]
+      }
+      tenant_student_profile: {
+        Args: { _institution: string; _student: string }
+        Returns: Json
       }
       tenant_update_settings: {
         Args: { _institution: string; _settings: Json }

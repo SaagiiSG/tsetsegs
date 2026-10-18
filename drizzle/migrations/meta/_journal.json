@@ -162,6 +162,13 @@
       "when": 1792296511554,
       "tag": "0022_center_students_sat_month",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792347812812,
+      "tag": "0023_tenant_board_speed_points_profile",
+      "breakpoints": true
     }
   ]
 }
