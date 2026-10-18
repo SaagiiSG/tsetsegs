@@ -8,12 +8,12 @@ export function AlgorithmAccuracySummary() {
     queryKey: ['sat-prediction-accuracy'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('sat_prediction_accuracy' as any);
-      if (error) return null;
+      if (error) return 'hidden' as const;
       return summarizeMisses(((data as any[]) ?? []).map(r => r.miss).filter((m: any) => typeof m === 'number'));
     },
     staleTime: 60_000,
   });
-  if (data === undefined) return null;
+  if (data === undefined || data === 'hidden') return null;
   return (
     <p className="text-xs text-muted-foreground">
       {data
