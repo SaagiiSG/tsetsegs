@@ -1,35 +1,28 @@
-# DESIGN.md from the student dashboard screenshot
+# Save the student design file and restyle the customer student portal
 
-Write a detailed design spec of the student dashboard shown in the screenshot. The current DESIGN.md only covers admin, so the file gets two parts: the existing admin section stays as it is, and a new "Student portal" section is added above it. Only the document changes. No app code is touched.
+## Decisions (from your answers)
+- The sky-blue pastel look replaces the gold look on the customer student portal. The gold rule is retired.
+- Buttons keep the mockup's pastel colours with white text, accepting the lower contrast.
+- The main blue stays the same for every center and ignores each center's brand colour.
+- Concept videos card: no roadmap preview. Class card: only the latest class.
 
-## What the new section covers
-
-1. **Overall feel**: airy, light, educational. A soft sky-blue to white canvas, frosted white cards, gradients in blue, violet and pink, and big friendly numbers.
-2. **Color tokens** (HSL values estimated from the screenshot):
-   - Canvas: near-white with a blue tint, plus soft corner washes of lavender and pink.
-   - Card surface: white at 70–85% opacity, a 1px white border and a soft blue shadow.
-   - Ink: near-black navy for headings, slate grey for secondary text.
-   - Accent ramp for the cards, left to right: blue (68 Questions), indigo-violet (150 Hard), violet-pink (Updated set). Each card has a matching icon tile and button gradient.
-   - Status colors: flame orange (streak), people orange (class card), "Not unlocked yet" pill (pale blue background with blue text).
-   - Ring segments: Speed blue, Hard violet, Medium pink.
-3. **Typography**: Chillax for headings (greeting about 40px bold with tight tracking, card titles 18px semibold), body at 14–16px, and JetBrains Mono for every number (big `0` around 40px with a smaller `/71`, chips like `0%`, dates, `0 / 440`). Label tracking is defined per size, and uppercase labels like "TODAY'S GOAL" are spelled out.
-4. **Layout grid**: 300px floating sidebar card, a 24px gutter, and a header row (greeting on the left, streak pill on the right). Then three rows:
-   - Row 1: goal ring card plus three set cards, equal width.
-   - Row 2: full-width SAT Simulation island.
-   - Row 3: Domain mastery (about 2/5), Concept videos and Class card.
-   - Spacing scale: 8, 12, 16, 24, 32. Card padding is 24px.
-5. **Radius scale**: cards 24px, icon tiles 16px, buttons and chips fully round (pill), progress tracks fully round, sidebar card 24px.
-6. **Component specs**, each with anatomy, sizes, states and do/don't notes:
-   - Sidebar: logo tile and two-line identity, a gradient-filled active Home pill with a glow, outline icon items, a divider before Log out.
-   - Streak pill.
-   - Today's Goal ring: three concentric tracks, a center `0%` with "today" under it, a legend with dots and mono counts, a settings icon.
-   - Set card: icon tile, truncated title and subtitle, fraction readout, progress track with a round `%` chip, gradient Continue button with an arrow.
-   - SAT Simulation island: lock tile, title, status pill, helper text, bold remaining count, full-width track with a mono count, Keep practicing button.
-   - Domain mastery: empty state with a faded ascending bar chart.
-   - Concept videos mini card: text-link call to action.
-   - Class card: three stat columns plus last attendance date and status.
-7. **Effects**: glass recipe (blur, bright top edge, layered blue shadow), button glow halos, decorative card washes kept below 10% opacity, the ring-pop animation, a press scale of 0.97, critically damped motion, plus fallbacks for reduced motion, reduced transparency and dark mode.
-8. **Scope rules**: this applies to the main student portal. The customer student portal uses the same structure but swaps the accents for its restrained gold, following the existing prestige rule. Full-screen test pages keep the exam look.
+## Steps
+1. **Save the design file** as `docs/design/student-sky.md` (your file, unchanged) and keep the mockup picture next to it as a reference. Add a short pointer at the top of `DESIGN.md`. Replace the gold memory with a "Student Sky" design memory that records the four decisions above.
+2. **Page and surfaces**: pale sky page with a lilac glow in the top right; near-white frosted cards with no border, 16px corners and a soft blue shadow.
+3. **Sidebar**: near-solid white card, a bigger blue letter tile, 48px-tall round nav items, a blue gradient active pill with a glow, and a thin divider above Log out.
+4. **Header**: "Hey {name} 👋" in a larger size, grey subtitle, and a white streak pill with an orange flame.
+5. **Today's goal ring**: Speed blue, Hard violet, Medium pink, used only in this portal so the main student dashboard keeps its colours. Plus the legend and the round settings button.
+6. **Set cards** (68 Questions blue, 150 Hard violet, Updated set pink): icon tile, title and blurb, big mono count, thick track with a % circle, gradient "Continue" pill.
+7. **SAT Simulation island**: lock tile, "Not unlocked yet" chip, blue "Keep practicing" pill, thick track with the "0 / 440" counter, lilac glow behind the button.
+8. **Bottom row**:
+   - Domain mastery: blue tile, faded bar chart when there's no data, blue bars when there is.
+   - Concept videos: violet tile, count, track and a blue link.
+   - Class card: orange tile, three stats, the latest class only, no divider lines.
+9. **Other pages and pop-ups** in this portal inherit the same colours, corners and buttons. The phone bottom bar uses the blue active pill.
+10. **Check it** in a browser at desktop and phone sizes. The main student portal, teacher pages and admin pages must stay unchanged.
 
 ## Technical details
-- Values are documented as semantic tokens that map to existing classes in `src/index.css` (`.student-theme`, `.student-cta`, `.student-chip`, `.student-dock`). The existing admin section stays at the bottom, unchanged.
+- Swap the `customer-student-theme` / `body.customer-student-portal` gold token block in `src/index.css` for sky tokens (values from section 10 of your file), plus classes `.sky-tile-{blue,violet,pink,orange}`, `.sky-btn-{blue,violet,pink}`, `.sky-track`, `.sky-chip`, `.sky-card`. Colours live only in CSS tokens and classes, not in components.
+- `DailyRing` gets an optional `colors` prop; the shared default stays as it is today.
+- Files: `CenterStudentPortal.tsx`, `CenterSatUnlockIsland.tsx`, `centerContext.tsx` (an optional `CenterLogo` size and blue tile for the student shell only), `DailyRing.tsx`, `index.css`.
+- Update the AGENTS.md rule on customer student appearance: still a scoped body class plus shell class, now with sky tokens.
