@@ -264,7 +264,7 @@ export default function CenterAdminPortal() {
               <Route path="batches/new" element={<CreateBatchPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="students/:studentId" element={<StudentDetailPage />} />
-              <Route path="registrations" element={<Navigate to="../students" replace />} />
+              <Route path="registrations" element={<Navigate to="/admin/students" replace />} />
               <Route path="questions" element={<QuestionsPage />} />
               <Route path="sprints" element={<SprintsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
