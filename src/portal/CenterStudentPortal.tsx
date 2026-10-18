@@ -30,6 +30,9 @@ import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSi
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
+import { RoadmapPreview } from './RoadmapPreview';
+import { useTheme } from 'next-themes';
+import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
@@ -104,6 +107,7 @@ const NAV = [
   { to: '/student/videos', label: 'Concept videos', icon: PlayCircle },
   { to: '/student/badges', label: 'Badges', icon: Award },
   { to: '/student/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/student/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
 export default function CenterStudentPortal() {
@@ -152,6 +156,7 @@ export default function CenterStudentPortal() {
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
                 <Route path="announcements" element={<div className="max-w-2xl"><h1 className="text-2xl font-bold mb-4">Announcements</h1><StudentAnnouncements studentId={me.data.student.id} /></div>} />
+                <Route path="settings" element={<StudentSettingsPage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
               </Routes>
             </div>
@@ -298,6 +303,7 @@ function HomePage({ me }: { me: Me }) {
             <p className="font-mono text-4xl font-bold">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-xl font-normal sky-ink-soft">/{videoIds.length || '…'}</span></p>
             <div className="sky-track"><div className="sky-fill-violet" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%` }} /></div>
             <span className="sky-link">Continue your roadmap<ArrowRight className="h-4 w-4" /></span>
+            <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
           </Glass>
         </button>
         <Glass className="space-y-4">
@@ -642,6 +648,50 @@ function BadgesPage({ me }: { me: Me }) {
           <p className="font-medium mt-2">{b.name}</p><p className="text-xs text-muted-foreground">{b.desc}</p>
           {!b.got && <div className="h-1 rounded-full bg-muted overflow-hidden mt-3"><div className="h-full bg-foreground/60" style={{ width: `${Math.min(100, pct(b.prog[0], b.prog[1]))}%` }} /></div>}
         </Glass>))}</div>
+    </div>
+  );
+}
+
+/* ------------------------------ Settings ------------------------------ */
+
+const THEMES = [
+  { value: 'light', label: 'Light', hint: 'Bright sky look', icon: Sun },
+  { value: 'dark', label: 'Dark', hint: 'Easier on the eyes at night', icon: Moon },
+  { value: 'system', label: 'Match device', hint: 'Follows your phone or computer', icon: Monitor },
+] as const;
+
+function StudentSettingsPage() {
+  const { theme, setTheme } = useTheme();
+  const { name } = useCenter();
+  const current = theme ?? 'system';
+  return (
+    <div className="max-w-2xl space-y-5">
+      <div>
+        <h1 className="text-3xl md:text-4xl font-bold">Settings</h1>
+        <p className="text-lg sky-body mt-1">Make the portal look the way you like.</p>
+      </div>
+      <Glass className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="sky-tile sky-tile-blue">{current === 'dark' ? <Moon /> : <Sun />}</span>
+          <div><p className="text-lg font-bold">Appearance</p><p className="text-sm text-muted-foreground">Choose light or dark mode</p></div>
+        </div>
+        <div role="radiogroup" aria-label="Appearance" className="grid gap-3 sm:grid-cols-3">
+          {THEMES.map(t => {
+            const active = current === t.value;
+            return (
+              <button key={t.value} type="button" role="radio" aria-checked={active} onClick={() => setTheme(t.value)}
+                className={`rounded-2xl p-4 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'sky-btn-blue text-white' : 'bg-muted/60 hover:bg-muted'}`}>
+                <t.icon className="h-5 w-5" />
+                <p className="font-semibold mt-3">{t.label}</p>
+                <p className={`text-sm ${active ? 'text-white/85' : 'text-muted-foreground'}`}>{t.hint}</p>
+              </button>
+            );
+          })}
+        </div>
+      </Glass>
+      <Glass className="flex items-center justify-between gap-3">
+        <div className="min-w-0"><p className="text-sm text-muted-foreground">Signed in as</p><p className="font-semibold truncate">{name}</p></div>
+      </Glass>
     </div>
   );
 }
