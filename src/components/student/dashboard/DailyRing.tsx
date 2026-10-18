@@ -12,6 +12,8 @@ interface DailyRingProps {
   onShowHistory?: () => void;
   size?: number;
   className?: string;
+  /** Optional per-portal ring colours; defaults to the shared palette. */
+  colors?: { speed: string; hard: string; medium: string };
 }
 
 const RING_COLORS = {
@@ -53,7 +55,8 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors }: DailyRingProps) {
+  const RC = colors ?? RING_COLORS;
   const cx = size / 2;
   const cy = size / 2;
   const stroke = Math.round(size * 0.1);
@@ -97,9 +100,9 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
         </div>
         <div className="flex-1 flex items-center justify-center w-full">
           <svg className={cn('w-full h-full max-h-[260px]', allDone && 'motion-safe:animate-[ring-pop_.6s_ease-out] drop-shadow-[0_0_14px_hsl(var(--primary)/0.45)]')} viewBox={`0 0 ${size} ${size}`}>
-            <Ring cx={cx} cy={cy} radius={rOuter} stroke={stroke} color={RING_COLORS.speed} pct={speedPct} />
-            <Ring cx={cx} cy={cy} radius={rMid} stroke={stroke} color={RING_COLORS.hard} pct={hardPct} />
-            <Ring cx={cx} cy={cy} radius={rInner} stroke={stroke} color={RING_COLORS.medium} pct={medPct} />
+            <Ring cx={cx} cy={cy} radius={rOuter} stroke={stroke} color={RC.speed} pct={speedPct} />
+            <Ring cx={cx} cy={cy} radius={rMid} stroke={stroke} color={RC.hard} pct={hardPct} />
+            <Ring cx={cx} cy={cy} radius={rInner} stroke={stroke} color={RC.medium} pct={medPct} />
             <text
               x={cx} y={cy}
               textAnchor="middle"
@@ -120,9 +123,9 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
           </svg>
         </div>
         <div className="w-full grid grid-cols-3 gap-1 text-[10px] sm:text-xs">
-          <Legend label="Speed" current={speed.current} goal={speed.goal} color={RING_COLORS.speed} />
-          <Legend label="Hard" current={hard.current} goal={hard.goal} color={RING_COLORS.hard} />
-          <Legend label="Medium" current={medium.current} goal={medium.goal} color={RING_COLORS.medium} />
+          <Legend label="Speed" current={speed.current} goal={speed.goal} color={RC.speed} />
+          <Legend label="Hard" current={hard.current} goal={hard.goal} color={RC.hard} />
+          <Legend label="Medium" current={medium.current} goal={medium.goal} color={RC.medium} />
         </div>
       </CardContent>
     </Card>
