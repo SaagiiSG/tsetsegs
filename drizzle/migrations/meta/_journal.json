@@ -204,6 +204,20 @@
       "when": 1792361031573,
       "tag": "0028_badges_allow_seasonal_rarity",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792361307882,
+      "tag": "0029_server_checks_remaining_badges",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792361348024,
+      "tag": "0030_fix_seasonal_badge_lookup",
+      "breakpoints": true
     }
   ]
 }
