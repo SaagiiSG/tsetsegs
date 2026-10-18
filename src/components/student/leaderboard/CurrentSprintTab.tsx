@@ -54,13 +54,12 @@ export function CurrentSprintTab({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Rank ladder sits top-right, beside the sprint timer */}
-      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_290px] lg:grid-cols-[minmax(0,1fr)_330px] gap-3 sm:gap-4 items-start">
-        <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
+      {/* Rank ladder sits right under the tabs, full width */}
+      <MyTierLadder studentId={currentUserId} currentTier={currentUserRanking?.currentTier}
+        standing={currentUserRanking ? leaderboard.findIndex(e => e.userId === currentUserId) + 1 : null} />
 
-        <MyTierLadder studentId={currentUserId} currentTier={currentUserRanking?.currentTier}
-          standing={currentUserRanking ? leaderboard.findIndex(e => e.userId === currentUserId) + 1 : null} />
-      </div>
+      <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
+
 
       <Card>
         <CardHeader className="pb-2 p-3 sm:p-6">
