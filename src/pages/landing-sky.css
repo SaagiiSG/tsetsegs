@@ -43,7 +43,8 @@
 .landing-sky .landing-primary { background: linear-gradient(180deg, hsl(var(--landing-primary-top)), hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: var(--landing-glow); }
 .landing-primary:hover { filter: brightness(1.04); }
 .landing-hero { height: min(820px, 88svh); min-height: 650px; }
-.landing-shader-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: hsl(var(--background)); }
+.landing-sky > main, .landing-sky > footer { position: relative; z-index: 1; }
+.landing-shader-background { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: hsl(var(--background)); }
 .landing-shader-fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .32; }
 .landing-shader-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease; }
 .landing-shader-canvas.is-ready { opacity: 1; }
