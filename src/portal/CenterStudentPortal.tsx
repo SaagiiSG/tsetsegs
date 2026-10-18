@@ -220,7 +220,7 @@ function HomePage({ me }: { me: Me }) {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
-        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="flex items-center gap-2 rounded-full border px-3 py-1.5 admin-glass transition-transform active:scale-95 hover:bg-foreground/5">
+        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="student-chip student-chip-flame">
           <FlameIcon className="h-4 w-4" /><span className="font-mono text-sm">{streak}</span><span className="text-xs text-muted-foreground">day streak</span>
         </button>
       </div>
