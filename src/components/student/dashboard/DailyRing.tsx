@@ -57,7 +57,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors, decor }: DailyRingProps) {
   const RC = colors ?? RING_COLORS;
   const cx = size / 2;
   const cy = size / 2;
