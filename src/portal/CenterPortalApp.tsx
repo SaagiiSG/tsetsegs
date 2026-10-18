@@ -14,6 +14,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [role, setRole] = useState<CenterRole | null | undefined>(undefined);
   const [memberName, setMemberName] = useState('');
+  const [access, setAccess] = useState<{ blocked: boolean; warnings: number } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   useCenterBrand(center);
   useEffect(() => {
     loadCenter();
+    supabase.rpc('tenant_access_status', { _slug: slug }).then(({ data }) => setAccess((data as { blocked: boolean; warnings: number } | null) ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
@@ -64,9 +66,26 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     );
   }
 
+  if (access?.blocked && !window.location.pathname.startsWith('/join')) {
+    return (
+      <main className="min-h-screen grid place-items-center p-6 text-center">
+        <div className="max-w-sm space-y-2">
+          <h1 className="font-chillax text-2xl font-semibold">Access paused</h1>
+          <p className="text-sm text-muted-foreground">This portal is paused because of an overdue payment. Please contact your center, or your center admin can contact FlowersOS.</p>
+          {session && <button className="text-sm underline text-muted-foreground" onClick={signOut}>Sign out</button>}
+        </div>
+      </main>
+    );
+  }
+
   const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? '/student' : '/';
   return (
     <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut, reloadCenter: loadCenter }}>
+      {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
+        <div role="alert" className="relative z-50 bg-status-risk/10 text-status-risk text-sm text-center px-4 py-2 border-b border-status-risk/20">
+          Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. Please contact FlowersOS to settle your bill.
+        </div>
+      )}
       <Routes>
         <Route path="/join/:code" element={<CenterJoin />} />
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
