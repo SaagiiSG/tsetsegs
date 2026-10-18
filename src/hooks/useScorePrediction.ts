@@ -421,6 +421,14 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
       else if (confidence === 'medium') halfRange = 17;
       else halfRange = 20;
 
+      // Save today's prediction (only works for the signed-in student themselves)
+      // so it can be compared with their real SAT score later.
+      supabase.rpc('save_sat_prediction', {
+        p_sim: simHistory.length > 0 && simBlend != null ? Math.round(simBlend) : null,
+        p_low: Math.max(200, predicted - halfRange),
+        p_high: Math.min(800, predicted + halfRange),
+      } as any).then(() => {});
+
       return {
         predictedRange: [Math.max(200, predicted - halfRange), Math.min(800, predicted + halfRange)] as [number, number],
         confidence,
