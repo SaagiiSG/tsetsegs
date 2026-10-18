@@ -10,7 +10,8 @@ import { useCenterSprints } from './admin/ToolPages';
 import { TIER_ORDER, TIER_PROMOTION_CUTOFFS, type TierType } from '@/data/badgeDefinitions';
 import { TierLadder } from '@/components/student/leaderboard/TierLadder';
 import { CurrentSprintTab, AllTimeTab, MyRankTab } from '@/components/student/leaderboard';
-import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit } from '@/hooks/useLeaderboard';
+import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
+import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
@@ -21,12 +22,15 @@ export function CenterRankings({ studentId }: { studentId: string }) {
   const { center } = useCenter();
   const sprints = useCenterSprints();
   const [limit, setLimit] = useState<AllTimeLimit>(100);
+  const [win, setWin] = useState<AllTimeWindow>('all');
+  const [profile, setProfile] = useState<{ id: string; name: string } | null>(null);
+  const openProfile = (id: string, name: string) => setProfile({ id, name });
   const list = sprints.data ?? [];
   const active = list.find(s => s.status === 'active') ?? null;
   const board = useQuery({ queryKey: ['center-board', center.id, active?.id], enabled: !!active,
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: active!.id }); if (error) throw error; return data ?? []; } });
-  const allTime = useQuery({ queryKey: ['center-all-time', center.id],
-    queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id }); if (error) throw error; return data ?? []; } });
+  const allTime = useQuery({ queryKey: ['center-all-time', center.id, win],
+    queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _since: win === 'last30' ? new Date(Date.now() - 30 * 864e5).toISOString() : undefined }); if (error) throw error; return data ?? []; } });
   const history = useQuery({ queryKey: ['center-rank-history', center.id, studentId], queryFn: async () => {
     const { data, error } = await supabase.from('tenant_rank_history').select('*').eq('institution_id', center.id).eq('student_id', studentId).order('created_at', { ascending: false }).limit(100); if (error) throw error; return data ?? [];
   } });
@@ -51,7 +55,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
     const cutoff = TIER_PROMOTION_CUTOFFS[tier] ?? 10;
     return { rank: r.standing, userId: r.student_id, username: r.name, level: Math.max(1, Math.floor(Math.log2(r.points / 100 + 1)) + 1), totalPoints: r.points,
       currentTier: tier, groupNumber: 1, isAdvancing: r.standing <= cutoff && r.points > 0, isAtRisk: false, isTop1: r.standing === 1 && r.points > 0,
-      reservedNextTier: null, pointsBreakdown: { ...EMPTY_BREAKDOWN, questions: r.points } };
+      reservedNextTier: null, pointsBreakdown: { ...EMPTY_BREAKDOWN, questions: Number(r.practice_points), speedSessions: Number(r.speed_points) } };
   }), [board.data]);
 
   const allTimeEntries: AllTimeEntry[] = useMemo(() => (allTime.data ?? []).slice(0, limit).map(r => ({
@@ -83,7 +87,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
 
         <TabsContent value="current" className="mt-0"><motion.div {...fade}>
           {active ? (
-            <CurrentSprintTab sprint={sprintInfo} leaderboard={entries} currentUserId={studentId} isLoading={board.isLoading} ladder={ladder} allowProfiles={false}
+            <CurrentSprintTab sprint={sprintInfo} leaderboard={entries} currentUserId={studentId} isLoading={board.isLoading} ladder={ladder} onProfileClick={openProfile}
               onSprintEnd={() => { sprints.refetch(); board.refetch(); }} />
           ) : (
             <div className="space-y-4">{ladder}<Card><CardContent className="py-10 text-center text-muted-foreground">
@@ -93,8 +97,8 @@ export function CenterRankings({ studentId }: { studentId: string }) {
         </motion.div></TabsContent>
 
         <TabsContent value="alltime" className="mt-0"><motion.div {...fade}>
-          <AllTimeTab leaderboard={allTimeEntries} currentUserId={studentId} isLoading={allTime.isLoading} window="all" onWindowChange={() => {}} hideWindow
-            limit={limit} onLimitChange={setLimit} showEysh={false} allowProfiles={false} />
+          <AllTimeTab leaderboard={allTimeEntries} currentUserId={studentId} isLoading={allTime.isLoading} window={win} onWindowChange={setWin}
+            limit={limit} onLimitChange={setLimit} showEysh={false} onProfileClick={openProfile} />
         </motion.div></TabsContent>
 
         <TabsContent value="myrank" className="mt-0"><motion.div {...fade}>
@@ -113,6 +117,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
           </CardContent></Card>
         </motion.div></TabsContent>
       </Tabs>
+      <CenterStudentProfileDialog studentId={profile?.id ?? null} name={profile?.name ?? ''} open={!!profile} onOpenChange={o => !o && setProfile(null)} />
     </div>
   );
 }

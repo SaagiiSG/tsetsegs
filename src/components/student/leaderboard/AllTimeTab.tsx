@@ -27,8 +27,8 @@ interface AllTimeTabProps {
   onLimitChange: (l: 10 | 50 | 100) => void;
   /** Mongolian EYSH conversion is only meaningful for Mongolian students */
   showEysh?: boolean;
-  /** Main-app profile dialog reads main student records; customer portals turn it off. */
-  allowProfiles?: boolean;
+  /** Customer portals open their own tenant profile instead of the main-app dialog (which reads main records). */
+  onProfileClick?: (userId: string, username: string) => void;
   /** Hide the all-time / last-30-days switch when the data source has no time window. */
   hideWindow?: boolean;
 }
@@ -44,7 +44,7 @@ function satMathToEysh(mathScore: number | null): number | null {
   return null;
 }
 
-export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange, showEysh = true, allowProfiles = true, hideWindow = false }: AllTimeTabProps) {
+export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: timeWindow, onWindowChange, limit, onLimitChange, showEysh = true, onProfileClick, hideWindow = false }: AllTimeTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -54,7 +54,8 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
   const rubyLegends = leaderboard.filter(e => e.isRubyLegend);
 
   const handleProfileClick = (entry: AllTimeEntry) => {
-    if (allowProfiles && entry.userId !== currentUserId) {
+    if (onProfileClick) { if (entry.userId !== currentUserId) onProfileClick(entry.userId, entry.username); return; }
+    if (entry.userId !== currentUserId) {
       setSelectedUserId(entry.userId);
       setSelectedUsername(entry.username);
       setProfileSheetOpen(true);
@@ -315,7 +316,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
       </Card>
 
       {/* Full Profile Dialog */}
-      {allowProfiles && <FullProfileDialog
+      {!onProfileClick && <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}
