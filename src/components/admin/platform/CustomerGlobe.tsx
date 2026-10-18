@@ -49,7 +49,7 @@ export function CustomerGlobe({ pins, onSelect }: { pins: GlobePin[]; onSelect: 
       for (const p of pins) {
         const el = pinRefs.current[p.id];
         if (!el) continue;
-        const anchor = [...wrap.children].find(c => (c as HTMLElement).style.getPropertyValue('anchor-name') === `--cobe-${p.id}`) as HTMLElement | undefined;
+        const anchor = [...wrap.querySelectorAll<HTMLElement>('div[style*="anchor-name"]')].find(c => (c.getAttribute('style') ?? '').includes(`--cobe-${p.id}`));
         const visible = !!getComputedStyle(root).getPropertyValue(`--cobe-visible-${p.id}`).trim();
         if (anchor) { el.style.left = anchor.style.left; el.style.top = anchor.style.top; }
         el.style.opacity = visible ? '1' : '0';
