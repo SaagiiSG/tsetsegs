@@ -59,11 +59,15 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
 
   const shown = pool.filter(r => (domain === 'all' || r.domain === domain) && (!skill || r.skill === skill));
   const total = pool.length, mastered = done(pool);
-  const tab = (active: boolean) => `inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors active:scale-[0.97] ${active ? 'bg-foreground/15 text-foreground' : 'text-foreground/70 hover:text-foreground'}`;
-  const bar = (c: number, n: number) => <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground/70 transition-all" style={{ width: `${n ? (100 * c) / n : 0}%` }} /></div>;
+  const tab = (active: boolean) => `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all active:scale-[0.97] ${active ? 'bg-primary text-primary-foreground shadow-[0_3px_0_hsl(var(--ds-blue-press))]' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`;
+  const bar = (c: number, n: number, small = false) => <div className="ds-bar w-full" style={small ? { height: 10 } : undefined}><span style={{ width: `${n ? (100 * c) / n : 0}%` }} /></div>;
 
   return (
     <div className="space-y-4">
+      <header className="flex items-center gap-4">
+        <span className="ds-tile ds-tile-blue h-12 w-12"><BookOpen className="h-6 w-6" /></span>
+        <div><h1 className="text-2xl font-bold">Practice</h1><p className="ds-sub">Pick a set, choose a topic, and solve at your own pace</p></div>
+      </header>
       <section className="admin-glass-card admin-glass-neutral rounded-3xl border p-5 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1 rounded-2xl border p-1" role="tablist" aria-label="Subject">
@@ -80,31 +84,31 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
           <Button variant="outline" size="sm" className="ml-auto" onClick={onRandom}><Shuffle className="h-4 w-4" />Random question</Button>
         </div>
         <div className="space-y-2">
-          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Overall progress</span><span className="font-mono">{mastered}/{total} ({total ? Math.round((100 * mastered) / total) : 0}%)</span></div>
+          <div className="flex justify-between text-sm"><span className="font-semibold">Overall progress</span><span className="font-mono font-semibold">{mastered}/{total} ({total ? Math.round((100 * mastered) / total) : 0}%)</span></div>
           {bar(mastered, total)}
         </div>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <aside className="admin-glass-card admin-glass-neutral rounded-3xl border p-5 space-y-3 lg:sticky lg:top-6 lg:self-start">
-          <p className="flex items-center gap-2 font-medium"><Target className="h-4 w-4" />{subject === 'math' ? 'Math areas' : 'English areas'}</p>
-          <button onClick={() => { setDomain('all'); setSkill(null); }} className={`w-full rounded-2xl px-4 py-3 text-left transition-colors ${domain === 'all' ? 'bg-foreground/10' : 'hover:bg-foreground/5'}`}>
+          <p className="flex items-center gap-3 font-bold"><span className="ds-tile ds-tile-green h-9 w-9"><Target className="h-4 w-4" /></span>{subject === 'math' ? 'Math areas' : 'English areas'}</p>
+          <button onClick={() => { setDomain('all'); setSkill(null); }} className={`w-full rounded-2xl px-4 py-3 text-left transition-colors ${domain === 'all' ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-foreground/5'}`}>
             <span className="flex justify-between text-sm"><span>All questions</span><span className="font-mono text-muted-foreground">{total}</span></span>
           </button>
           {domains.map(([name, d]) => {
             const isOpen = open[name] ?? false;
             return (
               <div key={name}>
-                <div className={`flex items-center gap-2 rounded-2xl px-2 py-2 ${domain === name && !skill ? 'bg-foreground/10' : 'hover:bg-foreground/5'}`}>
+                <div className={`flex items-center gap-2 rounded-2xl px-2 py-2 ${domain === name && !skill ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-foreground/5'}`}>
                   <button aria-label={isOpen ? 'Collapse' : 'Expand'} onClick={() => setOpen(o => ({ ...o, [name]: !isOpen }))} className="p-1 text-muted-foreground"><ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} /></button>
                   <button className="flex flex-1 items-center gap-3 text-left text-sm" onClick={() => { setDomain(name); setSkill(null); }}>
                     <span className="flex-1">{name}</span>
                     <span className="font-mono text-xs text-muted-foreground">{done(d.rows)}/{d.rows.length}</span>
-                    <span className="w-20">{bar(done(d.rows), d.rows.length)}</span>
+                    <span className="w-20">{bar(done(d.rows), d.rows.length, true)}</span>
                   </button>
                 </div>
                 {isOpen && Object.entries(d.skills).sort().map(([sk, rows]) => (
-                  <button key={sk} onClick={() => { setDomain(name); setSkill(sk); }} className={`ml-9 flex w-[calc(100%-2.25rem)] justify-between rounded-xl px-3 py-1.5 text-left text-xs ${skill === sk && domain === name ? 'bg-foreground/10' : 'text-muted-foreground hover:bg-foreground/5'}`}>
+                  <button key={sk} onClick={() => { setDomain(name); setSkill(sk); }} className={`ml-9 flex w-[calc(100%-2.25rem)] justify-between rounded-xl px-3 py-1.5 text-left text-xs ${skill === sk && domain === name ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-foreground/5'}`}>
                     <span>{sk}</span><span className="font-mono">{done(rows)}/{rows.length}</span>
                   </button>
                 ))}
@@ -120,12 +124,12 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
                 const s = status[r.id];
                 return (
                   <button key={r.id} onClick={() => onOpen(r.id)}
-                    className={`rounded-2xl border p-3 text-left transition-colors hover:bg-foreground/5 active:scale-[0.98] ${s === 'done' ? 'border-foreground/40' : ''}`}>
+                    className={`rounded-2xl border-2 bg-card p-3 text-left transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none ${s === 'done' ? 'border-[hsl(var(--ds-green))] bg-[hsl(var(--ds-green)/0.08)] shadow-[0_3px_0_hsl(var(--ds-green)/0.5)]' : s === 'tried' ? 'border-[hsl(var(--ds-orange)/0.6)] shadow-[0_3px_0_hsl(var(--ds-orange)/0.35)]' : 'shadow-[0_3px_0_hsl(var(--border))]'}`}>
                     <span className="flex items-center justify-between gap-1">
                       <span className="truncate font-mono text-sm font-semibold">{r.question_id ?? r.id.slice(0, 6)}</span>
-                      {s === 'done' ? <Check className="h-4 w-4 shrink-0" aria-label="Solved" /> : s === 'tried' ? <CircleDot className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Attempted" /> : null}
+                      {s === 'done' ? <span className="grid h-5 w-5 place-items-center rounded-full bg-[hsl(var(--ds-green))] text-primary-foreground"><Check className="h-3 w-3" strokeWidth={3} aria-label="Solved" /></span> : s === 'tried' ? <CircleDot className="h-4 w-4 shrink-0 text-[hsl(var(--ds-orange))]" aria-label="Attempted" /> : null}
                     </span>
-                    <span className="mt-2 inline-block rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{ENGLISH.includes(r.domain) ? r.domain.split(' ')[0] : short(r.domain)}</span>
+                    <span className="mt-2 inline-block rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">{ENGLISH.includes(r.domain) ? r.domain.split(' ')[0] : short(r.domain)}</span>
                   </button>
                 );
               })}

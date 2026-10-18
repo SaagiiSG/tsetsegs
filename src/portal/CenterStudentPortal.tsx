@@ -409,7 +409,6 @@ function PracticePage({ me }: { me: Me }) {
 
   if (!solving) return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Practice</h1>
       <CenterPracticeBrowser sets={SETS.map(s => ({ key: s.key, label: s.key === '68' ? '68' : s.key === 'SATMathTraining800' ? '150' : 'New 120' }))}
         attempts={me.attempts} subject={subject} setKey={set}
         onSubject={s => { setSubject(s); if (s === 'english') { const p = new URLSearchParams(params); p.delete('set'); setParams(p); } }}
