@@ -3981,6 +3981,7 @@ export type Database = {
       student_badges: {
         Row: {
           badge_id: string
+          celebrated_at: string | null
           created_at: string
           id: string
           is_unlocked: boolean
@@ -3992,6 +3993,7 @@ export type Database = {
         }
         Insert: {
           badge_id: string
+          celebrated_at?: string | null
           created_at?: string
           id?: string
           is_unlocked?: boolean
@@ -4003,6 +4005,7 @@ export type Database = {
         }
         Update: {
           badge_id?: string
+          celebrated_at?: string | null
           created_at?: string
           id?: string
           is_unlocked?: boolean
@@ -5920,6 +5923,7 @@ export type Database = {
           total_points: number
         }[]
       }
+      longest_day_run: { Args: { p_days: string[] }; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -6156,6 +6160,13 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      speed_window_counts: {
+        Args: { p_seconds: number; p_student: string }
+        Returns: {
+          correct: number
+          total: number
+        }[]
+      }
       student_badge_earned: {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
@@ -6169,6 +6180,10 @@ export type Database = {
         Returns: number
       }
       student_logout: { Args: never; Returns: undefined }
+      student_mark_badges_celebrated: {
+        Args: { p_badge_ids: string[] }
+        Returns: undefined
+      }
       student_owns_record: {
         Args: { phone: string; student_id: string }
         Returns: boolean
