@@ -25,6 +25,7 @@ import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowR
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
+import { CenterReviewPage } from './CenterReviewPage';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
@@ -362,16 +363,16 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   };
   return (
     <div className={`grid gap-4 ${showExp ? 'xl:grid-cols-[1fr_minmax(0,420px)]' : ''}`}>
-      <article className="admin-glass-card rounded-2xl border p-5 space-y-5 min-w-0">
+      <article className="sky-card space-y-5 min-w-0">
         {q.passage_text && <div className="text-sm leading-relaxed border-l-2 pl-4"><MathText text={q.passage_text} /></div>}
         <div className="leading-relaxed"><MathText text={q.question_text} /></div>
-        {[q.question_image_url, q.question_image_url_2].filter(Boolean).map(u => <img key={u!} src={u!} alt="Question figure" className="max-h-80 rounded border bg-background" />)}
+        {[q.question_image_url, q.question_image_url_2].filter((u): u is string => !!u).map(u => <img key={u} src={u} alt="Question figure" className="max-h-80 rounded border bg-background" />)}
         {choices.length ? (
           <div className="grid gap-2">{choices.map(c => (
-            <button key={c.letter} disabled={result === 'correct'} onClick={() => { setPicked(c.letter); if (result === 'wrong') setResult(null); }}
-              className={`student-choice text-left rounded-xl border p-3 flex gap-3 items-start transition-colors active:scale-[0.99] ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
+            <Button variant="ghost" key={c.letter} disabled={result === 'correct'} onClick={() => { setPicked(c.letter); if (result === 'wrong') setResult(null); }}
+              className={`student-choice h-auto min-h-12 whitespace-normal justify-start text-left rounded-xl border p-3 flex gap-3 items-start transition-colors active:scale-[0.99] ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
               <span className="font-mono text-sm w-5">{c.letter}</span><span className="min-w-0 flex-1">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span>
-            </button>))}</div>
+            </Button>))}</div>
         ) : <Input aria-label="Your answer" value={typed} onChange={e => { setTyped(e.target.value); if (result === 'wrong') setResult(null); }} placeholder="Type your answer" className="max-w-xs font-mono" />}
         {result === 'wrong' && <p role="status" className="text-sm text-status-risk">Not quite — try again.</p>}
         {result === 'correct' && <p role="status" className="text-sm text-status-healthy">Correct!{forfeit && ' (not counted — explanation viewed)'}</p>}
@@ -382,7 +383,7 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
         </div>
       </article>
       {showExp && (
-        <aside className="admin-glass-card rounded-2xl border p-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+        <aside className="sky-card xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <p className="text-xs text-muted-foreground mb-3">Explanation</p>
           {q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
         </aside>
@@ -438,7 +439,7 @@ function PracticePage({ me }: { me: Me }) {
 
   if (!solving) return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Practice</h1>
+      <div className="flex items-center gap-3"><span className="sky-tile sky-tile-blue"><BookOpen /></span><div><h1 className="text-3xl font-bold">Practice</h1><p className="sky-body mt-1">One question closer to your goal.</p></div></div>
       <CenterPracticeBrowser sets={SETS.map(s => ({ key: s.key, label: s.key === '68' ? '68' : s.key === 'SATMathTraining800' ? '150' : 'New 120' }))}
         attempts={me.attempts} subject={subject} setKey={set}
         onSubject={s => { setSubject(s); if (s === 'english') { const p = new URLSearchParams(params); p.delete('set'); setParams(p); } }}
@@ -451,10 +452,10 @@ function PracticePage({ me }: { me: Me }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3"><Button variant="ghost" size="sm" onClick={back}>← All questions</Button><h1 className="text-2xl font-bold tracking-tight">Practice</h1></div>
-      <div className="flex flex-wrap gap-2 items-center p-2 admin-glass rounded-xl border">
+      <div className="sky-card flex flex-wrap gap-2 items-center !p-3">
         <div className="flex gap-1 rounded-lg border p-1" role="tablist" aria-label="Subject">
-          {(['math', 'english'] as const).map(s => <button key={s} role="tab" aria-selected={subject === s} onClick={() => { setSubject(s); if (s === 'english') setSet('all'); }}
-            className={`rounded-md px-3 py-1 text-sm active:scale-[0.97] transition-colors ${subject === s ? 'bg-foreground text-background' : 'text-foreground/70 hover:text-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</button>)}
+          {(['math', 'english'] as const).map(s => <Button variant="ghost" key={s} role="tab" aria-selected={subject === s} onClick={() => { setSubject(s); if (s === 'english') setSet('all'); }}
+            className={`rounded-md px-3 py-1 text-sm active:scale-[0.97] transition-colors ${subject === s ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</Button>)}
         </div>
         {subject === 'math' && <Select value={set} onValueChange={setSet}><SelectTrigger className="w-44" aria-label="Question set"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All math sets</SelectItem>{SETS.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
@@ -563,31 +564,7 @@ function SpeedPage({ me }: { me: Me }) {
 /* ------------------------------ Review ------------------------------ */
 
 function ReviewPage({ me }: { me: Me }) {
-  const navigate = useNavigate();
-  // Questions whose latest attempt was wrong (attempts are newest-first).
-  const pending = useMemo(() => {
-    const seen = new Set<string>(); const out: { id: string; at: string }[] = [];
-    for (const a of me.attempts) { if (seen.has(a.question_id)) continue; seen.add(a.question_id); if (!a.is_correct) out.push({ id: a.question_id, at: a.created_at }); }
-    return out;
-  }, [me]);
-  const texts = useQuery({
-    enabled: pending.length > 0,
-    queryKey: ['center-review-texts', pending.map(p => p.id).join(',').slice(0, 200), pending.length],
-    queryFn: async () => (await supabase.from('intl_questions').select('id, question_text').in('id', pending.slice(0, 150).map(p => p.id))).data ?? [],
-  });
-  const textOf = Object.fromEntries((texts.data ?? []).map(t => [t.id, t.question_text]));
-  return (
-    <div className="space-y-4 max-w-3xl">
-      <div><h1 className="text-2xl font-bold tracking-tight">Review mistakes</h1><p className="text-sm text-muted-foreground">Retry questions you missed. Solve one correctly and it leaves this list.</p></div>
-      {!pending.length ? <Glass><p className="text-sm text-muted-foreground">No mistakes waiting — nice work.</p></Glass> : (
-        <ul className="space-y-2">{pending.slice(0, 150).map(p => (
-          <li key={p.id}><button onClick={() => navigate(`/student/practice?q=${p.id}`)} className="w-full text-left admin-glass-card rounded-2xl border p-4 hover:-translate-y-0.5 transition-transform">
-            <div className="text-sm line-clamp-2"><MathText text={(textOf[p.id] ?? '…').slice(0, 220)} /></div>
-            <p className="text-xs text-muted-foreground mt-1">{me.meta[p.id]?.domain ?? ''} · missed {new Date(p.at).toLocaleDateString()}</p>
-          </button></li>))}</ul>
-      )}
-    </div>
-  );
+  return <CenterReviewPage attempts={me.attempts} meta={me.meta} studentId={me.student.id} />;
 }
 
 /* ------------------------------ Leaderboard ------------------------------ */
