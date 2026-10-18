@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { PlatformOverview } from '@/components/admin/platform/PlatformOverview';
+import { PlatformInsights } from '@/components/admin/platform/PlatformInsights';
 import { BatchOverview } from '@/components/admin/BatchOverview';
 import { BatchesView } from '@/components/admin/BatchesView';
 import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
@@ -76,7 +77,8 @@ const Admin = () => {
       <Route index element={<PlatformOverview />} />
       <Route path="tsetsegs/dashboard" element={<DashboardStats />} />
       <Route path="customers" element={<InstitutionCustomers />} />
-      <Route path="analytics" element={<AnalyticsDashboard />} />
+      <Route path="analytics" element={<PlatformInsights />} />
+      <Route path="tsetsegs/analytics" element={<AnalyticsDashboard />} />
       <Route path="overview" element={<BatchOverview />} />
       <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
       <Route path="batches" element={<BatchesView />} />
