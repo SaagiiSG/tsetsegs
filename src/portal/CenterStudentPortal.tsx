@@ -529,9 +529,9 @@ function SpeedPage({ me }: { me: Me }) {
     const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : ratio >= 0.5 ? 1 : 0;
     return (
       <Glass className="max-w-xl text-center space-y-3">
-        <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`} />)}</div>
+        <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
-        <p className="text-sm text-muted-foreground">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
+        <p className="text-sm sky-body">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
         <div className="flex justify-center gap-2"><Button onClick={() => start()}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
       </Glass>
     );
@@ -542,10 +542,10 @@ function SpeedPage({ me }: { me: Me }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <span className="font-mono text-sm">{i + 1}/{qs.length}</span>
-        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full transition-[width] duration-1000 ease-linear" style={{ width: `${(left / SPEED_SECONDS) * 100}%`, background: left < 15 ? 'hsl(var(--status-risk, 0 80% 55%))' : 'hsl(var(--section-glow))' }} /></div>
+        <div className="sky-track flex-1 !h-1.5 overflow-hidden"><div className={`h-full transition-[width] duration-1000 ease-linear ${left < 15 ? '' : 'sky-fill-accent'}`} style={left < 15 ? { width: `${(left / SPEED_SECONDS) * 100}%`, background: 'hsl(var(--destructive))' } : { width: `${(left / SPEED_SECONDS) * 100}%` }} /></div>
         <span className="font-mono text-sm flex items-center gap-1"><Timer className="h-4 w-4" />{left}s</span>
       </div>
-      <article className="admin-glass-card rounded-2xl border p-5 space-y-5">
+      <Glass className="space-y-5">
         {q.passage_text && <div className="text-sm leading-relaxed border-l-2 pl-4"><MathText text={q.passage_text} /></div>}
         <div className="leading-relaxed"><MathText text={q.question_text} /></div>
         {[q.question_image_url, q.question_image_url_2].filter(Boolean).map(u => <img key={u!} src={u!} alt="Question figure" className="max-h-72 rounded border bg-background" />)}
@@ -554,7 +554,7 @@ function SpeedPage({ me }: { me: Me }) {
             <span className="font-mono text-sm w-5">{c.letter}</span><span className="flex-1 min-w-0">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span></button>))}</div>
           : <Input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer" className="max-w-xs font-mono" />}
         <Button onClick={() => answer(choices.length ? picked : typed)} disabled={choices.length ? !picked : !typed.trim()}>Submit</Button>
-      </article>
+      </Glass>
       {subject === 'math' && <><Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button><DesmosCalculator /></>}
     </div>
   );

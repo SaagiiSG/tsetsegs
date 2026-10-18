@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { History, Play, Target, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 export type SpeedRun = { id: string; created_at: string; subject: string; correct: number; total: number; duration_seconds: number | null; total_time_seconds: number | null; category: string | null };
@@ -24,7 +23,7 @@ function Picker<T extends number>({ label, values, value, onChange, render }: { 
       <div className="flex flex-col gap-1">
         {values.map(v => (
           <button key={v} onClick={() => onChange(v)}
-            className={`min-w-28 rounded-2xl px-5 py-2 font-mono transition-all active:scale-[0.97] ${v === value ? 'bg-foreground/10 text-2xl font-semibold text-foreground' : 'text-lg text-muted-foreground/60 hover:text-foreground'}`}>{render(v)}</button>
+            className={`min-w-28 rounded-2xl px-5 py-2 font-mono transition-all active:scale-[0.97] ${v === value ? 'bg-accent text-2xl font-semibold text-accent-foreground' : 'text-lg text-muted-foreground/60 hover:text-foreground'}`}>{render(v)}</button>
         ))}
       </div>
     </div>
@@ -47,24 +46,27 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
       .map(r => ({ date: new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), accuracy: acc(r), pace: perQ(r) }));
   }, [runs, range]);
 
+  const lastRating = last ? rating(perQ(last)) : '';
+  const chipRating = lastRating === 'Excellent' || lastRating === 'Good';
+
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-center gap-4">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl border admin-glass"><Zap className="h-6 w-6" /></span>
-        <div className="flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="text-sm text-muted-foreground">Challenge yourself with timed sessions</p></div>
+        <span className="sky-tile sky-tile-solid"><Zap /></span>
+        <div className="flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="text-sm sky-body">Challenge yourself with timed sessions</p></div>
         {[['Best acc', `${bestAcc}%`], ['Sessions', String(runs.length)]].map(([l, v]) => (
-          <div key={l} className="admin-glass-card rounded-2xl border px-5 py-3 text-center"><p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{l}</p><p className="font-mono text-2xl font-semibold">{v}</p></div>
+          <div key={l} className="sky-card !p-0 px-5 py-3 text-center"><p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{l}</p><p className="font-mono text-2xl font-semibold">{v}</p></div>
         ))}
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <section className="admin-glass-card admin-glass-neutral rounded-3xl border p-5">
+        <section className="sky-card sky-wash" style={{ '--wash': 'hsl(207 90% 96%)' } as React.CSSProperties}>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <h2 className="flex-1 font-semibold">Last {range} days performance</h2>
-            <div className="flex gap-1 rounded-xl border p-1">
-              {([7, 14, 30] as const).map(d => <button key={d} onClick={() => setRange(d)} className={`rounded-lg px-3 py-1 text-sm ${range === d ? 'bg-foreground/15 text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{d}d</button>)}
+            <div className="flex gap-1 rounded-full border bg-background/60 p-1">
+              {([7, 14, 30] as const).map(d => <button key={d} onClick={() => setRange(d)} className={`rounded-full px-3 py-1 text-sm transition-colors ${range === d ? 'bg-accent font-semibold text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{d}d</button>)}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}><History className="h-4 w-4" />History</Button>
+            <button onClick={() => setHistoryOpen(true)} className="sky-link text-sm"><History className="h-4 w-4" />History</button>
           </div>
           {chart.length === 0 ? (
             <div className="grid h-56 place-items-center text-center text-sm text-muted-foreground"><div><Zap className="mx-auto mb-2 h-8 w-8 opacity-50" /><p>No sessions in the last {range} days</p><p className="text-xs">Complete sessions to see your progress</p></div></div>
@@ -72,13 +74,13 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chart} margin={{ left: -20, right: 8, top: 8 }}>
-                  <defs><linearGradient id="speedAcc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity={0.25} /><stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity={0} /></linearGradient></defs>
+                  <defs><linearGradient id="speedAcc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} /><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, color: 'hsl(var(--popover-foreground))' }}
                     formatter={(v: number, k: string) => (k === 'accuracy' ? [`${v}%`, 'Accuracy'] : [`${v}s`, 'Per problem'])} />
-                  <Area type="monotone" dataKey="accuracy" stroke="hsl(var(--foreground))" strokeWidth={2} fill="url(#speedAcc)" />
+                  <Area type="monotone" dataKey="accuracy" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#speedAcc)" />
                   <Area type="monotone" dataKey="pace" stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" fill="none" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -86,33 +88,35 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
           )}
         </section>
 
-        <section className="admin-glass-card admin-glass-neutral flex flex-col rounded-3xl border p-5">
+        <section className="sky-card sky-wash flex flex-col" style={{ '--wash': 'hsl(250 90% 96%)' } as React.CSSProperties}>
           <p className="text-sm text-muted-foreground">Last session</p>
           <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4">
             <p className="font-mono text-5xl font-semibold">{last ? perQ(last) : 0}<span className="text-2xl">s</span></p>
-            <p className="text-sm text-muted-foreground">per problem</p>
-            <p className="w-full rounded-full border py-1.5 text-center text-sm font-medium">{last ? rating(perQ(last)) : 'No sessions yet'}</p>
+            <p className="text-sm sky-body">per problem</p>
+            {chipRating
+              ? <span className="sky-chip">{lastRating}</span>
+              : <span className="rounded-full border px-3 py-1 text-sm font-medium">{last ? lastRating : 'No sessions yet'}</span>}
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><Target className="h-4 w-4" />{last ? acc(last) : 0}% · {last?.total ?? 0} questions</p>
           </div>
         </section>
       </div>
 
-      <section className="admin-glass-card admin-glass-neutral grid gap-6 rounded-3xl border p-6 md:grid-cols-[auto_auto_1fr]">
+      <section className="sky-card grid gap-6 md:grid-cols-[auto_auto_1fr]">
         <Picker label="Duration" values={DURATIONS} value={cfg.duration} onChange={v => setCfg(c => ({ ...c, duration: v }))} render={fmt} />
         <Picker label="Questions" values={COUNTS} value={cfg.count} onChange={v => setCfg(c => ({ ...c, count: v }))} render={String} />
         <div className="flex flex-col items-center gap-3">
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Category</p>
-          <div className="flex gap-1 rounded-2xl border p-1">
-            {(['math', 'english'] as const).map(s => <button key={s} onClick={() => setCfg(c => ({ ...c, subject: s, category: null }))} className={`rounded-xl px-4 py-1.5 text-sm ${cfg.subject === s ? 'bg-foreground/15 text-foreground' : 'text-muted-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</button>)}
+          <div className="flex gap-1 rounded-full border bg-background/60 p-1">
+            {(['math', 'english'] as const).map(s => <button key={s} onClick={() => setCfg(c => ({ ...c, subject: s, category: null }))} className={`rounded-full px-4 py-1.5 text-sm transition-colors ${cfg.subject === s ? 'bg-accent font-semibold text-accent-foreground' : 'text-muted-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</button>)}
           </div>
           <div className="flex flex-wrap justify-center gap-2">
-            <button onClick={() => setCfg(c => ({ ...c, category: null }))} className={`rounded-full border px-4 py-2 text-sm ${!cfg.category ? 'bg-foreground/15' : 'hover:bg-foreground/5'}`}>All mixed</button>
-            {domainOptions.map(d => <button key={d.id} onClick={() => setCfg(c => ({ ...c, category: d.id }))} className={`rounded-full border px-4 py-2 text-sm ${cfg.category === d.id ? 'bg-foreground/15' : 'hover:bg-foreground/5'}`}>{d.name}</button>)}
+            <button onClick={() => setCfg(c => ({ ...c, category: null }))} className={`rounded-full border px-4 py-2 text-sm transition-colors ${!cfg.category ? 'border-transparent bg-accent font-semibold text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>All mixed</button>
+            {domainOptions.map(d => <button key={d.id} onClick={() => setCfg(c => ({ ...c, category: d.id }))} className={`rounded-full border px-4 py-2 text-sm transition-colors ${cfg.category === d.id ? 'border-transparent bg-accent font-semibold text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{d.name}</button>)}
           </div>
         </div>
       </section>
 
-      <Button size="lg" className="h-14 w-full rounded-2xl text-lg" onClick={() => onStart(cfg)}><Play className="h-5 w-5" />Start session</Button>
+      <button className="sky-btn sky-btn-blue w-full text-lg" onClick={() => onStart(cfg)}><Play className="h-5 w-5" />Start session</button>
 
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
@@ -120,7 +124,7 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
           <div className="mt-4 space-y-2">
             {runs.length === 0 && <p className="text-sm text-muted-foreground">No sessions yet.</p>}
             {runs.map(r => (
-              <div key={r.id} className="rounded-2xl border p-3">
+              <div key={r.id} className="sky-card !p-0 rounded-2xl p-3">
                 <div className="flex justify-between text-sm"><span className="font-medium">{r.subject === 'english' ? 'English' : 'Math'} · {r.category ? catName[r.category] ?? 'Topic' : 'All mixed'}</span><span className="text-muted-foreground">{new Date(r.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></div>
                 <div className="mt-2 flex gap-4 font-mono text-sm"><span>{r.correct}/{r.total}</span><span>{acc(r)}%</span><span>{perQ(r)}s / problem</span>{r.duration_seconds && <span className="text-muted-foreground">{fmt(r.duration_seconds)}</span>}</div>
               </div>
