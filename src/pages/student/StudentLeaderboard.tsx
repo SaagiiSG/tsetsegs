@@ -289,7 +289,7 @@ export default function StudentLeaderboard() {
               transition={{ duration: 0.2 }}
             >
               {noActiveSprint ? (
-                <div className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_290px] lg:grid-cols-[minmax(0,1fr)_330px] gap-3 sm:gap-4 items-start">
                   <NoActiveSprintCard
                     lastEndedSprint={lastEndedSprint}
                     nextSprint={nextSprint}
