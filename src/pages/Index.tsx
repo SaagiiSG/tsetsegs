@@ -2,269 +2,186 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, BookOpen, Target, Trophy, BarChart3, Sparkles, GraduationCap, Users, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PlayCircle, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
-import { LandingShaderBackground } from "@/components/LandingShaderBackground";
-import "./landing-sky.css";
-// IELTS achievement images
-import ielts801 from "@/assets/ielts-8-0-1.jpg";
-import ielts802 from "@/assets/ielts-8-0-2.jpg";
-import ielts751 from "@/assets/ielts-7-5-1.jpg";
-import ielts80new1 from "@/assets/ielts-8-0-new1.jpg";
-import ielts80new2 from "@/assets/ielts-8-0-new2.jpg";
-import ielts80new3 from "@/assets/ielts-8-0-new3.jpg";
-import ielts80new4 from "@/assets/ielts-8-0-new4.jpg";
-import ielts80new5 from "@/assets/ielts-8-0-new5.jpg";
-import ielts75new1 from "@/assets/ielts-7-5-new1.jpg";
-import ielts75new2 from "@/assets/ielts-7-5-new2.jpg";
-import ielts70new1 from "@/assets/ielts-7-0-new1.jpg";
-import ielts70new2 from "@/assets/ielts-7-0-new2.jpg";
-import ielts70new3 from "@/assets/ielts-7-0-new3.jpg";
-import ieltsA1 from "@/assets/ielts-achievement-1.jpg";
-import ieltsA2 from "@/assets/ielts-achievement-2.jpg";
-import ieltsA3 from "@/assets/ielts-achievement-3.jpg";
-import ieltsA4 from "@/assets/ielts-achievement-4.jpg";
-import ieltsA5 from "@/assets/ielts-achievement-5.jpg";
-import ieltsA6 from "@/assets/ielts-achievement-6.jpg";
-import ieltsA7 from "@/assets/ielts-achievement-7.jpg";
-import ieltsA8 from "@/assets/ielts-achievement-8.jpg";
-import ieltsA9 from "@/assets/ielts-achievement-9.jpg";
-import ieltsA10 from "@/assets/ielts-achievement-10.jpg";
-import ieltsA11 from "@/assets/ielts-achievement-11.jpg";
-import ieltsA12 from "@/assets/ielts-achievement-12.jpg";
-import ieltsA13 from "@/assets/ielts-achievement-13.jpg";
-import ieltsA14 from "@/assets/ielts-achievement-14.jpg";
-import ieltsA15 from "@/assets/ielts-achievement-15.jpg";
+import { HeroDemo } from "@/components/landing/HeroDemo";
+import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
+import "@/components/landing/landing.css";
+import cloudsFar from "@/assets/landing/05-clouds-far.svg";
+import cloudsMid from "@/assets/landing/06-clouds-mid.svg";
+import cloudsNear from "@/assets/landing/07-clouds-near.svg";
 
-// SAT score achievement images
-import sat1470 from "@/assets/sat-1470.jpg";
-import sat1500 from "@/assets/sat-1500.jpg";
-import sat1500_1 from "@/assets/sat-1500-1.jpg";
-import sat1480 from "@/assets/sat-1480.jpg";
-import sat1500_2 from "@/assets/sat-1500-2.jpg";
-import sat1480_2 from "@/assets/sat-1480-2.jpg";
-import sat1430 from "@/assets/sat-1430.jpg";
+type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number };
+const FB = "https://www.facebook.com/tsetsegs.agency";
+const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
 
-// Translation dictionary
-const translations: Record<string, Record<string, string>> = {
-  mon: {
-    badge: "Монголын шилдэг SAT математикийн төв",
-    heroTitle: "SAT-ыг эзэмш",
-    heroGradient: "Өндөр оноо ав",
-    heroSubtitle: "Цэцэгсийн гэр бүлд нэгдэж, хувийн сургалт, тоглоомжуулсан дасгал, мэргэжилтнүүдийн удирдлагаар чадавхиа нээгээрэй.",
-    studentPortal: "Сурагчийн портал",
-    staffLogin: "Ажилтны нэвтрэх",
-    statAvgScore: "1500+ сурагч SAT математикт авсан",
-    statAvgScoreSub: "Дэлхийд дээд 10%-д",
-    statStudents: "Актив хэрэглэгчид",
-    statExperience: "Жилийн туршлага",
-    whyChooseUs: "Яагаад биднийг сонгох вэ",
-    everythingYouNeed: "Амжилтанд хүрэхэд хэрэгтэй бүх зүйл",
-    succeed: "Амжилт",
-    featureSmartTitle: "Ухаалаг дасгал",
-    featureSmartDesc: "AI-д суурилсан 2,600+ өвөрмөц бодлого, 300 видео хичээл болон CollegeBoard импорт",
-    featureScoreTitle: "Оноо хянах",
-    featureScoreDesc: "Зорилтот оноогоо тавьж, хувийн ахицаа хянаарай",
-    featureGameTitle: "Тоглоомжуулсан сургалт",
-    featureGameDesc: "Badge цуглуулж, түвшин ахиж, найзуудтайгаа өрсөлдөөрэй",
-    featureAnalyticsTitle: "Гүнзгий аналитик",
-    featureAnalyticsDesc: "Давуу болон сул талуудаа дэлгэрэнгүй гүйцэтгэлийн тайлангаар ойлгоорой",
-    studentAchievements: "Сурагчдын амжилт",
-    ourStudents: "Манай сурагчид",
-    excel: "Тэргүүлдэг",
-    totalScore: "Нийт оноо",
-    meetTheTeam: "Багтай танилцах",
-    our: "Манай",
-    teachers: "Багш нар",
-    roleCEO: "Захирал",
-    roleManager: "Менежер | Англи хэл",
-    roleIELTS: "IELTS",
-    roleSATMath: "SAT Математик",
-    ieltsAchievements: "IELTS-ийн амжилтууд",
-    ourIELTS: "Манай IELTS",
-    results: "Үр дүн",
-    readyToStart: "SAT-ын аялалаа эхлэхэд бэлэн үү?",
-    ctaDescription: "Манай туршлагатай багш нар болон батлагдсан аргачлалаар олон зуун сурагчид оноогоо ахиулсан.",
-    getStarted: "Эхлэх",
-    followFacebook: "Facebook-ээр дагах",
-    footerTagline: "Монголын SAT & IELTS бэлтгэлийн шилдэг төв",
-    footerCopyright: "Цэцэгс Талент Агентлаг. Бүх эрх хуулиар хамгаалагдсан.",
-  },
-  eng: {
-    badge: "Mongolia's Best SAT Math Center",
-    heroTitle: "Master the SAT",
-    heroGradient: "Score Higher",
-    heroSubtitle: "Join the family of Tsetsegs and unlock your potential with personalized learning, gamified practice, and expert guidance.",
-    studentPortal: "Student Portal",
-    staffLogin: "Staff Login",
-    statAvgScore: "SAT Math scored by 1500+ students",
-    statAvgScoreSub: "Top 10% worldwide",
-    statStudents: "Active Users",
-    statExperience: "Years Experience",
-    whyChooseUs: "Why Choose Us",
-    everythingYouNeed: "Everything You Need to",
-    succeed: "Succeed",
-    featureSmartTitle: "Smart Practice",
-    featureSmartDesc: "AI-powered question bank with 2,600+ unique problems, 300 video lessons, and CollegeBoard imports",
-    featureScoreTitle: "Score Tracking",
-    featureScoreDesc: "Set your target score and track your progress with personalized milestones",
-    featureGameTitle: "Gamified Learning",
-    featureGameDesc: "Earn badges, climb tiers, and compete on leaderboards with your peers",
-    featureAnalyticsTitle: "Deep Analytics",
-    featureAnalyticsDesc: "Understand your strengths and weaknesses with detailed performance insights",
-    studentAchievements: "Student Achievements",
-    ourStudents: "Our Students",
-    excel: "Excel",
-    totalScore: "Total Score",
-    meetTheTeam: "Meet the Team",
-    our: "Our",
-    teachers: "Teachers",
-    roleCEO: "CEO",
-    roleManager: "Manager | English",
-    roleIELTS: "IELTS",
-    roleSATMath: "SAT Math",
-    ieltsAchievements: "IELTS Achievements",
-    ourIELTS: "Our IELTS",
-    results: "Results",
-    readyToStart: "Ready to Start Your SAT Journey?",
-    ctaDescription: "Join hundreds of students who have already improved their scores with our proven methodology and expert teachers.",
-    getStarted: "Get Started",
-    followFacebook: "Follow Us on Facebook",
-    footerTagline: "SAT & IELTS Prep Excellence in Mongolia",
-    footerCopyright: "Tsetsegs Talent Agency. All rights reserved.",
-  },
-};
-
-// Gallery images for student achievements - SAT scores
-const galleryImages = [
-  { src: sat1500_1, alt: "SAT 1500 - Б. Оюу-Ундрам" },
-  { src: sat1500, alt: "SAT 1500 - Г. Тэмүүлэн" },
-  { src: sat1500_2, alt: "SAT 1500 - Е. Ескендир" },
-  { src: sat1480, alt: "SAT 1480 - Б. Булгамаа" },
-  { src: sat1480_2, alt: "SAT 1480 - Г. Тэнгис" },
-  { src: sat1470, alt: "SAT 1470 - Билэгбаяр" },
-  { src: sat1430, alt: "SAT 1430 - Б. Аманда" },
-];
-
-
-const ieltsImages = [ielts80new1, ielts801, ielts80new2, ieltsA1, ieltsA2, ieltsA3, ielts802, ieltsA4, ieltsA5, ielts80new3, ielts80new4, ielts80new5, ieltsA6, ielts75new1, ieltsA7, ieltsA8, ielts751, ieltsA9, ielts75new2, ieltsA10, ielts70new1, ieltsA11, ielts70new2, ieltsA12, ielts70new3, ieltsA13, ieltsA14, ieltsA15];
+const Clouds = () => (
+  <div className="lv-clouds" aria-hidden>
+    <img src={cloudsFar} alt="" className="bottom-10 opacity-70" />
+    <img src={cloudsMid} alt="" className="bottom-0 opacity-90" />
+    <img src={cloudsNear} alt="" className="-bottom-6" />
+  </div>
+);
 
 const Index = () => {
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
   const [lang, setLang] = useState<"mon" | "eng">("mon");
-  const [selected, setSelected] = useState<{src: string; alt: string} | null>(null);
-  const [satPage, setSatPage] = useState(0);
-  const reduceMotion = useReducedMotion();
-  const t = (key: string) => translations[lang][key] || key;
-  const text = (mon: string, eng: string) => lang === "mon" ? mon : eng;
-  const reveal = { initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: .45 } };
-  const { data: successScores, isLoading, isError, refetch } = useQuery({
-    queryKey: ["landing-success-scores"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("bluebook_attempts").select("total_score, math_scaled_score, completed_at").not("total_score", "is", null).gte("total_score", 1400).order("total_score", { ascending: false }).limit(12);
-      if (error) throw error;
-      return data || [];
-    },
+  const text = (mn: string, en: string) => (lang === "mon" ? mn : en);
+  const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
+
+  const { data: s } = useQuery({
+    queryKey: ["landing-public-stats"], staleTime: 10 * 60_000,
+    queryFn: async () => { const { data, error } = await supabase.rpc("landing_public_stats" as never); if (error) throw error; return data as unknown as Stats; },
   });
-  const features = [
-    { icon: BookOpen, family: "blue", title: "featureSmartTitle", desc: "featureSmartDesc", number: "01" },
-    { icon: Target, family: "violet", title: "featureScoreTitle", desc: "featureScoreDesc", number: "02" },
-    { icon: Trophy, family: "pink", title: "featureGameTitle", desc: "featureGameDesc", number: "03" },
-    { icon: BarChart3, family: "orange", title: "featureAnalyticsTitle", desc: "featureAnalyticsDesc", number: "04" },
+
+  const CTA = ({ center }: { center?: boolean }) => (
+    <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
+      <Button size="lg" onClick={() => navigate("/login")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}<ArrowRight /></Button>
+      <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-2 px-7"><a href={FB} target="_blank" rel="noopener noreferrer">{text("Холбогдох", "Contact us")}<ArrowUpRight /></a></Button>
+    </div>
+  );
+
+  const proof = [
+    { v: s ? fmt(s.students) : "—", l: text("бодит тест өгсөн сурагч", "students with real practice tests"), c: "lv-blue" },
+    { v: s ? `+${s.best_gain}` : "—", l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
+    { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
+    { v: s ? fmt(s.club700) : "—", l: text("сурагч 700+ Math авсан", "students reached 700+ Math"), c: "lv-orange" },
   ];
+
+  const features = [
+    { icon: BookOpen, c: "lv-blue", pain: text("Гацаад үлдэхээ боль", "Never stay stuck"), body: text("Мянга мянган SAT бодлого, алхам алхмаар тайлбар, видео.", "Thousands of SAT questions with step-by-step explanations and videos."), demo: "question" },
+    { icon: Calculator, c: "lv-violet", pain: text("Desmos-ыг шалгалт шиг ашигла", "Use Desmos like on test day"), body: text("Шалгалтын өдөр байдаг тооны машин бодлого бүрийн хажууд.", "The same calculator you get on test day, right next to every question."), demo: "desmos" },
+    { icon: Zap, c: "lv-orange", pain: text("Хурдаа нэмэгдүүл", "Get faster under time"), body: text("Хурдны горим: цагтай уралдаж, од цуглуул.", "Speed mode: race the clock and earn stars."), demo: "speed" },
+    { icon: RotateCcw, c: "lv-pink", pain: text("Нэг алдааг хоёр удаа бүү гарга", "Never repeat a mistake"), body: text("Алдаанууд давталтын системээр зөв цагт буцаж ирнэ.", "Mistakes come back at the right time with spaced repetition."), demo: "review" },
+    { icon: BarChart3, c: "lv-green", pain: text("Юу сурахаа таамаглахаа боль", "Stop guessing what to study"), body: text("Сэдэв бүрийн чадвар, SAT оноо таамаглал, өсөлтийн чиглэл.", "Skill by topic, a predicted SAT score and your trend over time."), demo: "analytics" },
+  ];
+
+  const more = [
+    { icon: PlayCircle, l: text("Ойлголтын видео", "Concept videos") }, { icon: PenLine, l: text("Тэмдэглэл", "Notes on questions") },
+    { icon: Radio, l: text("Шууд ангийн тест", "Live class quizzes") }, { icon: Users, l: text("Эцэг эхэд тайлан", "Parent progress link") },
+    { icon: CalendarCheck, l: text("Ирц", "Attendance") }, { icon: MonitorPlay, l: text("Bluebook симулятор", "Bluebook simulator") },
+    { icon: Flame, l: text("Streak", "Study streaks") }, { icon: Trophy, l: text("Тэмдэг", "Badges") },
+  ];
+
+  const faq = [
+    { q: text("Хэрхэн элсэх вэ?", "How do I join?"), a: text("Манай ангид бүртгүүлэхэд админ таны утасны дугаарыг системд оруулж, нэвтрэх эрх нээнэ.", "Enroll in a class and an admin adds your phone number, which opens your access.") },
+    { q: text("Үнэ хэд вэ?", "How much does it cost?"), a: text("Үнэ ангиас хамаарна. Facebook хуудсаар холбогдож лавлана уу.", "Pricing depends on the class. Message us on Facebook for details.") },
+    { q: text("Онлайн уу, танхимаар уу?", "Online or in person?"), a: text("Хоёулаа. Танхимын ангиуд 1105, 905 тоотод, онлайн хичээл ч бий.", "Both. In-person classes are in rooms 1105 and 905, and online classes are available.") },
+    { q: text("Оноо таамаглал хэр үнэн бэ?", "How accurate is the score prediction?"), a: text("Бодит SAT-тай харьцуулахад ихэвчлэн ±30 орчим оноогоор зөрдөг бөгөөд шинэ оноо бүрээр шалгагддаг.", "Compared with real SAT results it usually lands within about 30 points, and it's rechecked with every new real score.") },
+  ];
+
   return (
-    <div className="landing-sky relative isolate min-h-screen bg-background text-foreground" lang={lang === "mon" ? "mn" : "en"}>
-      <LandingShaderBackground />
-      <header className="absolute inset-x-0 top-4 z-20 px-4 md:top-6 md:px-8">
-        <nav aria-label={text("Үндсэн цэс", "Main navigation")} className="landing-nav mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-full px-4 py-2 md:px-5">
-          <a href="/" aria-label="FlowersOS home" className="flex shrink-0 items-center gap-2 text-primary"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold text-foreground">flowersos</span></a>
-          <div className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#features">{text("Сургалт", "Learning")}</a><a href="#achievements">{text("Амжилт", "Results")}</a><a href="#team">IELTS</a>
-          </div>
+    <div className="landing-v2 min-h-screen" lang={lang === "mon" ? "mn" : "en"}>
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+        <div className="lv-container flex h-16 items-center justify-between gap-4">
+          <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
+          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a><a href="#faq">FAQ</a></nav>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-full bg-muted p-1" aria-label="Language">
-              {(["mon", "eng"] as const).map(l => <Button key={l} variant="ghost" size="sm" aria-pressed={lang === l} onClick={() => setLang(l)} className={`h-8 rounded-full px-2 text-[11px] ${lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}
-            </div>
-            <Button onClick={() => navigate("/login")} className="landing-primary hidden rounded-full sm:inline-flex">{t("getStarted")}<ArrowUpRight /></Button>
+            <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <button key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</button>)}</div>
+            <Button onClick={() => navigate("/login")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
           </div>
-        </nav>
+        </div>
       </header>
 
       <main>
-        <section className="landing-hero relative isolate overflow-hidden">
-          <div className="landing-hero-veil absolute inset-0 -z-10" />
-          <div className="landing-container flex h-full flex-col justify-center pb-14 pt-28">
-            <motion.div {...reveal} className="max-w-2xl">
-              <p className="mb-5 flex items-center gap-2 text-sm font-medium text-primary"><GraduationCap className="h-5 w-5" />{text("SAT & IELTS · Чиний дараагийн алхам", "SAT & IELTS · Your next chapter")}</p>
-              <h1 className="font-chillax text-5xl font-semibold leading-[1.1] sm:text-6xl lg:text-7xl">FlowersOS<span className="mt-3 block text-3xl leading-tight sm:text-4xl lg:text-5xl">{text("Өдөр бүр нэг алхам урагш.", "A little further, every day.")}</span></h1>
-              <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">{t("heroSubtitle")}</p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="lg" onClick={() => navigate("/practice")} className="landing-primary h-12 rounded-full px-6">{t("studentPortal")}<ArrowRight /></Button>
-                <Button variant="outline" size="lg" onClick={() => navigate("/login")} className="h-12 rounded-full border-border bg-card/80 px-6">{t("staffLogin")}<ArrowUpRight /></Button>
-              </div>
-              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-4 border-t border-border/70 pt-6">
-                {[{value: "2,600+", label: text("Бодлого", "Practice questions"), icon: BookOpen}, {value: "1,000+", label: text("Сурагчид", "Learners"), icon: Users}, {value: "6+", label: text("Жилийн туршлага", "Years of teaching"), icon: GraduationCap}].map(s => <div key={s.value}><div className="font-mono text-2xl font-semibold">{s.value}</div><p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"><s.icon className="h-3.5 w-3.5" />{s.label}</p></div>)}
-              </div>
+        <section className="lv-sky relative overflow-hidden pb-28 pt-16 md:pt-24">
+          <Clouds />
+          <div className="lv-container relative grid items-center gap-12 lg:grid-cols-2">
+            <motion.div {...reveal}>
+              <span className="lv-blue rounded-full px-3 py-1 text-sm font-medium">SAT · Math & English</span>
+              <h1 className="lv-h1 mt-6">{text("SAT-аа ", "Ace the ")}<span className="relative inline-block">{text("давж гар", "SAT")}<motion.svg viewBox="0 0 200 12" className="absolute -bottom-2 left-0 w-full" aria-hidden><motion.path d="M2 8 Q50 2 100 7 T198 5" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: .6, delay: .3 }} /></motion.svg></span></h1>
+              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид Math-д дунджаар +${s?.best_gain ?? 142} оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${s?.best_gain ?? 142} on average at their best. Practice, prediction and a league, all in one place.`)}</p>
+              <div className="mt-8"><CTA /></div>
             </motion.div>
+            <HeroDemo text={text} />
           </div>
         </section>
 
-        <section id="features" className="landing-section">
-          <div className="landing-container">
-            <motion.div {...reveal} className="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-              <div><p className="landing-eyebrow">{t("whyChooseUs")}</p><h2 className="landing-heading mt-3">{text("Бэлтгэл чинь нэг дор.", "Your preparation, connected.")}</h2></div>
-              <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{text("Дасгал хий. Ахицaa хар. Маргааш илүү итгэлтэй бай.", "Build your skills. See your progress. Show up more confident tomorrow.")}</p>
-            </motion.div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map(f => <motion.article {...reveal} key={f.title} className={`landing-feature landing-family-${f.family} relative overflow-hidden rounded-2xl bg-card p-6`}>
-                <div className="mb-8 flex items-center justify-between"><div className="landing-feature-tile grid h-12 w-12 place-items-center rounded-2xl"><f.icon className="h-6 w-6" /></div><span className="font-mono text-xs text-muted-foreground">{f.number}</span></div>
-                <h3 className="font-chillax text-lg font-semibold">{t(f.title)}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t(f.desc)}</p>
-              </motion.article>)}
+        <section className="py-10"><div className="lv-container grid grid-cols-2 gap-3 md:grid-cols-4">{proof.map((p, i) => (
+          <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${p.c}`}>{p.v}</p><p className="mt-3 text-sm text-muted-foreground">{p.l}</p></motion.div>
+        ))}</div></section>
+
+        <section id="how" className="py-20"><div className="lv-container">
+          <motion.h2 {...reveal} className="lv-h2 max-w-xl">{text("Гурван алхам. Нэг зорилго.", "Three steps. One goal.")}</motion.h2>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">{[
+            { icon: Stethoscope, c: "lv-blue", t: text("Оношил", "Diagnose"), d: text("Практик тест таны түвшин, сул сэдвийг олно.", "Practice tests find your level and weak topics.") },
+            { icon: Map, c: "lv-violet", t: text("Төлөвлө", "Plan"), d: text("Систем дараа нь юу сурахыг санал болгоно.", "The app tells you what to study next.") },
+            { icon: Target, c: "lv-pink", t: text("Дасгалла", "Practice"), d: text("Бодлого бүр оноо, streak, лигийн байр авчирна.", "Every question earns points, streaks and league rank.") },
+          ].map((x, i) => (
+            <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card overflow-hidden"><div className="lv-sky h-24 p-5"><span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${x.c}`}><x.icon className="h-5 w-5" /></span></div><div className="p-5"><p className="font-mono text-xs text-muted-foreground">0{i + 1}</p><h3 className="mt-1 font-chillax text-2xl font-medium">{x.t}</h3><p className="mt-2 text-muted-foreground">{x.d}</p></div></motion.div>
+          ))}</div>
+        </div></section>
+
+        <section id="features" className="py-10">{features.map((f, i) => (
+          <div key={i} className="py-14"><div className={`lv-container grid items-center gap-10 lg:grid-cols-2 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
+            <motion.div {...reveal}><span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${f.c}`}><f.icon className="h-5 w-5" /></span><h2 className="lv-h2 mt-5">{f.pain}</h2><p className="lv-lead mt-4 max-w-md">{f.body}</p></motion.div>
+            <motion.div {...reveal}><div className="lv-tray"><div className="lv-screen p-5"><FeatureDemo kind={f.demo} text={text} /></div></div><p className="mt-3 text-center text-sm text-muted-foreground">{text("Жишээ өгөгдөл", "Sample data")}</p></motion.div>
+          </div></div>
+        ))}</section>
+
+        <section className="lv-sky py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
+          <motion.div {...reveal}><h2 className="lv-h2">{text("Сурах нь тоглоом шиг", "Studying that feels like a game")}</h2><p className="lv-lead mt-4 max-w-md">{text("7 хоногийн лиг, Bronze-оос Ruby хүртэлх зэрэг, streak ба тэмдэг. Ruby-д зөвхөн #1 үлдэнэ.", "Weekly leagues, ranks from Bronze to Ruby, streaks and badges. Only #1 keeps Ruby.")}</p></motion.div>
+          <motion.div {...reveal} className="lv-card flex flex-wrap items-end justify-center gap-3 p-6">{(["bronze", "silver", "gold", "platinum", "diamond", "ruby"] as const).map((t, i) => (
+            <motion.img key={t} src={TIER_ASSETS[t].image} alt={t} className="h-16 w-16 object-contain md:h-20 md:w-20" animate={reduce ? {} : { y: [0, -6, 0] }} transition={{ duration: 4 + i * .4, repeat: Infinity, ease: "easeInOut", delay: i * .3 }} />
+          ))}</motion.div>
+        </div></section>
+
+        <section className="py-20"><div className="lv-container">
+          <motion.h2 {...reveal} className="lv-h2">{text("Бас бусад", "And more")}</motion.h2>
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">{more.map((m, i) => (
+            <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .04 }} className="lv-card flex items-center gap-3 p-4"><m.icon className="h-5 w-5 shrink-0 text-accent" /><span className="text-sm font-medium">{m.l}</span></motion.div>
+          ))}</div>
+        </div></section>
+
+        <section id="results" className="py-20"><div className="lv-container">
+          <motion.h2 {...reveal} className="lv-h2 max-w-2xl">{text("Бодит сурагчид, бодит тоо", "Real students, real numbers")}</motion.h2>
+          <p className="lv-lead mt-4 max-w-2xl">{text("Нэрийг нь зөвшөөрөл авсны дараа нэмнэ. Доорх тоо бүх сурагчийн нийлбэр.", "Names appear only with consent. The numbers below are totals across all students.")}</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div className="lv-card p-6 md:col-span-2"><p className="text-sm text-muted-foreground">{text("Дундаж Math оноо", "Average Math score")}</p>
+              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Сүүлийн", "Latest"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + (s?.best_gain ?? 142) }].map((b, i) => (
+                <div key={i} className="flex-1 text-center"><motion.div className={`mx-auto w-full max-w-[90px] rounded-t-xl ${["lv-blue", "lv-violet", "lv-green"][i]}`} initial={{ height: 0 }} whileInView={{ height: (b.v - 300) / 2 }} viewport={{ once: true }} transition={{ duration: .6, delay: i * .1 }} /><p className="mt-2 font-mono text-xl font-semibold">{b.v}</p><p className="text-xs text-muted-foreground">{b.l}</p></div>
+              ))}</div></div>
+            <div className="grid gap-4">
+              <div className="lv-card p-6"><p className="font-mono text-3xl font-semibold">{s ? fmt(s.club800) : "—"}</p><p className="text-sm text-muted-foreground">{text("сурагч Math 800 авсан", "students hit a perfect 800 Math")}</p></div>
+              <div className="lv-card p-6"><p className="font-mono text-3xl font-semibold">{s ? fmt(s.answers) : "—"}</p><p className="text-sm text-muted-foreground">{text("бодлого бодогдсон", "questions answered")}</p></div>
             </div>
           </div>
-        </section>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map(i => (
+            <div key={i} className="lv-card border-dashed p-6"><p className="text-sm text-muted-foreground">{text("Сурагчийн түүх — зөвшөөрөл хүлээж байна", "Student story — awaiting consent")}</p><div className="mt-4 h-3 w-2/3 rounded-full bg-muted" /><div className="mt-2 h-3 w-1/2 rounded-full bg-muted" /></div>
+          ))}</div>
+        </div></section>
 
-        <section id="achievements" className="landing-section landing-results-band">
-          <div className="landing-container">
-            <motion.div {...reveal} className="mb-9 flex flex-wrap items-end justify-between gap-4">
-              <div><p className="landing-eyebrow">{t("studentAchievements")}</p><h2 className="landing-heading mt-3">{text("Хөдөлмөр. Ахиц. Амжилт.", "The work. The growth. The results.")}</h2></div>
-              <div className="flex gap-2"><Button variant="outline" size="icon" className="rounded-full bg-card" aria-label="Previous SAT results" onClick={() => setSatPage(p => (p - 1 + galleryImages.length) % galleryImages.length)}><ChevronLeft /></Button><Button variant="outline" size="icon" className="rounded-full bg-card" aria-label="Next SAT results" onClick={() => setSatPage(p => (p + 1) % galleryImages.length)}><ChevronRight /></Button></div>
-            </motion.div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-              {[0, 1, 2].map(offset => { const item = galleryImages[(satPage + offset) % galleryImages.length]; return <Button key={offset} variant="ghost" onClick={() => setSelected(item)} aria-label={item.alt} className="landing-result-photo block h-auto overflow-hidden rounded-2xl p-0"><img src={item.src} alt={item.alt} width={500} height={620} loading="lazy" className="aspect-[4/5] w-full object-contain" /></Button>; })}
-            </div>
-            <div className="mt-8">
-              {isLoading ? <div className="grid grid-cols-3 gap-3 md:grid-cols-6">{Array.from({length: 6}, (_,i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div> : isError ? <div className="flex items-center gap-3 text-sm text-muted-foreground"><span>{text("Оноонуудыг ачаалж чадсангүй.", "Practice results are unavailable.")}</span><Button variant="link" onClick={() => refetch()}>{text("Дахин оролдох", "Retry")}</Button></div> : successScores && successScores.length > 0 ? <><p className="mb-4 text-xs text-muted-foreground">{text("Платформ дээрх SAT дасгалын үр дүн", "SAT practice results on the platform")}</p><div className="grid grid-cols-3 gap-3 md:grid-cols-6">{successScores.slice(0,6).map((s,i) => <div key={i} className="rounded-2xl bg-card p-4 text-center"><div className="font-mono text-2xl font-semibold">{s.total_score}</div><div className="mt-1 text-xs text-muted-foreground">{t("totalScore")}</div></div>)}</div></> : null}
-            </div>
-          </div>
-        </section>
+        <section id="faq" className="py-20"><div className="lv-container max-w-3xl">
+          <h2 className="lv-h2 text-center">FAQ</h2>
+          <Accordion type="single" collapsible className="mt-8">{faq.map((f, i) => (
+            <AccordionItem key={i} value={`f${i}`}><AccordionTrigger className="text-left text-lg">{f.q}</AccordionTrigger><AccordionContent className="text-base text-muted-foreground">{f.a}</AccordionContent></AccordionItem>
+          ))}</Accordion>
+        </div></section>
 
-        <section id="team" className="landing-section">
-          <div className="landing-container"><motion.div {...reveal} className="mb-9"><p className="landing-eyebrow">{t("ieltsAchievements")}</p><h2 className="landing-heading mt-3">{text("Дэлхийд хүрэх дараагийн алхам.", "A world of possibilities.")}</h2></motion.div></div>
-          <div className="landing-ielts-strip flex gap-4 overflow-x-auto px-6 pb-5 md:px-12">
-            {ieltsImages.map((src,i) => <Button key={src} variant="ghost" aria-label={`IELTS achievement ${i+1}`} onClick={() => setSelected({src, alt: `IELTS achievement ${i+1}`})} className="landing-result-photo h-auto w-48 shrink-0 overflow-hidden rounded-2xl p-0 md:w-60"><img src={src} alt={`IELTS achievement ${i+1}`} width={300} height={400} loading="lazy" className="aspect-[3/4] w-full object-contain" /></Button>)}
-          </div>
-        </section>
-
-        <section className="landing-cta py-16 md:py-20">
-          <motion.div {...reveal} className="landing-container text-center"><Sparkles className="mx-auto mb-5 h-7 w-7 text-primary" /><h2 className="landing-heading mx-auto max-w-2xl">{t("readyToStart")}</h2><p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">{t("ctaDescription")}</p><div className="mt-8 flex flex-wrap justify-center gap-3"><Button size="lg" onClick={() => navigate("/practice")} className="landing-primary h-12 rounded-full px-7">{t("getStarted")}<ArrowRight /></Button><Button asChild variant="outline" size="lg" className="h-12 rounded-full bg-card"><a href="https://www.facebook.com/tsetsegs.agency" target="_blank" rel="noopener noreferrer">{t("followFacebook")}<ArrowUpRight /></a></Button></div></motion.div>
+        <section className="lv-sky relative overflow-hidden pb-40 pt-24 text-center">
+          <Clouds />
+          <motion.div {...reveal} className="lv-container relative"><h2 className="lv-h2 mx-auto max-w-2xl">{text("Дараагийн оноо чинь эндээс эхэлнэ", "Your next score starts here")}</h2><p className="lv-lead mx-auto mt-4 max-w-xl">{text("Ангид элсэж, утасны дугаараа бүртгүүлээд нэвтэрнэ үү.", "Join a class, get your phone number added, and sign in.")}</p><div className="mt-8"><CTA center /></div></motion.div>
         </section>
       </main>
-      <footer className="landing-container py-10">
-        <div className="flex flex-col justify-between gap-6 border-b border-border pb-8 sm:flex-row"><div><a href="/" className="flex items-center gap-2 font-chillax text-2xl font-semibold"><BrandMark className="h-8 w-8 text-primary" />flowersos</a><p className="mt-3 text-sm text-muted-foreground">{t("footerTagline")}</p></div><div className="text-sm text-muted-foreground"><p>11th floor (1105) & 9th floor (905)</p><Button variant="link" onClick={() => navigate("/login")} className="mt-2 h-auto px-0">{t("staffLogin")}<ArrowUpRight /></Button></div></div>
-        <p className="mt-6 text-xs text-muted-foreground">© {new Date().getFullYear()} {t("footerCopyright")}</p>
-      </footer>
-      <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) setSelected(null); }}>
-        <DialogContent className="landing-sky max-h-[90vh] max-w-2xl overflow-y-auto bg-card p-5">
-          <DialogTitle>{selected?.alt}</DialogTitle><DialogDescription className="sr-only">{text("Сурагчийн амжилтын зураг", "Student achievement photograph")}</DialogDescription>
-          {selected && <img src={selected.src} alt={selected.alt} className="max-h-[72vh] w-full object-contain" />}
-        </DialogContent>
-      </Dialog>
+
+      <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
+        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep · 1105 & 905</p></div>
+        <div className="flex gap-6"><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/login">{text("Нэвтрэх", "Sign in")}</a></div>
+      </div></footer>
     </div>
   );
 };
+
+function FeatureDemo({ kind, text }: { kind: string; text: (a: string, b: string) => string }) {
+  if (kind === "question") return (<div><span className="lv-violet rounded-full px-3 py-1 text-xs">{text("Тайлбар", "Explanation")}</span><p className="mt-3 font-medium">{text("Шулууны налалт 2, (1, 5) цэгээр гарна. y-тэнхлэгийг хаана огтлох вэ?", "A line with slope 2 passes through (1, 5). Where does it cross the y-axis?")}</p><ol className="mt-3 space-y-1.5 font-mono text-sm text-muted-foreground"><li>1. y = 2x + b</li><li>2. 5 = 2(1) + b</li><li className="lv-green inline-block rounded-full px-2">3. b = 3</li></ol></div>);
+  if (kind === "desmos") return (<svg viewBox="0 0 300 160" className="w-full"><g stroke="hsl(var(--border))">{[...Array(11)].map((_, i) => <line key={i} x1={i * 30} y1="0" x2={i * 30} y2="160" />)}{[...Array(6)].map((_, i) => <line key={i} x1="0" y1={i * 32} x2="300" y2={i * 32} />)}</g><path d="M0 150 Q150 -60 300 150" fill="none" stroke="hsl(var(--lv-violet-ink))" strokeWidth="3" /><path d="M0 120 L300 40" stroke="hsl(var(--lv-blue-ink))" strokeWidth="3" /></svg>);
+  if (kind === "speed") return (<div className="text-center"><p className="font-mono text-5xl font-semibold">0:42</p><div className="mt-3 flex justify-center gap-1 text-3xl">★★<span className="text-muted-foreground">★</span></div><div className="mx-auto mt-4 h-2 w-3/4 overflow-hidden rounded-full bg-muted"><div className="lv-orange h-full w-2/3" /></div><p className="mt-2 text-sm text-muted-foreground">{text("12 / 15 зөв · +15 хурдны оноо", "12 / 15 correct · +15 speed points")}</p></div>);
+  if (kind === "review") return (<div className="space-y-2">{[[text("Квадрат тэгшитгэл", "Quadratics"), text("Маргааш", "Tomorrow"), "lv-pink"], [text("Хувь", "Percentages"), text("3 хоногийн дараа", "In 3 days"), "lv-orange"], [text("Шугаман функц", "Linear functions"), text("Цээжилсэн", "Mastered"), "lv-green"]].map(([a, b, c], i) => <div key={i} className="flex items-center justify-between rounded-full border-2 border-border px-4 py-2 text-sm"><span>{a}</span><span className={`rounded-full px-2 py-0.5 text-xs ${c}`}>{b}</span></div>)}</div>);
+  return (<div><div className="flex items-baseline justify-between"><p className="text-sm text-muted-foreground">{text("Таамаглал", "Prediction")}</p><span className="lv-green rounded-full px-2 py-0.5 text-xs">▲ +25</span></div><p className="font-mono text-4xl font-semibold">640 <span className="text-base text-muted-foreground">±35</span></p><div className="mt-4 space-y-2">{[[text("Алгебр", "Algebra"), 82], [text("Геометр", "Geometry"), 61], [text("Өгөгдөл", "Data"), 74]].map(([l, v]) => <div key={l as string} className="text-sm"><div className="flex justify-between"><span>{l}</span><span className="font-mono">{v}%</span></div><div className="mt-1 h-2 rounded-full bg-muted"><div className="lv-blue h-full rounded-full" style={{ width: `${v}%` }} /></div></div>)}</div></div>);
+}
+
 export default Index;
