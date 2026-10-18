@@ -23,7 +23,7 @@ import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
-import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, Check, PlayCircle, Users, Brain } from 'lucide-react';
+import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, Check, Users, Brain } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
