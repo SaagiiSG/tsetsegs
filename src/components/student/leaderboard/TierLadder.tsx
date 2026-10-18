@@ -51,9 +51,9 @@ export function TierLadder({ currentTier, unlockedAt, standing }: Props) {
                     className={`relative flex flex-col items-center gap-1 rounded-xl p-1 transition ${isCurrent ? 'bg-primary/10 ring-1 ring-primary/40' : ''} ${unlocked ? '' : 'opacity-50'}`}>
                     <div className="relative h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center rounded-full"
                       style={unlocked ? { background: `${color}26`, boxShadow: isCurrent ? `0 0 22px ${color}aa` : undefined } : undefined}>
-                      {img ? <img src={img} alt="" className={`h-full w-full object-contain ${unlocked ? '' : 'grayscale'}`} />
+                      {img ? <img src={img} alt="" className={`h-full w-full object-contain ${unlocked || asset.lockedImage ? '' : 'grayscale'}`} />
                         : <Icon className="h-6 w-6 sm:h-8 sm:w-8" style={{ color: unlocked ? color : undefined }} />}
-                      {!unlocked && <Lock className="absolute -bottom-0.5 -right-0.5 h-3 w-3 text-muted-foreground" />}
+                      {!unlocked && !asset.lockedImage && <Lock className="absolute -bottom-0.5 -right-0.5 h-3 w-3 text-muted-foreground" />}
                       {isCurrent && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px] shadow-primary" />}
                     </div>
                     <span className="text-[8px] sm:text-[9px] font-medium leading-none text-muted-foreground">{ladderTierName(t)}</span>

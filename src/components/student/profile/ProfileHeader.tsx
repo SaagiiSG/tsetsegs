@@ -2,8 +2,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Shield, Gem, Star, Award, Zap } from 'lucide-react';
 import { TierType, TIER_COLORS } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { format } from 'date-fns';
 
 interface ProfileHeaderProps {
@@ -20,15 +20,10 @@ interface ProfileHeaderProps {
 }
 
 const TierIcon = ({ tier }: { tier: TierType }) => {
-  const iconClass = "w-5 h-5";
-  switch (tier) {
-    case 'ruby': return <Gem className={iconClass} />;
-    case 'diamond': return <Crown className={iconClass} />;
-    case 'platinum': return <Star className={iconClass} />;
-    case 'gold': return <Award className={iconClass} />;
-    case 'silver': return <Shield className={iconClass} />;
-    default: return <Zap className={iconClass} />;
-  }
+  const asset = TIER_ASSETS[tier];
+  return asset.image
+    ? <img src={asset.image} alt="" className="w-4 h-4 object-contain" />
+    : <asset.icon className="w-4 h-4" />;
 };
 
 export function ProfileHeader({

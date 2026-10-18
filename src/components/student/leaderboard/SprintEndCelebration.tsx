@@ -5,6 +5,7 @@ import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import { Button } from '@/components/ui/button';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from './tierAssets';
 
 interface SprintEndCelebrationProps {
   isOpen: boolean;
@@ -218,7 +219,12 @@ export function SprintEndCelebration({
                 className="flex items-center justify-center gap-2 py-3 px-6 rounded-full mx-auto w-fit"
                 style={{ backgroundColor: `${tierColor}20`, border: `2px solid ${tierColor}` }}
               >
-                <Star className="h-5 w-5" style={{ color: tierColor }} />
+                {(() => {
+                  const asset = TIER_ASSETS[tierReached];
+                  return asset.image
+                    ? <img src={asset.image} alt="" className="h-6 w-6 object-contain" />
+                    : <Star className="h-5 w-5" style={{ color: tierColor }} />;
+                })()}
                 <span className="font-bold" style={{ color: tierColor }}>
                   {TIER_DISPLAY_NAMES[tierReached]} Tier
                 </span>
