@@ -50,10 +50,10 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-center gap-4">
-        <span className="ds-tile ds-tile-gold h-12 w-12"><Zap className="h-6 w-6 fill-current" /></span>
-        <div className="flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="ds-sub">Challenge yourself with timed sessions</p></div>
+        <span className="grid h-12 w-12 place-items-center rounded-2xl border admin-glass"><Zap className="h-6 w-6" /></span>
+        <div className="flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="text-sm text-muted-foreground">Challenge yourself with timed sessions</p></div>
         {[['Best acc', `${bestAcc}%`], ['Sessions', String(runs.length)]].map(([l, v]) => (
-          <div key={l} className="admin-glass-card rounded-2xl border px-5 py-3 flex items-center gap-3"><span className={`ds-tile h-9 w-9 ${l === 'Sessions' ? 'ds-tile-blue' : 'ds-tile-green'}`}>{l === 'Sessions' ? <History className="h-4 w-4" /> : <Target className="h-4 w-4" />}</span><div><p className="ds-sub uppercase">{l}</p><p className="font-mono text-xl font-bold leading-none">{v}</p></div></div>
+          <div key={l} className="admin-glass-card rounded-2xl border px-5 py-3 text-center"><p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{l}</p><p className="font-mono text-2xl font-semibold">{v}</p></div>
         ))}
       </header>
 
