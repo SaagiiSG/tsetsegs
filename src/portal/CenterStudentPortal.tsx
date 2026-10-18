@@ -108,18 +108,18 @@ export default function CenterStudentPortal() {
   const glow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || '217 91% 60%';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
+    <div className="student-theme min-h-screen overflow-x-clip admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
       <div aria-hidden className="admin-page-atmosphere" />
       <AdminBackgroundPaths />
       <div className="relative flex">
-        <aside className="hidden md:flex sticky top-3 m-3 h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col admin-glass rounded-2xl border p-3">
+        <aside className="hidden md:flex sticky top-3 m-3 h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col student-card border p-3">
           <div className="flex items-center gap-2.5 px-2 pt-2 pb-4">
             <CenterLogo center={center} className="h-8 w-8" />
             <div className="min-w-0"><p className="text-sm font-semibold truncate">{centerDisplayName(center)}</p><p className="text-xs text-muted-foreground truncate">{name}</p></div>
           </div>
           <nav aria-label="Student" className="flex-1 space-y-0.5 overflow-y-auto">
             {NAV.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors active:scale-[0.98] ${isActive ? 'bg-foreground text-background font-medium' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}>
+              <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors active:scale-[0.98] ${isActive ? 'bg-primary text-primary-foreground font-semibold shadow-sm' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}>
                 <Icon className="h-4 w-4" />{label}
               </NavLink>
             ))}
@@ -220,7 +220,7 @@ function HomePage({ me }: { me: Me }) {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
-        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="flex items-center gap-2 rounded-full border px-3 py-1.5 admin-glass transition-transform active:scale-95 hover:bg-foreground/5">
+        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="student-chip student-chip-flame">
           <FlameIcon className="h-4 w-4" /><span className="font-mono text-sm">{streak}</span><span className="text-xs text-muted-foreground">day streak</span>
         </button>
       </div>
