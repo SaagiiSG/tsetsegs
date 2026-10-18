@@ -48,7 +48,7 @@ const DAILY_GOAL = 20;
 const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5';
 
 function Glass({ className = '', children }: { className?: string; children: React.ReactNode }) {
-  return <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} ${className}`}><LiquidGlassFX /><div className="relative">{children}</div></div>;
+  return <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} ${className}`}><LiquidGlassFX /><div className="relative h-full">{children}</div></div>;
 }
 
 /** Everything the student pages share: profile, class, attendance, attempts + question meta. */
@@ -242,12 +242,13 @@ function HomePage({ me }: { me: Me }) {
             const done = ids.filter(id => solved.has(id)).length;
             return (
               <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left">
-                <Glass className="h-full flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <span className={`ds-tile ${s.tile} h-14 w-14`}><s.icon className="h-7 w-7" strokeWidth={2.2} /></span>
+                <Glass className="h-full">
+                  <div className="flex h-full flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`ds-tile ${s.tile} h-11 w-11`}><s.icon className="h-5 w-5" strokeWidth={2.2} /></span>
                     <div className="min-w-0">
                       <p className="text-sm font-bold leading-tight">{s.label}</p>
-                      <p className="ds-sub line-clamp-2">{s.blurb}</p>
+                      <p className="ds-sub truncate">{s.blurb}</p>
                     </div>
                   </div>
                   <p className="font-mono text-3xl font-bold mt-auto">{done}<span className="text-base text-muted-foreground font-medium">/{ids.length || '…'}</span></p>
@@ -255,7 +256,8 @@ function HomePage({ me }: { me: Me }) {
                     <div className="ds-bar flex-1"><span style={{ width: `${pct(done, ids.length)}%` }} /></div>
                     <span className={`ds-status ${ids.length && done >= ids.length ? 'done' : ''}`}>{ids.length && done >= ids.length ? <Check className="h-4 w-4" strokeWidth={3} /> : <span className="text-[10px] font-bold font-mono">{pct(done, ids.length)}%</span>}</span>
                   </div>
-                  <span className="ds-btn inline-flex items-center justify-center h-10 bg-primary text-primary-foreground text-sm">Continue</span>
+                  <span className="ds-btn flex w-full items-center justify-center h-11 bg-primary text-primary-foreground text-sm">Continue</span>
+                  </div>
                 </Glass>
               </button>
             );
@@ -266,6 +268,7 @@ function HomePage({ me }: { me: Me }) {
       <div className="grid gap-4 lg:grid-cols-4">
         <Glass className="lg:col-span-2 space-y-3">
           <div className="flex items-center gap-3"><span className="ds-tile ds-tile-green h-10 w-10"><Brain className="h-5 w-5" /></span><div><p className="font-bold">Domain mastery</p><p className="ds-sub">Your accuracy by topic</p></div></div>
+          <div className="pt-1" />
           {!domains.length ? <p className="text-sm text-muted-foreground">Solve a few problems to see your strengths.</p> : domains.map(d => (
             <div key={d.domain} className="space-y-1"><div className="flex justify-between text-sm"><span>{d.domain} <span className="text-xs text-muted-foreground capitalize">· {d.subject}</span></span><span className="font-mono text-xs">{pct(d.c, d.n)}% <span className="text-muted-foreground">({d.n})</span></span></div>
               <div className="ds-bar"><span style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
@@ -273,7 +276,7 @@ function HomePage({ me }: { me: Me }) {
         </Glass>
         <button onClick={() => navigate('/student/videos')} className="text-left">
           <Glass className="h-full space-y-3 hover:-translate-y-0.5 transition-transform">
-            <div className="flex items-center gap-3"><span className="ds-tile ds-tile-purple h-10 w-10"><PlayCircle className="h-5 w-5" /></span><div><p className="font-bold">Concept videos</p><p className="ds-sub">Your video roadmap</p></div></div>
+            <div className="flex items-center gap-3"><span className="ds-tile ds-tile-purple h-10 w-10 shrink-0"><PlayCircle className="h-5 w-5" /></span><div><p className="font-bold leading-tight">Concept videos</p><p className="ds-sub truncate">Your video roadmap</p></div></div>
             <p className="font-mono text-3xl">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-base text-muted-foreground">/{videoIds.length || '…'}</span></p>
             <div className="ds-bar ds-bar-blue"><span style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%` }} /></div>
             <p className="text-xs text-muted-foreground">Continue your roadmap →</p>
