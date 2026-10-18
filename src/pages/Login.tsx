@@ -57,7 +57,7 @@ export default function Login() {
 
     if (adminUser && isAdmin) {
       toast({
-        title: text('Тавтай морил!', text('Тавтай морил!', 'Welcome back!')),
+        title: text('Тавтай морил!', 'Welcome back!'),
         description: text('Админаар амжилттай нэвтэрлээ.', "You've successfully logged in as admin."),
       });
       navigate("/admin");
@@ -65,7 +65,7 @@ export default function Login() {
     } else if (adminUser && !isAdmin) {
       setAdminLoading(false);
       toast({
-        title: text('Эрх хүрэхгүй', text('Эрх хүрэхгүй', 'Access Denied')),
+        title: text('Эрх хүрэхгүй', 'Access Denied'),
         description: text('Танд админ эрх байхгүй.', "You don't have admin privileges."),
         variant: "destructive",
       });
@@ -89,8 +89,8 @@ export default function Login() {
     e.preventDefault();
     if (!adminEmail || !adminPassword) {
       toast({
-        title: text('Алдаа', text('Алдаа', 'Error')),
-        description: text('Бүх талбарыг бөглөнө үү', text('Бүх талбарыг бөглөнө үү', 'Please fill in all fields')),
+        title: text('Алдаа', 'Error'),
+        description: text('Бүх талбарыг бөглөнө үү', 'Please fill in all fields'),
         variant: "destructive",
       });
       return;
@@ -102,8 +102,8 @@ export default function Login() {
         const { error } = await adminSignUp(adminEmail, adminPassword);
         if (error) throw error;
         toast({
-          title: text('Амжилттай', text('Амжилттай', 'Success')),
-          description: text('Бүртгэл үүслээ. Админы зөвшөөрлийг хүлээнэ үү.', text('Бүртгэл үүслээ. Админы зөвшөөрлийг хүлээнэ үү.', 'Account created successfully. Please wait for admin approval.')),
+          title: text('Амжилттай', 'Success'),
+          description: text('Бүртгэл үүслээ. Админы зөвшөөрлийг хүлээнэ үү.', 'Account created successfully. Please wait for admin approval.'),
         });
         setIsSignUp(false);
         setAdminEmail("");
@@ -113,7 +113,7 @@ export default function Login() {
         const { error } = await adminSignIn(adminEmail, adminPassword);
         if (error) {
           toast({
-            title: text('Нэвтрэхэд алдаа гарлаа', text('Нэвтрэхэд алдаа гарлаа', 'Login Failed')),
+            title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
             description: error.message,
             variant: "destructive",
           });
@@ -125,8 +125,8 @@ export default function Login() {
       }
     } catch (error: any) {
       toast({
-        title: text('Алдаа', text('Алдаа', 'Error')),
-        description: error.message || text('Алдаа гарлаа', text('Алдаа гарлаа', 'An error occurred')),
+        title: text('Алдаа', 'Error'),
+        description: error.message || text('Алдаа гарлаа', 'An error occurred'),
         variant: "destructive",
       });
       setAdminLoading(false);
@@ -138,8 +138,8 @@ export default function Login() {
     e.preventDefault();
     if (!teacherUsername || !teacherPassword) {
       toast({
-        title: text('Алдаа', text('Алдаа', 'Error')),
-        description: text('Хэрэглэгчийн нэр, нууц үгээ оруулна уу', text('Хэрэглэгчийн нэр, нууц үгээ оруулна уу', 'Please enter your username and password')),
+        title: text('Алдаа', 'Error'),
+        description: text('Хэрэглэгчийн нэр, нууц үгээ оруулна уу', 'Please enter your username and password'),
         variant: "destructive",
       });
       return;
@@ -150,23 +150,23 @@ export default function Login() {
       const { error, needsPasswordChange } = await teacherSignIn(teacherUsername, teacherPassword);
       if (error) {
         toast({
-          title: text('Нэвтрэхэд алдаа гарлаа', text('Нэвтрэхэд алдаа гарлаа', 'Login Failed')),
-          description: error.message || text('Хэрэглэгчийн нэр эсвэл нууц үг буруу', text('Хэрэглэгчийн нэр эсвэл нууц үг буруу', 'Invalid username or password')),
+          title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
+          description: error.message || text('Хэрэглэгчийн нэр эсвэл нууц үг буруу', 'Invalid username or password'),
           variant: "destructive",
         });
         setTeacherLoading(false);
       } else {
         toast({
-          title: text('Тавтай морил!', text('Тавтай морил!', 'Welcome!')),
+          title: text('Тавтай морил!', 'Welcome!'),
           description: needsPasswordChange
-            ? text('Түр нууц үгээ солино уу.', text('Түр нууц үгээ солино уу.', 'Please change your temporary password.'))
-            : text('Амжилттай нэвтэрлээ.', text('Амжилттай нэвтэрлээ.', 'Successfully logged in.')),
+            ? text('Түр нууц үгээ солино уу.', 'Please change your temporary password.')
+            : text('Амжилттай нэвтэрлээ.', 'Successfully logged in.'),
         });
       }
     } catch (error: any) {
       toast({
-        title: text('Алдаа', text('Алдаа', 'Error')),
-        description: error.message || text('Гэнэтийн алдаа гарлаа', text('Гэнэтийн алдаа гарлаа', 'An unexpected error occurred')),
+        title: text('Алдаа', 'Error'),
+        description: error.message || text('Гэнэтийн алдаа гарлаа', 'An unexpected error occurred'),
         variant: "destructive",
       });
       setTeacherLoading(false);
@@ -250,12 +250,12 @@ export default function Login() {
                     {adminLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {isSignUp ? text('Бүртгэж байна...', text('Бүртгэж байна...', 'Creating Account...')) : text('Нэвтэрч байна...', text('Нэвтэрч байна...', 'Signing In...'))}
+                        {isSignUp ? text('Бүртгэж байна...', 'Creating Account...') : text('Нэвтэрч байна...', 'Signing In...')}
                       </>
                     ) : isSignUp ? (
-                      text('Бүртгүүлэх', text('Бүртгүүлэх', 'Sign Up'))
+                      text('Бүртгүүлэх', 'Sign Up')
                     ) : (
-                      text('Нэвтрэх', text('Нэвтрэх', 'Login'))
+                      text('Нэвтрэх', 'Login')
                     )}
                   </Button>
                   <Button
@@ -265,7 +265,7 @@ export default function Login() {
                     onClick={() => setIsSignUp(!isSignUp)}
                     disabled={adminLoading}
                   >
-                    {isSignUp ? text('Бүртгэлтэй юу? Нэвтрэх', text('Бүртгэлтэй юу? Нэвтрэх', 'Already have an account? Login')) : text('Бүртгэлгүй юу? Бүртгүүлэх', text('Бүртгэлгүй юу? Бүртгүүлэх', 'Need an account? Sign Up'))}
+                    {isSignUp ? text('Бүртгэлтэй юу? Нэвтрэх', 'Already have an account? Login') : text('Бүртгэлгүй юу? Бүртгүүлэх', 'Need an account? Sign Up')}
                   </Button>
                 </form>
               </TabsContent>
@@ -308,7 +308,7 @@ export default function Login() {
                         {text('Нэвтэрч байна...', 'Signing In...')}
                       </>
                     ) : (
-                      text('Нэвтрэх', text('Нэвтрэх', 'Sign In'))
+                      text('Нэвтрэх', 'Sign In')
                     )}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">

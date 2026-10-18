@@ -112,7 +112,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                 <div className="space-y-2">
                   <Label htmlFor="cp-phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone number')}</Label>
                   <Input id="cp-phone" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                    placeholder={text('Ангидаа бүртгүүлсэн дугаар', text('Ангидаа бүртгүүлсэн дугаар', 'Phone registered with your class'))} required className={authInputClasses} />
+                    placeholder={text('Ангидаа бүртгүүлсэн дугаар', 'Phone registered with your class')} required className={authInputClasses} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cp-pw" className={authLabelClasses}>{text('Нууц үг', 'Password')}</Label>

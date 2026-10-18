@@ -246,7 +246,7 @@ export default function StudentPortal() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder={text('Нууц үгээ оруулна уу', text('Нууц үгээ оруулна уу', 'Enter your password'))}
+              placeholder={text('Нууц үгээ оруулна уу', 'Enter your password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={cn(authInputClasses, "pl-10 pr-10")}
@@ -314,7 +314,7 @@ export default function StudentPortal() {
             <Input
               id="fullName"
               type="text"
-              placeholder={text('Бүтэн нэрээ оруулна уу', text('Бүтэн нэрээ оруулна уу', 'Enter your full name'))}
+              placeholder={text('Бүтэн нэрээ оруулна уу', 'Enter your full name')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className={cn(authInputClasses, "pl-10")}
@@ -395,7 +395,7 @@ export default function StudentPortal() {
             <Input
               id="new-password"
               type={showPassword ? 'text' : 'password'}
-              placeholder={text('Хүчтэй нууц үг үүсгэнэ үү', text('Хүчтэй нууц үг үүсгэнэ үү', 'Create a strong password'))}
+              placeholder={text('Хүчтэй нууц үг үүсгэнэ үү', 'Create a strong password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={cn(authInputClasses, "pl-10 pr-10")}
@@ -416,11 +416,11 @@ export default function StudentPortal() {
         <div className="space-y-1.5 text-xs">
           <p className="text-muted-foreground font-medium">{text('Нууц үг дараах шаардлагатай:', 'Password must have:')}</p>
           <div className="grid grid-cols-2 gap-1">
-            <PasswordRule met={passwordValidation.minLength} text={text('8 ба түүнээс олон тэмдэгт', text('8 ба түүнээс олон тэмдэгт', '8+ characters'))} />
-            <PasswordRule met={passwordValidation.hasUppercase} text={text('Том үсэг', text('Том үсэг', 'Uppercase letter'))} />
-            <PasswordRule met={passwordValidation.hasLowercase} text={text('Жижиг үсэг', text('Жижиг үсэг', 'Lowercase letter'))} />
-            <PasswordRule met={passwordValidation.hasNumber} text={text('Тоо', text('Тоо', 'Number'))} />
-            <PasswordRule met={passwordValidation.hasSpecial} text={text('Тусгай тэмдэгт', text('Тусгай тэмдэгт', 'Special character'))} />
+            <PasswordRule met={passwordValidation.minLength} text={text('8 ба түүнээс олон тэмдэгт', '8+ characters')} />
+            <PasswordRule met={passwordValidation.hasUppercase} text={text('Том үсэг', 'Uppercase letter')} />
+            <PasswordRule met={passwordValidation.hasLowercase} text={text('Жижиг үсэг', 'Lowercase letter')} />
+            <PasswordRule met={passwordValidation.hasNumber} text={text('Тоо', 'Number')} />
+            <PasswordRule met={passwordValidation.hasSpecial} text={text('Тусгай тэмдэгт', 'Special character')} />
           </div>
         </div>
 
@@ -431,7 +431,7 @@ export default function StudentPortal() {
             <Input
               id="confirm-password"
               type={showPassword ? 'text' : 'password'}
-              placeholder={text('Нууц үгээ давтана уу', text('Нууц үгээ давтана уу', 'Confirm your password'))}
+              placeholder={text('Нууц үгээ давтана уу', 'Confirm your password')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={cn(authInputClasses, "pl-10")}
