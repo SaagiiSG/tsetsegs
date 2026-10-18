@@ -23,7 +23,7 @@ import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
-import { Flame as FlameIcon, Star, BarChart3 } from 'lucide-react';
+import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, Check, PlayCircle, Users, Brain } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
@@ -40,9 +40,9 @@ const COLS = 'id, question_text, question_image_url, question_image_url_2, multi
 const DIFFS = [['all', 'Any difficulty'], ['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']] as const;
 /** Math sets available to international students (the intl bank hides everything else). */
 const SETS = [
-  { key: '68', label: '68 Questions', blurb: 'Core SAT math patterns' },
-  { key: 'SATMathTraining800', label: '150 Hard', blurb: 'Hardest problems for 800' },
-  { key: 'ANP120Aug3', label: 'Updated set', blurb: 'Freshly explained problems' },
+  { key: '68', label: '68 Questions', blurb: 'Core SAT math patterns', icon: Target, tile: 'ds-tile-blue' },
+  { key: 'SATMathTraining800', label: '150 Hard', blurb: 'Hardest problems for 800', icon: Mountain, tile: 'ds-tile-orange' },
+  { key: 'ANP120Aug3', label: 'Updated set', blurb: 'Freshly explained problems', icon: Sparkles, tile: 'ds-tile-purple' },
 ] as const;
 const DAILY_GOAL = 20;
 const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5';
@@ -215,7 +215,7 @@ function HomePage({ me }: { me: Me }) {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Hey {first} 👋</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
         <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="student-chip student-chip-flame">
@@ -242,12 +242,20 @@ function HomePage({ me }: { me: Me }) {
             const done = ids.filter(id => solved.has(id)).length;
             return (
               <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left">
-                <Glass className="h-full hover:-translate-y-0.5 transition-transform">
-                  <p className="text-xs text-muted-foreground">{s.blurb}</p>
-                  <p className="text-lg font-semibold mt-1">{s.label}</p>
-                  <p className="font-mono text-3xl mt-6">{done}<span className="text-base text-muted-foreground">/{ids.length || '…'}</span></p>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-2"><div className="h-full rounded-full" style={{ width: `${pct(done, ids.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
-                  <p className="text-xs text-muted-foreground mt-3">Continue →</p>
+                <Glass className="h-full flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <span className={`ds-tile ${s.tile} h-14 w-14`}><s.icon className="h-7 w-7" strokeWidth={2.2} /></span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold leading-tight">{s.label}</p>
+                      <p className="ds-sub line-clamp-2">{s.blurb}</p>
+                    </div>
+                  </div>
+                  <p className="font-mono text-3xl font-bold mt-auto">{done}<span className="text-base text-muted-foreground font-medium">/{ids.length || '…'}</span></p>
+                  <div className="flex items-center gap-3">
+                    <div className="ds-bar flex-1"><span style={{ width: `${pct(done, ids.length)}%` }} /></div>
+                    <span className={`ds-status ${ids.length && done >= ids.length ? 'done' : ''}`}>{ids.length && done >= ids.length ? <Check className="h-4 w-4" strokeWidth={3} /> : <span className="text-[10px] font-bold font-mono">{pct(done, ids.length)}%</span>}</span>
+                  </div>
+                  <span className="ds-btn inline-flex items-center justify-center h-10 bg-primary text-primary-foreground text-sm">Continue</span>
                 </Glass>
               </button>
             );
@@ -257,23 +265,23 @@ function HomePage({ me }: { me: Me }) {
       {simulation ? <SatSimulationIsland latest={simulation} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
       <div className="grid gap-4 lg:grid-cols-4">
         <Glass className="lg:col-span-2 space-y-3">
-          <p className="font-medium">Domain mastery</p>
+          <div className="flex items-center gap-3"><span className="ds-tile ds-tile-green h-10 w-10"><Brain className="h-5 w-5" /></span><div><p className="font-bold">Domain mastery</p><p className="ds-sub">Your accuracy by topic</p></div></div>
           {!domains.length ? <p className="text-sm text-muted-foreground">Solve a few problems to see your strengths.</p> : domains.map(d => (
             <div key={d.domain} className="space-y-1"><div className="flex justify-between text-sm"><span>{d.domain} <span className="text-xs text-muted-foreground capitalize">· {d.subject}</span></span><span className="font-mono text-xs">{pct(d.c, d.n)}% <span className="text-muted-foreground">({d.n})</span></span></div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-foreground/70" style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
+              <div className="ds-bar"><span style={{ width: `${pct(d.c, d.n)}%` }} /></div></div>
           ))}
         </Glass>
         <button onClick={() => navigate('/student/videos')} className="text-left">
           <Glass className="h-full space-y-3 hover:-translate-y-0.5 transition-transform">
-            <p className="text-xs text-muted-foreground">Concept videos</p>
+            <div className="flex items-center gap-3"><span className="ds-tile ds-tile-purple h-10 w-10"><PlayCircle className="h-5 w-5" /></span><div><p className="font-bold">Concept videos</p><p className="ds-sub">Your video roadmap</p></div></div>
             <p className="font-mono text-3xl">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-base text-muted-foreground">/{videoIds.length || '…'}</span></p>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%`, background: 'hsl(var(--section-glow))' }} /></div>
+            <div className="ds-bar ds-bar-blue"><span style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%` }} /></div>
             <p className="text-xs text-muted-foreground">Continue your roadmap →</p>
             <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
           </Glass>
         </button>
         <Glass className="space-y-4">
-          <div><p className="text-xs text-muted-foreground">Class</p><p className="font-medium">{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-xs text-muted-foreground">{me.cls.schedule}</p>}</div>
+          <div className="flex items-center gap-3"><span className="ds-tile ds-tile-gold h-10 w-10"><Users className="h-5 w-5" /></span><div className="min-w-0"><p className="font-bold truncate">{me.cls?.name ?? 'Not assigned'}</p><p className="ds-sub">{me.cls?.schedule ?? 'Your class'}</p></div></div>
           <div className="grid grid-cols-3 gap-3 border-t pt-4">
             <div><p className="text-xs text-muted-foreground">Answered</p><p className="font-mono text-xl">{total}</p></div>
             <div><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-xl">{total ? `${pct(correct, total)}%` : '—'}</p></div>

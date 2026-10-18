@@ -1243,3 +1243,77 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
   box-shadow: var(--student-shadow);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
+
+/* ===== FlowersOS design system (DESIGN.md) for student portals ===== */
+.student-theme, body.student-portal [role="dialog"] {
+  --primary: 199 96% 54%;            /* sky blue #1CB3FA */
+  --primary-foreground: 0 0% 100%;
+  --ring: 199 96% 54%;
+  --ds-blue-press: 199 88% 44%;      /* #0E94D1 */
+  --ds-green: 142 71% 45%;           /* #22C55E */
+  --ds-done: 141 89% 38%;            /* #0BB846 */
+  --ds-orange: 27 100% 57%;          /* #FF8626 */
+  --ds-gold: 42 100% 63%;            /* #FFC842 */
+  --ds-purple: 272 72% 47%;
+  --ds-text-2: 222 6% 47%;           /* #717680 */
+  --student-card-border: 220 14% 96%;
+  --student-shadow: 0 1px 2px rgb(0 0 0 / .05);
+  font-family: 'Geist', 'Arial', sans-serif;
+}
+.student-theme h1, .student-theme h2, .student-theme h3,
+body.student-portal [role="dialog"] h2 { font-family: 'Geist', sans-serif; letter-spacing: -0.02em; }
+.student-theme {
+  background:
+    radial-gradient(ellipse 38% 14% at 22% 6%, hsl(0 0% 100% / .95), transparent 70%),
+    radial-gradient(ellipse 30% 12% at 70% 3%, hsl(0 0% 100% / .9), transparent 70%),
+    radial-gradient(ellipse 26% 10% at 92% 20%, hsl(0 0% 100% / .8), transparent 70%),
+    linear-gradient(180deg, #F2F2F2, #EDF8FF 40%, #DDF1FF);
+}
+.dark .student-theme {
+  --student-card-border: 228 20% 22%;
+  background: radial-gradient(ellipse 60% 30% at 20% 0%, hsl(199 96% 54% / .10), transparent 70%), linear-gradient(180deg, hsl(228 35% 9%), hsl(222 40% 12%));
+}
+/* cards */
+.student-theme .admin-glass-card, .student-theme .rounded-lg.border.bg-card, .student-theme .student-card {
+  border-radius: 16px !important; transition: transform .15s ease, box-shadow .15s ease;
+}
+.student-theme button:hover > .admin-glass-card, .student-theme .ds-card-hover:hover { transform: scale(1.01); box-shadow: 0 4px 12px rgb(0 0 0 / .08); }
+/* active nav pill */
+.student-theme aside nav a.bg-primary, .student-theme nav a[aria-current="page"].bg-primary {
+  background-image: linear-gradient(rgb(255 255 255 / .32), transparent);
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / .19), 0 3px 6px rgb(0 0 0 / .1), inset 0 0 0 1px rgb(32 32 32 / .16);
+}
+.student-theme aside nav a { min-height: 46px; font-weight: 600; font-size: 15px; }
+/* chunky 3D buttons */
+.student-theme button.bg-primary, body.student-portal [role="dialog"] button.bg-primary, .ds-btn {
+  border-radius: 999px; font-weight: 700; letter-spacing: .02em;
+  box-shadow: 0 4px 0 hsl(var(--ds-blue-press)); transition: transform .1s ease, box-shadow .1s ease;
+}
+.student-theme button.bg-primary:active, body.student-portal [role="dialog"] button.bg-primary:active, .ds-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+/* glossy toy progress bar */
+.ds-bar { position: relative; height: 16px; border-radius: 999px; background: #E5E7EB; overflow: hidden; }
+.dark .ds-bar { background: hsl(228 20% 22%); }
+.ds-bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: hsl(var(--ds-green)); min-width: 0; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+.ds-bar > span::after { content: ''; position: absolute; top: 3px; left: 4px; right: 4px; height: 25%; border-radius: 999px; background: rgb(255 255 255 / .3); }
+.ds-bar.ds-bar-blue > span { background: hsl(var(--primary)); }
+/* drawn icon tile */
+.ds-tile { display: grid; place-items: center; border-radius: 14px; flex-shrink: 0; box-shadow: inset 0 -3px 0 rgb(0 0 0 / .08), 0 1px 2px rgb(0 0 0 / .06); }
+.ds-tile-blue { background: linear-gradient(160deg, #BFE9FF, #7DD3FC); color: #0369A1; }
+.ds-tile-orange { background: linear-gradient(160deg, #FFE1C2, #FDBA74); color: #C2410C; }
+.ds-tile-purple { background: linear-gradient(160deg, #EBDCFF, #C4B5FD); color: #6D28D9; }
+.ds-tile-green { background: linear-gradient(160deg, #CFF7DC, #86EFAC); color: #15803D; }
+.ds-tile-gold { background: linear-gradient(160deg, #FFF1C2, #FFC842); color: #A16207; }
+/* status circle */
+.ds-status { height: 32px; width: 32px; border-radius: 999px; display: grid; place-items: center; flex-shrink: 0; border: 2px solid #E5E7EB; color: #9CA3AF; background: #fff; }
+.ds-status.done { background: hsl(var(--ds-green)); border-color: hsl(var(--ds-green)); color: #fff; }
+.ds-sub { color: hsl(var(--ds-text-2)); font-size: 12px; font-weight: 600; line-height: 1.6; }
+.dark .ds-sub { color: hsl(var(--muted-foreground)); }
+/* chips per DESIGN 4.4 */
+.student-theme .student-chip { height: 32px; padding: 6px 10px; gap: 8px; font-family: 'Geist', sans-serif; font-weight: 500; font-size: 14px; background: #fff; border-color: #E5E7EB; box-shadow: none; }
+.dark .student-theme .student-chip { background: hsl(var(--student-card)); border-color: hsl(var(--student-card-border)); }
+.student-theme .student-chip:hover { transform: scale(1.02); }
+.student-theme .student-chip-flame svg { color: hsl(var(--ds-orange)); fill: hsl(var(--ds-orange) / .35); }
+@media (prefers-reduced-motion: reduce) {
+  .ds-bar > span { transition: none; }
+  .student-theme button.bg-primary:active, .ds-btn:active, .student-theme .student-chip:hover { transform: none; }
+}
