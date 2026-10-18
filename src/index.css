@@ -1191,3 +1191,24 @@ body.student-portal [role="dialog"] {
 body.student-portal [data-vaul-drawer], body.student-portal [role="dialog"][data-state] { overflow: hidden; }
 .student-theme kbd { border-radius: 6px; box-shadow: 0 2px 0 hsl(var(--border)); }
 @media (prefers-reduced-motion: reduce) { .student-choice:not(:disabled):active { transform: none; } }
+
+/* Batch 5-7: speed & live, leaderboard & ranks, badges & social */
+.student-theme [role="tablist"], body.student-portal [role="dialog"] [role="tablist"] {
+  border-radius: 999px; padding: 4px;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
+.student-theme [role="tab"], body.student-portal [role="dialog"] [role="tab"] { border-radius: 999px; font-weight: 600; }
+.student-theme [role="tab"][data-state="active"], body.student-portal [role="dialog"] [role="tab"][data-state="active"] {
+  background: hsl(var(--student-card, var(--card)));
+  box-shadow: 0 2px 0 hsl(var(--border));
+}
+.student-theme table { border-collapse: separate; border-spacing: 0 6px; }
+.student-theme tbody tr { background: hsl(var(--student-card, var(--card))); }
+.student-theme tbody tr td:first-child { border-radius: 14px 0 0 14px; }
+.student-theme tbody tr td:last-child { border-radius: 0 14px 14px 0; }
+.student-theme tbody tr { box-shadow: 0 2px 0 hsl(var(--border)); }
+.student-theme .rounded-full.overflow-hidden > img,
+.student-theme [class*="Avatar"] { box-shadow: 0 0 0 2px hsl(var(--student-card, var(--card))); }
+.student-theme .font-mono.text-3xl, .student-theme .font-mono.text-4xl,
+.student-theme .font-mono.text-5xl { letter-spacing: -0.02em; }
