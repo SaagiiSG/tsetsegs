@@ -1,0 +1,37 @@
+.landing-v2 {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --border: 0 0% 94%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 215 100% 65%;
+  --accent-foreground: 219 70% 47%;
+  --lv-sky: 204 85% 95%;
+  --lv-blue: 214 82% 94%; --lv-blue-ink: 219 70% 47%;
+  --lv-violet: 255 90% 95%; --lv-violet-ink: 258 60% 50%;
+  --lv-pink: 330 90% 95%; --lv-pink-ink: 334 65% 48%;
+  --lv-orange: 32 100% 93%; --lv-orange-ink: 24 80% 42%;
+  --lv-green: 142 60% 92%; --lv-green-ink: 145 63% 30%;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.landing-v2 .lv-h1 { font-family: Chillax, system-ui, sans-serif; font-weight: 500; letter-spacing: -0.05em; line-height: 1; font-size: clamp(2.75rem, 6vw, 5rem); }
+.landing-v2 .lv-h2 { font-family: Chillax, system-ui, sans-serif; font-weight: 500; letter-spacing: -0.04em; line-height: 1.05; font-size: clamp(2rem, 4vw, 3.25rem); }
+.landing-v2 .lv-lead { font-size: clamp(1.05rem, 1.6vw, 1.4rem); color: hsl(var(--muted-foreground)); line-height: 1.45; }
+.landing-v2 .lv-tray { background: hsl(var(--muted)); border-radius: 24px; padding: 12px; }
+.landing-v2 .lv-screen { background: hsl(var(--card)); border-radius: 12px; border: 2px solid hsl(var(--border)); }
+.landing-v2 .lv-card { background: hsl(var(--card)); border: 2px solid hsl(var(--border)); border-radius: 24px; }
+.landing-v2 .lv-float { box-shadow: 0 24px 48px -24px hsl(220 40% 30% / .25); }
+.landing-v2 .lv-sky { background: linear-gradient(180deg, hsl(var(--lv-sky)), hsl(var(--background))); }
+.landing-v2 .lv-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.lv-blue { background: hsl(var(--lv-blue)); color: hsl(var(--lv-blue-ink)); }
+.lv-violet { background: hsl(var(--lv-violet)); color: hsl(var(--lv-violet-ink)); }
+.lv-pink { background: hsl(var(--lv-pink)); color: hsl(var(--lv-pink-ink)); }
+.lv-orange { background: hsl(var(--lv-orange)); color: hsl(var(--lv-orange-ink)); }
+.lv-green { background: hsl(var(--lv-green)); color: hsl(var(--lv-green-ink)); }
+.landing-v2 .lv-clouds { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.landing-v2 .lv-clouds img { position: absolute; left: 0; width: 100%; height: auto; }
