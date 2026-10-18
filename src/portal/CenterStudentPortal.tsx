@@ -13,8 +13,6 @@ import { MathText } from '@/components/MathText';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
-import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
-import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { StudentAnnouncements } from './StudentExtras';
@@ -32,7 +30,6 @@ import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSi
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
-import { RoadmapPreview } from './RoadmapPreview';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };

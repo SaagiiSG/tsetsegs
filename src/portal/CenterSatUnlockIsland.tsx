@@ -1,30 +1,30 @@
 import { Lock, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { CENTER_SAT_UNLOCK_AT } from './centerSatSimulation';
 
 export function CenterSatUnlockIsland({ distinct }: { distinct: number }) {
   const progress = Math.min(CENTER_SAT_UNLOCK_AT, Math.max(0, distinct));
   const remaining = CENTER_SAT_UNLOCK_AT - progress;
+  const p = Math.round((progress / CENTER_SAT_UNLOCK_AT) * 100);
   return (
-    <section aria-label="SAT simulation unlock progress" className="w-full rounded-3xl border admin-glass-card admin-glass-neutral p-5 md:p-6">
+    <section aria-label="SAT simulation unlock progress" className="sky-card sky-wash w-full md:p-6" style={{ '--wash': 'hsl(245 80% 95%)' } as React.CSSProperties}>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Lock className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">SAT Simulation</h2>
-            <Badge variant="outline">Not unlocked yet</Badge>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="sky-tile sky-tile-lock"><Lock /></span>
+            <h2 className="text-xl font-bold">SAT Simulation</h2>
+            <span className="sky-chip">Not unlocked yet</span>
           </div>
-          <p className="text-sm text-muted-foreground">Solve 440 distinct Math questions to unlock your simulated SAT score.</p>
-          <p className="text-sm font-medium">{remaining} more questions to unlock</p>
+          <p className="sky-body">Solve 440 distinct Math questions to unlock your simulated SAT score.</p>
+          <p className="font-semibold">{remaining} more questions to unlock</p>
         </div>
-        <Button asChild className="shrink-0"><Link to="/student/practice">Keep practicing<ArrowRight className="h-4 w-4" /></Link></Button>
+        <Link to="/student/practice" className="sky-btn sky-btn-blue shrink-0">Keep practicing<ArrowRight className="h-5 w-5" /></Link>
       </div>
-      <div className="mt-5 flex items-center gap-3">
-        <Progress value={progress / CENTER_SAT_UNLOCK_AT * 100} aria-label="Questions toward SAT simulation" className="h-2 flex-1" />
-        <span className="shrink-0 text-xs font-mono text-muted-foreground">{progress} / {CENTER_SAT_UNLOCK_AT}</span>
+      <div className="mt-5 flex items-center gap-4">
+        <div role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={CENTER_SAT_UNLOCK_AT} aria-label="Questions toward SAT simulation" className="sky-track !h-3.5 flex-1">
+          <div className="sky-fill-blue" style={{ width: `${p}%` }} />
+        </div>
+        <span className="shrink-0 font-mono font-medium">{progress} / {CENTER_SAT_UNLOCK_AT}</span>
       </div>
     </section>
   );
