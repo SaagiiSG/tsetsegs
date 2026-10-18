@@ -6,6 +6,7 @@ import { LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
 import { TIER_COLORS, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { cn } from '@/lib/utils';
+import { TIER_ASSETS } from './tierAssets';
 
 interface MyRankTabProps {
   currentEntry: LeaderboardEntry | undefined;
@@ -37,6 +38,7 @@ export function MyRankTab({
   }
 
   const tierColor = TIER_COLORS[currentEntry.currentTier];
+  const tierAsset = TIER_ASSETS[currentEntry.currentTier];
   const cutoff = TIER_PROMOTION_CUTOFFS[currentEntry.currentTier];
   const progressToAdvance = currentEntry.isAdvancing 
     ? 100 
@@ -62,21 +64,22 @@ export function MyRankTab({
         <Card className="border-2" style={{ borderColor: tierColor }}>
           <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
             <div className="text-center space-y-3 sm:space-y-4">
-              {/* Rank Circle */}
-              <motion.div
-                className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold"
-                style={{ backgroundColor: tierColor }}
-                animate={{ 
-                  boxShadow: [
-                    `0 0 20px ${tierColor}40`,
-                    `0 0 40px ${tierColor}60`,
-                    `0 0 20px ${tierColor}40`
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                #{currentEntry.rank}
-              </motion.div>
+              <div className="mx-auto flex flex-col items-center gap-1">
+                <div className="h-24 w-24 sm:h-32 sm:w-32 flex items-center justify-center">
+                  {tierAsset.image ? (
+                    <img
+                      src={tierAsset.image}
+                      alt={`${currentEntry.currentTier} rank emblem`}
+                      className="h-full w-full object-contain"
+                      width={192}
+                      height={192}
+                    />
+                  ) : (
+                    <tierAsset.icon className="h-16 w-16 text-primary" aria-hidden="true" />
+                  )}
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">#{currentEntry.rank}</p>
+              </div>
 
               <div>
                 <p className="text-lg sm:text-2xl font-bold truncate">{currentEntry.username}</p>
