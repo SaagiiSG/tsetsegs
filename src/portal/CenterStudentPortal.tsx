@@ -54,9 +54,9 @@ function Glass({ className = '', style, children }: { className?: string; style?
 
 /** Sky family per position: 68 blue, 150 Hard violet, Updated set pink. */
 const SET_LOOK = {
-  '68': { family: 'blue', icon: Target, wash: 'hsl(207 90% 95%)', wave: CARD_WAVES.blue },
-  SATMathTraining800: { family: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
-  ANP120Aug3: { family: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
+  '68': { family: 'blue', btn: 'sky', icon: Target, wash: 'hsl(207 90% 95%)', wave: CARD_WAVES.blue },
+  SATMathTraining800: { family: 'violet', btn: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
+  ANP120Aug3: { family: 'pink', btn: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
 } as const;
 const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
 
@@ -271,7 +271,7 @@ function HomePage({ me }: { me: Me }) {
                     <div className="sky-track flex-1"><div className={`sky-fill-${look.family}`} style={{ width: `${p}%` }} /></div>
                     <span className="sky-pct">{p}%</span>
                   </div>
-                  <span className={`sky-btn sky-btn-${look.family} w-full mt-4`}>Continue<ArrowRight className="h-5 w-5" /></span>
+                  <span className={`sky-btn sky-btn-${look.btn} w-full mt-4`}>Continue<ArrowRight className="h-5 w-5" /></span>
                 </Glass>
               </button>
             );
