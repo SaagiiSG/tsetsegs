@@ -185,7 +185,8 @@ export function useBadges(filter?: {
     uncommon: { earned: 0, total: 0 },
     rare: { earned: 0, total: 0 },
     epic: { earned: 0, total: 0 },
-    legendary: { earned: 0, total: 0 }
+    legendary: { earned: 0, total: 0 },
+    seasonal: { earned: 0, total: 0 }
   } as BadgeStats['byRarity'];
 
   // Count totals per rarity from all badge definitions
@@ -200,7 +201,7 @@ export function useBadges(filter?: {
   let rarestEarned: BadgeDefinition | null = null;
 
   studentBadges?.filter(sb => sb.isUnlocked).forEach(sb => {
-    byRarity[sb.badge.rarity].earned++;
+    if (byRarity[sb.badge.rarity]) byRarity[sb.badge.rarity].earned++;
     
     // Track rarest earned
     if (!rarestEarned || 
