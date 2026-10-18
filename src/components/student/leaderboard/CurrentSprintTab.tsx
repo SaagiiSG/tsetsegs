@@ -23,8 +23,8 @@ interface CurrentSprintTabProps {
   onSprintEnd?: () => void;
   /** Replaces the main-app rank ladder (customer portals pass their own tenant ladder). */
   ladder?: React.ReactNode;
-  /** Main-app profile dialog reads main student records; customer portals turn it off. */
-  allowProfiles?: boolean;
+  /** Customer portals open their own tenant profile instead of the main-app dialog (which reads main records). */
+  onProfileClick?: (userId: string, username: string) => void;
 }
 
 export function CurrentSprintTab({ 
@@ -35,7 +35,7 @@ export function CurrentSprintTab({
   groupInfo,
   onSprintEnd,
   ladder,
-  allowProfiles = true,
+  onProfileClick,
 }: CurrentSprintTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
@@ -54,7 +54,7 @@ export function CurrentSprintTab({
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
 
   const handleProfileClick = (entry: LeaderboardEntry) => {
-    if (!allowProfiles) return;
+    if (onProfileClick) { onProfileClick(entry.userId, entry.username); return; }
     setSelectedUserId(entry.userId);
     setSelectedUsername(entry.username);
     setProfileSheetOpen(true);
@@ -171,7 +171,7 @@ export function CurrentSprintTab({
       </Card>
 
       {/* Full Profile Dialog */}
-      {allowProfiles && <FullProfileDialog
+      {!onProfileClick && <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}
