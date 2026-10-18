@@ -11,9 +11,7 @@ import { LeaderboardRow } from './LeaderboardRow';
 import { FullProfileDialog } from './FullProfileDialog';
 import { LAST_SPRINT_OF_SEASON } from '@/lib/rankProgression';
 import { StatusLegend } from './StatusLegend';
-import { TierLadder } from './TierLadder';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { MyTierLadder } from './MyTierLadder';
 
 interface CurrentSprintTabProps {
   sprint: SprintInfo | null;
@@ -44,23 +42,6 @@ export function CurrentSprintTab({
   // Leaderboard is already filtered by user's tier and group from the hook
   const userTier = currentUserRanking?.currentTier || 'unranked';
 
-  // Every tier the student has held in any sprint, with the first date reached.
-  const unlocked = useQuery({
-    queryKey: ['unlocked-tiers', currentUserId],
-    enabled: !!currentUserId,
-    queryFn: async () => {
-      const { data, error } = await supabase.from('student_sprint_rankings')
-        .select('current_tier, reserved_next_tier, created_at, updated_at')
-        .eq('student_account_id', currentUserId!).order('created_at');
-      if (error) throw error;
-      const out: Record<string, string> = {};
-      for (const r of data ?? []) {
-        if (r.current_tier && !out[r.current_tier]) out[r.current_tier] = r.created_at;
-        if (r.reserved_next_tier && !out[r.reserved_next_tier]) out[r.reserved_next_tier] = r.updated_at;
-      }
-      return out;
-    },
-  });
 
   // Get cutoff for user's tier (within their group)
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
@@ -75,10 +56,8 @@ export function CurrentSprintTab({
     <div className="space-y-4 sm:space-y-6">
       <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
 
-      {currentUserRanking && (
-        <TierLadder currentTier={userTier} unlockedAt={unlocked.data ?? {}}
-          standing={leaderboard.findIndex(e => e.userId === currentUserId) + 1 || null} />
-      )}
+      <MyTierLadder studentId={currentUserId} currentTier={currentUserRanking?.currentTier}
+        standing={currentUserRanking ? leaderboard.findIndex(e => e.userId === currentUserId) + 1 : null} />
 
       <Card>
         <CardHeader className="pb-2 p-3 sm:p-6">
