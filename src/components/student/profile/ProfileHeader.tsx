@@ -2,8 +2,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Shield, Gem, Star, Award, Zap } from 'lucide-react';
 import { TierType, TIER_COLORS } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { format } from 'date-fns';
 
 interface ProfileHeaderProps {
