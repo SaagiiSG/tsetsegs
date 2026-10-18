@@ -1247,9 +1247,9 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
 /* Customer students: restrained institutional gold, solid learning surfaces.
    Body scope lets portalled dialogs inherit the same palette. */
 body.customer-student-portal {
-  --primary: 43 65% 48% !important;
-  --primary-foreground: 40 20% 9% !important;
-  --ring: 43 65% 40% !important;
+  --primary: 44 92% 60% !important;
+  --primary-foreground: 40 45% 12% !important;
+  --ring: 44 82% 46% !important;
   --background: 210 16% 97%;
   --foreground: 220 12% 14%;
   --card: 0 0% 100%;
