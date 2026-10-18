@@ -45,7 +45,9 @@ export function LandingShaderBackground() {
         <Shader
           className={`landing-shader-canvas ${ready ? "is-ready" : ""}`}
           disableTelemetry
-          onReady={() => setReady(true)}
+          // The current library reports ready even when it paints a blank canvas.
+          // Keep the image visible until its rendering issue is resolved.
+          onReady={() => { setUnavailable(true); setReady(false); }}
           onUnavailable={() => { setUnavailable(true); setReady(false); }}
         >
           <MeshGradient
