@@ -86,7 +86,7 @@ export function SatSchedulePage() {
         description={`${total} student${total === 1 ? '' : 's'} planned for the next 13 months · ${unassigned} without a month`}
       />
 
-      <Section>
+      <section className="admin-glass-card rounded-xl border p-5">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Students taking the SAT</p>
@@ -125,11 +125,11 @@ export function SatSchedulePage() {
           </div>
           <span className="text-sm font-mono text-muted-foreground">{list.length} students</span>
         </div>
-      </Section>
+      </section>
 
       <section className="admin-glass-card rounded-xl border p-5">
         {list.length === 0 ? (
-          <Empty title={`No students planned for ${selLabel}`} description="Open a student's SAT month picker below to assign one." />
+          <Empty>No students planned for {selLabel} yet — assign a month from any student in the list below.</Empty>
         ) : (
           <Table>
             <TableHeader>
@@ -166,7 +166,7 @@ export function SatSchedulePage() {
             </TableBody>
           </Table>
         )}
-      </Section>
+      </section>
     </div>
   );
 }
