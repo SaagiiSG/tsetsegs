@@ -7,6 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useCenter } from './centerContext';
 import { useCenterSprints } from './admin/ToolPages';
 import { TIER_ORDER } from '@/data/badgeDefinitions';
+import { TierLadder } from '@/components/student/leaderboard/TierLadder';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 
@@ -26,6 +27,11 @@ export function CenterRankings({ studentId }: { studentId: string }) {
   } });
   const mine = board.data?.find(r => r.student_id === studentId);
   const currentTier = history.data?.[0]?.next_tier ?? 'unranked';
+  const unlockedAt: Record<string, string> = {};
+  for (const h of [...(history.data ?? [])].reverse()) {
+    if (h.tier && !unlockedAt[h.tier]) unlockedAt[h.tier] = h.created_at;
+    if (h.next_tier && !unlockedAt[h.next_tier]) unlockedAt[h.next_tier] = h.created_at;
+  }
   const renderRows = (query: typeof board, filter: boolean) => {
     if (query.isLoading) return <p className="py-8 text-muted-foreground">Loading standings…</p>;
     if (query.error) return <p role="alert" className="py-8 text-destructive">Could not load standings. Please try again.</p>;
@@ -40,6 +46,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
       <TabsContent value="sprint" className="space-y-4">
         <div className="flex flex-wrap gap-3">{!!sprint && <Select value={sprint.id} onValueChange={setSelected}><SelectTrigger className="w-64"><SelectValue/></SelectTrigger><SelectContent>{sprints.data?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} · {s.status}</SelectItem>)}</SelectContent></Select>}
           <Select value={tier} onValueChange={setTier}><SelectTrigger className="w-44"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">All ranks</SelectItem>{TIER_ORDER.map(t => <SelectItem key={t} value={t}>{tierName(t)}</SelectItem>)}</SelectContent></Select></div>
+        {sprint?.status === 'active' && <TierLadder currentTier={currentTier} unlockedAt={unlockedAt} standing={mine?.standing ?? null} />}
         {sprint ? <><p className="text-sm text-muted-foreground">{sprint.starts_on} → {sprint.ends_on}</p>{renderRows(board, true)}</> : <p className="py-8 text-muted-foreground">Your center hasn't started a sprint yet.</p>}
       </TabsContent>
       <TabsContent value="position" className="space-y-6">
