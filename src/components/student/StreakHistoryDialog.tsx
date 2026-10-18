@@ -24,6 +24,14 @@ export function StreakHistoryDialog({ open, onOpenChange }: StreakHistoryDialogP
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 min-w-0">
+          <div className="flex flex-col items-center gap-1 py-2">
+            <div className={`relative grid place-items-center h-24 w-24 rounded-full ${isStreakActive ? 'bg-primary/10' : 'bg-muted'}`}>
+              {isStreakActive && <span aria-hidden className="absolute inset-0 rounded-full bg-primary/20 blur-xl motion-safe:animate-pulse" />}
+              <Flame className={`relative h-14 w-14 ${isStreakActive ? 'student-chip-flame fill-current' : 'text-muted-foreground opacity-50'}`} />
+            </div>
+            <p className="font-mono text-4xl font-bold leading-none mt-2">{current}</p>
+            <p className="text-xs text-muted-foreground">{current === 1 ? 'day' : 'days'} in a row</p>
+          </div>
           <PastDailyRings />
           <StreakRewardsPanel />
           <StudyStreakCalendar />

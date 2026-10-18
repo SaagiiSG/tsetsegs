@@ -56,7 +56,7 @@ function Ring({
 export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className }: DailyRingProps) {
   const cx = size / 2;
   const cy = size / 2;
-  const stroke = Math.round(size * 0.085);
+  const stroke = Math.round(size * 0.1);
   const gap = Math.round(stroke * 0.45);
   const rOuter = (size / 2) - stroke / 2 - 2;
   const rMid = rOuter - stroke - gap;
@@ -96,7 +96,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
           Today's Goal
         </div>
         <div className="flex-1 flex items-center justify-center w-full">
-          <svg className="w-full h-full max-h-[260px]" viewBox={`0 0 ${size} ${size}`}>
+          <svg className={cn('w-full h-full max-h-[260px]', allDone && 'motion-safe:animate-[ring-pop_.6s_ease-out] drop-shadow-[0_0_14px_hsl(var(--primary)/0.45)]')} viewBox={`0 0 ${size} ${size}`}>
             <Ring cx={cx} cy={cy} radius={rOuter} stroke={stroke} color={RING_COLORS.speed} pct={speedPct} />
             <Ring cx={cx} cy={cy} radius={rMid} stroke={stroke} color={RING_COLORS.hard} pct={hardPct} />
             <Ring cx={cx} cy={cy} radius={rInner} stroke={stroke} color={RING_COLORS.medium} pct={medPct} />
