@@ -176,6 +176,13 @@
       "when": 1792360452298,
       "tag": "0024_student_server_sessions_and_scoreboard_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792360535488,
+      "tag": "0025_student_self_block",
+      "breakpoints": true
     }
   ]
 }

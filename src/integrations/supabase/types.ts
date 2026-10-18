@@ -6183,6 +6183,7 @@ export type Database = {
         Args: { p_student: string }
         Returns: boolean
       }
+      student_self_block: { Args: { p_reason: string }; Returns: undefined }
       student_session_alive: { Args: never; Returns: string }
       tenant_access_status: { Args: { _slug: string }; Returns: Json }
       tenant_has_role: {
