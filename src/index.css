@@ -1401,6 +1401,7 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .sky-fill-blue   { background: linear-gradient(90deg, #74B3FF, #4B95FF); }
 .sky-fill-violet { background: linear-gradient(90deg, #A3A0FC, #8C94FB); }
 .sky-fill-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); }
+.sky-fill-accent { background: linear-gradient(90deg, #A18FFB, #7B68F4); }
 .sky-pct {
   display: grid; place-items: center; flex-shrink: 0; height: 2.25rem; width: 2.25rem; border-radius: 999px;
   background: hsl(0 0% 100%); color: #797C8B; font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 500;
@@ -1423,6 +1424,7 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .customer-student-theme .student-dock a[aria-current="page"] { background: linear-gradient(180deg, #A18FFB, #7B68F4); color: #fff; box-shadow: var(--glow-accent); }
 
 body.customer-student-portal [role="dialog"] { border-color: transparent; border-radius: 1rem; box-shadow: var(--shadow-card), 0 30px 60px -30px hsl(212 60% 30% / .35); }
+body.customer-student-portal button.bg-primary,
 body.customer-student-portal a.bg-primary { background-image: linear-gradient(180deg, #A18FFB, #7B68F4); box-shadow: var(--glow-accent); }
 
 @media (prefers-reduced-motion: reduce) {
