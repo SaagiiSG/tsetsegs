@@ -13,6 +13,7 @@ import { CenterLogo, useCenter, type PortalSettings } from '../centerContext';
 import { centerAccounts, localDate } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, money } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section } from './ui';
+import { ThemeModeSelect } from '@/components/settings/ThemeModeSelect';
 
 function CredentialDialog({ cred, onClose }: { cred: { email: string; password: string } | null; onClose: () => void }) {
   return (
@@ -138,7 +139,7 @@ export function SettingsPage() {
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
       <Section title="Appearance">
-        <DarkModeSetting />
+        <ThemeModeSelect />
       </Section>
       <Section title="Portal address">
         <p className="text-sm"><span className="font-mono">{centerPortalUrl(center.slug)}</span></p>
