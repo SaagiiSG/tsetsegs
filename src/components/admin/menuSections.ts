@@ -41,16 +41,7 @@ export const menuSections: MenuSection[] = [
     items: [
       { title: "Tsetsegs Dashboard", url: "/admin/tsetsegs/dashboard", icon: LayoutDashboard },
       { title: "Tsetsegs Analytics", url: "/admin/tsetsegs/analytics", icon: LineChart },
-    ],
-    defaultOpen: true,
-  },
-  {
-    label: "Batches",
-    icon: GraduationCap,
-    glow: "262 83% 62%",
-    items: [
-      { title: "All Batches", url: "/admin/batches", icon: GraduationCap },
-      { title: "Create Batch", url: "/admin/create", icon: Plus },
+      { title: "Tsetsegs Batches", url: "/admin/batches", icon: GraduationCap },
     ],
     defaultOpen: true,
   },

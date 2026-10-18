@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -9,7 +9,6 @@ import { PlatformOverview } from '@/components/admin/platform/PlatformOverview';
 import { PlatformInsights } from '@/components/admin/platform/PlatformInsights';
 import { BatchOverview } from '@/components/admin/BatchOverview';
 import { BatchesView } from '@/components/admin/BatchesView';
-import { CreateBatchForm } from '@/components/admin/CreateBatchForm';
 import { TeamManagement } from '@/components/admin/TeamManagement';
 import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
@@ -82,7 +81,7 @@ const Admin = () => {
       <Route path="overview" element={<BatchOverview />} />
       <Route path="analytics/:batchId" element={<AdminBatchAnalytics />} />
       <Route path="batches" element={<BatchesView />} />
-      <Route path="create" element={<CreateBatchForm onSuccess={() => {}} />} />
+      <Route path="create" element={<Navigate to="/admin/batches?create=1" replace />} />
       <Route path="questions" element={<QuestionBank />} />
       <Route path="question-search" element={<QuestionSearch />} />
       <Route path="concept-videos" element={<ConceptVideosAdmin />} />
