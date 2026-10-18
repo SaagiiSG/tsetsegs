@@ -7,6 +7,7 @@ import {
   linkCurrentGoogleEmail,
 } from '@/lib/studentEmailLinking';
 import { v4 as uuidv4 } from 'uuid';
+import { getStudentToken, setStudentToken } from '@/lib/studentToken';
 
 interface LinkedStudent {
   id: string;
@@ -218,14 +219,16 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Try to fetch the stored session first.
-      const { data: session } = await supabase
-        .from('student_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
+      // Only server-issued sessions count. Older sign-ins have no token and
+      // must sign in once more.
+      if (!getStudentToken()) {
+        localStorage.removeItem('student_session_id');
+        localStorage.removeItem('student_id');
+        setIsLoading(false);
+        return;
+      }
+      const { data: aliveId } = await supabase.rpc('student_session_alive' as any);
+      const session = aliveId && aliveId === studentId ? { id: sessionId } : null;
 
       // Always fetch the student account so we can fingerprint-check before dropping them.
       const { data: studentAccount, error: accountError } = await supabase
@@ -252,6 +255,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       // Session closed (e.g. signed in elsewhere) → sign out. No silent revival.
       const activeSessionId = session?.id ?? null;
       if (!activeSessionId) {
+        setStudentToken(null);
         localStorage.removeItem('student_session_id');
         localStorage.removeItem('student_id');
         setIsLoading(false);
@@ -494,8 +498,8 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: (data as any)?.error || error?.message || 'Failed to set password' };
       }
 
-      // Now complete the login
-      return await completeLogin(pendingStudentAccount, true);
+      // Now sign in on the server with the new password
+      return await serverLogin(pendingStudentAccount, password);
 
     } catch (err: any) {
       console.error('Set password error:', err);
@@ -516,55 +520,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: 'Session expired. Please start over.' };
       }
 
-      // Verify against the edge function directly with fetch so we can tell a
-      // genuine "wrong password" (401 body) apart from a flaky mobile network
-      // (Safari surfaces those as a bare "Load failed"). Retries transient
-      // network failures instead of mislabelling them as a bad password.
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-verify-password`;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-      let lastNetworkError: unknown = null;
-      let verified = false;
-      let serverError: string | null = null;
-
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: anonKey,
-              Authorization: `Bearer ${anonKey}`,
-            },
-            body: JSON.stringify({ account_id: pendingStudentAccount.id, password }),
-          });
-          const body = await res.json().catch(() => ({} as any));
-          if (res.ok && body?.ok) {
-            verified = true;
-            break;
-          }
-          if (res.status === 401 || res.status === 400) {
-            serverError = 'Incorrect password. Please try again.';
-            break;
-          }
-          // 5xx / gateway hiccup → retry
-          lastNetworkError = new Error(body?.error || `Server error (${res.status})`);
-        } catch (netErr) {
-          lastNetworkError = netErr;
-        }
-        if (attempt < 2) await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
-      }
-
-      if (serverError) return { error: serverError };
-      if (!verified) {
-        console.error('Password verification network failure:', lastNetworkError);
-        return {
-          error: 'Could not reach the server. Check your internet connection and try again.',
-        };
-      }
-
-      // Password is correct, complete login
-      return await completeLogin(pendingStudentAccount, true);
-
+      return await serverLogin(pendingStudentAccount, password);
     } catch (err: any) {
       console.error('Login with password error:', err);
       const msg = String(err?.message || '');
@@ -577,125 +533,51 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
 
 
-  const completeLogin = async (studentAccount: StudentAccount, bypassDeviceLock = false): Promise<{ error: string | null }> => {
-    try {
-      const deviceId = await getDeviceIdAsync();
-      const fingerprint = generateFingerprint();
-
-      // Check device registration lock (90-day lock) - skip for dev accounts and password-authenticated logins
-      const isDevAccount = (studentAccount as any).is_dev_account === true;
-      const storedFingerprint = (studentAccount as any).device_fingerprint as string | null;
-      const fingerprintMatches = storedFingerprint && storedFingerprint === fingerprint;
-      
-      // A correct password does NOT bypass the device lock — the lock is the point.
-      void bypassDeviceLock;
-      if (!isDevAccount && studentAccount.registered_device_id && studentAccount.device_registered_at) {
-        const daysRemaining = getDaysRemaining(studentAccount.device_registered_at);
-        const deviceIdMatches = studentAccount.registered_device_id === deviceId;
-        
-        if (!deviceIdMatches && !fingerprintMatches && daysRemaining > 0) {
-          await supabase.from('security_alerts').insert({
-            student_account_id: studentAccount.id,
-            alert_type: 'unauthorized_device_attempt',
-            severity: 'high',
-            metadata: {
-              attempted_device_id: deviceId,
-              registered_device_id: studentAccount.registered_device_id,
-              days_remaining: daysRemaining,
-              fingerprint_match: false,
-              user_agent: navigator.userAgent
-            }
-          });
-          
-          return { 
-            error: `This account is registered to another device. You can log in from a new device in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
-          };
+  // Signs in on the server: password, device lock and one-active-session are
+  // all checked there, and a secret session token comes back.
+  const serverLogin = async (studentAccount: StudentAccount, password: string): Promise<{ error: string | null }> => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-login`;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+    const deviceId = await getDeviceIdAsync();
+    const fingerprint = generateFingerprint();
+    let lastNetworkError: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+          body: JSON.stringify({ account_id: studentAccount.id, password, device_id: deviceId, fingerprint, user_agent: navigator.userAgent }),
+        });
+        const body = await res.json().catch(() => ({} as any));
+        if (res.ok && body?.ok && body.token) {
+          return await finishLogin(studentAccount, body.session_id, body.token);
         }
-        
-        // Fingerprint matches but device ID changed (cleared localStorage) — re-register silently
-        if (!deviceIdMatches && fingerprintMatches) {
-          await supabase
-            .from('student_accounts')
-            .update({ registered_device_id: deviceId })
-            .eq('id', studentAccount.id);
-        }
-        
-        // 90 days passed, allow new device
-        if (!deviceIdMatches && !fingerprintMatches && daysRemaining <= 0) {
-          await supabase
-            .from('student_accounts')
-            .update({
-              registered_device_id: deviceId,
-              device_registered_at: new Date().toISOString(),
-              device_fingerprint: fingerprint
-            })
-            .eq('id', studentAccount.id);
-        }
-        
-        // Same device, backfill fingerprint if missing
-        if (deviceIdMatches && !storedFingerprint) {
-          await supabase
-            .from('student_accounts')
-            .update({ device_fingerprint: fingerprint })
-            .eq('id', studentAccount.id);
-        }
-      } else if (!studentAccount.registered_device_id || (isDevAccount && studentAccount.registered_device_id !== deviceId)) {
-        // First time device registration
-        await supabase
-          .from('student_accounts')
-          .update({
-            registered_device_id: deviceId,
-            device_registered_at: new Date().toISOString(),
-            device_fingerprint: fingerprint
-          })
-          .eq('id', studentAccount.id);
-      } else if (!storedFingerprint) {
-        // Existing device, just backfill fingerprint
-        await supabase
-          .from('student_accounts')
-          .update({ device_fingerprint: fingerprint })
-          .eq('id', studentAccount.id);
+        if (res.status === 401 || res.status === 400) return { error: 'Incorrect password. Please try again.' };
+        if (res.status === 403) return { error: body?.error || 'Sign-in not allowed on this device.' };
+        lastNetworkError = new Error(body?.error || `Server error (${res.status})`);
+      } catch (netErr) {
+        lastNetworkError = netErr;
       }
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+    }
+    console.error('Sign-in network failure:', lastNetworkError);
+    return { error: 'Could not reach the server. Check your internet connection and try again.' };
+  };
 
-      // Deactivate ALL existing sessions for this student
-      await supabase
-        .from('student_sessions')
-        .update({ is_active: false })
-        .eq('student_account_id', studentAccount.id)
-        .eq('is_active', true);
+  const finishLogin = async (studentAccount: StudentAccount, sessionId: string, token: string): Promise<{ error: string | null }> => {
+    try {
+      setStudentToken(token);
+      localStorage.setItem('student_session_id', sessionId);
+      localStorage.setItem('student_id', studentAccount.id);
 
-      // Create or update session for this device
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 35); // 5 weeks
-
-      const { data: session, error: sessionError } = await supabase
-        .from('student_sessions')
-        .upsert({
-          student_account_id: studentAccount.id,
-          device_id: deviceId,
-          login_timestamp: new Date().toISOString(),
-          expires_at: expiresAt.toISOString(),
-          is_active: true,
-          user_agent: navigator.userAgent,
-        }, {
-          onConflict: 'student_account_id,device_id'
-        })
-        .select()
-        .single();
-
-      if (sessionError) throw sessionError;
-
-      // Update last login
-      await supabase
-        .from('student_accounts')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', studentAccount.id);
+      const { data: fresh } = await supabase.from('student_accounts').select('*').eq('id', studentAccount.id).maybeSingle();
+      const account = (fresh ?? studentAccount) as StudentAccount;
 
       // Fetch ALL student records matching this phone (with batch course_type), prefer SAT as primary.
       const { data: allLinkedRaw } = await supabase
         .from('students')
         .select('id, first_name, last_name, phone, batch_id, grade, school_name, parent_phone, sat_test_month, batches(course_type)')
-        .or(`phone.eq.${studentAccount.phone_number},phone.eq.${studentAccount.phone_number.replace(/-/g, '')}`);
+        .or(`phone.eq.${account.phone_number},phone.eq.${account.phone_number.replace(/-/g, '')}`);
       const linkedStudents: LinkedStudent[] = (allLinkedRaw ?? []).map((r: any) => ({
         id: r.id,
         first_name: r.first_name,
@@ -708,58 +590,19 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         sat_test_month: r.sat_test_month,
         course_type: r.batches?.course_type ?? null,
       }));
-
       const linkedStudent: LinkedStudent | null =
         linkedStudents.find((s) => s.course_type === 'SAT') ??
-        linkedStudents.find((s) => s.id === studentAccount.linked_student_id) ??
+        linkedStudents.find((s) => s.id === account.linked_student_id) ??
         linkedStudents[0] ??
         null;
 
-      // Store session info
-      localStorage.setItem('student_session_id', session.id);
-      localStorage.setItem('student_id', studentAccount.id);
-      
-      const fullStudent = {
-        ...studentAccount,
-        linked_student: linkedStudent,
-        linked_students: linkedStudents
-      } as StudentAccount;
-      
-      setStudent(fullStudent);
-
-      // Reset auth flow state
+      setStudent({ ...account, linked_student: linkedStudent, linked_students: linkedStudents } as StudentAccount);
       setPendingPhone(null);
       setPendingStudentAccount(null);
       setAuthStep('phone');
-
-      // Log login activity with IP address via edge function
-      try {
-        await supabase.functions.invoke('log-ip', {
-          body: {
-            student_account_id: studentAccount.id,
-            activity_type: 'login'
-          }
-        });
-      } catch (ipError) {
-        console.error('Failed to log IP:', ipError);
-        // Still log activity without IP as fallback
-        await supabase
-          .from('student_activity_logs')
-          .insert({
-            student_account_id: studentAccount.id,
-            session_id: session.id,
-            activity_type: 'login',
-            metadata: {
-              device_id: deviceId,
-              user_agent: navigator.userAgent
-            }
-          });
-      }
-
       return { error: null };
-
     } catch (err: any) {
-      console.error('Complete login error:', err);
+      console.error('Finish login error:', err);
       return { error: err.message || 'Login failed' };
     }
   };
@@ -784,12 +627,10 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         })
         .then(() => {});
 
-      supabase
-        .from('student_sessions')
-        .update({ is_active: false })
-        .eq('id', sessionId)
-        .then(() => {});
     }
+    const hadToken = !!getStudentToken();
+    const finish = () => setStudentToken(null);
+    if (hadToken) supabase.rpc('student_logout' as any).then(finish, finish); else finish();
 
     localStorage.removeItem('student_session_id');
     localStorage.removeItem('student_id');
@@ -805,13 +646,10 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     const check = async () => {
       const sessionId = localStorage.getItem('student_session_id');
       if (!sessionId) return;
-      const { data, error } = await supabase
-        .from('student_sessions')
-        .select('is_active')
-        .eq('id', sessionId)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('student_session_alive' as any);
       if (error) return; // network hiccup — don't kick
-      if (!data || !data.is_active) {
+      if (!data) {
+        setStudentToken(null);
         localStorage.removeItem('student_session_id');
         localStorage.removeItem('student_id');
         setStudent(null);
