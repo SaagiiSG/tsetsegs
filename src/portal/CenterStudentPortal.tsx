@@ -31,7 +31,7 @@ import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
 import { RoadmapPreview } from './RoadmapPreview';
-import { SkyDepth } from './SkyDepth';
+import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -54,9 +54,9 @@ function Glass({ className = '', style, children }: { className?: string; style?
 
 /** Sky family per position: 68 blue, 150 Hard violet, Updated set pink. */
 const SET_LOOK = {
-  '68': { family: 'blue', icon: Target, wash: 'hsl(207 90% 95%)' },
-  SATMathTraining800: { family: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)' },
-  ANP120Aug3: { family: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)' },
+  '68': { family: 'blue', icon: Target, wash: 'hsl(207 90% 95%)', wave: CARD_WAVES.blue },
+  SATMathTraining800: { family: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
+  ANP120Aug3: { family: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
 } as const;
 const SKY_RING = { speed: '#5EBDFD', hard: '#D28CF5', medium: '#FBC2E5' };
 
@@ -246,6 +246,7 @@ function HomePage({ me }: { me: Me }) {
             onEditGoals={() => setGoalOpen(true)}
             onShowHistory={() => setRingOpen(true)}
             colors={SKY_RING}
+            decor={AURORA}
             className="sky-card !p-0"
           />
         </div>
@@ -260,7 +261,7 @@ function HomePage({ me }: { me: Me }) {
             const p = pct(done, ids.length);
             return (
               <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left group">
-                <Glass className="sky-wash h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash } as React.CSSProperties}>
+                <Glass className="sky-wash sky-decor h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash, '--wave': `url(${look.wave})` } as React.CSSProperties}>
                   <div className="flex items-center gap-3">
                     <span className={`sky-tile sky-tile-${look.family}`}><look.icon /></span>
                     <div className="min-w-0"><p className="font-semibold">{s.label}</p><p className="text-sm text-muted-foreground line-clamp-2" title={s.blurb}>{s.blurb}</p></div>
@@ -279,7 +280,7 @@ function HomePage({ me }: { me: Me }) {
       </div>
       {simulation ? <SatSimulationIsland latest={simulation} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
       <div className="grid gap-3 lg:grid-cols-4">
-        <Glass className="sky-wash lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)' } as React.CSSProperties}>
+        <Glass className="sky-wash sky-decor lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)', '--wave': `url(${CARD_WAVES.blue})` } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <span className="sky-tile sky-tile-solid"><BarChart3 /></span>
             <div><p className="text-lg font-bold">Domain mastery</p><p className="text-sm text-muted-foreground">Your accuracy by topic</p></div>
@@ -297,7 +298,7 @@ function HomePage({ me }: { me: Me }) {
           ))}
         </Glass>
         <button onClick={() => navigate('/student/videos')} className="text-left group">
-          <Glass className="h-full space-y-4 transition-transform group-hover:-translate-y-0.5">
+          <Glass className="sky-decor h-full space-y-4 transition-transform group-hover:-translate-y-0.5" style={{ '--wave': `url(${CARD_WAVES.violet})` } as React.CSSProperties}>
             <div className="flex items-center gap-3">
               <span className="sky-tile sky-tile-video"><PlayCircle /></span>
               <div><p className="text-lg font-bold leading-tight">Concept videos</p><p className="text-sm text-muted-foreground">Your video roadmap</p></div>
@@ -308,7 +309,7 @@ function HomePage({ me }: { me: Me }) {
             <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
           </Glass>
         </button>
-        <Glass className="space-y-4">
+        <Glass className="sky-decor space-y-4" style={{ '--wave': `url(${CARD_WAVES.orange})` } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <span className="sky-tile sky-tile-orange"><Users /></span>
             <div className="min-w-0"><p className="text-lg font-bold truncate" title={me.cls?.name ?? undefined}>{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-sm text-muted-foreground truncate">{me.cls.schedule}</p>}</div>

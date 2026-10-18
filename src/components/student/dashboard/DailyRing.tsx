@@ -14,6 +14,8 @@ interface DailyRingProps {
   className?: string;
   /** Optional per-portal ring colours; defaults to the shared palette. */
   colors?: { speed: string; hard: string; medium: string };
+  /** Optional decorative wash (css background-image value) rendered behind the ring. */
+  decor?: string;
 }
 
 const RING_COLORS = {
@@ -55,7 +57,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors, decor }: DailyRingProps) {
   const RC = colors ?? RING_COLORS;
   const cx = size / 2;
   const cy = size / 2;
@@ -83,6 +85,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
       onKeyDown={onShowHistory ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowHistory(); } } : undefined}
       aria-label={onShowHistory ? 'View streak history' : undefined}
     >
+      {decor && <div aria-hidden className="pointer-events-none absolute inset-0 z-0" style={{ backgroundImage: decor, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
       {onEditGoals && (
         <Button
           variant="ghost"
@@ -94,7 +97,7 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
           <Settings2 className="h-4 w-4" />
         </Button>
       )}
-      <CardContent className="p-3 sm:p-4 h-full flex flex-col items-center justify-between gap-3">
+      <CardContent className="p-3 sm:p-4 h-full flex flex-col items-center justify-between gap-3 relative z-[1]">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground self-start">
           Today's Goal
         </div>

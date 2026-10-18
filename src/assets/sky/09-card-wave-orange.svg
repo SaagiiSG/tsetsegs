@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" preserveAspectRatio="xMaxYMax slice"><defs><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter></defs><g filter="url(#b)"><circle cx="400" cy="540" r="330" fill="#FBD9C3" opacity=".32"/><circle cx="450" cy="590" r="270" fill="#FFFFFF" opacity=".45"/></g></svg>
