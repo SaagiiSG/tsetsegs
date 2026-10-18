@@ -17,11 +17,6 @@ export function CohortSwitcher() {
         className="w-auto h-8 gap-2 text-xs font-medium border-dashed"
         aria-label="Switch student cohort"
       >
-        {cohort === 'intl' ? (
-          <Globe className="h-3.5 w-3.5 text-primary" />
-        ) : (
-          <Flag className="h-3.5 w-3.5 text-primary" />
-        )}
         <SelectValue />
       </SelectTrigger>
       <SelectContent align="end">

@@ -27,10 +27,19 @@ export const menuSections: MenuSection[] = [
     icon: LayoutDashboard,
     glow: "217 91% 60%",
     items: [
-      { title: "Dashboard", url: "/admin", icon: BarChart3, end: true },
+      { title: "Platform Overview", url: "/admin", icon: BarChart3, end: true },
       { title: "Analytics", url: "/admin/analytics", icon: LineChart },
       { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
       { title: "International Customers", url: "/admin/customers", icon: Building2 },
+    ],
+    defaultOpen: true,
+  },
+  {
+    label: "Tsetsegs Workspace",
+    icon: Flame,
+    glow: "12 85% 60%",
+    items: [
+      { title: "Tsetsegs Dashboard", url: "/admin/tsetsegs/dashboard", icon: LayoutDashboard },
     ],
     defaultOpen: true,
   },

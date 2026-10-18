@@ -5,11 +5,9 @@ import {
   TopicWeakSpots,
   SprintPreview,
   RecentClasses,
-  AtRiskQuickView,
-  QuickActionsBar
+  AtRiskQuickView
 } from './dashboard';
 import { Radio } from 'lucide-react';
-import { InstitutionCustomerSummary } from './InstitutionCustomerSummary';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -30,7 +28,7 @@ export function DashboardStats() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold tracking-normal">Dashboard</h2>
+          <h2 className="text-base font-bold tracking-normal">Tsetsegs dashboard</h2>
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border border-border">
             <Radio className="w-2.5 h-2.5 text-status-healthy" />
             <span className="text-xs font-mono text-muted-foreground">Live</span>
@@ -38,8 +36,6 @@ export function DashboardStats() {
         </div>
 
         <HeroStatsRow stats={stats} sparklineData={sparklineData} isLoading={isLoading} />
-        <QuickActionsBar />
-        <InstitutionCustomerSummary />
 
         <Accordion type="multiple" defaultValue={["at-risk", "sprint"]} className="space-y-2">
           <AccordionItem value="at-risk" className="border-b px-0">
@@ -73,11 +69,8 @@ export function DashboardStats() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground">
-            Dashboard
+            Tsetsegs dashboard
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Platform overview
-          </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border">
           <Radio className="w-3 h-3 text-status-healthy" />
@@ -86,8 +79,6 @@ export function DashboardStats() {
       </div>
 
       <HeroStatsRow stats={stats} sparklineData={sparklineData} isLoading={isLoading} />
-      <QuickActionsBar />
-        <InstitutionCustomerSummary />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ActivityHeatmap data={heatmapData} />
