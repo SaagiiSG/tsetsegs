@@ -38,3 +38,8 @@
 - [ ] Step 3: server-side badge checks, "seen" flags on the server, fix Week Warrior/God Amongst Human/Ruby Legend meanings
 - [ ] Step 4: 7-day sprints, safe middle zone, one group size, fix season-end drop bug, streak bonus out of league
 - [ ] Step 5: badge ladders and personal records
+
+- [x] Student sign-in moved to the server (secret token, one device, 90-day lock)
+- [x] Student accounts and sign-in records locked; passwords moved to server-only store
+- [x] Scoreboard locked: server grades answers, decides points, updates league totals
+- [ ] Server-side badge checks + fix mixed-up badge rules (next)

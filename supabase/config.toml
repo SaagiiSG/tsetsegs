@@ -57,3 +57,6 @@ verify_jwt = false
 
 
 
+
+[functions.student-login]
+verify_jwt = false

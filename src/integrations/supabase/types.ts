@@ -4029,6 +4029,32 @@ export type Database = {
           },
         ]
       }
+      student_credentials: {
+        Row: {
+          password_hash: string
+          student_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          password_hash: string
+          student_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          password_hash?: string
+          student_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_credentials_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: true
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_email_links: {
         Row: {
           created_at: string
@@ -4349,6 +4375,7 @@ export type Database = {
           is_active: boolean
           login_timestamp: string
           student_account_id: string
+          token_hash: string | null
           user_agent: string | null
         }
         Insert: {
@@ -4358,6 +4385,7 @@ export type Database = {
           is_active?: boolean
           login_timestamp?: string
           student_account_id: string
+          token_hash?: string | null
           user_agent?: string | null
         }
         Update: {
@@ -4367,6 +4395,7 @@ export type Database = {
           is_active?: boolean
           login_timestamp?: string
           student_account_id?: string
+          token_hash?: string | null
           user_agent?: string | null
         }
         Relationships: [
@@ -5610,6 +5639,10 @@ export type Database = {
         Args: { fn_name: string; payload: Json }
         Returns: undefined
       }
+      add_league_points: {
+        Args: { p_points: number; p_sprint: string; p_student: string }
+        Returns: undefined
+      }
       admin_activity_stats: {
         Args: never
         Returns: {
@@ -5692,6 +5725,10 @@ export type Database = {
               username: string
             }[]
           }
+      apply_league_points_definer: {
+        Args: { p_points: number; p_sprint: string; p_student: string }
+        Returns: undefined
+      }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
@@ -5849,6 +5886,10 @@ export type Database = {
           total_attempts: number
         }[]
       }
+      grade_student_answer: {
+        Args: { p_answer: string; p_question: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5870,6 +5911,7 @@ export type Database = {
         Returns: boolean
       }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
+      is_platform_staff: { Args: never; Returns: boolean }
       live_session_find_participant: {
         Args: { p_phone: string; p_session_id: string }
         Returns: {
@@ -6077,6 +6119,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      request_student_id: { Args: never; Returns: string }
       resolve_account_cohort: {
         Args: { _linked_student_id: string }
         Returns: string
@@ -6113,10 +6156,35 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      student_inherited_tier: {
+        Args: { p_sprint: string; p_student: string }
+        Returns: string
+      }
+      student_league_sum: {
+        Args: { p_sprint: string; p_student: string }
+        Returns: number
+      }
+      student_logout: { Args: never; Returns: undefined }
       student_owns_record: {
         Args: { phone: string; student_id: string }
         Returns: boolean
       }
+      student_points_allowed: {
+        Args: {
+          p_category: string
+          p_meta: Json
+          p_points: number
+          p_sprint: string
+          p_student: string
+        }
+        Returns: number
+      }
+      student_practised_recently: {
+        Args: { p_student: string }
+        Returns: boolean
+      }
+      student_self_block: { Args: { p_reason: string }; Returns: undefined }
+      student_session_alive: { Args: never; Returns: string }
       tenant_access_status: { Args: { _slug: string }; Returns: Json }
       tenant_has_role: {
         Args: { _institution: string; _role: string }

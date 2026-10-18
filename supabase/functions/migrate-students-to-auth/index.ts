@@ -75,6 +75,13 @@ Deno.serve(async (req) => {
       .limit(limit);
 
     if (fetchErr) throw fetchErr;
+    // Real hashes live in student_credentials; student_accounts only keeps a marker.
+    if (accounts?.length) {
+      const { data: creds } = await admin.from('student_credentials').select('student_account_id, password_hash')
+        .in('student_account_id', accounts.map((a: any) => a.id));
+      const byId = new Map((creds ?? []).map((c: any) => [c.student_account_id, c.password_hash]));
+      for (const a of accounts as any[]) a.password_hash = byId.get(a.id) ?? null;
+    }
 
     const stats = {
       considered: accounts?.length ?? 0,
