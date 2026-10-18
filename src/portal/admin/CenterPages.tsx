@@ -145,6 +145,7 @@ export function SettingsPage() {
             <select id="st-session" value={s.session_days ?? ''} onChange={e => setS({ ...s, session_days: e.target.value ? Number(e.target.value) : undefined })} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
               <option value="">Until they sign out</option><option value="1">1 day</option><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select>
             <p className="text-xs text-muted-foreground">After this, they need to sign in again. Admins are not affected.</p></div>
+          <div className="flex items-center justify-between gap-3"><p className="text-sm">Sign out all students and teachers on every device</p><Button type="button" variant="outline" size="sm" onClick={signOutEveryone}>Sign everyone out</Button></div>
         </Section>
         <Section title="Notifications">
           <p className="text-xs text-muted-foreground">Shown on your dashboard.</p>
