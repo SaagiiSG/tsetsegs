@@ -261,7 +261,7 @@ function HomePage({ me }: { me: Me }) {
             const p = pct(done, ids.length);
             return (
               <button key={s.key} onClick={() => navigate(`/student/practice?set=${s.key}`)} className="text-left group">
-                <Glass className="sky-wash h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash } as React.CSSProperties}>
+                <Glass className="sky-wash sky-decor h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash, '--wave': `url(${look.wave})` } as React.CSSProperties}>
                   <div className="flex items-center gap-3">
                     <span className={`sky-tile sky-tile-${look.family}`}><look.icon /></span>
                     <div className="min-w-0"><p className="font-semibold">{s.label}</p><p className="text-sm text-muted-foreground line-clamp-2" title={s.blurb}>{s.blurb}</p></div>
