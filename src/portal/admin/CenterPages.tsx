@@ -92,7 +92,14 @@ export function SettingsPage() {
   const { center, reloadCenter } = useCenter();
   const { data } = useCenterAdminData();
   const initial = center.portal_settings ?? {};
-  const [s, setS] = useState<PortalSettings>({ display_name: initial.display_name ?? center.name, brand_color: initial.brand_color ?? '#171717', logo_url: initial.logo_url, contact_email: initial.contact_email ?? '', timezone: initial.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const [s, setS] = useState<PortalSettings>({ ...initial, display_name: initial.display_name ?? center.name, brand_color: initial.brand_color ?? '#171717', contact_email: initial.contact_email ?? '', billing_email: initial.billing_email ?? '', timezone: initial.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const signOutEveryone = async () => {
+    if (!confirm('Sign out every student and teacher now? They will need to sign in again.')) return;
+    const next = { ...s, signout_before: new Date().toISOString() };
+    const { error } = await supabase.rpc('tenant_update_settings', { _institution: center.id, _settings: next as never });
+    if (error) return toast.error(error.message);
+    setS(next); toast.success('Everyone will be signed out'); reloadCenter();
+  };
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const preview = { ...center, portal_settings: s };
@@ -127,9 +134,24 @@ export function SettingsPage() {
         </Section>
         <Section title="Contact & region">
           <div className="space-y-1"><Label htmlFor="st-email">Contact email for students</Label><Input id="st-email" type="email" value={s.contact_email ?? ''} onChange={e => setS({ ...s, contact_email: e.target.value })} /></div>
+          <div className="space-y-1"><Label htmlFor="st-billing">Billing contact email</Label><Input id="st-billing" type="email" placeholder="accounts@yourcenter.com" value={s.billing_email ?? ''} onChange={e => setS({ ...s, billing_email: e.target.value })} />
+            <p className="text-xs text-muted-foreground">Where Tsetsegs sends invoices and payment reminders. Not shown to students.</p></div>
           <div className="space-y-1"><Label htmlFor="st-tz">Time zone</Label>
             <select id="st-tz" value={s.timezone} onChange={e => setS({ ...s, timezone: e.target.value })} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
               {[...new Set([s.timezone!, ...TIMEZONES])].map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+        </Section>
+        <Section title="Login security">
+          <div className="space-y-1"><Label htmlFor="st-session">Keep students and teachers signed in for</Label>
+            <select id="st-session" value={s.session_days ?? ''} onChange={e => setS({ ...s, session_days: e.target.value ? Number(e.target.value) : undefined })} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <option value="">Until they sign out</option><option value="1">1 day</option><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select>
+            <p className="text-xs text-muted-foreground">After this, they need to sign in again. Admins are not affected.</p></div>
+        </Section>
+        <Section title="Notifications">
+          <p className="text-xs text-muted-foreground">Shown on your dashboard.</p>
+          {([['notify_new_students', 'New students joined'], ['notify_overdue', 'Overdue payments'], ['notify_inactive', "Students who haven't practiced in 7 days"]] as const).map(([k, label]) => (
+            <div key={k} className="flex items-center justify-between"><Label htmlFor={`st-${k}`} className="font-normal">{label}</Label>
+              <Switch id={`st-${k}`} checked={s[k] !== false} onCheckedChange={v => setS({ ...s, [k]: v })} /></div>
+          ))}
         </Section>
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
