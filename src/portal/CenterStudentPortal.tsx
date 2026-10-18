@@ -332,7 +332,7 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
         {choices.length ? (
           <div className="grid gap-2">{choices.map(c => (
             <button key={c.letter} disabled={result === 'correct'} onClick={() => { setPicked(c.letter); if (result === 'wrong') setResult(null); }}
-              className={`text-left rounded-xl border p-3 flex gap-3 items-start transition-colors active:scale-[0.99] ${picked === c.letter ? 'border-foreground bg-muted' : 'hover:bg-muted/50'}`}>
+              className={`student-choice text-left rounded-xl border p-3 flex gap-3 items-start transition-colors active:scale-[0.99] ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
               <span className="font-mono text-sm w-5">{c.letter}</span><span className="min-w-0 flex-1">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span>
             </button>))}</div>
         ) : <Input aria-label="Your answer" value={typed} onChange={e => { setTyped(e.target.value); if (result === 'wrong') setResult(null); }} placeholder="Type your answer" className="max-w-xs font-mono" />}
@@ -513,7 +513,7 @@ function SpeedPage({ me }: { me: Me }) {
         <div className="leading-relaxed"><MathText text={q.question_text} /></div>
         {[q.question_image_url, q.question_image_url_2].filter(Boolean).map(u => <img key={u!} src={u!} alt="Question figure" className="max-h-72 rounded border bg-background" />)}
         {choices.length ? <div className="grid gap-2">{choices.map(c => (
-          <button key={c.letter} onClick={() => setPicked(c.letter)} className={`text-left rounded-xl border p-3 flex gap-3 ${picked === c.letter ? 'border-foreground bg-muted' : 'hover:bg-muted/50'}`}>
+          <button key={c.letter} onClick={() => setPicked(c.letter)} className={`student-choice text-left rounded-xl border p-3 flex gap-3 ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
             <span className="font-mono text-sm w-5">{c.letter}</span><span className="flex-1 min-w-0">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span></button>))}</div>
           : <Input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer" className="max-w-xs font-mono" />}
         <Button onClick={() => answer(choices.length ? picked : typed)} disabled={choices.length ? !picked : !typed.trim()}>Submit</Button>

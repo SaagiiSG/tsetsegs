@@ -1169,3 +1169,25 @@ body.student-portal [role="dialog"] {
 @media (prefers-reduced-motion: reduce) {
   .student-theme .rounded-lg.border.bg-card:hover { transform: none; }
 }
+
+/* Batch 3-4: practice screens, answer choices, explanation & tools */
+.student-choice {
+  border-width: 2px; border-radius: 18px;
+  box-shadow: 0 3px 0 hsl(var(--border));
+  display: flex; align-items: center; gap: .75rem;
+}
+.student-choice:not(:disabled):active { transform: translateY(3px); box-shadow: none; }
+.student-choice.border-primary { box-shadow: 0 3px 0 hsl(var(--primary) / .6); }
+.student-choice.border-green-500 { box-shadow: 0 3px 0 hsl(142 70% 40% / .6); }
+.student-choice.border-red-500 { box-shadow: 0 3px 0 hsl(0 75% 50% / .5); }
+.student-choice-letter {
+  flex-shrink: 0; display: grid; place-items: center;
+  height: 2rem; width: 2rem; border-radius: 10px;
+  border: 2px solid hsl(var(--border));
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: .8rem;
+}
+.student-choice.border-primary .student-choice-letter { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
+.student-theme textarea, .student-theme input:not([type=checkbox]):not([type=radio]) { border-radius: 14px; }
+body.student-portal [data-vaul-drawer], body.student-portal [role="dialog"][data-state] { overflow: hidden; }
+.student-theme kbd { border-radius: 6px; box-shadow: 0 2px 0 hsl(var(--border)); }
+@media (prefers-reduced-motion: reduce) { .student-choice:not(:disabled):active { transform: none; } }

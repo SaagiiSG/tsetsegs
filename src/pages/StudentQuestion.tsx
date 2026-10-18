@@ -1035,7 +1035,7 @@ export default function StudentQuestion() {
                             key={opt}
                             onClick={() => !submitted && setSelectedAnswer(opt)}
                             disabled={submitted}
-                            className={`w-full p-4 rounded-lg border text-left transition-all ${
+                            className={`student-choice w-full p-4 rounded-lg border text-left transition-all ${
                               submitted && opt === selectedAnswer && isCorrect
                                 ? 'border-green-500 bg-green-500/10'
                                 : submitted && opt === selectedAnswer && !isCorrect
@@ -1045,7 +1045,7 @@ export default function StudentQuestion() {
                                 : 'hover:border-primary/50'
                             }`}
                           >
-                            <span className="font-medium mr-3">{opt}.</span>
+                            <span className="student-choice-letter">{opt}</span>
                             {choiceImg && (
                               <img src={choiceImg} alt={`Choice ${opt}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
                             )}
