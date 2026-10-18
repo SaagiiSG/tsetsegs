@@ -13,6 +13,7 @@ import { CenterLogo, useCenter, type PortalSettings } from '../centerContext';
 import { centerAccounts, localDate } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, money } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section } from './ui';
+import { ThemeModeSelect } from '@/components/settings/ThemeModeSelect';
 
 function CredentialDialog({ cred, onClose }: { cred: { email: string; password: string } | null; onClose: () => void }) {
   return (
@@ -123,11 +124,6 @@ export function SettingsPage() {
             </div>
           </div>
           <div className="space-y-1"><Label htmlFor="st-name">Display name</Label><Input id="st-name" value={s.display_name ?? ''} onChange={e => setS({ ...s, display_name: e.target.value })} maxLength={80} /></div>
-          <div className="space-y-1"><Label htmlFor="st-color">Brand color</Label>
-            <div className="flex items-center gap-2"><input id="st-color" type="color" value={s.brand_color} onChange={e => setS({ ...s, brand_color: e.target.value })} className="h-9 w-12 rounded border bg-background cursor-pointer" />
-              <Input aria-label="Brand color hex" value={s.brand_color} onChange={e => setS({ ...s, brand_color: e.target.value })} className="w-32 font-mono" />
-              <span className="rounded-md px-3 h-9 inline-flex items-center text-sm" style={{ background: s.brand_color, color: '#fff' }}>Button preview</span></div>
-            <p className="text-xs text-muted-foreground">Used for buttons and highlights. Pick a darker color so white text stays readable.</p></div>
         </Section>
         <Section title="Contact & region">
           <div className="space-y-1"><Label htmlFor="st-email">Contact email for students</Label><Input id="st-email" type="email" value={s.contact_email ?? ''} onChange={e => setS({ ...s, contact_email: e.target.value })} /></div>
@@ -138,7 +134,7 @@ export function SettingsPage() {
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
       <Section title="Appearance">
-        <DarkModeSetting />
+        <ThemeModeSelect />
       </Section>
       <Section title="Portal address">
         <p className="text-sm"><span className="font-mono">{centerPortalUrl(center.slug)}</span></p>
