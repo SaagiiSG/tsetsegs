@@ -150,7 +150,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
             <SelectItem value="all">All Time</SelectItem>
             <SelectItem value="last30">Last 30 Days</SelectItem>
           </SelectContent>
-        </Select>
+        </Select>}
 
       </div>
 
