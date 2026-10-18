@@ -272,7 +272,15 @@ export default function TeacherStudentProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-account-share'] });
       queryClient.invalidateQueries({ queryKey: ['all-time-leaderboard'] });
-      toast({ title: 'SAT score saved!' });
+      queryClient.invalidateQueries({ queryKey: ['sat-prediction-accuracy'] });
+      const math = satMath.trim() ? parseInt(satMath, 10) : null;
+      const cmp = compareToReal(predictionSnapshots, math, satDate || null);
+      toast({
+        title: 'SAT score saved!',
+        description: cmp?.predicted != null
+          ? `Prediction was ${cmp.predicted} vs real ${math} (${cmp.miss! > 0 ? '+' : ''}${cmp.miss}) — ${cmp.onTarget ? 'on target' : 'missed'}.`
+          : undefined,
+      });
     },
     onError: (error: any) => {
       const errorToast = getErrorToast(error, 'save SAT score');
@@ -759,6 +767,12 @@ export default function TeacherStudentProfile() {
                   )}
                   Save SAT Score
                 </Button>
+                <PredictionVsReal
+                  predictions={predictionSnapshots}
+                  realMath={studentAccount?.sat_math_score ?? null}
+                  realDate={studentAccount?.sat_score_date ?? null}
+                />
+                <AlgorithmAccuracySummary />
               </CardContent>
             </Card>
           </div>
