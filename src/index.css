@@ -1248,9 +1248,9 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
    frosted near-white cards, four pastel families (blue/violet/pink/orange).
    Body scope lets portalled dialogs inherit the same palette. */
 body.customer-student-portal {
-  --primary: 215 100% 65% !important;
+  --primary: 248 88% 67% !important;
   --primary-foreground: 0 0% 100% !important;
-  --ring: 215 100% 65% !important;
+  --ring: 248 88% 67% !important;
   --background: 205 85% 95%;
   --foreground: 232 29% 5%;
   --card: 206 78% 98%;
@@ -1261,17 +1261,17 @@ body.customer-student-portal {
   --muted-foreground: 223 6% 43%;
   --secondary: 212 60% 93%;
   --secondary-foreground: 232 20% 15%;
-  --accent: 205 85% 93%;
-  --accent-foreground: 216 70% 46%;
+  --accent: 250 75% 95%;
+  --accent-foreground: 250 60% 50%;
   --border: 212 50% 90%;
   --input: 212 45% 86%;
-  --section-glow: 215 100% 65%;
+  --section-glow: 248 88% 67%;
   --radius: 1rem;
   --sky-ink-soft: 225 3% 16%;
   --sky-body: 226 6% 40%;
   --sky-track: 213 66% 93%;
   --shadow-card: 0 10px 24px -12px hsl(212 60% 45% / .22), 0 1px 2px hsl(212 60% 45% / .06);
-  --glow-blue: 0 8px 16px -6px hsl(215 100% 65% / .45);
+  --glow-accent: 0 8px 16px -6px hsl(248 90% 68% / .45);
   --glow-violet: 0 8px 16px -6px hsl(240 90% 75% / .45);
   --glow-pink: 0 8px 16px -6px hsl(304 70% 77% / .45);
   --student-card: 206 78% 98%;
@@ -1291,8 +1291,8 @@ body.customer-student-portal {
   color: hsl(var(--foreground));
 }
 body.customer-student-portal.dark, .dark body.customer-student-portal {
-  --primary: 215 100% 68% !important;
-  --ring: 215 100% 68% !important;
+  --primary: 248 88% 72% !important;
+  --ring: 248 88% 72% !important;
   --background: 222 35% 9%;
   --foreground: 210 30% 95%;
   --card: 222 30% 13%;
@@ -1303,8 +1303,8 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
   --muted-foreground: 215 14% 68%;
   --secondary: 222 22% 19%;
   --secondary-foreground: 210 30% 95%;
-  --accent: 216 40% 22%;
-  --accent-foreground: 213 100% 80%;
+  --accent: 250 35% 24%;
+  --accent-foreground: 250 100% 85%;
   --border: 222 20% 24%;
   --input: 222 20% 28%;
   --sky-ink-soft: 210 20% 85%;
@@ -1360,13 +1360,13 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 }
 .dark .customer-student-theme .sky-sidebar, .customer-student-theme.dark .sky-sidebar { background: hsl(var(--card)) !important; }
 .sky-nav { color: hsl(var(--sky-body)); }
-.sky-nav:hover { background: hsl(205 85% 95%); color: hsl(var(--foreground)); }
+.sky-nav:hover { background: hsl(250 75% 96%); color: hsl(var(--foreground)); }
 .dark .sky-nav:hover { background: hsl(var(--muted)); }
 .sky-nav[aria-current="page"], .sky-btn-blue {
-  background: linear-gradient(180deg, #83B8FE, #5B9EFF); color: #fff; box-shadow: var(--glow-blue);
+  background: linear-gradient(180deg, #A18FFB, #7B68F4); color: #fff; box-shadow: var(--glow-accent);
 }
 .sky-nav[aria-current="page"] svg { color: #fff; }
-.sky-avatar { border-radius: 1rem !important; background: linear-gradient(180deg, #6BB4FF, #59A1FF) !important; color: #fff !important; font-size: 1.1rem !important; }
+.sky-avatar { border-radius: 1rem !important; background: linear-gradient(180deg, #9C8BFB, #7F6DF6) !important; color: #fff !important; font-size: 1.1rem !important; }
 
 /* Icon tiles */
 .sky-tile { display: grid; place-items: center; flex-shrink: 0; height: 3rem; width: 3rem; border-radius: 1rem; }
@@ -1376,9 +1376,9 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .sky-tile-video  { background: linear-gradient(180deg, #EAE3FE, #CCC6FE); color: #5A58E1; box-shadow: 0 6px 12px -8px #5A58E1; }
 .sky-tile-pink   { background: linear-gradient(180deg, #FEE9F0, #F9C4EE); color: #D665B9; box-shadow: 0 6px 12px -8px #D665B9; }
 .sky-tile-orange { background: linear-gradient(180deg, #FBEDDF, #FBD9C3); color: #FA7433; box-shadow: 0 6px 12px -8px #FA7433; }
-.sky-tile-solid  { background: linear-gradient(180deg, #92CFFE, #5B9DFF); color: #fff; box-shadow: var(--glow-blue); }
+.sky-tile-solid  { background: linear-gradient(180deg, #A795FC, #8271F5); color: #fff; box-shadow: var(--glow-accent); }
 .sky-tile-solid svg { height: 1.4rem; width: 1.4rem; }
-.sky-tile-lock   { height: 2.75rem; width: 2.75rem; background: linear-gradient(180deg, #DAEDFC, #BDD9FB); color: #176ADC; }
+.sky-tile-lock   { height: 2.75rem; width: 2.75rem; background: linear-gradient(180deg, #E7DFFE, #CBBEFC); color: #5B3FD6; }
 .sky-tile-lock svg { height: 1.4rem; width: 1.4rem; }
 
 /* Gradient pill buttons (white labels, as in the mockup) */
@@ -1391,7 +1391,7 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .sky-btn:hover { filter: brightness(1.04); }
 .sky-btn:active { transform: scale(.97); }
 .sky-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-.sky-btn-blue   { background: linear-gradient(180deg, #74B3FF, #4B95FF); box-shadow: var(--glow-blue); }
+.sky-btn-blue   { background: linear-gradient(180deg, #A18FFB, #7B68F4); box-shadow: var(--glow-accent); }
 .sky-btn-violet { background: linear-gradient(170deg, #A3A0FC, #8C94FB 70%, #AC96FB); box-shadow: var(--glow-violet); }
 .sky-btn-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); box-shadow: var(--glow-pink); }
 
@@ -1401,14 +1401,15 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .sky-fill-blue   { background: linear-gradient(90deg, #74B3FF, #4B95FF); }
 .sky-fill-violet { background: linear-gradient(90deg, #A3A0FC, #8C94FB); }
 .sky-fill-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); }
+.sky-fill-accent { background: linear-gradient(90deg, #A18FFB, #7B68F4); }
 .sky-pct {
   display: grid; place-items: center; flex-shrink: 0; height: 2.25rem; width: 2.25rem; border-radius: 999px;
   background: hsl(0 0% 100%); color: #797C8B; font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 500;
   box-shadow: 0 0 0 1px hsl(220 60% 92%), 0 2px 6px -2px hsl(212 60% 45% / .2);
 }
 .dark .sky-pct { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); box-shadow: none; }
-.sky-chip { display: inline-flex; align-items: center; height: 1.75rem; padding: 0 .75rem; border-radius: 999px; background: #E4EEFD; color: #235ECA; font-size: .875rem; font-weight: 600; }
-.sky-link { color: #3C7AD0; font-weight: 500; display: inline-flex; align-items: center; gap: .35rem; }
+.sky-chip { display: inline-flex; align-items: center; height: 1.75rem; padding: 0 .75rem; border-radius: 999px; background: #ECE7FE; color: #5B3FD6; font-size: .875rem; font-weight: 600; }
+.sky-link { color: #7A63E8; font-weight: 500; display: inline-flex; align-items: center; gap: .35rem; }
 .sky-pill {
   display: inline-flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 1rem; border-radius: 999px;
   background: hsl(0 0% 100% / .92); box-shadow: var(--shadow-card); transition: transform .1s ease-out;
@@ -1420,11 +1421,11 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 
 /* Phone dock: blue active pill */
 .customer-student-theme .student-dock { border-color: transparent; box-shadow: var(--shadow-card); }
-.customer-student-theme .student-dock a[aria-current="page"] { background: linear-gradient(180deg, #83B8FE, #5B9EFF); color: #fff; box-shadow: var(--glow-blue); }
+.customer-student-theme .student-dock a[aria-current="page"] { background: linear-gradient(180deg, #A18FFB, #7B68F4); color: #fff; box-shadow: var(--glow-accent); }
 
 body.customer-student-portal [role="dialog"] { border-color: transparent; border-radius: 1rem; box-shadow: var(--shadow-card), 0 30px 60px -30px hsl(212 60% 30% / .35); }
 body.customer-student-portal button.bg-primary,
-body.customer-student-portal a.bg-primary { background-image: linear-gradient(180deg, #74B3FF, #4B95FF); box-shadow: var(--glow-blue); }
+body.customer-student-portal a.bg-primary { background-image: linear-gradient(180deg, #A18FFB, #7B68F4); box-shadow: var(--glow-accent); }
 
 @media (prefers-reduced-motion: reduce) {
   .sky-btn, .sky-pill, .sky-track > div { transition: none; }
