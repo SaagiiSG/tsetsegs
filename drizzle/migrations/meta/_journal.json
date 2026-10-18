@@ -225,6 +225,13 @@
       "when": 1792361697450,
       "tag": "0031_sat_prediction_tracking_and_center_scoreboard",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792366526143,
+      "tag": "0032_migration",
+      "breakpoints": true
     }
   ]
 }
