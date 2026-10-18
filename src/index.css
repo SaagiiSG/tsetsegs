@@ -1271,7 +1271,7 @@ body.customer-student-portal {
   --sky-body: 226 6% 40%;
   --sky-track: 213 66% 93%;
   --shadow-card: 0 10px 24px -12px hsl(212 60% 45% / .22), 0 1px 2px hsl(212 60% 45% / .06);
-  --glow-blue: 0 8px 16px -6px hsl(215 100% 65% / .45);
+  --glow-accent: 0 8px 16px -6px hsl(248 90% 68% / .45);
   --glow-violet: 0 8px 16px -6px hsl(240 90% 75% / .45);
   --glow-pink: 0 8px 16px -6px hsl(304 70% 77% / .45);
   --student-card: 206 78% 98%;
@@ -1291,8 +1291,8 @@ body.customer-student-portal {
   color: hsl(var(--foreground));
 }
 body.customer-student-portal.dark, .dark body.customer-student-portal {
-  --primary: 215 100% 68% !important;
-  --ring: 215 100% 68% !important;
+  --primary: 248 88% 72% !important;
+  --ring: 248 88% 72% !important;
   --background: 222 35% 9%;
   --foreground: 210 30% 95%;
   --card: 222 30% 13%;
@@ -1303,8 +1303,8 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
   --muted-foreground: 215 14% 68%;
   --secondary: 222 22% 19%;
   --secondary-foreground: 210 30% 95%;
-  --accent: 216 40% 22%;
-  --accent-foreground: 213 100% 80%;
+  --accent: 250 35% 24%;
+  --accent-foreground: 250 100% 85%;
   --border: 222 20% 24%;
   --input: 222 20% 28%;
   --sky-ink-soft: 210 20% 85%;
