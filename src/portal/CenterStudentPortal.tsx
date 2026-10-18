@@ -246,6 +246,7 @@ function HomePage({ me }: { me: Me }) {
             onEditGoals={() => setGoalOpen(true)}
             onShowHistory={() => setRingOpen(true)}
             colors={SKY_RING}
+            decor={AURORA}
             className="sky-card !p-0"
           />
         </div>
