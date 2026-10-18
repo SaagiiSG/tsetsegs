@@ -119,16 +119,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
     const token = authHeader.replace('Bearer ', '')
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
-    if (claimsErr || !claimsData?.claims?.sub) {
-      console.error('getClaims failed:', claimsErr)
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
-    const userId = claimsData.claims.sub as string
-    const { data: adminRole } = await supabase.from('user_roles')
-      .select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle()
-    if (!adminRole) {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // The scheduled autopilot calls itself with the service key; everyone else must be an admin.
+    if (token !== supabaseServiceKey) {
+      const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
+      if (claimsErr || !claimsData?.claims?.sub) {
+        console.error('getClaims failed:', claimsErr)
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      const userId = claimsData.claims.sub as string
+      const { data: adminRole } = await supabase.from('user_roles')
+        .select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle()
+      if (!adminRole) {
+        return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
     }
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
