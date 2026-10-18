@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PredictionVsReal } from "@/components/shared/PredictionVsReal";
+import { AlgorithmAccuracySummary } from "@/components/shared/AlgorithmAccuracySummary";
+import { compareToReal } from "@/lib/predictionAccuracy";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
@@ -132,6 +135,21 @@ export default function TeacherStudentProfile() {
       return data;
     },
     enabled: !!student?.phone
+  });
+
+  // Daily saved SAT predictions (to compare with the real SAT)
+  const { data: predictionSnapshots = [] } = useQuery({
+    queryKey: ['sat-prediction-snapshots', studentAccount?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('sat_prediction_snapshots' as any)
+        .select('snapshot_date, sim_score')
+        .eq('student_account_id', studentAccount!.id)
+        .order('snapshot_date', { ascending: false })
+        .limit(400);
+      return ((data as any[]) ?? []).map(r => ({ date: r.snapshot_date as string, score: r.sim_score as number | null }));
+    },
+    enabled: !!studentAccount?.id,
   });
 
   // Generate share token mutation
