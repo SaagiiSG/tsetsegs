@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Users, Crown, Sparkles } from 'lucide-react';
@@ -20,6 +21,10 @@ interface CurrentSprintTabProps {
   isLoading: boolean;
   groupInfo?: GroupInfo | null;
   onSprintEnd?: () => void;
+  /** Replaces the main-app rank ladder (customer portals pass their own tenant ladder). */
+  ladder?: React.ReactNode;
+  /** Main-app profile dialog reads main student records; customer portals turn it off. */
+  allowProfiles?: boolean;
 }
 
 export function CurrentSprintTab({ 
@@ -28,7 +33,9 @@ export function CurrentSprintTab({
   currentUserId, 
   isLoading,
   groupInfo,
-  onSprintEnd
+  onSprintEnd,
+  ladder,
+  allowProfiles = true,
 }: CurrentSprintTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string>('');
@@ -47,6 +54,7 @@ export function CurrentSprintTab({
   const cutoffRank = TIER_PROMOTION_CUTOFFS[userTier as TierType] || 10;
 
   const handleProfileClick = (entry: LeaderboardEntry) => {
+    if (!allowProfiles) return;
     setSelectedUserId(entry.userId);
     setSelectedUsername(entry.username);
     setProfileSheetOpen(true);
@@ -55,8 +63,8 @@ export function CurrentSprintTab({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Rank ladder sits right under the tabs, full width */}
-      <MyTierLadder studentId={currentUserId} currentTier={currentUserRanking?.currentTier}
-        standing={currentUserRanking ? leaderboard.findIndex(e => e.userId === currentUserId) + 1 : null} />
+      {ladder !== undefined ? ladder : <MyTierLadder studentId={currentUserId} currentTier={currentUserRanking?.currentTier}
+        standing={currentUserRanking ? leaderboard.findIndex(e => e.userId === currentUserId) + 1 : null} />}
 
       <SprintTimer sprint={sprint} currentUserRanking={currentUserRanking} onSprintEnd={onSprintEnd} />
 
@@ -163,12 +171,12 @@ export function CurrentSprintTab({
       </Card>
 
       {/* Full Profile Dialog */}
-      <FullProfileDialog
+      {allowProfiles && <FullProfileDialog
         open={profileSheetOpen}
         onOpenChange={setProfileSheetOpen}
         userId={selectedUserId}
         username={selectedUsername}
-      />
+      />}
     </div>
   );
 }
