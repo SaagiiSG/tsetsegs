@@ -1248,9 +1248,9 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
    frosted near-white cards, four pastel families (blue/violet/pink/orange).
    Body scope lets portalled dialogs inherit the same palette. */
 body.customer-student-portal {
-  --primary: 215 100% 65% !important;
+  --primary: 248 88% 67% !important;
   --primary-foreground: 0 0% 100% !important;
-  --ring: 215 100% 65% !important;
+  --ring: 248 88% 67% !important;
   --background: 205 85% 95%;
   --foreground: 232 29% 5%;
   --card: 206 78% 98%;
