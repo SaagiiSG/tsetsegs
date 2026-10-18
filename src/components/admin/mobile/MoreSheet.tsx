@@ -5,7 +5,7 @@ import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsDevAccount } from "@/lib/devAccount";
 import {
-  CalendarDays, QrCode, FileQuestion, BookOpen, Trophy,
+  CalendarDays, FileQuestion, BookOpen, Trophy,
   Armchair, Bug, UserPlus, Users, Settings, ClipboardList, LineChart, UserCheck, Building2,
 } from "lucide-react";
 
