@@ -1,0 +1,2 @@
+ALTER TABLE public.badges DROP CONSTRAINT IF EXISTS badges_rarity_check;
+ALTER TABLE public.badges ADD CONSTRAINT badges_rarity_check CHECK (rarity = ANY (ARRAY['common','uncommon','rare','epic','legendary','seasonal']));

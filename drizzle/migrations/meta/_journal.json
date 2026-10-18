@@ -197,6 +197,13 @@
       "when": 1792361001102,
       "tag": "0027_server_badge_rules_full_set",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792361031573,
+      "tag": "0028_badges_allow_seasonal_rarity",
+      "breakpoints": true
     }
   ]
 }
