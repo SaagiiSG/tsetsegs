@@ -31,3 +31,10 @@
 - [ ] Student: remaining main features (badges/points, mock tests, vocabulary, stats, review queue parity)
 - [ ] Teacher dashboard: homework, intense prep, proctored tests, class wrapped
 - [ ] Center admin: batch analytics, student profiles parity
+
+## Main portal scoreboard and badges (Duolingo report)
+- [x] Fix stuck speed/discipline badges reading wrong point types; seasonal badge crash; Platinum naming
+- [ ] Step 1+2 together: lock points/badges/streaks/rankings tables and move grading + awarding to server functions
+- [ ] Step 3: server-side badge checks, "seen" flags on the server, fix Week Warrior/God Amongst Human/Ruby Legend meanings
+- [ ] Step 4: 7-day sprints, safe middle zone, one group size, fix season-end drop bug, streak bonus out of league
+- [ ] Step 5: badge ladders and personal records

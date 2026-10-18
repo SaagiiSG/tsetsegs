@@ -696,7 +696,7 @@ function calculateConsecutiveDaysBoth(
   });
 
   const daysWithBoth = Object.entries(dateActivities)
-    .filter(([_, activities]) => activities.has('speed') && activities.has('practice'))
+    .filter(([_, activities]) => activities.has('speed_session') && activities.has('questions'))
     .map(([date]) => date)
     .sort();
 
