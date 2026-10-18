@@ -1270,7 +1270,7 @@ body.customer-student-portal {
   --student-shadow: 0 1px 2px hsl(220 12% 14% / .03), 0 8px 28px -16px hsl(220 12% 14% / .16);
 }
 .student-theme.customer-student-theme {
-  --student-canvas: 210 16% 97%;
+  --student-canvas: 210 16% 97%; --chip-flame: 40 92% 50%;
   --student-card: var(--card);
   --student-card-border: var(--border);
   --student-shadow: 0 1px 2px hsl(var(--foreground) / .03), 0 8px 28px -16px hsl(var(--foreground) / .16);
@@ -1320,31 +1320,29 @@ body.customer-student-portal [role="dialog"] {
    portal (body class) so portalled dialogs inherit it and other roles don't. */
 body.customer-student-portal .student-cta {
   box-shadow:
-    0 3px 0 hsl(var(--gold-halo, 46 100% 80%)),
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 80%) / .55),
-    0 0 22px hsl(var(--gold-halo, 46 100% 80%) / .55);
+    0 0 0 1px hsl(var(--primary) / .4),
+    0 0 16px hsl(var(--primary) / .32), 0 0 32px hsl(var(--primary) / .16);
 }
 body.customer-student-portal .student-cta:active {
   box-shadow:
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 80%) / .55), 0 0 14px hsl(var(--gold-halo, 46 100% 80%) / .45);
+    0 0 0 1px hsl(var(--primary) / .4), 0 0 12px hsl(var(--primary) / .28);
 }
 body.customer-student-portal button.bg-primary,
 body.customer-student-portal a.bg-primary {
   box-shadow:
     inset 0 1px 0 hsl(0 0% 100% / .4),
     0 1px 2px hsl(var(--foreground) / .08),
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 80%) / .55),
-    0 0 22px hsl(var(--gold-halo, 46 100% 80%) / .55);
+    0 0 0 1px hsl(var(--primary) / .4),
+    0 0 16px hsl(var(--primary) / .32), 0 0 32px hsl(var(--primary) / .16);
 }
 /* Small gold tiles (center logo / initials) need a tighter halo to read. */
 body.customer-student-portal span.bg-primary {
   box-shadow:
     inset 0 1px 0 hsl(0 0% 100% / .4),
-    0 0 0 1px hsl(var(--gold-halo, 46 100% 80%) / .65),
-    0 0 14px hsl(var(--gold-halo, 46 100% 80%) / .7);
+    0 0 0 1px hsl(var(--primary) / .5), 0 0 12px hsl(var(--primary) / .4);
 }
 body.customer-student-portal [role="progressbar"] > div {
-  box-shadow: 0 0 10px hsl(var(--gold-halo, 46 100% 80%) / .6);
+  box-shadow: 0 0 8px hsl(var(--primary) / .45), 0 0 16px hsl(var(--primary) / .25);
 }
 body.customer-student-portal [class~="max-h-[260px]"]:not([class*="drop-shadow-"]) {
   filter: drop-shadow(0 0 16px hsl(45 95% 55% / .35));
