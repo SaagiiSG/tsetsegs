@@ -15,7 +15,6 @@ import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosC
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
-import { AdminBackgroundPaths } from '@/components/ui/background-paths';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { StudentAnnouncements } from './StudentExtras';
@@ -155,7 +154,7 @@ export default function CenterStudentPortal() {
       {/* Mobile glass dock */}
       <nav aria-label="Student" className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5">
         {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} aria-label={label} className={({ isActive }) => `rounded-full p-2.5 transition-colors ${isActive ? 'bg-foreground text-background' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
+          <NavLink key={to} to={to} end={end} aria-label={label} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
         ))}
         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side="top" align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
       </nav>
