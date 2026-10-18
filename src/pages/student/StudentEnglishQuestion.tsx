@@ -565,7 +565,7 @@ export default function StudentEnglishQuestion() {
                     return (
                       <div 
                         key={key}
-                        className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${bgClass} ${
+                        className={`student-choice flex items-start gap-3 p-3 rounded-lg border transition-colors ${bgClass} ${
                           !submitted ? 'hover:bg-muted/50 cursor-pointer' : ''
                         }`}
                         onClick={() => !submitted && setSelectedAnswer(key)}
