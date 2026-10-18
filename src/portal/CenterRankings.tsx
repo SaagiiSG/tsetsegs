@@ -41,7 +41,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
     </div>)}</div>;
   };
   return <div className="space-y-6 max-w-5xl">
-    <header className="flex justify-between items-start gap-3"><div><h1 className="text-3xl font-bold">Leaderboard</h1><p className="text-sm text-muted-foreground mt-1">{center.name}</p></div><div className="flex items-center gap-2 admin-glass rounded-xl border px-4 py-3"><Medal className="h-5 w-5"/><span className="font-medium">{tierName(currentTier)}</span></div></header>
+    <header className="flex justify-between items-start gap-3"><div className="flex items-center gap-4"><span className="ds-tile ds-tile-gold h-12 w-12"><Trophy className="h-6 w-6" /></span><div><h1 className="text-3xl font-bold">Leaderboard</h1><p className="ds-sub">{center.name}</p></div></div><div className="student-chip"><Medal className="h-4 w-4 text-[hsl(var(--ds-orange))]"/><span className="font-semibold">{tierName(currentTier)}</span></div></header>
     <Tabs defaultValue="sprint" className="space-y-5"><TabsList className="h-auto flex flex-wrap justify-start"><TabsTrigger value="sprint">Sprint</TabsTrigger><TabsTrigger value="position">My position</TabsTrigger><TabsTrigger value="all">All-time</TabsTrigger><TabsTrigger value="history">Rank history</TabsTrigger></TabsList>
       <TabsContent value="sprint" className="space-y-4">
         <div className="flex flex-wrap gap-3">{!!sprint && <Select value={sprint.id} onValueChange={setSelected}><SelectTrigger className="w-64"><SelectValue/></SelectTrigger><SelectContent>{sprints.data?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} · {s.status}</SelectItem>)}</SelectContent></Select>}
