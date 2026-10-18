@@ -218,6 +218,13 @@
       "when": 1792361348024,
       "tag": "0030_fix_seasonal_badge_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792361697450,
+      "tag": "0031_sat_prediction_tracking_and_center_scoreboard",
+      "breakpoints": true
     }
   ]
 }

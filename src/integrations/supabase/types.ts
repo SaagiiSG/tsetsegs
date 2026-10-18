@@ -3214,6 +3214,47 @@ export type Database = {
           },
         ]
       }
+      sat_prediction_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          method: string
+          predicted_high: number | null
+          predicted_low: number | null
+          sim_score: number | null
+          snapshot_date: string
+          student_account_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method?: string
+          predicted_high?: number | null
+          predicted_low?: number | null
+          sim_score?: number | null
+          snapshot_date?: string
+          student_account_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method?: string
+          predicted_high?: number | null
+          predicted_low?: number | null
+          sim_score?: number | null
+          snapshot_date?: string
+          student_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sat_prediction_snapshots_student_account_id_fkey"
+            columns: ["student_account_id"]
+            isOneToOne: false
+            referencedRelation: "student_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_templates: {
         Row: {
           created_at: string
@@ -4879,28 +4920,34 @@ export type Database = {
       }
       tenant_attempts: {
         Row: {
+          answer: string | null
           created_at: string
           id: string
           institution_id: string
           is_correct: boolean
+          points: number | null
           question_id: string
           student_id: string
           time_spent_seconds: number | null
         }
         Insert: {
+          answer?: string | null
           created_at?: string
           id?: string
           institution_id: string
           is_correct: boolean
+          points?: number | null
           question_id: string
           student_id: string
           time_spent_seconds?: number | null
         }
         Update: {
+          answer?: string | null
           created_at?: string
           id?: string
           institution_id?: string
           is_correct?: boolean
+          points?: number | null
           question_id?: string
           student_id?: string
           time_spent_seconds?: number | null
@@ -5347,6 +5394,51 @@ export type Database = {
           },
         ]
       }
+      tenant_sat_predictions: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          method: string
+          sim_score: number | null
+          snapshot_date: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          method?: string
+          sim_score?: number | null
+          snapshot_date?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          method?: string
+          sim_score?: number | null
+          snapshot_date?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sat_predictions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_sat_predictions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_speed_runs: {
         Row: {
           category: string | null
@@ -5482,6 +5574,9 @@ export type Database = {
           institution_id: string
           name: string
           phone: string
+          real_sat_date: string | null
+          real_sat_math: number | null
+          real_sat_total: number | null
           sat_month: string | null
           user_id: string | null
         }
@@ -5493,6 +5588,9 @@ export type Database = {
           institution_id: string
           name: string
           phone: string
+          real_sat_date?: string | null
+          real_sat_math?: number | null
+          real_sat_total?: number | null
           sat_month?: string | null
           user_id?: string | null
         }
@@ -5504,6 +5602,9 @@ export type Database = {
           institution_id?: string
           name?: string
           phone?: string
+          real_sat_date?: string | null
+          real_sat_math?: number | null
+          real_sat_total?: number | null
           sat_month?: string | null
           user_id?: string | null
         }
@@ -6128,6 +6229,22 @@ export type Database = {
         Args: { _linked_student_id: string }
         Returns: string
       }
+      sat_prediction_accuracy: {
+        Args: never
+        Returns: {
+          miss: number
+          portal: string
+          predicted: number
+          predicted_on: string
+          real_date: string
+          real_math: number
+          student_ref: string
+        }[]
+      }
+      save_sat_prediction: {
+        Args: { p_high: number; p_low: number; p_sim: number }
+        Returns: undefined
+      }
       search_questions: {
         Args: {
           p_category?: string
@@ -6245,6 +6362,10 @@ export type Database = {
       }
       tenant_sat_start: { Args: { _institution: string }; Returns: string }
       tenant_sat_state: { Args: { _attempt: string }; Returns: Json }
+      tenant_save_sat_prediction: {
+        Args: { _institution: string; p_sim: number }
+        Returns: undefined
+      }
       tenant_sprint_leaderboard: {
         Args: { _sprint: string }
         Returns: {
