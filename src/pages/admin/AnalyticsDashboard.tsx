@@ -19,7 +19,7 @@ const AnalyticsDashboard = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Tsetsegs Analytics</h1>
         <p className="text-muted-foreground">
           Comprehensive insights for SAT prep platform performance and student progress.
         </p>

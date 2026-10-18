@@ -16,7 +16,8 @@ interface MoreSheetProps {
 
 const moreItems = [
   { title: "International Customers", url: "/admin/customers", icon: Building2 },
-  { title: "Analytics", url: "/admin/analytics", icon: LineChart },
+  { title: "Insights", url: "/admin/analytics", icon: LineChart },
+  { title: "Tsetsegs Analytics", url: "/admin/tsetsegs/analytics", icon: LineChart },
   { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
   { title: "Accounts", url: "/admin/students", icon: UserCheck },
   { title: "Registration Queue", url: "/admin/registration-queue", icon: UserPlus },

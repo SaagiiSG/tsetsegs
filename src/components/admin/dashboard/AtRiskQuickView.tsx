@@ -42,7 +42,7 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
             variant="ghost" 
             size="sm" 
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/admin/analytics')}
+            onClick={() => navigate('/admin/tsetsegs/analytics')}
           >
             View all
             <ChevronRight className="w-3 h-3 ml-1" />
