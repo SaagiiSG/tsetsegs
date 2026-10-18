@@ -18,11 +18,13 @@ interface ResetRequest {
 
 interface Props {
   onResolved?: () => void;
+  search?: string;
+  embedded?: boolean;
 }
 
 const last8 = (p: string | null) => (p || '').replace(/\D/g, '').slice(-8);
 
-export function PasswordResetRequestsPanel({ onResolved }: Props) {
+export function PasswordResetRequestsPanel({ onResolved, search = '', embedded = false }: Props) {
   const { toast } = useToast();
   const [requests, setRequests] = useState<ResetRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,33 +110,7 @@ export function PasswordResetRequestsPanel({ onResolved }: Props) {
     }
   };
 
-  if (!loading && requests.length === 0) return null;
-
-  return (
-    <Card className="border-primary/40">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div className="space-y-1">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <KeyRound className="h-4 w-4 text-primary" />
-            Reset requests
-            {requests.length > 0 && <Badge variant="default">{requests.length}</Badge>}
-          </CardTitle>
-          <CardDescription>
-            Students who asked for a password reset. Approving clears their password so they set a new
-            one at next login.
-          </CardDescription>
-        </div>
-        <Button variant="ghost" size="icon" onClick={fetchRequests} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {loading && requests.length === 0 ? (
-          <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading requests...
-          </div>
-        ) : (
-          requests.map((req) => (
+  const renderRow = (req: ResetRequest) => (
             <div
               key={req.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3"
@@ -169,7 +145,45 @@ export function PasswordResetRequestsPanel({ onResolved }: Props) {
                 </Button>
               </div>
             </div>
-          ))
+  );
+
+  const q = search.trim().toLowerCase();
+  const shown = q ? requests.filter(r => r.phone_number.includes(q) || (r.studentName || '').toLowerCase().includes(q) || (r.batchName || '').toLowerCase().includes(q)) : requests;
+
+  if (!loading && requests.length === 0) return embedded ? <p className="text-sm text-muted-foreground text-center py-8">No pending reset requests</p> : null;
+  if (embedded) return (
+    <div className="space-y-2">
+      {loading && requests.length === 0 ? <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading requests...</div>
+        : shown.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No requests match.</p>
+        : shown.map(req => renderRow(req))}
+    </div>
+  );
+
+  return (
+    <Card className="border-primary/40">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+        <div className="space-y-1">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <KeyRound className="h-4 w-4 text-primary" />
+            Reset requests
+            {requests.length > 0 && <Badge variant="default">{requests.length}</Badge>}
+          </CardTitle>
+          <CardDescription>
+            Students who asked for a password reset. Approving clears their password so they set a new
+            one at next login.
+          </CardDescription>
+        </div>
+        <Button variant="ghost" size="icon" onClick={fetchRequests} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {loading && requests.length === 0 ? (
+          <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading requests...
+          </div>
+        ) : (
+          requests.map((req) => renderRow(req))
         )}
       </CardContent>
     </Card>

@@ -27,7 +27,7 @@ interface Batch {
   start_date: string;
 }
 
-export function RegistrationQueue() {
+export function RegistrationQueue({ search = '', embedded = false }: { search?: string; embedded?: boolean } = {}) {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({});
@@ -136,8 +136,10 @@ export function RegistrationQueue() {
     }
   };
 
-  const pendingRequests = requests.filter(r => r.status === 'pending');
-  const processedRequests = requests.filter(r => r.status !== 'pending');
+  const q = search.trim().toLowerCase();
+  const matched = q ? requests.filter(r => r.full_name.toLowerCase().includes(q) || r.phone_number.includes(q) || (r.parent_name || '').toLowerCase().includes(q)) : requests;
+  const pendingRequests = matched.filter(r => r.status === 'pending');
+  const processedRequests = matched.filter(r => r.status !== 'pending');
 
   if (loading) {
     return (
@@ -149,10 +151,10 @@ export function RegistrationQueue() {
 
   return (
     <div className="space-y-6">
-      <div>
+      {!embedded && <div>
         <h2 className="text-2xl font-bold tracking-tight">Registration Queue</h2>
         <p className="text-muted-foreground">Review and approve student registration requests</p>
-      </div>
+      </div>}
 
       {/* Pending requests */}
       <Card>
