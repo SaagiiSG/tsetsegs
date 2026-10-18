@@ -1,4 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { Filter, CalendarDays, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BatchWizard } from './batches/BatchWizard';
+import { ScheduleTemplatesDialog } from './batches/ScheduleTemplatesDialog';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +41,9 @@ export function BatchesView() {
   const { toast } = useToast();
 
   const batchIdFromUrl = searchParams.get('batch');
+  const [wizardOpen, setWizardOpen] = useState(searchParams.get('create') === '1');
+  const [schedulesOpen, setSchedulesOpen] = useState(false);
+  const activeFilters = [selectedCourse, selectedIntake, selectedTeacher].filter(v => v !== 'all').length;
 
   useEffect(() => {
     fetchBatches();
@@ -48,7 +58,7 @@ export function BatchesView() {
           setSelectedBatch(batchToOpen);
           setDialogOpen(true);
         }
-        setSearchParams({}, { replace: true });
+        if (batchToOpen) setSearchParams({}, { replace: true });
       }
     }
   }, [batches, batchIdFromUrl]);
@@ -109,6 +119,16 @@ export function BatchesView() {
       return true;
     });
   }, [batches, selectedIntake, selectedTeacher, selectedCourse]);
+
+  const intakeTrend = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      const key = format(d, 'yyyy-MM');
+      const inMonth = batches.filter(b => b.start_date?.startsWith(key));
+      return { label: format(d, 'MMM'), batches: inMonth.length, students: inMonth.reduce((s, b) => s + (studentCounts[b.id] || 0), 0) };
+    });
+  }, [batches, studentCounts]);
 
   // Group filtered batches by month (MMM yyyy), sorted descending
   const groupedBatches = useMemo(() => {
@@ -188,66 +208,56 @@ export function BatchesView() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter Batches</CardTitle>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground [text-shadow:0_0_24px_hsl(var(--section-glow,12_85%_60%)/0.45)]">
+          Tsetsegs Batches
+        </h1>
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-3.5 w-3.5" />Filter
+                {activeFilters > 0 && <span className="font-mono text-xs rounded-full bg-muted px-1.5">{activeFilters}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-60 space-y-3">
+              {[
+                { label: 'Course', value: selectedCourse, set: setSelectedCourse, opts: [['all', 'All courses'], ['SAT', 'SAT'], ['IELTS', 'IELTS']] },
+                { label: 'Intake', value: selectedIntake, set: setSelectedIntake, opts: [['all', 'All intakes'], ...intakes.map(i => [i, i])] },
+                { label: 'Teacher', value: selectedTeacher, set: setSelectedTeacher, opts: [['all', 'All teachers'], ...teachers.map(t => [t, t])] },
+              ].map(f => (
+                <div key={f.label} className="space-y-1">
+                  <p className="text-xs text-muted-foreground">{f.label}</p>
+                  <Select value={f.value} onValueChange={f.set}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>{f.opts.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              ))}
+              {activeFilters > 0 && <Button variant="ghost" size="sm" className="w-full" onClick={() => { setSelectedCourse('all'); setSelectedIntake('all'); setSelectedTeacher('all'); }}>Clear filters</Button>}
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setSchedulesOpen(true)}><CalendarDays className="h-3.5 w-3.5" />Schedules</Button>
+          <Button size="sm" className="gap-2" onClick={() => setWizardOpen(true)}><Plus className="h-3.5 w-3.5" />New batch</Button>
+        </div>
+      </div>
+
+      <Card className="admin-glass-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Intake trend</CardTitle>
+          <CardDescription>Batches and students starting each month, last 12 months</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select course" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  <SelectItem value="SAT">
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                      SAT
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="IELTS">
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                      IELTS
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Select value={selectedIntake} onValueChange={setSelectedIntake}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select intake" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Intakes</SelectItem>
-                  {intakes.map((intake) => (
-                    <SelectItem key={intake} value={intake}>
-                      {intake}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select teacher" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Teachers</SelectItem>
-                  {teachers.map((teacher) => (
-                    <SelectItem key={teacher} value={teacher}>
-                      {teacher}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ChartContainer config={{ students: { label: 'Students', color: 'hsl(var(--foreground))' }, batches: { label: 'Batches', color: 'hsl(var(--muted-foreground))' } }} className="h-48 w-full">
+            <LineChart data={intakeTrend} margin={{ left: 0, right: 8, top: 8 }}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
+              <YAxis tickLine={false} axisLine={false} fontSize={11} width={32} allowDecimals={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line type="monotone" dataKey="students" stroke="var(--color-students)" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="batches" stroke="var(--color-batches)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+            </LineChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
@@ -294,6 +304,10 @@ export function BatchesView() {
           )}
         </CardContent>
       </Card>
+
+      <BatchWizard open={wizardOpen} onOpenChange={o => { setWizardOpen(o); if (!o && searchParams.get('create')) setSearchParams({}, { replace: true }); }}
+        onCreated={(id) => { fetchBatches().then(() => setSearchParams({ batch: id }, { replace: true })); }} />
+      <ScheduleTemplatesDialog open={schedulesOpen} onOpenChange={setSchedulesOpen} />
 
       {/* Edit Dialog (split pane) */}
       <BatchDetailsDialog
