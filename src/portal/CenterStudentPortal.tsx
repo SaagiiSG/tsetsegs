@@ -599,7 +599,7 @@ function SpeedPage({ me }: { me: Me }) {
   const answer = useCallback(async (given: string) => {
     if (!q) return;
     const ok = !!given && isCorrect(q, given);
-    record(q.id, ok, qStart - left);
+    record(q.id, ok, qStart - left, given);
     setScore(s => [...s, ok]); setI(n => n + 1); setQStart(left); setPicked(''); setTyped('');
   }, [q, record, left, qStart]);
   useEffect(() => {
