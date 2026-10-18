@@ -1,6 +1,6 @@
 # UI work
-- [ ] Restyle customer student Practice in sky/purple and replicate main Review Mistakes graphs, breakdown and history sidebar using tenant-only data.
-- [ ] Verify customer Practice and Review Mistakes with a signed-in center student.
+- [x] Restyle customer student Practice in sky/purple and replicate main Review Mistakes graphs, breakdown and history sidebar using tenant-only data; isolated desktop/mobile checks and model tests pass.
+- [ ] Verify customer Practice and Review Mistakes with a signed-in center student — available requesting account has no center student access; isolated layout checks do not verify real question loading.
 - [x] Public investor demo: isolated 15-minute stored sessions, fictional progress, student/teacher/admin experiences, automatic deletion, and end-to-end verification (answers, reload, attendance, classes, announcements, visitor isolation, mobile, cleanup and cleanup-job shutdown).
 - [x] Show a full-width SAT simulation locked island with distinct-question progress, remaining questions and a practice button in the customer student dashboard.
 - [x] Check existing demo access and provide the center testing sign-in link with its access limitation.
