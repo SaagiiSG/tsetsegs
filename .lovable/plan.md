@@ -37,9 +37,10 @@ I read the research document and checked its biggest claims against the live dat
 - Seasons stay (3 sprints), and the end-of-season drop stays. The season bug gets fixed so the drop actually happens.
 - Tier 5 is called Platinum everywhere, shown in emerald green. All "Emerald" labels get renamed.
 - Repeat answers pay 0 points once a question has already paid.
-
-## Still open (asked before step 4)
-Streak bonus counted in the league or not, badges paying points or not, and what Ruby Legend means.
+- Streak bonus points do not count in the league (shown separately as "streak bonus").
+- Badge points do count in the league.
+- Ruby rule stays: in Ruby, only #1 keeps Ruby; everyone else drops to Diamond.
+- Ruby Legend = holding Ruby for a long run of sprints in a row (proposed: 4 sprints in a row, matching the current badge text). The sprint-close step stops giving it to every Ruby group winner.
 
 These decisions will be saved to project memory when building starts.
 
