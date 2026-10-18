@@ -10,12 +10,11 @@ import { PlatformInsights } from '@/components/admin/platform/PlatformInsights';
 import { BatchOverview } from '@/components/admin/BatchOverview';
 import { BatchesView } from '@/components/admin/BatchesView';
 import { TeamManagement } from '@/components/admin/TeamManagement';
-import { StudentAccountsManagement } from '@/components/admin/StudentAccountsManagement';
 import AdminSettings from '@/pages/AdminSettings';
 import QuestionBank from '@/pages/admin/QuestionBank';
 import AdminBatchAnalytics from '@/pages/admin/AdminBatchAnalytics';
 import TeacherStudentProfile from '@/pages/TeacherStudentProfile';
-import StudentSearch from '@/pages/admin/StudentSearch';
+import StudentManagement from '@/pages/admin/StudentManagement';
 import QuestionSearch from '@/pages/admin/QuestionSearch';
 import SATSchedule from '@/pages/admin/SATSchedule';
 import BluebookManager from '@/pages/admin/BluebookManager';
@@ -35,7 +34,6 @@ import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
 import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
 import { CohortSwitcher } from '@/components/admin/CohortSwitcher';
-import { RegistrationQueue } from '@/components/admin/RegistrationQueue';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DevOnlyRoute } from '@/components/admin/DevOnlyRoute';
@@ -91,15 +89,15 @@ const Admin = () => {
       <Route path="bluebook/*" element={<DevOnlyRoute><BluebookManager /></DevOnlyRoute>} />
       <Route path="sprint-monitor" element={<SprintMonitor />} />
       <Route path="team" element={<TeamManagement />} />
-      <Route path="students" element={<StudentAccountsManagement />} />
-      <Route path="search" element={<StudentSearch />} />
+      <Route path="students" element={<StudentManagement />} />
+      <Route path="search" element={<Navigate to="/admin/students" replace />} />
       <Route path="sat-schedule" element={<SATSchedule />} />
       <Route path="student/:studentId" element={<TeacherStudentProfile />} />
       <Route path="review-sessions" element={<ReviewSessions />} />
       <Route path="ngee" element={<NGEEAdmin />} />
       <Route path="bug-reports" element={<BugReports />} />
       <Route path="announcements" element={<AdminAnnouncements />} />
-      <Route path="registration-queue" element={<RegistrationQueue />} />
+      <Route path="registration-queue" element={<Navigate to="/admin/students" replace />} />
       <Route path="database-health" element={<DatabaseHealth />} />
       <Route path="burner" element={<DevOnlyRoute><BurnerAdmin /></DevOnlyRoute>} />
       <Route path="settings" element={<AdminSettings />} />

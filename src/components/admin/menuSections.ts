@@ -42,19 +42,9 @@ export const menuSections: MenuSection[] = [
       { title: "Tsetsegs Dashboard", url: "/admin/tsetsegs/dashboard", icon: LayoutDashboard },
       { title: "Tsetsegs Analytics", url: "/admin/tsetsegs/analytics", icon: LineChart },
       { title: "Tsetsegs Batches", url: "/admin/batches", icon: GraduationCap },
+      { title: "Student Management", url: "/admin/students", icon: Users },
     ],
     defaultOpen: true,
-  },
-  {
-    label: "Students",
-    icon: Users,
-    glow: "152 60% 42%",
-    items: [
-      { title: "Search", url: "/admin/search", icon: Search },
-      { title: "Accounts", url: "/admin/students", icon: UserCheck },
-      { title: "Registration Queue", url: "/admin/registration-queue", icon: UserPlus },
-    ],
-    defaultOpen: false,
   },
   {
     label: "Tools",
