@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useCenter } from '../centerContext';
-import { useCenterAdminData } from './useCenterAdminData';
+import { useCenterAdminData, useRefreshCenter } from './useCenterAdminData';
 import { Empty, Loading, PageHeader } from './ui';
 
 const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
