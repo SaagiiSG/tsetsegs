@@ -1321,3 +1321,52 @@ body.student-portal [role="dialog"] h2 { font-family: 'Geist', sans-serif; lette
 .student-theme .admin-glass-card > [class*="liquid"], .student-theme .liquid-glass-fx { display: none; }
 .student-theme aside nav { display: flex; flex-direction: column; gap: 4px; }
 .student-theme aside nav a { min-height: 44px; }
+
+/* ===== Rest of customer student portal: DESIGN.md everywhere ===== */
+/* every progress bar becomes the glossy toy bar */
+.student-theme [role="progressbar"],
+.student-theme .rounded-full.bg-muted.overflow-hidden:is(.h-1,.h-1\.5,.h-2,.h-2\.5) {
+  height: 14px !important; background: #E5E7EB; border-radius: 999px; position: relative;
+}
+.dark .student-theme [role="progressbar"], .dark .student-theme .rounded-full.bg-muted.overflow-hidden { background: hsl(228 20% 22%); }
+.student-theme [role="progressbar"] > div,
+.student-theme .rounded-full.bg-muted.overflow-hidden:is(.h-1,.h-1\.5,.h-2,.h-2\.5) > div {
+  position: relative; border-radius: 999px; background-color: hsl(var(--ds-green)) !important; background-image: none !important;
+}
+.student-theme [role="progressbar"] > div::after,
+.student-theme .rounded-full.bg-muted.overflow-hidden:is(.h-1,.h-1\.5,.h-2,.h-2\.5) > div::after {
+  content: ''; position: absolute; top: 3px; left: 4px; right: 4px; height: 25%; border-radius: 999px; background: rgb(255 255 255 / .3);
+}
+/* page titles and section labels */
+.student-theme main h1 { font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 800; line-height: 1.15; }
+.student-theme main h2 { font-weight: 700; }
+.student-theme .text-muted-foreground { color: hsl(var(--ds-text-2)); }
+.dark .student-theme .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+/* tabs: white pill with sky text, per design */
+.student-theme [role="tab"][data-state="active"] { color: hsl(var(--primary)); }
+/* answer options per quiz spec */
+.student-theme .student-choice { border-color: #E8E8E8; box-shadow: 0 1px 2px rgb(0 0 0 / .05); border-radius: 16px; }
+.student-theme .student-choice:not(:disabled):hover { border-color: #D8D8D8; background: #F9F9F9; }
+.student-theme .student-choice.border-primary { border-color: hsl(var(--primary)); background: #F2FAFF; box-shadow: 0 0 0 2px hsl(var(--primary) / .2), 0 4px 10px rgb(0 0 0 / .06); }
+.student-theme .student-choice.border-red-500 { border-color: hsl(var(--ds-orange)); background: hsl(var(--ds-orange) / .08); }
+.student-theme .student-choice:not(:disabled):active { transform: scale(.98); }
+.dark .student-theme .student-choice:not(:disabled):hover { background: hsl(var(--muted)); }
+.dark .student-theme .student-choice.border-primary { background: hsl(var(--primary) / .12); }
+/* outline/secondary buttons: white with hard grey edge */
+.student-theme button.border.bg-background, body.student-portal [role="dialog"] button.border.bg-background {
+  border-radius: 999px; font-weight: 600; box-shadow: 0 3px 0 #E5E7EB; transition: transform .1s, box-shadow .1s;
+}
+.student-theme button.border.bg-background:active { transform: translateY(3px); box-shadow: none; }
+/* badges/pills */
+.student-theme .rounded-full.border.px-2\.5, .student-theme [class*="badge"] { font-weight: 600; }
+/* dialogs: white, radius 24, Geist */
+body.student-portal [role="dialog"] { border-radius: 24px; box-shadow: 0 24px 60px -20px rgb(15 23 42 / .35); }
+/* inputs */
+.student-theme input:not([type=checkbox]):not([type=radio]):not([type=range]), .student-theme textarea, .student-theme button[role="combobox"] {
+  border-width: 2px; border-color: #E8E8E8; border-radius: 14px;
+}
+.student-theme input:focus-visible, .student-theme textarea:focus-visible { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .2); outline: none; }
+.dark .student-theme input:not([type=checkbox]):not([type=radio]), .dark .student-theme textarea { border-color: hsl(var(--border)); }
+@media (prefers-reduced-motion: reduce) {
+  .student-theme .student-choice:not(:disabled):active, .student-theme button.border.bg-background:active { transform: none; }
+}
