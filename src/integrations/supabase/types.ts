@@ -6016,6 +6016,7 @@ export type Database = {
       }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
+      landing_public_stats: { Args: never; Returns: Json }
       live_session_find_participant: {
         Args: { p_phone: string; p_session_id: string }
         Returns: {
