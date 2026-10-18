@@ -1247,9 +1247,9 @@ body.student-portal [data-radix-popper-content-wrapper] > div { border-radius: 1
 /* Customer students: restrained institutional gold, solid learning surfaces.
    Body scope lets portalled dialogs inherit the same palette. */
 body.customer-student-portal {
-  --primary: 43 65% 48% !important;
-  --primary-foreground: 40 20% 9% !important;
-  --ring: 43 65% 40% !important;
+  --primary: 45 92% 62% !important;
+  --primary-foreground: 40 45% 12% !important;
+  --ring: 44 82% 46% !important;
   --background: 210 16% 97%;
   --foreground: 220 12% 14%;
   --card: 0 0% 100%;
@@ -1260,17 +1260,17 @@ body.customer-student-portal {
   --muted-foreground: 215 9% 40%;
   --secondary: 210 12% 94%;
   --secondary-foreground: 220 12% 20%;
-  --accent: 43 56% 92%;
-  --accent-foreground: 38 58% 28%;
+  --accent: 45 96% 95%;
+  --accent-foreground: 38 65% 25%;
   --border: 210 12% 88%;
   --input: 210 12% 85%;
-  --section-glow: 43 65% 48%;
+  --section-glow: 45 92% 62%; --gold-halo: 46 100% 82%;
   --student-card: 0 0% 100%;
   --student-card-border: 210 12% 88%;
   --student-shadow: 0 1px 2px hsl(220 12% 14% / .03), 0 8px 28px -16px hsl(220 12% 14% / .16);
 }
 .student-theme.customer-student-theme {
-  --student-canvas: 210 16% 97%;
+  --student-canvas: 210 16% 97%; --chip-flame: 40 92% 50%;
   --student-card: var(--card);
   --student-card-border: var(--border);
   --student-shadow: 0 1px 2px hsl(var(--foreground) / .03), 0 8px 28px -16px hsl(var(--foreground) / .16);
@@ -1279,8 +1279,8 @@ body.customer-student-portal {
   color: hsl(var(--foreground));
 }
 body.customer-student-portal.dark, .dark body.customer-student-portal {
-  --primary: 43 65% 62% !important;
-  --ring: 43 65% 62% !important;
+  --primary: 45 90% 68% !important;
+  --ring: 45 85% 58% !important; --gold-halo: 46 95% 74%;
   --background: 220 8% 9%;
   --foreground: 210 12% 93%;
   --card: 220 7% 13%;
@@ -1291,8 +1291,8 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
   --muted-foreground: 210 8% 66%;
   --secondary: 220 6% 18%;
   --secondary-foreground: 210 12% 93%;
-  --accent: 40 22% 19%;
-  --accent-foreground: 43 65% 72%;
+  --accent: 42 34% 20%;
+  --accent-foreground: 44 92% 76%;
   --border: 220 6% 24%;
   --input: 220 6% 29%;
   --student-card: 220 7% 13%;
@@ -1303,7 +1303,7 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
   background: hsl(var(--student-canvas));
 }
 .customer-student-theme nav a[aria-current="page"] {
-  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .35);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .45), 0 0 20px -6px hsl(var(--gold-glow, 43 95% 68%) / .55);
 }
 .customer-student-theme nav a[aria-current="page"] svg { color: hsl(var(--accent-foreground)); }
 .customer-student-theme .student-dock a[aria-current="page"] svg { color: hsl(var(--primary-foreground)); }
@@ -1314,4 +1314,40 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 body.customer-student-portal [role="dialog"] {
   border-color: hsl(var(--border));
   box-shadow: var(--student-shadow);
+}
+
+/* Brightened gold carries a soft warm halo. Scoped to the customer student
+   portal (body class) so portalled dialogs inherit it and other roles don't. */
+body.customer-student-portal .student-cta {
+  box-shadow:
+    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45),
+    0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .55), 0 0 34px hsl(var(--gold-halo, 46 100% 82%) / .3);
+}
+body.customer-student-portal .student-cta:active {
+  box-shadow:
+    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45), 0 0 12px hsl(var(--gold-halo, 46 100% 82%) / .4);
+}
+body.customer-student-portal button.bg-primary,
+body.customer-student-portal a.bg-primary {
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / .4),
+    0 1px 2px hsl(var(--foreground) / .08),
+    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .45),
+    0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .55), 0 0 34px hsl(var(--gold-halo, 46 100% 82%) / .3);
+}
+/* Small gold tiles (center logo / initials) need a tighter halo to read. */
+body.customer-student-portal span.bg-primary {
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / .4),
+    0 0 0 1px hsl(var(--gold-halo, 46 100% 82%) / .6), 0 0 12px hsl(var(--gold-halo, 46 100% 82%) / .65);
+}
+body.customer-student-portal [role="progressbar"] > div {
+  box-shadow: 0 0 8px hsl(var(--gold-halo, 46 100% 82%) / .6), 0 0 18px hsl(var(--gold-halo, 46 100% 82%) / .35);
+}
+body.customer-student-portal [class~="max-h-[260px]"]:not([class*="drop-shadow-"]) {
+  filter: drop-shadow(0 0 16px hsl(45 95% 55% / .35));
+}
+@media (prefers-reduced-motion: reduce) {
+  body.customer-student-portal .student-cta,
+  body.customer-student-portal .student-cta:active { transition: none; transform: none; }
 }
