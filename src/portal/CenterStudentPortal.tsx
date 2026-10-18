@@ -298,7 +298,7 @@ function HomePage({ me }: { me: Me }) {
           ))}
         </Glass>
         <button onClick={() => navigate('/student/videos')} className="text-left group">
-          <Glass className="h-full space-y-4 transition-transform group-hover:-translate-y-0.5">
+          <Glass className="sky-decor h-full space-y-4 transition-transform group-hover:-translate-y-0.5" style={{ '--wave': `url(${CARD_WAVES.violet})` } as React.CSSProperties}>
             <div className="flex items-center gap-3">
               <span className="sky-tile sky-tile-video"><PlayCircle /></span>
               <div><p className="text-lg font-bold leading-tight">Concept videos</p><p className="text-sm text-muted-foreground">Your video roadmap</p></div>
