@@ -1274,6 +1274,7 @@ body.customer-student-portal {
   --glow-accent: 0 8px 16px -6px hsl(248 90% 68% / .45);
   --glow-violet: 0 8px 16px -6px hsl(240 90% 75% / .45);
   --glow-pink: 0 8px 16px -6px hsl(304 70% 77% / .45);
+  --glow-sky: 0 8px 16px -6px hsl(212 92% 58% / .45);
   --student-card: 206 78% 98%;
   --student-card-border: 206 78% 98%;
   --student-shadow: var(--shadow-card);
@@ -1392,6 +1393,8 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .sky-btn:active { transform: scale(.97); }
 .sky-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
 .sky-btn-blue   { background: linear-gradient(180deg, #A18FFB, #7B68F4); box-shadow: var(--glow-accent); }
+.sky-btn-sky    { background: linear-gradient(180deg, #74B3FF, #4B95FF); box-shadow: var(--glow-sky); }
+.dark .sky-btn-sky { background: linear-gradient(180deg, #86BEFF, #5B9FFF); }
 .sky-btn-violet { background: linear-gradient(170deg, #A3A0FC, #8C94FB 70%, #AC96FB); box-shadow: var(--glow-violet); }
 .sky-btn-pink   { background: linear-gradient(90deg, #C6A5FB, #ED9AE8); box-shadow: var(--glow-pink); }
 
