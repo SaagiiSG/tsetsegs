@@ -5,6 +5,7 @@ import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import { Button } from '@/components/ui/button';
 import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from './tierAssets';
 
 interface SprintEndCelebrationProps {
   isOpen: boolean;
