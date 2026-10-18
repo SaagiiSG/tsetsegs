@@ -6156,6 +6156,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      student_badge_earned: {
+        Args: { p_badge: string; p_student: string }
+        Returns: boolean
+      }
       student_inherited_tier: {
         Args: { p_sprint: string; p_student: string }
         Returns: string

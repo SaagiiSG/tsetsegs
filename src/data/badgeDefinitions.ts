@@ -579,7 +579,7 @@ export const badgeDefinitions: BadgeDefinition[] = [
     name: 'Week Warrior',
     description: 'Maintain a 7-day study streak',
     rarity: 'uncommon',
-    pointValue: 500,
+    pointValue: 70,
     iconName: 'Flame',
     category: 'streak',
     requirements: [

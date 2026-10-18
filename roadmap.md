@@ -42,4 +42,5 @@
 - [x] Student sign-in moved to the server (secret token, one device, 90-day lock)
 - [x] Student accounts and sign-in records locked; passwords moved to server-only store
 - [x] Scoreboard locked: server grades answers, decides points, updates league totals
-- [ ] Server-side badge checks + fix mixed-up badge rules (next)
+- [x] Server-side badge checks (streak badges verified; others server-only), badge points paid once into the league, Week Warrior = 70
+- [ ] Add missing badges (speed, practice, monthly) to the database with server checks; store "celebration seen" on the server
