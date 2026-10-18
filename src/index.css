@@ -1189,6 +1189,8 @@ body.student-portal [role="dialog"] {
 .student-choice.border-primary .student-choice-letter { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
 .student-theme textarea, .student-theme input:not([type=checkbox]):not([type=radio]) { border-radius: 14px; }
 body.student-portal [data-vaul-drawer], body.student-portal [role="dialog"][data-state] { overflow: hidden; }
+/* Dialogs that explicitly ask to scroll must win over the clip rule above. */
+body.student-portal [role="dialog"][data-state].overflow-y-auto { overflow-y: auto; }
 .student-theme kbd { border-radius: 6px; box-shadow: 0 2px 0 hsl(var(--border)); }
 @media (prefers-reduced-motion: reduce) { .student-choice:not(:disabled):active { transform: none; } }
 
