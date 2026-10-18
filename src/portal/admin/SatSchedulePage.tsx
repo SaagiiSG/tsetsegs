@@ -6,11 +6,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useCenter } from '../centerContext';
 import { useCenterAdminData } from './useCenterAdminData';
-import { Empty, Loading, PageHeader, Section } from './ui';
+import { Empty, Loading, PageHeader } from './ui';
 
 const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
@@ -128,7 +127,7 @@ export function SatSchedulePage() {
         </div>
       </Section>
 
-      <Section>
+      <section className="admin-glass-card rounded-xl border p-5">
         {list.length === 0 ? (
           <Empty title={`No students planned for ${selLabel}`} description="Open a student's SAT month picker below to assign one." />
         ) : (
