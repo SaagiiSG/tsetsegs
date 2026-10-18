@@ -37,7 +37,8 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Bell, PanelLeftClose, PanelLeftOpen, GripVertical, GripHorizontal } from 'lucide-react';
+import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -136,37 +137,46 @@ function ProfileCard({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/** Floating dock for phones/iPad that the student can drag out of the way; position is remembered. */
+type DockEdge = 'bottom' | 'top' | 'left' | 'right';
+const DOCK_ALIGN: Record<DockEdge, string> = {
+  bottom: 'items-end justify-center pb-3', top: 'items-start justify-center pt-3',
+  left: 'items-center justify-start pl-3', right: 'items-center justify-end pr-3',
+};
+const DOCK_SPRING = { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.8 };
+const DOCK_KEY = 'center_dock_edge';
+
+/** Floating dock for phones/iPad: drag the handle and it snaps to the nearest screen edge (vertical on left/right). */
 function MovableDock() {
-  const key = 'center_dock_pos';
-  const [pos, setPos] = useState<{ x: number; y: number }>(() => { try { return JSON.parse(localStorage.getItem(key) || '') } catch { return { x: 0, y: 0 }; } });
-  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
-  const justDragged = useRef(false);
-  const onDown = (e: React.PointerEvent) => {
-    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, moved: false };
+  const [edge, setEdge] = useState<DockEdge>(() => {
+    const v = localStorage.getItem(DOCK_KEY);
+    return v === 'top' || v === 'left' || v === 'right' ? v : 'bottom';
+  });
+  const x = useMotionValue(0), y = useMotionValue(0);
+  const controls = useDragControls();
+  const vertical = edge === 'left' || edge === 'right';
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    const w = window.innerWidth, h = window.innerHeight, px = info.point.x, py = info.point.y;
+    const d: Record<DockEdge, number> = { left: px / w, right: 1 - px / w, top: py / h, bottom: 1 - py / h };
+    const next = (Object.keys(d) as DockEdge[]).reduce((a, b) => (d[a] < d[b] ? a : b));
+    animate(x, 0, DOCK_SPRING); animate(y, 0, DOCK_SPRING);
+    setEdge(next); localStorage.setItem(DOCK_KEY, next);
   };
-  const onMove = (e: React.PointerEvent) => {
-    const d = drag.current; if (!d) return;
-    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
-    if (!d.moved && Math.hypot(dx, dy) < 10) return;
-    if (!d.moved) { d.moved = true; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); }
-    const mx = window.innerWidth / 2 - 40, my = window.innerHeight - 80;
-    setPos({ x: Math.max(-mx, Math.min(mx, d.ox + dx)), y: Math.max(-my, Math.min(0, d.oy + dy)) });
-  };
-  const onUp = (e: React.PointerEvent) => {
-    const d = drag.current; drag.current = null; justDragged.current = !!d?.moved;
-    if (d?.moved) { e.preventDefault(); localStorage.setItem(key, JSON.stringify(pos)); }
-  };
+  const side = edge === 'left' ? 'right' : edge === 'right' ? 'left' : edge === 'top' ? 'bottom' : 'top';
   return (
-    <nav aria-label="Student" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onClickCapture={e => { if (justDragged.current) { e.preventDefault(); e.stopPropagation(); justDragged.current = false; } }}
-      style={{ transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)`, touchAction: 'none' }}
-      className="lg:hidden fixed bottom-3 left-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5 cursor-grab active:cursor-grabbing select-none">
-      <span aria-hidden className="mx-1 h-6 w-1 rounded-full bg-foreground/20" />
-      {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
-        <NavLink key={to} to={to} end={end} aria-label={label} draggable={false} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
-      ))}
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side="top" align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-    </nav>
+    <div className={`lg:hidden fixed inset-0 z-40 flex pointer-events-none ${DOCK_ALIGN[edge]}`}>
+      <motion.nav aria-label="Student" layout transition={DOCK_SPRING} drag dragListener={false} dragControls={controls}
+        dragMomentum={false} dragElastic={0.15} onDragEnd={onDragEnd} whileDrag={{ scale: 1.05 }} style={{ x, y }}
+        className={`pointer-events-auto select-none student-dock rounded-full p-1.5 flex items-center gap-0.5 ${vertical ? 'flex-col' : 'flex-row'}`}>
+        <button type="button" aria-label="Drag dock" onPointerDown={e => controls.start(e)}
+          className={`touch-none cursor-grab active:cursor-grabbing grid place-items-center text-foreground/50 ${vertical ? 'h-6 w-9' : 'h-9 w-6'}`}>
+          {vertical ? <GripHorizontal className="h-4 w-4" /> : <GripVertical className="h-4 w-4" />}
+        </button>
+        {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
+          <NavLink key={to} to={to} end={end} aria-label={label} draggable={false} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
+        ))}
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side={side} align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      </motion.nav>
+    </div>
   );
 }
 
