@@ -1,3 +1,5 @@
+import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
+import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +13,7 @@ import { Link } from 'react-router-dom';
 type Step = 'form' | 'submitted' | 'already_pending' | 'already_registered';
 
 export default function StudentRegistration() {
+  const { text } = usePublicLanguage();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
   const [parentName, setParentName] = useState('');
@@ -22,15 +25,15 @@ export default function StudentRegistration() {
     e.preventDefault();
 
     if (phoneNumber.length !== 8) {
-      toast({ title: 'Утасны дугаар буруу', description: '8 оронтой утасны дугаар оруулна уу', variant: 'destructive' });
+      toast({ title: text('Утасны дугаар буруу', 'Invalid phone number'), description: text('8 оронтой утасны дугаар оруулна уу', 'Enter an 8-digit phone number'), variant: 'destructive' });
       return;
     }
     if (fullName.trim().length < 2) {
-      toast({ title: 'Нэрээ оруулна уу', description: 'Бүтэн нэрээ оруулна уу', variant: 'destructive' });
+      toast({ title: text('Нэрээ оруулна уу', 'Enter your name'), description: text('Бүтэн нэрээ оруулна уу', 'Enter your full name'), variant: 'destructive' });
       return;
     }
     if (parentName.trim().length < 2) {
-      toast({ title: 'Эцэг/эхийн нэр', description: 'Эцэг эсвэл эхийн нэрийг оруулна уу', variant: 'destructive' });
+      toast({ title: text('Эцэг/эхийн нэр', 'Parent name'), description: text('Эцэг эсвэл эхийн нэрийг оруулна уу', 'Enter your parent’s name'), variant: 'destructive' });
       return;
     }
 
@@ -72,7 +75,7 @@ export default function StudentRegistration() {
           return;
         }
         if (existingRequest.status === 'rejected') {
-          toast({ title: 'Хүсэлт татгалзагдсан', description: 'Таны өмнөх хүсэлт татгалзагдсан. Багштайгаа холбогдоно уу.', variant: 'destructive' });
+          toast({ title: text('Хүсэлт татгалзагдсан', 'Request declined'), description: text('Таны өмнөх хүсэлт татгалзагдсан. Багштайгаа холбогдоно уу.', 'Your previous request was declined. Contact your teacher.'), variant: 'destructive' });
           setIsLoading(false);
           return;
         }
@@ -99,30 +102,30 @@ export default function StudentRegistration() {
       }
     } catch (err: any) {
       console.error('Registration request error:', err);
-      toast({ title: 'Алдаа гарлаа', description: 'Дахин оролдоно уу', variant: 'destructive' });
+      toast({ title: text('Алдаа гарлаа', 'Something went wrong'), description: text('Дахин оролдоно уу', 'Please try again'), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const renderForm = () => (
-    <Card className="border-0 shadow-lg">
+    <Card className="border-0 shadow-none">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Бүртгүүлэх</CardTitle>
+        <CardTitle className="text-2xl text-center">{text('Бүртгүүлэх', 'Sign up')}</CardTitle>
         <CardDescription className="text-center">
-          Мэдээллээ оруулаад хүсэлт илгээнэ үү. Багш таны хүсэлтийг шалгаж баталгаажуулна.
+          {text('Мэдээллээ оруулаад хүсэлт илгээнэ үү. Багш таны хүсэлтийг шалгаж баталгаажуулна.', 'Send your details for teacher approval.')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Бүтэн нэр</Label>
+            <Label htmlFor="fullName">{text('Бүтэн нэр', 'Full name')}</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Таны бүтэн нэр"
+                placeholder={text('Таны бүтэн нэр', 'Your full name')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="pl-10"
@@ -132,7 +135,7 @@ export default function StudentRegistration() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Утасны дугаар</Label>
+            <Label htmlFor="phone">{text('Утасны дугаар', 'Phone number')}</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -146,18 +149,18 @@ export default function StudentRegistration() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Энэ дугаараар нэвтрэх болно
+              {text('Энэ дугаараар нэвтрэх болно', 'Use this phone number to sign in')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="parentName">Эцэг/эхийн нэр</Label>
+            <Label htmlFor="parentName">{text('Эцэг/эхийн нэр', 'Parent name')}</Label>
             <div className="relative">
               <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="parentName"
                 type="text"
-                placeholder="Эцэг эсвэл эхийн нэр"
+                placeholder={text('Эцэг эсвэл эхийн нэр', 'Your parent’s name')}
                 value={parentName}
                 onChange={(e) => setParentName(e.target.value)}
                 className="pl-10"
@@ -168,16 +171,16 @@ export default function StudentRegistration() {
 
           <Button
             type="submit"
-            className="w-full h-12 text-lg"
+            className="w-full h-12 text-lg rounded-full"
             disabled={isLoading || phoneNumber.length !== 8 || fullName.trim().length < 2 || parentName.trim().length < 2}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Илгээж байна...
+                {text('Илгээж байна...', 'Sending...')}
               </>
             ) : (
-              'Хүсэлт илгээх'
+              text('Хүсэлт илгээх', 'Send request')
             )}
           </Button>
         </form>
@@ -185,7 +188,7 @@ export default function StudentRegistration() {
         <div className="mt-6 text-center">
           <Link to="/practice" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
             <ArrowLeft className="h-3 w-3" />
-            Нэвтрэх хуудас руу буцах
+            {text('Нэвтрэх хуудас руу буцах', 'Back to sign in')}
           </Link>
         </div>
       </CardContent>
@@ -193,16 +196,16 @@ export default function StudentRegistration() {
   );
 
   const renderSubmitted = () => (
-    <Card className="border-0 shadow-lg">
+    <Card className="border-0 shadow-none">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
             <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <CardTitle className="text-2xl">Хүсэлт илгээгдлээ!</CardTitle>
+        <CardTitle className="text-2xl">{text('Хүсэлт илгээгдлээ!', 'Request sent!')}</CardTitle>
         <CardDescription>
-          Таны бүртгэлийн хүсэлт амжилттай илгээгдлээ. Багш шалгаж баталгаажуулсны дараа нэвтрэх боломжтой болно.
+          {text('Таны бүртгэлийн хүсэлт амжилттай илгээгдлээ. Багш шалгаж баталгаажуулсны дараа нэвтрэх боломжтой болно.', 'Your request was sent. You can sign in after your teacher approves it.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -213,7 +216,7 @@ export default function StudentRegistration() {
         <Link to="/practice">
           <Button variant="outline" className="w-full">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Нэвтрэх хуудас руу буцах
+            {text('Нэвтрэх хуудас руу буцах', 'Back to sign in')}
           </Button>
         </Link>
       </CardContent>
@@ -221,23 +224,23 @@ export default function StudentRegistration() {
   );
 
   const renderAlreadyPending = () => (
-    <Card className="border-0 shadow-lg">
+    <Card className="border-0 shadow-none">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
             <Clock className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <CardTitle className="text-2xl">Хүсэлт хүлээгдэж байна</CardTitle>
+        <CardTitle className="text-2xl">{text('Хүсэлт хүлээгдэж байна', 'Awaiting approval')}</CardTitle>
         <CardDescription>
-          Энэ дугаараар хүсэлт аль хэдийн илгээгдсэн байна. Багш шалгаж баталгаажуулахыг хүлээнэ үү.
+          {text('Энэ дугаараар хүсэлт аль хэдийн илгээгдсэн байна. Багш шалгаж баталгаажуулахыг хүлээнэ үү.', 'A request already exists for this number. Please wait for teacher approval.')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Link to="/practice">
           <Button variant="outline" className="w-full">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Нэвтрэх хуудас руу буцах
+            {text('Нэвтрэх хуудас руу буцах', 'Back to sign in')}
           </Button>
         </Link>
       </CardContent>
@@ -245,22 +248,22 @@ export default function StudentRegistration() {
   );
 
   const renderAlreadyRegistered = () => (
-    <Card className="border-0 shadow-lg">
+    <Card className="border-0 shadow-none">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
             <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <CardTitle className="text-2xl">Бүртгэлтэй байна</CardTitle>
+        <CardTitle className="text-2xl">{text('Бүртгэлтэй байна', 'Already registered')}</CardTitle>
         <CardDescription>
-          Энэ дугаар аль хэдийн бүртгэгдсэн байна. Шууд нэвтрэх боломжтой.
+          {text('Энэ дугаар аль хэдийн бүртгэгдсэн байна. Шууд нэвтрэх боломжтой.', 'This number is registered. You can sign in.')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Link to="/practice">
           <Button className="w-full">
-            Нэвтрэх
+            {text('Нэвтрэх', 'Sign in')}
           </Button>
         </Link>
       </CardContent>
@@ -268,7 +271,7 @@ export default function StudentRegistration() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <AuthSplitLayout headline="FlowersOS">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
@@ -277,7 +280,7 @@ export default function StudentRegistration() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground">SAT Practice</h1>
-          <p className="text-muted-foreground text-sm">Шинэ сурагч бүртгүүлэх</p>
+          <p className="text-muted-foreground text-sm">{text('Шинэ сурагч бүртгүүлэх', 'New student signup')}</p>
         </div>
 
         {step === 'form' && renderForm()}
@@ -285,6 +288,6 @@ export default function StudentRegistration() {
         {step === 'already_pending' && renderAlreadyPending()}
         {step === 'already_registered' && renderAlreadyRegistered()}
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

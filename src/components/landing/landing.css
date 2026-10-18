@@ -9,6 +9,8 @@
   --primary: 0 0% 9%;
   --primary-foreground: 0 0% 100%;
   --accent: 215 100% 65%;
+  --input: 0 0% 82%;
+  --ring: 219 70% 47%;
   --accent-foreground: 219 70% 47%;
   --lv-sky: 204 85% 95%;
   --lv-blue: 214 82% 94%; --lv-blue-ink: 219 70% 47%;
@@ -35,3 +37,6 @@
 .lv-green { background: hsl(var(--lv-green)); color: hsl(var(--lv-green-ink)); }
 .landing-v2 .lv-clouds { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .landing-v2 .lv-clouds img { position: absolute; left: 0; width: 100%; height: auto; }
+
+.landing-v2 .auth-sky { background: hsl(var(--lv-sky)); }
+.landing-v2.auth-public h1, .landing-v2.auth-public h2 { font-family: Chillax, system-ui, sans-serif; letter-spacing: 0; }

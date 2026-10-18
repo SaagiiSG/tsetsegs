@@ -1,3 +1,4 @@
+import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ const isPasswordValid = (password: string) => {
 };
 
 export default function StudentPortal() {
+  const { text } = usePublicLanguage();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -82,8 +84,8 @@ export default function StudentPortal() {
 
     if (digitsOnly(phoneNumber).length < 8) {
       toast({
-        title: 'Invalid phone number',
-        description: 'Please enter your full phone number',
+        title: text('Утасны дугаар буруу', 'Invalid phone number'),
+        description: text('Утасны дугаараа бүтнээр оруулна уу', 'Please enter your full phone number'),
         variant: 'destructive'
       });
       return;
@@ -91,8 +93,8 @@ export default function StudentPortal() {
 
     if (!password) {
       toast({
-        title: 'Password required',
-        description: 'Please enter your password',
+        title: text('Нууц үг шаардлагатай', 'Password required'),
+        description: text('Нууц үгээ оруулна уу', 'Please enter your password'),
         variant: 'destructive'
       });
       return;
@@ -104,7 +106,7 @@ export default function StudentPortal() {
 
     if (result.error) {
       toast({
-        title: 'Error',
+        title: text('Алдаа', 'Error'),
         description: result.error,
         variant: 'destructive'
       });
@@ -123,7 +125,7 @@ export default function StudentPortal() {
 
     if (error) {
       toast({
-        title: 'Login failed',
+        title: text('Нэвтрэхэд алдаа гарлаа', 'Login failed'),
         description: error,
         variant: 'destructive'
       });
@@ -137,8 +139,8 @@ export default function StudentPortal() {
     
     if (!isPasswordValid(password)) {
       toast({
-        title: 'Invalid password',
-        description: 'Password must meet all requirements',
+        title: text('Нууц үг буруу', 'Invalid password'),
+        description: text('Нууц үг бүх шаардлагыг хангасан байх ёстой', 'Password must meet all requirements'),
         variant: 'destructive'
       });
       return;
@@ -146,8 +148,8 @@ export default function StudentPortal() {
 
     if (password !== confirmPassword) {
       toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure both passwords are the same',
+        title: text('Нууц үг таарахгүй байна', 'Passwords do not match'),
+        description: text('Хоёр нууц үг ижил байх ёстой', 'Please make sure both passwords are the same'),
         variant: 'destructive'
       });
       return;
@@ -159,7 +161,7 @@ export default function StudentPortal() {
     
     if (error) {
       toast({
-        title: 'Failed to set password',
+        title: text('Нууц үг тохируулж чадсангүй', 'Failed to set password'),
         description: error,
         variant: 'destructive'
       });
@@ -173,8 +175,8 @@ export default function StudentPortal() {
 
     if (!fullName.trim() || fullName.trim().length < 2) {
       toast({
-        title: 'Invalid name',
-        description: 'Please enter your full name',
+        title: text('Нэр буруу', 'Invalid name'),
+        description: text('Бүтэн нэрээ оруулна уу', 'Please enter your full name'),
         variant: 'destructive'
       });
       return;
@@ -186,14 +188,14 @@ export default function StudentPortal() {
 
     if (error) {
       toast({
-        title: 'Error',
+        title: text('Алдаа', 'Error'),
         description: error,
         variant: 'destructive'
       });
     } else {
       toast({
-        title: 'Request submitted!',
-        description: 'Your teacher will review your request shortly.'
+        title: text('Хүсэлт илгээгдлээ!', 'Request submitted!'),
+        description: text('Багш удахгүй таны хүсэлтийг шалгана.', 'Your teacher will review your request shortly.')
       });
     }
 
@@ -212,48 +214,48 @@ export default function StudentPortal() {
   const renderLoginStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Student Login</h2>
-        <p className="text-sm text-white/50">
-          Enter your phone number and password to access practice questions
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Сурагч нэвтрэх', 'Student Login')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {text('Утасны дугаар, нууц үгээ оруулж нэвтэрнэ үү', 'Enter your phone number and password to access practice questions')}
         </p>
       </div>
       <form onSubmit={handleLogin} className="space-y-8">
         <div className="space-y-2">
-          <Label htmlFor="phone" className={authLabelClasses}>Phone Number</Label>
+          <Label htmlFor="phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone Number')}</Label>
           <div className="relative">
-            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="phone"
               type="tel"
               placeholder="99112233"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
-              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
               maxLength={20}
             />
           </div>
-          <p className="text-xs text-white/40">
-            Use the phone number registered with your class.
+          <p className="text-xs text-muted-foreground">
+            {text('Ангидаа бүртгүүлсэн утасны дугаараа ашиглана уу.', 'Use the phone number registered with your class.')}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className={authLabelClasses}>Password</Label>
+          <Label htmlFor="password" className={authLabelClasses}>{text('Нууц үг', 'Password')}</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder={text('Нууц үгээ оруулна уу', 'Enter your password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7 pr-10")}
+              className={cn(authInputClasses, "pl-10 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -270,10 +272,10 @@ export default function StudentPortal() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                {text('Нэвтэрч байна...', 'Signing in...')}
               </>
             ) : (
-              'Sign In'
+              text('Нэвтрэх', 'Sign In')
             )}
           </Button>
           <Button
@@ -282,7 +284,7 @@ export default function StudentPortal() {
             className={authGhostButtonClasses}
             onClick={() => setForgotPassword(true)}
           >
-            Forgot password?
+            {text('Нууц үгээ мартсан уу?', 'Forgot password?')}
           </Button>
         </div>
       </form>
@@ -292,35 +294,35 @@ export default function StudentPortal() {
   const renderRegistrationRequestStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <button
+        <Button variant="ghost"
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request Access</h2>
-        <p className="text-sm text-white/50">
-          This phone number ({pendingPhone}) isn't registered yet. Submit your name and your teacher will approve your access.
+          <ArrowLeft className="h-3.5 w-3.5" /> {text('Буцах', 'Back')}
+        </Button>
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Эрх хүсэх', 'Request Access')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {text(`Энэ дугаар (${pendingPhone}) бүртгэлгүй байна. Нэрээ илгээж багшийн зөвшөөрлийг хүлээнэ үү.`, `This phone number (${pendingPhone}) isn't registered yet. Submit your name for teacher approval.`)}
         </p>
       </div>
       <form onSubmit={handleRegistrationRequest} className="space-y-8">
         <div className="space-y-2">
-          <Label htmlFor="fullName" className={authLabelClasses}>Full Name</Label>
+          <Label htmlFor="fullName" className={authLabelClasses}>{text('Бүтэн нэр', 'Full Name')}</Label>
           <div className="relative">
-            <User className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="fullName"
               type="text"
-              placeholder="Enter your full name"
+              placeholder={text('Бүтэн нэрээ оруулна уу', 'Enter your full name')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={cn(authInputClasses, "pl-7")}
+              className={cn(authInputClasses, "pl-10")}
               maxLength={100}
             />
           </div>
-          <p className="text-xs text-white/40">
-            Use the name your teacher knows you by
+          <p className="text-xs text-muted-foreground">
+            {text('Багшийн тань мэдэх нэрийг ашиглана уу', 'Use the name your teacher knows you by')}
           </p>
         </div>
 
@@ -332,10 +334,10 @@ export default function StudentPortal() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Submitting...
+              {text('Илгээж байна...', 'Submitting...')}
             </>
           ) : (
-            'Request Access'
+            text('Эрх хүсэх', 'Request Access')
           )}
         </Button>
       </form>
@@ -345,18 +347,18 @@ export default function StudentPortal() {
   const renderPendingApprovalStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-          <Clock className="h-7 w-7 text-white/70" />
+        <div className="h-14 w-14 rounded-full bg-muted border border-border flex items-center justify-center">
+          <Clock className="h-7 w-7 text-muted-foreground" />
         </div>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Pending Approval</h2>
-        <p className="text-sm text-white/50">
-          Your registration request has been submitted. Your teacher will review it shortly.
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Баталгаажуулалт хүлээж байна', 'Pending Approval')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {text('Таны хүсэлт илгээгдлээ. Багш удахгүй шалгана.', 'Your registration request has been submitted. Your teacher will review it shortly.')}
         </p>
       </div>
       <div className="space-y-6">
-        <div className="border-b border-white/10 pb-4">
-          <p className="text-sm text-white/50">Phone: <span className="font-mono font-medium text-white">{pendingPhone}</span></p>
-          <p className="text-xs text-white/40 mt-1">You'll be able to log in once approved</p>
+        <div className="border-b border-border pb-4">
+          <p className="text-sm text-muted-foreground">{text('Утас:', 'Phone:')} <span className="font-mono font-medium text-foreground">{pendingPhone}</span></p>
+          <p className="text-xs text-muted-foreground mt-1">{text('Баталгаажуулсны дараа нэвтрэх боломжтой', "You'll be able to log in once approved")}</p>
         </div>
         <Button
           variant="ghost"
@@ -364,7 +366,7 @@ export default function StudentPortal() {
           onClick={handleBack}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Login
+          {text('Нэвтрэх хуудас руу буцах', 'Back to Login')}
         </Button>
       </div>
     </AuthGlassCard>
@@ -373,36 +375,36 @@ export default function StudentPortal() {
   const renderSetPasswordStep = () => (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <button
+        <Button variant="ghost"
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Set Your Password</h2>
-        <p className="text-sm text-white/50">
-          Create a password for your account ({pendingPhone})
+          <ArrowLeft className="h-3.5 w-3.5" /> {text('Буцах', 'Back')}
+        </Button>
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Нууц үгээ тохируулах', 'Set Your Password')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {text(`Бүртгэлдээ нууц үг үүсгэнэ үү (${pendingPhone})`, `Create a password for your account (${pendingPhone})`)}
         </p>
       </div>
       <form onSubmit={handleSetPassword} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="new-password" className={authLabelClasses}>Password</Label>
+          <Label htmlFor="new-password" className={authLabelClasses}>{text('Нууц үг', 'Password')}</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="new-password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Create a strong password"
+              placeholder={text('Хүчтэй нууц үг үүсгэнэ үү', 'Create a strong password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7 pr-10")}
+              className={cn(authInputClasses, "pl-10 pr-10")}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white/50 hover:text-white hover:bg-transparent"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -412,31 +414,31 @@ export default function StudentPortal() {
 
         {/* Password requirements */}
         <div className="space-y-1.5 text-xs">
-          <p className="text-white/50 font-medium">Password must have:</p>
+          <p className="text-muted-foreground font-medium">{text('Нууц үг дараах шаардлагатай:', 'Password must have:')}</p>
           <div className="grid grid-cols-2 gap-1">
-            <PasswordRule met={passwordValidation.minLength} text="8+ characters" />
-            <PasswordRule met={passwordValidation.hasUppercase} text="Uppercase letter" />
-            <PasswordRule met={passwordValidation.hasLowercase} text="Lowercase letter" />
-            <PasswordRule met={passwordValidation.hasNumber} text="Number" />
-            <PasswordRule met={passwordValidation.hasSpecial} text="Special character" />
+            <PasswordRule met={passwordValidation.minLength} text={text('8 ба түүнээс олон тэмдэгт', '8+ characters')} />
+            <PasswordRule met={passwordValidation.hasUppercase} text={text('Том үсэг', 'Uppercase letter')} />
+            <PasswordRule met={passwordValidation.hasLowercase} text={text('Жижиг үсэг', 'Lowercase letter')} />
+            <PasswordRule met={passwordValidation.hasNumber} text={text('Тоо', 'Number')} />
+            <PasswordRule met={passwordValidation.hasSpecial} text={text('Тусгай тэмдэгт', 'Special character')} />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirm-password" className={authLabelClasses}>Confirm Password</Label>
+          <Label htmlFor="confirm-password" className={authLabelClasses}>{text('Нууц үг давтах', 'Confirm Password')}</Label>
           <div className="relative">
-            <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="confirm-password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Confirm your password"
+              placeholder={text('Нууц үгээ давтана уу', 'Confirm your password')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={cn(authInputClasses, "pl-7")}
+              className={cn(authInputClasses, "pl-10")}
             />
           </div>
           {confirmPassword && password !== confirmPassword && (
-            <p className="text-xs text-red-400">Passwords do not match</p>
+            <p className="text-xs text-destructive">{text('Нууц үг таарахгүй байна', 'Passwords do not match')}</p>
           )}
         </div>
 
@@ -448,10 +450,10 @@ export default function StudentPortal() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Setting up...
+              {text('Тохируулж байна...', 'Setting up...')}
             </>
             ) : (
-              'Create Account & Start Practicing'
+              text('Бүртгэл үүсгэж дасгаллах', 'Create Account & Start Practicing')
             )}
           </Button>
         </form>
@@ -480,8 +482,8 @@ export default function StudentPortal() {
               resetAuthFlow();
               setPassword('');
               toast({
-                title: 'Password reset',
-                description: 'Please log in with your new password.',
+                title: text('Нууц үг сэргээгдлээ', 'Password reset'),
+                description: text('Шинэ нууц үгээрээ нэвтэрнэ үү.', 'Please log in with your new password.'),
               });
             }}
           />
@@ -495,11 +497,11 @@ export default function StudentPortal() {
         )}
 
         <div className="text-center space-y-1">
-          <Link to="/student-register" className="text-sm text-white/80 hover:text-white hover:underline">
-            Шинээр бүртгүүлэх
+          <Link to="/student-register" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+            {text('Шинээр бүртгүүлэх', 'Sign up')}
           </Link>
-          <p className="text-xs text-white/40">
-            Having trouble logging in? Contact your teacher.
+          <p className="text-xs text-muted-foreground">
+            {text('Нэвтрэхэд асуудал гарвал багштайгаа холбогдоно уу.', 'Having trouble logging in? Contact your teacher.')}
           </p>
         </div>
       </div>
@@ -511,11 +513,11 @@ function PasswordRule({ met, text }: { met: boolean; text: string }) {
   return (
     <div className={cn(
       "flex items-center gap-1.5 transition-colors",
-      met ? "text-emerald-400" : "text-white/40"
+      met ? "text-[hsl(var(--lv-green-ink))]" : "text-muted-foreground"
     )}>
       <CheckCircle2 className={cn(
         "h-3 w-3",
-        met ? "text-emerald-400" : "text-white/25"
+        met ? "text-[hsl(var(--lv-green-ink))]" : "text-muted-foreground"
       )} />
       <span>{text}</span>
     </div>

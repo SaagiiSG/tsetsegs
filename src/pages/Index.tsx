@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
@@ -29,8 +29,7 @@ const Clouds = () => (
 const Index = () => {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
-  const [lang, setLang] = useState<"mon" | "eng">("mon");
-  const text = (mn: string, en: string) => (lang === "mon" ? mn : en);
+  const { lang, setLang, text } = usePublicLanguage();
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
 
   const { data: s } = useQuery({
@@ -40,8 +39,9 @@ const Index = () => {
 
   const CTA = ({ center }: { center?: boolean }) => (
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
-      <Button size="lg" onClick={() => navigate("/login")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}<ArrowRight /></Button>
-      <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-2 px-7"><a href={FB} target="_blank" rel="noopener noreferrer">{text("Холбогдох", "Contact us")}<ArrowUpRight /></a></Button>
+      <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Үнэгүй эхлэх", "Start free")}<ArrowRight /></Button>
+      <Button size="lg" variant="outline" onClick={() => navigate("/login?role=teacher")} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
+      <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
     </div>
   );
 
@@ -81,8 +81,8 @@ const Index = () => {
           <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
           <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a><a href="#faq">FAQ</a></nav>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <button key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</button>)}</div>
-            <Button onClick={() => navigate("/login")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
+            <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
+            <Button onClick={() => navigate("/practice")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
           </div>
         </div>
       </header>
@@ -170,7 +170,7 @@ const Index = () => {
 
       <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
         <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep · 1105 & 905</p></div>
-        <div className="flex gap-6"><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/login">{text("Нэвтрэх", "Sign in")}</a></div>
+        <div className="flex gap-6"><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
       </div></footer>
     </div>
   );

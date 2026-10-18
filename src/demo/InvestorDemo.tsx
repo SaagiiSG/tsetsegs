@@ -1,3 +1,5 @@
+import { usePublicLanguage } from '@/hooks/usePublicLanguage';
+import { requiresDemoSignup } from '@/lib/publicLanguage';
 import { useEffect, useRef, useState } from 'react';
 import { Home, BookOpen, Zap, BarChart3, Trophy, PlayCircle, Users, CalendarCheck, Megaphone, Plus, ArrowRight, Clock, LogOut, Moon, Sun, Flame } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -33,6 +35,14 @@ function Performance({ days = 14 }: { days?: number }) { return <div className="
 
 export default function InvestorDemo() {
   const demo = useDemoSession();
+  const { lang, text: translate } = usePublicLanguage();
+  const signupMode = new URLSearchParams(window.location.search).get('signup');
+  const [signupPrompt, setSignupPrompt] = useState(false);
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (signupMode !== 'practice' || demo.loading || demo.session || demo.expired || autoStarted.current) return;
+    autoStarted.current = true; void demo.start();
+  }, [signupMode, demo.loading, demo.session, demo.expired]);
   const { resolvedTheme, setTheme } = useTheme();
   const [role, setRole] = useState<Role>('student');
   const [page, setPage] = useState('Home');
@@ -55,13 +65,14 @@ export default function InvestorDemo() {
     return () => clearInterval(interval);
   }, [speedActive]);
   const resetQuestion = (index: number) => { setQ(index); setAnswer(null); setResult(null); setExplanation(false); started.current = Date.now(); };
-  const go = (next: string) => { setPage(next); resetQuestion(0); setSpeedActive(false); };
+  const go = (next: string) => { if (requiresDemoSignup(signupMode, next)) { setSignupPrompt(true); return; } setPage(next); resetQuestion(0); setSpeedActive(false); };
   const state = demo.session?.state;
   const correct = state?.attempts.filter(a => a.correct).length ?? 0;
   const total = state?.attempts.length ?? 0;
   const completed = ['exponents', 'linear', ...(state?.completedVideos ?? [])];
   const simulation = buildSimHistory(Array.from({ length: 44 }, (_, i) => ({ question_id: `sample-${i}`, is_correct: i % 7 !== 0, time_spent_seconds: 80 + i % 10, difficulty_level: i % 2 ? 'hard' : 'medium' })))[0];
   const submitAnswer = async () => {
+    if (requiresDemoSignup(signupMode, 'attempt')) { setSignupPrompt(true); return; }
     if (!answer) return;
     const ok = await demo.action('attempt', { question: String(q), answer, seconds: String(Math.min(3600, Math.max(1, Math.round((Date.now() - started.current) / 1000)))) });
     if (ok) setResult(['B', 'C', 'A', 'D', 'B', 'C'][q] === answer);
@@ -90,6 +101,7 @@ export default function InvestorDemo() {
       {role !== 'student' && page === 'Announcements' && <><Panel><Label htmlFor="demo-announcement">New announcement</Label><Input id="demo-announcement" maxLength={500} className="mt-2" value={text} onChange={e => setText(e.target.value)} placeholder="Message your class"/><Button disabled={!text.trim() || demo.busy} className="mt-3" onClick={async () => { if (await demo.action('announcement', {text})) setText(''); }}>Post announcement<Megaphone className="h-4 w-4"/></Button></Panel>{[...state.announcements].reverse().map((a,i) => <Panel key={i}><p>{a.text}</p><p className="text-xs text-muted-foreground mt-2">Saved in your demo session</p></Panel>)}<Panel><p>Welcome to SAT Foundations! Our next session focuses on quadratic equations.</p><p className="text-xs text-muted-foreground mt-2">Sample announcement</p></Panel></>}
       <p className="text-xs text-muted-foreground pt-3">Fictional sample data. Your changes are stored only in this demo and expire in 15 minutes.</p>
     </main></div>
+    <Dialog open={signupPrompt} onOpenChange={setSignupPrompt}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{translate('Дасгаллахын тулд бүртгүүлнэ үү', 'Sign up to start practicing')}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">{translate('Бүртгэлийн хүсэлт илгээнэ үү. Багш баталгаажуулсны дараа дасгаллах эрх нээгдэнэ. Бие даан суралцах хэсэг удахгүй нээгдэнэ.', 'Send a signup request. Practice access opens after teacher approval; the solo student area is coming soon.')}</p><Button asChild><a href={`/student-register?lang=${lang}`}>{translate('Бүртгүүлэх', 'Sign up')}<ArrowRight className="h-4 w-4"/></a></Button><Button asChild variant="outline"><a href={`/practice?lang=${lang}`}>{translate('Бүртгэлтэй юу? Нэвтрэх', 'Already have an account? Sign in')}</a></Button><Button variant="ghost" onClick={() => setSignupPrompt(false)}>{translate('Үргэлжлүүлэн үзэх', 'Keep exploring')}</Button></DialogContent></Dialog>
     <Sheet open={history} onOpenChange={setHistory}><SheetContent className="overflow-y-auto"><SheetHeader><SheetTitle>Practice history</SheetTitle></SheetHeader><div className="space-y-4 mt-6">{[...state.attempts].reverse().map((a,i) => <div key={i} className="border-b pb-3"><p className="font-medium">DEMO{a.question + 1} · {a.correct ? 'Correct' : 'Incorrect'}</p><p className="text-xs text-muted-foreground">{a.seconds}s · Saved this demo</p></div>)}{!total && <p className="text-sm text-muted-foreground">No new attempts in this demo yet.</p>}{demoHistory.slice(-3).reverse().map(h => <div key={h.day} className="border-b pb-3"><p>{h.accuracy}% accuracy · {h.seconds}s / question</p><p className="text-xs text-muted-foreground">{h.day} · sample session</p></div>)}</div></SheetContent></Sheet>
     <Dialog open={!!dialog} onOpenChange={open => { if (!open) setDialog(null); }}><DialogContent className="max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>{dialog === 'streak' ? 'Your streak' : dialog === 'rings' ? 'Daily ring history' : dialog === 'goals' ? 'Daily goals' : dialog === 'class' ? 'Create class' : demoLessons.find(l => l.id === dialog)?.name}</DialogTitle></DialogHeader>{dialog === 'streak' && <div className="space-y-4"><p className="font-mono text-4xl">12 days</p><p>2 streak freezes available · sample rewards</p><Progress value={12 / 14 * 100}/><p className="text-sm text-muted-foreground">Next reward: 14-day streak badge in 2 days.</p></div>}{dialog === 'rings' && <Performance days={7}/>} {dialog === 'goals' && <div className="space-y-4">{(['speed','hard','medium'] as const).map(key => <div key={key}><Label htmlFor={`goal-${key}`} className="capitalize">{key}</Label><Input id={`goal-${key}`} type="number" min={1} max={99} value={goal[key]} onChange={e => setGoal({...goal,[key]: Number(e.target.value)})}/></div>)}<Button disabled={demo.busy} onClick={async () => { if (await demo.action('goals', goal)) setDialog(null); }}>Save goals</Button></div>}{dialog === 'class' && <div className="space-y-4"><Label htmlFor="class-name">Class name</Label><Input id="class-name" maxLength={60} value={text} onChange={e => setText(e.target.value)}/><Button disabled={!text.trim() || demo.busy} onClick={async () => { if (await demo.action('class',{name:text})) setDialog(null); }}>Create class</Button></div>}{demoLessons.filter(l => l.id === dialog).map(l => <div key={l.id} className="space-y-5"><div className="text-2xl"><MathText text={l.math}/></div><p>{l.text}</p><MathText text={l.example}/><Button disabled={demo.busy} onClick={async () => { if (await demo.action('video',{id:l.id})) setDialog(null); }}>Mark complete</Button></div>)}</DialogContent></Dialog>
   </div>;

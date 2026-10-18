@@ -1,3 +1,4 @@
+import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,7 @@ import AuthSplitLayout, {
 } from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
+  const { text } = usePublicLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -55,16 +57,16 @@ export default function Login() {
 
     if (adminUser && isAdmin) {
       toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in as admin.",
+        title: text('Тавтай морил!', 'Welcome back!'),
+        description: text('Админаар амжилттай нэвтэрлээ.', "You've successfully logged in as admin."),
       });
       navigate("/admin");
       setLoginSucceeded(false);
     } else if (adminUser && !isAdmin) {
       setAdminLoading(false);
       toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges.",
+        title: text('Эрх хүрэхгүй', 'Access Denied'),
+        description: text('Танд админ эрх байхгүй.', "You don't have admin privileges."),
         variant: "destructive",
       });
       setLoginSucceeded(false);
@@ -87,8 +89,8 @@ export default function Login() {
     e.preventDefault();
     if (!adminEmail || !adminPassword) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: text('Алдаа', 'Error'),
+        description: text('Бүх талбарыг бөглөнө үү', 'Please fill in all fields'),
         variant: "destructive",
       });
       return;
@@ -100,8 +102,8 @@ export default function Login() {
         const { error } = await adminSignUp(adminEmail, adminPassword);
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Account created successfully. Please wait for admin approval.",
+          title: text('Амжилттай', 'Success'),
+          description: text('Бүртгэл үүслээ. Админы зөвшөөрлийг хүлээнэ үү.', 'Account created successfully. Please wait for admin approval.'),
         });
         setIsSignUp(false);
         setAdminEmail("");
@@ -111,7 +113,7 @@ export default function Login() {
         const { error } = await adminSignIn(adminEmail, adminPassword);
         if (error) {
           toast({
-            title: "Login Failed",
+            title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
             description: error.message,
             variant: "destructive",
           });
@@ -123,8 +125,8 @@ export default function Login() {
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "An error occurred",
+        title: text('Алдаа', 'Error'),
+        description: error.message || text('Алдаа гарлаа', 'An error occurred'),
         variant: "destructive",
       });
       setAdminLoading(false);
@@ -136,8 +138,8 @@ export default function Login() {
     e.preventDefault();
     if (!teacherUsername || !teacherPassword) {
       toast({
-        title: "Error",
-        description: "Please enter your username and password",
+        title: text('Алдаа', 'Error'),
+        description: text('Хэрэглэгчийн нэр, нууц үгээ оруулна уу', 'Please enter your username and password'),
         variant: "destructive",
       });
       return;
@@ -148,23 +150,23 @@ export default function Login() {
       const { error, needsPasswordChange } = await teacherSignIn(teacherUsername, teacherPassword);
       if (error) {
         toast({
-          title: "Login Failed",
-          description: error.message || "Invalid username or password",
+          title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
+          description: error.message || text('Хэрэглэгчийн нэр эсвэл нууц үг буруу', 'Invalid username or password'),
           variant: "destructive",
         });
         setTeacherLoading(false);
       } else {
         toast({
-          title: "Welcome!",
+          title: text('Тавтай морил!', 'Welcome!'),
           description: needsPasswordChange
-            ? "Please change your temporary password."
-            : "Successfully logged in.",
+            ? text('Түр нууц үгээ солино уу.', 'Please change your temporary password.')
+            : text('Амжилттай нэвтэрлээ.', 'Successfully logged in.'),
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
+        title: text('Алдаа', 'Error'),
+        description: error.message || text('Гэнэтийн алдаа гарлаа', 'An unexpected error occurred'),
         variant: "destructive",
       });
       setTeacherLoading(false);
@@ -184,32 +186,32 @@ export default function Login() {
     >
       <div className="space-y-10">
         <div className="space-y-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
-            Staff sign in
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+            {text('Багш, админ нэвтрэх', 'Staff sign in')}
           </p>
-          <h1 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">
-            Welcome back
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">
+            {text('Тавтай морил', 'Welcome back')}
           </h1>
-          <p className="text-sm text-white/50">Sign in to the flowersos staff workspace.</p>
+          <p className="text-sm text-muted-foreground">{text('flowersos багш, админы хэсэгт нэвтэрнэ үү.', 'Sign in to the flowersos staff workspace.')}</p>
         </div>
 
         <AuthGlassCard>
           <div className="space-y-8">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "teacher")}>
-              <TabsList className="grid w-full grid-cols-2 bg-transparent border-b border-white/10 rounded-none p-0 h-auto gap-6">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent border-b border-border rounded-none p-0 h-auto gap-6">
                 <TabsTrigger
                   value="admin"
-                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-muted-foreground border-b-2 border-transparent -mb-px data-[state=active]:border-border data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Admin
+                  {text('Админ', 'Admin')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="teacher"
-                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-white/40 border-b-2 border-transparent -mb-px data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-none pb-3 text-sm text-muted-foreground border-b-2 border-transparent -mb-px data-[state=active]:border-border data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-colors"
                 >
                   <GraduationCap className="h-4 w-4" />
-                  Teacher
+                  {text('Багш', 'Teacher')}
                 </TabsTrigger>
               </TabsList>
 
@@ -218,7 +220,7 @@ export default function Login() {
                 <form onSubmit={handleAdminSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="admin-email" className={authLabelClasses}>
-                      Email
+                      {text('Имэйл', 'Email')}
                     </label>
                     <Input
                       id="admin-email"
@@ -232,7 +234,7 @@ export default function Login() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="admin-password" className={authLabelClasses}>
-                      Password
+                      {text('Нууц үг', 'Password')}
                     </label>
                     <Input
                       id="admin-password"
@@ -248,12 +250,12 @@ export default function Login() {
                     {adminLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {isSignUp ? "Creating Account..." : "Signing In..."}
+                        {isSignUp ? text('Бүртгэж байна...', 'Creating Account...') : text('Нэвтэрч байна...', 'Signing In...')}
                       </>
                     ) : isSignUp ? (
-                      "Sign Up"
+                      text('Бүртгүүлэх', 'Sign Up')
                     ) : (
-                      "Login"
+                      text('Нэвтрэх', 'Login')
                     )}
                   </Button>
                   <Button
@@ -263,7 +265,7 @@ export default function Login() {
                     onClick={() => setIsSignUp(!isSignUp)}
                     disabled={adminLoading}
                   >
-                    {isSignUp ? "Already have an account? Login" : "Need an account? Sign Up"}
+                    {isSignUp ? text('Бүртгэлтэй юу? Нэвтрэх', 'Already have an account? Login') : text('Бүртгэлгүй юу? Бүртгүүлэх', 'Need an account? Sign Up')}
                   </Button>
                 </form>
               </TabsContent>
@@ -273,7 +275,7 @@ export default function Login() {
                 <form onSubmit={handleTeacherSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="teacher-username" className={authLabelClasses}>
-                      Username
+                      {text('Хэрэглэгчийн нэр', 'Username')}
                     </label>
                     <Input
                       id="teacher-username"
@@ -287,7 +289,7 @@ export default function Login() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="teacher-password" className={authLabelClasses}>
-                      Password
+                      {text('Нууц үг', 'Password')}
                     </label>
                     <Input
                       id="teacher-password"
@@ -303,14 +305,14 @@ export default function Login() {
                     {teacherLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
+                        {text('Нэвтэрч байна...', 'Signing In...')}
                       </>
                     ) : (
-                      "Sign In"
+                      text('Нэвтрэх', 'Sign In')
                     )}
                   </Button>
-                  <p className="text-xs text-white/40 text-center">
-                    Contact admin if you need account access
+                  <p className="text-xs text-muted-foreground text-center">
+                    {text('Нэвтрэх эрх авах бол админтай холбогдоно уу', 'Contact admin if you need account access')}
                   </p>
                 </form>
               </TabsContent>

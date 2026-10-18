@@ -1,3 +1,4 @@
+import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ interface Props {
 type Step = 'request' | 'sent';
 
 export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
+  const { text } = usePublicLanguage();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>('request');
   const [phone, setPhone] = useState(initialPhone);
@@ -30,7 +32,7 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length !== 8) {
-      toast({ title: 'Invalid phone', description: '8-digit phone required', variant: 'destructive' });
+      toast({ title: text('Утасны дугаар буруу', 'Invalid phone'), description: text('8 оронтой утасны дугаар шаардлагатай', '8-digit phone required'), variant: 'destructive' });
       return;
     }
     setLoading(true);
@@ -40,8 +42,8 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
     setLoading(false);
     if (error || (data && (data as any).error)) {
       toast({
-        title: 'Could not send request',
-        description: (data as any)?.error || error?.message || 'Try again later',
+        title: text('Хүсэлт илгээж чадсангүй', 'Could not send request'),
+        description: (data as any)?.error || error?.message || text('Дараа дахин оролдоно уу', 'Try again later'),
         variant: 'destructive',
       });
       return;
@@ -53,21 +55,20 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
     return (
       <AuthGlassCard>
         <div className="space-y-3 pb-8">
-          <div className="h-14 w-14 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-            <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+          <div className="h-14 w-14 rounded-full bg-muted border border-border flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7 text-[hsl(var(--lv-green-ink))]" />
           </div>
-          <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Request sent</h2>
-          <p className="text-sm text-white/50">
-            Хүсэлт админд илгээгдлээ ({phone})
+          <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Хүсэлт илгээгдлээ', 'Request sent')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {text(`Хүсэлт админд илгээгдлээ (${phone})`, `Your request was sent to an admin (${phone})`)}
           </p>
         </div>
         <div className="space-y-6">
-          <p className="text-sm text-white/50 border-b border-white/10 pb-4">
-            Админ таны нэвтрэх эрхийг цоожгүй болгосны дараа та дугаараа оруулаад шинэ нууц үг
-            тохируулна.
+          <p className="text-sm text-muted-foreground border-b border-border pb-4">
+            {text('Админ зөвшөөрсний дараа дугаараа оруулж шинэ нууц үг тохируулна.', 'After an admin approves the reset, enter your phone number and set a new password.')}
           </p>
           <Button className={authPrimaryButtonClasses} onClick={onBack}>
-            Back to sign in
+            {text('Нэвтрэх хуудас руу буцах', 'Back to sign in')}
           </Button>
         </div>
       </AuthGlassCard>
@@ -77,39 +78,38 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
   return (
     <AuthGlassCard>
       <div className="space-y-3 pb-8">
-        <button
+        <Button variant="ghost"
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <h2 className="text-4xl font-semibold tracking-tight text-white leading-[1.1]">Reset Password</h2>
-        <p className="text-sm text-white/50">
-          Админд нууц үг сэргээх хүсэлт илгээнэ
+          <ArrowLeft className="h-3.5 w-3.5" /> {text('Буцах', 'Back')}
+        </Button>
+        <h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Нууц үг сэргээх', 'Reset Password')}</h2>
+        <p className="text-sm text-muted-foreground">
+          {text('Админд нууц үг сэргээх хүсэлт илгээнэ', 'Send a password reset request to an admin')}
         </p>
       </div>
       <form onSubmit={handleRequest} className="space-y-8">
         <div className="space-y-2">
-          <Label htmlFor="reset-phone" className={authLabelClasses}>Phone Number</Label>
+          <Label htmlFor="reset-phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone Number')}</Label>
           <div className="relative">
-            <Phone className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-white/35" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="reset-phone"
               type="tel"
               placeholder="99112233"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              className={cn(authInputClasses, "pl-7 text-lg tracking-wider")}
+              className={cn(authInputClasses, "pl-10 text-lg tracking-wider")}
               maxLength={8}
             />
           </div>
         </div>
-        <div className="flex items-start gap-2 text-xs text-white/40">
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Хүсэлтийг админ баталгаажуулсны дараа та дугаараа оруулаад шинэ нууц үг тохируулах
-            боломжтой болно.
+            {text('Админ баталгаажуулсны дараа шинэ нууц үг тохируулах боломжтой.', 'An admin must approve your request before you can set a new password.')}
           </span>
         </div>
         <Button
@@ -120,10 +120,10 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
+              {text('Илгээж байна...', 'Sending...')}
             </>
           ) : (
-            'Request password reset'
+            text('Нууц үг сэргээх хүсэлт илгээх', 'Request password reset')
           )}
         </Button>
       </form>
