@@ -1149,3 +1149,23 @@ button .math-inline .katex {
   .student-chip:active, .student-cta:active { transform: none; }
 }
 @keyframes ring-pop { 0% { transform: scale(.94); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+/* Batch 2: dashboard islands, dialogs and progress bars */
+body.student-portal [role="dialog"] {
+  border-radius: 28px;
+  border-color: hsl(212 30% 90%);
+}
+.dark body.student-portal [role="dialog"] { border-color: hsl(228 20% 22%); }
+.student-theme [role="progressbar"], body.student-portal [role="dialog"] [role="progressbar"] {
+  height: .65rem; border-radius: 999px;
+}
+.student-theme [role="progressbar"] > div, body.student-portal [role="dialog"] [role="progressbar"] > div {
+  border-radius: 999px;
+  background-image: linear-gradient(180deg, hsl(0 0% 100% / .35), transparent 55%);
+}
+.student-theme .rounded-lg.border.bg-card { transition: transform .15s ease, box-shadow .15s ease; }
+.student-theme .rounded-lg.border.bg-card:hover { transform: translateY(-1px); }
+.student-theme button.rounded-md, body.student-portal [role="dialog"] button.rounded-md { border-radius: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .student-theme .rounded-lg.border.bg-card:hover { transform: none; }
+}
