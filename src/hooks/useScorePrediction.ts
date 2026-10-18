@@ -263,20 +263,23 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
             const batch = questionIds.slice(i, i + 500);
             const { data: qData } = await supabase
               .from(qTable)
-              .select('id, difficulty_level')
+              .select('id, difficulty_level, subject')
               .in('id', batch);
             if (qData) allQuestions.push(...qData);
           }
 
           const difficultyMap = new Map(allQuestions.map(q => [q.id, q.difficulty_level]));
+          const mathIds = new Set(
+            allQuestions.filter(q => (q.subject ?? 'math').toLowerCase() === 'math').map(q => q.id)
+          );
           attempts = attemptsData.map(a => ({
             ...a,
             difficulty_level: difficultyMap.get(a.question_id) || 'medium',
           }));
 
-          // Distinct (most-recent attempt per question), newest first — sim input
+          // Math only, first attempt per question, newest first — sim input
           simAttemptsNewestFirst = dedupeDistinctNewestFirst(
-            attempts.map((a) => ({
+            attempts.filter(a => mathIds.has(a.question_id)).map((a) => ({
               is_correct: a.is_correct,
               time_spent_seconds: a.time_spent_seconds,
               difficulty_level: a.difficulty_level,
