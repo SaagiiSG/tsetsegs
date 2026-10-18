@@ -14,6 +14,8 @@ interface DailyRingProps {
   className?: string;
   /** Optional per-portal ring colours; defaults to the shared palette. */
   colors?: { speed: string; hard: string; medium: string };
+  /** Optional decorative wash (css background-image value) rendered behind the ring. */
+  decor?: string;
 }
 
 const RING_COLORS = {
