@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Building2, Plus, Search, Pencil, Check, RotateCcw, Globe, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { CenterPortalSetup } from '@/components/admin/CenterPortalSetup';
@@ -20,6 +21,14 @@ export default function InstitutionCustomers() {
   const [portalFor, setPortalFor] = useState<InstitutionCustomer | null>(null);
   const [deleteFor, setDeleteFor] = useState<InstitutionCustomer | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const linked = params.get('customer');
+  useEffect(() => {
+    if (!linked || !customers.length) return;
+    const c = customers.find(x => x.id === linked);
+    if (c) setEditor(c);
+    params.delete('customer'); setParams(params, { replace: true });
+  }, [linked, customers]);
   async function deleteCustomer() {
     if (!deleteFor || deleting) return;
     setDeleting(true);

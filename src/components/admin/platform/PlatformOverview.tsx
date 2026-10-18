@@ -8,7 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { CustomerGlobe } from './CustomerGlobe';
+import { CustomerGlobe, type GlobePin } from './CustomerGlobe';
+import { useNavigate } from 'react-router-dom';
 import { countryCentroid } from './countryCentroids';
 
 const sumByCurrency = (rows: { amount: number; currency: string }[]) => {
@@ -52,6 +53,7 @@ export function PlatformOverview() {
   const [mostActive, setMostActive] = useState<'customers' | 'countries'>('customers');
   const [confirm, setConfirm] = useState<{ id: string; name: string; block: boolean } | null>(null);
   const today = localToday();
+  const navigate = useNavigate();
 
   const act = useMemo(() => new Map((activity.data ?? []).map(a => [a.institution_id, a])), [activity.data]);
   const centerStudents = (activity.data ?? []).reduce((s, a) => s + Number(a.students), 0);
@@ -75,17 +77,17 @@ export function PlatformOverview() {
     return [...g.values()].sort((a, b) => b.days - a.days);
   }, [unpaid, byId, today]);
 
-  const markers = useMemo(() => {
-    const m = new Map<string, { location: [number, number]; size: number }>();
+  const pins = useMemo(() => {
+    const m = new Map<string, GlobePin>();
     customers.forEach(c => {
       const loc = countryCentroid(c.country); if (!loc) return;
-      const k = loc.join(',');
+      const k = `p${loc.join('_').replace(/[^0-9_]/g, 'n')}`;
       const students = Number(act.get(c.id)?.students ?? 0);
-      const e = m.get(k) ?? { location: loc, size: 0 };
-      e.size += 1 + students; m.set(k, e);
+      const e = m.get(k) ?? { id: k, location: loc, weight: 0, label: c.country || '', customers: [] };
+      e.weight += 1 + students; e.customers.push({ id: c.id, name: c.name, students }); m.set(k, e);
     });
-    const max = Math.max(1, ...[...m.values()].map(v => v.size));
-    return [...m.values()].map(v => ({ location: v.location, size: 0.04 + 0.08 * (v.size / max) }));
+    const max = Math.max(1, ...[...m.values()].map(v => v.weight));
+    return [...m.values()].map(v => ({ ...v, weight: v.weight / max }));
   }, [customers, act]);
 
   const ranking = useMemo(() => {
@@ -139,8 +141,8 @@ export function PlatformOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="admin-glass-card rounded-xl border p-5">
           <h2 className="text-sm font-medium">Customer locations</h2>
-          <p className="text-xs text-muted-foreground">Pin size grows with students</p>
-          <div className="mt-2">{loading ? <Skeleton className="aspect-square max-w-[420px] mx-auto rounded-full" /> : <CustomerGlobe markers={markers} />}</div>
+          <p className="text-xs text-muted-foreground">Hover a pin to see the customer, click to open their profile</p>
+          <div className="mt-2">{loading ? <Skeleton className="aspect-square max-w-[420px] mx-auto rounded-full" /> : <CustomerGlobe pins={pins} onSelect={id => navigate(`/admin/customers?customer=${id}`)} />}</div>
           {!loading && customers.some(c => !countryCentroid(c.country)) && (
             <p className="text-xs text-muted-foreground mt-2">Some customers have no recognised country, so they have no pin.</p>
           )}
