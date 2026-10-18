@@ -1426,3 +1426,11 @@ body.customer-student-portal a.bg-primary { background-image: linear-gradient(18
 @media (prefers-reduced-transparency: reduce) {
   .student-theme.customer-student-theme { background: hsl(var(--student-canvas)); }
 }
+
+/* Sky depth layers (customer student portal, light mode). Fixed behind content. */
+.sky-depth { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.sky-depth-layer { position: absolute; inset: 0; background-repeat: no-repeat; }
+.sky-depth-cover { background-position: center; background-size: cover; }
+.sky-depth-cloud { background-position: center bottom; background-size: max(100%, 1000px) auto; }
+.dark .sky-depth { display: none; }
+@media (prefers-reduced-transparency: reduce) { .sky-depth { display: none; } }
