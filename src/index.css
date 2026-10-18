@@ -1261,11 +1261,11 @@ body.customer-student-portal {
   --muted-foreground: 223 6% 43%;
   --secondary: 212 60% 93%;
   --secondary-foreground: 232 20% 15%;
-  --accent: 205 85% 93%;
-  --accent-foreground: 216 70% 46%;
+  --accent: 250 75% 95%;
+  --accent-foreground: 250 60% 50%;
   --border: 212 50% 90%;
   --input: 212 45% 86%;
-  --section-glow: 215 100% 65%;
+  --section-glow: 248 88% 67%;
   --radius: 1rem;
   --sky-ink-soft: 225 3% 16%;
   --sky-body: 226 6% 40%;
