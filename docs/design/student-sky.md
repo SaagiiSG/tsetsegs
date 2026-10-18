@@ -591,3 +591,40 @@ bigger and bold.
   aren't shown
 - Pop-ups: streak sheet, goal settings, ring history
 - Loading and error states
+
+---
+
+## 15. Pop-ups, loading and empty states (added 18 October 2026)
+
+### 15.1 Dialog scrolling
+
+A portal-wide rule (`body.student-portal [role="dialog"][data-state] { overflow: hidden }` in
+`src/index.css`) keeps dialog chrome (rounded corners, shadows) clipped. Dialogs whose content can
+exceed the viewport **must** opt back into scrolling by adding `overflow-y-auto` (plus
+`max-h-[90vh]`) to their `DialogContent`; the rule
+`body.student-portal [role="dialog"][data-state].overflow-y-auto { overflow-y: auto }` honours
+that opt-in. The streak history dialog (`StreakHistoryDialog.tsx`) is the reference: tall content
+(stats, freezers, rewards, calendar) scrolls inside the rounded frame instead of being cut off.
+
+### 15.2 Skeleton loading
+
+Never show bare "Loading…" text in the customer student portal. While data loads, render a
+skeleton that matches the shape of the content it replaces, so the page doesn't jump when data
+arrives:
+
+- Use the shared `Skeleton` (`src/components/ui/skeleton.tsx`) with sky-tinted pieces via the
+  helpers in `src/portal/SkySkeleton.tsx` (`SkyCardSkeleton`, `SkyLineSkeleton`,
+  `SkyListSkeleton`).
+- Match layout, not detail: a card gets a card-sized skeleton with a tile circle and 2–3 lines;
+  a list gets 3–5 row skeletons; a chart gets a block of the same height.
+- Skeleton pieces use `rounded-2xl`/`rounded-full` and the card surface colour, pulsing — same
+  corners as the real content.
+- Keep the header (title, streak pill, bell) visible while the body skeletons; only the
+  data-dependent area is replaced.
+
+### 15.3 Empty and error states
+
+- Empty states are one calm sentence in body grey (`text-sm text-muted-foreground`) inside the
+  card — no red, no exclamation marks.
+- Errors get a short sentence plus, where useful, a retry action; red is reserved for errors
+  only (2.6).
