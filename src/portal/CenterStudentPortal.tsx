@@ -309,7 +309,7 @@ function HomePage({ me }: { me: Me }) {
             <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
           </Glass>
         </button>
-        <Glass className="space-y-4">
+        <Glass className="sky-decor space-y-4" style={{ '--wave': `url(${CARD_WAVES.orange})` } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <span className="sky-tile sky-tile-orange"><Users /></span>
             <div className="min-w-0"><p className="text-lg font-bold truncate" title={me.cls?.name ?? undefined}>{me.cls?.name ?? 'Not assigned'}</p>{me.cls?.schedule && <p className="text-sm text-muted-foreground truncate">{me.cls.schedule}</p>}</div>
