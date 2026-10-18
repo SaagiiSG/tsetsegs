@@ -368,7 +368,7 @@ export default function StudentSpeedSession() {
       try {
         const summarySprintId = await fetchActiveSprintId(normalizeCohort(student.cohort));
         await supabase.from('point_transactions').insert({
-          student_account_id: student.id, sprint_id: summarySprintId, points: 0, category: 'speed',
+          student_account_id: student.id, sprint_id: summarySprintId, points: 0, category: 'speed_session',
           metadata: { session_summary: true, total_questions: results.length, correct_count: correctCount, accuracy, total_time_seconds: totalTimeSeconds, avg_time_per_question: Math.round(avgTimePerQuestion * 10) / 10 }
         });
       } catch (err) { console.error('Failed to record speed session summary:', err); }

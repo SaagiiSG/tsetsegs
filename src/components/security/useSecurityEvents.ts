@@ -50,14 +50,8 @@ export function useSecurityEvents({
     if (!studentAccountId) return;
     
     try {
-      await supabase
-        .from('student_accounts')
-        .update({
-          is_blocked: true,
-          blocked_reason: reason,
-          blocked_at: new Date().toISOString()
-        })
-        .eq('id', studentAccountId);
+      await supabase.rpc('student_self_block', { p_reason: reason });
+      localStorage.removeItem('student_token');
       
       // Force logout
       localStorage.removeItem('student_session_id');
