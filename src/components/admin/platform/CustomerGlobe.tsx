@@ -24,14 +24,15 @@ export function CustomerGlobe({ markers }: { markers: GlobeMarker[] }) {
       markerColor: [0.98, 0.45, 0.45],
       glowColor: dark ? [0.15, 0.15, 0.18] : [0.9, 0.9, 0.92],
       markers,
-      onRender: (state) => {
-        if (!reduce) phi += 0.003;
-        state.phi = phi;
-        state.width = width * 2;
-        state.height = width * 2;
-      },
     });
-    return () => { globe.destroy(); window.removeEventListener('resize', onResize); };
+    let raf = 0;
+    const tick = () => {
+      if (!reduce) phi += 0.003;
+      globe.update({ phi, width: width * 2, height: width * 2 });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); globe.destroy(); window.removeEventListener('resize', onResize); };
   }, [JSON.stringify(markers)]);
   return <canvas ref={ref} aria-label="Globe showing customer locations" className="w-full aspect-square max-w-[420px] mx-auto" />;
 }
