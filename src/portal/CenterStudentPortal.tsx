@@ -110,8 +110,6 @@ export default function CenterStudentPortal() {
 
   return (
     <div className="student-theme min-h-screen overflow-x-clip admin-glow-scope" style={{ '--section-glow': glow } as React.CSSProperties}>
-      <div aria-hidden className="admin-page-atmosphere" />
-      <AdminBackgroundPaths />
       <div className="relative flex">
         <aside className="hidden md:flex sticky top-3 m-3 h-[calc(100vh-1.5rem)] w-60 shrink-0 flex-col student-card border p-3">
           <div className="flex items-center gap-2.5 px-2 pt-2 pb-4">
@@ -155,7 +153,7 @@ export default function CenterStudentPortal() {
       </div>
 
       {/* Mobile glass dock */}
-      <nav aria-label="Student" className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-1.5 py-1.5 flex items-center gap-0.5">
+      <nav aria-label="Student" className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 student-dock rounded-full px-1.5 py-1.5 flex items-center gap-0.5">
         {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} aria-label={label} className={({ isActive }) => `rounded-full p-2.5 transition-colors ${isActive ? 'bg-foreground text-background' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
         ))}
