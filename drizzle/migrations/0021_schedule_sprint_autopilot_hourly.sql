@@ -1,0 +1,1 @@
+SELECT cron.schedule('sprint-autopilot-hourly', '0 * * * *', $$select public._post_edge_function('finalize-sprint', '{"autopilot": true}'::jsonb);$$);

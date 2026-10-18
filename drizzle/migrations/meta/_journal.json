@@ -148,6 +148,13 @@
       "when": 1792295666690,
       "tag": "0020_center_settings_billing_security_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792296009560,
+      "tag": "0021_schedule_sprint_autopilot_hourly",
+      "breakpoints": true
     }
   ]
 }
