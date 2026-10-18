@@ -106,11 +106,11 @@ export function StudentSatSimulationCard({ mode = 'dashboard' }: Props = {}) {
   // ---------- Unlocked state ----------
   const latest = prediction.simulation?.latest;
   if (!latest) return null;
-  return <SatSimulationIsland latest={latest} isFresh={isFresh} />;
+  return <SatSimulationIsland latest={latest} trend={prediction.simulation?.trend ?? null} isFresh={isFresh} />;
 }
 
 /** Shared display only; each portal supplies its own isolated practice data. */
-export function SatSimulationIsland({ latest, isFresh = false }: { latest: SimulationResult; isFresh?: boolean }) {
+export function SatSimulationIsland({ latest, trend = null, isFresh = false }: { latest: SimulationResult; trend?: number | null; isFresh?: boolean }) {
   const confLabel = latest.confidence === "high" ? "High confidence" : latest.confidence === "med" ? "Medium" : "Low confidence";
 
   return (
@@ -134,9 +134,14 @@ export function SatSimulationIsland({ latest, isFresh = false }: { latest: Simul
             {latest.simScore}
           </div>
           <div className="text-[11px] text-muted-foreground">/ 800</div>
+          {trend != null && trend !== 0 && (
+            <div className={`text-xs font-semibold ml-auto ${trend > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+              {trend > 0 ? '▲ rising' : '▼ falling'} {trend > 0 ? '+' : ''}{trend}
+            </div>
+          )}
         </div>
         <p className="text-[11px] text-muted-foreground mb-3">
-          Based on your most recent 44 questions · {Math.round(latest.accuracy * 100)}% accurate
+          Based on your last {latest.totalQuestions} questions, newest weighted most · {Math.round(latest.accuracy * 100)}% accurate recently
         </p>
         <div className="grid grid-cols-3 gap-2 text-[11px]">
           <Mini label="Hard share" value={`${Math.round(latest.hardShare * 100)}%`} />

@@ -4,6 +4,7 @@ import { questionTableFor } from "@/lib/questionTable";
 import { CALIBRATION_REQUIRED } from "./useCalibrationProgress";
 import {
   buildSimHistory,
+  buildWeightedSim,
   blendSimHistory,
   dedupeDistinctNewestFirst,
   type SimulationResult,
@@ -29,6 +30,7 @@ export interface ScorePredictionResult {
   distinctSolved: number;
   // Simulation engine — teacher/admin facing only. Students never see this.
   simulation?: {
+    trend?: number | null;
     latest: SimulationResult;
     history: SimulationResult[];      // newest first, up to 3
     blendedScore: number;             // confidence-weighted avg
@@ -291,8 +293,11 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
       }
 
       // Build simulation history (latest up to 3, sliding every 10 questions)
+      // Last 440 distinct Math questions as 10 mini-SATs, newest weighted most,
+      // then calibrated against real SAT results (see predictionAccuracy).
       const simHistory = buildSimHistory(simAttemptsNewestFirst, 3);
-      const simBlend = blendSimHistory(simHistory);
+      const weighted = buildWeightedSim(simAttemptsNewestFirst);
+      const simBlend: number | null = weighted ? weighted.calibrated : null;
 
 
 
@@ -363,8 +368,8 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
       // Real tests dominate; sim is a smoothing signal.
       let simBlendWeight = 0;
       if (simBlend != null && tests.length > 0) {
-        if (tests.length >= 3) simBlendWeight = 0.15;
-        else simBlendWeight = 0.30; // 1-2 tests → sim gets a bigger voice
+        // Backtest on 16 real SATs: calibrated sim beat practice tests alone (~28 vs ~42 pt miss).
+        simBlendWeight = 0.6;
         baseScore = baseScore * (1 - simBlendWeight) + simBlend * simBlendWeight;
       } else if (simBlend != null && tests.length === 0) {
         // Sim fully drove the base
@@ -420,6 +425,8 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
       if (confidence === 'high') halfRange = 15;
       else if (confidence === 'medium') halfRange = 17;
       else halfRange = 20;
+      // Real SAT misses were ~30–45 pts in the backtest; don't show a falsely narrow range.
+      halfRange = Math.max(halfRange, 35);
 
       // Save today's prediction (only works for the signed-in student themselves)
       // so it can be compared with their real SAT score later.
@@ -446,7 +453,9 @@ export function useScorePrediction(studentId: string | undefined, cohort?: strin
         hasBaseline,
         distinctSolved: simAttemptsNewestFirst.length,
         simulation: simHistory.length > 0 && simBlend != null ? {
-          latest: simHistory[0],
+          latest: weighted ? { ...weighted.batches[0], simScore: weighted.calibrated, totalQuestions: weighted.batches.length * 44,
+            accuracy: weighted.batches[0].accuracy } : simHistory[0],
+          trend: weighted?.trend ?? null,
           history: simHistory,
           blendedScore: Math.round(simBlend),
           blendWeight: simBlendWeight,

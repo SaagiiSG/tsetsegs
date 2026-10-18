@@ -1,4 +1,4 @@
-import { buildSimHistory, dedupeDistinctNewestFirst } from '@/lib/satSimulation';
+import { buildWeightedSim, dedupeDistinctNewestFirst } from '@/lib/satSimulation';
 import type { QMeta } from './questionMeta';
 
 type Attempt = { question_id: string; is_correct: boolean; time_spent_seconds: number | null; created_at: string };
@@ -25,5 +25,7 @@ export function centerSatProgress(attempts: Attempt[], meta: Record<string, QMet
 export function centerSatSimulation(attempts: Attempt[], meta: Record<string, QMeta>) {
   const distinct = distinctMathAttempts(attempts, meta);
   if (distinct.length < CENTER_SAT_UNLOCK_AT) return null;
-  return buildSimHistory(distinct, 3)[0] ?? null;
+  const w = buildWeightedSim(distinct);
+  if (!w) return null;
+  return { ...w.batches[0], simScore: w.calibrated, totalQuestions: w.batches.length * 44, trend: w.trend };
 }

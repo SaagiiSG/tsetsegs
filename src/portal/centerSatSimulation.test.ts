@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
-import { calculateSimulation } from '@/lib/satSimulation';
+import { buildWeightedSim } from '@/lib/satSimulation';
 import type { QMeta } from './questionMeta';
 
 const attempts = Array.from({ length: 440 }, (_, i) => ({ question_id: String(i), is_correct: i % 4 !== 0, time_spent_seconds: 95, created_at: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString() }));
@@ -16,9 +16,9 @@ describe('center dashboard SAT simulation', () => {
     expect(centerSatSimulation(attempts.slice(0, 439), meta)).toBeNull();
     expect(centerSatSimulation([...attempts.slice(0, 439), attempts[0]], meta)).toBeNull();
   });
-  it('uses the main algorithm on the newest 44 distinct attempts', () => {
-    const expected = calculateSimulation([...attempts].reverse().slice(0, 44).map(a => ({ ...a, difficulty_level: 'hard' })));
-    expect(centerSatSimulation(attempts, meta)).toEqual(expected);
+  it('uses the same recency-weighted, calibrated score as the main dashboard', () => {
+    const distinct = [...attempts].reverse().map(a => ({ ...a, attempted_at: a.created_at, difficulty_level: 'hard' }));
+    expect(centerSatSimulation(attempts, meta)?.simScore).toBe(buildWeightedSim(distinct)!.calibrated);
   });
   it('excludes English and unknown-bank questions', () => {
     expect(centerSatSimulation(attempts, { ...meta, '0': { ...meta['0'], subject: 'english' } })).toBeNull();
