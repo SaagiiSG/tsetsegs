@@ -13,7 +13,7 @@ const actions = [
   {
     label: 'Analytics',
     icon: BarChart3,
-    path: '/admin/analytics',
+    path: '/admin/tsetsegs/analytics',
     color: 'hover:text-foreground hover:border-input'
   },
   {

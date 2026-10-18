@@ -56,7 +56,7 @@ export function AtRiskStudentsTable() {
   };
 
   const handleRowClick = (studentId: string) => {
-    navigate(`/admin/analytics?tab=student-deep-dive&studentId=${studentId}`);
+    navigate(`/admin/tsetsegs/analytics?tab=student-deep-dive&studentId=${studentId}`);
   };
 
   return (
