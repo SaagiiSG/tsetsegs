@@ -1,4 +1,5 @@
 # UI work
+- [ ] Use shader-effects-inc/shaders for the public landing background; integration installed, but blank-canvas rendering blocks animation. Static sky fallback remains visible pending a working library renderer.
 - [x] Redesign the public landing page with the customer student sky design; preserve bilingual navigation and achievement photos; verified desktop/mobile language switching, photo dialogs, sign-in links, and no horizontal overflow.
 - [x] Restyle customer student Practice in sky/purple and replicate main Review Mistakes graphs, breakdown and history sidebar using tenant-only data; isolated desktop/mobile checks and model tests pass.
 - [ ] Verify customer Practice and Review Mistakes with a signed-in center student — available requesting account has no center student access; isolated layout checks do not verify real question loading.

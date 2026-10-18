@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
-import studySky from "@/assets/landing-sky-study.jpg";
+import { LandingShaderBackground } from "@/components/LandingShaderBackground";
 import "./landing-sky.css";
 // IELTS achievement images
 import ielts801 from "@/assets/ielts-8-0-1.jpg";
@@ -177,7 +177,8 @@ const Index = () => {
     { icon: BarChart3, family: "orange", title: "featureAnalyticsTitle", desc: "featureAnalyticsDesc", number: "04" },
   ];
   return (
-    <div className="landing-sky min-h-screen bg-background text-foreground" lang={lang === "mon" ? "mn" : "en"}>
+    <div className="landing-sky relative isolate min-h-screen bg-background text-foreground" lang={lang === "mon" ? "mn" : "en"}>
+      <LandingShaderBackground />
       <header className="absolute inset-x-0 top-4 z-20 px-4 md:top-6 md:px-8">
         <nav aria-label={text("Үндсэн цэс", "Main navigation")} className="landing-nav mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-full px-4 py-2 md:px-5">
           <a href="/" aria-label="FlowersOS home" className="flex shrink-0 items-center gap-2 text-primary"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold text-foreground">flowersos</span></a>
@@ -195,7 +196,6 @@ const Index = () => {
 
       <main>
         <section className="landing-hero relative isolate overflow-hidden">
-          <img src={studySky} alt="" aria-hidden="true" width={1920} height={1024} fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover" />
           <div className="landing-hero-veil absolute inset-0 -z-10" />
           <div className="landing-container flex h-full flex-col justify-center pb-14 pt-28">
             <motion.div {...reveal} className="max-w-2xl">

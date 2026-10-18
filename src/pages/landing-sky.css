@@ -27,6 +27,10 @@
   --landing-pink: 311 58% 48%;
   --landing-orange-light: 30 78% 93%;
   --landing-orange: 21 88% 44%;
+  --landing-shader-sky: #e7f4fd;
+  --landing-shader-blue: #b6ddf8;
+  --landing-shader-lilac: #e5dcf8;
+  --landing-shader-rose: #f9e5ef;
   font-family: 'Nunito', system-ui, sans-serif;
   letter-spacing: 0;
 }
@@ -39,6 +43,12 @@
 .landing-sky .landing-primary { background: linear-gradient(180deg, hsl(var(--landing-primary-top)), hsl(var(--primary))); color: hsl(var(--primary-foreground)); box-shadow: var(--landing-glow); }
 .landing-primary:hover { filter: brightness(1.04); }
 .landing-hero { height: min(820px, 88svh); min-height: 650px; }
+.landing-sky > main, .landing-sky > footer { position: relative; z-index: 1; }
+.landing-shader-background { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: hsl(var(--background)); }
+.landing-shader-fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .32; }
+.landing-shader-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease; }
+.landing-shader-canvas.is-ready { opacity: 1; }
+.landing-shader-canvas canvas { display: block; width: 100%; height: 100%; }
 .landing-hero-veil { background: linear-gradient(90deg, hsl(var(--background) / .92), hsl(var(--background) / .72) 42%, hsl(var(--background) / .06) 76%); }
 .landing-section { padding-block: 5rem; scroll-margin-top: 1.5rem; }
 .landing-eyebrow { color: hsl(var(--primary)); font-size: .875rem; font-weight: 700; }
@@ -59,7 +69,7 @@
 @media (max-width: 767px) {
   .landing-container { padding-inline: 1.5rem; }
   .landing-hero { height: auto; min-height: 660px; }
-  .landing-hero > img { object-position: 58% center; }
+  .landing-shader-fallback { object-position: 58% center; }
   .landing-hero-veil { background: hsl(var(--background) / .87); }
   .landing-section { padding-block: 3.5rem; }
   .landing-heading { font-size: 2rem; }
