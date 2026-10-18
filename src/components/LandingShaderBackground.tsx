@@ -36,12 +36,12 @@ export function LandingShaderBackground() {
   }, [reducedMotion]);
 
   const Shader = library?.Shader;
-  const FlowingGradient = library?.FlowingGradient;
+  const MeshGradient = library?.MeshGradient;
 
   return (
     <div ref={root} className="landing-shader-background" aria-hidden="true">
       <img src={studySky} alt="" width={1920} height={1024} className="landing-shader-fallback" />
-      {Shader && FlowingGradient && colors.length === 4 && !reducedMotion && !unavailable && visible && (
+      {Shader && MeshGradient && colors.length === 4 && !reducedMotion && !unavailable && visible && (
         <Shader
           className={`landing-shader-canvas ${ready ? "is-ready" : ""}`}
           disableTelemetry
@@ -49,13 +49,15 @@ export function LandingShaderBackground() {
           onReady={() => setReady(true)}
           onUnavailable={() => { setUnavailable(true); setReady(false); }}
         >
-          <FlowingGradient
+          <MeshGradient
             colorA={colors[0]}
             colorB={colors[1]}
-            colorC={colors[2]}
-            colorD={colors[3]}
+            stops={colors.map((color, index) => ({ color, position: index / 3 }))}
             speed={0.15}
-            distortion={0.35}
+            count={5}
+            smoothness={1.8}
+            swirl={0.12}
+            drift={0.35}
             seed={8}
           />
         </Shader>
