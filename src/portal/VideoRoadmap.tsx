@@ -10,6 +10,7 @@ import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlay
 import { VideoLabelFilter, LabelChips, allLabels, filterVideos } from '@/components/concept-videos/VideoLabelFilter';
 import { cn } from '@/lib/utils';
 import { useCenter } from './centerContext';
+import { SkyListSkeleton } from './SkySkeleton';
 
 type Video = { id: string; title: string; description: string | null; module: string | null; domain: string; video_url: string; subtitles_vtt: string | null; labels: string[]; duration_minutes: number | null; order_index: number };
 type MeLite = { student: { id: string }; videosDone: string[] };
@@ -70,7 +71,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
       {list.length > 0 && <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${(watched / list.length) * 100}%`, background: 'hsl(var(--section-glow))' }} /></div>}
       {list.length > 0 && <VideoLabelFilter labels={labels} query={query} onQuery={setQuery} active={label} onActive={setLabel} />}
 
-      {videos.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !list.length ? <p className="text-sm text-muted-foreground">No videos yet.</p> : filtering ? (
+      {videos.isLoading ? <SkyListSkeleton rows={4} /> : !list.length ? <p className="text-sm text-muted-foreground">No videos yet.</p> : filtering ? (
         !filtered.length ? <p className="text-sm text-muted-foreground">No videos match.</p> : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(v => {
             const i = list.indexOf(v as Video), st = state(i, v as Video);

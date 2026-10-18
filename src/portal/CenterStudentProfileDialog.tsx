@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { useCenter } from './centerContext';
+import { SkyListSkeleton } from './SkySkeleton';
 
 type Profile = {
   name: string; class_name: string | null; joined: string; tier: string;
@@ -47,7 +48,7 @@ export function CenterStudentProfileDialog({ studentId, name, open, onOpenChange
           </div>
         </DialogHeader>
 
-        {q.isLoading ? <p className="py-8 text-center text-muted-foreground">Loading profile…</p>
+        {q.isLoading ? <div className="py-6"><SkyListSkeleton rows={4} /></div>
           : q.error ? <p role="alert" className="py-8 text-center text-destructive">Could not load this profile.</p>
           : !p ? <p className="py-8 text-center text-muted-foreground">This student is no longer active.</p> : (
           <div className="space-y-4">
