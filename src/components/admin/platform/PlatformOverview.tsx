@@ -22,7 +22,7 @@ function Stat({ icon: Icon, label, value, sub, loading, tip }: { icon: typeof Us
   const body = (
     <div className="min-w-0 space-y-2 xl:border-r xl:last:border-r-0 pr-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-3.5 w-3.5" />{label}</div>
-      {loading ? <Skeleton className="h-8 w-24" /> : <p className="font-mono text-2xl font-medium tabular-nums truncate">{value}</p>}
+      {loading ? <Skeleton className="h-8 w-24" /> : <p className={`font-mono font-medium tabular-nums ${value.length > 12 ? "text-lg leading-snug" : "text-2xl truncate"}`}>{value}</p>}
       <p className="text-xs text-muted-foreground truncate">{sub}</p>
     </div>
   );

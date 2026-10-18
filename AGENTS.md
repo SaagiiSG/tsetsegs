@@ -15,3 +15,5 @@
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
 - Center SAT simulation is an automatic dashboard island using the shared satSimulation algorithm on tenant Math attempts and intDB difficulty; never expose it as a student-taken test or query main student attempts.
 - Center rankings derive points only from tenant attempts and snapshot tier progression when a center sprint finishes, so center rankings and history never query global student rankings.
+- Main admin `/admin` is the platform-wide overview (customers, revenue, payment health); Tsetsegs-only views live under `/admin/tsetsegs/*` in a "Tsetsegs Workspace" sidebar section, so platform and in-house data never mix on one page.
+- Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
