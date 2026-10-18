@@ -10,7 +10,7 @@ interface MobileBottomNavProps {
 const tabs = [
   { to: "/admin", label: "Home", icon: Home, end: true },
   { to: "/admin/batches", label: "Batches", icon: GraduationCap },
-  { to: "/admin/search", label: "Students", icon: Search },
+  { to: "/admin/students", label: "Students", icon: Search },
 ];
 
 export function MobileBottomNav({ onCommandClick, onMoreClick }: MobileBottomNavProps) {
@@ -36,7 +36,7 @@ export function MobileBottomNav({ onCommandClick, onMoreClick }: MobileBottomNav
         </button>
 
         {/* Students */}
-        <NavTab to={tabs[2].to} label={tabs[2].label} Icon={tabs[2].icon} active={pathname.startsWith("/admin/search") || pathname.startsWith("/admin/student")} />
+        <NavTab to={tabs[2].to} label={tabs[2].label} Icon={tabs[2].icon} active={pathname.startsWith("/admin/students") || pathname.startsWith("/admin/student")} />
 
         {/* More */}
         <button

@@ -20,7 +20,7 @@ const moreItems = [
   { title: "Tsetsegs Analytics", url: "/admin/tsetsegs/analytics", icon: LineChart },
   { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
   { title: "Accounts", url: "/admin/students", icon: UserCheck },
-  { title: "Registration Queue", url: "/admin/registration-queue", icon: UserPlus },
+  { title: "Registration Queue", url: "/admin/students", icon: UserPlus },
   { title: "SAT Schedule", url: "/admin/sat-schedule", icon: CalendarDays },
   { title: "Registration", url: "/register/admin", icon: QrCode },
   { title: "Questions", url: "/admin/questions", icon: FileQuestion },
