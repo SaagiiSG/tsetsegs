@@ -39,9 +39,73 @@ async function getSeasonSprintIds(supabase: any, seasonNumber: number, cohort = 
   return sprints?.map((s: any) => s.id) || []
 }
 
+/**
+ * Autopilot: runs on a schedule so seasons roll back-to-back with no admin action.
+ * Only applies what the sprint dates already dictate, so it is safe to call without admin rights.
+ * Order per cohort: make sure the next season exists, activate the due sprint, then finalize ended ones
+ * (finalization auto-enrolls into the newly active sprint).
+ */
+async function runAutopilot(supabaseUrl: string, serviceKey: string) {
+  const supabase = createClient(supabaseUrl, serviceKey)
+  const now = new Date()
+  const { data: all } = await supabase.from('sprints').select('*').order('end_date', { ascending: true })
+  const cohorts = [...new Set((all ?? []).map((s: any) => s.cohort ?? 'mn'))]
+  const log: string[] = []
+  for (const cohort of cohorts) {
+    const list = (all ?? []).filter((s: any) => (s.cohort ?? 'mn') === cohort)
+    const latest = list[list.length - 1]
+    if (!latest) continue
+    const latestEnd = new Date(latest.end_date)
+    const len = Math.max(864e5, latestEnd.getTime() - new Date(latest.start_date).getTime())
+    // Create the next season once the final scheduled sprint is running (or already over).
+    if (latestEnd.getTime() - now.getTime() <= len) {
+      const season = Math.max(...list.map((s: any) => s.season_number)) + 1
+      const start = latestEnd > now ? latestEnd : now
+      const rows = [1, 2, 3].map(n => ({
+        season_number: season, sprint_number: n, cohort, is_active: false,
+        start_date: new Date(start.getTime() + (n - 1) * len).toISOString(),
+        end_date: new Date(start.getTime() + n * len).toISOString(),
+      }))
+      const { data: created, error } = await supabase.from('sprints').insert(rows).select()
+      if (error) log.push(`${cohort}: create season failed ${error.message}`)
+      else { list.push(...(created ?? [])); log.push(`${cohort}: created season ${season}`) }
+    }
+    const ended = list.filter((s: any) => s.is_active && new Date(s.end_date) <= now)
+    for (const s of ended) {
+      await supabase.from('sprints').update({ is_active: false }).eq('id', s.id)
+      s.is_active = false
+    }
+    const due = list.find((s: any) => !s.is_active && new Date(s.start_date) <= now && new Date(s.end_date) > now)
+    if (due && !list.some((s: any) => s.is_active)) {
+      await supabase.from('sprints').update({ is_active: true }).eq('id', due.id)
+      log.push(`${cohort}: activated S${due.season_number} sprint ${due.sprint_number}`)
+    }
+    for (const s of ended) {
+      const res = await fetch(`${supabaseUrl}/functions/v1/finalize-sprint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+        body: JSON.stringify({ sprintId: s.id }),
+      })
+      log.push(`${cohort}: finalized S${s.season_number} sprint ${s.sprint_number} (${res.status})`)
+    }
+  }
+  return log
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  const peek = req.method === 'POST' ? await req.clone().json().catch(() => ({})) : {}
+  if (peek?.autopilot === true) {
+    try {
+      const log = await runAutopilot(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+      return new Response(JSON.stringify({ ok: true, log }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    } catch (e) {
+      console.error('autopilot failed', e)
+      return new Response(JSON.stringify({ error: 'autopilot failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
   }
 
   try {
