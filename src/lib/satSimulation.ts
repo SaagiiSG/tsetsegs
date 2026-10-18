@@ -159,3 +159,38 @@ export function dedupeDistinctNewestFirst(attempts: SimAttempt[]): SimAttempt[] 
   }
   return [...first.values()].reverse();
 }
+
+export interface WeightedSimResult {
+  score: number;            // recency-weighted, before calibration
+  calibrated: number;       // score + CALIBRATION_OFFSET, clamped 200-800
+  trend: number | null;     // newest 3 batches minus oldest 3 (null if < 6 batches)
+  batches: SimulationResult[]; // newest first
+}
+
+/** Fitted from real SAT results (see sat_prediction_accuracy). Our bank is harder than the real SAT. */
+export const CALIBRATION_OFFSET = 0;
+
+/**
+ * Score the last `batches × size` distinct questions as mini-SATs of `size`,
+ * newest batch weighted most (weight = decay^i × batch confidence weight).
+ */
+export function buildWeightedSim(
+  distinctNewestFirst: SimAttempt[],
+  { batches = 10, size = 44, decay = 0.8, offset = CALIBRATION_OFFSET } = {},
+): WeightedSimResult | null {
+  const conf = { high: 1.0, med: 0.7, low: 0.4 } as const;
+  const out: SimulationResult[] = [];
+  for (let i = 0; i < batches; i++) {
+    const slice = distinctNewestFirst.slice(i * size, (i + 1) * size);
+    if (slice.length < size) break;
+    const sim = calculateSimulation(slice);
+    if (sim) out.push(sim);
+  }
+  if (!out.length) return null;
+  let num = 0, den = 0;
+  out.forEach((s, i) => { const w = Math.pow(decay, i) * conf[s.confidence]; num += s.simScore * w; den += w; });
+  const score = Math.round(num / den);
+  const avg = (a: SimulationResult[]) => a.reduce((x, s) => x + s.simScore, 0) / a.length;
+  const trend = out.length >= 6 ? Math.round(avg(out.slice(0, 3)) - avg(out.slice(-3))) : null;
+  return { score, calibrated: Math.max(200, Math.min(800, score + offset)), trend, batches: out };
+}
