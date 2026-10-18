@@ -60,7 +60,9 @@ async function runAutopilot(supabaseUrl: string, serviceKey: string) {
     // Create the next season once the final scheduled sprint is running (or already over).
     if (latestEnd.getTime() - now.getTime() <= len) {
       const season = Math.max(...list.map((s: any) => s.season_number)) + 1
-      const start = latestEnd > now ? latestEnd : now
+      // Start on the hour so the hourly autopilot run lands exactly on every boundary.
+      const nextHour = new Date(Math.ceil(now.getTime() / 36e5) * 36e5)
+      const start = latestEnd > now ? latestEnd : nextHour
       const rows = [1, 2, 3].map(n => ({
         season_number: season, sprint_number: n, cohort, is_active: false,
         start_date: new Date(start.getTime() + (n - 1) * len).toISOString(),
