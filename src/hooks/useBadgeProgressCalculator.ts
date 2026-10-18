@@ -61,7 +61,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('created_at')
         .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed')
+        .eq('category', 'speed_session')
         .order('created_at', { ascending: true });
 
       current = calculateConsecutiveDayStreak(speedTransactions?.map(t => t.created_at) || []);
@@ -73,7 +73,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('created_at, category')
         .eq('student_account_id', studentAccountId)
-        .in('category', ['speed', 'practice'])
+        .in('category', ['speed_session', 'questions'])
         .order('created_at', { ascending: true });
 
       current = calculateConsecutiveDaysBoth(allTransactions || []);
@@ -161,7 +161,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('metadata')
         .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed');
+        .eq('category', 'speed_session');
 
       current = speedTransactions?.filter(t => {
         const metadata = t.metadata as any;
@@ -175,7 +175,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('metadata, created_at')
         .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed')
+        .eq('category', 'speed_session')
         .order('created_at', { ascending: true });
 
       let maxStreak = 0;
@@ -210,7 +210,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('metadata')
         .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed')
+        .eq('category', 'speed_session')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -487,7 +487,7 @@ async function calculateRequirementProgress(
         .from('point_transactions')
         .select('metadata')
         .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed');
+        .eq('category', 'speed_session');
 
       if (speedSessions) {
         for (const session of speedSessions) {
@@ -696,7 +696,7 @@ function calculateConsecutiveDaysBoth(
   });
 
   const daysWithBoth = Object.entries(dateActivities)
-    .filter(([_, activities]) => activities.has('speed') && activities.has('practice'))
+    .filter(([_, activities]) => activities.has('speed_session') && activities.has('questions'))
     .map(([date]) => date)
     .sort();
 
