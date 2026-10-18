@@ -360,31 +360,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Award badge points as a point transaction
-      if (badgeAwarded && badge.point_value > 0) {
-        const { error: pointError } = await supabase
-          .from('point_transactions')
-          .insert({
-            student_account_id: finisher.student_account_id,
-            points: badge.point_value,
-            category: 'badge',
-            sprint_id: sprintId,
-            metadata: { 
-              badge_name: badgeName, 
-              badge_id: badge.id,
-              tier: finisher.current_tier,
-              group_number: finisher.group_number
-            }
-          })
-
-        if (pointError) {
-          console.error(`Failed to award badge points for ${finisher.student_account_id}:`, pointError)
-        } else {
-          console.log(`Awarded ${badge.point_value} points for badge ${badgeName} to ${finisher.student_account_id}`)
-        }
-
-        badgesAwarded++
-      }
+      // Badge points are paid by the database when the badge unlocks (once per badge).
     }
 
     // SEASON END LOGIC: If this is Sprint 3, apply tier demotions for next season
