@@ -105,6 +105,7 @@ const NAV = [
 export default function CenterStudentPortal() {
   const { center, name, signOut } = useCenter();
   const me = useMe();
+  useEffect(() => { document.body.classList.add('student-portal'); return () => document.body.classList.remove('student-portal'); }, []);
   const glow = (center.portal_settings?.brand_color && hexToHslToken(center.portal_settings.brand_color)) || '217 91% 60%';
 
   return (
