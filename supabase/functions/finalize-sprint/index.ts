@@ -361,6 +361,7 @@ Deno.serve(async (req) => {
       }
 
       // Badge points are paid by the database when the badge unlocks (once per badge).
+      if (badgeAwarded) badgesAwarded++
     }
 
     // SEASON END LOGIC: If this is Sprint 3, apply tier demotions for next season
