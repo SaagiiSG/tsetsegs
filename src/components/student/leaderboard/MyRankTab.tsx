@@ -3,7 +3,7 @@ import { TrendingUp, Target, Trophy, ArrowUp, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
-import { TIER_COLORS, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType, TIER_PROMOTION_CUTOFFS } from '@/data/badgeDefinitions';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { cn } from '@/lib/utils';
 import { TIER_ASSETS } from './tierAssets';
@@ -69,7 +69,7 @@ export function MyRankTab({
                   {tierAsset.image ? (
                     <img
                       src={tierAsset.image}
-                      alt={`${currentEntry.currentTier} rank emblem`}
+                      alt={`${TIER_DISPLAY_NAMES[currentEntry.currentTier]} rank emblem`}
                       className="h-full w-full object-contain"
                       width={192}
                       height={192}
@@ -84,7 +84,7 @@ export function MyRankTab({
               <div>
                 <p className="text-lg sm:text-2xl font-bold truncate">{currentEntry.username}</p>
                 <p className="text-xs sm:text-base text-muted-foreground">
-                  Level {currentEntry.level} • <span className="capitalize">{currentEntry.currentTier}</span>
+                  Level {currentEntry.level} • <span className="capitalize">{TIER_DISPLAY_NAMES[currentEntry.currentTier]}</span>
                 </p>
               </div>
 
@@ -152,7 +152,7 @@ export function MyRankTab({
               {pointsToTop1 === 0 ? '🏆 You\'re #1!' : `${pointsToTop1?.toLocaleString()} pts`}
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {currentEntry.currentTier.charAt(0).toUpperCase() + currentEntry.currentTier.slice(1)} badge
+              {TIER_DISPLAY_NAMES[currentEntry.currentTier]} badge
             </p>
           </CardContent>
         </Card>
@@ -252,5 +252,5 @@ export function MyRankTab({
 function getNextTier(current: string): string {
   const order = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'ruby'];
   const idx = order.indexOf(current);
-  return idx < order.length - 1 ? order[idx + 1].charAt(0).toUpperCase() + order[idx + 1].slice(1) : 'Ruby';
+  return idx < order.length - 1 ? TIER_DISPLAY_NAMES[order[idx + 1] as TierType] : 'Ruby';
 }

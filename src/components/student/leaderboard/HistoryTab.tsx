@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { TierType, TIER_COLORS } from '@/data/badgeDefinitions';
+import { TierType, TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 
 interface SprintRecord {
   sprintId: string;
@@ -152,7 +152,7 @@ export function HistoryTab({ studentAccountId }: HistoryTabProps) {
         }}>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold capitalize" style={{ color: TIER_COLORS[stats.highestTier] }}>
-              {stats.highestTier}
+              {TIER_DISPLAY_NAMES[stats.highestTier]}
             </div>
             <div className="text-xs text-muted-foreground">Highest Tier</div>
           </CardContent>
@@ -210,7 +210,7 @@ export function HistoryTab({ studentAccountId }: HistoryTabProps) {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium capitalize" style={{ color: TIER_COLORS[record.tier] }}>
-                                {record.tier}
+                                {TIER_DISPLAY_NAMES[record.tier]}
                               </span>
                               {record.isTop1 && (
                                 <Badge variant="outline" className="text-xs border-amber-500 text-amber-500">
@@ -229,13 +229,13 @@ export function HistoryTab({ studentAccountId }: HistoryTabProps) {
                           {tierChange === 'up' && (
                             <div className="flex items-center gap-1 text-emerald-500">
                               <TrendingUp className="h-4 w-4" />
-                              <span className="text-xs capitalize">{record.nextTier}</span>
+                              <span className="text-xs capitalize">{record.nextTier ? TIER_DISPLAY_NAMES[record.nextTier] : ''}</span>
                             </div>
                           )}
                           {tierChange === 'down' && (
                             <div className="flex items-center gap-1 text-red-500">
                               <TrendingDown className="h-4 w-4" />
-                              <span className="text-xs capitalize">{record.nextTier}</span>
+                              <span className="text-xs capitalize">{record.nextTier ? TIER_DISPLAY_NAMES[record.nextTier] : ''}</span>
                             </div>
                           )}
                           {tierChange === 'same' && (

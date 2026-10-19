@@ -16,7 +16,7 @@ const tiers: { value: TierType | 'all'; label: string }[] = [
   { value: 'all', label: 'All Tiers' },
   { value: 'ruby', label: 'Ruby' },
   { value: 'diamond', label: 'Diamond' },
-  { value: 'platinum', label: 'Platinum' },
+  { value: 'platinum', label: 'Emerald' },
   { value: 'gold', label: 'Gold' },
   { value: 'silver', label: 'Silver' },
   { value: 'bronze', label: 'Bronze' },

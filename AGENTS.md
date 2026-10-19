@@ -6,20 +6,20 @@
 - Public investor demo renders outside main/tenant auth providers and uses only capability-scoped investor_demo RPCs with fictional sample content; no auth accounts, real question bank or customer privileges are created. Demo access expires server-side, and bounded cleanup wakes on creation and unschedules when empty.
 - Admin sidebar sections are controlled by route-aware expansion and remain available as icons when collapsed, so navigation cannot hide the current page or strand users.
 - Admin appearance uses a lifecycle-scoped body theme with semantic tokens so portalled dialogs inherit it without changing student or teacher pages.
-- Institution customer tracking and payment dues are admin-only records independent of competition cohorts; they do not grant tenant access or provision subdomains.
+- Customer/payment tracking is admin-only and separate from cohorts; it never grants access or provisions subdomains. Educator intake requires privileged approval and payment before customer creation; tenant role checks enforce linked request entitlement.
 - Institution customer lists and payment dues use paginated reads and shared query invalidation so dashboard summaries stay consistent after edits.
 - Admin navigation uses one lightweight translucent material with reduced-transparency/contrast fallbacks; data surfaces stay solid to preserve legibility and avoid stacked blur costs.
 - Admin atmospheric lighting is semantic and navigation-only with a solid accessibility fallback, preserving data contrast.
 - Center portals use separate `tenant_*` tables scoped by `institution_id`, resolved from `<slug>.flowersos.co` (preview-only `?center=` override), preventing leaks into main cohorts, leaderboards or teacher views.
 - Center admin workspace pages (`src/portal/admin/*`) read only `tenant_*` tables and shared read-only resources (question bank); never mount main admin pages inside a portal, because they query the main cohort tables.
-- The center admin shell reuses the main admin's sidebar primitives (`SidebarProvider`/`Sidebar` floating + icon-collapsible) so both workspaces collapse to the same icon rail, tooltips and glass card; keep them in sync rather than forking a second navigation implementation.
+- Center admin reuses main-admin `SidebarProvider`/`Sidebar` floating icon rail, tooltips and glass; keep navigation in sync, not forked.
 - Center branding lives in `institution_customers.portal_settings` (written only via `tenant_update_settings`), with logos stored as small data URLs because the workspace blocks public storage buckets.
 
 - Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank.
 - Concept videos are international-only (nav filtered and route guarded by `student.cohort`).
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
 - Center SAT simulation is an automatic dashboard island using the shared satSimulation algorithm on tenant Math attempts and intDB difficulty; never expose it as a student-taken test or query main student attempts.
-- Center rankings derive points only from tenant attempts and snapshot tier progression when a center sprint finishes, so center rankings and history never query global student rankings.
+- Center rankings/history use tenant attempts and sprint snapshots, never global rankings. Stored tier keys remain stable; rename display labels to preserve history, themes and badges.
 - Customer Review Mistakes uses a tenant-attempt data adapter and international question previews with data-agnostic chart primitives, so matching the main review layout never grants access to main student records.
 - Main admin `/admin` is the platform-wide overview (customers, revenue, payment health); Tsetsegs-only views live under `/admin/tsetsegs/*` in a "Tsetsegs Workspace" sidebar section, so platform and in-house data never mix on one page.
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.

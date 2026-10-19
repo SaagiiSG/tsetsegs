@@ -23,7 +23,7 @@ const TIER_BADGE_NAMES: Record<string, string> = {
   bronze: 'Bronze Novice',
   silver: 'Silver Challenger',
   gold: 'Gold Scholar',
-  platinum: 'Platinum Legend',
+  platinum: 'Emerald Legend',
   diamond: 'Diamond Apex',
   ruby: 'Ruby Legend'
 }

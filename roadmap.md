@@ -1,4 +1,7 @@
 # UI work
+- [x] Educator applications and admin review: live submission, signed-in approval/payment gate verified; Emerald display rename preserves stored rank keys.
+- [x] Educator admin/teacher/student previews render their selected roles; Mongolian mobile form checked with no overflow or runtime errors.
+- [ ] Newly provisioned educator roster verification — requires an approved, paid educator account and configured center portal; existing center dashboard is reused.
 - [x] Match sign-in pages to landing style and persisted language; add Start free, educator and sign-in actions; require signup for practice from Start free demo; public entry flow and mobile signup checked.
 - [x] Landing background: superseded by cloud layers in the new landing page
 - [x] Redesign the public landing page with the customer student sky design; preserve bilingual navigation and achievement photos; verified desktop/mobile language switching, photo dialogs, sign-in links, and no horizontal overflow.

@@ -26,6 +26,7 @@ function IntlOnlyRoute({ children }: { children: ReactNode }) {
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
+import Educators from "./pages/public/Educators";
 import { resolveCenterSlug } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
 import InvestorDemo from './demo/InvestorDemo';
@@ -131,6 +132,7 @@ const MainApp = () => (
               <StudentAuthProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/educators" element={<Educators />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />

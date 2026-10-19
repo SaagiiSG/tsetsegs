@@ -8,7 +8,7 @@
 //   - Top performers in each tier advance to the next tier
 //   - Cutoff ranks determine who advances (see TIER_PROMOTION_CUTOFFS)
 // - At end of each season:
-//   - All students drop one rank (Ruby → Diamond → Platinum → etc.)
+//   - All students drop one rank (Ruby → Diamond → Emerald → etc.)
 //   - Students in Bronze/Unranked stay at their tier
 // - New students always start as "Unranked"
 //
@@ -231,7 +231,7 @@ export const TIER_DISPLAY_NAMES: Record<TierType, string> = {
   bronze: 'Bronze',
   silver: 'Silver',
   gold: 'Gold',
-  platinum: 'Platinum',
+  platinum: 'Emerald',
   diamond: 'Diamond',
   ruby: 'Ruby'
 };
@@ -243,7 +243,7 @@ export const TIER_PROMOTION_CUTOFFS: Record<TierType, number> = {
   unranked: 20,  // Top 20 advance to Bronze
   bronze: 20,    // Top 20 advance to Silver
   silver: 15,    // Top 15 advance to Gold
-  gold: 10,      // Top 10 advance to Platinum
+  gold: 10,      // Top 10 advance to Emerald
   platinum: 5,   // Top 5 advance to Diamond
   diamond: 1,    // Top 1 advances to Ruby
   ruby: 1        // Top 1 retains Ruby rank
@@ -457,14 +457,14 @@ export const badgeDefinitions: BadgeDefinition[] = [
   // Sprint Championship - Epic (2000 pts)
   {
     id: 'platinum-legend',
-    name: 'Platinum Legend',
-    description: 'Finish Top 1 in Platinum Sprint',
+    name: 'Emerald Legend',
+    description: 'Finish Top 1 in Emerald Sprint',
     rarity: 'epic',
     pointValue: 2000,
     iconName: 'Award',
     category: 'championship',
     requirements: [
-      { type: 'sprint_top_1', target: 1, label: 'Top 1 in Platinum Sprint' }
+      { type: 'sprint_top_1', target: 1, label: 'Top 1 in Emerald Sprint' }
     ]
   },
   {

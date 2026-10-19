@@ -40,7 +40,7 @@ const Index = () => {
   const CTA = ({ center }: { center?: boolean }) => (
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
       <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Үнэгүй эхлэх", "Start free")}<ArrowRight /></Button>
-      <Button size="lg" variant="outline" onClick={() => navigate("/login?role=teacher")} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
+      <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
     </div>
   );

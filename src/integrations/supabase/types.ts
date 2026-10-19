@@ -1443,6 +1443,65 @@ export type Database = {
         }
         Relationships: []
       }
+      educator_demo_requests: {
+        Row: {
+          approved_at: string | null
+          country: string
+          created_at: string
+          email: string
+          id: string
+          institution_id: string | null
+          institution_name: string
+          message: string
+          name: string
+          payment_confirmed_at: string | null
+          phone: string
+          reviewed_by: string | null
+          status: string
+          student_count: number
+        }
+        Insert: {
+          approved_at?: string | null
+          country?: string
+          created_at?: string
+          email: string
+          id?: string
+          institution_id?: string | null
+          institution_name: string
+          message?: string
+          name: string
+          payment_confirmed_at?: string | null
+          phone: string
+          reviewed_by?: string | null
+          status?: string
+          student_count: number
+        }
+        Update: {
+          approved_at?: string | null
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          institution_id?: string | null
+          institution_name?: string
+          message?: string
+          name?: string
+          payment_confirmed_at?: string | null
+          phone?: string
+          reviewed_by?: string | null
+          status?: string
+          student_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "educator_demo_requests_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -6230,6 +6289,10 @@ export type Database = {
         Args: { _linked_student_id: string }
         Returns: string
       }
+      review_educator_demo_request: {
+        Args: { _action: string; _id: string }
+        Returns: string
+      }
       sat_prediction_accuracy: {
         Args: never
         Returns: {
@@ -6326,6 +6389,19 @@ export type Database = {
       }
       student_self_block: { Args: { p_reason: string }; Returns: undefined }
       student_session_alive: { Args: never; Returns: string }
+      submit_educator_demo_request: {
+        Args: {
+          _country: string
+          _email: string
+          _institution: string
+          _message: string
+          _name: string
+          _phone: string
+          _students: number
+          _website?: string
+        }
+        Returns: string
+      }
       tenant_access_status: { Args: { _slug: string }; Returns: Json }
       tenant_has_role: {
         Args: { _institution: string; _role: string }

@@ -1,5 +1,6 @@
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { requiresDemoSignup } from '@/lib/publicLanguage';
+import { demoRole } from '@/lib/educatorApplications';
 import { useEffect, useRef, useState } from 'react';
 import { Home, BookOpen, Zap, BarChart3, Trophy, PlayCircle, Users, CalendarCheck, Megaphone, Plus, ArrowRight, Clock, LogOut, Moon, Sun, Flame } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -40,12 +41,12 @@ export default function InvestorDemo() {
   const [signupPrompt, setSignupPrompt] = useState(false);
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (signupMode !== 'practice' || demo.loading || demo.session || demo.expired || autoStarted.current) return;
+    if ((signupMode !== 'practice' && new URLSearchParams(window.location.search).get('preview') !== 'educator') || demo.loading || demo.session || demo.expired || autoStarted.current) return;
     autoStarted.current = true; void demo.start();
   }, [signupMode, demo.loading, demo.session, demo.expired]);
   const { resolvedTheme, setTheme } = useTheme();
-  const [role, setRole] = useState<Role>('student');
-  const [page, setPage] = useState('Home');
+  const [role, setRole] = useState<Role>(() => demoRole(new URLSearchParams(window.location.search).get('role')));
+  const [page, setPage] = useState(() => demoRole(new URLSearchParams(window.location.search).get('role')) === 'student' ? 'Home' : 'Overview');
   const [dialog, setDialog] = useState<string | null>(null);
   const [history, setHistory] = useState(false);
   const [q, setQ] = useState(0);

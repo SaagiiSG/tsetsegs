@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 import { RankHistoryEntry } from '@/hooks/useStudentProfile';
-import { TIER_COLORS, TierType } from '@/data/badgeDefinitions';
+import { TIER_COLORS, TIER_DISPLAY_NAMES, TierType } from '@/data/badgeDefinitions';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface RankHistoryGraphProps {
@@ -39,7 +39,7 @@ export function RankHistoryGraph({ rankHistory, currentTier }: RankHistoryGraphP
         <div className="bg-popover border border-border rounded-lg p-2 text-sm">
           <p className="font-semibold">{data.name}</p>
           <p className="capitalize" style={{ color: TIER_COLORS[data.tierName as TierType] }}>
-            {data.tierName} Tier
+            {TIER_DISPLAY_NAMES[data.tierName as TierType]} Tier
           </p>
           {data.points > 0 && (
             <p className="text-muted-foreground">{data.points.toLocaleString()} pts</p>
@@ -79,7 +79,7 @@ export function RankHistoryGraph({ rankHistory, currentTier }: RankHistoryGraphP
                 <YAxis 
                   domain={[0, 7]}
                   ticks={[1, 2, 3, 4, 5, 6]}
-                  tickFormatter={(value) => TIER_ORDER[value - 1]?.charAt(0).toUpperCase() || ''}
+                  tickFormatter={(value) => TIER_DISPLAY_NAMES[TIER_ORDER[value - 1]]?.charAt(0) || ''}
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tickLine={false}
@@ -106,7 +106,7 @@ export function RankHistoryGraph({ rankHistory, currentTier }: RankHistoryGraphP
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: TIER_COLORS[tier] }}
               />
-              <span className="text-[10px] capitalize text-muted-foreground">{tier}</span>
+              <span className="text-[10px] capitalize text-muted-foreground">{TIER_DISPLAY_NAMES[tier]}</span>
             </div>
           ))}
         </div>

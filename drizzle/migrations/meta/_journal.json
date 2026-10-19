@@ -232,6 +232,13 @@
       "when": 1792366526143,
       "tag": "0032_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792368409492,
+      "tag": "0033_educator_demo_requests",
+      "breakpoints": true
     }
   ]
 }
