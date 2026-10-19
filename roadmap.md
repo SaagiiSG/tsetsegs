@@ -53,3 +53,10 @@
 - [ ] Server rules for test-based badges (Blitz, Flawless Execution, August Ascent, October Olympian, Penguins, God Amongst Human)
 - [ ] SAT simulation: Math-only answers, first try per question only (both portals); save daily prediction snapshots + real SAT to compare; switch method only if record shows misses
 - [ ] Customer portal: server grading of practice answers, repeat answers pay 0, speed run checks, badge checks
+
+## Solo sign-up (approved plan 2026-10-19)
+- [x] Google/Apple/Microsoft/email sign-up on Start free pop-up and student sign-in page; free solo account record
+- [x] Existing students: Connect Google prompt now explains self password reset; reset with connected Google
+- [ ] Solo practice portal (real practice for solo students, premium locks on concept videos/planner)
+- [ ] Admin: "Google connected" status + count of students not yet connected
+- [ ] Premium price/payment method (needs user answer)
