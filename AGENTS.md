@@ -25,4 +25,4 @@
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
 - Main-portal students sign in through the `student-login` server function, which issues a secret token sent as the `x-student-token` header (src/lib/studentToken.ts); the database maps it to the student via `request_student_id()`, so students can only write their own rows and never sessions or passwords.
 - Student answers are graded and points decided in database triggers (repeat answers pay 0, league totals updated server-side); the browser's own right/wrong is only for display. Password hashes live only in the server-only `student_credentials` table.
-- Solo sign-ups use `solo_students`, apart from phone-login students; plan set only by admin/server. Google links prove identity for password reset, not login.
+- Solo uses `solo_students` with server-only plans. Google links recover passwords, not login; layout owns OAuth returns and unlocks before cleanup to preserve practice.

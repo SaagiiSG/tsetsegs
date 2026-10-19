@@ -3,10 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
-  clearBorrowedGoogleSession,
   clearStudentEmailLinkPending,
   getErrorMessage,
-  linkCurrentGoogleEmail,
+  completeStudentGoogleLink,
+  STUDENT_EMAIL_LINKED_EVENT,
   markStudentEmailLinkPending,
 } from '@/lib/studentEmailLinking';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,29 +35,16 @@ export function ConnectedEmailCard() {
 
   useEffect(() => { load(); }, [student?.id]);
 
-  // Handle return from OAuth on the settings page
+  // The layout owns OAuth returns; settings observes completion.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('link_email') !== '1' || !student?.id) return;
-    (async () => {
-      try {
-        setBusy(true);
-        const linkedEmail = await linkCurrentGoogleEmail(student.id);
-        setEmail(linkedEmail);
-        toast.success('Email connected');
-      } catch (e: unknown) {
-        toast.error(getErrorMessage(e, 'Failed to link email'));
-      } finally {
-        // Drop the Google session so it doesn't shadow the phone-based student session.
-        await clearBorrowedGoogleSession();
-        clearStudentEmailLinkPending();
-        setBusy(false);
-        const url = new URL(window.location.href);
-        url.searchParams.delete('link_email');
-        window.history.replaceState({}, '', url.toString());
-        load();
-      }
-    })();
+    const onLinked = (event: Event) => {
+      const detail = (event as CustomEvent<{ studentAccountId: string; email: string | null }>).detail;
+      if (detail.studentAccountId !== student?.id) return;
+      setEmail(detail.email);
+      setLoading(false);
+    };
+    window.addEventListener(STUDENT_EMAIL_LINKED_EVENT, onLinked);
+    return () => window.removeEventListener(STUDENT_EMAIL_LINKED_EVENT, onLinked);
   }, [student?.id]);
 
   const connect = async () => {
@@ -70,11 +57,9 @@ export function ConnectedEmailCard() {
       });
       if (result.error) throw result.error;
       if (!result.redirected) {
-        const linkedEmail = await linkCurrentGoogleEmail(student.id);
+        const linkedEmail = await completeStudentGoogleLink(student.id);
         setEmail(linkedEmail);
         toast.success('Email connected');
-        await clearBorrowedGoogleSession();
-        clearStudentEmailLinkPending();
       }
     } catch (e: unknown) {
       clearStudentEmailLinkPending();
