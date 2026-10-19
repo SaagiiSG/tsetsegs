@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { lovable } from '@/integrations/lovable';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GoogleMark } from '@/components/auth/BrandIcons';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Phone, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -165,7 +166,8 @@ export function ForgotPasswordCard({ initialPhone = '', onBack, onSuccess }: Pro
             text('Нууц үг сэргээх хүсэлт илгээх', 'Request password reset')
           )}
         </Button>
-        <Button type="button" variant="outline" className="w-full h-11 rounded-full" disabled={phone.length !== 8} onClick={() => void startGoogle()}>
+        <Button type="button" variant="outline" className="w-full h-11 rounded-full gap-2.5" disabled={phone.length !== 8} onClick={() => void startGoogle()}>
+          <GoogleMark />
           {text('Холбосон Google-ээрээ сэргээх', 'Reset with my connected Google')}
         </Button>
       </form>

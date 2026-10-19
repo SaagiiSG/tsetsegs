@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mail, Sparkles } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { GoogleMark } from '@/components/auth/BrandIcons';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -114,7 +115,7 @@ export function LinkEmailModal() {
         </DialogHeader>
         <div className="space-y-2 pt-2">
           <Button className="w-full gap-2" onClick={connect} disabled={busy}>
-            <Sparkles className="h-4 w-4" /> Connect with Google
+            <GoogleMark /> Connect with Google
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Required to keep using the platform.

@@ -11,7 +11,8 @@ import {
 } from '@/lib/studentEmailLinking';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Sparkles } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { GoogleMark } from '@/components/auth/BrandIcons';
 import { toast } from 'sonner';
 
 export function ConnectedEmailCard() {
@@ -113,7 +114,7 @@ export function ConnectedEmailCard() {
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">No email connected yet.</p>
             <Button onClick={connect} disabled={busy} className="gap-2">
-              <Sparkles className="h-4 w-4" /> Connect with Google
+              <GoogleMark /> Connect with Google
             </Button>
           </div>
         )}
