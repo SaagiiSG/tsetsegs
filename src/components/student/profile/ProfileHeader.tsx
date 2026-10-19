@@ -68,7 +68,7 @@ export function ProfileHeader({
               className="gap-1 capitalize mt-1 text-[10px] py-0 h-5"
               style={{ borderColor: tierColor, color: tierColor }}
             >
-              <TierIcon tier={TIER_DISPLAY_NAMES[currentTier]} />
+              <TierIcon tier={currentTier} />
               {TIER_DISPLAY_NAMES[currentTier]}
             </Badge>
           </div>
@@ -109,7 +109,7 @@ export function ProfileHeader({
                 className="gap-1 capitalize"
                 style={{ borderColor: tierColor, color: tierColor }}
               >
-                <TierIcon tier={TIER_DISPLAY_NAMES[currentTier]} />
+                <TierIcon tier={currentTier} />
                 {TIER_DISPLAY_NAMES[currentTier]} Tier
               </Badge>
               {reservedNextTier && (
