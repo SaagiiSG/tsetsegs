@@ -55,7 +55,7 @@ export function LinkEmailModal() {
           .from('student_accounts')
           .update({ email_link_prompted_at: new Date().toISOString() })
           .eq('id', student.id);
-        toast.success('Email connected — you\'ll get announcements');
+        toast.success('Google connected — you can now reset your password yourself');
         setOpen(false);
       } catch (e: unknown) {
         toast.error(getErrorMessage(e, 'Failed to link email'));
@@ -89,7 +89,7 @@ export function LinkEmailModal() {
           .eq('id', student.id);
         await clearBorrowedGoogleSession();
         clearStudentEmailLinkPending();
-        toast.success('Email connected — you\'ll get announcements');
+        toast.success('Google connected — you can now reset your password yourself');
         setOpen(false);
       }
     } catch (e: unknown) {
@@ -119,9 +119,9 @@ export function LinkEmailModal() {
           <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Mail className="h-6 w-6 text-primary" />
           </div>
-          <DialogTitle className="text-center">Connect your email</DialogTitle>
+          <DialogTitle className="text-center">Connect your Google account</DialogTitle>
           <DialogDescription className="text-center">
-            We'll send important announcements (test dates, schedule changes, scholarship news) to your inbox.
+            If you ever forget your password, you can reset it yourself with this Google account. We'll also send important announcements to your inbox.
             Connect once with Google — takes 5 seconds.
           </DialogDescription>
         </DialogHeader>
