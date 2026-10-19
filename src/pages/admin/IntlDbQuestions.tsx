@@ -81,8 +81,8 @@ export default function IntlDbQuestions() {
     const agg = { found: 0, changed: 0, inserted: 0, errors: 0 };
     try {
       let offset = 0, hasMore = true;
-      const { error: sessionError } = await supabase.auth.refreshSession();
-      if (sessionError) throw new Error("Please sign in again before updating questions.");
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) throw new Error("Please sign in again before updating questions.");
       const batchSize = dryRun ? 200 : 50;
       while (hasMore) {
         const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
