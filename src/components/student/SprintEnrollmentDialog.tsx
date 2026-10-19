@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trophy, Sparkles, Users, Award } from 'lucide-react';
+import { TIER_DISPLAY_NAMES, type TierType } from '@/data/badgeDefinitions';
 import type { SprintEnrollmentSnapshot } from '@/lib/sprintEnrollment';
 
 interface Props {
@@ -22,7 +23,7 @@ export function SprintEnrollmentDialog({ open, onOpenChange, snapshot, pointsEar
   const navigate = useNavigate();
   if (!snapshot) return null;
 
-  const tierLabel = snapshot.tier.charAt(0).toUpperCase() + snapshot.tier.slice(1);
+  const tierLabel = TIER_DISPLAY_NAMES[snapshot.tier as TierType] ?? snapshot.tier;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

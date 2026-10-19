@@ -227,7 +227,7 @@ export function AllTimeTab({ leaderboard, currentUserId, isLoading, window: time
                               <span>L{entry.level}</span>
                               <span>•</span>
                               <span className="capitalize truncate" style={{ color: tierColor }}>
-                                Peak: {entry.highestTier}
+                                Peak: {TIER_DISPLAY_NAMES[entry.highestTier as TierType]}
                               </span>
                             </div>
                           </div>

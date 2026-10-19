@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Crown, ChevronRight, Flame } from 'lucide-react';
 import { useSprintLeaderboardPreview } from '@/hooks/useAdminAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TIER_DISPLAY_NAMES, type TierType } from '@/data/badgeDefinitions';
 import { useNavigate } from 'react-router-dom';
 
 const tierColors: Record<string, string> = {
@@ -83,7 +84,7 @@ export function SprintLeaderboardPreview() {
               <div className="flex items-center gap-2">
                 <p className="font-medium truncate">{student.name}</p>
                 <Badge variant="outline" className={`text-[10px] ${tierBadgeColors[student.tier] || ''}`}>
-                  {student.tier}
+                  {TIER_DISPLAY_NAMES[student.tier as TierType] ?? student.tier}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">{student.batchName}</p>
@@ -105,14 +106,14 @@ export function SprintLeaderboardPreview() {
                   key={tier}
                   className={`${tierColors[tier] || 'bg-muted'}`}
                   style={{ flex: count as number }}
-                  title={`${tier}: ${count} students`}
+                  title={`${TIER_DISPLAY_NAMES[tier as TierType] ?? tier}: ${count} students`}
                 />
               ))}
             </div>
             <div className="flex justify-between mt-2">
               {Object.entries(data.tierDistribution).map(([tier, count]) => (
                 <div key={tier} className="text-center">
-                  <p className="text-xs font-medium capitalize">{tier}</p>
+                  <p className="text-xs font-medium capitalize">{TIER_DISPLAY_NAMES[tier as TierType] ?? tier}</p>
                   <p className="text-[10px] text-muted-foreground">{count as number}</p>
                 </div>
               ))}

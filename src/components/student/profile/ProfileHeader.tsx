@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { TierType, TIER_COLORS } from '@/data/badgeDefinitions';
+import { TierType, TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
 import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { format } from 'date-fns';
 
@@ -68,8 +68,8 @@ export function ProfileHeader({
               className="gap-1 capitalize mt-1 text-[10px] py-0 h-5"
               style={{ borderColor: tierColor, color: tierColor }}
             >
-              <TierIcon tier={currentTier} />
-              {currentTier}
+              <TierIcon tier={TIER_DISPLAY_NAMES[currentTier]} />
+              {TIER_DISPLAY_NAMES[currentTier]}
             </Badge>
           </div>
           <div className="text-right flex-shrink-0 min-w-0">
@@ -109,12 +109,12 @@ export function ProfileHeader({
                 className="gap-1 capitalize"
                 style={{ borderColor: tierColor, color: tierColor }}
               >
-                <TierIcon tier={currentTier} />
-                {currentTier} Tier
+                <TierIcon tier={TIER_DISPLAY_NAMES[currentTier]} />
+                {TIER_DISPLAY_NAMES[currentTier]} Tier
               </Badge>
               {reservedNextTier && (
                 <Badge variant="secondary" className="text-xs">
-                  ✓ Reserved: {reservedNextTier}
+                  ✓ Reserved: {TIER_DISPLAY_NAMES[reservedNextTier as TierType] ?? reservedNextTier}
                 </Badge>
               )}
             </div>
@@ -152,7 +152,7 @@ export function ProfileHeader({
         <div className="md:hidden w-full space-y-2">
           {reservedNextTier && (
             <Badge variant="secondary" className="text-[10px]">
-              ✓ Reserved: {reservedNextTier}
+              ✓ Reserved: {TIER_DISPLAY_NAMES[reservedNextTier as TierType] ?? reservedNextTier}
             </Badge>
           )}
           <div className="space-y-1">
