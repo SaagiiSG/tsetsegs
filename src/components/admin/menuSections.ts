@@ -31,6 +31,7 @@ export const menuSections: MenuSection[] = [
       { title: "Insights", url: "/admin/analytics", icon: LineChart },
       { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
       { title: "International Customers", url: "/admin/customers", icon: Building2 },
+      { title: "Demo Requests", url: "/admin/demo-requests", icon: CalendarDays },
     ],
     defaultOpen: true,
   },

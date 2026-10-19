@@ -29,6 +29,7 @@ import BurnerAdmin from '@/pages/admin/BurnerAdmin';
 import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
 import IntlDbQuestions from '@/pages/admin/IntlDbQuestions';
 import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
+import DemoRequests from '@/pages/admin/DemoRequests';
 import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
 import { CohortSwitcher } from '@/components/admin/CohortSwitcher';
@@ -72,6 +73,7 @@ const Admin = () => {
       <Route index element={<PlatformOverview />} />
       <Route path="tsetsegs/dashboard" element={<DashboardStats />} />
       <Route path="customers" element={<InstitutionCustomers />} />
+      <Route path="demo-requests" element={<DemoRequests />} />
       <Route path="analytics" element={<PlatformInsights />} />
       <Route path="tsetsegs/analytics" element={<AnalyticsDashboard />} />
       <Route path="overview" element={<BatchOverview />} />
