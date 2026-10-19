@@ -239,6 +239,13 @@
       "when": 1792368409492,
       "tag": "0033_educator_demo_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792370220744,
+      "tag": "0034_solo_students",
+      "breakpoints": true
     }
   ]
 }

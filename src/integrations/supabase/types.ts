@@ -3728,6 +3728,39 @@ export type Database = {
           },
         ]
       }
+      solo_students: {
+        Row: {
+          created_at: string
+          email: string | null
+          name: string
+          plan: string
+          premium_until: string | null
+          provider: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          name?: string
+          plan?: string
+          premium_until?: string | null
+          provider?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          name?: string
+          plan?: string
+          premium_until?: string | null
+          provider?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       speed_session_items: {
         Row: {
           answer_submitted: string | null
@@ -6341,6 +6374,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solo_has_premium: { Args: { _user: string }; Returns: boolean }
       speed_window_counts: {
         Args: { p_seconds: number; p_student: string }
         Returns: {
