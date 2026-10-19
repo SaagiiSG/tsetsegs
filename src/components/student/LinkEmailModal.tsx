@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
@@ -7,10 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import {
-  clearBorrowedGoogleSession,
   clearStudentEmailLinkPending,
   getErrorMessage,
-  linkCurrentGoogleEmail,
+  completeStudentGoogleLink,
+  STUDENT_EMAIL_LINKED_EVENT,
   markStudentEmailLinkPending,
 } from '@/lib/studentEmailLinking';
 import { toast } from 'sonner';
@@ -24,17 +24,33 @@ export function LinkEmailModal() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const linked = useRef(false);
+  useEffect(() => {
+    linked.current = false;
+    setOpen(false);
+    const onLinked = (event: Event) => {
+      const detail = (event as CustomEvent<{ studentAccountId: string }>).detail;
+      if (detail.studentAccountId !== student?.id) return;
+      linked.current = true;
+      setOpen(false);
+    };
+    window.addEventListener(STUDENT_EMAIL_LINKED_EVENT, onLinked);
+    return () => window.removeEventListener(STUDENT_EMAIL_LINKED_EVENT, onLinked);
+  }, [student?.id]);
+
   // Detect whether to show on mount / route change
   useEffect(() => {
     if (!student?.id) return;
     const params = new URLSearchParams(window.location.search);
     // Don't auto-open while we're mid OAuth-return; the handler below decides.
     if (params.get('link_email') === '1') return;
+    let cancelled = false;
     (async () => {
       const { data: connected, error } = await supabase.rpc('student_google_connected');
-      if (error || connected) return;
+      if (cancelled || linked.current || error || connected) return;
       setOpen(true);
     })();
+    return () => { cancelled = true; };
   }, [student?.id]);
 
   // Handle OAuth return: ?link_email=1 means we just came back from Google
@@ -45,23 +61,13 @@ export function LinkEmailModal() {
     (async () => {
       try {
         setBusy(true);
-        await linkCurrentGoogleEmail(student.id);
-        await supabase
-          .from('student_accounts')
-          .update({ email_link_prompted_at: new Date().toISOString() })
-          .eq('id', student.id);
+        await completeStudentGoogleLink(student.id);
         toast.success('Google connected — you can now reset your password yourself');
         setOpen(false);
       } catch (e: unknown) {
+        if (!linked.current) setOpen(true);
         toast.error(getErrorMessage(e, 'Failed to link email'));
       } finally {
-        // CRITICAL: drop the Google session immediately so it doesn't
-        // hijack the student's custom phone-based session on next login.
-        await clearBorrowedGoogleSession();
-        clearStudentEmailLinkPending();
-        const url = new URL(window.location.href);
-        url.searchParams.delete('link_email');
-        window.history.replaceState({}, '', url.toString());
         setBusy(false);
       }
     })();
@@ -77,13 +83,7 @@ export function LinkEmailModal() {
       });
       if (result.error) throw result.error;
       if (!result.redirected) {
-        await linkCurrentGoogleEmail(student.id);
-        await supabase
-          .from('student_accounts')
-          .update({ email_link_prompted_at: new Date().toISOString() })
-          .eq('id', student.id);
-        await clearBorrowedGoogleSession();
-        clearStudentEmailLinkPending();
+        await completeStudentGoogleLink(student.id);
         toast.success('Google connected — you can now reset your password yourself');
         setOpen(false);
       }
@@ -94,6 +94,9 @@ export function LinkEmailModal() {
       setBusy(false);
     }
   };
+
+  // Unmount the focus/pointer lock completely after connection.
+  if (!open) return null;
 
   return (
     <Dialog open={open}>
