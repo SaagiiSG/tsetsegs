@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, KeyRound, Loader2, Power, PowerOff, RefreshCw, Search, ShieldOff, User, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, KeyRound, Loader2, Mail, Power, PowerOff, RefreshCw, Search, ShieldOff, User, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -63,13 +63,14 @@ export default function StudentManagement() {
     queryKey: ['student-mgmt-stats', cohort],
     queryFn: async () => {
       const acc = () => supabase.from('student_accounts').select('id', { count: 'exact', head: true }).eq('is_ghost', false).eq('cohort', cohort);
-      const [total, deactivated, sessions, resets, pendingRegs] = await Promise.all([
+      const [total, deactivated, sessions, resets, pendingRegs, google] = await Promise.all([
         count(acc()), count(acc().eq('is_active', false)),
         count(supabase.from('student_sessions').select('id', { count: 'exact', head: true }).eq('is_active', true).gt('expires_at', new Date().toISOString())),
         count(supabase.from('password_reset_requests').select('id', { count: 'exact', head: true })),
         count(supabase.from('registration_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')),
+        count(supabase.from('student_email_links').select('id, student_accounts!inner(cohort, is_ghost)', { count: 'exact', head: true }).eq('student_accounts.cohort', cohort).eq('student_accounts.is_ghost', false)),
       ]);
-      return { total, deactivated, sessions, resets, pendingRegs };
+      return { total, deactivated, sessions, resets, pendingRegs, google };
     },
   });
 
@@ -92,7 +93,13 @@ export default function StudentManagement() {
         const { data: a } = await supabase.from('student_accounts').select('id, phone_number, password_hash, registered_device_id').eq('is_ghost', false).or(keys.map(k => `phone_number.ilike.%${k}`).join(','));
         (a ?? []).forEach(x => accounts.set(last8(x.phone_number), x));
       }
-      return { rows, total: total ?? 0, accounts };
+      const googleIds = new Set<string>();
+      const accIds = [...accounts.values()].map(x => x.id);
+      if (accIds.length) {
+        const { data: l } = await supabase.from('student_email_links').select('student_account_id').in('student_account_id', accIds);
+        (l ?? []).forEach(x => googleIds.add(x.student_account_id));
+      }
+      return { rows, total: total ?? 0, accounts, googleIds };
     },
     placeholderData: prev => prev,
   });
@@ -134,10 +141,11 @@ export default function StudentManagement() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Stat icon={User} label="Total accounts" value={s?.total ?? 0} loading={stats.isLoading} />
         <Stat icon={Power} label="Active sessions" value={s?.sessions ?? 0} loading={stats.isLoading} />
         <Stat icon={PowerOff} label="Deactivated accounts" value={s?.deactivated ?? 0} loading={stats.isLoading} />
+        <Stat icon={Mail} label="Not connected to Google" value={Math.max(0, (s?.total ?? 0) - (s?.google ?? 0))} loading={stats.isLoading} />
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -158,11 +166,12 @@ export default function StudentManagement() {
               <TableHead>Batch</TableHead>
               <TableHead>Course</TableHead>
               <TableHead>Registered</TableHead>
+              <TableHead>Google</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-5" /></TableCell></TableRow>)
-              : list.data?.rows.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
+            {list.isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}><TableCell colSpan={10}><Skeleton className="h-5" /></TableCell></TableRow>)
+              : list.data?.rows.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
               : list.data?.rows.map(r => {
                 const acc = list.data!.accounts.get(last8(r.phone));
                 const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.name || 'Unnamed';
@@ -177,6 +186,7 @@ export default function StudentManagement() {
                     <TableCell className="text-sm max-w-[220px] truncate">{r.batch?.batch_name || <span className="text-muted-foreground">No batch</span>}</TableCell>
                     <TableCell className="text-sm">{r.batch?.course_type || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">{acc && list.data!.googleIds.has(acc.id) ? <span className="inline-flex items-center gap-1 text-foreground"><Mail className="h-3.5 w-3.5" />Connected</span> : <span className="text-muted-foreground">Not connected</span>}</TableCell>
                   </TableRow>
                 );
               })}

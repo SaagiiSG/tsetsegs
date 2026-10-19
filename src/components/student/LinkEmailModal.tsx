@@ -15,9 +15,8 @@ import {
 import { toast } from 'sonner';
 
 /**
- * Shown once per student account: prompts them to connect a Google email so we
- * can send announcements. Skipping stamps `email_link_prompted_at` so we don't
- * nag every session — they can still connect later in Settings.
+ * Blocking prompt: existing students must connect a Google account (used for
+ * self password reset and announcements) before using the portal.
  */
 export function LinkEmailModal() {
   const { student } = useStudentAuth();
@@ -31,13 +30,8 @@ export function LinkEmailModal() {
     // Don't auto-open while we're mid OAuth-return; the handler below decides.
     if (params.get('link_email') === '1') return;
     (async () => {
-      const { data: link } = await supabase
-        .from('student_email_links')
-        .select('id')
-        .eq('student_account_id', student.id)
-        .maybeSingle();
-      if (link) return;
-      if (student.email_link_prompted_at) return;
+      const { data: connected, error } = await supabase.rpc('student_google_connected');
+      if (error || connected) return;
       setOpen(true);
     })();
   }, [student?.id]);
@@ -100,21 +94,14 @@ export function LinkEmailModal() {
     }
   };
 
-  const skip = async () => {
-
-    if (!student?.id) return;
-    setBusy(true);
-    await supabase
-      .from('student_accounts')
-      .update({ email_link_prompted_at: new Date().toISOString() })
-      .eq('id', student.id);
-    setOpen(false);
-    setBusy(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!busy) setOpen(v); }}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open}>
+      <DialogContent
+        className="max-w-md [&>button]:hidden"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Mail className="h-6 w-6 text-primary" />
@@ -129,9 +116,9 @@ export function LinkEmailModal() {
           <Button className="w-full gap-2" onClick={connect} disabled={busy}>
             <Sparkles className="h-4 w-4" /> Connect with Google
           </Button>
-          <Button variant="ghost" className="w-full" onClick={skip} disabled={busy}>
-            Skip for now
-          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Required to keep using the platform.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

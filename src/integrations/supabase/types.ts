@@ -6390,6 +6390,7 @@ export type Database = {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
       }
+      student_google_connected: { Args: never; Returns: boolean }
       student_inherited_tier: {
         Args: { p_sprint: string; p_student: string }
         Returns: string
