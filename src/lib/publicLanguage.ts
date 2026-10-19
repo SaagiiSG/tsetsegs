@@ -5,5 +5,5 @@ export function resolvePublicLanguage(query: string | null, stored: string | nul
   return stored === 'eng' ? 'eng' : 'mon';
 }
 export function requiresDemoSignup(mode: string | null, action: string): boolean {
-  return mode === 'practice' && ['Practice', 'Speed', 'attempt'].includes(action);
+  return mode === 'practice' && ['attempt', 'practice', 'video', 'speed', 'goals'].includes(action);
 }
