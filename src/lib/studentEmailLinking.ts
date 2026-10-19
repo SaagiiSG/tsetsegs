@@ -31,16 +31,18 @@ export async function linkCurrentGoogleEmail(studentAccountId: string): Promise<
   if (!session) throw new Error('Google sign-in did not finish. Please try again.');
 
   const studentSessionId = localStorage.getItem('student_session_id') ?? '';
-  if (!studentSessionId) throw new Error('Student session missing. Please log in again.');
+  const studentToken = localStorage.getItem('student_token') ?? '';
+  if (!studentSessionId || !studentToken) throw new Error('Student session missing. Please log in again.');
 
   const { data, error } = await supabase.functions.invoke('link-google-email', {
     body: { student_account_id: studentAccountId },
-    headers: { 'x-student-session-id': studentSessionId },
+    headers: { 'x-student-session-id': studentSessionId, 'x-student-token': studentToken },
   });
 
   if (error) throw error;
   const response = data as LinkEmailResponse | null;
   if (response?.error) throw new Error(response.error);
+  if (!response?.ok) throw new Error('Google connection was not confirmed. Please try again.');
   return response?.email ?? null;
 }
 

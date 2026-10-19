@@ -55,6 +55,7 @@
 - [ ] Customer portal: server grading of practice answers, repeat answers pay 0, speed run checks, badge checks
 
 ## Solo sign-up (approved plan 2026-10-19)
+- [ ] Google connection error: correct header permissions and Google identity; verify real student retry after deployment.
 - [x] Google/Apple/Microsoft/email sign-up on Start free pop-up and student sign-in page; free solo account record
 - [x] Existing students: Connect Google prompt now explains self password reset; reset with connected Google
 - [ ] Solo practice portal — ON HOLD (user request)

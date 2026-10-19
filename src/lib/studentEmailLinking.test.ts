@@ -48,6 +48,10 @@ describe('Google connection preserves practice access', () => {
     expect(second).toBe(first);
     await first;
     expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    expect(mocks.invoke).toHaveBeenCalledWith('link-google-email', {
+      body: { student_account_id: 'student-2' },
+      headers: { 'x-student-session-id': 'test-session', 'x-student-token': 'test-token' },
+    });
     expect(mocks.signOut).toHaveBeenCalledTimes(1);
   });
 
@@ -58,5 +62,12 @@ describe('Google connection preserves practice access', () => {
     await expect(completeStudentGoogleLink('student-3')).rejects.toThrow('Connection rejected');
     expect(unlocked).not.toHaveBeenCalled();
     expect(storage.get('student_session_id')).toBe('test-session');
+  });
+  it('never unlocks without server confirmation', async () => {
+    mocks.invoke.mockResolvedValue({ data: null, error: null });
+    const unlocked = vi.fn();
+    events.addEventListener(STUDENT_EMAIL_LINKED_EVENT, unlocked);
+    await expect(completeStudentGoogleLink('student-4')).rejects.toThrow('not confirmed');
+    expect(unlocked).not.toHaveBeenCalled();
   });
 });
