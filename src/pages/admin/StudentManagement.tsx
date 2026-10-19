@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, KeyRound, Loader2, Power, PowerOff, RefreshCw, Search, ShieldOff, User, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, KeyRound, Loader2, Mail, Power, PowerOff, RefreshCw, Search, ShieldOff, User, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

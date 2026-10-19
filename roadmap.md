@@ -57,6 +57,6 @@
 ## Solo sign-up (approved plan 2026-10-19)
 - [x] Google/Apple/Microsoft/email sign-up on Start free pop-up and student sign-in page; free solo account record
 - [x] Existing students: Connect Google prompt now explains self password reset; reset with connected Google
-- [ ] Solo practice portal (real practice for solo students, premium locks on concept videos/planner)
-- [ ] Admin: "Google connected" status + count of students not yet connected
-- [ ] Premium price/payment method (needs user answer)
+- [ ] Solo practice portal — ON HOLD (user request)
+- [x] Admin: "Google connected" status + count; blocking Connect Google pop-up for existing students
+- [ ] Premium: Stripe checkout $25/month, international only (waiting on user OK to turn on payments)
