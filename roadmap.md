@@ -59,4 +59,5 @@
 - [x] Existing students: Connect Google prompt now explains self password reset; reset with connected Google
 - [ ] Solo practice portal — ON HOLD (user request)
 - [x] Admin: "Google connected" status + count; blocking Connect Google pop-up for existing students
-- [ ] Premium: Stripe checkout $25/month, international only (waiting on user OK to turn on payments)
+- [ ] Premium: Stripe checkout $25/month, international only — ON HOLD (user request)
+- [ ] Dev environment draft with fake data (running in separate draft)
