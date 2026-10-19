@@ -3,15 +3,16 @@ import { Loader2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AppleMark, GoogleMark, MicrosoftMark } from '@/components/auth/BrandIcons';
 import { lovable } from '@/integrations/lovable';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 
 type Provider = 'google' | 'apple' | 'microsoft';
-const PROVIDERS: { id: Provider; label: string }[] = [
-  { id: 'google', label: 'Google' },
-  { id: 'apple', label: 'Apple' },
-  { id: 'microsoft', label: 'Microsoft' },
+const PROVIDERS: { id: Provider; label: string; Mark: () => JSX.Element }[] = [
+  { id: 'google', label: 'Google', Mark: GoogleMark },
+  { id: 'apple', label: 'Apple', Mark: AppleMark },
+  { id: 'microsoft', label: 'Microsoft', Mark: MicrosoftMark },
 ];
 
 /** Solo student sign-up / sign-in: Google, Apple, Microsoft or email. Lands on /solo after the session exists. */
@@ -53,9 +54,10 @@ export function SoloAuthPanel() {
 
   return (
     <div className="space-y-3">
-      {PROVIDERS.map(p => (
-        <Button key={p.id} type="button" variant="outline" className="w-full h-11 rounded-full" disabled={!!busy} onClick={() => void oauth(p.id)}>
-          {busy === p.id && <Loader2 className="h-4 w-4 animate-spin" />}{text(`${p.label}-ээр үргэлжлүүлэх`, `Continue with ${p.label}`)}
+      {PROVIDERS.map(({ id, label, Mark }) => (
+        <Button key={id} type="button" variant="outline" className="w-full h-11 rounded-full gap-2.5" disabled={!!busy} onClick={() => void oauth(id)}>
+          {busy === id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mark />}
+          {text(`${label}-ээр үргэлжлүүлэх`, `Continue with ${label}`)}
         </Button>
       ))}
       {!emailMode ? (
