@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildContentPatch } from "./contentPatch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -347,13 +348,7 @@ Deno.serve(async (req) => {
           const cur: any = byId.get(m.internalId);
           if (!cur) { notFound++; return; }
           const next: any = normalizeQuestion(m.ext, {}, null);
-          const patch: Record<string, unknown> = {};
-          for (const f of CONTENT_FIELDS) {
-            // Never wipe an explanation written locally when the external copy has none
-            if (f === "rationale" && (next[f] == null || String(next[f]).trim() === "")) continue;
-            if (f === "question_image_url" && skipImageDiffs) continue;
-            if (norm(cur[f]) !== norm(next[f])) patch[f] = next[f] ?? null;
-          }
+          const patch = buildContentPatch(cur, next, CONTENT_FIELDS, skipImageDiffs);
           const changed = Object.keys(patch);
           if (changed.length === 0) unchanged++;
           // Skip questions whose figure link differs — our hosted images win over external links
