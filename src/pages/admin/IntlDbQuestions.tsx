@@ -81,18 +81,32 @@ export default function IntlDbQuestions() {
     const agg = { found: 0, changed: 0, inserted: 0, errors: 0 };
     try {
       let offset = 0, hasMore = true;
-      while (hasMore && offset <= 4000) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) throw new Error("Please sign in again before updating questions.");
+      const batchSize = dryRun ? 200 : 50;
+      while (hasMore) {
         const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
-          body: { mode: 'update', dry_run: dryRun, skip_image_diffs: true, offset, limit: 200 },
+          body: { mode: 'update', dry_run: dryRun, skip_image_diffs: true, offset, limit: batchSize },
         });
-        if (error) throw error;
+        if (error) {
+          let detail = error.message;
+          if ("context" in error && error.context instanceof Response) {
+            const response = await error.context.json().catch(() => null);
+            detail = response?.error || detail;
+          }
+          throw new Error(detail);
+        }
+        if (!d || d.error) throw new Error(d?.error || "No update result returned.");
         agg.found += d?.total_found || 0;
         agg.changed += d?.updated || 0;
         agg.inserted += d?.inserted || 0;
         agg.errors += d?.errors || 0;
         setSyncResult({ ...agg, dryRun });
+        if (d.errors > 0 || d.success === false) throw new Error(d.error_details?.join("; ") || "Some questions failed to update. Please retry.");
         hasMore = d?.has_more === true;
-        offset = d?.next_offset || offset + 200;
+        const nextOffset = d?.next_offset ?? offset + batchSize;
+        if (hasMore && nextOffset <= offset) throw new Error("The scan did not advance. Please retry.");
+        offset = nextOffset;
       }
       setSyncResult({ ...agg, dryRun });
       if (!dryRun) {
@@ -101,7 +115,9 @@ export default function IntlDbQuestions() {
       }
     } catch (e: any) {
       toast({ title: 'Sync failed', description: e.message || 'Unknown error', variant: 'destructive' });
+      setSyncResult(null);
     } finally {
+      if (!dryRun) refetch();
       setSyncing(null);
     }
   };

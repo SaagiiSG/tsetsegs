@@ -1,4 +1,5 @@
 # UI work
+- [x] Fix question update failures; signed-in admin imported 598 updates + 4 additions across 879 flagged questions, then rechecked with 0 remaining changes.
 - [x] Educator applications and admin review: live submission, signed-in approval/payment gate verified; Emerald display rename preserves stored rank keys.
 - [x] Educator admin/teacher/student previews render their selected roles; Mongolian mobile form checked with no overflow or runtime errors.
 - [ ] Newly provisioned educator roster verification — requires an approved, paid educator account and configured center portal; existing center dashboard is reused.

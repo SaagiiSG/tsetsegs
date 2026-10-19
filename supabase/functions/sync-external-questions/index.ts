@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildContentPatch } from "./contentPatch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -206,6 +207,7 @@ Deno.serve(async (req) => {
       .select("question_id, question_text, answer, multiple_choice_options, difficulty_level, subject, question_type, rationale, passage_text, original_cb_id, question_set, subtopic, alternate_answers, question_image_url, choice_images, video_url, skill, has_figure, figure_type, figure_description, figure_svg, is_variant")
       .eq("is_active", true)
       .order("created_at", { ascending: true })
+      .order("question_id", { ascending: true })
       .range(offset, offset + safeLimit - 1);
 
     // Update mode: only pull questions the external DB flags as overwritten variants
@@ -290,10 +292,10 @@ Deno.serve(async (req) => {
       const { data: page, error: pageErr } = await adminClient
         .from(QT)
         .select("id, question_id, original_cb_id")
+        .order("id")
         .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1);
       if (pageErr) {
-        console.error("Dedup fetch error:", pageErr.message);
-        break;
+        throw new Error(`Could not read existing questions: ${pageErr.message}`);
       }
       if (!page || page.length === 0) break;
       allExistingQuestions.push(...page);
@@ -303,7 +305,7 @@ Deno.serve(async (req) => {
 
     const existingQIds = new Map(allExistingQuestions.map((q) => [q.question_id, q.id]));
     const existingCbIds = new Map(
-      allExistingQuestions.filter((q) => q.original_cb_id).map((q) => [q.original_cb_id!, q.id])
+      allExistingQuestions.flatMap((q) => q.original_cb_id ? [[q.original_cb_id, q.id] as const] : [])
     );
 
     // ── UPDATE MODE: overwrite content of already-imported questions in place ──
@@ -341,20 +343,16 @@ Deno.serve(async (req) => {
         if (rowsErr) { errors += chunk.length; errorDetails.push(rowsErr.message); continue; }
         const byId = new Map((rows || []).map((r: any) => [r.id, r]));
 
-        for (const m of chunk) {
+        for (let start = 0; start < chunk.length; start += 5) {
+        await Promise.all(chunk.slice(start, start + 5).map(async (m) => {
           const cur: any = byId.get(m.internalId);
-          if (!cur) { notFound++; continue; }
+          if (!cur) { notFound++; return; }
           const next: any = normalizeQuestion(m.ext, {}, null);
-          const patch: Record<string, unknown> = {};
-          for (const f of CONTENT_FIELDS) {
-            // Never wipe an explanation written locally when the external copy has none
-            if ((f === "rationale" || f === "explanation_steps") && !norm(next[f]) && norm(cur[f])) continue;
-            if (norm(cur[f]) !== norm(next[f])) patch[f] = next[f] ?? null;
-          }
+          const patch = buildContentPatch(cur, next, CONTENT_FIELDS, skipImageDiffs);
           const changed = Object.keys(patch);
-          if (changed.length === 0) { unchanged++; continue; }
+          if (changed.length === 0) unchanged++;
           // Skip questions whose figure link differs — our hosted images win over external links
-          if (skipImageDiffs && changed.includes("question_image_url")) { skippedImages++; continue; }
+          if (skipImageDiffs && norm(cur.question_image_url) !== norm(next.question_image_url)) skippedImages++;
 
           if (changes.length < 200) {
             changes.push({
@@ -364,20 +362,20 @@ Deno.serve(async (req) => {
               after_text: next.question_text,
             });
           }
-          if (dry_run) { updated++; continue; }
+          if (dry_run) { if (changed.length) updated++; return; }
 
-          const { error: upErr } = await adminClient.from(QT).update(patch).eq("id", m.internalId);
+          const metadata = QT === "intl_questions" ? { ext_variant: true, ext_question_id: m.ext.question_id } : {};
+          if (!changed.length && QT !== "intl_questions") return;
+          const { error: upErr } = await adminClient.from(QT).update({ ...patch, ...metadata }).eq("id", m.internalId);
           if (upErr) { errors++; errorDetails.push(`${cur.question_id}: ${upErr.message}`); }
-          else updated++;
+          else if (changed.length) updated++;
+        }));
         }
       }
 
       // Tag every matched flagged question + insert the ones intDB doesn't have yet
       let inserted = 0;
       if (!dry_run && QT === "intl_questions") {
-        for (const m of matches) {
-          await adminClient.from(QT).update({ ext_variant: true, ext_question_id: m.ext.question_id }).eq("id", m.internalId);
-        }
         const matchedExt = new Set(matches.map((m) => m.ext.question_id));
         const missing = filteredQuestions.filter((q: any) => !matchedExt.has(q.question_id));
         if (missing.length) {
@@ -391,13 +389,13 @@ Deno.serve(async (req) => {
             ext_variant: true, ext_question_id: q.question_id,
           }));
           const { error: insErr } = await adminClient.from(QT).insert(rows);
-          if (insErr) errorDetails.push(`insert: ${insErr.message}`); else inserted = rows.length;
+          if (insErr) { errors += rows.length; errorDetails.push(`insert: ${insErr.message}`); } else inserted = rows.length;
         }
       }
 
       return new Response(
         JSON.stringify({
-          mode: "update", preview: dry_run, success: true,
+          mode: "update", preview: dry_run, success: errors === 0,
           total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, inserted, errors, skipped_images: skippedImages,
           changes, has_more: hasMore, next_offset: offset + safeLimit,
           error_details: errorDetails.slice(0, 10),
@@ -429,8 +427,8 @@ Deno.serve(async (req) => {
         const qId = q.question_id as string;
 
         const existingId = (cbId && existingCbIds.has(cbId))
-          ? existingCbIds.get(cbId)!
-          : existingQIds.has(qId) ? existingQIds.get(qId)! : null;
+          ? existingCbIds.get(cbId)
+          : existingQIds.has(qId) ? existingQIds.get(qId) : null;
 
         if (existingId) {
           skipped++;
