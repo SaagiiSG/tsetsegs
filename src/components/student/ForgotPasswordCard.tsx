@@ -1,5 +1,6 @@
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { lovable } from '@/integrations/lovable';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -20,14 +21,40 @@ interface Props {
   onSuccess?: (phone: string) => void;
 }
 
-type Step = 'request' | 'sent';
+type Step = 'request' | 'sent' | 'newpass';
 
-export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
+export function ForgotPasswordCard({ initialPhone = '', onBack, onSuccess }: Props) {
   const { text } = usePublicLanguage();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>('request');
   const [phone, setPhone] = useState(initialPhone);
   const [loading, setLoading] = useState(false);
+  const [newPass, setNewPass] = useState('');
+  // Returning from Google: the connected account proves ownership, so the student can set a new password.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('google_reset') !== '1') return;
+    const saved = sessionStorage.getItem('google_reset_phone') ?? '';
+    supabase.auth.getSession().then(({ data }) => { if (data.session && saved) { setPhone(saved); setStep('newpass'); } });
+  }, []);
+  const startGoogle = async () => {
+    if (phone.length !== 8) return;
+    sessionStorage.setItem('google_reset_phone', phone);
+    const r = await lovable.auth.signInWithOAuth('google', { redirect_uri: `${window.location.origin}/practice?google_reset=1` });
+    if (r.error) { toast({ title: text('Google-ээр нэвтэрч чадсангүй', 'Google sign-in failed'), variant: 'destructive' }); return; }
+    if (r.redirected) return;
+    setStep('newpass');
+  };
+  const submitNew = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoading(true);
+    const { data, error } = await supabase.functions.invoke('google-reset-password', { body: { phone_number: phone, password: newPass } });
+    setLoading(false);
+    await supabase.auth.signOut().catch(() => undefined);
+    sessionStorage.removeItem('google_reset_phone');
+    window.history.replaceState(null, '', window.location.pathname);
+    const msg = (data as any)?.error;
+    if (error || msg) { toast({ title: text('Сэргээж чадсангүй', 'Could not reset'), description: msg || text('Энэ Google бүртгэл тухайн дугаартай холбогдоогүй байна.', 'This Google account is not connected to that phone number.'), variant: 'destructive' }); setStep('request'); return; }
+    onSuccess?.(phone);
+  };
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +77,18 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
     }
     setStep('sent');
   };
+
+  if (step === 'newpass') {
+    return (
+      <AuthGlassCard>
+        <div className="space-y-3 pb-8"><h2 className="text-4xl font-semibold tracking-tight text-foreground leading-[1.1]">{text('Шинэ нууц үг', 'New password')}</h2><p className="text-sm text-muted-foreground">{text(`Google-ээр баталгаажлаа (${phone})`, `Verified with Google (${phone})`)}</p></div>
+        <form onSubmit={submitNew} className="space-y-6">
+          <div className="space-y-2"><Label htmlFor="new-pass" className={authLabelClasses}>{text('Шинэ нууц үг', 'New password')}</Label><Input id="new-pass" type="password" minLength={8} maxLength={72} value={newPass} onChange={e => setNewPass(e.target.value)} className={authInputClasses} /></div>
+          <Button type="submit" className={authPrimaryButtonClasses} disabled={loading || newPass.length < 8}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{text('Нууц үг солих', 'Set new password')}</Button>
+        </form>
+      </AuthGlassCard>
+    );
+  }
 
   if (step === 'sent') {
     return (
@@ -125,6 +164,9 @@ export function ForgotPasswordCard({ initialPhone = '', onBack }: Props) {
           ) : (
             text('Нууц үг сэргээх хүсэлт илгээх', 'Request password reset')
           )}
+        </Button>
+        <Button type="button" variant="outline" className="w-full h-11 rounded-full" disabled={phone.length !== 8} onClick={() => void startGoogle()}>
+          {text('Холбосон Google-ээрээ сэргээх', 'Reset with my connected Google')}
         </Button>
       </form>
     </AuthGlassCard>

@@ -27,6 +27,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
 import Educators from "./pages/public/Educators";
+import SoloWelcome from "./pages/public/SoloWelcome";
 import { resolveCenterSlug } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
 import InvestorDemo from './demo/InvestorDemo';
@@ -333,6 +334,7 @@ const MainApp = () => (
 
                   {/* Student Self-Registration */}
                   <Route path="/student-register" element={<StudentRegistration />} />
+                  <Route path="/solo" element={<SoloWelcome />} />
 
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />
