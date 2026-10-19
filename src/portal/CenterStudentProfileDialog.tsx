@@ -15,7 +15,7 @@ type Profile = {
   history: { sprint: string; tier: string; next_tier: string; position: number; points: number }[];
 };
 
-const tierName = (t: string) => t === 'platinum' ? 'Platinum' : t.charAt(0).toUpperCase() + t.slice(1);
+const tierName = (t: string) => t === 'platinum' ? 'Emerald' : t.charAt(0).toUpperCase() + t.slice(1);
 
 /** Center-only student profile: reads tenant records through tenant_student_profile, never main student data. */
 export function CenterStudentProfileDialog({ studentId, name, open, onOpenChange }: { studentId: string | null; name: string; open: boolean; onOpenChange: (o: boolean) => void }) {

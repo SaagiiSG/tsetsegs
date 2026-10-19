@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TIER_ORDER, TIER_COLORS, TIER_PROMOTION_CUTOFFS, type TierType } from '@/data/badgeDefinitions';
 import { TIER_ASSETS } from './tierAssets';
 
-export const ladderTierName = (t: string) => t === 'platinum' ? 'Platinum' : t.charAt(0).toUpperCase() + t.slice(1);
+export const ladderTierName = (t: string) => t === 'platinum' ? 'Emerald' : t.charAt(0).toUpperCase() + t.slice(1);
 
 interface Props {
   currentTier: string;

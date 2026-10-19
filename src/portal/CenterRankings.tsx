@@ -14,7 +14,7 @@ import { SkyListSkeleton } from './SkySkeleton';
 import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
 import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
 
-const tierName = (tier: string) => tier === 'platinum' ? 'Platinum' : tier.charAt(0).toUpperCase() + tier.slice(1);
+const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
 const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
 

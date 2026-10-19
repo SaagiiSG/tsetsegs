@@ -31,7 +31,7 @@ const THEME_OPTIONS: { value: ThemeOption; label: string }[] = [
   { value: 'bronze', label: 'Bronze' },
   { value: 'silver', label: 'Silver' },
   { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
+  { value: 'platinum', label: 'Emerald' },
   { value: 'diamond', label: 'Diamond' },
   { value: 'ruby', label: 'Ruby' },
 ];
