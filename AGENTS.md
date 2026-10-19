@@ -18,11 +18,13 @@
 - Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank.
 - Concept videos are international-only (nav filtered and route guarded by `student.cohort`).
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
-- Center SAT simulation is an automatic dashboard island using the shared satSimulation algorithm on tenant Math attempts and intDB difficulty; never expose it as a student-taken test or query main student attempts.
+- Center SAT simulation uses shared satSimulation with tenant Math attempts and intDB difficulty; never a student-taken test or main student query.
 - Center rankings/history use tenant attempts and sprint snapshots, never global rankings. Stored tier keys remain stable; rename display labels to preserve history, themes and badges.
 - Customer Review Mistakes uses a tenant-attempt data adapter and international question previews with data-agnostic chart primitives, so matching the main review layout never grants access to main student records.
-- Main admin `/admin` is the platform-wide overview (customers, revenue, payment health); Tsetsegs-only views live under `/admin/tsetsegs/*` in a "Tsetsegs Workspace" sidebar section, so platform and in-house data never mix on one page.
+- `/admin` shows platform data; `/admin/tsetsegs/*` isolates in-house data.
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
 - Main-portal students sign in through the `student-login` server function, which issues a secret token sent as the `x-student-token` header (src/lib/studentToken.ts); the database maps it to the student via `request_student_id()`, so students can only write their own rows and never sessions or passwords.
 - Student answers are graded and points decided in database triggers (repeat answers pay 0, league totals updated server-side); the browser's own right/wrong is only for display. Password hashes live only in the server-only `student_credentials` table.
 - Solo plans are server-only. Google linking verifies Google identity and secret student token; layout unlocks before local OAuth cleanup to preserve practice.
+
+- External sync uses stable pagination and bounded parallel content/metadata writes to avoid timeouts; failures must not report completion.
