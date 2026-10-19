@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders as sdkCorsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  ...sdkCorsHeaders,
+  "Access-Control-Allow-Headers": `${sdkCorsHeaders['Access-Control-Allow-Headers']}, x-student-session-id, x-student-token`,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -24,9 +25,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !anonKey || !serviceKey) throw new Error('Service configuration unavailable');
 
     // Verify the (Google-issued) session token and pull email from auth.users
     const userClient = createClient(supabaseUrl, anonKey, {
@@ -39,19 +41,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    const googleIdentity = user.identities?.find((identity) => identity.provider === 'google');
+    const googleSub = googleIdentity?.identity_data?.sub ?? googleIdentity?.id;
+    if (!googleSub || typeof googleSub !== 'string') {
+      return new Response(JSON.stringify({ error: 'Please connect using a Google account' }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const admin = createClient(supabaseUrl, serviceKey);
 
     // Ownership check: caller must present an active student session for the target account
     const sessionId = req.headers.get('x-student-session-id') ?? '';
-    if (!sessionId) {
+    const studentToken = req.headers.get('x-student-token') ?? '';
+    if (!sessionId || !studentToken) {
       return new Response(JSON.stringify({ error: 'missing student session' }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(studentToken));
+    const tokenHash = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
     const { data: session } = await admin
       .from('student_sessions')
       .select('student_account_id, is_active, expires_at')
       .eq('id', sessionId)
+      .eq('token_hash', tokenHash)
       .maybeSingle();
     if (!session || !session.is_active || new Date(session.expires_at as string) < new Date() || session.student_account_id !== student_account_id) {
       return new Response(JSON.stringify({ error: 'session does not own this account' }), {
@@ -82,9 +95,7 @@ Deno.serve(async (req) => {
       .update({ email_link_prompted_at: new Date().toISOString() })
       .eq("id", student_account_id);
 
-    // Sign the user out of the Supabase auth session so the student session
-    // (phone/password in localStorage) remains the primary identity.
-    try { await userClient.auth.signOut(); } catch { /* ignore */ }
+    // The browser cleans up only its borrowed Google session after unlocking.
 
     return new Response(JSON.stringify({ ok: true, email }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
