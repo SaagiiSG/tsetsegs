@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 
 type Provider = 'google' | 'apple' | 'microsoft';
-const PROVIDERS: { id: Provider; label: string; Mark: () => JSX.Element }[] = [
+const PROVIDERS: { id: Provider; label: string; Mark: React.ComponentType<{ className?: string }> }[] = [
   { id: 'google', label: 'Google', Mark: GoogleMark },
   { id: 'apple', label: 'Apple', Mark: AppleMark },
   { id: 'microsoft', label: 'Microsoft', Mark: MicrosoftMark },
