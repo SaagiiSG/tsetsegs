@@ -1,15 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { PointsFlyer } from './PointsFlyer';
-import { animate, motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { Flame, Snowflake, Trophy, Sparkles } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
-import { useStudentStreak } from '@/hooks/useStudentStreak';
+import { motion } from 'framer-motion';
+import { Flame, Snowflake, Trophy } from 'lucide-react';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
+import { TodayPointsChip } from './TodayPointsChip';
 import { cn } from '@/lib/utils';
 
 interface StreakAndRankBarProps {
