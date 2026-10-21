@@ -6382,6 +6382,27 @@ export type Database = {
           total: number
         }[]
       }
+      student_account_by_share_token: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+          linked_student_id: string
+        }[]
+      }
+      student_account_for_login: {
+        Args: { _phones: string[] }
+        Returns: {
+          blocked_reason: string
+          id: string
+          is_blocked: boolean
+          password_hash: string
+          phone_number: string
+        }[]
+      }
+      student_account_id_for_student: {
+        Args: { _student_id: string }
+        Returns: string
+      }
       student_badge_earned: {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
