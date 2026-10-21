@@ -4,7 +4,6 @@ import { CheckInWidget } from './CheckInWidget';
 import { ExternalResourcesPopover } from './ExternalResourcesPopover';
 import { SATCountdownWidget } from './SATCountdownWidget';
 import { StreakHistoryDialog } from './StreakHistoryDialog';
-import { TodayPointsChip } from './TodayPointsChip';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';

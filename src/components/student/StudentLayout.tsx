@@ -34,6 +34,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
 import { StreakAndRankBar } from './StreakAndRankBar';
+import { TodayPointsChip } from './TodayPointsChip';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
 import { ChallengeWinCelebration } from './challenges/ChallengeWinCelebration';
 
