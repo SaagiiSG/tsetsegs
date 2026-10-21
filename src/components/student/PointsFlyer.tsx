@@ -8,39 +8,39 @@ export function emitPointsEarned(points: number) {
 }
 
 type Pt = { x: number; y: number };
-interface Flyer { id: number; points: number; from: Pt; to: Pt }
+interface Flyer { id: number; points: number; from: Pt; hover: Pt; to: Pt }
 interface Burst { id: number; at: Pt }
 
-const FLIGHT = 0.42;
-const POP = 0.12;
+const RISE = 0.25, HOLD = 0.15, FLY = 0.35;
+const TOTAL = RISE + HOLD + FLY;
 
-/** Arc path: pop at the tap, then accelerate along a curve into the target. */
-function arc(from: Pt, to: Pt) {
-  const ctrl = { x: from.x + (to.x - from.x) * 0.2 - 60, y: Math.min(from.y, to.y) - 80 };
-  const pts: Pt[] = [from, from];
+/** Pop out of the Check button, hover above it, then accelerate along a curve into the chip. */
+function path(from: Pt, hover: Pt, to: Pt) {
+  const ctrl = { x: hover.x + (to.x - hover.x) * 0.2 - 60, y: Math.min(hover.y, to.y) - 60 };
+  const pts: Pt[] = [from, hover, hover];
+  const times = [0, RISE / TOTAL, (RISE + HOLD) / TOTAL];
   for (const t of [0.25, 0.5, 0.75, 1]) {
     const u = 1 - t;
-    pts.push({ x: u * u * from.x + 2 * u * t * ctrl.x + t * t * to.x, y: u * u * from.y + 2 * u * t * ctrl.y + t * t * to.y });
+    pts.push({ x: u * u * hover.x + 2 * u * t * ctrl.x + t * t * to.x, y: u * u * hover.y + 2 * u * t * ctrl.y + t * t * to.y });
+    times.push((RISE + HOLD + Math.sqrt(t) * FLY) / TOTAL); // accelerates into the chip
   }
-  return pts;
+  return { pts, times };
 }
 
-const TIMES = [0, POP / FLIGHT, 0.5, 0.72, 0.88, 1];
-
 function Bubble({ f, delay, ghost, onDone }: { f: Flyer; delay: number; ghost?: number; onDone?: () => void }) {
-  const p = arc(f.from, f.to);
+  const { pts, times } = path(f.from, f.hover, f.to);
+  const o = ghost ? 0.35 / ghost : 1;
   return (
     <motion.div
-      className="pointer-events-none fixed left-0 top-0 z-[100] -translate-x-1/2 -translate-y-1/2 rounded-full bg-success px-2.5 py-1 font-mono text-sm font-bold text-primary-foreground shadow-lg"
-      style={{ opacity: ghost ? 0.35 / ghost : 1 }}
-      initial={{ x: f.from.x, y: f.from.y, scale: 0 }}
+      className="pointer-events-none fixed left-0 top-0 z-[100] -translate-x-1/2 -translate-y-1/2 rounded-full bg-success px-3 py-1 font-mono text-base font-bold text-primary-foreground shadow-lg"
+      initial={{ x: f.from.x, y: f.from.y, scale: 0.3, opacity: 0 }}
       animate={{
-        x: p.map(q => q.x),
-        y: p.map(q => q.y),
-        scale: ghost ? [0, 1, 0.8, 0.6, 0.45, 0.3] : [0, 1.3, 1.05, 0.9, 0.75, 0.55],
-        scaleX: ghost ? undefined : [1, 1, 1, 1, 1, 1.5],
+        x: pts.map(q => q.x),
+        y: pts.map(q => q.y),
+        scale: [0.3, 1.15, 1.15, 0.95, 0.8, 0.65, 0.5],
+        opacity: ghost ? [0, 0, 0, o, o, o, o] : [0, 1, 1, 1, 1, 1, 1],
       }}
-      transition={{ duration: FLIGHT, delay, times: TIMES, ease: [0.55, 0, 0.9, 0.4] }}
+      transition={{ duration: TOTAL, delay, times, ease: ['easeOut', 'linear', 'linear', 'linear', 'linear', 'linear'] }}
       onAnimationComplete={onDone}
     >
       +{f.points}
@@ -52,11 +52,21 @@ function Bubble({ f, delay, ghost, onDone }: { f: Flyer; delay: number; ghost?: 
 export function PointsFlyer({ targetRef, onLaunch, onArrive }: { targetRef: React.RefObject<HTMLElement>; onLaunch: () => void; onArrive: (points: number) => void }) {
   const [flyers, setFlyers] = useState<Flyer[]>([]);
   const [bursts, setBursts] = useState<Burst[]>([]);
-  const lastTap = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const lastTap = useRef<{ from: Pt; hover: Pt }>({ from: { x: window.innerWidth / 2, y: window.innerHeight / 2 }, hover: { x: window.innerWidth / 2, y: window.innerHeight / 2 - 40 } });
   const reduce = useReducedMotion();
 
   useEffect(() => {
-    const onDown = (e: PointerEvent) => { lastTap.current = { x: e.clientX, y: e.clientY }; };
+    const onDown = (e: PointerEvent) => {
+      // Launch from the pressed button's centre and hover just above it.
+      const btn = (e.target as Element | null)?.closest?.('button');
+      if (btn) {
+        const b = btn.getBoundingClientRect();
+        const cx = b.left + b.width / 2;
+        lastTap.current = { from: { x: cx, y: b.top + b.height / 2 }, hover: { x: cx, y: b.top - 24 } };
+      } else {
+        lastTap.current = { from: { x: e.clientX, y: e.clientY }, hover: { x: e.clientX, y: e.clientY - 48 } };
+      }
+    };
     const onEarn = (e: Event) => {
       const points = (e as CustomEvent).detail?.points ?? 0;
       const el = targetRef.current;
@@ -64,7 +74,7 @@ export function PointsFlyer({ targetRef, onLaunch, onArrive }: { targetRef: Reac
       const r = el.getBoundingClientRect();
       onLaunch();
       if (reduce) { onArrive(points); return; }
-      setFlyers(f => [...f, { id: Date.now() + Math.random(), points, from: lastTap.current, to: { x: r.left + r.width / 2, y: r.top + r.height / 2 } }]);
+      setFlyers(f => [...f, { id: Date.now() + Math.random(), points, ...lastTap.current, to: { x: r.left + r.width / 2, y: r.top + r.height / 2 } }]);
     };
     window.addEventListener('pointerdown', onDown, true);
     window.addEventListener('student-points-earned', onEarn);
