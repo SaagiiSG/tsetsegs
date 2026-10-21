@@ -10,7 +10,7 @@ export function emitPointsEarned(points: number) {
 interface Flyer { id: number; points: number; from: { x: number; y: number }; to: { x: number; y: number } }
 
 /** Renders "+N" bubbles flying from the last tap to `targetRef`, then calls onArrive. */
-export function PointsFlyer({ targetRef, onArrive }: { targetRef: React.RefObject<HTMLElement>; onArrive: () => void }) {
+export function PointsFlyer({ targetRef, onLaunch, onArrive }: { targetRef: React.RefObject<HTMLElement>; onLaunch: () => void; onArrive: (points: number) => void }) {
   const [flyers, setFlyers] = useState<Flyer[]>([]);
   const lastTap = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const reduce = useReducedMotion();
@@ -22,7 +22,8 @@ export function PointsFlyer({ targetRef, onArrive }: { targetRef: React.RefObjec
       const el = targetRef.current;
       if (!el || points <= 0) return;
       const r = el.getBoundingClientRect();
-      if (reduce) { onArrive(); return; }
+      onLaunch();
+      if (reduce) { onArrive(points); return; }
       setFlyers(f => [...f, { id: Date.now() + Math.random(), points, from: lastTap.current, to: { x: r.left + r.width / 2, y: r.top + r.height / 2 } }]);
     };
     window.addEventListener('pointerdown', onDown, true);
@@ -31,7 +32,7 @@ export function PointsFlyer({ targetRef, onArrive }: { targetRef: React.RefObjec
       window.removeEventListener('pointerdown', onDown, true);
       window.removeEventListener('student-points-earned', onEarn);
     };
-  }, [targetRef, onArrive, reduce]);
+  }, [targetRef, onLaunch, onArrive, reduce]);
 
   return createPortal(
     <AnimatePresence>
@@ -48,7 +49,7 @@ export function PointsFlyer({ targetRef, onArrive }: { targetRef: React.RefObjec
           }}
           exit={{ opacity: 0, scale: 0.2 }}
           transition={{ duration: 0.75, times: [0, 0.3, 1], ease: [0.22, 1, 0.36, 1] }}
-          onAnimationComplete={() => { setFlyers(list => list.filter(x => x.id !== f.id)); onArrive(); }}
+          onAnimationComplete={() => { setFlyers(list => list.filter(x => x.id !== f.id)); onArrive(f.points); }}
         >
           +{f.points}
         </motion.div>
