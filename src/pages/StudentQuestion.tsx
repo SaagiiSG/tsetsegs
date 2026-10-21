@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -514,7 +515,8 @@ export default function StudentQuestion() {
             points,
             category: 'questions',
             metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
-          });
+          }).select('points').maybeSingle()
+          .then(({ data }) => { emitPointsEarned(Number(data?.points) || 0); return { data }; });
         // Refresh the header's "today" chip right away with what the server paid.
         queryClient.invalidateQueries({ queryKey: ['today-points'] });
 
