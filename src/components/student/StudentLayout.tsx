@@ -155,6 +155,11 @@ function StudentLayoutContent() {
             <StreakAndRankBar onStreakClick={() => setStreakDialogOpen(true)} />
           </div>
 
+          {/* Desktop: just the today-points chip centered in the header */}
+          <div className="hidden xl:flex">
+            <TodayPointsChip />
+          </div>
+
           <div className="flex items-center gap-2">
             {/* Mobile streak counter */}
             <button

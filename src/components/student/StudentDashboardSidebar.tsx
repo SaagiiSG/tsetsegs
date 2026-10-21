@@ -196,7 +196,6 @@ export function StudentDashboardSidebar() {
                   {freezersAvailable}
                 </button>
               )}
-              <TodayPointsChip />
             </motion.div>
           )}
           {open && <SidebarTrigger className="h-8 w-8 shrink-0" title="Collapse sidebar" />}
