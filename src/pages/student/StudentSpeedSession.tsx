@@ -219,6 +219,7 @@ export default function StudentSpeedSession() {
           category: 'speed_session',
           metadata: { question_id: questionId, time_seconds: timeInSeconds }
         });
+        queryClient.invalidateQueries({ queryKey: ['today-points'] });
 
         if (activeSprint) {
           const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
