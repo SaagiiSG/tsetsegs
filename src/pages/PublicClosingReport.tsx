@@ -75,28 +75,16 @@ export default function PublicClosingReport() {
       const hwDone = homework?.filter(h => h.completed).length || 0;
       const homeworkCompletion = hwTotal > 0 ? Math.round((hwDone / hwTotal) * 100) : 0;
 
-      const { data: mockTests } = await supabase
-        .from('practice_tests')
-        .select('test_number, score')
-        .eq('student_id', studentId)
-        .eq('batch_id', batchId)
-        .order('test_number', { ascending: true });
+      const { data: mockTestRows } = await supabase.rpc('report_practice_tests' as any, { _token: token });
+      const mockTests = mockTestRows as { test_number: number; score: number | null }[] | null;
 
       const firstMock = mockTests?.[0]?.score ?? null;
       const highestMock = mockTests?.length ? Math.max(...mockTests.map(t => t.score || 0)) : null;
       const lastMock = mockTests?.length ? mockTests[mockTests.length - 1]?.score : null;
       const scoreImprovement = firstMock && lastMock ? lastMock - firstMock : null;
 
-      const { data: studentAccountId } = await supabase.rpc('student_account_id_for_student' as any, { _student_id: studentId });
-
-      let totalQuestionsAttempted = 0;
-      if (studentAccountId) {
-        const { count } = await supabase
-          .from('student_attempts')
-          .select('id', { count: 'exact', head: true })
-          .eq('student_account_id', studentAccountId as string);
-        totalQuestionsAttempted = count || 0;
-      }
+      const { data: attemptCount } = await supabase.rpc('report_attempt_count' as any, { _token: token });
+      const totalQuestionsAttempted = Number(attemptCount) || 0;
 
       return {
         studentName: `${student?.first_name || ''} ${student?.last_name || ''}`.trim(),

@@ -102,14 +102,9 @@ export default function StudentShareProfile() {
   const { data: practiceTests } = useQuery({
     queryKey: ['shared-practice-tests', linkedStudent?.id, linkedStudent?.batch_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('practice_tests')
-        .select('test_number, score, created_at')
-        .eq('student_id', linkedStudent!.id)
-        .eq('batch_id', linkedStudent!.batch_id)
-        .order('test_number');
+      const { data, error } = await supabase.rpc('shared_practice_tests' as any, { _token: shareToken });
       if (error) throw error;
-      return data;
+      return data as { test_number: number; score: number | null; created_at: string }[];
     },
     enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
   });
@@ -147,13 +142,9 @@ export default function StudentShareProfile() {
   const { data: attempts } = useQuery({
     queryKey: ['shared-attempts', studentAccount?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct, attempt_number, attempted_at')
-        .eq('student_account_id', studentAccount!.id)
-        .order('attempted_at', { ascending: false });
+      const { data, error } = await supabase.rpc('shared_attempts' as any, { _token: shareToken });
       if (error) throw error;
-      return data;
+      return data as { question_id: string; is_correct: boolean; attempt_number: number; attempted_at: string }[];
     },
     enabled: !!studentAccount?.id
   });
