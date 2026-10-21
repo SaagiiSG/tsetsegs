@@ -302,6 +302,13 @@
       "when": 1792607213519,
       "tag": "0042_lock_student_roster",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1792608047160,
+      "tag": "0043_lock_scores_attempts",
+      "breakpoints": true
     }
   ]
 }
