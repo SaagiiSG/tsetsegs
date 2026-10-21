@@ -6317,7 +6317,16 @@ export type Database = {
           read_ct: number
         }[]
       }
+      report_attempt_count: { Args: { _token: string }; Returns: number }
+      report_practice_tests: {
+        Args: { _token: string }
+        Returns: {
+          score: number
+          test_number: number
+        }[]
+      }
       request_student_id: { Args: never; Returns: string }
+      request_student_owns: { Args: { _student_id: string }; Returns: boolean }
       resolve_account_cohort: {
         Args: { _linked_student_id: string }
         Returns: string
@@ -6371,6 +6380,23 @@ export type Database = {
       set_batch_nickname: {
         Args: { p_batch_id: string; p_nickname: string }
         Returns: undefined
+      }
+      shared_attempts: {
+        Args: { _token: string }
+        Returns: {
+          attempt_number: number
+          attempted_at: string
+          is_correct: boolean
+          question_id: string
+        }[]
+      }
+      shared_practice_tests: {
+        Args: { _token: string }
+        Returns: {
+          created_at: string
+          score: number
+          test_number: number
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
