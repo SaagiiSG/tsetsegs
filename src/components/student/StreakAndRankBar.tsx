@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Flame, Snowflake, Trophy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Flame, Snowflake, Trophy, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -12,8 +15,39 @@ interface StreakAndRankBarProps {
   className?: string;
 }
 
+/** Sum of points the server actually paid since local midnight. */
+function useTodayPoints(studentId?: string) {
+  return useQuery({
+    queryKey: ['today-points', studentId],
+    enabled: !!studentId,
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      let sum = 0;
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase
+          .from('point_transactions')
+          .select('points')
+          .eq('student_account_id', studentId!)
+          .gte('created_at', start.toISOString())
+          .range(from, from + 999);
+        if (error) throw error;
+        if (!data?.length) break;
+        sum += data.reduce((s, t) => s + (t.points || 0), 0);
+        if (data.length < 1000) break;
+      }
+      return sum;
+    },
+  });
+}
+
 export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarProps) {
   const navigate = useNavigate();
+  const { student } = useStudentAuth();
+  const { data: todayPoints } = useTodayPoints(student?.id);
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
   const { tier } = useStudentTier();
@@ -54,6 +88,18 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
           {freezersAvailable}
         </button>
       )}
+
+      <div
+        className="student-chip"
+        title="Points you collected today"
+        aria-label={`${todayPoints ?? 0} points collected today`}
+      >
+        <Sparkles className="h-3 w-3 text-primary" />
+        <span className="font-mono font-bold text-xs text-foreground tabular-nums">
+          {todayPoints === undefined ? '…' : `+${todayPoints.toLocaleString()}`}
+        </span>
+        <span className="text-[9px] text-muted-foreground">today</span>
+      </div>
 
       <div
         className="student-chip text-[10px] uppercase"
