@@ -34,6 +34,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
 import { StreakAndRankBar } from './StreakAndRankBar';
+import { TodayPointsChip } from './TodayPointsChip';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
 import { ChallengeWinCelebration } from './challenges/ChallengeWinCelebration';
 
@@ -153,6 +154,11 @@ function StudentLayoutContent() {
           {/* Streak + rank bar centered whenever the iPad dock is visible */}
           <div className="hidden md:flex xl:hidden">
             <StreakAndRankBar onStreakClick={() => setStreakDialogOpen(true)} />
+          </div>
+
+          {/* Desktop: just the today-points chip centered in the header */}
+          <div className="hidden xl:flex">
+            <TodayPointsChip />
           </div>
 
           <div className="flex items-center gap-2">
