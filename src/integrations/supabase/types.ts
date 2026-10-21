@@ -6430,10 +6430,6 @@ export type Database = {
           phone_number: string
         }[]
       }
-      student_account_id_for_student: {
-        Args: { _student_id: string }
-        Returns: string
-      }
       student_badge_earned: {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
