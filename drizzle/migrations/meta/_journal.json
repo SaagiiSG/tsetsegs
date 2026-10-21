@@ -295,6 +295,13 @@
       "when": 1792606761166,
       "tag": "0041_lock_student_roster_step2",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792607213519,
+      "tag": "0042_lock_student_roster",
+      "breakpoints": true
     }
   ]
 }
