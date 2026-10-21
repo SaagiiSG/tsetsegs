@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { PointsFlyer } from './PointsFlyer';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Flame, Snowflake, Trophy, Sparkles } from 'lucide-react';
@@ -55,6 +57,22 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
   const rank = currentUserEntry?.rank ?? null;
   const group = currentUserEntry?.groupNumber;
 
+  // The number only changes when a flying "+N" lands, so the reward feels caused.
+  const todayRef = useRef<HTMLDivElement>(null);
+  const inFlight = useRef(0);
+  const latest = useRef(todayPoints);
+  latest.current = todayPoints;
+  const [shownPoints, setShownPoints] = useState<number | undefined>(todayPoints);
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => { if (inFlight.current === 0) setShownPoints(todayPoints); }, [todayPoints]);
+  const onLaunch = useCallback(() => { inFlight.current += 1; }, []);
+  const onArrive = useCallback((points: number) => {
+    inFlight.current = Math.max(0, inFlight.current - 1);
+    // Use the server total if it already arrived, otherwise bump by what was paid.
+    setShownPoints(prev => Math.max(latest.current ?? 0, (prev ?? 0) + points));
+    setPulse(true);
+  }, []);
+
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <button
@@ -89,17 +107,22 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
         </button>
       )}
 
-      <div
-        className="student-chip"
+      <motion.div
+        ref={todayRef}
+        animate={pulse ? { scale: [1, 1.25, 1] } : { scale: 1 }}
+        transition={{ type: 'spring', bounce: 0.5, duration: 0.4 }}
+        onAnimationComplete={() => setPulse(false)}
+        className={cn('student-chip transition-colors', pulse && 'text-emerald-600 dark:text-emerald-400')}
         title="Points you collected today"
-        aria-label={`${todayPoints ?? 0} points collected today`}
+        aria-label={`${shownPoints ?? 0} points collected today`}
       >
         <Sparkles className="h-3 w-3 text-primary" />
         <span className="font-mono font-bold text-xs text-foreground tabular-nums">
-          {todayPoints === undefined ? '…' : `+${todayPoints.toLocaleString()}`}
+          {shownPoints === undefined ? '…' : `+${shownPoints.toLocaleString()}`}
         </span>
         <span className="text-[9px] text-muted-foreground">today</span>
-      </div>
+      </motion.div>
+      <PointsFlyer targetRef={todayRef} onLaunch={onLaunch} onArrive={onArrive} />
 
       <div
         className="student-chip text-[10px] uppercase"
