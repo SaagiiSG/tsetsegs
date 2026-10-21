@@ -330,16 +330,12 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       // Run the roster lookup and the account lookup in parallel — they are
       // independent, and doing them sequentially doubled the login wait time.
       const [studentRes, accountRes] = await Promise.all([
-        supabase
-          .from('students')
-          .select('id, first_name, phone')
-          .in('phone', candidates)
-          .limit(1),
+        supabase.rpc('student_roster_for_login' as any, { _phones: candidates }),
         supabase.rpc('student_account_for_login' as any, { _phones: candidates }),
       ]);
 
       const { data: studentRecords, error: studentError } = studentRes;
-      const studentRecord = studentRecords?.[0] || null;
+      const studentRecord = (studentRecords as { id: string; phone: string }[] | null)?.[0] || null;
       // Canonical phone: prefer the roster record's stored format so the
       // account and session stay consistent with how the number is stored.
       const canonicalPhone = studentRecord?.phone ?? phoneNumber;

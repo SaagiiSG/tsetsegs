@@ -506,19 +506,14 @@ export default function ReviewRegistration() {
         locale === "en"
           ? (normalizeInternationalPhone(data.parentPhone) ?? data.parentPhone)
           : data.parentPhone;
-      const phoneDigits = digitsOnly(storedPhone);
 
       // Check if phone number already exists (in the same batch for QR, or globally for code-based)
       if (assignedBatchId) {
         // QR flow: only block if already in THIS batch
-        const { data: existingInBatch } = await supabase
-          .from("students")
-          .select("id, phone")
-          .eq("batch_id", assignedBatchId);
-
-        const duplicate = (existingInBatch || []).some(
-          (s) => digitsOnly(s.phone || "") === phoneDigits,
-        );
+        const { data: duplicate } = await supabase.rpc("student_phone_registered" as any, {
+          _phone: storedPhone,
+          _batch_id: assignedBatchId,
+        });
 
         if (duplicate) {
           toast.warning(t.alreadyTitle, {
@@ -531,11 +526,10 @@ export default function ReviewRegistration() {
         }
       } else {
         // Code-based flow: block if phone exists anywhere
-        const { data: existingStudent } = await supabase
-          .from("students")
-          .select("id, name")
-          .eq("phone", storedPhone)
-          .maybeSingle();
+        const { data: existingStudent } = await supabase.rpc("student_phone_registered" as any, {
+          _phone: storedPhone,
+          _batch_id: null,
+        });
 
         if (existingStudent) {
           toast.warning(t.alreadyTitle, {
@@ -552,7 +546,7 @@ export default function ReviewRegistration() {
       const uniqueLinkId = crypto.randomUUID().split("-")[0];
 
       // Create student record
-      const { data: newStudent, error: insertError } = await supabase.from("students").insert({
+      const { error: insertError } = await supabase.from("students").insert({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
         name: `${data.firstName.trim()} ${data.lastName.trim()}`,
@@ -572,7 +566,7 @@ export default function ReviewRegistration() {
         first_session_completed: true,
         accessed: false,
         batch_id: assignedBatchId,
-      }).select('id').single();
+      });
 
       if (insertError) {
         console.error("Error creating student:", insertError);
@@ -583,7 +577,7 @@ export default function ReviewRegistration() {
       }
 
       // Auto-create student_account if batch QR flow (so they can login immediately)
-      if (assignedBatchId && newStudent) {
+      if (assignedBatchId) {
         await supabase.from("student_accounts").insert({
           phone_number: storedPhone,
           is_active: true,

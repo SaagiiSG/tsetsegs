@@ -34,11 +34,8 @@ export default function PublicClosingReport() {
       const studentId = tokenData.student_id;
       const batchId = tokenData.batch_id;
 
-      const { data: student } = await supabase
-        .from('students')
-        .select('first_name, last_name')
-        .eq('id', studentId)
-        .single();
+      const { data: nameRows } = await supabase.rpc('student_name_for_report' as any, { _token: token });
+      const student = (nameRows as { first_name: string; last_name: string | null }[] | null)?.[0];
 
       const { data: batch } = await supabase
         .from('batches')

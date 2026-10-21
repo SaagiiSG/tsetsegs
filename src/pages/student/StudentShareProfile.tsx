@@ -20,32 +20,33 @@ export default function StudentShareProfile() {
     queryFn: async () => {
       const { data: rows, error } = await supabase.rpc('student_account_by_share_token' as any, { _token: shareToken });
       if (error) throw error;
-      const account = (rows as { id: string; linked_student_id: string | null }[] | null)?.[0];
+      const account = (rows as {
+        id: string; linked_student_id: string | null; first_name: string | null; last_name: string | null;
+        school_name: string | null; grade: string | null; batch_id: string | null;
+      }[] | null)?.[0];
       if (!account) return null;
+      if (!account.linked_student_id) return { id: account.id, linked_student: null };
 
-      const { data: linked_student, error: studentError } = account.linked_student_id
+      const { data: batch, error: batchError } = account.batch_id
         ? await supabase
-            .from('students')
-            .select(`
-              id,
-              first_name,
-              last_name,
-              school_name,
-              grade,
-              batch_id,
-              batch:batches(
-                id,
-                batch_name,
-                course_type,
-                schedule,
-                start_date
-              )
-            `)
-            .eq('id', account.linked_student_id)
+            .from('batches')
+            .select('id, batch_name, course_type, schedule, start_date')
+            .eq('id', account.batch_id)
             .maybeSingle()
         : { data: null, error: null };
-      if (studentError) throw studentError;
-      return { ...account, linked_student };
+      if (batchError) throw batchError;
+      return {
+        id: account.id,
+        linked_student: {
+          id: account.linked_student_id,
+          first_name: account.first_name,
+          last_name: account.last_name,
+          school_name: account.school_name,
+          grade: account.grade,
+          batch_id: account.batch_id,
+          batch,
+        },
+      };
     },
     enabled: !!shareToken
   });
