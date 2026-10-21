@@ -267,6 +267,13 @@
       "when": 1792605044477,
       "tag": "0037_lock_student_account_reads_step2",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792605350881,
+      "tag": "0038_lock_student_account_reads",
+      "breakpoints": true
     }
   ]
 }
