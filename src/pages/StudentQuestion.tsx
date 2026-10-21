@@ -515,6 +515,8 @@ export default function StudentQuestion() {
             category: 'questions',
             metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
           });
+        // Refresh the header's "today" chip right away with what the server paid.
+        queryClient.invalidateQueries({ queryKey: ['today-points'] });
 
         // Update sprint ranking only if there's an active sprint.
         // First-correct-answer-of-the-sprint enrolls the student.
