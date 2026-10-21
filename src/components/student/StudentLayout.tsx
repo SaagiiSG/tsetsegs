@@ -184,6 +184,9 @@ function StudentLayoutContent() {
               </motion.span>
               {currentStreak}
             </button>
+            <div className="md:hidden">
+              <TodayPointsChip />
+            </div>
             {freezersAvailable > 0 && (
               <button
                 type="button"
