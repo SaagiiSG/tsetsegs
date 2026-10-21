@@ -281,6 +281,20 @@
       "when": 1792605842740,
       "tag": "0039_lock_student_account_reads_step2",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1792606757629,
+      "tag": "0040_lock_student_roster",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1792606761166,
+      "tag": "0041_lock_student_roster_step2",
+      "breakpoints": true
     }
   ]
 }
