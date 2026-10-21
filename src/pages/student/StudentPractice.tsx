@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllStudentAttempts } from '@/lib/studentAttempts';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -276,25 +277,7 @@ export default function StudentPractice() {
     queryKey: ['student-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      // Paginate to fetch ALL attempts — heavy users can exceed the 1k default
-      // and any fixed range cap, which caused solved cards to appear unsolved.
-      const pageSize = 1000;
-      let from = 0;
-      const all: any[] = [];
-      while (true) {
-        const { data, error } = await supabase
-          .from('student_attempts')
-          .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
-          .eq('student_account_id', student.id)
-          .order('attempted_at', { ascending: false })
-          .range(from, from + pageSize - 1);
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-        all.push(...data);
-        if (data.length < pageSize) break;
-        from += pageSize;
-      }
-      return all;
+      return fetchAllStudentAttempts(student.id);
     },
     enabled: !!student
   });

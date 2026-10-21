@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllStudentAttempts } from '@/lib/studentAttempts';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { questionTableFor } from '@/lib/questionTable';
 import { useNavigate } from 'react-router-dom';
@@ -78,16 +79,13 @@ export default function StudentEnglishPractice() {
     queryKey: ['student-english-progress', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      const questionIds = questions?.map(q => q.id) || [];
-      if (questionIds.length === 0) return [];
-      
+      const ids = new Set((questions || []).map(q => q.id));
       const { data, error } = await supabase
         .from('student_progress')
         .select('question_id, video_watched')
-        .eq('student_account_id', student.id)
-        .in('question_id', questionIds);
+        .eq('student_account_id', student.id);
       if (error) throw error;
-      return data;
+      return (data || []).filter(p => ids.has(p.question_id));
     },
     enabled: !!student && !!questions?.length
   });
@@ -96,16 +94,11 @@ export default function StudentEnglishPractice() {
     queryKey: ['student-english-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      const questionIds = questions?.map(q => q.id) || [];
-      if (questionIds.length === 0) return [];
-      
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
-        .eq('student_account_id', student.id)
-        .in('question_id', questionIds);
-      if (error) throw error;
-      return data;
+      // Full history, filtered locally: a long id list in the request is too
+      // large for the server and made solved English problems look unsolved.
+      const ids = new Set((questions || []).map(q => q.id));
+      const all = await fetchAllStudentAttempts(student.id);
+      return all.filter(a => ids.has(a.question_id));
     },
     enabled: !!student && !!questions?.length
   });
