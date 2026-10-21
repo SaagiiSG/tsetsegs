@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllStudentAttempts } from '@/lib/studentAttempts';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';

@@ -78,16 +78,13 @@ export default function StudentEnglishPractice() {
     queryKey: ['student-english-progress', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      const questionIds = questions?.map(q => q.id) || [];
-      if (questionIds.length === 0) return [];
-      
+      const ids = new Set((questions || []).map(q => q.id));
       const { data, error } = await supabase
         .from('student_progress')
         .select('question_id, video_watched')
-        .eq('student_account_id', student.id)
-        .in('question_id', questionIds);
+        .eq('student_account_id', student.id);
       if (error) throw error;
-      return data;
+      return (data || []).filter(p => ids.has(p.question_id));
     },
     enabled: !!student && !!questions?.length
   });
