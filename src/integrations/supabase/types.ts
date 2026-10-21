@@ -6385,8 +6385,13 @@ export type Database = {
       student_account_by_share_token: {
         Args: { _token: string }
         Returns: {
+          batch_id: string
+          first_name: string
+          grade: string
           id: string
+          last_name: string
           linked_student_id: string
+          school_name: string
         }[]
       }
       student_account_for_login: {
@@ -6425,8 +6430,19 @@ export type Database = {
         Args: { p_badge_ids: string[] }
         Returns: undefined
       }
+      student_name_for_report: {
+        Args: { _token: string }
+        Returns: {
+          first_name: string
+          last_name: string
+        }[]
+      }
       student_owns_record: {
         Args: { phone: string; student_id: string }
+        Returns: boolean
+      }
+      student_phone_registered: {
+        Args: { _batch_id: string; _phone: string }
         Returns: boolean
       }
       student_points_allowed: {
@@ -6442,6 +6458,13 @@ export type Database = {
       student_practised_recently: {
         Args: { p_student: string }
         Returns: boolean
+      }
+      student_roster_for_login: {
+        Args: { _phones: string[] }
+        Returns: {
+          id: string
+          phone: string
+        }[]
       }
       student_self_block: { Args: { p_reason: string }; Returns: undefined }
       student_session_alive: { Args: never; Returns: string }
