@@ -139,7 +139,7 @@ function StudentLayoutContent() {
         <StudentDashboardSidebar />
       </div>
 
-      <main className="flex-1 pb-16 md:pb-24 xl:pb-0 overflow-auto">
+      <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-24 xl:pb-0 overflow-auto">
         {/* Mobile check-in banner */}
         <div className="md:hidden sticky top-0 z-40">
           <CheckInWidget variant="banner" />
