@@ -46,12 +46,8 @@ export default function StudentRegistration() {
       let alreadyRegistered = enrolled === true;
 
       if (!alreadyRegistered) {
-        const { data: existingAccount } = await supabase
-          .from('student_accounts')
-          .select('id')
-          .eq('phone_number', phoneNumber)
-          .limit(1);
-        alreadyRegistered = !!existingAccount?.length;
+        const { data: existingAccount } = await supabase.rpc('student_account_for_login' as any, { _phones: [phoneNumber] });
+        alreadyRegistered = !!(existingAccount as any[])?.length;
       }
 
       if (alreadyRegistered) {

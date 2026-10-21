@@ -18,34 +18,34 @@ export default function StudentShareProfile() {
   const { data: studentAccount, isLoading: loadingAccount } = useQuery({
     queryKey: ['shared-profile', shareToken],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_accounts')
-        .select(`
-          id,
-          phone_number,
-          created_at,
-          linked_student_id,
-          linked_student:students(
-            id,
-            first_name,
-            last_name,
-            school_name,
-            grade,
-            batch_id,
-            batch:batches(
-              id,
-              batch_name,
-              course_type,
-              schedule,
-              start_date
-            )
-          )
-        `)
-        .eq('share_token', shareToken)
-        .maybeSingle();
-      
+      const { data: rows, error } = await supabase.rpc('student_account_by_share_token' as any, { _token: shareToken });
       if (error) throw error;
-      return data;
+      const account = (rows as { id: string; linked_student_id: string | null }[] | null)?.[0];
+      if (!account) return null;
+
+      const { data: linked_student, error: studentError } = account.linked_student_id
+        ? await supabase
+            .from('students')
+            .select(`
+              id,
+              first_name,
+              last_name,
+              school_name,
+              grade,
+              batch_id,
+              batch:batches(
+                id,
+                batch_name,
+                course_type,
+                schedule,
+                start_date
+              )
+            `)
+            .eq('id', account.linked_student_id)
+            .maybeSingle()
+        : { data: null, error: null };
+      if (studentError) throw studentError;
+      return { ...account, linked_student };
     },
     enabled: !!shareToken
   });

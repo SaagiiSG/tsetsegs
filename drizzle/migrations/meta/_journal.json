@@ -253,6 +253,20 @@
       "when": 1792370634403,
       "tag": "0035_student_google_connected",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792604440278,
+      "tag": "0036_lock_student_account_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792605044477,
+      "tag": "0037_lock_student_account_reads_step2",
+      "breakpoints": true
     }
   ]
 }

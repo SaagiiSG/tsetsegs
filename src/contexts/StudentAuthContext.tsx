@@ -335,12 +335,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           .select('id, first_name, phone')
           .in('phone', candidates)
           .limit(1),
-        supabase
-          .from('student_accounts')
-          .select('*')
-          .in('phone_number', candidates)
-          .limit(1)
-          .maybeSingle(),
+        supabase.rpc('student_account_for_login' as any, { _phones: candidates }),
       ]);
 
       const { data: studentRecords, error: studentError } = studentRes;
@@ -382,24 +377,24 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
         return { error: null, needsRegistration: true };
       }
 
-      let { data: studentAccount, error: fetchError } = accountRes;
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
+      const { data: accountRows, error: fetchError } = accountRes;
+      if (fetchError) throw fetchError;
+      let studentAccount = (accountRows as any[] | null)?.[0] ?? null;
 
       if (!studentAccount) {
         // Create new student account WITHOUT device lock (deferred to first password login)
-        const { data: newStudent, error: createError } = await supabase
+        const { error: createError } = await supabase
           .from('student_accounts')
-          .insert({ 
+          .insert({
             phone_number: canonicalPhone
-          })
-          .select()
-          .single();
+          });
 
         if (createError) throw createError;
-        studentAccount = newStudent;
+        // Signed-out visitors can't read the new row back, so look it up again.
+        const { data: createdRows, error: lookupError } = await supabase.rpc('student_account_for_login' as any, { _phones: [canonicalPhone] });
+        if (lookupError) throw lookupError;
+        studentAccount = (createdRows as any[] | null)?.[0] ?? null;
+        if (!studentAccount) throw new Error('Failed to create account');
       }
 
       // Check if account is blocked

@@ -90,18 +90,14 @@ export default function PublicClosingReport() {
       const lastMock = mockTests?.length ? mockTests[mockTests.length - 1]?.score : null;
       const scoreImprovement = firstMock && lastMock ? lastMock - firstMock : null;
 
-      const { data: studentAccount } = await supabase
-        .from('student_accounts')
-        .select('id')
-        .eq('linked_student_id', studentId)
-        .single();
+      const { data: studentAccountId } = await supabase.rpc('student_account_id_for_student' as any, { _student_id: studentId });
 
       let totalQuestionsAttempted = 0;
-      if (studentAccount) {
+      if (studentAccountId) {
         const { count } = await supabase
           .from('student_attempts')
           .select('id', { count: 'exact', head: true })
-          .eq('student_account_id', studentAccount.id);
+          .eq('student_account_id', studentAccountId as string);
         totalQuestionsAttempted = count || 0;
       }
 
