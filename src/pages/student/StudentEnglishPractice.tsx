@@ -96,16 +96,11 @@ export default function StudentEnglishPractice() {
     queryKey: ['student-english-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      const questionIds = questions?.map(q => q.id) || [];
-      if (questionIds.length === 0) return [];
-      
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
-        .eq('student_account_id', student.id)
-        .in('question_id', questionIds);
-      if (error) throw error;
-      return data;
+      // Full history, filtered locally: a long id list in the request is too
+      // large for the server and made solved English problems look unsolved.
+      const ids = new Set((questions || []).map(q => q.id));
+      const all = await fetchAllStudentAttempts(student.id);
+      return all.filter(a => ids.has(a.question_id));
     },
     enabled: !!student && !!questions?.length
   });

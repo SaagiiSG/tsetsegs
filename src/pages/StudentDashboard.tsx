@@ -135,14 +135,7 @@ export default function StudentDashboard() {
     queryKey: ['student-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      
-      const { data, error } = await supabase
-        .from('student_attempts')
-        .select('question_id, is_correct, attempt_number')
-        .eq('student_account_id', student.id);
-      
-      if (error) throw error;
-      return data;
+      return fetchAllStudentAttempts(student.id);
     },
     enabled: !!student
   });
