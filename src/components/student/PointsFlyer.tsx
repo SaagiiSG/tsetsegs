@@ -72,6 +72,8 @@ export function PointsFlyer({ targetRef, onLaunch, onArrive }: { targetRef: Reac
       const el = targetRef.current;
       if (!el || points <= 0) return;
       const r = el.getBoundingClientRect();
+      // Skip when the chip is hidden (e.g. its bar is display:none at this width).
+      if (r.width === 0 || r.height === 0) return;
       onLaunch();
       if (reduce) { onArrive(points); return; }
       setFlyers(f => [...f, { id: Date.now() + Math.random(), points, ...lastTap.current, to: { x: r.left + r.width / 2, y: r.top + r.height / 2 } }]);
