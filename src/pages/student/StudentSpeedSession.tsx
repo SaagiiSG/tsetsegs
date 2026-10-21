@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
@@ -218,7 +219,8 @@ export default function StudentSpeedSession() {
           points,
           category: 'speed_session',
           metadata: { question_id: questionId, time_seconds: timeInSeconds }
-        });
+        }).select('points').maybeSingle()
+          .then(({ data }) => { emitPointsEarned(Number(data?.points) || 0); return { data }; });
         queryClient.invalidateQueries({ queryKey: ['today-points'] });
 
         if (activeSprint) {

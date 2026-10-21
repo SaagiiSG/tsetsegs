@@ -1,4 +1,5 @@
 import { ExplanationView } from '@/components/explanation/ExplanationView';
+import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -308,7 +309,8 @@ export default function StudentEnglishQuestion() {
             points,
             category: 'questions',
             metadata: { question_id: questionId, attempt_number: attemptNumber, subject: 'english' }
-          });
+          }).select('points').maybeSingle()
+          .then(({ data }) => { emitPointsEarned(Number(data?.points) || 0); return { data }; });
         queryClient.invalidateQueries({ queryKey: ['today-points'] });
 
         // Update sprint ranking only if there's an active sprint.
