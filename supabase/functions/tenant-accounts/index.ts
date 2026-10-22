@@ -14,12 +14,12 @@ const tempPassword = () => {
   return Array.from(bytes, (b) => chars[b % chars.length]).join('') + '!7'
 }
 // Retry when the auth provider rejects a generated password as weak/leaked.
-const withFreshPassword = async <T>(fn: (password: string) => Promise<{ data?: T; error: { message?: string } | null }>): Promise<{ password: string; data?: T }> => {
+const withFreshPassword = async <T>(fn: (password: string) => Promise<{ data?: unknown; error: { message?: string } | null }>): Promise<{ password: string; data?: T }> => {
   let lastError: { message?: string } | null = null
   for (let i = 0; i < 4; i++) {
     const password = tempPassword()
     const { data, error } = await fn(password)
-    if (!error) return { password, data }
+    if (!error) return { password, data: data as T | undefined }
     lastError = error
     if (!/weak|easy to guess|leaked|compromised/i.test(error.message ?? '')) throw new Error(error.message ?? 'Could not set password')
   }
