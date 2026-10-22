@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { getStudentToken } from '@/lib/studentToken';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -140,7 +141,10 @@ export function BluebookVideosTab() {
   const { data, isLoading, error } = useQuery<VideosPayload>({
     queryKey: ['bluebook-explanation-videos'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('list-bluebook-videos');
+      const token = getStudentToken();
+      const { data, error } = await supabase.functions.invoke('list-bluebook-videos', {
+        headers: token ? { 'x-student-token': token } : undefined,
+      });
       if (error) throw error;
       return data as VideosPayload;
     },

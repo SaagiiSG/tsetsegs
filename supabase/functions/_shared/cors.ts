@@ -17,6 +17,7 @@ const SUPABASE_HEADERS = [
   'apikey',
   'content-type',
   'x-retry-count',
+  'x-student-token',
   'traceparent',
   'tracestate',
   'baggage',
