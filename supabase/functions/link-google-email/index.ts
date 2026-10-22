@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders as sdkCorsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { corsHeaders as sdkCorsHeaders } from '../_shared/cors.ts'
 
 const corsHeaders = {
   ...sdkCorsHeaders,

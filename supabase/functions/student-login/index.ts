@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { corsHeaders } from '../_shared/cors.ts'
 
 // Server-side student sign-in. Checks the password, the 90-day device lock and
 // the account block, closes every other session (one active device), and

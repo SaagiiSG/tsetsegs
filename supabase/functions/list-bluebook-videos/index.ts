@@ -6,7 +6,7 @@
 //         N.M.Q  (video/*)
 // Returns a flat list plus a nested grouping by test → module.
 
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from '../_shared/cors.ts'
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive/drive/v3";
 const ROOT_FOLDER_ID = "1HvhNJkGiFbRJaq0ppW87fNi-oUb7rjKj";
