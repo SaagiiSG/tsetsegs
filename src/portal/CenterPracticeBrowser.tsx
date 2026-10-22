@@ -4,17 +4,17 @@ import { BookOpen, Check, ChevronRight, CircleDot, FileText, Shuffle, Target } f
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { SkyListSkeleton } from './SkySkeleton';
+import { PRACTICE_SETS, inPracticeSet } from './practiceSets';
 
 type Row = { id: string; question_id: string | null; subject: string | null; question_set: string | null; category_id: string | null; skill: string | null };
 type Attempt = { question_id: string; is_correct: boolean };
-export type BrowserSet = { key: string; label: string };
 
 const ENGLISH = ['Information and Ideas', 'Craft and Structure', 'Expression of Ideas', 'Standard English Conventions'];
 const short = (d: string) => d.replace(/ and .*/, '').replace(/Advanced Math/, 'Advanced').replace(/Data Analysis.*/, 'Data').replace(/Geometry.*/, 'Geometry');
 
 /** Main-site style practice browser: subject + set tabs, overall progress, domain tree and question code grid. */
-export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {
-  sets: readonly BrowserSet[]; attempts: Attempt[]; subject: 'math' | 'english'; setKey: string;
+export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {
+  attempts: Attempt[]; subject: 'math' | 'english'; setKey: string;
   onSubject: (s: 'math' | 'english') => void; onSet: (k: string) => void; onOpen: (id: string) => void; onRandom: () => void;
 }) {
   const [domain, setDomain] = useState<string>('all');
@@ -44,8 +44,8 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
 
   const all = data.data ?? [];
   const inSubject = all.filter(r => r.sub === subject);
-  const pool = subject === 'math' && setKey !== 'all' ? inSubject.filter(r => r.question_set === setKey) : inSubject;
-  const setCount = (k: string) => inSubject.filter(r => r.question_set === k).length;
+  const pool = subject === 'math' ? inSubject.filter(r => inPracticeSet(setKey, r.question_set)) : inSubject;
+  const setCount = (k: string) => inSubject.filter(r => inPracticeSet(k, r.question_set)).length;
   const done = (rows: typeof pool) => rows.filter(r => status[r.id] === 'done').length;
 
   const domains = useMemo(() => {
@@ -73,8 +73,7 @@ export function CenterPracticeBrowser({ sets, attempts, subject, setKey, onSubje
           </div>
           {subject === 'math' && (
             <div className="flex flex-wrap gap-1 rounded-2xl border p-1" role="tablist" aria-label="Question set">
-              <Button variant="ghost" className={tab(setKey === 'all')} onClick={() => { onSet('all'); setDomain('all'); setSkill(null); }}>All ({inSubject.length})</Button>
-              {sets.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
+              {PRACTICE_SETS.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
                 {setKey === s.key && <BookOpen className="h-4 w-4" />}{s.label} ({setCount(s.key)})</Button>)}
             </div>
           )}

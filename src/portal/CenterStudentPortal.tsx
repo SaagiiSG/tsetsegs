@@ -27,6 +27,7 @@ import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowR
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser } from './CenterPracticeBrowser';
+import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam } from './practiceSets';
 import { CenterReviewPage } from './CenterReviewPage';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
@@ -483,10 +484,10 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
 
 function PracticePage({ me }: { me: Me }) {
   const [params, setParams] = useSearchParams();
-  const set = params.get('set') ?? 'all';
+  const set = practiceSetFromParam(params.get('set'));
   const pinned = params.get('q');
   const cats = useQuery({ queryKey: ['question-categories'], queryFn: async () => (await supabase.from('question_categories').select('id, name').order('name')).data ?? [] });
-  const [subject, setSubject] = useState<'math' | 'english'>(set !== 'all' ? 'math' : 'math');
+  const [subject, setSubject] = useState<'math' | 'english'>('math');
   const [domain, setDomain] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
   const [q, setQ] = useState<Q | null | undefined>(undefined);
@@ -506,7 +507,7 @@ function PracticePage({ me }: { me: Me }) {
     const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
     const base = () => {
       let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
-      if (subject === 'math' && set !== 'all') b = b.eq('question_set', set);
+      if (subject === 'math') b = set === 'CB' ? b.or(CB_FILTER) : b.eq('question_set', set);
       if (domain !== 'all') b = b.eq('category_id', domain);
       if (difficulty !== 'all') b = b.ilike('difficulty_level', difficulty);
       return b;
@@ -520,14 +521,14 @@ function PracticePage({ me }: { me: Me }) {
   const solving = !!pinned || params.get('mode') === 'random';
   useEffect(() => { if (solving) loadQuestion(); }, [loadQuestion, solving]);
 
-  const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); v === 'all' ? p.delete('set') : p.set('set', v); setParams(p); setSubject('math'); };
+  const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); p.set('set', v); setParams(p); setSubject('math'); };
   const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); p.set('mode', 'random'); setParams(p); } else loadQuestion(); };
   const back = () => { const p = new URLSearchParams(params); p.delete('q'); p.delete('mode'); setParams(p); };
 
   if (!solving) return (
     <div className="space-y-4">
       <div className="flex items-center gap-3"><span className="sky-tile sky-tile-blue"><BookOpen /></span><div><h1 className="text-3xl font-bold">Practice</h1><p className="sky-body mt-1">One question closer to your goal.</p></div></div>
-      <CenterPracticeBrowser sets={SETS.map(s => ({ key: s.key, label: s.key === '68' ? '68' : s.key === 'SATMathTraining800' ? '150' : 'New 120' }))}
+      <CenterPracticeBrowser
         attempts={me.attempts} subject={subject} setKey={set}
         onSubject={s => { setSubject(s); if (s === 'english') { const p = new URLSearchParams(params); p.delete('set'); setParams(p); } }}
         onSet={setSet}
@@ -541,11 +542,11 @@ function PracticePage({ me }: { me: Me }) {
       <div className="flex items-center gap-3"><Button variant="ghost" size="sm" onClick={back}>← All questions</Button><h1 className="text-2xl font-bold tracking-tight">Practice</h1></div>
       <div className="sky-card flex flex-wrap gap-2 items-center !p-3">
         <div className="flex gap-1 rounded-lg border p-1" role="tablist" aria-label="Subject">
-          {(['math', 'english'] as const).map(s => <Button variant="ghost" key={s} role="tab" aria-selected={subject === s} onClick={() => { setSubject(s); if (s === 'english') setSet('all'); }}
+          {(['math', 'english'] as const).map(s => <Button variant="ghost" key={s} role="tab" aria-selected={subject === s} onClick={() => setSubject(s)}
             className={`rounded-md px-3 py-1 text-sm active:scale-[0.97] transition-colors ${subject === s ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</Button>)}
         </div>
         {subject === 'math' && <Select value={set} onValueChange={setSet}><SelectTrigger className="w-44" aria-label="Question set"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All math sets</SelectItem>{SETS.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
+          <SelectContent>{PRACTICE_SETS.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
         <Select value={domain} onValueChange={setDomain}><SelectTrigger className="w-56" aria-label="Domain"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All domains</SelectItem>{domainOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
         <Select value={difficulty} onValueChange={setDifficulty}><SelectTrigger className="w-40" aria-label="Difficulty"><SelectValue /></SelectTrigger>
