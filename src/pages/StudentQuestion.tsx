@@ -1023,6 +1023,8 @@ export default function StudentQuestion() {
 
                   {/* Question Image */}
                   <QuestionFigures
+                    svg={currentQuestion.figure_svg}
+                    description={currentQuestion.figure_description}
                     url1={currentQuestion.question_image_url}
                     url2={(currentQuestion as any).question_image_url_2}
                     imgClassName="max-w-full rounded-lg border"

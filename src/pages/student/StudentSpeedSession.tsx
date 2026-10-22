@@ -539,21 +539,17 @@ export default function StudentSpeedSession() {
                   <MathText text={currentQuestion?.question_text || ''} className="block min-w-0" />
                 </div>
 
-                {/* Figure (SVG or image) */}
-                {currentQuestion?.figure_svg ? (
-                  <div
-                    className="flex min-w-0 justify-center overflow-x-auto py-2 [&_svg]:block [&_svg]:h-auto [&_svg]:max-h-72 [&_svg]:max-w-full [&_svg]:shrink-0"
-                    dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
-                  />
-                ) : currentQuestion?.question_image_url || currentQuestion?.question_image_url_2 ? (
+                {/* Figure (drawn SVG or image) */}
+                {currentQuestion && (
                   <QuestionFigures
+                    svg={currentQuestion.figure_svg}
+                    description={currentQuestion.figure_description}
                     url1={currentQuestion.question_image_url}
                     url2={currentQuestion.question_image_url_2}
                     className="py-2"
-                    alt={currentQuestion.figure_description || 'Question figure'}
                     imgClassName="rounded-md max-h-72 w-auto object-contain"
                   />
-                ) : null}
+                )}
 
                 {/* Answer options */}
                 {isMultipleChoice ? (

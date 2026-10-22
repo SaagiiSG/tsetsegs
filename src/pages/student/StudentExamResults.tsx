@@ -43,6 +43,8 @@ interface QuestionRow {
   question_text: string | null;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   answer: string | null;
 }
 
@@ -58,7 +60,7 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
         questionIds.length
           ? supabase
               .from('questions')
-              .select('id, question_id, question_text, question_image_url, question_image_url_2, answer')
+              .select('id, question_id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, answer')
               .in('id', questionIds)
           : Promise.resolve({ data: [] as QuestionRow[] }),
       ]);
@@ -99,6 +101,8 @@ function ExamDetail({ participantId, questionIds }: { participantId: string; que
                 {q?.question_text ? <MathText text={q.question_text} /> : 'Question unavailable'}
               </div>
               <QuestionFigures
+                svg={q?.figure_svg}
+                description={q?.figure_description}
                 url1={q?.question_image_url}
                 url2={q?.question_image_url_2}
                 className="mt-2 justify-start"

@@ -211,9 +211,10 @@ export function BluebookResultsDialog({ open, onClose, results }: BluebookResult
                   </div>
 
                   <QuestionFigures
+                    svg={selectedQuestion.figure_svg}
+                    description={selectedQuestion.figure_description}
                     url1={selectedQuestion.question_image_url}
                     url2={selectedQuestion.question_image_url_2}
-                    alt="Question figure"
                     imgClassName={cn(
                       "rounded-lg border object-contain",
                       selectedQuestion.question_image_url_2 ? "max-h-72 w-auto" : "max-w-md w-full h-auto"

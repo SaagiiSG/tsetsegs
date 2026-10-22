@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MathText } from "@/components/MathText";
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { CheckCircle2, XCircle, Clock, ChevronRight, Zap, Timer } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,9 @@ interface SpeedItem {
     question_text: string;
     answer: string;
     question_image_url: string | null;
+    question_image_url_2: string | null;
     figure_svg: string | null;
+    figure_description: string | null;
   } | null;
 }
 
@@ -126,7 +129,7 @@ function SessionDetailDialog({
         .from("speed_session_items")
         .select(`
           order_index, answer_submitted, is_correct, time_ms,
-          question:questions(id, question_id, question_text, answer, question_image_url, figure_svg)
+          question:questions(id, question_id, question_text, answer, question_image_url, question_image_url_2, figure_svg, figure_description)
         `)
         .eq("session_id", sessionId!)
         .order("order_index");
@@ -180,20 +183,15 @@ function SessionDetailDialog({
                     <MathText text={it.question.question_text} />
                   </div>
                 )}
-                {it.question?.figure_svg ? (
-                  <div
-                    className="flex justify-center [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:max-h-60"
-                    dangerouslySetInnerHTML={{ __html: it.question.figure_svg }}
+                {it.question && (
+                  <QuestionFigures
+                    svg={it.question.figure_svg}
+                    description={it.question.figure_description}
+                    url1={it.question.question_image_url}
+                    url2={it.question.question_image_url_2}
+                    imgClassName="rounded-md max-h-60 w-auto object-contain"
                   />
-                ) : it.question?.question_image_url ? (
-                  <div className="flex justify-center">
-                    <img
-                      src={it.question.question_image_url}
-                      alt="Question figure"
-                      className="rounded-md max-h-60 w-auto object-contain"
-                    />
-                  </div>
-                ) : null}
+                )}
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>
                     Your answer:{" "}

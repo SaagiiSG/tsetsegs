@@ -25,6 +25,8 @@ interface PreviewQuestion {
   question_text: string;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   question_type: string;
   multiple_choice_options: any;
   choice_images: any;
@@ -104,7 +106,7 @@ const StudentTestPreview = ({ testId: testIdProp, onBack, hideEditorLink }: Stud
           bluebook_module_questions(
             id, order_index,
             question:questions(
-              id, question_id, question_text, question_image_url, question_image_url_2, question_type,
+              id, question_id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, question_type,
               multiple_choice_options, choice_images, passage_text, answer
             )
           )
@@ -284,6 +286,8 @@ const StudentTestPreview = ({ testId: testIdProp, onBack, hideEditorLink }: Stud
                       </div>
 
                       <QuestionFigures
+                        svg={currentQuestion.figure_svg}
+                        description={currentQuestion.figure_description}
                         url1={currentQuestion.question_image_url}
                         url2={currentQuestion.question_image_url_2}
                         className="mb-4"

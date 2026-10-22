@@ -20,6 +20,8 @@ interface QuestionRow {
   question_text: string;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   multiple_choice_options: unknown;
   question_type: string | null;
   passage_text: string | null;
@@ -67,7 +69,7 @@ export default function FlowersChallengePlay() {
       const ids = (attempt.question_ids as string[]) ?? [];
       const { data: qs } = await supabase
         .from("questions")
-        .select("id, question_text, question_image_url, question_image_url_2, multiple_choice_options, question_type, passage_text")
+        .select("id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, question_type, passage_text")
         .in("id", ids);
 
       const ordered = ids
@@ -218,6 +220,8 @@ export default function FlowersChallengePlay() {
             <MathText text={question.question_text} />
           </div>
           <QuestionFigures
+            svg={question.figure_svg}
+            description={question.figure_description}
             url1={question.question_image_url}
             url2={question.question_image_url_2}
             imgClassName="rounded-md max-h-72"

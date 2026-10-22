@@ -7,6 +7,8 @@ export interface BluebookQuestionResult {
   question_text: string;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   question_type: string;
   multiple_choice_options: any;
   choice_images: any;
@@ -45,7 +47,7 @@ export function scaleSectionScore(correct: number, total: number): number {
 }
 
 const QUESTION_FIELDS =
-  'id, question_id, question_text, question_image_url, question_image_url_2, question_type, multiple_choice_options, choice_images, rationale, passage_text, answer, alternate_answers';
+  'id, question_id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, question_type, multiple_choice_options, choice_images, rationale, passage_text, answer, alternate_answers';
 
 /**
  * Build the full review payload for an attempt.
@@ -120,6 +122,8 @@ export async function buildBluebookResults(
         question_text: q.question_text,
         question_image_url: q.question_image_url,
         question_image_url_2: q.question_image_url_2,
+        figure_svg: q.figure_svg ?? null,
+        figure_description: q.figure_description ?? null,
         question_type: q.question_type,
         multiple_choice_options: q.multiple_choice_options,
         choice_images: q.choice_images,

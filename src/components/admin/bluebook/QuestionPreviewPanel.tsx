@@ -78,6 +78,8 @@ export default function QuestionPreviewPanel({ questionId, onClose }: QuestionPr
           </div>
 
           <QuestionFigures
+            svg={question.figure_svg}
+            description={question.figure_description}
             url1={question.question_image_url}
             url2={question.question_image_url_2}
             className="justify-start"

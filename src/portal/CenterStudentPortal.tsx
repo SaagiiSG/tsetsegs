@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
@@ -41,8 +42,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Bell, PanelLeftClose, PanelLeftOpen, GripVertical, GripHorizontal } from 'lucide-react';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 
-type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
-const COLS = 'id, question_text, question_image_url, question_image_url_2, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
+type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
+const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
 const DIFFS = [['all', 'Any difficulty'], ['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']] as const;
 /** Math sets available to international students (the intl bank hides everything else). */
 const SETS = [
@@ -452,7 +453,7 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
       <article className="sky-card space-y-5 min-w-0">
         {q.passage_text && <div className="text-sm leading-relaxed border-l-2 pl-4"><MathText text={q.passage_text} /></div>}
         <div className="leading-relaxed"><MathText text={q.question_text} /></div>
-        {[q.question_image_url, q.question_image_url_2].filter((u): u is string => !!u).map(u => <img key={u} src={u} alt="Question figure" className="max-h-80 rounded border bg-background" />)}
+        <QuestionFigures svg={q.figure_svg} description={q.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-80 rounded border bg-background" />
         {choices.length ? (
           <div className="grid gap-2">{choices.map(c => (
             <Button variant="ghost" key={c.letter} disabled={result === 'correct'} onClick={() => { setPicked(c.letter); if (result === 'wrong') setResult(null); }}
@@ -635,7 +636,7 @@ function SpeedPage({ me }: { me: Me }) {
       <Glass className="space-y-5">
         {q.passage_text && <div className="text-sm leading-relaxed border-l-2 pl-4"><MathText text={q.passage_text} /></div>}
         <div className="leading-relaxed"><MathText text={q.question_text} /></div>
-        {[q.question_image_url, q.question_image_url_2].filter(Boolean).map(u => <img key={u!} src={u!} alt="Question figure" className="max-h-72 rounded border bg-background" />)}
+        <QuestionFigures svg={q.figure_svg} description={q.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-72 rounded border bg-background" />
         {choices.length ? <div className="grid gap-2">{choices.map(c => (
           <button key={c.letter} onClick={() => setPicked(c.letter)} className={`student-choice text-left rounded-xl border p-3 flex gap-3 ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
             <span className="font-mono text-sm w-5">{c.letter}</span><span className="flex-1 min-w-0">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span></button>))}</div>

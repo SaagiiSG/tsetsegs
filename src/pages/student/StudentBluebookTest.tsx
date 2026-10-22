@@ -50,6 +50,8 @@ interface Question {
   question_text: string;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg?: string | null;
+  figure_description?: string | null;
   question_type: string;
   multiple_choice_options: any;
   choice_images: any;
@@ -146,6 +148,7 @@ export default function StudentBluebookTest() {
           order_index,
           question:questions(
             id, question_id, question_text, question_image_url, question_image_url_2,
+            figure_svg, figure_description,
             question_type, multiple_choice_options, choice_images, passage_text
           )
 
@@ -638,6 +641,8 @@ export default function StudentBluebookTest() {
                       
                       {/* Question Image */}
                       <QuestionFigures
+                        svg={currentQuestion.question.figure_svg}
+                        description={currentQuestion.question.figure_description}
                         url1={currentQuestion.question.question_image_url}
                         url2={currentQuestion.question.question_image_url_2}
                         className="mb-3 md:mb-4"

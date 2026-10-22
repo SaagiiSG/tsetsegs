@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
+import { useFigureFields } from '@/hooks/useFigureFields';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { useCenter } from './centerContext';
@@ -61,6 +63,7 @@ export function CenterSATTest() {
   const moduleIndex = completed ? reviewModule : state?.current_module ?? 0;
   const module = state?.paper[moduleIndex];
   const q = module?.questions[index];
+  const figures = useFigureFields(state?.paper.flatMap(m => m.questions.map(x => x.id)) ?? [], 'intl_questions');
   const onBreak = !!state?.break_until && new Date(state.break_until).getTime() > now;
   const deadline = state && module ? new Date(onBreak ? state.break_until ?? state.module_started_at : state.module_started_at).getTime() + (onBreak ? 0 : module.minutes * 60000) : now;
   const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
@@ -115,7 +118,7 @@ export function CenterSATTest() {
     <header className="flex flex-wrap justify-between items-center gap-3"><div><Button variant="ghost" className="px-0" onClick={() => navigate('/student/sat')}><ArrowLeft className="h-4 w-4"/>Your tests</Button><h1 className="text-xl font-semibold">{module.section === 'math' ? 'Math' : 'Reading & Writing'} · Module {moduleIndex % 2 + 1}</h1></div>{completed ? <div className="font-mono text-2xl">{(state.rw_score ?? 0) + (state.math_score ?? 0)}<span className="text-xs block text-muted-foreground">Estimated practice score</span></div> : <div className="text-right"><p className="font-mono text-2xl flex gap-2 items-center"><Timer className="h-5 w-5"/>{formatTime(seconds)}</p><p className="text-xs text-muted-foreground" role="status">{saveLabel}</p></div>}</header>
     {completed && <div className="flex flex-wrap gap-2">{state.paper.map((m, i) => <Button key={i} variant={reviewModule === i ? 'default' : 'outline'} onClick={() => { setReviewModule(i); setIndex(0); }}>{m.section === 'math' ? 'Math' : 'R&W'} {i % 2 + 1}</Button>)}</div>}
     {q && <div className="grid lg:grid-cols-[1fr_240px] gap-5"><section className="min-w-0 admin-glass-card admin-glass-neutral rounded-3xl border p-5 md:p-7 space-y-5"><div className="flex items-center justify-between"><p className="font-mono text-sm">Question {index + 1} of {module.questions.length}</p>{!completed && <Button size="sm" variant={answers[q.id]?.flagged ? 'default' : 'outline'} onClick={() => change(answers[q.id]?.value ?? '', !answers[q.id]?.flagged)}><Flag className="h-4 w-4"/>Review later</Button>}</div>
-      {q.passage_text && <div className="border-b pb-5"><MathText text={q.passage_text}/></div>}<MathText text={q.question_text}/>{[q.question_image_url,q.question_image_url_2].filter(Boolean).map((src, i) => <img key={i} src={src} alt={`Question figure ${i + 1}`} className="max-h-96 max-w-full object-contain"/>)}
+      {q.passage_text && <div className="border-b pb-5"><MathText text={q.passage_text}/></div>}<MathText text={q.question_text}/><QuestionFigures svg={figures?.get(q.id)?.figure_svg} description={figures?.get(q.id)?.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-96 max-w-full object-contain"/>
       {choices.length ? <div className="space-y-3">{choices.map(choice => <Button key={choice.letter} disabled={completed || seconds === 0} variant={answers[q.id]?.value === choice.letter ? 'default' : 'outline'} className="w-full h-auto min-h-12 justify-start text-left whitespace-normal p-4" onClick={() => change(choice.letter)}><span className="font-mono mr-3">{choice.letter}</span><span className="min-w-0"><MathText text={choice.text}/>{choice.image && <img src={choice.image} alt={`Choice ${choice.letter}`} className="max-h-48"/>}</span></Button>)}</div> : <Input aria-label="Your answer" value={answers[q.id]?.value ?? ''} disabled={completed || seconds === 0} onChange={e => change(e.target.value)} placeholder="Your answer"/>}
       {completed && <div className="border-t pt-4 space-y-2"><p>Your answer: {answers[q.id]?.value || 'Not answered'} · Correct answer: {q.answer}</p>{q.rationale && <MathText text={q.rationale}/>}</div>}
       <div className="flex justify-between gap-2"><Button variant="outline" disabled={index === 0} onClick={() => setIndex(i => i - 1)}>Previous</Button><Button disabled={index === module.questions.length - 1} onClick={() => setIndex(i => i + 1)}>Next</Button></div>

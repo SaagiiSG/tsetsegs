@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MathText } from '@/components/MathText';
 import { QuestionFigures } from "@/components/QuestionFigures";
+import { useFigureFields } from "@/hooks/useFigureFields";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -148,6 +149,7 @@ export function ProctorRunner({
     });
     return [...map.values()].sort((a, b) => a.moduleNumber - b.moduleNumber);
   }, [paper]);
+  const figures = useFigureFields(paper.map((r) => r.question_id));
 
   /* ---- restore from the device snapshot first, server state second ---- */
   const snap = useMemo(() => loadSnapshot(participantId), [participantId]);
@@ -472,6 +474,8 @@ export function ProctorRunner({
               <MathText text={q.question_text} />
             </div>
             <QuestionFigures
+              svg={figures?.get(q.question_id)?.figure_svg}
+              description={figures?.get(q.question_id)?.figure_description}
               url1={q.question_image_url}
               url2={q.question_image_url_2}
               imgClassName="rounded-md max-h-72"

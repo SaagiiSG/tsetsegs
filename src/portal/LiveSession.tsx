@@ -5,13 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { toast } from 'sonner';
 import { useCenter } from './centerContext';
 
-type LiveQ = { id: string; question_text: string; question_image_url: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; passage_text: string | null };
-const Q_COLS = 'id, question_text, question_image_url, multiple_choice_options, choice_images, answer, alternate_answers, passage_text';
+type LiveQ = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; passage_text: string | null };
+const Q_COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, passage_text';
 const norm = (v: string) => v.trim().toLowerCase().replace(/\s+/g, '');
 export const isCorrect = (q: LiveQ, given: string) => {
   const alts: string[] = Array.isArray(q.alternate_answers) ? q.alternate_answers.map(String) : [];
@@ -33,7 +34,7 @@ function QuestionBody({ q, big = false }: { q: LiveQ; big?: boolean }) {
     <div className={`space-y-4 ${big ? 'text-lg' : ''}`}>
       {q.passage_text && <div className="text-sm leading-relaxed border-l-2 pl-4"><MathText text={q.passage_text} /></div>}
       <div className="leading-relaxed"><MathText text={q.question_text} /></div>
-      {q.question_image_url && <img src={q.question_image_url} alt="Question figure" className="max-h-72 rounded border bg-background" />}
+      <QuestionFigures svg={q.figure_svg} description={q.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-72 rounded border bg-background" />
     </div>
   );
 }

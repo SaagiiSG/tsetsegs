@@ -203,6 +203,8 @@ export function TeacherQuestionViewer({
                       <div className="md:col-span-2">
                         <div className="md:sticky md:top-4">
                           <QuestionFigures
+                            svg={question.figure_svg}
+                            description={question.figure_description}
                             url1={question.question_image_url}
                             url2={(question as any).question_image_url_2}
                             imgClassName="w-full max-h-64 md:max-h-[70vh] rounded-lg border object-contain bg-white"

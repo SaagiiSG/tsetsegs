@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildContentPatch } from "./contentPatch.ts";
+import { sanitizeSvg } from "../_shared/svgFigure.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,7 +125,7 @@ function normalizeQuestion(q: any, categoryMap: Record<string, string>, targetSe
     has_figure: q.has_figure,
     figure_type: q.figure_type,
     figure_description: q.figure_description,
-    figure_svg: q.figure_svg,
+    figure_svg: sanitizeSvg(q.figure_svg), // no scripts, handlers or outside links get stored
     is_original: true,
     is_active: true,
     category_id: categoryId,

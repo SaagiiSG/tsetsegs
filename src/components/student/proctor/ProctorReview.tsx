@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MathText } from '@/components/MathText';
 import { QuestionFigures } from '@/components/QuestionFigures';
+import { useFigureFields } from '@/hooks/useFigureFields';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +74,7 @@ export function ProctorReview({ rows, onBack }: Props) {
   const showAnswers = rows[0]?.review_mode === 'explanations';
   const row = rows[idx];
   const wrongCount = useMemo(() => rows.filter((r) => !r.is_correct).length, [rows]);
+  const figures = useFigureFields(rows.map((r) => r.question_id));
   const options = row ? toOptions(row) : [];
   const isMc = options.length > 0;
 
@@ -141,7 +143,12 @@ export function ProctorReview({ rows, onBack }: Props) {
             </div>
           )}
 
-          <QuestionFigures url1={row.question_image_url} url2={row.question_image_url_2} />
+          <QuestionFigures
+            svg={figures?.get(row.question_id)?.figure_svg}
+            description={figures?.get(row.question_id)?.figure_description}
+            url1={row.question_image_url}
+            url2={row.question_image_url_2}
+          />
 
 
           {isMc ? (

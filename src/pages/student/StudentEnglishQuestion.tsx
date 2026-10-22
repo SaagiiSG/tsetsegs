@@ -29,6 +29,7 @@ import { ensureSprintEnrollment, getSprintEnrollmentSnapshot, type SprintEnrollm
 import { fetchActiveSprintId, normalizeCohort } from '@/lib/cohort';
 import { SprintEnrollmentDialog } from '@/components/student/SprintEnrollmentDialog';
 import { ShowExplanation } from '@/components/student/ShowExplanation';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 const catName = (c: any): string | undefined => (Array.isArray(c) ? c[0]?.name : c?.name);
 
@@ -406,6 +407,7 @@ export default function StudentEnglishQuestion() {
     : null;
 
   const options = question?.multiple_choice_options as Record<string, string> | null;
+  const choiceImages = question?.choice_images as Record<string, string> | null;
 
   // ---------- iOS-style gestures + recents ----------
   const haptics = useHaptics();
@@ -547,7 +549,15 @@ export default function StudentEnglishQuestion() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <p className="text-base leading-relaxed">{question.question_text}</p>
-              
+
+              <QuestionFigures
+                svg={question.figure_svg}
+                description={question.figure_description}
+                url1={question.question_image_url}
+                url2={question.question_image_url_2}
+                imgClassName="max-w-full rounded-lg border"
+              />
+
               {options && (
                 <RadioGroup
                   value={selectedAnswer || ''}
@@ -576,6 +586,9 @@ export default function StudentEnglishQuestion() {
                         <RadioGroupItem value={key} id={key} className="mt-0.5" />
                         <Label htmlFor={key} className="flex-1 cursor-pointer">
                           <span className="font-medium mr-2">{key}.</span>
+                          {choiceImages?.[key] && (
+                            <img src={choiceImages[key]} alt={`Choice ${key}`} className="rounded border max-w-full max-h-32 object-contain bg-white my-1" />
+                          )}
                           {value}
                         </Label>
                         {submitted && isSelected && (

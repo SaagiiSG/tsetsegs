@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn, isAcceptedFillBlankAnswer } from '@/lib/utils';
 import { Check, X, Minus, ChevronDown } from 'lucide-react';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 import type { ClassTest } from '@/hooks/useClassTest';
 
 interface QuestionLike {
@@ -13,6 +14,9 @@ interface QuestionLike {
   question_type: string | null;
   question_text?: string;
   question_image_url?: string | null;
+  question_image_url_2?: string | null;
+  figure_svg?: string | null;
+  figure_description?: string | null;
   multiple_choice_options?: any;
   choice_images?: any;
   passage_text?: string | null;
@@ -163,14 +167,15 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
                           <MathText text={q.passage_text} />
                         </div>
                       )}
-                      {q.question_image_url && (
-                        <img
-                          src={q.question_image_url}
-                          alt={`Question ${r.index} figure`}
-                          loading="lazy"
-                          className="max-h-64 rounded border bg-background object-contain"
-                        />
-                      )}
+                      <QuestionFigures
+                        svg={q.figure_svg}
+                        description={q.figure_description}
+                        url1={q.question_image_url}
+                        url2={q.question_image_url_2}
+                        alt={`Question ${r.index} figure`}
+                        className="justify-start"
+                        imgClassName="max-h-64 rounded border bg-background object-contain"
+                      />
                       {opts.length > 0 && (
                         <div className="space-y-2">
                           {opts.map((o) => {

@@ -18,6 +18,8 @@ interface QuestionRow {
   question_text: string;
   question_image_url: string | null;
   question_image_url_2: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   multiple_choice_options: any;
   answer: string;
   difficulty_level: string | null;
@@ -60,7 +62,7 @@ export default function ChallengePlay() {
     startedAtRef.current = Date.now();
     supabase
       .from('questions')
-      .select('id, question_text, question_image_url, question_image_url_2, multiple_choice_options, answer, difficulty_level, passage_text')
+      .select('id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, answer, difficulty_level, passage_text')
       .eq('id', poolIds[cursor])
       .maybeSingle()
       .then(({ data }) => setQuestion(data as QuestionRow));
@@ -208,6 +210,8 @@ export default function ChallengePlay() {
             <MathText text={question.question_text} />
           </div>
           <QuestionFigures
+            svg={question.figure_svg}
+            description={question.figure_description}
             url1={question.question_image_url}
             url2={question.question_image_url_2}
             imgClassName="rounded-md max-h-60"

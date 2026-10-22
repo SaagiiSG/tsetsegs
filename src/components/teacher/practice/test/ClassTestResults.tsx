@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, EyeOff, Loader2 } from 'lucide-react';
 
@@ -15,6 +16,8 @@ interface QuestionRow {
   question_id: string | number | null;
   question_text: string | null;
   question_image_url: string | null;
+  figure_svg: string | null;
+  figure_description: string | null;
   multiple_choice_options: any;
   choice_images: any;
   answer: string | null;
@@ -62,7 +65,7 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
       if (qids.length) {
         const { data: q } = await supabase
           .from('questions')
-          .select('id, question_id, question_text, question_image_url, multiple_choice_options, choice_images, answer, question_type, passage_text')
+          .select('id, question_id, question_text, question_image_url, figure_svg, figure_description, multiple_choice_options, choice_images, answer, question_type, passage_text')
           .in('id', qids);
         setQuestions((q ?? []) as QuestionRow[]);
       }
@@ -235,13 +238,14 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
                 </div>
               )}
               <div><MathText text={zoomed.question_text ?? ''} /></div>
-              {zoomed.question_image_url && (
-                <img
-                  src={zoomed.question_image_url}
-                  alt={`Question ${zoomedIndex} figure`}
-                  className="max-h-72 rounded border bg-background object-contain"
-                />
-              )}
+              <QuestionFigures
+                svg={zoomed.figure_svg}
+                description={zoomed.figure_description}
+                url1={zoomed.question_image_url}
+                alt={`Question ${zoomedIndex} figure`}
+                className="justify-start"
+                imgClassName="max-h-72 rounded border bg-background object-contain"
+              />
               {Array.isArray(zoomed.multiple_choice_options) && zoomed.multiple_choice_options.length > 0 && (
                 <div className="space-y-2">
                   {(zoomed.multiple_choice_options as any[]).map((opt, i) => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { MathText } from "@/components/MathText";
+import { QuestionFigures } from "@/components/QuestionFigures";
 import { ChevronRight, Trophy, Clock, Users, CheckCircle, XCircle } from "lucide-react";
 
 interface Question {
@@ -17,6 +18,7 @@ interface Question {
   figure_svg: string | null;
   figure_description: string | null;
   question_image_url: string | null;
+  question_image_url_2: string | null;
   passage_text: string | null;
 }
 
@@ -47,7 +49,7 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
     const loadQuestions = async () => {
       const { data } = await supabase
         .from("live_session_questions")
-        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer, has_figure, figure_svg, figure_description, question_image_url, passage_text)")
+        .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer, has_figure, figure_svg, figure_description, question_image_url, question_image_url_2, passage_text)")
         .eq("session_id", sessionId)
         .order("order_index", { ascending: true });
 
@@ -226,25 +228,15 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
           </div>
         )}
 
-        {/* Figure: SVG or image */}
-        {currentQuestion.has_figure && currentQuestion.figure_svg && (
-          <div className="mt-4 flex justify-center">
-            <div
-              className="max-w-md w-full rounded-lg border bg-background p-2"
-              dangerouslySetInnerHTML={{ __html: currentQuestion.figure_svg }}
-            />
-          </div>
-        )}
-
-        {currentQuestion.question_image_url && (
-          <div className="mt-4 flex justify-center">
-            <img
-              src={currentQuestion.question_image_url}
-              alt={currentQuestion.figure_description || "Question figure"}
-              className="max-w-md w-full rounded-lg border"
-            />
-          </div>
-        )}
+        {/* Figure: drawn SVG or image */}
+        <QuestionFigures
+          svg={currentQuestion.figure_svg}
+          description={currentQuestion.figure_description}
+          url1={currentQuestion.question_image_url}
+          url2={currentQuestion.question_image_url_2}
+          className="mt-4"
+          imgClassName="max-w-md w-full rounded-lg border"
+        />
 
         {/* Figure description fallback */}
         {currentQuestion.has_figure && !currentQuestion.figure_svg && !currentQuestion.question_image_url && currentQuestion.figure_description && (
