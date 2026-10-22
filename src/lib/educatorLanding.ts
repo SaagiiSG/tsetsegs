@@ -1,10 +1,7 @@
 import type { PublicLanguage } from './publicLanguage';
 const fmt = (n: number) => n.toLocaleString('en-US');
-// Counts come live from the database; a missing or zero count shows the line without a number.
-// The English explanations are College Board's own, so the total credits no one; only math is the teachers'.
-export const explanationsLine = (count: number | null, lang: PublicLanguage) =>
- count ? (lang === 'mon' ? `${fmt(count)} асуулт алхам алхмаар тайлбартай` : `${fmt(count)} questions with step-by-step explanations`)
-  : (lang === 'mon' ? 'Алхам алхмаар тайлбартай асуултууд' : 'Questions with step-by-step explanations');
+// Counts come live from the database and hide below a floor, so a missing or small count never shows.
+// Math only: the English explanations are College Board's own, not the teachers'.
 export const mathExplanationsLabel = (count: number | null, lang: PublicLanguage) =>
  count != null && count >= 100 ? (lang === 'mon' ? `Манай багш нарын бичсэн ${fmt(count)} математикийн тайлбар` : `${fmt(count)} math explanations written by our teachers`) : null;
 export const videoCountLabel = (count: number | null, lang: PublicLanguage) =>

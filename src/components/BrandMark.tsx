@@ -1,4 +1,4 @@
-/** floweros geometric flower mark. Inherits color via currentColor. */
+/** flowersos geometric flower mark. Inherits color via currentColor. */
 export const BrandMark = ({ className = "h-8 w-8" }: { className?: string }) => (
   <svg viewBox="40 200 1840 1540" className={className} fill="currentColor" aria-hidden="true">
     <polygon points="960,228 1307,730 975,945 940,1580 915,945 603,730" />

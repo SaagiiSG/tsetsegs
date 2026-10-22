@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { appendSource, explanationsLine, mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from './educatorLanding';
+import { appendSource, mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from './educatorLanding';
 describe('educator landing wording', () => {
-  it('counts explanations', () => { expect(explanationsLine(918, 'eng')).toBe('918 questions with step-by-step explanations'); expect(explanationsLine(1044, 'eng')).toBe('1,044 questions with step-by-step explanations'); expect(explanationsLine(918, 'mon')).toContain('918'); });
-  it('falls back without a number, crediting no one', () => { for (const n of [null, 0]) expect(explanationsLine(n, 'eng')).toBe('Questions with step-by-step explanations'); });
   it('credits only the math explanations to the teachers, from 100 up', () => { expect(mathExplanationsLabel(144, 'eng')).toBe('144 math explanations written by our teachers'); expect(mathExplanationsLabel(144, 'mon')).toContain('144'); expect(mathExplanationsLabel(99, 'eng')).toBeNull(); expect(mathExplanationsLabel(null, 'eng')).toBeNull(); });
   it('shows video counts from 20 up', () => { expect(videoCountLabel(127, 'eng')).toBe('127 video lessons from the same teachers'); expect(videoCountLabel(20, 'eng')).toBe('20 video lessons from the same teachers'); expect(videoCountLabel(19, 'eng')).toBeNull(); expect(videoCountLabel(null, 'eng')).toBeNull(); });
   it('rounds problems solved down', () => { expect(problemsSolvedLabel(817495)).toBe('817,000+'); expect(problemsSolvedLabel(999)).toBe('999'); expect(problemsSolvedLabel(null)).toBeNull(); });

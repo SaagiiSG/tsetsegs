@@ -8,7 +8,7 @@ import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useEducatorStats } from "@/hooks/useEducatorStats";
-import { explanationsLine, mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from "@/lib/educatorLanding";
+import { mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from "@/lib/educatorLanding";
 import "@/components/landing/landing.css";
 
 export default function Educators() {
@@ -17,17 +17,16 @@ export default function Educators() {
   const stats = useEducatorStats();
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
   const solved = problemsSolvedLabel(stats.answers);
-  const explanations = explanationsLine(stats.explanations, lang);
   const videos = videoCountLabel(stats.videos, lang);
 
   const mathExplanations = mathExplanationsLabel(stats.mathExplanations, lang);
 
   // Hard-coded 30-day numbers carry their date so they stay true; the all-time count is live.
-  // student_attempts counts every answer, wrong ones and retries included, so the wording is "questions answered".
+  // "Problems solved" is Saagii's wording; student_attempts counts every answer, retries included.
   const practice = [
-    { v: "271,000", l: text("асуултад хариулсан", "questions answered"), c: "lv-orange" },
+    { v: "271,000", l: text("бодлого бодсон", "problems solved"), c: "lv-orange" },
     { v: "510", l: text("сурагч дасгал хийсэн", "students practiced"), c: "lv-pink" },
-    ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш хариулсан асуулт", "questions answered since December 2025"), c: "lv-blue", wide: true }] : []),
+    ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш бодсон бодлого", "problems solved since December 2025"), c: "lv-blue", wide: true }] : []),
   ];
   const scores = [
     { v: "2", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
@@ -113,7 +112,7 @@ export default function Educators() {
         <section id="practice" className="lv-sky scroll-mt-20 py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
           <motion.div {...reveal}>
             <h2 className="lv-h2">{text("Их дасгал хийсэн сурагч өндөр оноо авдаг", "Students who practice more score higher")}</h2>
-            <p className="lv-lead mt-4">{text("8-р сарын SAT-д 700+ авсан бүртгэгдсэн сурагч бүр платформ дээр дор хаяж 500 асуултад хариулсан бөгөөд ихэнх нь 1,500-аас илүүд хариулсан. Streak, чансаа, өдрийн зорилго, хурдны тойрог тэднийг эргэн ирүүлдэг.", "Every student we recorded at 700+ on the August SAT had answered at least 500 questions on the platform, and most had answered more than 1,500. Streaks, ranks, daily goals and speed rounds keep them coming back.")}</p>
+            <p className="lv-lead mt-4">{text("8-р сарын SAT-д 700+ авсан бүртгэгдсэн сурагч бүр платформ дээр дор хаяж 500 бодлого бодсон бөгөөд ихэнх нь 1,500-аас илүүг бодсон. Streak, чансаа, өдрийн зорилго, хурдны тойрог тэднийг эргэн ирүүлдэг.", "Every student we recorded at 700+ on the August SAT had solved at least 500 problems on the platform, and most had solved more than 1,500. Streaks, ranks, daily goals and speed rounds keep them coming back.")}</p>
             <div className="mt-8 grid grid-cols-2 gap-3">
               <div className="lv-card p-5"><p className="lv-orange inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold">271</p><p className="mt-3 text-sm text-muted-foreground">{text("сурагч 7 хоногийн streak барьсан", "students kept a 7‑day streak")}</p></div>
               <div className="lv-card p-5"><p className="lv-pink inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold">25</p><p className="mt-3 text-sm text-muted-foreground">{text("нь 30+ хоног тасралтгүй барьсан", "kept one going for 30+ days")}</p></div>
@@ -136,7 +135,6 @@ export default function Educators() {
         <section id="center" className="scroll-mt-20 py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2 max-w-2xl">{text("Төвөө бүхэлд нь нэг дороос удирд", "Run your whole center in one place")}</motion.h2>
           <p className="lv-lead mt-4 max-w-2xl">{text("Таны лого, өнгөтэй өөрийн орчин.", "Your own workspace, with your logo and colors.")}</p>
-          <p className="mt-6"><span className="lv-violet inline-block rounded-full px-4 py-2 text-sm font-medium">{explanations}</span></p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{included.map((m, i) => (
             <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .03 }} className="lv-card flex items-center gap-3 p-4"><m.icon className="h-5 w-5 shrink-0 text-accent" /><span className="text-sm font-medium">{m.l}</span></motion.div>
           ))}</div>
