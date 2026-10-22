@@ -37,12 +37,19 @@ export default function IntlDbQuestions() {
   const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
     queryFn: async () => {
-      const { data, error } = await (supabase.from('intl_questions') as any)
-        .select('id, question_id, ext_question_id, subject, question_set, difficulty_level, question_type, question_text, passage_text, multiple_choice_options, answer, rationale, question_image_url, question_image_url_2, figure_svg, figure_description')
-        .eq('ext_variant', true)
-        .order('question_id');
-      if (error) throw error;
-      return (data || []) as Row[];
+      // The API returns at most 1,000 rows per request, so read page by page until a short page.
+      const rows: Row[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await (supabase.from('intl_questions') as any)
+          .select('id, question_id, ext_question_id, subject, question_set, difficulty_level, question_type, question_text, passage_text, multiple_choice_options, answer, rationale, question_image_url, question_image_url_2, figure_svg, figure_description')
+          .eq('ext_variant', true)
+          .order('question_id')
+          .order('id')
+          .range(from, from + 999);
+        if (error) throw error;
+        rows.push(...((data || []) as Row[]));
+        if (!data || data.length < 1000) return rows;
+      }
     },
   });
 
