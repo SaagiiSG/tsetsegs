@@ -1,0 +1,1 @@
+COMMENT ON TABLE public.questions IS 'Mongolian question bank; reads limited to signed-in staff and student-token sessions.';

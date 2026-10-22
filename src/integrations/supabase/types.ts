@@ -6124,6 +6124,10 @@ export type Database = {
           total_points: number
         }[]
       }
+      live_session_question_list: {
+        Args: { _join_code: string }
+        Returns: Json
+      }
       longest_day_run: { Args: { p_days: string[] }; Returns: number }
       move_to_dlq: {
         Args: {
@@ -6405,6 +6409,7 @@ export type Database = {
           test_number: number
         }[]
       }
+      shared_question_categories: { Args: never; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       solo_has_premium: { Args: { _user: string }; Returns: boolean }
