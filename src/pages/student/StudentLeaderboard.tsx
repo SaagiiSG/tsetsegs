@@ -13,7 +13,6 @@ import {
   HistoryTab,
   SprintEndCelebration,
   NoActiveSprintCard,
-  EpicBadgeUnlock,
   RankAdvancementCelebration
 } from '@/components/student/leaderboard';
 import { MyTierLadder } from '@/components/student/leaderboard/MyTierLadder';
@@ -37,8 +36,6 @@ export default function StudentLeaderboard() {
   const { student } = useStudentAuth();
   const [showCelebration, setShowCelebration] = useState(false);
   const [showAdvancementCelebration, setShowAdvancementCelebration] = useState(false);
-  const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
-  const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
   const [celebrationData, setCelebrationData] = useState<{
     rank: number;
     tier: TierType;
@@ -113,14 +110,6 @@ export default function StudentLeaderboard() {
       // Refetch leaderboard data
       await refetchLeaderboard();
 
-      // Check if user got a badge (only top 1 gets badge)
-      if (userRank === 1) {
-        const badgeName = TIER_BADGE_NAMES[userTier];
-        const badge = badgeDefinitions.find(b => b.name === badgeName);
-        if (badge) {
-          setUnlockedBadge(badge);
-        }
-      }
     } catch (err) {
       console.error('Error finalizing sprint:', err);
     } finally {
@@ -187,10 +176,8 @@ export default function StudentLeaderboard() {
         });
         setShowAdvancementCelebration(true);
       } else {
-        // Show regular celebration (and possibly badge unlock for P1)
-        if (badgeForAdvancement) {
-          setUnlockedBadge(badgeForAdvancement);
-        }
+        // Show regular celebration; a sprint-win badge comes from the server
+        // and BadgeCelebrationWatcher celebrates it once it is awarded
         setCelebrationData({
           rank: userEntry.rank,
           tier: currentTier,
@@ -207,26 +194,7 @@ export default function StudentLeaderboard() {
 
   const handleCloseCelebration = useCallback(() => {
     setShowCelebration(false);
-    
-    // If there's a badge to unlock, show the badge unlock animation
-    if (unlockedBadge) {
-      setTimeout(() => {
-        setShowBadgeUnlock(true);
-      }, 300);
-    }
-  }, [unlockedBadge]);
-
-  const handleClaimBadge = useCallback(() => {
-    setShowBadgeUnlock(false);
-    setUnlockedBadge(null);
-    
-    // Invalidate queries to sync badge collection and points/level
-    queryClient.invalidateQueries({ queryKey: ['badges'] });
-    queryClient.invalidateQueries({ queryKey: ['badge-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['total-points'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['activity-heatmap'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-achievements'] });
+    queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
   }, [queryClient]);
 
   // Handler for advancement celebration completion
@@ -409,13 +377,6 @@ export default function StudentLeaderboard() {
       )}
 
       {/* Epic Badge Unlock Animation - Shows after celebration for badge winners */}
-      {unlockedBadge && (
-        <EpicBadgeUnlock
-          isOpen={showBadgeUnlock}
-          onClaim={handleClaimBadge}
-          badge={unlockedBadge}
-        />
-      )}
     </div>
   );
 }

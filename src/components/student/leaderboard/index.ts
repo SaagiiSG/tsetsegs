@@ -8,7 +8,6 @@ export { MyRankTab } from './MyRankTab';
 export { HistoryTab } from './HistoryTab';
 export { SprintEndCelebration } from './SprintEndCelebration';
 export { NoActiveSprintCard } from './NoActiveSprintCard';
-export { EpicBadgeUnlock } from './EpicBadgeUnlock';
 export { RankAdvancementCelebration } from './RankAdvancementCelebration';
 export { LockFallAnimation } from './LockFallAnimation';
 export { FullProfileDialog } from './FullProfileDialog';

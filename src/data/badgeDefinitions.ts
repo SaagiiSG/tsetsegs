@@ -306,13 +306,13 @@ export const badgeDefinitions: BadgeDefinition[] = [
   {
     id: 'peak-of-speed',
     name: 'Peak of Speed',
-    description: 'Complete 10 speed sessions with 95%+ accuracy',
+    description: 'Complete 10 speed sessions of 5+ questions with 95%+ accuracy',
     rarity: 'uncommon',
     pointValue: 500,
     iconName: 'Mountain',
     category: 'speed',
     requirements: [
-      { type: 'speed_sessions_high_accuracy', target: 10, label: '10 speed sessions with 95%+ accuracy' }
+      { type: 'speed_sessions_high_accuracy', target: 10, label: '10 speed sessions of 5+ questions, 95%+ accuracy' }
     ]
   },
   

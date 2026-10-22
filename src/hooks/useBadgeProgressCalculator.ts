@@ -1,7 +1,11 @@
 import { questionTableFor, type QuestionTable } from '@/lib/questionTable';
 import { supabase } from '@/integrations/supabase/client';
-import { badgeDefinitions, BadgeDefinition, BadgeRequirement } from '@/data/badgeDefinitions';
-import { differenceInCalendarDays, parseISO, format } from 'date-fns';
+import { badgeDefinitions, BadgeRequirement } from '@/data/badgeDefinitions';
+import { parseISO, format } from 'date-fns';
+import {
+  type AttemptRow, type SpeedSessionRow, ubDay, longestDayRun, bestCorrectRun, hasAccurateWindow,
+  countAccurateSessions, longestPerfectRun, hasQualifyingSession, percentOf,
+} from '@/lib/badgeRules';
 
 export interface BadgeProgressResult {
   badgeId: string;
@@ -14,6 +18,45 @@ export interface BadgeProgressResult {
   }[];
   overallProgress: number;
   isComplete: boolean;
+}
+
+// PostgREST sends at most 1,000 rows per request, so read whole histories page by page.
+async function fetchAll<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await page(from, from + 999);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 1000) return rows;
+  }
+}
+
+// One sync reads a student's answers and speed sessions once, shared by every badge.
+// shortcut: this downloads the student's whole answer history each sync; move these counts
+// into a server function if the heaviest students find the badges page slow.
+let cache: { student: string; attempts?: Promise<(AttemptRow & { question_id: string })[]>; sessions?: Promise<SpeedSessionRow[]> } = { student: '' };
+const forStudent = (id: string) => (cache.student === id ? cache : (cache = { student: id }));
+
+const loadAttempts = (id: string) => (forStudent(id).attempts ??= fetchAll((from, to) => supabase
+  .from('student_attempts')
+  .select('question_id, is_correct, time_spent_seconds, attempted_at')
+  .eq('student_account_id', id)
+  .order('attempted_at')
+  .order('id')
+  .range(from, to)));
+
+const loadSessions = (id: string) => (forStudent(id).sessions ??= fetchAll((from, to) => supabase
+  .from('speed_sessions')
+  .select('total_questions, correct_count, duration_seconds, created_at')
+  .eq('student_account_id', id)
+  .order('created_at')
+  .order('id')
+  .range(from, to)));
+
+async function solvedIn(studentAccountId: string, questions: Promise<{ id: string }[]>) {
+  const [qs, attempts] = await Promise.all([questions, loadAttempts(studentAccountId)]);
+  const solved = new Set(attempts.filter(a => a.is_correct).map(a => a.question_id));
+  return { total: qs.length, solved: qs.filter(q => solved.has(q.id)).length };
 }
 
 /**
@@ -57,68 +100,39 @@ async function calculateRequirementProgress(
     }
 
     case 'consecutive_days_speed': {
-      const { data: speedTransactions } = await supabase
-        .from('point_transactions')
-        .select('created_at')
-        .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed_session')
-        .order('created_at', { ascending: true });
-
-      current = calculateConsecutiveDayStreak(speedTransactions?.map(t => t.created_at) || []);
+      const [sessions, paid] = await Promise.all([
+        loadSessions(studentAccountId),
+        fetchAll<{ created_at: string }>((from, to) => supabase
+          .from('point_transactions')
+          .select('created_at')
+          .eq('student_account_id', studentAccountId)
+          .eq('category', 'speed_session')
+          .gt('points', 0)
+          .order('created_at')
+          .order('id')
+          .range(from, to)),
+      ]);
+      current = longestDayRun([...sessions.filter(s => s.total_questions > 0), ...paid].map(r => ubDay(r.created_at)));
       break;
     }
 
     case 'consecutive_days_both': {
-      const { data: allTransactions } = await supabase
-        .from('point_transactions')
-        .select('created_at, category')
-        .eq('student_account_id', studentAccountId)
-        .in('category', ['speed_session', 'questions'])
-        .order('created_at', { ascending: true });
-
-      current = calculateConsecutiveDaysBoth(allTransactions || []);
+      const [sessions, attempts] = await Promise.all([loadSessions(studentAccountId), loadAttempts(studentAccountId)]);
+      const practised = new Set(attempts.map(a => ubDay(a.attempted_at)));
+      current = longestDayRun(sessions.map(s => ubDay(s.created_at)).filter(d => practised.has(d)));
       break;
     }
 
-    case 'all_68_questions': {
-      const { data: questions68 } = await supabase
-        .from(qTable)
-        .select('id')
-        .eq('question_set', '68')
-        .eq('is_active', true);
-
-      const questionIds = questions68?.map(q => q.id) || [];
-      if (questionIds.length === 0) break;
-
-      const { data: correctAttempts } = await supabase
-        .from('student_attempts')
-        .select('question_id')
-        .eq('student_account_id', studentAccountId)
-        .eq('is_correct', true)
-        .in('question_id', questionIds);
-
-      current = new Set(correctAttempts?.map(a => a.question_id) || []).size;
-      break;
-    }
-
+    case 'all_68_questions':
     case 'all_cb_problems': {
-      const { data: cbQuestions } = await supabase
+      const set = req.type === 'all_68_questions' ? '68' : 'CollegeBoard';
+      current = (await solvedIn(studentAccountId, fetchAll<{ id: string }>((from, to) => supabase
         .from(qTable)
         .select('id')
-        .eq('question_set', 'CollegeBoard')
-        .eq('is_active', true);
-
-      const questionIds = cbQuestions?.map(q => q.id) || [];
-      if (questionIds.length === 0) break;
-
-      const { data: correctAttempts } = await supabase
-        .from('student_attempts')
-        .select('question_id')
-        .eq('student_account_id', studentAccountId)
-        .eq('is_correct', true)
-        .in('question_id', questionIds);
-
-      current = new Set(correctAttempts?.map(a => a.question_id) || []).size;
+        .eq('question_set', set)
+        .eq('is_active', true)
+        .order('id')
+        .range(from, to)))).solved;
       break;
     }
 
@@ -156,78 +170,22 @@ async function calculateRequirementProgress(
       break;
     }
 
-    case 'speed_sessions_high_accuracy': {
-      const { data: speedTransactions } = await supabase
-        .from('point_transactions')
-        .select('metadata')
-        .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed_session');
-
-      current = speedTransactions?.filter(t => {
-        const metadata = t.metadata as any;
-        return metadata?.accuracy >= 95;
-      }).length || 0;
+    case 'speed_sessions_high_accuracy':
+      current = countAccurateSessions(await loadSessions(studentAccountId), 5, 95);
       break;
-    }
 
-    case 'consecutive_perfect_drills': {
-      const { data: speedTransactions } = await supabase
-        .from('point_transactions')
-        .select('metadata, created_at')
-        .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed_session')
-        .order('created_at', { ascending: true });
-
-      let maxStreak = 0;
-      let currentStreak = 0;
-
-      speedTransactions?.forEach(t => {
-        const metadata = t.metadata as any;
-        if (metadata?.session_summary && metadata?.accuracy === 100) {
-          currentStreak++;
-          maxStreak = Math.max(maxStreak, currentStreak);
-        } else if (metadata?.session_summary) {
-          currentStreak = 0;
-        }
-      });
-
-      current = maxStreak;
+    case 'consecutive_perfect_drills':
+      current = longestPerfectRun(await loadSessions(studentAccountId));
       break;
-    }
 
     case 'speed_session_combo': {
-      // Distinguish Lightning Strike vs Speedster by badge name context
-      const isLightning = badgeName?.includes('Lightning');
+      // Lightning Strike: 10+ questions, 80%+ / Speedster: 20+ questions, 90%+; both in a session of 5 min or less
       const isSpeedster = badgeName?.includes('Speedster');
-
-      // Thresholds per badge
-      const minQuestions = isSpeedster ? 20 : 10;
-      const minAccuracy = isSpeedster ? 90 : 80;
-      const maxTimeSeconds = 300; // 5 minutes for both
-
-      // Query speed session summary transactions
-      const { data: speedSummaries } = await supabase
-        .from('point_transactions')
-        .select('metadata')
-        .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed_session')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (speedSummaries && speedSummaries.length > 0) {
-        for (const tx of speedSummaries) {
-          const meta = tx.metadata as Record<string, any> | null;
-          if (!meta?.session_summary) continue;
-          const q = meta.totalQuestions || 0;
-          const acc = meta.accuracy || 0;
-          const time = meta.totalTimeSeconds || meta.time_seconds || 0;
-
-          if (q >= minQuestions && acc >= minAccuracy && time < maxTimeSeconds) {
-            current = 1;
-            break;
-          }
-        }
-      }
+      current = hasQualifyingSession(await loadSessions(studentAccountId), {
+        minQuestions: isSpeedster ? 20 : 10,
+        maxSeconds: 300,
+        minAccuracy: isSpeedster ? 90 : 80,
+      }) ? 1 : 0;
       break;
     }
 
@@ -359,25 +317,14 @@ async function calculateRequirementProgress(
     }
 
     case 'all_english_bank': {
-      // FIX: Filter attempts by English subject via question join
-      const { data: englishQuestions } = await supabase
+      const { total, solved } = await solvedIn(studentAccountId, fetchAll<{ id: string }>((from, to) => supabase
         .from(qTable)
         .select('id')
         .ilike('subject', 'english')
-        .eq('is_active', true);
-
-      const englishIds = englishQuestions?.map(q => q.id) || [];
-      if (englishIds.length === 0) break;
-
-      const { data: correctAttempts } = await supabase
-        .from('student_attempts')
-        .select('question_id')
-        .eq('student_account_id', studentAccountId)
-        .eq('is_correct', true)
-        .in('question_id', englishIds);
-
-      const uniqueCorrect = new Set(correctAttempts?.map(a => a.question_id) || []).size;
-      current = uniqueCorrect >= englishIds.length ? 1 : 0;
+        .eq('is_active', true)
+        .order('id')
+        .range(from, to)));
+      current = total > 0 && solved >= total ? 1 : 0;
       break;
     }
 
@@ -444,69 +391,15 @@ async function calculateRequirementProgress(
       break;
     }
 
-    case 'consecutive_correct_under_time': {
-      // Sniper (target=10, 8min) / Rush Delivery (target=20, 12min)
-      // Parse time limit from the label
-      const timeLimitMinutes = target === 10 ? 8 : target === 20 ? 12 : 10;
-      const timeLimitSeconds = timeLimitMinutes * 60;
-
-      const { data: attempts } = await supabase
-        .from('student_attempts')
-        .select('is_correct, time_spent_seconds, attempted_at')
-        .eq('student_account_id', studentAccountId)
-        .order('attempted_at', { ascending: true });
-
-      if (!attempts || attempts.length === 0) break;
-
-      // Sliding window: find longest consecutive correct run where cumulative time < limit
-      let bestRun = 0;
-
-      for (let i = 0; i < attempts.length; i++) {
-        if (!attempts[i].is_correct) continue;
-
-        let runLength = 0;
-        let cumulativeTime = 0;
-
-        for (let j = i; j < attempts.length; j++) {
-          if (!attempts[j].is_correct) break;
-          cumulativeTime += attempts[j].time_spent_seconds || 0;
-          if (cumulativeTime > timeLimitSeconds) break;
-          runLength++;
-        }
-
-        bestRun = Math.max(bestRun, runLength);
-      }
-
-      current = bestRun;
+    case 'consecutive_correct_under_time':
+      // Sniper: 10 in 8 min / Rush Delivery: 20 in 12 min
+      current = bestCorrectRun(await loadAttempts(studentAccountId), (target === 10 ? 8 : target === 20 ? 12 : 10) * 60);
       break;
-    }
 
-    case 'questions_under_time_high_accuracy': {
-      // Time Lord: 50 questions in under 17 min with 90%+ accuracy (from speed sessions)
-      const { data: speedSessions } = await supabase
-        .from('point_transactions')
-        .select('metadata')
-        .eq('student_account_id', studentAccountId)
-        .eq('category', 'speed_session');
-
-      if (speedSessions) {
-        for (const session of speedSessions) {
-          const metadata = session.metadata as any;
-          if (!metadata?.session_summary) continue;
-
-          const totalQuestions = metadata.total_questions || 0;
-          const accuracy = metadata.accuracy || 0;
-          const totalTimeSeconds = metadata.total_time_seconds || metadata.time_seconds || 0;
-          const totalTimeMinutes = totalTimeSeconds / 60;
-
-          if (totalQuestions >= 50 && totalTimeMinutes < 17 && accuracy >= 90) {
-            current = 1;
-            break;
-          }
-        }
-      }
+    case 'questions_under_time_high_accuracy':
+      // Time Lord: any 50 answers in a row, 17 min or less, 90%+ right
+      current = hasAccurateWindow(await loadAttempts(studentAccountId), target, 17 * 60, 90) ? target : 0;
       break;
-    }
 
     case 'perfect_test_under_time': {
       // Flawless Execution: Perfect bluebook test under target minutes
@@ -647,78 +540,8 @@ async function calculateRequirementProgress(
       console.warn(`Unknown requirement type: ${req.type}`);
   }
 
-  const percentage = Math.min(100, Math.round((current / target) * 100));
+  const percentage = percentOf(current, target);
   return { current, target, percentage };
-}
-
-/**
- * Calculate consecutive day streak from a list of timestamps
- */
-function calculateConsecutiveDayStreak(timestamps: string[]): number {
-  if (timestamps.length === 0) return 0;
-
-  const uniqueDays = [...new Set(
-    timestamps.map(ts => format(parseISO(ts), 'yyyy-MM-dd'))
-  )].sort();
-
-  let maxStreak = 1;
-  let currentStreak = 1;
-
-  for (let i = 1; i < uniqueDays.length; i++) {
-    const prev = parseISO(uniqueDays[i - 1]);
-    const curr = parseISO(uniqueDays[i]);
-    const diff = differenceInCalendarDays(curr, prev);
-
-    if (diff === 1) {
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      currentStreak = 1;
-    }
-  }
-
-  return maxStreak;
-}
-
-/**
- * Calculate consecutive days with BOTH speed and practice activity
- */
-function calculateConsecutiveDaysBoth(
-  transactions: { created_at: string; category: string }[]
-): number {
-  if (transactions.length === 0) return 0;
-
-  const dateActivities: Record<string, Set<string>> = {};
-  transactions.forEach(t => {
-    const date = format(parseISO(t.created_at), 'yyyy-MM-dd');
-    if (!dateActivities[date]) dateActivities[date] = new Set();
-    dateActivities[date].add(t.category);
-  });
-
-  const daysWithBoth = Object.entries(dateActivities)
-    .filter(([_, activities]) => activities.has('speed_session') && activities.has('questions'))
-    .map(([date]) => date)
-    .sort();
-
-  if (daysWithBoth.length === 0) return 0;
-
-  let maxStreak = 1;
-  let currentStreak = 1;
-
-  for (let i = 1; i < daysWithBoth.length; i++) {
-    const prev = parseISO(daysWithBoth[i - 1]);
-    const curr = parseISO(daysWithBoth[i]);
-    const diff = differenceInCalendarDays(curr, prev);
-
-    if (diff === 1) {
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      currentStreak = 1;
-    }
-  }
-
-  return maxStreak;
 }
 
 /**
@@ -727,11 +550,14 @@ function calculateConsecutiveDaysBoth(
 export async function calculateAllBadgeProgress(
   studentAccountId: string,
   studentId?: string,
-  qTable: QuestionTable = 'questions'
+  qTable: QuestionTable = 'questions',
+  skipBadgeNames: Set<string> = new Set()
 ): Promise<BadgeProgressResult[]> {
   const results: BadgeProgressResult[] = [];
+  cache = { student: '' };
 
   for (const badge of badgeDefinitions) {
+    if (skipBadgeNames.has(badge.name)) continue;
     const requirementsProgress = await Promise.all(
       badge.requirements.map(async req => {
         const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name, qTable);
@@ -743,7 +569,7 @@ export async function calculateAllBadgeProgress(
     );
 
     const overallProgress = requirementsProgress.length > 0
-      ? Math.round(
+      ? Math.floor(
           requirementsProgress.reduce((sum, r) => sum + r.percentage, 0) / requirementsProgress.length
         )
       : 0;
@@ -760,40 +586,4 @@ export async function calculateAllBadgeProgress(
   }
 
   return results;
-}
-
-/**
- * Calculate progress for a single badge
- */
-export async function calculateBadgeProgress(
-  studentAccountId: string,
-  badge: BadgeDefinition,
-  studentId?: string,
-  qTable: QuestionTable = 'questions'
-): Promise<BadgeProgressResult> {
-  const requirementsProgress = await Promise.all(
-    badge.requirements.map(async req => {
-      const progress = await calculateRequirementProgress(studentAccountId, req, studentId, badge.name, qTable);
-      return {
-        type: req.type,
-        ...progress
-      };
-    })
-  );
-
-  const overallProgress = requirementsProgress.length > 0
-    ? Math.round(
-        requirementsProgress.reduce((sum, r) => sum + r.percentage, 0) / requirementsProgress.length
-      )
-    : 0;
-
-  const isComplete = requirementsProgress.every(r => r.percentage >= 100);
-
-  return {
-    badgeId: badge.id,
-    badgeName: badge.name,
-    requirements: requirementsProgress,
-    overallProgress,
-    isComplete
-  };
 }

@@ -15,7 +15,6 @@ import { MathText } from '@/components/MathText';
 import { SecurityWrapper } from '@/components/security/SecurityWrapper';
 import { DesmosCalculator, useCalculatorSnap, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
-import { checkSpeedBadgeProgress } from '@/hooks/useSpeedBadgeProgress';
 import { syncBadgeProgressForStudent } from '@/hooks/useSyncBadgeProgress';
 import { updateStudentStreak } from '@/hooks/useStudentStreak';
 import { toast } from 'sonner';
@@ -377,13 +376,7 @@ export default function StudentSpeedSession() {
       } catch (err) { console.error('Failed to record speed session summary:', err); }
 
       try {
-        const { badgesUnlocked } = await checkSpeedBadgeProgress(student.id, { totalQuestions: results.length, correctCount, totalTimeSeconds, accuracy });
-        queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
-        if (badgesUnlocked.length > 0) queryClient.invalidateQueries({ queryKey: ['student-badges'] });
-      } catch (error) { console.error('Failed to check speed badge progress:', error); }
-
-      try {
-        const newBadges = await syncBadgeProgressForStudent(student.id, student.linked_student_id || undefined);
+        const newBadges = await syncBadgeProgressForStudent(student.id, student.linked_student_id || undefined, qTable);
         queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
         if (newBadges.length > 0) queryClient.invalidateQueries({ queryKey: ['student-badges'] });
       } catch (error) { console.error('Failed to sync badge progress:', error); }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,6 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useSyncBadgeProgress } from '@/hooks/useSyncBadgeProgress';
 import { useDailyGoals } from '@/hooks/useDailyGoals';
 import { useDailyProgress } from '@/hooks/useDailyProgress';
-import { toast } from 'sonner';
 
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { SetProgressIsland } from '@/components/student/dashboard/SetProgressIsland';
@@ -48,17 +47,17 @@ export default function StudentDashboardHome() {
 
   // Badge progress sync (once)
   const { syncBadgeProgress } = useSyncBadgeProgress();
+  const queryClient = useQueryClient();
   const synced = useRef(false);
   useEffect(() => {
     if (student?.id && !synced.current) {
       synced.current = true;
+      // BadgeCelebrationWatcher celebrates anything this unlocks
       syncBadgeProgress().then((newly) => {
-        if (newly.length > 0) {
-          toast.success(`🎉 Badge${newly.length > 1 ? 's' : ''} unlocked: ${newly.join(', ')}`);
-        }
+        if (newly.length > 0) queryClient.invalidateQueries({ queryKey: ['badge-celebrations'] });
       });
     }
-  }, [student?.id, syncBadgeProgress]);
+  }, [student?.id, syncBadgeProgress, queryClient]);
 
   // Closing report (preserved from previous dashboard)
   const studentId = student?.linked_student?.id;
