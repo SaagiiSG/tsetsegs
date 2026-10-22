@@ -254,6 +254,20 @@ Deno.serve(async (req) => {
     const projectRef = supabaseUrl.replace(/^https?:\/\//, "").split(".")[0];
     if (!projectRef) throw new Error("SUPABASE_URL not set");
 
+    // The videos are paid content: only signed-in users get the list and its stream links.
+    // The public site key is a valid JWT too, so ask auth whether the token belongs to a user.
+    const auth = req.headers.get("Authorization") ?? "";
+    const user = auth.startsWith("Bearer ")
+      ? await fetch(`${supabaseUrl}/auth/v1/user`, {
+          headers: { apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", Authorization: auth },
+        })
+      : null;
+    if (!user?.ok) {
+      return new Response(JSON.stringify({ error: "Please sign in" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (cache && Date.now() - cache.at < CACHE_TTL_MS) return json(cache.payload);
 
     // Shared cache survives cold starts, so a burst of students triggers at most
