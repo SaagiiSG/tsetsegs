@@ -34,6 +34,10 @@ serve(async (req) => {
     }
 
 
+    const body = await req.json().catch(() => ({}) as Record<string, unknown>);
+    const teacherId = String(body.teacherId ?? '');
+    const username = String(body.username ?? '');
+
     if (!teacherId || !username) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing teacherId or username" }),
