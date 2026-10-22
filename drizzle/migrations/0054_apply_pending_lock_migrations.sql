@@ -1,0 +1,1 @@
+comment on table public.intl_questions is 'International question bank (intDB): paid content, signed-in users only.';
