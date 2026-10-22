@@ -8,7 +8,7 @@ import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useEducatorStats } from "@/hooks/useEducatorStats";
-import { explanationsLine, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from "@/lib/educatorLanding";
+import { explanationsLine, mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from "@/lib/educatorLanding";
 import "@/components/landing/landing.css";
 
 export default function Educators() {
@@ -20,12 +20,23 @@ export default function Educators() {
   const explanations = explanationsLine(stats.explanations, lang);
   const videos = videoCountLabel(stats.videos, lang);
 
-  const results = [
+  const mathExplanations = mathExplanationsLabel(stats.mathExplanations, lang);
+
+  // Hard-coded 30-day numbers carry their date so they stay true; the all-time count is live.
+  // student_attempts counts every answer, wrong ones and retries included, so the wording is "questions answered".
+  const practice = [
+    { v: "271,000", l: text("асуултад хариулсан", "questions answered"), c: "lv-orange" },
+    { v: "510", l: text("сурагч дасгал хийсэн", "students practiced"), c: "lv-pink" },
+    ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш хариулсан асуулт", "questions answered since December 2025"), c: "lv-blue", wide: true }] : []),
+  ];
+  const scores = [
     { v: "2", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
     { v: "8", l: text("750+ авсан", "scored 750+"), c: "lv-blue" },
     { v: "14", l: text("700+ авсан", "scored 700+"), c: "lv-violet" },
-    ...(solved ? [{ v: solved, l: text("бодлого платформ дээр бодогдсон, 2025 оны 12-р сараас хойш", "problems solved on the platform since December 2025"), c: "lv-orange" }] : []),
   ];
+  const statCard = (r: { v: string; l: string; c: string; wide?: boolean }, i: number) => (
+    <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className={`lv-card p-4 sm:p-5 ${r.wide ? "col-span-2 md:col-span-1" : ""}`}><p className={`inline-block rounded-full px-3 py-1 font-mono text-xl font-semibold sm:text-2xl md:text-3xl ${r.c}`}>{r.v}</p><p className="mt-3 text-sm text-muted-foreground">{r.l}</p></motion.div>
+  );
 
   // Each item exists in src/portal today; homework and parent links don't, so they're left out.
   const included = [
@@ -64,11 +75,11 @@ export default function Educators() {
     <div className="landing-v2 min-h-screen" lang={lang === "mon" ? "mn" : "en"}>
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="lv-container flex h-16 items-center justify-between gap-3">
-          <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
-          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#results">{text("Үр дүн", "Results")}</a><a href="#desmos">Desmos</a><a href="#center">{text("Таны төв", "Your center")}</a><a href="#faq">FAQ</a></nav>
+          <a href="/" aria-label="flowersos" className="flex h-11 items-center gap-2"><BrandMark className="h-7 w-7" /><span className="hidden font-chillax text-xl font-semibold sm:inline">flowersos</span></a>
+          <nav className="hidden gap-6 text-sm text-muted-foreground md:flex">{[["#results", text("Үр дүн", "Results")], ["#practice", text("Дасгал", "Practice")], ["#desmos", "Desmos"], ["#center", text("Таны төв", "Your center")], ["#faq", "FAQ"]].map(([h, l]) => <a key={h} href={h} className="inline-flex h-11 items-center hover:text-foreground">{l}</a>)}</nav>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`h-10 min-w-11 rounded-full px-3 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
-            <a href="#signin" className="hidden px-2 text-sm text-muted-foreground hover:text-foreground sm:inline">{text("Нэвтрэх", "Sign in")}</a>
+            <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`h-11 min-w-11 rounded-full px-3 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
+            <a href="#signin" className="hidden h-11 items-center px-2 text-sm text-muted-foreground hover:text-foreground sm:inline-flex">{text("Нэвтрэх", "Sign in")}</a>
             <Button asChild className="h-11 rounded-full px-4"><a href="#book">{text("Уулзалт товлох", "Book a call")}</a></Button>
           </div>
         </div>
@@ -79,10 +90,10 @@ export default function Educators() {
           <Clouds />
           <motion.div {...reveal} className="lv-container relative"><div className="max-w-4xl">
             <span className="lv-blue rounded-full px-3 py-1 text-sm font-medium">{text("SAT төв, сургуулиудад", "For SAT centers and schools")}</span>
-            <h1 className="lv-h1 mt-6">{text("Хоёр төгс 800-ын ард байгаа платформ дээр SAT төвөө ажиллуул.", "Run your SAT center on the platform behind two perfect 800s.")}</h1>
+            <h1 className="lv-h1 mt-6">{text("Сурагчид тань салж чадахгүй SAT дасгал.", "SAT practice your students won’t put down.")}</h1>
             <p className="lv-lead mt-6 max-w-2xl">{text(
-              `Цэцэгс SAT төвийн багш нар бүтээсэн. Тэнд SAT бүрт 80+ сурагч шалгалт өгдөг. ${explanations}, мөн адил багш нарын видео хичээл, сурагчдыг тасралтгүй дасгал хийлгэх тоглоомын систем.`,
-              `Built by the teachers at Tsetsegs, an SAT center where 80+ students sit every SAT. ${explanations}, video lessons from the same teachers, and a student side built to keep them practicing.`,
+              "Streak, чансаа, өдрийн зорилго SAT дасгалыг зуршил болгодог. Цэцэгс төвийн багш нар бүтээсэн бөгөөд тэнд хамгийн их дасгал хийсэн сурагчид хамгийн өндөр оноо авсан, үүнд 2026 оны 8-р сарын SAT-ын хоёр төгс 800 багтана.",
+              "Streaks, ranks and daily goals turn SAT practice into a habit. Built by the teachers at Tsetsegs, where the students who practiced most scored highest, including two perfect 800s on the August 2026 SAT.",
             )}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-12 rounded-full px-7"><a href="#book">{text("Уулзалт товлох", "Book a call")}<ArrowRight /></a></Button>
@@ -92,26 +103,17 @@ export default function Educators() {
         </section>
 
         <section id="results" className="scroll-mt-20 py-10"><div className="lv-container">
-          <p className="text-sm font-medium text-muted-foreground">{text("2026 оны 8-р сарын SAT, математик", "August 2026 SAT, math section")}</p>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">{results.map((r, i) => (
-            <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${r.c}`}>{r.v}</p><p className="mt-3 text-sm text-muted-foreground">{r.l}</p></motion.div>
-          ))}</div>
+          <p className="text-sm font-medium text-muted-foreground">{text("Цэцэгс дэх дасгал, 2026 оны 10-р сарын 21 хүртэлх 30 хоногт", "Practice at Tsetsegs in the 30 days to October 21, 2026")}</p>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">{practice.map(statCard)}</div>
+          <p className="mt-8 text-sm font-medium text-muted-foreground">{text("2026 оны 8-р сарын SAT, математик", "August 2026 SAT, math section")}</p>
+          <div className="mt-4 grid grid-cols-3 gap-3">{scores.map(statCard)}</div>
           <p className="mt-4 text-xs text-muted-foreground">{text("2026 оны 8-р сарын SAT-ын дараа манай багш нарын бүртгэсэн оноо.", "Scores our teachers recorded after the August 2026 SAT.")}</p>
         </div></section>
-
-        <section id="desmos" className="scroll-mt-20 py-20"><motion.div {...reveal} className="lv-container"><div className="max-w-3xl">
-          <h2 className="lv-h2">{text("Desmos-оор SAT математикийг секундэд", "SAT math in seconds, with Desmos")}</h2>
-          <p className="lv-lead mt-4">{text("Desmos дижитал SAT-д суурилагдсан. Манай багш нар SAT математикийг түүгээр секундэд боддог бөгөөд сурагч бүрт үүнийг заадаг. Тэдний тайлбар Desmos-ын товчлолыг боломжтой бүх газарт харуулдаг.", "Desmos is built into the digital SAT. Our teachers use it to solve SAT math in seconds, and they teach every student to do the same. Their explanations show the Desmos shortcut wherever there is one.")}</p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <span className="lv-violet rounded-full px-4 py-2 text-sm font-medium">{explanations}</span>
-            {videos && <span className="lv-blue rounded-full px-4 py-2 text-sm font-medium">{videos}</span>}
-          </div>
-        </div></motion.div></section>
 
         <section id="practice" className="lv-sky scroll-mt-20 py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
           <motion.div {...reveal}>
             <h2 className="lv-h2">{text("Их дасгал хийсэн сурагч өндөр оноо авдаг", "Students who practice more score higher")}</h2>
-            <p className="lv-lead mt-4">{text("8-р сарын SAT-д 700+ авсан бүртгэгдсэн сурагч бүр платформ дээр дор хаяж 500 бодлого бодсон бөгөөд ихэнх нь 1,500-аас илүүг бодсон. Streak, долоо хоногийн чансаа, өдрийн зорилго, хурдны тойрог тэднийг эргэн ирүүлдэг.", "Every student we recorded at 700+ on the August SAT had solved at least 500 problems on the platform, and most had solved more than 1,500. Streaks, weekly ranks, daily goals and speed rounds keep them coming back.")}</p>
+            <p className="lv-lead mt-4">{text("8-р сарын SAT-д 700+ авсан бүртгэгдсэн сурагч бүр платформ дээр дор хаяж 500 асуултад хариулсан бөгөөд ихэнх нь 1,500-аас илүүд хариулсан. Streak, чансаа, өдрийн зорилго, хурдны тойрог тэднийг эргэн ирүүлдэг.", "Every student we recorded at 700+ on the August SAT had answered at least 500 questions on the platform, and most had answered more than 1,500. Streaks, ranks, daily goals and speed rounds keep them coming back.")}</p>
             <div className="mt-8 grid grid-cols-2 gap-3">
               <div className="lv-card p-5"><p className="lv-orange inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold">271</p><p className="mt-3 text-sm text-muted-foreground">{text("сурагч 7 хоногийн streak барьсан", "students kept a 7‑day streak")}</p></div>
               <div className="lv-card p-5"><p className="lv-pink inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold">25</p><p className="mt-3 text-sm text-muted-foreground">{text("нь 30+ хоног тасралтгүй барьсан", "kept one going for 30+ days")}</p></div>
@@ -122,9 +124,19 @@ export default function Educators() {
           ))}</motion.div>
         </div></section>
 
+        <section id="desmos" className="scroll-mt-20 py-20"><motion.div {...reveal} className="lv-container"><div className="max-w-3xl">
+          <h2 className="lv-h2">{text("Desmos-оор SAT математикийг секундэд", "SAT math in seconds, with Desmos")}</h2>
+          <p className="lv-lead mt-4">{text("Desmos дижитал SAT-д суулгагдсан. Манай багш нар SAT математикийг түүгээр секундэд бодож, сурагчдадаа ч мөн адил заадаг. Тэдний бичсэн математикийн тайлбар Desmos-ын товчлолыг боломжтой бүх газарт харуулдаг.", "Desmos is built into the digital SAT. Our teachers use it to solve SAT math in seconds and teach their students to do the same. Their math explanations show the Desmos shortcut wherever there is one.")}</p>
+          {(mathExplanations || videos) && <div className="mt-6 flex flex-wrap gap-2">
+            {mathExplanations && <span className="lv-violet rounded-full px-4 py-2 text-sm font-medium">{mathExplanations}</span>}
+            {videos && <span className="lv-blue rounded-full px-4 py-2 text-sm font-medium">{videos}</span>}
+          </div>}
+        </div></motion.div></section>
+
         <section id="center" className="scroll-mt-20 py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2 max-w-2xl">{text("Төвөө бүхэлд нь нэг дороос удирд", "Run your whole center in one place")}</motion.h2>
           <p className="lv-lead mt-4 max-w-2xl">{text("Таны лого, өнгөтэй өөрийн орчин.", "Your own workspace, with your logo and colors.")}</p>
+          <p className="mt-6"><span className="lv-violet inline-block rounded-full px-4 py-2 text-sm font-medium">{explanations}</span></p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{included.map((m, i) => (
             <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .03 }} className="lv-card flex items-center gap-3 p-4"><m.icon className="h-5 w-5 shrink-0 text-accent" /><span className="text-sm font-medium">{m.l}</span></motion.div>
           ))}</div>
@@ -132,7 +144,7 @@ export default function Educators() {
 
         <section id="story" className="scroll-mt-20 py-10"><motion.div {...reveal} className="lv-container"><div className="lv-card max-w-3xl p-6 md:p-10">
           <h2 className="lv-h2">{text("Жинхэнэ SAT төв дотор бүтээгдсэн", "Built inside a real SAT center")}</h2>
-          <p className="lv-lead mt-4">{text("Цэцэгс бол SAT бүрт 80+ сурагч шалгалт өгдөг SAT төв. Бид энэ платформыг өөрсдийн ангиудад зориулж бүтээсэн бөгөөд 2025 оны 12-р сараас хойш төвөө түүн дээр ажиллуулж байна. Тайлбаруудыг бичиж, хичээлүүдийг бичлэг хийсэн багш нар өдөр бүр Desmos ашиглан SAT математик заадаг.", "Tsetsegs is an SAT center where 80+ students sit every SAT. We built this platform for our own classes and have run the center on it since December 2025. The teachers who wrote the explanations and recorded the lessons teach SAT math with Desmos every day.")}</p>
+          <p className="lv-lead mt-4">{text("Цэцэгс бол SAT бүрт 80+ сурагч шалгалт өгдөг SAT төв. Бид энэ платформыг өөрсдийн ангиудад зориулж бүтээсэн бөгөөд 2025 оны 12-р сараас хойш төвөө түүн дээр ажиллуулж байна. Математикийн тайлбаруудыг бичиж, хичээлүүдийг бичлэг хийсэн багш нар өдөр бүр Desmos ашиглан SAT математик заадаг.", "Tsetsegs is an SAT center where 80+ students sit every SAT. We built this platform for our own classes and have run the center on it since December 2025. The teachers who wrote the math explanations and recorded the lessons teach SAT math with Desmos every day.")}</p>
         </div></motion.div></section>
 
         <section id="how" className="scroll-mt-20 py-20"><div className="lv-container">
@@ -169,10 +181,10 @@ export default function Educators() {
       </main>
 
       <footer id="signin" className="scroll-mt-20 border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p></div>
+        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p></div>
         <div className="space-y-2">
           <p className="font-medium text-foreground">{text("Аль хэдийн хэрэглэгч үү?", "Already a customer?")}</p>
-          <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="py-2">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="py-2">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
+          <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="inline-flex h-11 items-center">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="inline-flex h-11 items-center">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
           <p className="text-xs">{text("Төвийн бүртгэлтэй хэрэглэгчид өөрийн төвийн хаягаар нэвтэрнэ.", "Existing centers sign in at their own center’s address.")}</p>
         </div>
       </div></footer>

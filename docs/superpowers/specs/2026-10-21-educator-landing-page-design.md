@@ -58,6 +58,7 @@ Someone who runs an SAT center or a high school. They met Misheel for two minute
 - The claim is a **live count**: "N questions with step-by-step explanations", taken from the database, never typed in. About 80% of math solutions use Desmos, so the page says "with the Desmos shortcut wherever there is one", never "every question has a Desmos solution". His team (9 people) is writing math explanations now.
 - Centers should see every question in the INT DB (the 893 math variants, 1,106 by 24 Oct, plus the 900 English questions).
 - A test center exists, with no students in it yet.
+- **Positioning (21 Oct, after he looked at EdisonOS, which sells white-label software for your own questions):** lead with student retention and gamification, then results. The Desmos content supports that story; it isn't the headline.
 
 ## Facts the page may use
 
@@ -66,11 +67,13 @@ Numbers checked 21 Oct 2026 unless marked live.
 | Claim | Value | Source | Keep it true by |
 |---|---|---|---|
 | August 2026 SAT math results | two 800s, 8 at 750+, 14 at 700+ | `student_accounts.sat_math_score`, all dated 22 Aug 2026 | Hard-coded with the date ("August 2026 SAT") |
-| Top scorers practise the most | All 16 recorded scorers solved 500+ problems; 14 solved 1,500+. The typical student solves 270. | `student_attempts` grouped by student | Hard-coded |
-| Problems solved | 817,495 | `landing_public_stats().answers` | **Live**, rounded down (e.g. "817,000+") |
+| Top scorers practise the most | All 16 recorded scorers answered 500+ questions; 14 answered 1,500+. The typical student answers 270. | `student_attempts` grouped by student | Hard-coded |
+| Questions answered | 817,495 (every attempt, wrong answers and retries included, so never "problems solved") | `landing_public_stats().answers` | **Live**, rounded down (e.g. "817,000+") |
+| Questions answered in 30 days | 271,169 → "271,000", in the 30 days to 21 Oct 2026 | `student_attempts` | Hard-coded with that date |
+| Students practicing in 30 days | 510, same window | `student_attempts` | Hard-coded with that date |
 | Running since | first answer 8 Dec 2025 | `student_attempts` | "since December 2025" |
 | Center size | 80+ students sit every SAT month | Saagii | Hard-coded |
-| Questions with step-by-step explanations | 1,044 active (900 English, 144 math; 98 of the math mention Desmos); 918 visible to centers | `intl_questions.rationale` | **Live** (see Behaviour) |
+| Questions with step-by-step explanations | 1,044 active (900 English, 144 math; 98 of the math mention Desmos); 918 visible to centers. **The 900 English explanations are College Board's own** (imported from their question bank), so this total credits no one. Only the math explanations are the teachers' | `intl_questions.rationale` | **Live**; the teachers are credited only with a separate math-only count, shown from 100 up |
 | Video lessons | 129 in `concept_videos` (127 YouTube), **only 3 published** | `concept_videos` | **Live** count of published videos |
 | Streaks | 271 students held a 7+ day streak; 25 held 30+ | `student_streaks` | Hard-coded |
 | Math practice-test gains | from `landing_public_stats()` (`avg_gain`, `gained100_pct`) | `practice_tests` 0–800 scores | Live, supporting proof only |
