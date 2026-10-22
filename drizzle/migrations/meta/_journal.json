@@ -386,6 +386,13 @@
       "when": 1792685830628,
       "tag": "0054_apply_pending_lock_migrations",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1792686262763,
+      "tag": "0055_student_token_read_concept_videos_intl_questions",
+      "breakpoints": true
     }
   ]
 }
