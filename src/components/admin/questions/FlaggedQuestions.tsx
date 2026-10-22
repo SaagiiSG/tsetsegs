@@ -13,6 +13,7 @@ import {
 import { MathText } from '@/components/MathText';
 import { QuestionForm } from './QuestionForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 function QuestionPreviewDialog({ 
   open, 
@@ -98,15 +99,13 @@ function QuestionPreviewDialog({
               )}
 
               {/* Question image */}
-              {question.question_image_url && (
-                <div className="flex justify-center">
-                  <img 
-                    src={question.question_image_url} 
-                    alt="Question figure" 
-                    className="max-w-full max-h-64 rounded-lg border object-contain"
-                  />
-                </div>
-              )}
+              <QuestionFigures
+                svg={question.figure_svg}
+                description={question.figure_description}
+                url1={question.question_image_url}
+                url2={question.question_image_url_2}
+                imgClassName="max-w-full max-h-64 rounded-lg border object-contain"
+              />
 
               {/* Question text */}
               <div className="bg-card rounded-lg p-4 border-2">
@@ -219,7 +218,7 @@ export function FlaggedQuestions() {
         .from('question_flags')
         .select(`
           *,
-          question:questions(id, question_id, question_text, question_image_url, multiple_choice_options, category:question_categories(name)),
+          question:questions(id, question_id, question_text, question_image_url, figure_svg, multiple_choice_options, category:question_categories(name)),
           student:student_accounts(phone_number)
         `)
         .eq('admin_reviewed', false)
@@ -300,13 +299,13 @@ export function FlaggedQuestions() {
 
                   {/* Question preview snippet */}
                   <div className="mb-2">
-                    {flag.question?.question_image_url && (
-                      <img 
-                        src={flag.question.question_image_url} 
-                        alt="Question" 
-                        className="max-h-20 rounded border mb-2 object-contain"
-                      />
-                    )}
+                    <QuestionFigures
+                      compact
+                      svg={flag.question?.figure_svg}
+                      url1={flag.question?.question_image_url}
+                      alt="Question"
+                      imgClassName="max-h-20 rounded border mb-2 object-contain"
+                    />
                     <p className="text-sm line-clamp-2">
                       <MathText text={flag.question?.question_text || ''} />
                     </p>

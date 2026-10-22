@@ -9,6 +9,7 @@ import { Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 import { TeacherQuestionViewer } from './TeacherQuestionViewer';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 const MATH_QUESTION_SETS = [
   { value: 'all', label: 'All Questions' },
@@ -55,7 +56,7 @@ export function TeacherQuestionBrowser() {
     queryFn: async () => {
       let query = supabase
         .from('questions')
-        .select('id, question_id, question_text, question_image_url, difficulty_level, question_type, subject, category:question_categories(name)')
+        .select('id, question_id, question_text, question_image_url, figure_svg, difficulty_level, question_type, subject, category:question_categories(name)')
         .eq('is_active', true)
         .eq('hide_from_practice', false)
         .order('question_id');
@@ -219,9 +220,7 @@ export function TeacherQuestionBrowser() {
                     <CardContent className="p-2 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="font-mono font-bold text-xs">{simpleId}</span>
-                        {q.question_image_url && (
-                          <img src={q.question_image_url} alt="" className="h-4 w-4 rounded object-contain" />
-                        )}
+                        <QuestionFigures compact svg={q.figure_svg} url1={q.question_image_url} alt="" imgClassName="h-4 w-4 rounded object-contain" />
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {q.difficulty_level && (

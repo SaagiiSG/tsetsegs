@@ -202,14 +202,14 @@ export function ClassTestResults({ testId, onBack }: { testId: string; onBack: (
                       <span className="text-muted-foreground">Question unavailable</span>
                     )}
                   </div>
-                  {q.question?.question_image_url && (
-                    <img
-                      src={q.question.question_image_url}
-                      alt={`Question ${q.index} figure`}
-                      loading="lazy"
-                      className="mt-2 max-h-24 rounded border bg-background object-contain"
-                    />
-                  )}
+                  <QuestionFigures
+                    compact
+                    svg={q.question?.figure_svg}
+                    description={q.question?.figure_description}
+                    url1={q.question?.question_image_url}
+                    alt={`Question ${q.index} figure`}
+                    imgClassName="mt-2 max-h-24 rounded border bg-background object-contain"
+                  />
                   <div className="mt-2 flex items-center gap-2">
                     <Progress value={q.accuracy} className="h-2 flex-1" />
                     <span className="font-mono text-xs w-10 text-right">{q.accuracy}%</span>

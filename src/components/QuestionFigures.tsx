@@ -12,6 +12,8 @@ interface QuestionFiguresProps {
   className?: string;
   imgClassName?: string;
   alt?: string;
+  /** One bare <img> sized by imgClassName (the drawing, else the first image), for lists and thumbnails. */
+  compact?: boolean;
 }
 
 /**
@@ -27,9 +29,16 @@ export const QuestionFigures = ({
   className,
   imgClassName = "max-h-72 rounded-md border object-contain",
   alt = "Question figure",
+  compact = false,
 }: QuestionFiguresProps) => {
   const drawing = useMemo(() => svgDataUrl(svg), [svg]);
   const label = description?.trim() || alt;
+
+  if (compact) {
+    // A drawing always gets white behind it, whatever background the caller asks for.
+    const src = drawing ?? url1 ?? url2;
+    return src ? <img src={src} alt={label} loading="lazy" className={cn(imgClassName, drawing && "bg-white")} /> : null;
+  }
 
   if (drawing) {
     return (

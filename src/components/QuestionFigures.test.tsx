@@ -39,6 +39,16 @@ describe('QuestionFigures', () => {
     expect(imgs(render({ url1: 'a.png', url2: 'b.png', description: 'Graphs' })).map(i => i.alt)).toEqual(['Graphs 1', 'Graphs 2']);
   });
 
+  it('compact mode gives one bare image for lists and thumbnails', () => {
+    const drawn = render({ svg: SVG, url1: 'a.png', compact: true, imgClassName: 'h-4 w-4' });
+    expect(drawn).toMatch(/^<img [^>]*src="data:image\/svg\+xml/);
+    expect(drawn).toContain('bg-white');
+    expect(drawn).toContain('h-4 w-4');
+    expect(render({ svg: SVG, compact: true, imgClassName: 'bg-background' })).toMatch(/class="bg-white"/);
+    expect(render({ url1: 'a.png', url2: 'b.png', compact: true })).toMatch(/^<img [^>]*src="a\.png"[^>]*>$/);
+    expect(render({ compact: true })).toBe('');
+  });
+
   it('never puts SVG markup straight into the page', () => {
     expect(render({ svg: SVG })).not.toMatch(/<svg|<line/);
   });

@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MathText } from "@/components/MathText";
 import { cn } from "@/lib/utils";
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 interface QuestionPreviewDialogProps {
   questionId: string | null;
@@ -82,14 +83,15 @@ export default function QuestionPreviewDialog({
                 <MathText text={question.question_text ?? ""} />
               </div>
 
-              {question.question_image_url && (
-                <img
-                  src={question.question_image_url}
-                  alt={`Question ${question.question_id} figure`}
-                  className="max-h-72 rounded-lg border object-contain"
-                  loading="lazy"
-                />
-              )}
+              <QuestionFigures
+                svg={question.figure_svg}
+                description={question.figure_description}
+                url1={question.question_image_url}
+                url2={question.question_image_url_2}
+                alt={`Question ${question.question_id} figure`}
+                className="justify-start"
+                imgClassName="max-h-72 rounded-lg border object-contain"
+              />
 
               {options.length > 0 ? (
                 <div className="space-y-2">

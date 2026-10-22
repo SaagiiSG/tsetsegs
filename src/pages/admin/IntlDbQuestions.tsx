@@ -11,12 +11,14 @@ import { CheckCircle2, ChevronDown, ChevronUp, CircleDashed, Download, PencilLin
 import { useToast } from '@/hooks/use-toast';
 import { QuestionForm } from '@/components/admin/questions/QuestionForm';
 import { CBQuestionForm } from '@/components/admin/questions/CBQuestionForm';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 type Row = {
   id: string; question_id: string; ext_question_id: string | null; subject: string | null;
   question_set: string | null; difficulty_level: string | null; question_type: string | null;
   question_text: string | null; passage_text: string | null; multiple_choice_options: any;
   answer: string | null; rationale: string | null; question_image_url: string | null;
+  question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null;
 };
 
 export default function IntlDbQuestions() {
@@ -36,7 +38,7 @@ export default function IntlDbQuestions() {
     queryKey: ['intl-db-variant-questions'],
     queryFn: async () => {
       const { data, error } = await (supabase.from('intl_questions') as any)
-        .select('id, question_id, ext_question_id, subject, question_set, difficulty_level, question_type, question_text, passage_text, multiple_choice_options, answer, rationale, question_image_url')
+        .select('id, question_id, ext_question_id, subject, question_set, difficulty_level, question_type, question_text, passage_text, multiple_choice_options, answer, rationale, question_image_url, question_image_url_2, figure_svg, figure_description')
         .eq('ext_variant', true)
         .order('question_id');
       if (error) throw error;
@@ -217,7 +219,7 @@ export default function IntlDbQuestions() {
                         </Button>
                       </div>
                       {r.passage_text && <div className="rounded-md bg-muted p-3"><MathText text={r.passage_text} /></div>}
-                      {r.question_image_url && <img src={r.question_image_url} alt="" className="max-h-64 rounded-md" />}
+                      <QuestionFigures svg={r.figure_svg} description={r.figure_description} url1={r.question_image_url} url2={r.question_image_url_2} className="justify-start" imgClassName="max-h-64 rounded-md" />
                       <MathText text={r.question_text || ''} />
                       {opts.length > 0 && (
                         <ul className="space-y-1">

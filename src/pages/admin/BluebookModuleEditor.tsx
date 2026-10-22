@@ -39,6 +39,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import ReferencePdfViewer from "@/components/admin/bluebook/ReferencePdfViewer";
 import { useReferencePdf } from "@/hooks/useReferencePdf";
 import { useRef } from "react";
+import { QuestionFigures } from "@/components/QuestionFigures";
 
 type ModuleRow = {
   id: string;
@@ -133,7 +134,7 @@ const BluebookModuleEditor = () => {
       if (!subjectFilter) return [];
       let q = supabase
         .from("questions")
-        .select("id, question_id, question_text, subject, difficulty_level, question_set, passage_text, question_image_url, multiple_choice_options, answer, question_type")
+        .select("id, question_id, question_text, subject, difficulty_level, question_set, passage_text, question_image_url, figure_svg, figure_description, multiple_choice_options, answer, question_type")
         .eq("is_active", true)
         .ilike("subject", `%${subjectFilter}%`)
         .order("question_id", { ascending: false })
@@ -523,9 +524,14 @@ const BluebookModuleEditor = () => {
                                     <MathText text={q.passage_text} />
                                   </div>
                                 )}
-                                {q.question_image_url && (
-                                  <img src={q.question_image_url} alt="" className="max-h-48 rounded border object-contain" />
-                                )}
+                                <QuestionFigures
+                                  compact
+                                  svg={q.figure_svg}
+                                  description={q.figure_description}
+                                  url1={q.question_image_url}
+                                  alt=""
+                                  imgClassName="max-h-48 rounded border object-contain"
+                                />
                                 <div className="text-sm">
                                   <MathText text={q.question_text ?? ""} />
                                 </div>

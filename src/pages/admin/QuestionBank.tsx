@@ -24,6 +24,7 @@ import { CBQuestionImport } from '@/components/admin/questions/CBQuestionImport'
 import { CBImportReviewSessions } from '@/components/admin/questions/CBImportReviewSessions';
 import { EnglishQuestionImport } from '@/components/admin/questions/EnglishQuestionImport';
 import { toast } from '@/hooks/use-toast';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 export default function QuestionBank() {
   const queryClient = useQueryClient();
@@ -695,13 +696,14 @@ export default function QuestionBank() {
                   </div>
 
                   {/* Question Image */}
-                  {previewQuestion.question_image_url && (
-                    <img 
-                      src={previewQuestion.question_image_url} 
-                      alt="Question" 
-                      className="max-w-full rounded-lg border"
-                    />
-                  )}
+                  <QuestionFigures
+                    svg={previewQuestion.figure_svg}
+                    description={previewQuestion.figure_description}
+                    url1={previewQuestion.question_image_url}
+                    url2={previewQuestion.question_image_url_2}
+                    alt="Question"
+                    imgClassName="max-w-full rounded-lg border"
+                  />
 
                   {/* Multiple Choice Options */}
                   {previewQuestion.multiple_choice_options && (
