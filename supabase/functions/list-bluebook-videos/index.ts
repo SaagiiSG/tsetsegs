@@ -255,14 +255,34 @@ Deno.serve(async (req) => {
     if (!projectRef) throw new Error("SUPABASE_URL not set");
 
     // The videos are paid content: only signed-in users get the list and its stream links.
-    // The public site key is a valid JWT too, so ask auth whether the token belongs to a user.
-    const auth = req.headers.get("Authorization") ?? "";
-    const user = auth.startsWith("Bearer ")
-      ? await fetch(`${supabaseUrl}/auth/v1/user`, {
-          headers: { apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", Authorization: auth },
-        })
-      : null;
-    if (!user?.ok) {
+    // Students sign in with a server-issued student token (x-student-token header) rather
+    // than an account session, so accept either.
+    let allowed = false;
+
+    const studentToken = req.headers.get("x-student-token") ?? "";
+    if (studentToken.length >= 32) {
+      const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(studentToken));
+      const hash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/student_sessions?token_hash=eq.${hash}&is_active=eq.true&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=student_account_id&limit=1`,
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+      );
+      if (res.ok && (await res.json()).length > 0) allowed = true;
+    }
+
+    if (!allowed) {
+      // The public site key is a valid JWT too, so ask auth whether the token belongs to a user.
+      const auth = req.headers.get("Authorization") ?? "";
+      const user = auth.startsWith("Bearer ")
+        ? await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: { apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", Authorization: auth },
+          })
+        : null;
+      if (user?.ok) allowed = true;
+    }
+
+    if (!allowed) {
       return new Response(JSON.stringify({ error: "Please sign in" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
