@@ -4,7 +4,8 @@ import { Trophy, Users, Crown, BarChart3, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useLeaderboard, LeaderboardEntry, SprintInfo } from '@/hooks/useLeaderboard';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   CurrentSprintTab, 
   AllTimeTab, 
@@ -34,6 +35,16 @@ const TIER_BADGE_NAMES: Record<string, string> = {
 export default function StudentLeaderboard() {
   const queryClient = useQueryClient();
   const { student } = useStudentAuth();
+  const { data: myStanding } = useQuery({
+    queryKey: ['all-time-my-standing', student?.id, student?.cohort],
+    enabled: !!student?.id,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const win = (document.querySelector('[data-alltime-window]') as HTMLElement | null)?.dataset.alltimeWindow;
+      const { data } = await supabase.rpc('all_time_my_standing', { p_window: win === 'last30' ? 'last30' : 'all', p_cohort: student?.cohort === 'intl' ? 'intl' : 'mn' });
+      return (data as { standing: number; total_points: number }[] | null)?.[0] ?? null;
+    },
+  });
   const [showCelebration, setShowCelebration] = useState(false);
   const [showAdvancementCelebration, setShowAdvancementCelebration] = useState(false);
   const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
@@ -328,6 +339,13 @@ export default function StudentLeaderboard() {
                 onLimitChange={setAllTimeLimit}
                 showEysh={cohort === 'mn'}
               />
+              {myStanding && !allTimeLeaderboard.some(e => e.userId === student?.id) && (
+                <div className="mt-3 flex items-center justify-between rounded-xl border-2 border-primary/40 bg-primary/5 px-4 py-3">
+                  <span className="font-semibold">Your position: <span className="font-mono">#{Number(myStanding.standing)}</span></span>
+                  <span className="font-mono font-bold">{Number(myStanding.total_points).toLocaleString()} pts</span>
+                </div>
+              )}
+
 
             </motion.div>
           </TabsContent>
