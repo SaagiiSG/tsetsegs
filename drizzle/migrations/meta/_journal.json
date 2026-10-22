@@ -365,6 +365,13 @@
       "when": 1792640061318,
       "tag": "0051_speed_points_not_blocked_by_practice",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792684869794,
+      "tag": "0052_lock_concept_videos",
+      "breakpoints": true
     }
   ]
 }

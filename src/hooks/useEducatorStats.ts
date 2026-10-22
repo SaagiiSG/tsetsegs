@@ -16,21 +16,14 @@ export function useEducatorStats(): EducatorStats {
       return count;
     },
   });
-  const videos = useQuery({
-    queryKey: ['educator-videos'], staleTime,
-    queryFn: async () => {
-      const { count, error } = await supabase.from('concept_videos').select('id', { count: 'exact', head: true }).eq('is_published', true);
-      if (error) throw error;
-      return count;
-    },
-  });
-  const answers = useQuery({
-    queryKey: ['educator-answers'], staleTime,
+  // Signed-out visitors can't read the videos themselves, so both counts come from the public stats function.
+  const stats = useQuery({
+    queryKey: ['educator-landing-stats'], staleTime,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('landing_public_stats' as never);
       if (error) throw error;
-      return (data as unknown as { answers?: number } | null)?.answers ?? null;
+      return data as unknown as { answers?: number; videos?: number } | null;
     },
   });
-  return { mathExplanations: mathExplanations.data ?? null, videos: videos.data ?? null, answers: answers.data ?? null };
+  return { mathExplanations: mathExplanations.data ?? null, videos: stats.data?.videos ?? null, answers: stats.data?.answers ?? null };
 }
