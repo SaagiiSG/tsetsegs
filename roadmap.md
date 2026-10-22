@@ -63,3 +63,6 @@
 - [x] Admin: "Google connected" status + count; blocking Connect Google pop-up for existing students
 - [ ] Premium: Stripe checkout $25/month, international only — ON HOLD (user request)
 - [ ] Dev environment draft with fake data (running in separate draft)
+
+## Platform health
+- [x] Preview build error fixed: email template type check now resolves (three dev-only packages installed, shared CORS file for the server functions, email config pin relaxed). Checker also found and fixed: teacher password reset never read its request body, and the center-accounts password helper type.
