@@ -140,7 +140,10 @@ export function BluebookVideosTab() {
   const { data, isLoading, error } = useQuery<VideosPayload>({
     queryKey: ['bluebook-explanation-videos'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('list-bluebook-videos');
+      const token = getStudentToken();
+      const { data, error } = await supabase.functions.invoke('list-bluebook-videos', {
+        headers: token ? { 'x-student-token': token } : undefined,
+      });
       if (error) throw error;
       return data as VideosPayload;
     },
