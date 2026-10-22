@@ -45,27 +45,38 @@ serve(async (req) => {
       );
     }
 
-    // Generate new temporary password
+    // Generate new temporary password (cryptographically random)
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    const randomBytes = new Uint8Array(12);
+    crypto.getRandomValues(randomBytes);
     let newPassword = '';
     for (let i = 0; i < 12; i++) {
-      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      newPassword += chars.charAt(randomBytes[i] % chars.length);
     }
 
-    // Find the auth user by email (username@teachers.tsetsegs.mn)
+    // Find the auth user by email (username@teachers.tsetsegs.mn).
+    // listUsers() defaults to the first 50 users, so page through until
+    // the email is found or a short page signals the end.
     const email = `${username}@teachers.tsetsegs.mn`;
-    
-    const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (listError) {
-      console.error("Error listing users:", listError);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to find user" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
-    const authUser = users.users.find(u => u.email === email);
+    let authUser: { id: string; email?: string } | undefined;
+    let page = 1;
+    const perPage = 1000;
+    while (!authUser) {
+      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+
+      if (listError) {
+        console.error("Error listing users:", listError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to find user" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      authUser = users.users.find(u => u.email === email);
+      if (authUser || users.users.length < perPage) break;
+      page += 1;
+    }
     
     if (!authUser) {
       return new Response(
