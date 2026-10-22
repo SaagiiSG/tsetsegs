@@ -43,6 +43,7 @@ export default function IntlDbQuestions() {
         const { data, error } = await (supabase.from('intl_questions') as any)
           .select('id, question_id, ext_question_id, subject, question_set, difficulty_level, question_type, question_text, passage_text, multiple_choice_options, answer, rationale, question_image_url, question_image_url_2, figure_svg, figure_description')
           .eq('ext_variant', true)
+          .eq('is_active', true) // switched-off copies (e.g. merged duplicates) don't count
           .order('question_id')
           .order('id')
           .range(from, from + 999);

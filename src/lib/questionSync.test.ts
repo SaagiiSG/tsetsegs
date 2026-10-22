@@ -9,3 +9,35 @@ describe('question sync', () => {
     expect(buildContentPatch({ rationale: 'local' }, { rationale: ' ' }, ['rationale'], false)).toEqual({});
   });
 });
+import { existingMatcher } from '../../supabase/functions/sync-external-questions/existingMatch';
+
+describe('matching external questions to local rows', () => {
+  const row = (id: string, extra: Record<string, unknown> = {}) => ({ id, question_id: id.toUpperCase(), original_cb_id: null, ...extra });
+
+  it('finds the row by its permanent external id even after the CB id changed', () => {
+    const m = existingMatcher([row('a', { ext_question_id: '01668cd6', original_cb_id: 'ext_01668cd6', is_active: true })]);
+    expect(m.find({ question_id: '01668cd6', original_cb_id: 'CB-NEW' })).toBe('a');
+  });
+
+  it('prefers the active copy, then the newest, when an external id has two rows', () => {
+    const m = existingMatcher([
+      row('old', { ext_question_id: 'x1', is_active: true, created_at: '2026-08-01' }),
+      row('new', { ext_question_id: 'x1', is_active: true, created_at: '2026-09-01' }),
+      row('newest-off', { ext_question_id: 'x1', is_active: false, created_at: '2026-10-01' }),
+    ]);
+    expect(m.find({ question_id: 'x1', original_cb_id: null })).toBe('new');
+  });
+
+  it('falls back to the CB id, or the ext_ key, for rows saved without an external id', () => {
+    const m = existingMatcher([row('cb', { original_cb_id: 'CB-7' }), row('ext', { original_cb_id: 'ext_ab12' })]);
+    expect(m.find({ question_id: 'zz', original_cb_id: 'CB-7' })).toBe('cb');
+    expect(m.find({ question_id: 'ab12', original_cb_id: null })).toBe('ext');
+    expect(m.find({ question_id: 'nope', original_cb_id: null })).toBeNull();
+  });
+
+  it('remembers rows inserted earlier in the same run', () => {
+    const m = existingMatcher([]);
+    m.add(row('fresh', { ext_question_id: 'q9', original_cb_id: 'CB-9' }));
+    expect(m.find({ question_id: 'q9', original_cb_id: 'CB-other' })).toBe('fresh');
+  });
+});

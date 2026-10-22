@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildContentPatch } from "./contentPatch.ts";
+import { existingMatcher, type ExistingRow } from "./existingMatch.ts";
 import { sanitizeSvg } from "../_shared/svgFigure.ts";
 
 const corsHeaders = {
@@ -286,13 +287,17 @@ Deno.serve(async (req) => {
     }
 
     // Get ALL existing question IDs for dedup (paginate past 1000-row default)
-    const allExistingQuestions: { id: string; question_id: string; original_cb_id: string | null }[] = [];
+    const allExistingQuestions: ExistingRow[] = [];
+    // intDB rows also carry the permanent external id, which is what matching relies on first
+    const EXISTING_COLS = QT === "intl_questions"
+      ? "id, question_id, original_cb_id, ext_question_id, is_active, created_at"
+      : "id, question_id, original_cb_id";
     const DEDUP_PAGE = 1000;
     let dedupOffset = 0;
     while (true) {
       const { data: page, error: pageErr } = await adminClient
         .from(QT)
-        .select("id, question_id, original_cb_id")
+        .select(EXISTING_COLS)
         .order("id")
         .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1);
       if (pageErr) {
@@ -304,10 +309,7 @@ Deno.serve(async (req) => {
       dedupOffset += DEDUP_PAGE;
     }
 
-    const existingQIds = new Map(allExistingQuestions.map((q) => [q.question_id, q.id]));
-    const existingCbIds = new Map(
-      allExistingQuestions.flatMap((q) => q.original_cb_id ? [[q.original_cb_id, q.id] as const] : [])
-    );
+    const existing = existingMatcher(allExistingQuestions);
 
     // ── UPDATE MODE: overwrite content of already-imported questions in place ──
     // Keeps the internal id + question_id, so student attempts/progress stay linked.
@@ -323,9 +325,7 @@ Deno.serve(async (req) => {
       const matches: { internalId: string; ext: any }[] = [];
       let notFound = 0;
       for (const q of filteredQuestions) {
-        const cbId = q.original_cb_id as string | null;
-        const key = cbId || `ext_${q.question_id}`;
-        const id = existingCbIds.get(key) ?? null;
+        const id = existing.find(q);
         if (id) matches.push({ internalId: id, ext: q });
         else notFound++;
       }
@@ -424,12 +424,7 @@ Deno.serve(async (req) => {
       const toInsert: any[] = [];
 
       for (const q of batch) {
-        const cbId = q.original_cb_id as string | null;
-        const qId = q.question_id as string;
-
-        const existingId = (cbId && existingCbIds.has(cbId))
-          ? existingCbIds.get(cbId)
-          : existingQIds.has(qId) ? existingQIds.get(qId) : null;
+        const existingId = existing.find(q);
 
         if (existingId) {
           skipped++;
@@ -437,7 +432,11 @@ Deno.serve(async (req) => {
           const questionData = normalizeQuestion(q, categoryMap, targetSet);
           const newQuestionId = `${codePrefix}${String(nextExtNum).padStart(4, "0")}`;
           nextExtNum++;
-          toInsert.push({ ...questionData, question_id: newQuestionId });
+          toInsert.push({
+            ...questionData,
+            question_id: newQuestionId,
+            ...(QT === "intl_questions" ? { ext_question_id: q.question_id } : {}),
+          });
         }
       }
 
@@ -446,17 +445,14 @@ Deno.serve(async (req) => {
         const { error: insertError, data: insertedData } = await adminClient
           .from(QT)
           .insert(toInsert)
-          .select("question_id, id, original_cb_id");
+          .select(EXISTING_COLS);
 
         if (insertError) {
           errors += toInsert.length;
           errorDetails.push(`batch insert: ${insertError.message}`);
         } else {
           imported += toInsert.length;
-          for (const row of insertedData || []) {
-            existingQIds.set(row.question_id, row.id);
-            if (row.original_cb_id) existingCbIds.set(row.original_cb_id, row.id);
-          }
+          for (const row of insertedData || []) existing.add(row as ExistingRow);
         }
       }
     }
