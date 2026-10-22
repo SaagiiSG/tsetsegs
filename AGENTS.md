@@ -25,6 +25,7 @@
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
 - Main-portal students sign in through the `student-login` server function, which issues a secret token sent as the `x-student-token` header (src/lib/studentToken.ts); the database maps it to the student via `request_student_id()`, so students can only write their own rows and never sessions or passwords.
 - Student answers are graded and points decided in database triggers (repeat answers pay 0, league totals updated server-side); the browser's own right/wrong is only for display. Password hashes live only in the server-only `student_credentials` table.
+- Badges are unlocked by the server only: `student_claim_badges()` decides earns from `student_badge_earned()`/`_core` rules, the app only reports progress, and the `guard_student_badge` trigger refuses client-side unlocks and caps client progress at 99. Client-side unlock checks (src/lib/badgeRules.ts) are display-only mirrors of the server rules.
 - Solo plans are server-only. Google linking verifies Google identity and secret student token; layout unlocks before local OAuth cleanup to preserve practice.
 
 - External sync uses stable pagination and bounded parallel content/metadata writes to avoid timeouts; failures must not report completion.
