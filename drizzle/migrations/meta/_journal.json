@@ -358,6 +358,13 @@
       "when": 1792609745456,
       "tag": "0050_0049_drop_unused_account_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1792640061318,
+      "tag": "0051_speed_points_not_blocked_by_practice",
+      "breakpoints": true
     }
   ]
 }

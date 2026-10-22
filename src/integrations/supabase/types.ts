@@ -5921,6 +5921,13 @@ export type Database = {
               username: string
             }[]
           }
+      all_time_my_standing: {
+        Args: { p_cohort?: string; p_window?: string }
+        Returns: {
+          standing: number
+          total_points: number
+        }[]
+      }
       apply_league_points_definer: {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
