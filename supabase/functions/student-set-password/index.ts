@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { corsHeaders } from '../_shared/cors.ts'
 
 // Public endpoint: hashes and stores a student's password server-side.
 // The underlying hash/verify RPCs are revoked from anon/authenticated;
