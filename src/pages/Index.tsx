@@ -10,21 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { HeroDemo } from "@/components/landing/HeroDemo";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import "@/components/landing/landing.css";
-import cloudsFar from "@/assets/landing/05-clouds-far.svg";
-import cloudsMid from "@/assets/landing/06-clouds-mid.svg";
-import cloudsNear from "@/assets/landing/07-clouds-near.svg";
+import { Clouds } from "@/components/landing/Clouds";
 
 type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
 const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
-
-const Clouds = () => (
-  <div className="lv-clouds" aria-hidden>
-    <img src={cloudsFar} alt="" className="bottom-10 opacity-70" />
-    <img src={cloudsMid} alt="" className="bottom-0 opacity-90" />
-    <img src={cloudsNear} alt="" className="-bottom-6" />
-  </div>
-);
 
 const Index = () => {
   const navigate = useNavigate();
