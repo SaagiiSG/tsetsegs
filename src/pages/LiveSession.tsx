@@ -146,16 +146,11 @@ export default function LiveSession() {
         setSession(data as SessionData);
 
         // Load questions
-        const { data: qData } = await supabase
-          .from("live_session_questions")
-          .select("order_index, question_id, questions(id, question_text, multiple_choice_options, answer)")
-          .eq("session_id", data.id)
-          .order("order_index", { ascending: true });
+        // Players aren't signed in, so the questions come from a function that serves only this game's.
+        const { data: qData } = await supabase.rpc("live_session_question_list" as any, { _join_code: joinCode.toUpperCase() });
 
         if (qData) {
-          setQuestions(
-            qData.map((d: any) => ({ ...d.questions, order_index: d.order_index }))
-          );
+          setQuestions(qData as any);
         }
 
         // Restore prior participant if this device already joined this session

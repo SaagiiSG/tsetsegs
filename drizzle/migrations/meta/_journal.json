@@ -407,6 +407,13 @@
       "when": 1792687594140,
       "tag": "0057_server_unlocks_badges",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792688055072,
+      "tag": "0058_lock_mn_questions",
+      "breakpoints": true
     }
   ]
 }

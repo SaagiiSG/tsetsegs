@@ -113,13 +113,10 @@ export default function StudentShareProfile() {
   const { data: questions } = useQuery({
     queryKey: ['shared-questions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, question_id, category:question_categories(name)')
-        .eq('is_original', true)
-        .eq('is_active', true);
+      // Signed-out visitors can't read the question bank, so this function returns ids and categories only.
+      const { data, error } = await supabase.rpc('shared_question_categories' as any);
       if (error) throw error;
-      return data;
+      return data as { id: string; question_id: string; category: { name: string } | null }[];
     },
     enabled: !!studentAccount
   });
