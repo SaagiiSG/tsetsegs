@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getStudentToken } from '@/lib/studentToken';
 
 export const CONCEPT_DOMAINS = [
   'Algebra',
@@ -40,9 +41,13 @@ export type ResolvedVideo =
 
 export async function resolveVideo(url: string): Promise<ResolvedVideo> {
   if (url.startsWith(STORAGE_PREFIX)) {
-    const { data, error } = await supabase.storage
-      .from('concept-videos')
-      .createSignedUrl(url.slice(STORAGE_PREFIX.length), 60 * 60 * 3);
+    // Storage requests don't carry the student token, so signed links are
+    // minted by the server, which accepts either an account session or a token.
+    const token = getStudentToken();
+    const { data, error } = await supabase.functions.invoke('concept-video-url', {
+      body: { path: url.slice(STORAGE_PREFIX.length) },
+      headers: token ? { 'x-student-token': token } : undefined,
+    });
     if (error) throw error;
     return { kind: 'file', src: data.signedUrl };
   }
