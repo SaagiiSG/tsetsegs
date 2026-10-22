@@ -8,7 +8,7 @@ Misheel (Tsetsegs CEO) goes to Web Summit in Lisbon, 9–12 Nov 2026, and will h
 
 The new page sells the customer center portal (`src/portal/*`, tenant tables) to people who run SAT centers or high schools. It has one job: **get them to book a call.** Price is only discussed on the call.
 
-The pitch: *run your whole SAT center on the platform built by the teachers behind these results.* The Tsetsegs teachers are Desmos experts, and their know-how is in the platform: a step-by-step solution for every math question with the Desmos shortcut wherever there is one, video lessons, and a gamified student side that keeps students practicing.
+The pitch: *run your whole SAT center on the platform built by the teachers behind these results.* The Tsetsegs teachers are Desmos experts, and their know-how is in the platform: step-by-step explanations written by the teachers (live count, with the Desmos shortcut on math wherever there is one), video lessons, and a gamified student side that keeps students practicing.
 
 ## Reader
 
@@ -55,7 +55,7 @@ Someone who runs an SAT center or a high school. They met Misheel for two minute
 - English first.
 - Keep the existing request form.
 - Keep the demo buttons, even though the demos themselves are weak.
-- The claim is **"a step-by-step solution for every math question, with the Desmos shortcut wherever there is one."** About 80% of solutions use Desmos, so "every question has a Desmos solution" is not used. His team (9 people) is writing solutions now, aiming to cover the bank before Web Summit.
+- The claim is a **live count**: "N questions with step-by-step explanations", taken from the database, never typed in. About 80% of math solutions use Desmos, so the page says "with the Desmos shortcut wherever there is one", never "every question has a Desmos solution". His team (9 people) is writing math explanations now.
 - Centers should see every question in the INT DB (the 893 math variants, 1,106 by 24 Oct, plus the 900 English questions).
 - A test center exists, with no students in it yet.
 
@@ -70,7 +70,7 @@ Numbers checked 21 Oct 2026 unless marked live.
 | Problems solved | 817,495 | `landing_public_stats().answers` | **Live**, rounded down (e.g. "817,000+") |
 | Running since | first answer 8 Dec 2025 | `student_attempts` | "since December 2025" |
 | Center size | 80+ students sit every SAT month | Saagii | Hard-coded |
-| Step-by-step solutions | 144 of 893 INT DB math variants had one on 21 Oct (98 mention Desmos); target bank is 1,106 by 24 Oct | `intl_questions.rationale` | **Live** (see Behaviour) |
+| Questions with step-by-step explanations | 1,044 active (900 English, 144 math; 98 of the math mention Desmos); 918 visible to centers | `intl_questions.rationale` | **Live** (see Behaviour) |
 | Video lessons | 129 in `concept_videos` (127 YouTube), **only 3 published** | `concept_videos` | **Live** count of published videos |
 | Streaks | 271 students held a 7+ day streak; 25 held 30+ | `student_streaks` | Hard-coded |
 | Math practice-test gains | from `landing_public_stats()` (`avg_gain`, `gained100_pct`) | `practice_tests` 0–800 scores | Live, supporting proof only |
@@ -81,7 +81,7 @@ Numbers checked 21 Oct 2026 unless marked live.
 Top to bottom. The copy below is starting copy; the builder may tighten it but must keep the claims.
 
 1. **Header.** Brand, ENG/МОН toggle, "Center sign in" (goes to the existing admin and teacher sign-in links). Same sticky header as `Index.tsx`.
-2. **Hero** (`lv-sky` + clouds). Eyebrow: "For SAT centers and schools". Headline along the lines of "Run your SAT center on the platform behind two perfect 800s." Lead: built by the Tsetsegs teachers, 80+ students every SAT month, a step-by-step solution for every math question with the Desmos shortcut wherever there is one (live wording, see Behaviour). Primary button "Book a call"; secondary "See the platform". Visual: a real screenshot of a math question with its Desmos solution open, in an `lv-tray` frame. On phones the visual sits below the text.
+2. **Hero** (`lv-sky` + clouds). Eyebrow: "For SAT centers and schools". Headline along the lines of "Run your SAT center on the platform behind two perfect 800s." Lead: built by the Tsetsegs teachers, 80+ students every SAT month, the live count of questions with step-by-step explanations. Primary button "Book a call"; secondary "See the platform". Visual: a real screenshot of a math question with its Desmos solution open, in an `lv-tray` frame. On phones the visual sits below the text.
 3. **Results strip.** August 2026 SAT math counts, plus live problems solved.
 4. **The Desmos edge.** Desmos is built into the digital SAT; our teachers solve SAT math in seconds with it, and their solutions show the Desmos shortcut wherever there is one. Show a real solution screenshot. Mention the video lessons by the same teachers, with the live count.
 5. **Students who practise more score higher.** Streaks, ranks (`TIER_ASSETS`), daily goals, speed mode, rankings. The streak numbers. "Every student we recorded at 700+ had solved 500+ problems; most solved 1,500+." The quote, if permitted.
@@ -96,8 +96,7 @@ Top to bottom. The copy below is starting copy; the builder may tighten it but m
 ## Behaviour
 
 - **Language.** `/educators` with no `lang` query opens in English, even if the visitor's stored language is Mongolian. `?lang=mon` (sent by the Mongolian landing page button) still opens Mongolian. The toggle works as it does elsewhere.
-- **Solutions claim, live.** Count active, practice-visible math questions in `intl_questions` (`is_active = true`, `hide_from_practice = false`, `subject = 'math'`, the same filter the center portal uses) and how many have a non-empty `rationale`. If all of them have one, show "A step-by-step solution for every math question, with the Desmos shortcut wherever there is one." Otherwise show the real number, e.g. "Step-by-step solutions on 640 math questions, with the Desmos shortcut wherever there is one, and more every week." While the count is loading or fails, show the floor wording, never "every".
-- **Floor.** If not every question is covered and fewer than 300 are, show no number: "Step-by-step solutions written by our teachers, with the Desmos shortcut wherever there is one, and more added every week."
+- **Explanations count, live.** Count active questions centers can see (`intl_questions`, `is_active = true`, `hide_from_practice = false`, the same filter the center portal uses) that have a non-empty `rationale`, English and math together. Show "1,044 questions with step-by-step explanations" style wording, rounded down to the nearest 10 is fine. Math sections add "with the Desmos shortcut wherever there is one". While loading or on error, show the line without a number: "Step-by-step explanations written by our teachers." On 21 Oct the count was 918 (1,044 if hidden questions were included).
 - **Video count, live.** Count published `concept_videos`. Hide the number if it is under 20. The videos are the Tsetsegs teachers' own unlisted YouTube uploads.
 - **Where a request came from.** If the link carries `?ref=<name>` (e.g. `?ref=websummit`), keep it through the page and append `Source: <name>` to the request's message text. No migration.
 - **Problems solved, live** from `landing_public_stats()`, as `Index.tsx` already does.
@@ -106,11 +105,10 @@ Top to bottom. The copy below is starting copy; the builder may tighten it but m
 ## Calls I made (Saagii to check)
 
 - The form moves from a toggled panel into its own section at the bottom, with every CTA scrolling to it.
-- The solutions claim and video count are computed live instead of hard-coded, so the page can't over-claim and no one has to remember the 6 Nov check.
+- The explanations count counts what centers can see (918 on 21 Oct), not every active question (1,044). Unhiding the INT DB math raises it.
 - English default on `/educators` regardless of stored language.
 - Screenshots come from the existing test center after Saagii adds about 10 made-up students. Only screens that look right without practice history are captured: a question with its solution open, the video roadmap, center settings with a logo, a class list. Gamification is shown with the rank art and the real numbers, not an empty leaderboard.
 - Homework left out of the feature list because the portal doesn't have it.
-- No solutions number below 300 covered questions; wording without a number instead.
 - Lead source recorded by appending `?ref=` to the message, not a new column, to avoid a migration before Web Summit.
 - FAQ limited to answers we know are true.
 
@@ -125,6 +123,6 @@ Top to bottom. The copy below is starting copy; the builder may tighten it but m
 
 - **Publish the video lessons.** 126 of 129 are unpublished, so students and demo viewers see 3.
 - **Unhide the INT DB math questions for centers** (Saagii's decision). On 21 Oct centers could see 233 math questions; 779 of the 893 variants were hidden, including 126 of the 144 already solved. One data update: `hide_from_practice = false` for active `ext_variant` rows. Hidden INT DB questions aren't used anywhere a center sees (practice, live sessions and the center SAT simulation all skip them), so unhiding doesn't expose questions reserved for mock tests.
-- **119 older math questions outside the INT DB are also visible to centers** (112 non-variant originals plus 7 others), with no solutions. While they stay visible, the live check can never reach "every". Saagii decides: hide them in the same update, or have them solved.
+- **119 older math questions outside the INT DB are also visible to centers** (112 non-variant originals plus 7 others), with no explanations. They don't affect the live count; Saagii decides later whether to hide or solve them.
 - Ask the student behind the quote for permission.
 - Someone owns the request inbox. There is no notification; requests only appear on the admin Demo Requests page.
