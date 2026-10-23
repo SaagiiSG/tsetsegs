@@ -136,7 +136,7 @@ export function SettingsPage() {
         <Section title="Contact & region">
           <div className="space-y-1"><Label htmlFor="st-email">Contact email for students</Label><Input id="st-email" type="email" value={s.contact_email ?? ''} onChange={e => setS({ ...s, contact_email: e.target.value })} /></div>
           <div className="space-y-1"><Label htmlFor="st-billing">Billing contact email</Label><Input id="st-billing" type="email" placeholder="accounts@yourcenter.com" value={s.billing_email ?? ''} onChange={e => setS({ ...s, billing_email: e.target.value })} />
-            <p className="text-xs text-muted-foreground">Where Tsetsegs sends invoices and payment reminders. Not shown to students.</p></div>
+            <p className="text-xs text-muted-foreground">Where FlowersOS sends invoices and payment reminders. Not shown to students.</p></div>
           <div className="space-y-1"><Label htmlFor="st-tz">Time zone</Label>
             <select id="st-tz" value={s.timezone} onChange={e => setS({ ...s, timezone: e.target.value })} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
               {[...new Set([s.timezone!, ...TIMEZONES])].map(t => <option key={t} value={t}>{t}</option>)}</select></div>

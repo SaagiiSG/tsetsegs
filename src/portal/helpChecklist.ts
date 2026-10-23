@@ -6,7 +6,7 @@ export function gettingStartedSteps(c: ChecklistCounts = {}) {
   return [
     { label: 'Create a batch (a class group)', to: '/admin/batches/new', done: has(c.classes) },
     { label: 'Add your teachers', to: '/admin/team', done: has(c.teachers) },
-    { label: 'Add students one by one', to: '/admin/students', done: has(c.students) },
+    { label: 'Add students (one by one, or Import students to paste a whole list)', to: '/admin/students', done: has(c.students) },
     { label: "Share a batch's sign-up link or QR code", to: '/admin/batches', done: undefined },
     { label: 'Take attendance in Teacher view', to: '/teacher', done: has(c.attendance) },
     { label: 'Post an announcement', to: '/admin/announcements', done: has(c.announcements) },
