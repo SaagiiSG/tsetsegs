@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendTemplateEmail } from '../_shared/transactional-email-templates/send-email.ts'
+import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Public: the /educators form calls this right after submit_educator_demo_request with the new id.
 // Safe to expose because the claim below lets each saved request email the owner at most once.
@@ -32,12 +34,22 @@ Deno.serve(async (req) => {
   }
   if (!request) return json({ success: true, alreadyNotified: true })
 
-  // The service-role client authenticates as service_role, which send-transactional-email requires.
-  const { error: sendError } = await admin.functions.invoke('send-transactional-email', {
-    body: { templateName: 'educator-demo-request', idempotencyKey: `educator-demo-request-${id}`, templateData: request },
-  })
-  if (sendError) {
+  const templateName = 'educator-demo-request'
+  const recipient = TEMPLATES[templateName]?.to ?? ''
+  const log = async (status: 'sent' | 'suppressed' | 'failed', error_message?: string) => {
+    const { error: logError } = await admin.from('email_send_log').insert({
+      message_id: null, template_name: templateName, recipient_email: recipient, status, error_message: error_message ?? null,
+    })
+    if (logError) console.error('Email log write failed', { code: logError.code, message: logError.message })
+  }
+  try {
+    const result = await sendTemplateEmail(templateName, recipient, {
+      templateData: request, idempotencyKey: `educator-demo-request-${id}`,
+    })
+    await log(result.sent ? 'sent' : 'suppressed')
+  } catch (sendError) {
     console.error('Demo request alert failed', sendError)
+    await log('failed', sendError instanceof Error ? sendError.message : String(sendError))
     // Release the claim so a later call can retry this request.
     await admin.from('educator_demo_requests').update({ notified_at: null }).eq('id', id)
     return json({ error: 'Could not send alert' }, 502)

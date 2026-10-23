@@ -27,23 +27,10 @@ verify_jwt = false
 [functions.verify-password-reset]
 verify_jwt = false
 
-[functions.process-email-queue]
-[functions.process-email-queue]
-verify_jwt = true
-
-[functions.send-transactional-email]
-verify_jwt = true
-
 [functions.notify-demo-request]
 verify_jwt = false
 
 [functions.preview-transactional-email]
-verify_jwt = false
-
-[functions.handle-email-unsubscribe]
-verify_jwt = false
-
-[functions.handle-email-suppression]
 verify_jwt = false
 
 [functions.stream-bluebook-video]
