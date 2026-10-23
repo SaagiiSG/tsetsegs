@@ -463,6 +463,13 @@
       "when": 1792794705839,
       "tag": "0065_apply_pending_0061_0064",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1792794706839,
+      "tag": "0066_center_admins_add_co_admins",
+      "breakpoints": true
     }
   ]
 }

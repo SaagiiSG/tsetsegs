@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { phoneDigits } from '@/lib/tenant';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { PasswordInput } from './PasswordInput';
+import { ChangePasswordForm } from './ChangePasswordForm';
 import {
   AuthSplitLayout,
   authInputClasses,
@@ -15,16 +16,18 @@ import {
   authGhostButtonClasses,
 } from '@/components/auth/AuthSplitLayout';
 
-export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithoutAccess: boolean }) {
+// `recovering`: opened from a reset-password email link, so the user is signed in and must pick a new password.
+export default function CenterSignIn({ signedInWithoutAccess, recovering = false, onRecovered }: { signedInWithoutAccess: boolean; recovering?: boolean; onRecovered?: () => void }) {
   const { text } = usePublicLanguage();
   const { center, signOut } = useCenter();
   const name = centerDisplayName(center);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'student' | 'staff'>('student');
   // student
   const [phone, setPhone] = useState('');
-  const [stage, setStage] = useState<'signin' | 'create'>('signin');
+  const [stage, setStage] = useState<'phone' | 'password' | 'create'>('phone');
   const [studentEmail, setStudentEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -42,18 +45,21 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
   };
 
   const run = (fn: () => Promise<void>) => async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setBusy(true);
+    e.preventDefault(); setError(''); setNotice(''); setBusy(true);
     try { await fn(); } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   };
 
-  // Combined phone + password: look the phone up, then sign in — first-time
-  // students move to the create-password step instead.
-  const studentSignIn = run(async () => {
+  // Phone first: students who already set a password are asked for it; first-timers go straight to creating one.
+  const studentLookup = run(async () => {
     const res = await call({ action: 'student_lookup', phone: phoneDigits(phone) });
-    if (!res.activated) { setStudentEmail(''); setStage('create'); return; }
-    const { error } = await supabase.auth.signInWithPassword({ email: res.email, password });
-    if (error) throw new Error('Wrong password. Ask your center admin to reset it if you forgot.');
+    setStudentEmail(res.email ?? ''); setPassword(''); setConfirm('');
+    setStage(res.activated ? 'password' : 'create');
   });
+  const studentSignIn = run(async () => {
+    const { error } = await supabase.auth.signInWithPassword({ email: studentEmail, password });
+    if (error) throw new Error(text('Нууц үг буруу байна.', 'Wrong password.'));
+  });
+  const backToPhone = () => { setStage('phone'); setPassword(''); setConfirm(''); setError(''); };
   const createPassword = run(async () => {
     if (password !== confirm) throw new Error("Passwords don't match.");
     const res = await call({ action: 'student_activate', phone: phoneDigits(phone), password });
@@ -67,6 +73,14 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
     if (em && pw.toLowerCase().startsWith(em.toLowerCase()) && pw.length > em.length) pw = pw.slice(em.length).trim();
     const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
     if (error) throw new Error('Email or password is incorrect.');
+  });
+  const staffForgot = run(async () => {
+    const em = email.trim();
+    if (!em) throw new Error(text('Эхлээд имэйлээ оруулна уу.', 'Enter your email first.'));
+    // Back to this center's own address; *.flowersos.co must be on the auth redirect allow-list.
+    const { error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo: `${window.location.origin}/` });
+    if (error) throw new Error(error.message);
+    setNotice(text('Энэ имэйл бүртгэлтэй бол шинэ нууц үг тохируулах холбоос илгээлээ. Имэйлээ шалгана уу.', 'If this email has an account, we sent it a link to set a new password. Check your inbox.'));
   });
 
   return (
@@ -84,7 +98,12 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
           <p className="text-sm text-muted-foreground">{text('Төвийнхөө хэсэгт нэвтэрнэ үү', 'Sign in to your center portal')}</p>
         </div>
 
-        {signedInWithoutAccess ? (
+        {recovering ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{text('Шинэ нууц үгээ тохируулна уу.', 'Set a new password for your account.')}</p>
+            <ChangePasswordForm onAuthPage onDone={onRecovered} />
+          </div>
+        ) : signedInWithoutAccess ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{text(`Энэ бүртгэл ${name}-д нэвтрэх эрхгүй.`, `This account doesn't have access to ${name}.`)}</p>
             <Button className={authPrimaryButtonClasses} onClick={signOut}>{text('Өөр бүртгэлээр нэвтрэх', 'Use a different account')}</Button>
@@ -97,7 +116,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                 <Button variant="ghost"
                   key={t}
                   type="button"
-                  onClick={() => { setTab(t); setError(''); }}
+                  onClick={() => { setTab(t); setError(''); setNotice(''); }}
                   className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                     tab === t ? 'text-foreground border-border' : 'text-muted-foreground border-transparent hover:text-muted-foreground'
                   }`}
@@ -107,26 +126,34 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
               ))}
             </div>
 
-            {tab === 'student' && stage === 'signin' && (
-              <form onSubmit={studentSignIn} className="space-y-6">
+            {tab === 'student' && stage === 'phone' && (
+              <form onSubmit={studentLookup} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="cp-phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone number')}</Label>
                   <Input id="cp-phone" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)}
                     placeholder={text('Ангидаа бүртгүүлсэн дугаар', 'Phone registered with your class')} required className={authInputClasses} />
                 </div>
+                <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Шалгаж байна…', 'Checking…') : text('Үргэлжлүүлэх', 'Continue')}</Button>
+              </form>
+            )}
+
+            {tab === 'student' && stage === 'password' && (
+              <form onSubmit={studentSignIn} className="space-y-6">
+                <p className="text-sm text-muted-foreground">{text('Утас', 'Phone')}: <span className="font-mono text-foreground">{phone}</span></p>
                 <div className="space-y-2">
                   <Label htmlFor="cp-pw" className={authLabelClasses}>{text('Нууц үг', 'Password')}</Label>
-                  <PasswordInput id="cp-pw" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
+                  <PasswordInput id="cp-pw" autoComplete="current-password" autoFocus value={password} onChange={e => setPassword(e.target.value)}
                     required className={authInputClasses} />
-                  <p className="text-xs text-muted-foreground">{text('Анх удаа юу? Утасны дугаар, түр нууц үг оруулаад дараа нь өөрийн нууц үгийг үүсгэнэ.', "First time here? Enter your phone and any password — you'll create your real one next.")}</p>
+                  <p className="text-xs text-muted-foreground">{text('Нууц үгээ мартсан уу? Төвөөсөө шинэчилж өгөхийг хүсээрэй.', 'Forgot your password? Ask your center to reset it.')}</p>
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Нэвтэрч байна…', 'Signing in…') : text('Нэвтрэх', 'Sign in')}</Button>
+                <Button type="button" variant="ghost" className={authGhostButtonClasses} onClick={backToPhone}>{text('Буцах', 'Back')}</Button>
               </form>
             )}
 
             {tab === 'student' && stage === 'create' && (
               <form onSubmit={createPassword} className="space-y-6">
-                <p className="text-sm text-muted-foreground">{text('Нууц үгээ үүсгэнэ үү (8+ тэмдэгт, үсэг ба тоо).', 'First time here — create a password (8+ characters, letters and numbers).')}</p>
+                <p className="text-sm text-muted-foreground">{text('Нууц үгээ үүсгэнэ үү (8+ тэмдэгт, үсэг ба тоо).', 'Create your password — 8+ characters, with letters and numbers.')}</p>
                 <div className="space-y-2">
                   <Label htmlFor="cp-new" className={authLabelClasses}>{text('Шинэ нууц үг', 'New password')}</Label>
                   <PasswordInput id="cp-new" autoComplete="new-password" autoFocus value={password} onChange={e => setPassword(e.target.value)}
@@ -139,7 +166,7 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Үүсгэж байна…', 'Creating…') : text('Нууц үг үүсгэх', 'Create password')}</Button>
                 <Button type="button" variant="ghost" className={authGhostButtonClasses}
-                  onClick={() => { setStage('signin'); setPassword(''); setConfirm(''); }}>
+                  onClick={backToPhone}>
                   {text('Буцах', 'Back')}
                 </Button>
               </form>
@@ -158,9 +185,13 @@ export default function CenterSignIn({ signedInWithoutAccess }: { signedInWithou
                     required className={authInputClasses} />
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Нэвтэрч байна…', 'Signing in…') : text('Нэвтрэх', 'Sign in')}</Button>
+                <Button type="button" variant="ghost" className={authGhostButtonClasses} disabled={busy} onClick={staffForgot}>
+                  {text('Нууц үгээ мартсан уу?', 'Forgot password?')}
+                </Button>
               </form>
             )}
 
+            {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           </>
         )}

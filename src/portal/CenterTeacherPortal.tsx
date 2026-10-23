@@ -3,7 +3,7 @@ import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
+  Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
   Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -25,6 +25,7 @@ import { MathText } from '@/components/MathText';
 import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionMeta';
 import { TeacherLive } from './LiveSession';
 import { CenterHelpPage } from './CenterHelp';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
 const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
@@ -337,6 +338,7 @@ export default function CenterTeacherPortal() {
   const [intake, setIntake] = useState<'current' | 'previous' | 'all'>('current');
   const [date, setDate] = useState(localDate());
   const [searchOpen, setSearchOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [invite, setInvite] = useState<CenterClass | null>(null);
   const [rename, setRename] = useState<CenterClass | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -553,6 +555,9 @@ export default function CenterTeacherPortal() {
                 <Link to="/admin"><LayoutDashboard className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Admin view</span></Link>
               </Button>
             )}
+            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" onClick={() => setPasswordOpen(true)} aria-label="Change password">
+              <KeyRound className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Password</span>
+            </Button>
             <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={signOut}>
               <LogOut className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Logout</span>
             </Button>
@@ -711,6 +716,13 @@ export default function CenterTeacherPortal() {
               </CommandGroup>
             </CommandList>
           </Command>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Change password</DialogTitle><DialogDescription>Use it the next time you sign in.</DialogDescription></DialogHeader>
+          <ChangePasswordForm onDone={() => setPasswordOpen(false)} />
         </DialogContent>
       </Dialog>
 
