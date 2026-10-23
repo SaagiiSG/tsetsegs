@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, MonitorPlay, PlayCircle, Radio, RotateCcw, Target, Trophy, Users, Zap } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -8,7 +9,7 @@ import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useEducatorStats } from "@/hooks/useEducatorStats";
-import { mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel } from "@/lib/educatorLanding";
+import { mathExplanationsLabel, problemsSolvedLabel, sourceFromSearch, videoCountLabel, withSource } from "@/lib/educatorLanding";
 import "@/components/landing/landing.css";
 
 export default function Educators() {
@@ -17,6 +18,9 @@ export default function Educators() {
   const stats = useEducatorStats();
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
   const solved = problemsSolvedLabel(stats.answers);
+  const source = sourceFromSearch(window.location.search);
+  // The page renders after the browser's own jump to a #section (e.g. the demo's Book a call), so jump again once it exists.
+  useEffect(() => { if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView(); }, []);
   const videos = videoCountLabel(stats.videos, lang);
 
   const mathExplanations = mathExplanationsLabel(stats.mathExplanations, lang);
@@ -156,7 +160,7 @@ export default function Educators() {
           <motion.h2 {...reveal} className="lv-h2">{text("Эхлээд өөрөө үзээрэй", "Look around first")}</motion.h2>
           <p className="lv-lead mt-4">{text("Зохиомол сурагчидтай жишээ орчин.", "Sample workspaces with made-up students.")}</p>
           <div className="mt-8 grid gap-3 md:grid-cols-3">{demos.map(r => (
-            <a key={r.role} href={`/demo?role=${r.role}&preview=educator&lang=${lang}`} className="lv-card flex min-h-16 items-center gap-3 p-4 hover:bg-muted"><r.icon className="h-5 w-5 text-muted-foreground" /><div className="flex-1"><p className="font-medium">{r.l}</p><p className="text-xs text-muted-foreground">{r.sub}</p></div>{r.role === "student" && <img src={TIER_ASSETS.diamond.image} alt="" className="h-9 w-9 object-contain" />}<ArrowRight className="h-4 w-4" /></a>
+            <a key={r.role} href={withSource(`/demo?role=${r.role}&preview=educator&lang=${lang}`, source)} className="lv-card flex min-h-16 items-center gap-3 p-4 hover:bg-muted"><r.icon className="h-5 w-5 text-muted-foreground" /><div className="flex-1"><p className="font-medium">{r.l}</p><p className="text-xs text-muted-foreground">{r.sub}</p></div>{r.role === "student" && <img src={TIER_ASSETS.diamond.image} alt="" className="h-9 w-9 object-contain" />}<ArrowRight className="h-4 w-4" /></a>
           ))}</div>
         </div></section>
 
@@ -173,7 +177,7 @@ export default function Educators() {
           <motion.div {...reveal} className="lv-container relative"><div className="mx-auto max-w-xl">
             <h2 className="lv-h2">{text("Уулзалт товлох", "Book a call")}</h2>
             <p className="lv-lead mt-4">{text("Төвийнхөө талаар бидэнд хэлээрэй. Бид тантай холбогдож цаг тохирно.", "Tell us about your center and we’ll get in touch to set up a time.")}</p>
-            <div className="lv-card mt-8 p-5 sm:p-6"><EducatorRequestForm text={text} source={sourceFromSearch(window.location.search)} /></div>
+            <div className="lv-card mt-8 p-5 sm:p-6"><EducatorRequestForm text={text} source={source} /></div>
           </div></motion.div>
         </section>
       </main>

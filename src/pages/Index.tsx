@@ -140,9 +140,7 @@ const Index = () => {
               <div className="lv-card p-6"><p className="font-mono text-3xl font-semibold">{s ? fmt(s.answers) : "—"}</p><p className="text-sm text-muted-foreground">{text("бодлого бодогдсон", "questions answered")}</p></div>
             </div>
           </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map(i => (
-            <div key={i} className="lv-card border-dashed p-6"><p className="text-sm text-muted-foreground">{text("Сурагчийн түүх — зөвшөөрөл хүлээж байна", "Student story — awaiting consent")}</p><div className="mt-4 h-3 w-2/3 rounded-full bg-muted" /><div className="mt-2 h-3 w-1/2 rounded-full bg-muted" /></div>
-          ))}</div>
+          {/* Student story cards come back here once student consent is in. */}
         </div></section>
 
         <section id="faq" className="py-20"><div className="lv-container max-w-3xl">
