@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { centerPortalUrl } from '@/lib/tenant';
@@ -14,6 +15,7 @@ import { centerAccounts, localDate } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, money } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section } from './ui';
 import { ThemeModeSelect } from '@/components/settings/ThemeModeSelect';
+import { ChangePasswordForm } from '../ChangePasswordForm';
 
 function CredentialDialog({ cred, onClose }: { cred: { email: string; password: string } | null; onClose: () => void }) {
   return (
@@ -34,13 +36,16 @@ export function TeamPage() {
   const { data, isLoading } = useCenterAdminData();
   const refresh = useRefreshCenter();
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState<'teacher' | 'center_admin'>('teacher');
   const [cred, setCred] = useState<{ email: string; password: string } | null>(null);
   if (isLoading || !data) return <Loading />;
   const add = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
     try {
-      const r = await centerAccounts<{ email: string; temporaryPassword: string }>({ action: 'create_member', institution_id: center.id, role: 'teacher', name, email });
-      setCred({ email: r.email, password: r.temporaryPassword }); setName(''); setEmail(''); refresh();
+      const r = await centerAccounts<{ email: string; temporaryPassword?: string; existingAccount?: boolean }>({ action: 'create_member', institution_id: center.id, role, name, email });
+      if (r.temporaryPassword) setCred({ email: r.email, password: r.temporaryPassword });
+      else toast.success(`${r.email} already has a FlowersOS login, so they sign in with their existing password.`);
+      setName(''); setEmail(''); refresh();
     } catch (err) { toast.error((err as Error).message); } finally { setBusy(false); }
   };
   const reset = async (m: (typeof data.members)[number]) => {
@@ -56,18 +61,20 @@ export function TeamPage() {
     <div className="space-y-8">
       <PageHeader title="Team" description="Teachers and admins who can sign in to your center." />
       <form onSubmit={add} className="flex flex-wrap gap-3 items-end rounded-lg border p-4">
-        <div className="space-y-1"><Label htmlFor="t-name">Teacher name</Label><Input id="t-name" value={name} onChange={e => setName(e.target.value)} required /></div>
+        <div className="space-y-1"><Label htmlFor="t-name">Name</Label><Input id="t-name" value={name} onChange={e => setName(e.target.value)} required /></div>
         <div className="space-y-1"><Label htmlFor="t-email">Email</Label><Input id="t-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-        <Button disabled={busy}><Plus className="h-4 w-4" />{busy ? 'Adding…' : 'Add teacher'}</Button>
+        <div className="space-y-1"><Label htmlFor="t-role">Role</Label>
+          <Select value={role} onValueChange={v => setRole(v as typeof role)}><SelectTrigger id="t-role" className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="teacher">Teacher</SelectItem><SelectItem value="center_admin">Admin (full access)</SelectItem></SelectContent></Select></div>
+        <Button disabled={busy}><Plus className="h-4 w-4" />{busy ? 'Adding…' : role === 'teacher' ? 'Add teacher' : 'Add admin'}</Button>
       </form>
       <ul className="divide-y">{data.members.map(m => (
         <li key={m.id} className="py-3 flex flex-wrap items-center gap-3 text-sm">
           <div className="flex-1 min-w-48"><p className={m.active ? 'font-medium' : 'text-muted-foreground line-through'}>{m.display_name}{m.user_id === userId && <span className="ml-2 text-xs text-muted-foreground font-normal">You</span>}</p>
             <p className="text-xs text-muted-foreground">{m.email}{batches(m.id) && ` · ${batches(m.id)}`}</p></div>
           <span className="text-xs rounded px-2 py-0.5 bg-muted text-muted-foreground">{m.role === 'center_admin' ? 'Admin' : 'Teacher'}</span>
-          {m.role === 'teacher' && <>
-            <Button variant="outline" size="sm" onClick={() => reset(m)}><KeyRound className="h-4 w-4" />New password</Button>
-            <Button variant="ghost" size="sm" onClick={() => toggle(m)}>{m.active ? 'Deactivate' : 'Reactivate'}</Button></>}
+          {m.role === 'teacher' && <Button variant="outline" size="sm" onClick={() => reset(m)}><KeyRound className="h-4 w-4" />New password</Button>}
+          {m.user_id !== userId && <Button variant="ghost" size="sm" onClick={() => toggle(m)}>{m.active ? 'Deactivate' : 'Reactivate'}</Button>}
         </li>
       ))}</ul>
       {!data.members.some(m => m.role === 'teacher') && <Empty>No teachers yet. Add one above to get their login.</Empty>}
@@ -158,6 +165,9 @@ export function SettingsPage() {
       </form>
       <Section title="Appearance">
         <ThemeModeSelect />
+      </Section>
+      <Section title="Your password">
+        <ChangePasswordForm />
       </Section>
       <Section title="Portal address">
         <p className="text-sm"><span className="font-mono">{centerPortalUrl(center.slug)}</span></p>

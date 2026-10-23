@@ -123,7 +123,8 @@ Deno.serve(async (req) => {
 
     if (action === 'create_member') {
       const role = body.role === 'center_admin' ? 'center_admin' : 'teacher'
-      if (!isPlatformAdmin && !(isCenterAdmin && role === 'teacher')) return json({ error: 'Not allowed' }, 403)
+      // Center admins add teachers or co-admins, only to the center they admin (isCenterAdmin is scoped to institution_id).
+      if (!isPlatformAdmin && !isCenterAdmin) return json({ error: 'Not allowed' }, 403)
       const name = String(body.name ?? '').trim().slice(0, 100)
       const email = String(body.email ?? '').trim().toLowerCase()
       if (name.length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Enter a name and a valid email.' }, 400)
@@ -141,8 +142,7 @@ Deno.serve(async (req) => {
       } catch (e) {
         const msg = (e as Error).message ?? 'Could not create account'
         if (!/already/i.test(msg)) return json({ error: msg }, 400)
-        // Email already has a login: platform admins may attach that login without touching its password.
-        if (!isPlatformAdmin) return json({ error: 'That email already has an account. Use a different email.' }, 400)
+        // Email already has a login: attach that login without touching its password (reset_member_password refuses it too).
         const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
         if (linkErr || !link?.user) return json({ error: 'That email already has an account, but it could not be attached.' }, 400)
         created = { user: { id: link.user.id } }
@@ -176,7 +176,9 @@ Deno.serve(async (req) => {
       if (!student || student.institution_id !== institutionId) return json({ error: 'Not found' }, 404)
       if (student.user_id) {
         await admin.from('tenant_students').update({ user_id: null }).eq('id', student.id)
-        await admin.auth.admin.deleteUser(student.user_id)
+        // Center admins can edit user_id, so only delete the login this function made for this student, never someone else's.
+        const { data: u } = await admin.auth.admin.getUserById(student.user_id)
+        if (u?.user?.email === `s-${student.id}@students.flowersos.co`) await admin.auth.admin.deleteUser(student.user_id)
       }
       return json({ ok: true })
     }

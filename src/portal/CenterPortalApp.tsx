@@ -15,6 +15,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [role, setRole] = useState<CenterRole | null | undefined>(undefined);
   const [memberName, setMemberName] = useState('');
   const [access, setAccess] = useState<{ blocked: boolean; warnings: number } | null>(null);
+  const [recovering, setRecovering] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   useEffect(() => {
     loadCenter();
     supabase.rpc('tenant_access_status', { _slug: slug }).then(({ data }) => setAccess((data as { blocked: boolean; warnings: number } | null) ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => { setSession(s); if (e === 'PASSWORD_RECOVERY') setRecovering(true); });
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
   }, [slug]);
@@ -98,14 +99,14 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
           Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. Please contact FlowersOS to settle your bill.
         </div>
       )}
-      <Routes>
+      {recovering ? <CenterSignIn signedInWithoutAccess={false} recovering onRecovered={() => setRecovering(false)} /> : <Routes>
         <Route path="/join/:code" element={<CenterJoin />} />
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />
         <Route path="/student/*" element={role === 'student' ? <CenterStudentPortal /> : <Navigate to={home} replace />} />
         <Route path="*" element={<Navigate to={home} replace />} />
-      </Routes>
+      </Routes>}
     </CenterContext.Provider>
   );
 }
