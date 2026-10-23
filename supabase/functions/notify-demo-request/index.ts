@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
   }
   try {
     const result = await sendTemplateEmail(templateName, recipient, {
-      templateData: request, idempotencyKey: `educator-demo-request-${id}`,
+      // Reply goes straight to the person who asked (submit_educator_demo_request validated the address).
+      templateData: request, idempotencyKey: `educator-demo-request-${id}`, replyTo: request.email?.trim(),
     })
     await log(result.sent ? 'sent' : 'suppressed')
   } catch (sendError) {
