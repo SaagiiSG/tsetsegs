@@ -118,13 +118,16 @@ export function StudentDetailPage() {
   const history = useQuery({
     queryKey: ['center-student-history', studentId],
     queryFn: async () => {
-      const [att, attempts, preds] = await Promise.all([
+      // Server-side counts: the API returns at most 1,000 rows per request.
+      const attempts = () => supabase.from('tenant_attempts').select('created_at', { count: 'exact' }).eq('student_id', studentId);
+      const [att, answered, correct, preds] = await Promise.all([
         supabase.from('tenant_attendance').select('session_date, status, class_id').eq('student_id', studentId).order('session_date', { ascending: false }).limit(200),
-        supabase.from('tenant_attempts').select('is_correct, created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(5000),
+        attempts().order('created_at', { ascending: false }).limit(1),
+        attempts().eq('is_correct', true).limit(1),
         supabase.from('tenant_sat_predictions' as any).select('snapshot_date, sim_score').eq('student_id', studentId).order('snapshot_date', { ascending: false }).limit(400),
       ]);
       return {
-        att: att.data ?? [], attempts: attempts.data ?? [],
+        att: att.data ?? [], answered: answered.count ?? 0, correct: correct.count ?? 0, last: answered.data?.[0]?.created_at,
         preds: ((preds.data as any[]) ?? []).map(r => ({ date: r.snapshot_date as string, score: r.sim_score as number | null })),
       };
     },
@@ -153,10 +156,10 @@ export function StudentDetailPage() {
       <div className="flex items-center gap-3"><Label>Batch</Label><ClassSelect value={s.class_id} onChange={v => update({ class_id: v }, 'Batch updated')} classes={data.classes} label="Move to batch" className="w-56" /></div>
       {!h ? <Loading /> : <>
         <StatRow stats={[
-          ['Questions answered', h.attempts.length],
-          ['Accuracy', pct(h.attempts.filter(a => a.is_correct).length, h.attempts.length)],
+          ['Questions answered', h.answered],
+          ['Accuracy', pct(h.correct, h.answered)],
           ['Attendance', pct(attended, h.att.length), `${attended}/${h.att.length} sessions`],
-          ['Last practice', h.attempts[0] ? new Date(h.attempts[0].created_at).toLocaleDateString() : '—'],
+          ['Last practice', h.last ? new Date(h.last).toLocaleDateString() : '—'],
         ]} />
         <Section title="Real SAT vs predicted">
           <RealSatEditor student={s as any} predictions={h.preds} onSaved={() => { refresh(); history.refetch(); }} />

@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { CenterLogo, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
-import { localDate } from './centerApi';
+import { allPages, localDate } from './centerApi';
 import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
@@ -256,10 +256,9 @@ function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: 
     enabled: studentIds.length > 0,
     queryKey: ['center-class-analytics', classId],
     queryFn: async () => {
-      const { data: attempts } = await supabase.from('tenant_attempts')
+      const list = await allPages(p => supabase.from('tenant_attempts')
         .select('student_id, question_id, is_correct, created_at').in('student_id', studentIds)
-        .order('created_at', { ascending: false }).limit(20000);
-      const list = attempts ?? [];
+        .order('created_at', { ascending: false }).order('id').range(p, p + 999), 20000);
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
       return domainStats(list, meta);
     },
@@ -372,9 +371,9 @@ export default function CenterTeacherPortal() {
       if (role !== 'center_admin') q = q.eq('teacher_member_id', me?.id ?? '00000000-0000-0000-0000-000000000000');
       const { data: rows, error } = await q;
       if (error) throw error;
-      const { data: students } = await supabase.from('tenant_students').select('id, class_id').eq('institution_id', center.id).eq('active', true);
+      const students = await allPages(p => supabase.from('tenant_students').select('id, class_id').eq('institution_id', center.id).eq('active', true).order('id').range(p, p + 999), 5000);
       const counts: Record<string, number> = {};
-      for (const s of students ?? []) if (s.class_id) counts[s.class_id] = (counts[s.class_id] ?? 0) + 1;
+      for (const s of students) if (s.class_id) counts[s.class_id] = (counts[s.class_id] ?? 0) + 1;
       return rows.map(c => ({ ...c, studentCount: counts[c.id] ?? 0 })) as CenterClass[];
     },
   });
@@ -387,10 +386,8 @@ export default function CenterTeacherPortal() {
     enabled: classIds.length > 0,
     queryKey: ['center-teacher-students', center.id, classIds.join(',')],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tenant_students')
-        .select('id, class_id, name, phone, user_id').eq('institution_id', center.id).eq('active', true).order('name');
-      if (error) throw error;
-      return data as CenterStudent[];
+      return allPages(p => supabase.from('tenant_students')
+        .select('id, class_id, name, phone, user_id').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
     },
   });
   const allStudents = studentsQuery.data ?? [];
@@ -419,14 +416,14 @@ export default function CenterTeacherPortal() {
     queryKey: ['center-teacher-history', center.id, allStudentIds.join(',')],
     queryFn: async () => {
       const [attempts, att] = await Promise.all([
-        supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at')
-          .in('student_id', allStudentIds).order('created_at', { ascending: false }).limit(30000),
-        supabase.from('tenant_attendance').select('student_id, class_id, status, session_date')
-          .in('class_id', classIds).order('session_date', { ascending: false }).limit(10000),
+        allPages(p => supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at')
+          .in('student_id', allStudentIds).order('created_at', { ascending: false }).order('id').range(p, p + 999), 30000),
+        allPages(p => supabase.from('tenant_attendance').select('student_id, class_id, status, session_date')
+          .in('class_id', classIds).order('session_date', { ascending: false }).order('id').range(p, p + 999), 10000),
       ]);
-      const list = (attempts.data ?? []) as Attempt[];
+      const list = attempts as Attempt[];
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
-      return { attempts: list, att: (att.data ?? []) as AttRow[], meta };
+      return { attempts: list, att: att as AttRow[], meta };
     },
   });
 
