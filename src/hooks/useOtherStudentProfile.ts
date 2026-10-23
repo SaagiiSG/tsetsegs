@@ -311,12 +311,9 @@ export function useOtherStudentProfile(userId: string | null) {
       const distinctSolved = Number(stats.distinct_solved) || 0;
       const avgTime = Number(stats.avg_time_seconds) || 0;
 
-      // Get bluebook attempts for practice tests
+      // Completed practice test scores (another student's attempts aren't readable directly)
       const { data: bluebookAttempts } = await supabase
-        .from('bluebook_attempts')
-        .select('total_score')
-        .eq('student_account_id', userId)
-        .eq('status', 'completed');
+        .rpc('student_bluebook_scores', { _student_account_id: userId });
 
       const scores = bluebookAttempts?.map(a => a.total_score || 0) || [];
       const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;

@@ -477,6 +477,13 @@
       "when": 1792796094828,
       "tag": "0067_center_admins_add_co_admins",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1792797614003,
+      "tag": "0068_lock_class_tests_proctor_bluebook",
+      "breakpoints": true
     }
   ]
 }

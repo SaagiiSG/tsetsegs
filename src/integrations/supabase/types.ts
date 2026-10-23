@@ -6427,6 +6427,12 @@ export type Database = {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
       }
+      student_bluebook_scores: {
+        Args: { _student_account_id: string }
+        Returns: {
+          total_score: number
+        }[]
+      }
       student_claim_badges: { Args: never; Returns: string[] }
       student_google_connected: { Args: never; Returns: boolean }
       student_inherited_tier: {
