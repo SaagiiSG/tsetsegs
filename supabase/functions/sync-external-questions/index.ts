@@ -299,7 +299,8 @@ Deno.serve(async (req) => {
         .from(QT)
         .select(EXISTING_COLS)
         .order("id")
-        .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1);
+        .range(dedupOffset, dedupOffset + DEDUP_PAGE - 1)
+        .returns<ExistingRow[]>();
       if (pageErr) {
         throw new Error(`Could not read existing questions: ${pageErr.message}`);
       }
@@ -445,14 +446,15 @@ Deno.serve(async (req) => {
         const { error: insertError, data: insertedData } = await adminClient
           .from(QT)
           .insert(toInsert)
-          .select(EXISTING_COLS);
+          .select(EXISTING_COLS)
+          .returns<ExistingRow[]>();
 
         if (insertError) {
           errors += toInsert.length;
           errorDetails.push(`batch insert: ${insertError.message}`);
         } else {
           imported += toInsert.length;
-          for (const row of insertedData || []) existing.add(row as ExistingRow);
+          for (const row of insertedData || []) existing.add(row);
         }
       }
     }
