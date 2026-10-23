@@ -213,7 +213,9 @@ export default function CenterStudentPortal() {
               <Button variant="ghost" size="icon" className="lg:hidden rounded-full" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
             </div>
           </div>
-          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? <p className="text-sm">Your account isn't linked. Contact your center.</p> : (
+          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
+            ? <p className="text-sm">Your account isn't linked. Contact your center.</p>
+            : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <Routes>
