@@ -13,6 +13,10 @@ const NOT_CB = ['68', 'SATMathTraining800'];
 export const inPracticeSet = (key: string, questionSet: string | null) =>
   key === 'CB' ? !NOT_CB.includes(questionSet ?? '') : questionSet === key;
 
+/** Ids of the math questions in a tab. The tabs, the home cards and the badges all count with this. */
+export const practiceSetIds = (key: string, rows: { id: string; subject: string | null; question_set: string | null }[]) =>
+  rows.filter(r => (r.subject ?? 'math').toLowerCase() === 'math' && inPracticeSet(key, r.question_set)).map(r => r.id);
+
 /** The same CB rule as a PostgREST .or() filter. */
 export const CB_FILTER = `question_set.is.null,question_set.not.in.(${NOT_CB.join(',')})`;
 

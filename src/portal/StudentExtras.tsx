@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCenter } from './centerContext';
 import { SprintLeaderboard, useCenterSprints } from './admin/ToolPages';
+import { SkyListSkeleton } from './SkySkeleton';
 
 export function StudentAnnouncements({ studentId }: { studentId: string }) {
   const { center } = useCenter();
@@ -22,7 +23,8 @@ export function StudentAnnouncements({ studentId }: { studentId: string }) {
     const unread = list.data?.filter(a => a.unread) ?? [];
     if (unread.length) supabase.from('tenant_announcement_reads').upsert(unread.map(a => ({ announcement_id: a.id, student_id: studentId, institution_id: center.id })), { ignoreDuplicates: true }).then(() => {});
   }, [list.data, studentId, center.id]);
-  if (!list.data?.length) return null;
+  if (list.isLoading) return <SkyListSkeleton rows={3} />;
+  if (!list.data?.length) return <p className="text-sm text-muted-foreground">No announcements yet.</p>;
   return (
     <section aria-label="Announcements" className="space-y-2">
       <p className="text-xs text-muted-foreground">Announcements</p>

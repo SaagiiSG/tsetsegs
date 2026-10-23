@@ -4,7 +4,7 @@ import { BookOpen, Check, ChevronRight, CircleDot, FileText, Shuffle, Target } f
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { SkyListSkeleton } from './SkySkeleton';
-import { PRACTICE_SETS, inPracticeSet } from './practiceSets';
+import { PRACTICE_SETS, inPracticeSet, practiceSetIds } from './practiceSets';
 
 type Row = { id: string; question_id: string | null; subject: string | null; question_set: string | null; category_id: string | null; skill: string | null };
 type Attempt = { question_id: string; is_correct: boolean };
@@ -12,16 +12,9 @@ type Attempt = { question_id: string; is_correct: boolean };
 const ENGLISH = ['Information and Ideas', 'Craft and Structure', 'Expression of Ideas', 'Standard English Conventions'];
 const short = (d: string) => d.replace(/ and .*/, '').replace(/Advanced Math/, 'Advanced').replace(/Data Analysis.*/, 'Data').replace(/Geometry.*/, 'Geometry');
 
-/** Main-site style practice browser: subject + set tabs, overall progress, domain tree and question code grid. */
-export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {
-  attempts: Attempt[]; subject: 'math' | 'english'; setKey: string;
-  onSubject: (s: 'math' | 'english') => void; onSet: (k: string) => void; onOpen: (id: string) => void; onRandom: () => void;
-}) {
-  const [domain, setDomain] = useState<string>('all');
-  const [skill, setSkill] = useState<string | null>(null);
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-
-  const data = useQuery({
+/** Every practice question (light columns). The home cards share this list so their counts match the tabs. */
+export function usePracticeQuestions() {
+  return useQuery({
     queryKey: ['center-practice-browser'],
     staleTime: 5 * 60_000,
     queryFn: async () => {
@@ -35,6 +28,18 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
       return rows.map(r => ({ ...r, domain: (r.category_id && cat[r.category_id]) || 'Other', sub: (r.subject ?? 'math').toLowerCase() as 'math' | 'english' }));
     },
   });
+}
+
+/** Main-site style practice browser: subject + set tabs, overall progress, domain tree and question code grid. */
+export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {
+  attempts: Attempt[]; subject: 'math' | 'english'; setKey: string;
+  onSubject: (s: 'math' | 'english') => void; onSet: (k: string) => void; onOpen: (id: string) => void; onRandom: () => void;
+}) {
+  const [domain, setDomain] = useState<string>('all');
+  const [skill, setSkill] = useState<string | null>(null);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  const data = usePracticeQuestions();
 
   const status = useMemo(() => {
     const m: Record<string, 'done' | 'tried'> = {};
@@ -45,7 +50,7 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
   const all = data.data ?? [];
   const inSubject = all.filter(r => r.sub === subject);
   const pool = subject === 'math' ? inSubject.filter(r => inPracticeSet(setKey, r.question_set)) : inSubject;
-  const setCount = (k: string) => inSubject.filter(r => inPracticeSet(k, r.question_set)).length;
+  const setCount = (k: string) => practiceSetIds(k, all).length;
   const done = (rows: typeof pool) => rows.filter(r => status[r.id] === 'done').length;
 
   const domains = useMemo(() => {

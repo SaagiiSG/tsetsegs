@@ -26,8 +26,8 @@ import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './Cent
 import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
 import { CenterAnalyticsPage } from './CenterAnalytics';
-import { CenterPracticeBrowser } from './CenterPracticeBrowser';
-import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam } from './practiceSets';
+import { CenterPracticeBrowser, usePracticeQuestions } from './CenterPracticeBrowser';
+import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
 import { CenterReviewPage } from './CenterReviewPage';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
@@ -46,12 +46,6 @@ import { motion, useMotionValue, animate, useDragControls, type PanInfo } from '
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
 const DIFFS = [['all', 'Any difficulty'], ['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']] as const;
-/** Math sets available to international students (the intl bank hides everything else). */
-const SETS = [
-  { key: '68', label: '68 Questions', blurb: 'Core SAT math patterns' },
-  { key: 'SATMathTraining800', label: '150 Hard', blurb: 'Hardest problems for 800' },
-  { key: 'ANP120Aug3', label: 'Updated set', blurb: 'Freshly explained problems' },
-] as const;
 const DAILY_GOAL = 20;
 const glass = 'sky-card';
 
@@ -59,11 +53,11 @@ function Glass({ className = '', style, children }: { className?: string; style?
   return <div className={`${glass} ${className}`} style={style}>{children}</div>;
 }
 
-/** Sky family per position: 68 blue, 150 Hard violet, Updated set pink. */
+/** Home card per practice tab: 68 blue, 150 violet, CB pink. */
 const SET_LOOK = {
-  '68': { family: 'blue', btn: 'sky', icon: Target, wash: 'hsl(207 90% 95%)', wave: CARD_WAVES.blue },
-  SATMathTraining800: { family: 'violet', btn: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
-  ANP120Aug3: { family: 'pink', btn: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
+  '68': { blurb: 'Core SAT math patterns', family: 'blue', btn: 'sky', icon: Target, wash: 'hsl(207 90% 95%)', wave: CARD_WAVES.blue },
+  SATMathTraining800: { blurb: 'Hardest problems for 800', family: 'violet', btn: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
+  CB: { blurb: 'All other math, including the new 120', family: 'pink', btn: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
 } as const;
 const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
 
@@ -89,18 +83,11 @@ function useMe() {
 }
 type Me = NonNullable<ReturnType<typeof useMe>['data']>;
 
+/** Question ids per practice tab, from the same list and rule the practice tabs count with. */
 function useSetTotals() {
-  return useQuery({
-    queryKey: ['intl-set-totals'],
-    queryFn: async () => {
-      const out: Record<string, string[]> = {};
-      await Promise.all(SETS.map(async s => {
-        const { data } = await supabase.from('intl_questions').select('id').eq('question_set', s.key).eq('is_active', true).eq('hide_from_practice', false).limit(1000);
-        out[s.key] = (data ?? []).map(r => r.id);
-      }));
-      return out;
-    },
-  });
+  const questions = usePracticeQuestions().data;
+  const data = useMemo(() => questions && Object.fromEntries(PRACTICE_SETS.map(s => [s.key, practiceSetIds(s.key, questions)])) as Record<string, string[]>, [questions]);
+  return { data };
 }
 
 /* ------------------------------ Shell ------------------------------ */
@@ -341,7 +328,7 @@ function HomePage({ me }: { me: Me }) {
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
-          {SETS.map(s => {
+          {PRACTICE_SETS.map(s => {
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
             const look = SET_LOOK[s.key];
@@ -351,7 +338,7 @@ function HomePage({ me }: { me: Me }) {
                 <Glass className="sky-wash sky-decor h-full flex flex-col transition-transform group-hover:-translate-y-0.5" style={{ '--wash': look.wash, '--wave': `url(${look.wave})` } as React.CSSProperties}>
                   <div className="flex items-center gap-3">
                     <span className={`sky-tile sky-tile-${look.family}`}><look.icon /></span>
-                    <div className="min-w-0"><p className="font-semibold">{s.label}</p><p className="text-sm text-muted-foreground line-clamp-2" title={s.blurb}>{s.blurb}</p></div>
+                    <div className="min-w-0"><p className="font-semibold">{s.label}</p><p className="text-sm text-muted-foreground line-clamp-2" title={look.blurb}>{look.blurb}</p></div>
                   </div>
                   <p className="font-mono text-4xl font-bold mt-auto pt-10">{done}<span className="text-xl font-normal sky-ink-soft">/{ids.length || '…'}</span></p>
                   <div className="flex items-center gap-3 mt-3">
@@ -705,7 +692,7 @@ function BadgesPage({ me }: { me: Me }) {
     { name: 'Marathon', desc: 'Answer 500 questions', got: n >= 500, prog: [n, 500] },
     { name: 'Sharpshooter', desc: '80% accuracy over 50+ questions', got: n >= 50 && c / n >= 0.8, prog: [n >= 50 ? Math.round(100 * c / n) : n, n >= 50 ? 80 : 50] },
     { name: 'Regular', desc: 'Attend 10 classes', got: present >= 10, prog: [present, 10] },
-    ...SETS.map(s => ({ name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: setDone(s.key), prog: [(totals.data?.[s.key] ?? []).filter(id => solved.has(id)).length, (totals.data?.[s.key] ?? []).length || 1] })),
+    ...PRACTICE_SETS.map(s => ({ name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: setDone(s.key), prog: [(totals.data?.[s.key] ?? []).filter(id => solved.has(id)).length, (totals.data?.[s.key] ?? []).length || 1] })),
   ];
   return (
     <div className="space-y-4">
