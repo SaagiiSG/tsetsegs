@@ -428,6 +428,13 @@
       "when": 1792711176943,
       "tag": "0060_merge_duplicate_intl_questions",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1792778554684,
+      "tag": "0061_hide_live_player_phones",
+      "breakpoints": true
     }
   ]
 }
