@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRACTICE_SETS, inPracticeSet, practiceSetFromParam, CB_FILTER } from './practiceSets';
+import { PRACTICE_SETS, inPracticeSet, practiceSetFromParam, practiceSetIds, CB_FILTER } from './practiceSets';
 
 describe('portal practice sets', () => {
   it('has exactly the 68, 150 and CB tabs, in that order', () => {
@@ -22,6 +22,18 @@ describe('portal practice sets', () => {
     expect(practiceSetFromParam('SATMathTraining800')).toBe('SATMathTraining800');
     expect(practiceSetFromParam('CB')).toBe('CB');
     expect(practiceSetFromParam('ANP120Aug3')).toBe('CB'); // old links to the new 120
+  });
+
+  it('counts only math questions, and puts each one in exactly one tab', () => {
+    const rows = [
+      { id: 'a', subject: 'Math', question_set: '68' },
+      { id: 'b', subject: 'math', question_set: 'SATMathTraining800' },
+      { id: 'c', subject: 'math', question_set: 'ANP120Aug3' },
+      { id: 'd', subject: null, question_set: 'CollegeBoard' },
+      { id: 'e', subject: 'English', question_set: 'CollegeBoard' },
+      { id: 'f', subject: 'english', question_set: '68' },
+    ];
+    expect(PRACTICE_SETS.map(s => practiceSetIds(s.key, rows))).toEqual([['a'], ['b'], ['c', 'd']]);
   });
 
   it('gives the database the same CB rule', () => {

@@ -14,6 +14,8 @@ interface MyRankTabProps {
   pointsToAdvance: number | null;
   pointsToTop1: number | null;
   sprint: SprintInfo | null;
+  /** Real running points per sprint day. Without it the progress chart is hidden. */
+  pointHistory?: { day: number; points: number }[];
 }
 
 export function MyRankTab({ 
@@ -21,7 +23,8 @@ export function MyRankTab({
   leaderboard, 
   pointsToAdvance, 
   pointsToTop1,
-  sprint 
+  sprint,
+  pointHistory,
 }: MyRankTabProps) {
   if (!currentEntry) {
     return (
@@ -43,12 +46,6 @@ export function MyRankTab({
   const progressToAdvance = currentEntry.isAdvancing 
     ? 100 
     : Math.max(0, Math.min(100, ((cutoff - currentEntry.rank + 1) / cutoff) * 100));
-
-  // Mock point history data (would come from real data in production)
-  const pointHistory = Array.from({ length: 14 }, (_, i) => ({
-    day: i + 1,
-    points: Math.round(currentEntry.totalPoints * ((i + 1) / 14) * (0.8 + Math.random() * 0.4))
-  }));
 
   // Find who's directly above and below
   const playerAbove = leaderboard.find(e => e.rank === currentEntry.rank - 1);
@@ -159,7 +156,7 @@ export function MyRankTab({
       </div>
 
       {/* Point Graph */}
-      <Card>
+      {pointHistory && pointHistory.length > 1 && <Card>
         <CardHeader className="pb-2 p-3 sm:p-6">
           <CardTitle className="text-sm sm:text-base flex items-center gap-2">
             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -204,7 +201,7 @@ export function MyRankTab({
             </ResponsiveContainer>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Comparison */}
       {(playerAbove || playerBelow) && (

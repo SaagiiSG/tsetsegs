@@ -33,20 +33,24 @@ export function SatSchedulePage() {
   const [selected, setSelected] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  // Latest Math simulation score per student: the student home saves one snapshot a day.
   const { data: simScores = new Map<string, number>() } = useQuery({
-    queryKey: ['center-sat-scores', center.id],
+    queryKey: ['center-sat-predictions', center.id],
     queryFn: async () => {
-      const { data: rows, error } = await supabase.from('tenant_sat_attempts')
-        .select('student_id, rw_score, math_score, completed_at')
-        .eq('institution_id', center.id)
-        .eq('status', 'completed')
-        .not('rw_score', 'is', null)
-        .order('completed_at', { ascending: false })
-        .limit(5000);
-      if (error) throw error;
       const m = new Map<string, number>();
-      (rows ?? []).forEach(r => { if (!m.has(r.student_id)) m.set(r.student_id, (r.rw_score ?? 0) + (r.math_score ?? 0)); });
-      return m;
+      // The API returns at most 1,000 rows per request, so read page by page until a short page.
+      for (let from = 0; ; from += 1000) {
+        const { data: rows, error } = await supabase.from('tenant_sat_predictions')
+          .select('id, student_id, sim_score')
+          .eq('institution_id', center.id)
+          .not('sim_score', 'is', null)
+          .order('snapshot_date', { ascending: false })
+          .order('id')
+          .range(from, from + 999);
+        if (error) throw error;
+        rows.forEach(r => { if (!m.has(r.student_id) && r.sim_score != null) m.set(r.student_id, r.sim_score); });
+        if (rows.length < 1000) return m;
+      }
     },
   });
 
@@ -143,7 +147,7 @@ export function SatSchedulePage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Batch</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Simulation score</TableHead>
+                <TableHead>Math simulation</TableHead>
                 <TableHead>SAT month</TableHead>
               </TableRow>
             </TableHeader>

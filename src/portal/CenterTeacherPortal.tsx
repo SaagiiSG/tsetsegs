@@ -6,6 +6,7 @@ import {
   Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
   Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft,
 } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,13 +57,12 @@ function riskOf(s: StudentStats | undefined) {
 
 function InviteDialog({ name, code, onClose }: { name: string; code: string; onClose: () => void }) {
   const url = `${window.location.origin}/join/${code}`;
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(url)}`;
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>Invite students · {name}</DialogTitle>
           <DialogDescription>Students scan this code, create a password and land straight in this class.</DialogDescription></DialogHeader>
-        <div className="flex justify-center"><div className="bg-white p-4 rounded-xl"><img src={qr} alt={`QR code to join ${name}`} className="h-56 w-56" /></div></div>
+        <div className="flex justify-center"><div className="bg-white p-4 rounded-xl"><QRCode value={url} size={224} level="H" title={`QR code to join ${name}`} /></div></div>
         <p className="text-center font-mono text-2xl tracking-[0.3em]">{code}</p>
         <p className="font-mono text-xs break-all rounded-md border p-2">{url}</p>
         <Button onClick={() => { navigator.clipboard.writeText(url); toast.success('Link copied'); }}><Copy className="h-4 w-4" />Copy link</Button>

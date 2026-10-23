@@ -13,10 +13,22 @@ import { CurrentSprintTab, AllTimeTab, MyRankTab } from '@/components/student/le
 import { SkyListSkeleton } from './SkySkeleton';
 import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
 import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
+import { sprintPointsByDay } from './sprintPoints';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
 const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
+const dayAfter = (date: string) => { const d = new Date(`${date}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+/** The API returns at most 1,000 rows per request, so read page by page until a short page. */
+async function allPages<T>(page: (from: number) => PromiseLike<{ data: T[] | null; error: unknown }>) {
+  const rows: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await page(from);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if ((data?.length ?? 0) < 1000) return rows;
+  }
+}
 
 /** Customer leaderboard: same tabs and components as the main student leaderboard, fed only by tenant data. */
 export function CenterRankings({ studentId }: { studentId: string }) {
@@ -32,6 +44,22 @@ export function CenterRankings({ studentId }: { studentId: string }) {
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: active!.id }); if (error) throw error; return data ?? []; } });
   const allTime = useQuery({ queryKey: ['center-all-time', center.id, win],
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _since: win === 'last30' ? new Date(Date.now() - 30 * 864e5).toISOString() : undefined }); if (error) throw error; return data ?? []; } });
+  // My points in the active sprint, from the same rows and window tenant_student_board sums.
+  const myPoints = useQuery({ queryKey: ['center-sprint-points', center.id, active?.id, studentId], enabled: !!active,
+    queryFn: async () => {
+      const from = active!.starts_on, to = dayAfter(active!.ends_on);
+      const [attempts, runs] = await Promise.all([
+        allPages(p => supabase.from('tenant_attempts').select('id, created_at, points, is_correct').eq('institution_id', center.id).eq('student_id', studentId)
+          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+        allPages(p => supabase.from('tenant_speed_runs').select('id, created_at, correct').eq('institution_id', center.id).eq('student_id', studentId)
+          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+      ]);
+      return [
+        ...attempts.map(a => ({ created_at: a.created_at, points: a.points ?? (a.is_correct ? 10 : 0) })),
+        ...runs.map(r => ({ created_at: r.created_at, points: r.correct * 10 })),
+      ];
+    } });
+  const pointHistory = useMemo(() => active && myPoints.data ? sprintPointsByDay(myPoints.data, active.starts_on, active.ends_on) : undefined, [active, myPoints.data]);
   const history = useQuery({ queryKey: ['center-rank-history', center.id, studentId], queryFn: async () => {
     const { data, error } = await supabase.from('tenant_rank_history').select('*').eq('institution_id', center.id).eq('student_id', studentId).order('created_at', { ascending: false }).limit(100); if (error) throw error; return data ?? [];
   } });
@@ -103,7 +131,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
         </motion.div></TabsContent>
 
         <TabsContent value="myrank" className="mt-0"><motion.div {...fade}>
-          <MyRankTab currentEntry={me} leaderboard={entries} pointsToAdvance={pointsToAdvance} pointsToTop1={pointsToTop1} sprint={sprintInfo} />
+          <MyRankTab currentEntry={me} leaderboard={entries} pointsToAdvance={pointsToAdvance} pointsToTop1={pointsToTop1} sprint={sprintInfo} pointHistory={pointHistory} />
         </motion.div></TabsContent>
 
         <TabsContent value="history" className="mt-0"><motion.div {...fade}>

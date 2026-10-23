@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Copy, FolderPlus, QrCode } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,12 +17,11 @@ export const joinUrl = (code: string) => `${window.location.origin}/join/${code}
 
 function JoinLinkDialog({ cls, onClose }: { cls: CenterAdminData['classes'][number]; onClose: () => void }) {
   const url = joinUrl(cls.join_code);
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}`;
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>Sign-up link · {cls.name}</DialogTitle><DialogDescription>Students who use this link are enrolled in this class right away.</DialogDescription></DialogHeader>
-        <img src={qr} alt={`QR code for ${cls.name} sign-up`} className="mx-auto h-60 w-60 rounded-md border bg-background p-2" />
+        <div className="mx-auto rounded-md border bg-white p-2"><QRCode value={url} size={224} level="H" title={`QR code for ${cls.name} sign-up`} /></div>
         <p className="font-mono text-xs break-all rounded-md border p-2">{url}</p>
         <Button onClick={() => { navigator.clipboard.writeText(url); toast.success('Link copied'); }}><Copy className="h-4 w-4" />Copy link</Button>
       </DialogContent>
