@@ -14,21 +14,12 @@ import { SkyListSkeleton } from './SkySkeleton';
 import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
 import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
 import { sprintPointsByDay } from './sprintPoints';
+import { allPages } from './centerApi';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
 const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
 const dayAfter = (date: string) => { const d = new Date(`${date}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
-/** The API returns at most 1,000 rows per request, so read page by page until a short page. */
-async function allPages<T>(page: (from: number) => PromiseLike<{ data: T[] | null; error: unknown }>) {
-  const rows: T[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await page(from);
-    if (error) throw error;
-    rows.push(...(data ?? []));
-    if ((data?.length ?? 0) < 1000) return rows;
-  }
-}
 
 /** Customer leaderboard: same tabs and components as the main student leaderboard, fed only by tenant data. */
 export function CenterRankings({ studentId }: { studentId: string }) {

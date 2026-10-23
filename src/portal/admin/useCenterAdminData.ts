@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCenter } from '../centerContext';
+import { allPages } from '../centerApi';
 
 const DAYS = 30;
 
@@ -16,18 +17,18 @@ export function useCenterAdminData() {
       const [members, classes, students, dues, attempts, attendance, regs] = await Promise.all([
         supabase.from('tenant_members').select('*').eq('institution_id', id).order('created_at'),
         supabase.from('tenant_classes').select('*').eq('institution_id', id).order('created_at'),
-        supabase.from('tenant_students').select('*').eq('institution_id', id).order('name').limit(5000),
+        allPages(p => supabase.from('tenant_students').select('*').eq('institution_id', id).order('name').order('id').range(p, p + 999), 5000),
         supabase.from('institution_payment_dues').select('*').eq('customer_id', id).order('due_date'),
-        supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at').eq('institution_id', id)
-          .gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(20000),
-        supabase.from('tenant_attendance').select('student_id, class_id, session_date, status').eq('institution_id', id)
-          .gte('session_date', sinceDate).limit(20000),
+        allPages(p => supabase.from('tenant_attempts').select('student_id, question_id, is_correct, created_at').eq('institution_id', id)
+          .gte('created_at', since.toISOString()).order('created_at', { ascending: false }).order('id').range(p, p + 999), 20000),
+        allPages(p => supabase.from('tenant_attendance').select('student_id, class_id, session_date, status').eq('institution_id', id)
+          .gte('session_date', sinceDate).order('id').range(p, p + 999), 20000),
         supabase.from('tenant_registrations').select('id', { count: 'exact', head: true }).eq('institution_id', id).eq('status', 'pending'),
       ]);
-      for (const r of [members, classes, students, dues, attempts, attendance]) if (r.error) throw r.error;
+      for (const r of [members, classes, dues]) if (r.error) throw r.error;
       return {
-        members: members.data!, classes: classes.data!, students: students.data!, dues: dues.data!,
-        attempts: attempts.data!, attendance: attendance.data!, pendingRegistrations: regs.count ?? 0,
+        members: members.data!, classes: classes.data!, students, dues: dues.data!,
+        attempts, attendance, pendingRegistrations: regs.count ?? 0,
       };
     },
   });

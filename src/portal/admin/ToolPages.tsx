@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { TeacherQuestionSearchTab } from '@/components/teacher/practice/search/TeacherQuestionSearchTab';
 import { useCenter } from '../centerContext';
-import { localDate } from '../centerApi';
+import { allPages, localDate } from '../centerApi';
 import { useCenterAdminData } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section } from './ui';
 
@@ -118,10 +118,11 @@ export function AnnouncementsPage() {
     queryFn: async () => {
       const [a, r] = await Promise.all([
         supabase.from('tenant_announcements').select('*').eq('institution_id', center.id).order('created_at', { ascending: false }).limit(100),
-        supabase.from('tenant_announcement_reads').select('announcement_id').eq('institution_id', center.id).limit(20000),
+        allPages(p => supabase.from('tenant_announcement_reads').select('announcement_id').eq('institution_id', center.id)
+          .order('announcement_id').order('student_id').range(p, p + 999), 20000),
       ]);
       const reads = new Map<string, number>();
-      r.data?.forEach(x => reads.set(x.announcement_id, (reads.get(x.announcement_id) ?? 0) + 1));
+      r.forEach(x => reads.set(x.announcement_id, (reads.get(x.announcement_id) ?? 0) + 1));
       return (a.data ?? []).map(x => ({ ...x, reads: reads.get(x.id) ?? 0 }));
     },
   });

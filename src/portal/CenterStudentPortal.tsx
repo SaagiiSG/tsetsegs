@@ -21,6 +21,7 @@ import { SkyHomeSkeleton, SkyListSkeleton, SkyCardSkeleton } from './SkySkeleton
 import { SprintLeaderboard, useCenterSprints } from './admin/ToolPages';
 import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
+import { allPages } from './centerApi';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
 import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
@@ -72,9 +73,9 @@ function useMe() {
       const [cls, att, attempts] = await Promise.all([
         s.class_id ? supabase.from('tenant_classes').select('name, schedule').eq('id', s.class_id).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from('tenant_attendance').select('session_date, status').eq('student_id', s.id).order('session_date', { ascending: false }).limit(60),
-        supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds').eq('student_id', s.id).order('created_at', { ascending: false }).limit(10000),
+        allPages(p => supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds').eq('student_id', s.id).order('created_at', { ascending: false }).order('id').range(p, p + 999), 10000),
       ]);
-      const list = attempts.data ?? [];
+      const list = attempts;
       const vids = (await supabase.from('tenant_video_progress').select('video_id, completed_at').eq('student_id', s.id)).data ?? [];
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
       return { student: s, cls: cls.data as { name: string; schedule: string | null } | null, att: att.data ?? [], attempts: list, meta, videosDone: vids.map(v => v.video_id) };
@@ -212,7 +213,9 @@ export default function CenterStudentPortal() {
               <Button variant="ghost" size="icon" className="lg:hidden rounded-full" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
             </div>
           </div>
-          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? <p className="text-sm">Your account isn't linked. Contact your center.</p> : (
+          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
+            ? <p className="text-sm">Your account isn't linked. Contact your center.</p>
+            : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <Routes>
@@ -407,8 +410,13 @@ function useRecordAttempt(me: Me) {
   const qc = useQueryClient();
   // The server grades `answer` and decides points; `ok` is display-only.
   return async (questionId: string, ok: boolean, seconds?: number, answer?: string) => {
-    await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, answer: answer ?? '', time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null });
-    qc.invalidateQueries({ queryKey: ['center-student', center.id, userId] });
+    const key = ['center-student', center.id, userId];
+    const { data: row } = await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, answer: answer ?? '', time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null })
+      .select('question_id, is_correct, created_at, time_spent_seconds').single();
+    if (!row) return qc.invalidateQueries({ queryKey: key });
+    // Add the server-graded row to the cached history instead of re-reading every answer.
+    const meta = me.meta[questionId] ? {} : await loadQuestionMeta([questionId]);
+    qc.setQueryData<Me>(key, old => old && { ...old, attempts: [row, ...old.attempts], meta: { ...old.meta, ...meta } });
   };
 }
 
