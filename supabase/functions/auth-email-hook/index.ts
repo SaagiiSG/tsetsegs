@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "Tsetsegs SAT Prep"
+const SITE_NAME = "FlowersOS"
 const SENDER_DOMAIN = "notify.flowersos.co"
 const ROOT_DOMAIN = "flowersos.co"
 const FROM_DOMAIN = "flowersos.co"
