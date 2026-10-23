@@ -14,6 +14,7 @@ import { centerAccounts, localDate } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, money } from './useCenterAdminData';
 import { Empty, Loading, PageHeader, Section } from './ui';
 import { ThemeModeSelect } from '@/components/settings/ThemeModeSelect';
+import { SUPPORT_EMAIL } from '../centerContext';
 
 function CredentialDialog({ cred, onClose }: { cred: { email: string; password: string } | null; onClose: () => void }) {
   return (
@@ -167,7 +168,7 @@ export function SettingsPage() {
           <tr key={d.id}><td className="py-2">{d.description || 'Payment'}</td><td className="font-mono">{money(d.amount, d.currency)}</td><td className="font-mono text-xs">{d.due_date}</td>
             <td className="text-xs">{d.paid_at ? 'Paid' : d.due_date < today ? <span className="rounded px-2 py-0.5 bg-status-risk/10 text-status-risk">Overdue</span> : 'Upcoming'}</td></tr>
         ))}</tbody></table> : <Empty>No payments on file.</Empty>}
-        <p className="text-xs text-muted-foreground">Questions about billing? Contact your Tsetsegs account manager.</p>
+        <p className="text-xs text-muted-foreground">Questions about billing? Email FlowersOS at <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
       </Section>
     </div>
   );

@@ -40,7 +40,8 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Bell, PanelLeftClose, PanelLeftOpen, GripVertical, GripHorizontal } from 'lucide-react';
+import { Bell, PanelLeftClose, PanelLeftOpen, GripVertical, GripHorizontal, LifeBuoy } from 'lucide-react';
+import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
@@ -101,6 +102,7 @@ const NAV = [
   { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/student/review', label: 'Review mistakes', icon: RotateCcw },
   { to: '/student/badges', label: 'Badges', icon: Award },
+  { to: '/student/help', label: 'Help', icon: LifeBuoy },
 ];
 
 /** Bottom-of-sidebar profile card; hovering (or focusing) reveals Settings, theme and Log out. */
@@ -226,6 +228,7 @@ export default function CenterStudentPortal() {
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
                 <Route path="settings" element={<StudentSettingsPage />} />
+                <Route path="help" element={<CenterHelpPage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
               </Routes>
             </div>

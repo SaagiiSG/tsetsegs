@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft,
+  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ import { AdminBackgroundPaths } from '@/components/ui/background-paths';
 import { MathText } from '@/components/MathText';
 import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionMeta';
 import { TeacherLive } from './LiveSession';
+import { CenterHelpPage } from './CenterHelp';
 
 type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
 const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
@@ -345,6 +346,7 @@ export default function CenterTeacherPortal() {
   const navigate = useNavigate();
   const location = useLocation();
   const hubId = matchPath('/teacher/class/:id', location.pathname)?.params.id ?? null;
+  const isHelp = location.pathname === '/teacher/help';
 
   // Liquid glass admin theme, scoped to this page's lifetime.
   useEffect(() => {
@@ -546,6 +548,9 @@ export default function CenterTeacherPortal() {
               <span className="hidden md:inline text-xs">Search</span>
               <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">⌘K</kbd>
             </Button>
+            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
+              <Link to="/teacher/help" aria-label="Help"><LifeBuoy className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Help</span></Link>
+            </Button>
             {role === 'center_admin' && (
               <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
                 <Link to="/admin"><LayoutDashboard className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Admin view</span></Link>
@@ -559,7 +564,7 @@ export default function CenterTeacherPortal() {
       </div>
 
       <div className="relative w-full max-w-[1600px] mx-auto p-3 md:p-6 lg:p-8 pb-28">
-        {!classes ? (
+        {isHelp ? <CenterHelpPage /> : !classes ? (
           <div className="grid gap-4">{[0, 1].map(i => <div key={i} className="h-64 rounded-3xl bg-gradient-to-br from-muted/50 to-muted/20 animate-pulse" />)}</div>
         ) : !classes.length ? (
           <p className="text-sm text-muted-foreground">No classes assigned to you yet. Ask your center admin.</p>
@@ -681,7 +686,7 @@ export default function CenterTeacherPortal() {
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => { if (hubClass) navigate('/teacher'); handleModeChange(key); }}
+              onClick={() => { if (hubClass || isHelp) navigate('/teacher'); handleModeChange(key); }}
               aria-pressed={mode === key}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >

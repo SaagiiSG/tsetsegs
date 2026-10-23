@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import {
   BarChart3, CalendarCheck, CalendarClock, FolderPlus, GraduationCap, Inbox, LayoutDashboard, LogOut, Megaphone, Menu,
-  Search, Settings, Trophy, Users, Layers, ExternalLink,
+  Search, Settings, Trophy, Users, Layers, ExternalLink, LifeBuoy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -22,6 +22,7 @@ import { StudentsPage, StudentDetailPage } from './admin/StudentPages';
 import { QuestionsPage, SprintsPage, AnnouncementsPage } from './admin/ToolPages';
 import { SatSchedulePage } from './admin/SatSchedulePage';
 import { TeamPage, SettingsPage } from './admin/CenterPages';
+import { CenterHelpPage } from './CenterHelp';
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard };
 type Section = { title: string; glow: string; items: Item[] };
@@ -49,6 +50,7 @@ const SECTIONS: Section[] = [
   { title: 'Center', glow: '345 75% 55%', items: [
     { to: 'team', label: 'Team', icon: Users },
     { to: 'settings', label: 'Settings', icon: Settings },
+    { to: 'help', label: 'Help', icon: LifeBuoy },
   ] },
 ];
 
@@ -273,6 +275,7 @@ export default function CenterAdminPortal() {
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="help" element={<CenterHelpPage />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>
           </main>
