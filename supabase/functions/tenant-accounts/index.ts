@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const action = String(body.action ?? '')
 
     const findTenant = async (slug: string) => {
-      const { data } = await admin.from('institution_customers').select('id, portal_enabled, status')
+      const { data } = await admin.from('institution_customers').select('id, portal_enabled, status, access_blocked_at')
         .ilike('slug', String(slug ?? '').trim()).maybeSingle()
       return data && data.portal_enabled && data.status !== 'churned' ? data : null
     }
@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
     if (action === 'register') {
       const tenant = await findTenant(body.slug)
       if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
+      if (tenant.access_blocked_at) return json({ error: 'This center is paused because of an overdue payment, so new sign-ups are closed. Please contact your center.' }, 403)
       const code = String(body.code ?? '').trim()
       const { data: cls } = await admin.from('tenant_classes').select('id').eq('institution_id', tenant.id).eq('join_code', code).maybeSingle()
       if (!cls) return json({ error: 'This sign-up link is not valid. Ask your center for a new one.' }, 404)
