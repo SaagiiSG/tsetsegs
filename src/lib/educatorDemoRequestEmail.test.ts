@@ -20,7 +20,7 @@ describe('educator demo request owner alert', () => {
   });
 
   it('does not throw on a missing or bad timestamp', () => {
-    expect(demoRequestRows({ created_at: 'nope' }).at(-1)).toEqual(['Submitted', '—']);
-    expect(demoRequestRows({}).at(-1)).toEqual(['Submitted', '—']);
+    expect(demoRequestRows({ created_at: 'nope' }).slice(-1)[0]).toEqual(['Submitted', '—']);
+    expect(demoRequestRows({}).slice(-1)[0]).toEqual(['Submitted', '—']);
   });
 });
