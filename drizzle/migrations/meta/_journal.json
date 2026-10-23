@@ -470,6 +470,13 @@
       "when": 1792794706839,
       "tag": "0066_center_admins_add_co_admins",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792796094828,
+      "tag": "0067_center_admins_add_co_admins",
+      "breakpoints": true
     }
   ]
 }
