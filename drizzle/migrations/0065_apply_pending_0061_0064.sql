@@ -1,0 +1,1 @@
+COMMENT ON COLUMN public.educator_demo_requests.notified_at IS 'Set by notify-demo-request when the owner alert is claimed; NULL until then.';
