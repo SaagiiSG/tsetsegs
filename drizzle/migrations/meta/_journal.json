@@ -442,6 +442,20 @@
       "when": 1792779427320,
       "tag": "0062_educator_demo_request_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1792779630333,
+      "tag": "0063_blocked_center_locks_students",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792779631333,
+      "tag": "0064_center_speed_pays_once",
+      "breakpoints": true
     }
   ]
 }
