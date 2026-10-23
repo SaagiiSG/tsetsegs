@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, Plus, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Plus, RotateCcw, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { phoneDigits } from '@/lib/tenant';
 import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { centerAccounts } from '../centerApi';
-import { useCenterAdminData, useRefreshCenter, pct } from './useCenterAdminData';
+import { useCenterAdminData, useRefreshCenter, pct, type CenterAdminData } from './useCenterAdminData';
+import { checkStudentRows, failedRowsText, type ImportRow } from './studentImport';
 import { Empty, Loading, PageHeader, Section, StatRow } from './ui';
 import { PredictionVsReal } from '@/components/shared/PredictionVsReal';
 import { compareToReal, type PredictionPoint } from '@/lib/predictionAccuracy';
@@ -64,6 +69,86 @@ function ClassSelect({ value, onChange, classes, label, className = 'w-44' }: { 
   );
 }
 
+const plural = (n: number) => `${n} student${n === 1 ? '' : 's'}`;
+
+function ImportStudentsDialog({ data }: { data: CenterAdminData }) {
+  const { center } = useCenter();
+  const refresh = useRefreshCenter();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [defaultClassId, setDefaultClassId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [result, setResult] = useState<{ added: number; failed: ImportRow[] } | null>(null);
+  const rows = useMemo(() => checkStudentRows(text, { classes: data.classes, students: data.students, defaultClassId }), [text, data, defaultClassId]);
+  const ok = rows.filter(r => !r.error);
+  const batchName = (id: string | null) => data.classes.find(c => c.id === id)?.name ?? '—';
+  const onOpenChange = (o: boolean) => {
+    if (progress) return; // keep the dialog open while students are being added
+    setOpen(o);
+    if (!o) { setText(''); setDefaultClassId(null); setResult(null); }
+  };
+  const run = async () => {
+    const failed = rows.filter(r => r.error);
+    let next = 0; let added = 0;
+    setProgress({ done: 0, total: ok.length });
+    // Same insert as the one-by-one form, a few at a time.
+    const worker = async () => {
+      while (next < ok.length) {
+        const r = ok[next++];
+        const { error } = await supabase.from('tenant_students').insert({ institution_id: center.id, name: r.name, phone: r.phone, class_id: r.classId });
+        if (error) failed.push({ ...r, error: error.code === '23505' ? 'That phone number is already registered.' : error.message }); else added++;
+        setProgress(p => p && { ...p, done: p.done + 1 });
+      }
+    };
+    await Promise.all(Array.from({ length: 4 }, worker));
+    setProgress(null); setResult({ added, failed }); refresh();
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild><Button variant="outline"><Upload className="h-4 w-4" />Import students</Button></DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Import students</DialogTitle>
+          <DialogDescription>Paste rows from Excel or Google Sheets, or upload a .csv file. Columns: name, phone, batch (optional).</DialogDescription>
+        </DialogHeader>
+        {result ? <>
+          <p className="text-sm">Added {plural(result.added)}.{result.failed.length > 0 && ` ${plural(result.failed.length)} not added. Copy them, fix them and paste them here again.`}</p>
+          <DialogFooter className="gap-2">
+            {result.failed.length > 0 && <Button variant="outline" onClick={() => { navigator.clipboard.writeText(failedRowsText(result.failed)); toast.success('Rows copied'); }}><Copy className="h-4 w-4" />Copy rows that failed</Button>}
+            <Button variant="outline" onClick={() => { setText(''); setResult(null); }}>Import more</Button>
+            <Button onClick={() => onOpenChange(false)}>Done</Button>
+          </DialogFooter>
+        </> : <>
+          <Textarea aria-label="Student rows" rows={6} placeholder={'Bat-Erdene, 99112233, SAT Morning'} value={text} onChange={e => setText(e.target.value)} disabled={!!progress} />
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1"><Label htmlFor="import-file">Or upload a .csv</Label>
+              <Input id="import-file" type="file" accept=".csv,text/csv" className="w-64" disabled={!!progress}
+                onChange={async e => { const f = e.target.files?.[0]; if (f) setText(await f.text()); e.target.value = ''; }} /></div>
+            <div className="space-y-1"><Label>Batch for rows without one</Label><ClassSelect value={defaultClassId} onChange={setDefaultClassId} classes={data.classes} label="Batch for rows without one" className="w-56" /></div>
+          </div>
+          {rows.length > 0 && <>
+            <p className="text-sm text-muted-foreground">{ok.length} ready · {rows.length - ok.length} with problems</p>
+            <div className="max-h-72 overflow-y-auto rounded-md border">
+              <Table>
+                <TableHeader><TableRow><TableHead>#</TableHead><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Batch</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                <TableBody>{rows.map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-muted-foreground">{i + 1}</TableCell><TableCell>{r.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{r.phone || r.rawPhone}</TableCell><TableCell>{r.batch || batchName(r.classId)}</TableCell>
+                    <TableCell className={r.error ? 'text-destructive' : 'text-muted-foreground'}>{r.error ?? 'OK'}</TableCell>
+                  </TableRow>
+                ))}</TableBody>
+              </Table>
+            </div>
+          </>}
+          {progress && <div className="space-y-1"><Progress value={(progress.done / progress.total) * 100} /><p className="text-xs text-muted-foreground">Adding {progress.done} of {progress.total}…</p></div>}
+          <DialogFooter><Button onClick={run} disabled={!ok.length || !!progress}><Upload className="h-4 w-4" />Import {plural(ok.length)}</Button></DialogFooter>
+        </>}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function StudentsPage() {
   const { center } = useCenter();
   const { data, isLoading } = useCenterAdminData();
@@ -87,7 +172,7 @@ export function StudentsPage() {
   const className = (id: string | null) => data.classes.find(c => c.id === id)?.name ?? '—';
   return (
     <div className="space-y-8">
-      <PageHeader title="Search Accounts" description={`${data.students.filter(s => s.active).length} active students`} />
+      <PageHeader title="Search Accounts" description={`${data.students.filter(s => s.active).length} active students`} actions={<ImportStudentsDialog data={data} />} />
       <form onSubmit={add} className="flex flex-wrap gap-3 items-end rounded-lg border p-4">
         <div className="space-y-1"><Label htmlFor="s-name">Student name</Label><Input id="s-name" value={name} onChange={e => setName(e.target.value)} required /></div>
         <div className="space-y-1"><Label htmlFor="s-phone">Phone</Label><Input id="s-phone" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} required /></div>
