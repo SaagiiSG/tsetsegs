@@ -12,6 +12,8 @@ export const sourceFromSearch = (search: string) => {
  const ref = new URLSearchParams(search).get('ref')?.toLowerCase();
  return ref && /^[a-z0-9_-]{1,40}$/.test(ref) ? ref : null;
 };
+// Carries the lead source between /educators and /demo; the ref is already cleaned by sourceFromSearch.
+export const withSource = (href: string, source: string | null) => source ? `${href}&ref=${source}` : href;
 // The request RPC rejects messages over 2000 characters, so the visitor's text gives way to the tag.
 export const appendSource = (message: string, source: string | null, max = 2000) => {
  if (!source) return message;

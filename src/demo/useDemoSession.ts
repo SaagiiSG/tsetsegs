@@ -22,7 +22,8 @@ export function useDemoSession() {
     if (!token) { setLoading(false); return; }
     supabase.rpc('investor_demo_state', { _token: token }).then(({ data, error: failure }) => {
       if (cancelled) return;
-      if (failure) { setError(failure.message); if (failure.message.includes('expired')) { sessionStorage.removeItem(STORAGE_KEY); setToken(null); setExpired(true); } }
+      // A stale token from an earlier visit is dropped quietly so this visitor gets a fresh start, not the end screen.
+      if (failure) { if (failure.message.includes('expired')) { sessionStorage.removeItem(STORAGE_KEY); setToken(null); } else setError(failure.message); }
       else accept(data);
       setLoading(false);
     });
