@@ -5987,15 +5987,6 @@ export type Database = {
         }[]
       }
       current_student_account_id: { Args: never; Returns: string }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       fill_answer_matches: {
         Args: {
           p_alternates: string[]
@@ -6132,15 +6123,6 @@ export type Database = {
         Returns: Json
       }
       longest_day_run: { Args: { p_days: string[] }; Returns: number }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       ngee_cancel_booking: {
         Args: { p_phone: string; p_session_id: string }
         Returns: boolean
@@ -6322,14 +6304,6 @@ export type Database = {
       proctor_unlock: {
         Args: { p_code: string; p_participant_id: string }
         Returns: boolean
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       report_attempt_count: { Args: { _token: string }; Returns: number }
       report_practice_tests: {
