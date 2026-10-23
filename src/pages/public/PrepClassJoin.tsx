@@ -28,12 +28,8 @@ export default function PrepClassJoin() {
   useEffect(() => {
     if (!joinCode) return;
     supabase
-      .from("intense_prep_groups")
-      .select("name")
-      .ilike("join_code", joinCode)
-      .eq("is_active", true)
-      .maybeSingle()
-      .then(({ data }) => setGroupName(data?.name ?? null));
+      .rpc("prep_class_name" as any, { _join_code: joinCode })
+      .then(({ data }) => setGroupName((data as string | null) ?? null));
   }, [joinCode]);
 
   const join = async () => {

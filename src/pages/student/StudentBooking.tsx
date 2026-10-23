@@ -70,16 +70,13 @@ export default function StudentBooking() {
     },
   });
 
-  // Fetch all bookings for display
+  // Taken seats for the seat map (other students' bookings are not readable directly)
   const { data: allBookings } = useQuery({
     queryKey: ['all-session-bookings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('seat_bookings')
-        .select('review_session_id, seat_number, student_account_id, cancelled_at')
-        .is('cancelled_at', null);
+      const { data, error } = await supabase.rpc('review_session_taken_seats' as any);
       if (error) throw error;
-      return data;
+      return data as { review_session_id: string; seat_number: number }[];
     },
   });
 
