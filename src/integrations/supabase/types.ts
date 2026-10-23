@@ -6177,6 +6177,7 @@ export type Database = {
           status: string
         }[]
       }
+      prep_class_name: { Args: { _join_code: string }; Returns: string }
       proctor_accept_oath: {
         Args: { p_participant_id: string }
         Returns: boolean
@@ -6322,6 +6323,13 @@ export type Database = {
       review_educator_demo_request: {
         Args: { _action: string; _id: string }
         Returns: string
+      }
+      review_session_taken_seats: {
+        Args: never
+        Returns: {
+          review_session_id: string
+          seat_number: number
+        }[]
       }
       sat_prediction_accuracy: {
         Args: never
