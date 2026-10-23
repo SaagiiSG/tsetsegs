@@ -63,7 +63,7 @@ export function CenterHelpPage() {
   const staff = role === 'teacher' || role === 'center_admin';
   return (
     <div className="max-w-3xl space-y-4">
-      <PageHeader title="Help" description={staff ? 'Setting up your center, and how to reach FlowersOS.' : 'Common questions, and who to ask.'} />
+      <PageHeader title="Help" description={role === 'center_admin' ? 'Setting up your center, and how to reach FlowersOS.' : staff ? 'How points work, and how to reach FlowersOS.' : 'Common questions, and who to ask.'} />
       {role === 'center_admin' && <GettingStarted />}
       {staff ? (
         <HelpCard title="Contact FlowersOS">
