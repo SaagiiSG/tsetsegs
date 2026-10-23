@@ -1,0 +1,2 @@
+-- Apply the existing pending migrations 0068_lock_class_tests_proctor_bluebook.sql and 0069_lock_notes_bookings_live_prep.sql unchanged in journal order.
+DO $$ BEGIN RAISE NOTICE 'Requested pending migrations processed unchanged'; END $$;

@@ -6177,6 +6177,7 @@ export type Database = {
           status: string
         }[]
       }
+      prep_class_name: { Args: { _join_code: string }; Returns: string }
       proctor_accept_oath: {
         Args: { p_participant_id: string }
         Returns: boolean
@@ -6323,6 +6324,13 @@ export type Database = {
         Args: { _action: string; _id: string }
         Returns: string
       }
+      review_session_taken_seats: {
+        Args: never
+        Returns: {
+          review_session_id: string
+          seat_number: number
+        }[]
+      }
       sat_prediction_accuracy: {
         Args: never
         Returns: {
@@ -6426,6 +6434,12 @@ export type Database = {
       student_badge_earned_core: {
         Args: { p_badge: string; p_student: string }
         Returns: boolean
+      }
+      student_bluebook_scores: {
+        Args: { _student_account_id: string }
+        Returns: {
+          total_score: number
+        }[]
       }
       student_claim_badges: { Args: never; Returns: string[] }
       student_google_connected: { Args: never; Returns: boolean }
