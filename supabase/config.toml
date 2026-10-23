@@ -34,6 +34,9 @@ verify_jwt = true
 [functions.send-transactional-email]
 verify_jwt = true
 
+[functions.notify-demo-request]
+verify_jwt = false
+
 [functions.preview-transactional-email]
 verify_jwt = false
 
