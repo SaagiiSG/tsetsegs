@@ -1454,6 +1454,7 @@ export type Database = {
           institution_name: string
           message: string
           name: string
+          notified_at: string | null
           payment_confirmed_at: string | null
           phone: string
           reviewed_by: string | null
@@ -1470,6 +1471,7 @@ export type Database = {
           institution_name: string
           message?: string
           name: string
+          notified_at?: string | null
           payment_confirmed_at?: string | null
           phone: string
           reviewed_by?: string | null
@@ -1486,6 +1488,7 @@ export type Database = {
           institution_name?: string
           message?: string
           name?: string
+          notified_at?: string | null
           payment_confirmed_at?: string | null
           phone?: string
           reviewed_by?: string | null
@@ -6517,6 +6520,10 @@ export type Database = {
         Returns: string
       }
       tenant_access_status: { Args: { _slug: string }; Returns: Json }
+      tenant_center_blocked: {
+        Args: { _institution: string }
+        Returns: boolean
+      }
       tenant_has_role: {
         Args: { _institution: string; _role: string }
         Returns: boolean
