@@ -484,6 +484,13 @@
       "when": 1792797614003,
       "tag": "0068_lock_class_tests_proctor_bluebook",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1792796095828,
+      "tag": "0069_lock_notes_bookings_live_prep",
+      "breakpoints": true
     }
   ]
 }
