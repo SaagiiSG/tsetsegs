@@ -5961,6 +5961,30 @@ export type Database = {
           times: Json
         }[]
       }
+      class_test_my_review: {
+        Args: { p_participant_id: string }
+        Returns: {
+          alternate_answers: string[]
+          answer: string
+          question_id: string
+          selected_answer: string
+        }[]
+      }
+      class_test_paper: {
+        Args: { p_participant_id: string }
+        Returns: {
+          choice_images: Json
+          figure_description: string
+          figure_svg: string
+          id: string
+          multiple_choice_options: Json
+          passage_text: string
+          question_image_url: string
+          question_image_url_2: string
+          question_text: string
+          question_type: string
+        }[]
+      }
       class_test_save_draft: {
         Args: {
           p_answers: Json

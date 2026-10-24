@@ -526,6 +526,13 @@
       "when": 1792863530291,
       "tag": "0074_class_test_paper_for_signed_out_phones",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792863638461,
+      "tag": "0075_class_test_paper_for_signed_out_phones",
+      "breakpoints": true
     }
   ]
 }
