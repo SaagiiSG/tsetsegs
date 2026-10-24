@@ -6001,6 +6001,10 @@ export type Database = {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
       }
+      challenge_finish_time_sprint: {
+        Args: { _challenge_id: string }
+        Returns: boolean
+      }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
@@ -6488,7 +6492,20 @@ export type Database = {
           test_number: number
         }[]
       }
+      shared_progress: {
+        Args: { _token: string }
+        Returns: {
+          question_id: string
+          video_watched: boolean
+        }[]
+      }
       shared_question_categories: { Args: never; Returns: Json }
+      shared_review_queue: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       solo_has_premium: { Args: { _user: string }; Returns: boolean }
