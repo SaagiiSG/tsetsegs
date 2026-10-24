@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Copy, KeyRound, Moon, Plus, Sun, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,9 +97,19 @@ async function shrinkLogo(file: File): Promise<string> {
 const TIMEZONES = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Edmonton', 'Europe/London', 'Europe/Berlin', 'Asia/Ulaanbaatar', 'Asia/Seoul', 'Asia/Tokyo', 'Asia/Singapore', 'Australia/Sydney'];
 
 export function SettingsPage() {
+  const { center } = useCenter();
+  // The form saves every key, so it starts from the full saved settings (admins only), not tenant_lookup's public copy.
+  const [initial, setInitial] = useState<PortalSettings | null>(null);
+  useEffect(() => {
+    supabase.rpc('tenant_settings', { _institution: center.id })
+      .then(({ data, error }) => error ? toast.error(error.message) : setInitial((data ?? {}) as PortalSettings));
+  }, [center.id]);
+  return initial ? <SettingsForm initial={initial} /> : <Loading />;
+}
+
+function SettingsForm({ initial }: { initial: PortalSettings }) {
   const { center, reloadCenter } = useCenter();
   const { data } = useCenterAdminData();
-  const initial = center.portal_settings ?? {};
   const [s, setS] = useState<PortalSettings>({ ...initial, display_name: initial.display_name ?? center.name, brand_color: initial.brand_color ?? '#171717', contact_email: initial.contact_email ?? '', billing_email: initial.billing_email ?? '', timezone: initial.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone });
   const signOutEveryone = async () => {
     if (!confirm('Sign out every student and teacher now? They will need to sign in again.')) return;

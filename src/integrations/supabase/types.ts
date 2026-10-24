@@ -6569,6 +6569,14 @@ export type Database = {
           total: number
         }[]
       }
+      sprint_points_breakdown: {
+        Args: { _sprint_id: string; _student_ids: string[] }
+        Returns: {
+          category: string
+          points: number
+          student_account_id: string
+        }[]
+      }
       student_account_by_share_token: {
         Args: { _token: string }
         Returns: {
@@ -6644,6 +6652,13 @@ export type Database = {
           p_student: string
         }
         Returns: number
+      }
+      student_points_history: {
+        Args: { _since?: string; _student_id: string }
+        Returns: {
+          created_at: string
+          points: number
+        }[]
       }
       student_practised_recently: {
         Args: { p_student: string }
@@ -6721,6 +6736,7 @@ export type Database = {
         Args: { _institution: string; p_sim: number }
         Returns: undefined
       }
+      tenant_settings: { Args: { _institution: string }; Returns: Json }
       tenant_sprint_leaderboard: {
         Args: { _sprint: string }
         Returns: {

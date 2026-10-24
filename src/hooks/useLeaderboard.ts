@@ -296,11 +296,9 @@ export function useLeaderboard(selectedTier?: TierType) {
       // Get point transactions breakdown for each student
       const studentIds = rankings?.map(r => r.student_account_id) || [];
       
+      // Summed per category by a definer function (point_transactions is own-rows only).
       const { data: transactions } = await supabase
-        .from('point_transactions')
-        .select('student_account_id, points, category')
-        .eq('sprint_id', activeSprint.id)
-        .in('student_account_id', studentIds);
+        .rpc('sprint_points_breakdown', { _sprint_id: activeSprint.id, _student_ids: studentIds });
 
       // Calculate breakdowns
       const breakdowns: Record<string, PointsBreakdown> = {};

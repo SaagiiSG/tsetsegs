@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FolderPlus, Megaphone, UserPlus, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { STATUS_LABEL, STATUS_STYLE, useCenter, type PortalSettings } from '../centerContext';
 import { localDate } from '../centerApi';
 import { useCenterAdminData, useQuestionTopics, pct, money, type CenterAdminData } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
@@ -14,7 +16,12 @@ const ATTENDED = new Set(['present', 'late']);
 /** In-app notifications on the center dashboard; each can be switched off in Settings. */
 function CenterAlerts({ data, today }: { data: CenterAdminData; today: string }) {
   const { center } = useCenter();
-  const ps = center.portal_settings ?? {};
+  // Notification switches are admin-only settings, not in tenant_lookup's public copy.
+  const { data: ps } = useQuery({
+    queryKey: ['center-settings', center.id],
+    queryFn: async () => ((await supabase.rpc('tenant_settings', { _institution: center.id })).data ?? {}) as PortalSettings,
+  });
+  if (!ps) return null;
   const week = Date.now() - 7 * 864e5;
   const alerts: { text: string; to: string }[] = [];
   if (ps.notify_new_students !== false) {

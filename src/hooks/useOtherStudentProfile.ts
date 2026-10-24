@@ -106,10 +106,9 @@ export function useOtherStudentProfile(userId: string | null) {
       let page = 0;
       const pageSize = 1000;
       while (true) {
+        // Classmates' points come through a definer function (point_transactions is own-rows only).
         const { data, error } = await supabase
-          .from('point_transactions')
-          .select('points')
-          .eq('student_account_id', userId)
+          .rpc('student_points_history', { _student_id: userId })
           .range(page * pageSize, (page + 1) * pageSize - 1);
         if (error) throw error;
         if (!data || data.length === 0) break;
@@ -155,10 +154,7 @@ export function useOtherStudentProfile(userId: string | null) {
       const pageSize = 1000;
       while (true) {
         const { data, error } = await supabase
-          .from('point_transactions')
-          .select('points, created_at')
-          .eq('student_account_id', userId)
-          .gte('created_at', startDate.toISOString())
+          .rpc('student_points_history', { _student_id: userId, _since: startDate.toISOString() })
           .range(page * pageSize, (page + 1) * pageSize - 1);
         if (error) throw error;
         if (!data || data.length === 0) break;

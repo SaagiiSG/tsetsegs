@@ -585,9 +585,9 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     const sessionId = localStorage.getItem('student_session_id');
-    
-    if (sessionId && student) {
-      supabase
+    // The log needs the still-valid token, so the session is ended only after it lands.
+    const logged = sessionId && student
+      ? supabase
         .from('student_activity_logs')
         .insert({
           student_account_id: student.id,
@@ -595,12 +595,11 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
           activity_type: 'logout',
           metadata: { user_agent: navigator.userAgent }
         })
-        .then(() => {});
-
-    }
+        .then(() => {}, () => {})
+      : Promise.resolve();
     const hadToken = !!getStudentToken();
     const finish = () => setStudentToken(null);
-    if (hadToken) supabase.rpc('student_logout' as any).then(finish, finish); else finish();
+    if (hadToken) logged.then(() => supabase.rpc('student_logout' as any)).then(finish, finish); else finish();
 
     localStorage.removeItem('student_session_id');
     localStorage.removeItem('student_id');
