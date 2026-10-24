@@ -111,6 +111,8 @@ export default function IntlDbQuestions() {
             throw new Error(detail);
           }
           if (!d || d.error) throw new Error(d?.error || "No update result returned.");
+          // An older server ignores figures_only and runs a full content update, which would overwrite Mongolian questions.
+          if (target && d.figures_only !== true) throw new Error("The server is still running the old sync, which would overwrite whole questions. Deploy sync-external-questions, then check again.");
           if (target !== 'mn') agg.found += d?.total_found || 0; // both banks scan the same external rows
           agg.changed += d?.updated || 0;
           agg.inserted += d?.inserted || 0;

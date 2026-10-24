@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
 
     if (filteredQuestions.length === 0) {
       return new Response(
-        JSON.stringify({ preview: dry_run, total_found: 0, sample: [], message: "No questions found matching filters.", has_more: hasMore, next_offset: offset + safeLimit }),
+        JSON.stringify({ preview: dry_run, figures_only: figuresOnly, total_found: 0, sample: [], message: "No questions found matching filters.", has_more: hasMore, next_offset: offset + safeLimit }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -406,7 +406,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({
-          mode: "update", preview: dry_run, success: errors === 0,
+          mode: "update", figures_only: figuresOnly, preview: dry_run, success: errors === 0,
           total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, inserted, errors, skipped_images: skippedImages,
           changes, has_more: hasMore, next_offset: offset + safeLimit,
           error_details: errorDetails.slice(0, 10),
