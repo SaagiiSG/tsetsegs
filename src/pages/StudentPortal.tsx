@@ -12,6 +12,8 @@ import { getPostLoginRoute } from '@/lib/courseRouting';
 import { cn } from '@/lib/utils';
 import { ForgotPasswordCard } from '@/components/student/ForgotPasswordCard';
 import { digitsOnly, sanitizePhoneInput } from '@/lib/phone';
+import { chromeIntentUrl, isAndroid, isInAppBrowser } from '@/lib/inAppBrowser';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AuthSplitLayout, {
   AuthGlassCard,
   authInputClasses,
@@ -125,9 +127,14 @@ export default function StudentPortal() {
     const { error } = await loginWithPassword(password, result.account);
 
     if (error) {
+      // The 90-day device lock: on the same phone this is almost always Instagram/Facebook's own browser vs Chrome/Safari.
+      const locked = /another device/i.test(error);
       toast({
         title: text('Нэвтрэхэд алдаа гарлаа', 'Login failed'),
-        description: error,
+        description: locked
+          ? text('Энэ бүртгэл өөр хөтөч эсвэл төхөөрөмж дээр бүртгэлтэй байна. Утас чинь адилхан бол анх нэвтэрсэн хөтчөөрөө (Chrome эсвэл Safari) орно уу, Instagram доторх хөтчөөр биш. Үгүй бол багшаасаа төхөөрөмжөө шинэчлүүлэхийг хүснэ үү.',
+              "This account is registered to another browser or device. On the same phone, open flowersos.co in the browser you first signed in with (Chrome or Safari), not inside Instagram. Otherwise ask your teacher to reset your device.")
+          : error,
         variant: 'destructive'
       });
     }
@@ -220,6 +227,19 @@ export default function StudentPortal() {
           {text('Утасны дугаар, нууц үгээ оруулж нэвтэрнэ үү', 'Enter your phone number and password to access practice questions')}
         </p>
       </div>
+      {isInAppBrowser() && (
+        <Alert className="mb-6">
+          <AlertTitle>{text('Апп доторх хөтөч ашиглаж байна', "You're in an app's built-in browser")}</AlertTitle>
+          <AlertDescription className="space-y-3">
+            <p>{text('Instagram, Facebook зэрэг апп доторх хөтчөөр нэвтэрвэл таны бүртгэл энэ хөтөчид түгжигдэж, дараа нь Chrome эсвэл Safari-аас нэвтэрч чадахгүй болно. Баруун дээд буланд байгаа ••• товчийг дараад "Open in browser"-ийг сонгоно уу.',
+              "If you sign in inside Instagram or Facebook, your account gets locked to this browser and Chrome or Safari won't work later. Tap ••• at the top right and choose \"Open in browser\".")}</p>
+            <div className="flex flex-wrap gap-2">
+              {isAndroid() && <Button asChild size="sm"><a href={chromeIntentUrl(window.location.href)}>{text('Chrome-д нээх', 'Open in Chrome')}</a></Button>}
+              <Button type="button" size="sm" variant="outline" onClick={() => navigator.clipboard?.writeText(window.location.href).then(() => toast({ title: text('Хаяг хуулагдлаа', 'Link copied') }))}>{text('Хаягийг хуулах', 'Copy link')}</Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       <form onSubmit={handleLogin} className="space-y-8">
         <div className="space-y-2">
           <Label htmlFor="phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone Number')}</Label>
