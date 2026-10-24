@@ -125,12 +125,9 @@ export default function StudentShareProfile() {
   const { data: progress } = useQuery({
     queryKey: ['shared-progress', studentAccount?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_progress')
-        .select('question_id, video_watched')
-        .eq('student_account_id', studentAccount!.id);
+      const { data, error } = await supabase.rpc('shared_progress' as any, { _token: shareToken });
       if (error) throw error;
-      return data;
+      return data as { question_id: string; video_watched: boolean }[];
     },
     enabled: !!studentAccount?.id
   });
@@ -150,12 +147,9 @@ export default function StudentShareProfile() {
   const { data: reviewQueue } = useQuery({
     queryKey: ['shared-review', studentAccount?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_review_queue')
-        .select('id')
-        .eq('student_account_id', studentAccount!.id);
+      const { data, error } = await supabase.rpc('shared_review_queue' as any, { _token: shareToken });
       if (error) throw error;
-      return data;
+      return data as { id: string }[];
     },
     enabled: !!studentAccount?.id
   });

@@ -152,7 +152,7 @@ export function useChallenge(challengeId: string | null) {
   const finishTimeSprint = useCallback(async () => {
     if (!challenge) return;
     if (challenge.status !== 'active') return;
-    await supabase.from('challenges').update({ status: 'finished' }).eq('id', challenge.id);
+    await supabase.rpc('challenge_finish_time_sprint' as any, { _challenge_id: challenge.id });
   }, [challenge]);
 
   return { challenge, participants, loading, refresh, setReady, startChallenge, cancelChallenge, finishTimeSprint };
@@ -239,7 +239,8 @@ export async function createChallenge(
       const rows = (accts ?? []).map((a: any) => ({
         challenge_id: ch.id,
         student_account_id: a.id,
-        display_name: nameByPhone.get(a.phone_number) || a.phone_number,
+        // Challenge players are publicly readable (live screens), so never fall back to a full phone number.
+        display_name: nameByPhone.get(a.phone_number) || `Student ••${String(a.phone_number ?? '').slice(-2)}`,
       }));
       if (rows.length > 0) {
         await supabase.from('challenge_participants').insert(rows);

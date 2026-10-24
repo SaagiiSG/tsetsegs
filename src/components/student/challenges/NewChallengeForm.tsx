@@ -61,7 +61,7 @@ export default function NewChallengeForm({ preselectFriend, onCreated }: Props) 
     if (!student) return 'You';
     const ls = student.linked_student;
     if (ls) return `${ls.first_name}${ls.last_name ? ' ' + ls.last_name.charAt(0) + '.' : ''}`;
-    return student.phone_number;
+    return `Student ••${String(student.phone_number ?? '').slice(-2)}`; // shown publicly in challenges: no full phone
   }, [student]);
 
   const toggle = (id: string) => {
