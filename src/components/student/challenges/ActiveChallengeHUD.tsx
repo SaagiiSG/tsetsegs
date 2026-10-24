@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion, PanInfo } from 'framer-motion';
 import { Sword, Calculator, BookOpen, Users, Trophy, Crown, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { useActiveChallenge } from '@/hooks/useActiveChallenge';
 import { useChallenge } from '@/hooks/useChallenge';
+import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -110,6 +111,17 @@ export function ActiveChallengeHUD() {
     const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
   }, [challenge?.format, challenge?.started_at, challenge?.id]);
+
+  // Sprint players practise with only this widget showing, so it ends the sprint when time runs out.
+  // The server checks the time and that the caller is a player; retry every 5 s in case clocks differ.
+  const sprintEndTry = useRef(0);
+  useEffect(() => {
+    if (!challenge || challenge.format !== 'time_sprint' || challenge.status !== 'active' || !challenge.started_at) return;
+    const end = new Date(challenge.started_at).getTime() + (challenge.duration_seconds ?? 0) * 1000;
+    if (now < end || now - sprintEndTry.current < 5000) return;
+    sprintEndTry.current = now;
+    void supabase.rpc('challenge_finish_time_sprint' as any, { _challenge_id: challenge.id });
+  }, [challenge, now]);
 
   const visible = !!challenge && !onPlayScreen;
 

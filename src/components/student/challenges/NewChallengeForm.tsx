@@ -60,7 +60,7 @@ export default function NewChallengeForm({ preselectFriend, onCreated }: Props) 
   const hostName = useMemo(() => {
     if (!student) return 'You';
     const ls = student.linked_student;
-    if (ls) return `${ls.first_name}${ls.last_name ? ' ' + ls.last_name.charAt(0) + '.' : ''}`;
+    if (ls?.first_name?.trim()) return `${ls.first_name}${ls.last_name ? ' ' + ls.last_name.charAt(0) + '.' : ''}`;
     return `Student ••${String(student.phone_number ?? '').slice(-2)}`; // shown publicly in challenges: no full phone
   }, [student]);
 
