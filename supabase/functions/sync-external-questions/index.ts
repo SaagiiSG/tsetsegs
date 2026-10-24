@@ -182,6 +182,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { subject, since_date, since_updated, dry_run = false, category, offset = 0, limit = 100, question_set, id_prefix, target_set, mode } = body;
     const isUpdate = mode === "update";
+    // Figures-only update: copies redrawn figures onto rows already imported, in either bank, and nothing else.
+    const figuresOnly = isUpdate && body.figures_only === true;
     // External updates feed the international bank (intDB); Mongolian bank stays untouched unless target="mn".
     const QT = body.target === "mn" ? "questions" : "intl_questions";
 
@@ -214,7 +216,10 @@ Deno.serve(async (req) => {
 
     // Update mode: only pull questions the external DB flags as overwritten variants
     // (is_variant = true). Timestamps are unreliable — bulk touches inflate counts.
-    if (isUpdate) {
+    // Figure fixes land on original rows, which are never flagged, so figures-only pulls every row with a drawing.
+    if (figuresOnly) {
+      query = query.not("figure_svg", "is", null);
+    } else if (isUpdate) {
       query = query.eq("is_variant", true);
     } else if (question_set) {
       // Filter by question_set if specified, otherwise only fetch originals (skip for english)
@@ -320,6 +325,9 @@ Deno.serve(async (req) => {
         "alternate_answers", "question_image_url", "choice_images", "video_url",
         "has_figure", "figure_type", "figure_description", "figure_svg", "difficulty_level",
       ] as const;
+      // The Mongolian bank may hold its own figure descriptions, so a figures-only run gives it just the drawing.
+      const FIELDS: readonly string[] = !figuresOnly ? CONTENT_FIELDS
+        : QT === "questions" ? ["figure_svg"] : ["figure_svg", "figure_description"];
       const norm = (v: unknown) => JSON.stringify(v ?? null);
 
       // Match each external question to an internal row
@@ -340,7 +348,7 @@ Deno.serve(async (req) => {
         const chunk = matches.slice(i, i + 50);
         const { data: rows, error: rowsErr } = await adminClient
           .from(QT)
-          .select(`id, question_id, ${CONTENT_FIELDS.join(", ")}`)
+          .select(`id, question_id, ${FIELDS.join(", ")}`)
           .in("id", chunk.map((m) => m.internalId));
         if (rowsErr) { errors += chunk.length; errorDetails.push(rowsErr.message); continue; }
         const byId = new Map((rows || []).map((r: any) => [r.id, r]));
@@ -350,7 +358,7 @@ Deno.serve(async (req) => {
           const cur: any = byId.get(m.internalId);
           if (!cur) { notFound++; return; }
           const next: any = normalizeQuestion(m.ext, {}, null);
-          const patch = buildContentPatch(cur, next, CONTENT_FIELDS, skipImageDiffs);
+          const patch = buildContentPatch(cur, next, FIELDS, skipImageDiffs, figuresOnly ? FIELDS : undefined);
           const changed = Object.keys(patch);
           if (changed.length === 0) unchanged++;
           // Skip questions whose figure link differs — our hosted images win over external links
@@ -366,8 +374,9 @@ Deno.serve(async (req) => {
           }
           if (dry_run) { if (changed.length) updated++; return; }
 
-          const metadata = QT === "intl_questions" ? { ext_variant: true, ext_question_id: m.ext.question_id } : {};
-          if (!changed.length && QT !== "intl_questions") return;
+          // Figures-only runs never tag originals as variants and skip unchanged rows.
+          const metadata = QT === "intl_questions" && !figuresOnly ? { ext_variant: true, ext_question_id: m.ext.question_id } : {};
+          if (!changed.length && (figuresOnly || QT !== "intl_questions")) return;
           const { error: upErr } = await adminClient.from(QT).update({ ...patch, ...metadata }).eq("id", m.internalId);
           if (upErr) { errors++; errorDetails.push(`${cur.question_id}: ${upErr.message}`); }
           else if (changed.length) updated++;
@@ -377,7 +386,7 @@ Deno.serve(async (req) => {
 
       // Tag every matched flagged question + insert the ones intDB doesn't have yet
       let inserted = 0;
-      if (!dry_run && QT === "intl_questions") {
+      if (!dry_run && QT === "intl_questions" && !figuresOnly) {
         const matchedExt = new Set(matches.map((m) => m.ext.question_id));
         const missing = filteredQuestions.filter((q: any) => !matchedExt.has(q.question_id));
         if (missing.length) {

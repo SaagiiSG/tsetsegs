@@ -32,7 +32,7 @@ export default function IntlDbQuestions() {
   const [formOpen, setFormOpen] = useState(false);
   const [cbFormOpen, setCbFormOpen] = useState(false);
   const [syncing, setSyncing] = useState<null | 'checking' | 'importing'>(null);
-  const [syncResult, setSyncResult] = useState<null | { found: number; changed: number; inserted: number; errors: number; dryRun: boolean }>(null);
+  const [syncResult, setSyncResult] = useState<null | { found: number; changed: number; inserted: number; errors: number; dryRun: boolean; banks?: { intl: number; mn: number } }>(null);
 
   const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
@@ -86,41 +86,49 @@ export default function IntlDbQuestions() {
     }
   };
 
-  const runSync = async (dryRun: boolean) => {
+  // figures: copy redrawn figures (only the drawing) into both banks, intDB first, then the Mongolian bank.
+  const runSync = async (dryRun: boolean, figures = false) => {
     setSyncing(dryRun ? 'checking' : 'importing');
     const agg = { found: 0, changed: 0, inserted: 0, errors: 0 };
+    const banks = { intl: 0, mn: 0 };
+    const show = () => setSyncResult({ ...agg, dryRun, ...(figures ? { banks: { ...banks } } : {}) });
     try {
-      let offset = 0, hasMore = true;
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData.session) throw new Error("Please sign in again before updating questions.");
       const batchSize = dryRun ? 200 : 50;
-      while (hasMore) {
-        const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
-          body: { mode: 'update', dry_run: dryRun, skip_image_diffs: true, offset, limit: batchSize },
-        });
-        if (error) {
-          let detail = error.message;
-          if ("context" in error && error.context instanceof Response) {
-            const response = await error.context.json().catch(() => null);
-            detail = response?.error || detail;
+      for (const target of figures ? (['intl', 'mn'] as const) : [null]) {
+        let offset = 0, hasMore = true;
+        while (hasMore) {
+          const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
+            body: { mode: 'update', dry_run: dryRun, offset, limit: batchSize, ...(target ? { figures_only: true, target } : { skip_image_diffs: true }) },
+          });
+          if (error) {
+            let detail = error.message;
+            if ("context" in error && error.context instanceof Response) {
+              const response = await error.context.json().catch(() => null);
+              detail = response?.error || detail;
+            }
+            throw new Error(detail);
           }
-          throw new Error(detail);
+          if (!d || d.error) throw new Error(d?.error || "No update result returned.");
+          if (target !== 'mn') agg.found += d?.total_found || 0; // both banks scan the same external rows
+          agg.changed += d?.updated || 0;
+          agg.inserted += d?.inserted || 0;
+          agg.errors += d?.errors || 0;
+          if (target) banks[target] += d?.updated || 0;
+          show();
+          if (d.errors > 0 || d.success === false) throw new Error(d.error_details?.join("; ") || "Some questions failed to update. Please retry.");
+          hasMore = d?.has_more === true;
+          const nextOffset = d?.next_offset ?? offset + batchSize;
+          if (hasMore && nextOffset <= offset) throw new Error("The scan did not advance. Please retry.");
+          offset = nextOffset;
         }
-        if (!d || d.error) throw new Error(d?.error || "No update result returned.");
-        agg.found += d?.total_found || 0;
-        agg.changed += d?.updated || 0;
-        agg.inserted += d?.inserted || 0;
-        agg.errors += d?.errors || 0;
-        setSyncResult({ ...agg, dryRun });
-        if (d.errors > 0 || d.success === false) throw new Error(d.error_details?.join("; ") || "Some questions failed to update. Please retry.");
-        hasMore = d?.has_more === true;
-        const nextOffset = d?.next_offset ?? offset + batchSize;
-        if (hasMore && nextOffset <= offset) throw new Error("The scan did not advance. Please retry.");
-        offset = nextOffset;
       }
-      setSyncResult({ ...agg, dryRun });
+      show();
       if (!dryRun) {
-        toast({ title: 'Imported into intDB', description: `${agg.changed} updated, ${agg.inserted} added.` });
+        toast(figures
+          ? { title: 'Figures updated', description: `${banks.intl} in intDB, ${banks.mn} in the Mongolian bank.` }
+          : { title: 'Imported into intDB', description: `${agg.changed} updated, ${agg.inserted} added.` });
         refetch();
       }
     } catch (e: any) {
@@ -146,9 +154,17 @@ export default function IntlDbQuestions() {
             {syncing === 'checking' ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
             Check for updates
           </Button>
-          <Button size="sm" disabled={!!syncing || !syncResult?.dryRun} onClick={() => runSync(false)}>
+          <Button size="sm" disabled={!!syncing || !syncResult?.dryRun || !!syncResult.banks} onClick={() => runSync(false)}>
             {syncing === 'importing' ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             Import to intDB
+          </Button>
+          <Button variant="outline" size="sm" disabled={!!syncing} onClick={() => runSync(true, true)}>
+            <Search className="h-4 w-4 mr-2" />
+            Check figures
+          </Button>
+          <Button size="sm" disabled={!!syncing || !syncResult?.dryRun || !syncResult.banks} onClick={() => runSync(false, true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Update figures
           </Button>
         </div>
       </div>
@@ -156,9 +172,10 @@ export default function IntlDbQuestions() {
       {syncResult && (
         <Card><CardContent className="p-4 text-sm flex flex-wrap gap-x-6 gap-y-1">
           <span>{syncing ? 'Scanning…' : syncResult.dryRun ? 'Check complete' : 'Import complete'}</span>
-          <span className="text-muted-foreground">Flagged in external DB: <span className="font-mono">{syncResult.found}</span></span>
+          <span className="text-muted-foreground">{syncResult.banks ? 'With a figure in external DB' : 'Flagged in external DB'}: <span className="font-mono">{syncResult.found}</span></span>
           <span className="text-muted-foreground">{syncResult.dryRun ? 'Will update' : 'Updated'}: <span className="font-mono">{syncResult.changed}</span></span>
-          {!syncResult.dryRun && <span className="text-muted-foreground">Added: <span className="font-mono">{syncResult.inserted}</span></span>}
+          {syncResult.banks && <span className="text-muted-foreground">Figures — intDB: <span className="font-mono">{syncResult.banks.intl}</span>, Mongolian bank: <span className="font-mono">{syncResult.banks.mn}</span></span>}
+          {!syncResult.dryRun && !syncResult.banks && <span className="text-muted-foreground">Added: <span className="font-mono">{syncResult.inserted}</span></span>}
           {syncResult.errors > 0 && <span className="text-destructive">Errors: {syncResult.errors}</span>}
           {syncResult.dryRun && !syncing && syncResult.changed === 0 && <span className="text-muted-foreground">Everything is already up to date.</span>}
         </CardContent></Card>

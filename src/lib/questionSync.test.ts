@@ -8,6 +8,11 @@ describe('question sync', () => {
   it('preserves local explanations when the external copy is blank', () => {
     expect(buildContentPatch({ rationale: 'local' }, { rationale: ' ' }, ['rationale'], false)).toEqual({});
   });
+  it('figures-only: copies a changed drawing but never wipes a local one', () => {
+    const figs = ['figure_svg', 'figure_description'];
+    expect(buildContentPatch({ figure_svg: '<svg>old</svg>', figure_description: 'd' }, { figure_svg: '<svg>new</svg>', figure_description: 'd' }, figs, false, figs)).toEqual({ figure_svg: '<svg>new</svg>' });
+    expect(buildContentPatch({ figure_svg: '<svg>local</svg>', figure_description: 'local' }, { figure_svg: null, figure_description: '' }, figs, false, figs)).toEqual({});
+  });
 });
 import { existingMatcher } from '../../supabase/functions/sync-external-questions/existingMatch';
 
