@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildContentPatch } from '../../supabase/functions/sync-external-questions/contentPatch';
+import { buildContentPatch, ORIGINALS_ONLY } from '../../supabase/functions/sync-external-questions/contentPatch';
 
 describe('question sync', () => {
   it('imports an explanation while preserving the hosted image', () => {
@@ -12,6 +12,9 @@ describe('question sync', () => {
     const figs = ['figure_svg', 'figure_description'];
     expect(buildContentPatch({ figure_svg: '<svg>old</svg>', figure_description: 'd' }, { figure_svg: '<svg>new</svg>', figure_description: 'd' }, figs, false, figs)).toEqual({ figure_svg: '<svg>new</svg>' });
     expect(buildContentPatch({ figure_svg: '<svg>local</svg>', figure_description: 'local' }, { figure_svg: null, figure_description: '' }, figs, false, figs)).toEqual({});
+  });
+  it('figures-only keeps originals (is_variant false or null) and drops variants', () => {
+    expect(ORIGINALS_ONLY).toBe('is_variant.is.null,is_variant.eq.false');
   });
 });
 import { existingMatcher } from '../../supabase/functions/sync-external-questions/existingMatch';

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { buildContentPatch } from "./contentPatch.ts";
+import { buildContentPatch, ORIGINALS_ONLY } from "./contentPatch.ts";
 import { existingMatcher, type ExistingRow } from "./existingMatch.ts";
 import { sanitizeSvg } from "../_shared/svgFigure.ts";
 
@@ -216,9 +216,10 @@ Deno.serve(async (req) => {
 
     // Update mode: only pull questions the external DB flags as overwritten variants
     // (is_variant = true). Timestamps are unreliable — bulk touches inflate counts.
-    // Figure fixes land on original rows, which are never flagged, so figures-only pulls every row with a drawing.
+    // Figure fixes land on original rows, which are never flagged, so figures-only pulls every original row with a drawing.
     if (figuresOnly) {
-      query = query.not("figure_svg", "is", null);
+      // Variants travel with their text through the normal import; their drawings are never copied here.
+      query = query.not("figure_svg", "is", null).or(ORIGINALS_ONLY);
     } else if (isUpdate) {
       query = query.eq("is_variant", true);
     } else if (question_set) {

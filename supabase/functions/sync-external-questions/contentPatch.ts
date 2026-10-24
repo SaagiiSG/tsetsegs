@@ -1,3 +1,5 @@
+// PostgREST filter for the figures-only run: originals hold is_variant false or null; variants (true) are excluded.
+export const ORIGINALS_ONLY = "is_variant.is.null,is_variant.eq.false";
 // keepWhenBlank: fields a blank external value never wipes (local explanations; local drawings on figures-only runs).
 export function buildContentPatch(current: Record<string, unknown>, next: Record<string, unknown>, fields: readonly string[], preserveImage: boolean, keepWhenBlank: readonly string[] = ['rationale']) {
   const patch: Record<string, unknown> = {};
