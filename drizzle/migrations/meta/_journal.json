@@ -582,6 +582,13 @@
       "when": 1792874615691,
       "tag": "0082_security_batch3",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1792875258990,
+      "tag": "0083_apply_pending_0081_0082",
+      "breakpoints": true
     }
   ]
 }
