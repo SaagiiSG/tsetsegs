@@ -519,6 +519,13 @@
       "when": 1792861710885,
       "tag": "0073_apply_pending_0072",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792863530291,
+      "tag": "0074_class_test_paper_for_signed_out_phones",
+      "breakpoints": true
     }
   ]
 }

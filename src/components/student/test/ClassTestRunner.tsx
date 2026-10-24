@@ -319,7 +319,7 @@ export function ClassTestRunner({
   const paperKey = `class-exam:paper:${test.id}`;
 
   useEffect(() => {
-    if (!idsKey) return;
+    if (!idsKey || !participantId) return;
     if (loadedKeyRef.current === idsKey) return;
     loadedKeyRef.current = idsKey;
     const ids = idsKey.split(',');
@@ -338,13 +338,11 @@ export function ClassTestRunner({
       /* ignore a bad cache */
     }
 
-    supabase
-      .from('questions')
-      // NOTE: `answer` is deliberately excluded — the answer key never touches the
-      // student's device while the exam is live (grading happens on the server).
-      .select('id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, question_type, passage_text')
-      .in('id', ids)
-      .then(({ data }) => {
+    // The paper comes without `answer`: the answer key never touches the student's device while the
+    // exam is live (grading happens on the server). Signed-out phones can't read `questions` directly.
+    (supabase.rpc as any)('class_test_paper', { p_participant_id: participantId })
+      .then(({ data }: { data: QuestionRow[] | null }) => {
+        if (!data?.length) { loadedKeyRef.current = null; return; } // never cache an empty paper
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
         const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as QuestionRow[];
         setQuestions(ordered);
@@ -354,7 +352,7 @@ export function ClassTestRunner({
           /* storage full — the test still works, just no offline cache */
         }
       });
-  }, [idsKey, paperKey]);
+  }, [idsKey, paperKey, participantId]);
 
 
   /* ---------- restore progress from this device (no network) ---------- */
@@ -507,11 +505,8 @@ export function ClassTestRunner({
   useEffect(() => {
     if (!submitted || !participantId) return;
     if (Object.keys(answersRef.current).length > 0) return;
-    supabase
-      .from('class_test_answers')
-      .select('question_id, selected_answer')
-      .eq('participant_id', participantId)
-      .then(({ data }) => {
+    (supabase.rpc as any)('class_test_my_review', { p_participant_id: participantId })
+      .then(({ data }: { data: { question_id: string; selected_answer: string | null }[] | null }) => {
         if (!data || data.length === 0) return;
         const map: Record<string, string> = {};
         for (const r of data as any[]) if (r.selected_answer != null) map[r.question_id] = r.selected_answer;
@@ -521,24 +516,21 @@ export function ClassTestRunner({
 
   /* ---------- answer key arrives only once the paper is in ---------- */
   useEffect(() => {
-    if (!submitted || !idsKey) return;
+    if (!submitted || !idsKey || !participantId) return;
     if (Object.keys(answerKey).length > 0) return;
-    supabase
-      .from('questions')
-      .select('id, answer, alternate_answers')
-      .in('id', idsKey.split(','))
-      .then(({ data }) => {
-        if (!data) return;
+    (supabase.rpc as any)('class_test_my_review', { p_participant_id: participantId })
+      .then(({ data }: { data: { question_id: string; answer: string | null; alternate_answers: string[] | null }[] | null }) => {
+        if (!data?.length) return;
         const key: Record<string, string> = {};
         const alts: Record<string, string[]> = {};
-        for (const r of data as any[]) {
-          key[r.id] = r.answer ?? '';
-          alts[r.id] = Array.isArray(r.alternate_answers) ? r.alternate_answers : [];
+        for (const r of data) {
+          key[r.question_id] = r.answer ?? '';
+          alts[r.question_id] = Array.isArray(r.alternate_answers) ? r.alternate_answers : [];
         }
         setAnswerKey(key);
         setAlternateKey(alts);
       });
-  }, [submitted, idsKey, answerKey]);
+  }, [submitted, idsKey, answerKey, participantId]);
 
 
 
