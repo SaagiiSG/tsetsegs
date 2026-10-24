@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Circle, CircleCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SUPPORT_EMAIL, useCenter } from './centerContext';
+import { useCenter } from './centerContext';
+import { ContactSupport } from './ContactSupport';
 import { useCenterAdminData } from './admin/useCenterAdminData';
 import { useCenterSprints } from './admin/ToolPages';
 import { PageHeader } from './admin/ui';
@@ -67,7 +68,8 @@ export function CenterHelpPage() {
       {role === 'center_admin' && <GettingStarted />}
       {staff ? (
         <HelpCard title="Contact FlowersOS">
-          <p>Something not working, or a question about your plan or billing? Email <Mail to={SUPPORT_EMAIL} />.</p>
+          <p>Something not working, or a question about your plan or billing? Send us a message and we'll reply by email.</p>
+          <ContactSupport centerId={center.id} />
           {role === 'teacher' && <p>Forgot your password, or missing a batch? Ask your center admin.</p>}
         </HelpCard>
       ) : (

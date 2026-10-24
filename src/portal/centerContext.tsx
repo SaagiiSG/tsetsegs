@@ -16,9 +16,6 @@ export function useCenter() {
 
 export const centerDisplayName = (c: Center) => c.portal_settings?.display_name || c.name;
 
-/** Where center staff reach FlowersOS. */
-export const SUPPORT_EMAIL = 'support@flowersos.co';
-
 /** "#rrggbb" -> "h s% l%" for HSL tokens. */
 export function hexToHslToken(hex: string): string | null {
   const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);

@@ -1,0 +1,60 @@
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
+import { sendTemplateEmail } from '../_shared/transactional-email-templates/send-email.ts'
+import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+
+// The center portal's Contact FlowersOS form calls this right after submit_support_request with the new id.
+// Safe to expose because the claim below lets each saved request email the owner at most once.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+
+  const id = await req.json().then((body) => body?.id, () => null)
+  if (typeof id !== 'string' || !UUID.test(id)) return json({ error: 'Invalid request id' }, 400)
+
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  // Atomic claim: a second or concurrent call finds notified_at already set and gets no row.
+  const { data: request, error } = await admin
+    .from('support_requests')
+    .update({ notified_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('notified_at', null)
+    .select('name, role, email, subject, message, created_at, institution_customers(name)')
+    .maybeSingle()
+  if (error) {
+    console.error('Support request claim failed', error)
+    return json({ error: 'Could not load request' }, 500)
+  }
+  if (!request) return json({ success: true, alreadyNotified: true })
+
+  const templateName = 'support-request'
+  const recipient = TEMPLATES[templateName]?.to ?? ''
+  const log = async (status: 'sent' | 'suppressed' | 'failed', error_message?: string) => {
+    const { error: logError } = await admin.from('email_send_log').insert({
+      message_id: null, template_name: templateName, recipient_email: recipient, status, error_message: error_message ?? null,
+    })
+    if (logError) console.error('Email log write failed', { code: logError.code, message: logError.message })
+  }
+  try {
+    const { institution_customers: center, ...fields } = request
+    const result = await sendTemplateEmail(templateName, recipient, {
+      // Reply goes straight to the staff member (the email is their login, copied from tenant_members).
+      templateData: { ...fields, center_name: center?.name }, idempotencyKey: `support-request-${id}`, replyTo: request.email?.trim(),
+    })
+    await log(result.sent ? 'sent' : 'suppressed')
+  } catch (sendError) {
+    console.error('Support request alert failed', sendError)
+    await log('failed', sendError instanceof Error ? sendError.message : String(sendError))
+    // Release the claim so a later call can retry this request.
+    await admin.from('support_requests').update({ notified_at: null }).eq('id', id)
+    return json({ error: 'Could not send alert' }, 502)
+  }
+  return json({ success: true })
+})

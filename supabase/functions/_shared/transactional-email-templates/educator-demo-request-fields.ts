@@ -11,12 +11,12 @@ export interface DemoRequest {
   created_at?: string
 }
 
-const oneLine = (value: unknown) => String(value ?? '').replace(/\s+/g, ' ').trim()
+export const oneLine = (value: unknown) => String(value ?? '').replace(/\s+/g, ' ').trim()
 
 export const demoRequestSubject = (r: DemoRequest) =>
   `New demo request: ${oneLine(r.institution_name).slice(0, 100) || 'educator'}`
 
-const submittedAt = (iso?: string) =>
+export const submittedAt = (iso?: string) =>
   iso && !Number.isNaN(Date.parse(iso)) ? `${new Date(iso).toISOString().slice(0, 16).replace('T', ' ')} UTC` : ''
 
 export function demoRequestRows(r: DemoRequest): [string, string][] {

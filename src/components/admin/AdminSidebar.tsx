@@ -1,6 +1,8 @@
 import { ChevronDown, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import flowersLogo from "@/assets/flowers-logo.png";
 import { motion, AnimatePresence, MotionConfig, useReducedMotion } from "framer-motion";
@@ -15,6 +17,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuBadge,
   useSidebar,
   SidebarFooter,
   SidebarRail,
@@ -34,6 +37,11 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
   const isDev = useIsDevAccount();
   const { pathname } = useLocation();
+  // Open support requests, shown as a badge on the menu item (RLS returns 0 rows for non-admins).
+  const openSupport = useQuery({
+    queryKey: ["support-requests", "open-count"],
+    queryFn: async () => (await supabase.from("support_requests").select("id", { count: "exact", head: true }).eq("status", "open")).count ?? 0,
+  });
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(menuSections.map((section) => [section.label, section.defaultOpen]))
   );
@@ -184,6 +192,7 @@ export function AdminSidebar() {
                                 </AnimatePresence>
                               </NavLink>
                             </SidebarMenuButton>
+                            {item.url === "/admin/support" && !!openSupport.data && <SidebarMenuBadge>{openSupport.data}</SidebarMenuBadge>}
                           </SidebarMenuItem>
                         </motion.div>
                       ))}

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { CenterContext, SUPPORT_EMAIL, useCenterBrand, type Center, type CenterRole } from './centerContext';
+import { Button } from '@/components/ui/button';
+import { CenterContext, useCenterBrand, type Center, type CenterRole } from './centerContext';
+import { ContactSupport } from './ContactSupport';
 import CenterJoin from './CenterJoin';
 import CenterSignIn from './CenterSignIn';
 import CenterAdminPortal from './CenterAdminPortal';
@@ -16,6 +18,8 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [memberName, setMemberName] = useState('');
   const [access, setAccess] = useState<{ blocked: boolean; warnings: number } | null>(null);
   const [recovering, setRecovering] = useState(false);
+  const [canContact, setCanContact] = useState(false);
+  const [staffSignIn, setStaffSignIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +55,12 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     return () => { cancelled = true; };
   }, [center, session]);
 
+  // A blocked center hides staff rows from the browser, so ask the server whether this login is staff.
+  useEffect(() => {
+    setCanContact(false);
+    if (access?.blocked && center && session) supabase.rpc('support_can_contact', { _institution: center.id }).then(({ data }) => setCanContact(!!data));
+  }, [access?.blocked, center, session]);
+
   const signOut = async () => { await supabase.auth.signOut(); setRole(null); navigate('/'); };
 
   // Center login security: students and teachers are signed out when their sign-in is older than the
@@ -79,12 +89,15 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     );
   }
 
-  if (access?.blocked && !window.location.pathname.startsWith('/join')) {
+  // Signed-out staff may open the sign-in page, then land back here with the contact form.
+  if (access?.blocked && !window.location.pathname.startsWith('/join') && !(staffSignIn && !session)) {
     return (
       <main className="min-h-screen grid place-items-center p-6 text-center">
         <div className="max-w-sm space-y-2">
           <h1 className="font-chillax text-2xl font-semibold">Access paused</h1>
-          <p className="text-sm text-muted-foreground">This portal is paused because of an overdue payment. Please contact your center, or your center admin can contact FlowersOS at <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
+          <p className="text-sm text-muted-foreground">This portal is paused because of an overdue payment. {canContact ? 'To settle your bill, contact FlowersOS.' : 'Please contact your center.'}</p>
+          {canContact && <ContactSupport centerId={center.id} />}
+          {!session && <Button variant="link" size="sm" onClick={() => setStaffSignIn(true)}>Center staff: sign in to contact FlowersOS</Button>}
           {session && <button className="text-sm underline text-muted-foreground" onClick={signOut}>Sign out</button>}
         </div>
       </main>
@@ -96,7 +109,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut, reloadCenter: loadCenter }}>
       {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
         <div role="alert" className="relative z-50 bg-status-risk/10 text-status-risk text-sm text-center px-4 py-2 border-b border-status-risk/20">
-          Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. Please contact FlowersOS at <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> to settle your bill.
+          Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. To settle your bill, <ContactSupport centerId={center.id} variant="link" className="h-auto p-0 text-status-risk underline" />.
         </div>
       )}
       {recovering ? <CenterSignIn signedInWithoutAccess={false} recovering onRecovered={() => setRecovering(false)} /> : <Routes>

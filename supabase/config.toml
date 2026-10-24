@@ -13,6 +13,8 @@ project_id = "plfaixcjzrhpaxfhfstd"
     verify_jwt = false
   [functions.notify-demo-request]
     verify_jwt = false
+  [functions.notify-support-request]
+    verify_jwt = false
   [functions.parse-cb-question]
     verify_jwt = false
   [functions.parse-english-question]

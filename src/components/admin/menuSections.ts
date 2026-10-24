@@ -1,7 +1,7 @@
 import {
   Plus, Users, BarChart3, Settings, FileQuestion, GraduationCap, Building2,
   UserCheck, ClipboardList, Search, QrCode, CalendarDays, LayoutDashboard,
-  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard,
+  Wrench, Shield, BookOpen, Trophy, LineChart, Armchair, Bug, UserPlus, MessageSquare, Megaphone, Database, Flame, Clapperboard, LifeBuoy,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -32,6 +32,7 @@ export const menuSections: MenuSection[] = [
       { title: "Class Overview", url: "/admin/overview", icon: ClipboardList },
       { title: "International Customers", url: "/admin/customers", icon: Building2 },
       { title: "Demo Requests", url: "/admin/demo-requests", icon: CalendarDays },
+      { title: "Support Requests", url: "/admin/support", icon: LifeBuoy },
     ],
     defaultOpen: true,
   },
