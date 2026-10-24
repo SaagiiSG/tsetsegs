@@ -136,7 +136,7 @@ export default function StudentDashboard() {
     queryKey: ['student-attempts', student?.id],
     queryFn: async () => {
       if (!student) return [];
-      return fetchAllStudentAttempts(student.id);
+      return fetchAllStudentAttempts(student.id, qTable);
     },
     enabled: !!student
   });

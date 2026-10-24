@@ -16,6 +16,7 @@
 - Center branding lives in `institution_customers.portal_settings` (written only via `tenant_update_settings`), with logos stored as small data URLs because the workspace blocks public storage buckets.
 
 - Question banks are split by cohort: Mongolian students use `questions`; international cohort, center portals and the external sync use `intl_questions` (intDB), so external updates never touch the Mongolian bank, except the figures-only sync (INT DB page, "Update figures"), which copies only redrawn figures (`figure_svg`; intDB also gets `figure_description`) onto rows already in each bank, never inserts and never tags variants.
+- Answer rows (`student_attempts`, `speed_session_items`, `student_review_queue`, `student_progress`) carry a server-set bank tag (`mn_bank`/`intl_bank`, exactly one set) with a composite foreign key per bank; the `questions` key keeps its old name so Mongolian embeds are unchanged. Intl students embed with `questionEmbedFor`/`questionTableFor` (alias keeps the `questions` key) and are graded against intl_questions.
 - Concept videos are international-only (nav filtered and route guarded by `student.cohort`).
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
 - Center SAT simulation uses shared satSimulation with tenant Math attempts and intDB difficulty; never a student-taken test or main student query.

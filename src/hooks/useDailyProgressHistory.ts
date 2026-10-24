@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionEmbedFor } from '@/lib/questionTable';
 
 export interface DailyProgressDay {
   date: string; // yyyy-MM-dd (local)
@@ -22,6 +23,7 @@ function localDayKey(d: Date) {
  */
 export function useDailyProgressHistory(days: number = 30) {
   const { student } = useStudentAuth();
+  const qEmbed = questionEmbedFor(student?.cohort);
 
   return useQuery({
     queryKey: ['daily-progress-history', student?.id, days],
@@ -44,7 +46,7 @@ export function useDailyProgressHistory(days: number = 30) {
           .gte('created_at', startIso),
         supabase
           .from('student_attempts')
-          .select('question_id, attempted_at, is_correct, questions!inner(difficulty_level)')
+          .select(`question_id, attempted_at, is_correct, ${qEmbed}!inner(difficulty_level)`)
           .eq('student_account_id', student.id)
           .eq('is_correct', true)
           .gte('attempted_at', startIso),

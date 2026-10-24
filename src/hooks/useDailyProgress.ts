@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionEmbedFor } from '@/lib/questionTable';
 
 export interface DailyProgress {
   speed: number;
@@ -14,6 +15,7 @@ export interface DailyProgress {
  */
 export function useDailyProgress() {
   const { student } = useStudentAuth();
+  const qEmbed = questionEmbedFor(student?.cohort);
 
   return useQuery({
     queryKey: ['daily-progress', student?.id],
@@ -40,7 +42,7 @@ export function useDailyProgress() {
       // Today's correct attempts joined to question difficulty
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, questions!inner(difficulty_level)')
+        .select(`question_id, is_correct, ${qEmbed}!inner(difficulty_level)`)
         .eq('student_account_id', student.id)
         .eq('is_correct', true)
         .gte('attempted_at', startIso);

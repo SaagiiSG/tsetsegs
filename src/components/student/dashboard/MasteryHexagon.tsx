@@ -7,11 +7,13 @@ import {
 } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionEmbedFor } from '@/lib/questionTable';
 
 interface Axis { area: string; score: number; fullMark: number }
 
 export function MasteryHexagon() {
   const { student } = useStudentAuth();
+  const qEmbed = questionEmbedFor(student?.cohort);
 
   const { data, isLoading } = useQuery({
     queryKey: ['mastery-hexagon', student?.id],
@@ -24,7 +26,7 @@ export function MasteryHexagon() {
       // hitting the 1000-row default cap on the questions table).
       const { data: attempts } = await supabase
         .from('student_attempts')
-        .select('question_id, is_correct, time_spent_seconds, attempt_number, attempted_at, questions!inner(id, subject, subtopic, is_active, question_categories(name))')
+        .select(`question_id, is_correct, time_spent_seconds, attempt_number, attempted_at, ${qEmbed}!inner(id, subject, subtopic, is_active, question_categories(name))`)
         .eq('student_account_id', student.id)
         .eq('questions.is_active', true)
         .ilike('questions.subject', 'math')

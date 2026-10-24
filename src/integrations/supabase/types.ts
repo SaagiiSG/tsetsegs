@@ -2113,6 +2113,7 @@ export type Database = {
         Row: {
           alternate_answers: string[] | null
           answer: string
+          bank: string
           category_id: string | null
           choice_images: Json | null
           content_updated_at: string | null
@@ -2148,6 +2149,7 @@ export type Database = {
         Insert: {
           alternate_answers?: string[] | null
           answer: string
+          bank?: string
           category_id?: string | null
           choice_images?: Json | null
           content_updated_at?: string | null
@@ -2183,6 +2185,7 @@ export type Database = {
         Update: {
           alternate_answers?: string[] | null
           answer?: string
+          bank?: string
           category_id?: string | null
           choice_images?: Json | null
           content_updated_at?: string | null
@@ -2215,7 +2218,15 @@ export type Database = {
           updated_at?: string
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "intl_questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "question_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investor_demo_sessions: {
         Row: {
@@ -2962,6 +2973,7 @@ export type Database = {
         Row: {
           alternate_answers: string[] | null
           answer: string
+          bank: string
           category_id: string | null
           choice_images: Json | null
           created_at: string
@@ -2994,6 +3006,7 @@ export type Database = {
         Insert: {
           alternate_answers?: string[] | null
           answer: string
+          bank?: string
           category_id?: string | null
           choice_images?: Json | null
           created_at?: string
@@ -3026,6 +3039,7 @@ export type Database = {
         Update: {
           alternate_answers?: string[] | null
           answer?: string
+          bank?: string
           category_id?: string | null
           choice_images?: Json | null
           created_at?: string
@@ -3769,7 +3783,9 @@ export type Database = {
           answer_submitted: string | null
           created_at: string
           id: string
+          intl_bank: string | null
           is_correct: boolean
+          mn_bank: string | null
           order_index: number
           question_id: string
           session_id: string
@@ -3779,7 +3795,9 @@ export type Database = {
           answer_submitted?: string | null
           created_at?: string
           id?: string
+          intl_bank?: string | null
           is_correct?: boolean
+          mn_bank?: string | null
           order_index: number
           question_id: string
           session_id: string
@@ -3789,7 +3807,9 @@ export type Database = {
           answer_submitted?: string | null
           created_at?: string
           id?: string
+          intl_bank?: string | null
           is_correct?: boolean
+          mn_bank?: string | null
           order_index?: number
           question_id?: string
           session_id?: string
@@ -3797,11 +3817,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "speed_session_items_intl_question_id_fkey"
+            columns: ["question_id", "intl_bank"]
+            isOneToOne: false
+            referencedRelation: "intl_questions"
+            referencedColumns: ["id", "bank"]
+          },
+          {
             foreignKeyName: "speed_session_items_question_id_fkey"
-            columns: ["question_id"]
+            columns: ["question_id", "mn_bank"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "bank"]
           },
           {
             foreignKeyName: "speed_session_items_session_id_fkey"
@@ -4072,7 +4099,9 @@ export type Database = {
           attempt_number: number
           attempted_at: string
           id: string
+          intl_bank: string | null
           is_correct: boolean
+          mn_bank: string | null
           question_id: string
           student_account_id: string
           time_spent_seconds: number | null
@@ -4082,7 +4111,9 @@ export type Database = {
           attempt_number: number
           attempted_at?: string
           id?: string
+          intl_bank?: string | null
           is_correct: boolean
+          mn_bank?: string | null
           question_id: string
           student_account_id: string
           time_spent_seconds?: number | null
@@ -4092,18 +4123,27 @@ export type Database = {
           attempt_number?: number
           attempted_at?: string
           id?: string
+          intl_bank?: string | null
           is_correct?: boolean
+          mn_bank?: string | null
           question_id?: string
           student_account_id?: string
           time_spent_seconds?: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "student_attempts_intl_question_id_fkey"
+            columns: ["question_id", "intl_bank"]
+            isOneToOne: false
+            referencedRelation: "intl_questions"
+            referencedColumns: ["id", "bank"]
+          },
+          {
             foreignKeyName: "student_attempts_question_id_fkey"
-            columns: ["question_id"]
+            columns: ["question_id", "mn_bank"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "bank"]
           },
           {
             foreignKeyName: "student_attempts_student_account_id_fkey"
@@ -4380,6 +4420,8 @@ export type Database = {
           explanation_viewed: boolean
           explanation_viewed_at: string | null
           id: string
+          intl_bank: string | null
+          mn_bank: string | null
           question_id: string
           student_account_id: string
           updated_at: string
@@ -4391,6 +4433,8 @@ export type Database = {
           explanation_viewed?: boolean
           explanation_viewed_at?: string | null
           id?: string
+          intl_bank?: string | null
+          mn_bank?: string | null
           question_id: string
           student_account_id: string
           updated_at?: string
@@ -4402,6 +4446,8 @@ export type Database = {
           explanation_viewed?: boolean
           explanation_viewed_at?: string | null
           id?: string
+          intl_bank?: string | null
+          mn_bank?: string | null
           question_id?: string
           student_account_id?: string
           updated_at?: string
@@ -4410,11 +4456,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "student_progress_intl_question_id_fkey"
+            columns: ["question_id", "intl_bank"]
+            isOneToOne: false
+            referencedRelation: "intl_questions"
+            referencedColumns: ["id", "bank"]
+          },
+          {
             foreignKeyName: "student_progress_question_id_fkey"
-            columns: ["question_id"]
+            columns: ["question_id", "mn_bank"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "bank"]
           },
           {
             foreignKeyName: "student_progress_student_account_id_fkey"
@@ -4461,6 +4514,8 @@ export type Database = {
           ease_factor: number | null
           id: string
           interval_days: number | null
+          intl_bank: string | null
+          mn_bank: string | null
           next_review_at: string
           question_id: string
           review_count: number | null
@@ -4472,6 +4527,8 @@ export type Database = {
           ease_factor?: number | null
           id?: string
           interval_days?: number | null
+          intl_bank?: string | null
+          mn_bank?: string | null
           next_review_at?: string
           question_id: string
           review_count?: number | null
@@ -4483,6 +4540,8 @@ export type Database = {
           ease_factor?: number | null
           id?: string
           interval_days?: number | null
+          intl_bank?: string | null
+          mn_bank?: string | null
           next_review_at?: string
           question_id?: string
           review_count?: number | null
@@ -4491,11 +4550,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "student_review_queue_intl_question_id_fkey"
+            columns: ["question_id", "intl_bank"]
+            isOneToOne: false
+            referencedRelation: "intl_questions"
+            referencedColumns: ["id", "bank"]
+          },
+          {
             foreignKeyName: "student_review_queue_question_id_fkey"
-            columns: ["question_id"]
+            columns: ["question_id", "mn_bank"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "bank"]
           },
           {
             foreignKeyName: "student_review_queue_student_account_id_fkey"

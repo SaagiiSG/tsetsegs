@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { QuestionTable } from '@/lib/questionTable';
 
 export interface StudentAttemptRow {
   question_id: string;
@@ -12,13 +13,13 @@ export interface StudentAttemptRow {
  * most 1000 rows per request, so a single read silently drops older answers
  * and makes solved problems look unsolved for active students.
  */
-export async function fetchAllStudentAttempts(studentId: string): Promise<StudentAttemptRow[]> {
+export async function fetchAllStudentAttempts(studentId: string, qTable: QuestionTable = 'questions'): Promise<StudentAttemptRow[]> {
   const pageSize = 1000;
   const all: StudentAttemptRow[] = [];
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from('student_attempts')
-      .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
+      .select(`question_id, is_correct, attempt_number, question:${qTable}(parent_question_id, question_set)`)
       .eq('student_account_id', studentId)
       .order('attempted_at', { ascending: false })
       .order('id', { ascending: true })

@@ -96,7 +96,7 @@ export function useStudentAnalytics(subject: 'math' | 'english' | 'all' = 'all')
         .from('student_attempts')
         .select(`
           *,
-          question:questions!inner(
+          question:${qTable}!inner(
             id,
             question_id,
             difficulty_level,

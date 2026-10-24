@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudentAuth } from "@/contexts/StudentAuthContext";
+import { questionTableFor } from "@/lib/questionTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +122,8 @@ function SessionDetailDialog({
   sessionId: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
   const { data: items, isLoading } = useQuery({
     queryKey: ["speed-session-items", sessionId],
     enabled: !!sessionId,
@@ -129,7 +132,7 @@ function SessionDetailDialog({
         .from("speed_session_items")
         .select(`
           order_index, answer_submitted, is_correct, time_ms,
-          question:questions(id, question_id, question_text, answer, question_image_url, question_image_url_2, figure_svg, figure_description)
+          question:${qTable}(id, question_id, question_text, answer, question_image_url, question_image_url_2, figure_svg, figure_description)
         `)
         .eq("session_id", sessionId!)
         .order("order_index");

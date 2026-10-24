@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionEmbedFor, questionTableFor } from '@/lib/questionTable';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ const chartConfig = {
 
 export default function StudentReview() {
   const { student } = useStudentAuth();
+  const qTable = questionTableFor(student?.cohort);
+  const qEmbed = questionEmbedFor(student?.cohort);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -52,7 +55,7 @@ export default function StudentReview() {
         .from('student_review_queue')
         .select(`
           *,
-          question:questions(
+          question:${qTable}(
             id, question_id, subject,
             category:question_categories(id, name)
           )
@@ -92,7 +95,7 @@ export default function StudentReview() {
         .from('student_attempts')
         .select(`
           question_id, is_correct,
-          questions!inner(subject, category:question_categories(name))
+          ${qEmbed}!inner(subject, category:question_categories(name))
         `)
         .eq('student_account_id', student.id);
       
@@ -141,7 +144,7 @@ export default function StudentReview() {
         .from('student_attempts')
         .select(`
           id, question_id, is_correct, attempted_at,
-          questions!inner(
+          ${qEmbed}!inner(
             question_id, subject, question_text, question_set,
             category:question_categories(name)
           )
@@ -171,7 +174,7 @@ export default function StudentReview() {
           .from('student_attempts')
           .select(`
             question_id, is_correct, time_spent_seconds, attempt_number, attempted_at,
-            questions!inner(subject, subtopic)
+            ${qEmbed}!inner(subject, subtopic)
           `)
           .eq('student_account_id', student.id)
           .gte('attempted_at', twoWeeksAgo);
@@ -241,7 +244,7 @@ export default function StudentReview() {
           .from('student_attempts')
           .select(`
             question_id, is_correct,
-            questions!inner(subject, subtopic)
+            ${qEmbed}!inner(subject, subtopic)
           `)
           .eq('student_account_id', student.id)
           .gte('attempted_at', twoWeeksAgo);
@@ -320,7 +323,7 @@ export default function StudentReview() {
         .from('student_attempts')
         .select(`
           question_id, is_correct, attempted_at,
-          questions!inner(id, question_id, subject, question_text, question_set, subtopic, category:question_categories(name))
+          ${qEmbed}!inner(id, question_id, subject, question_text, question_set, subtopic, category:question_categories(name))
         `)
         .eq('student_account_id', student.id)
         .order('attempted_at', { ascending: false });

@@ -97,7 +97,7 @@ export default function StudentEnglishPractice() {
       // Full history, filtered locally: a long id list in the request is too
       // large for the server and made solved English problems look unsolved.
       const ids = new Set((questions || []).map(q => q.id));
-      const all = await fetchAllStudentAttempts(student.id);
+      const all = await fetchAllStudentAttempts(student.id, qTable);
       return all.filter(a => ids.has(a.question_id));
     },
     enabled: !!student && !!questions?.length

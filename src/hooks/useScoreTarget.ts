@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { questionEmbedFor } from '@/lib/questionTable';
 import { toast } from 'sonner';
 
 export function useScoreTarget() {
   const { student } = useStudentAuth();
+  const qEmbed = questionEmbedFor(student?.cohort);
   const queryClient = useQueryClient();
 
   // Fetch current target score
@@ -60,7 +62,7 @@ export function useScoreTarget() {
         .select(`
           is_correct,
           question_id,
-          questions!inner (
+          ${qEmbed}!inner (
             subject,
             subtopic,
             question_categories (name)

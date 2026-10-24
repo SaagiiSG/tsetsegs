@@ -137,7 +137,7 @@ export function QuestionNavigatorDialog({
       while (true) {
         const { data, error } = await supabase
           .from('student_attempts')
-          .select('question_id, is_correct, attempt_number, question:questions(parent_question_id, question_set)')
+          .select(`question_id, is_correct, attempt_number, question:${qTable}(parent_question_id, question_set)`)
           .eq('student_account_id', student.id)
           .order('attempted_at', { ascending: false })
           .range(from, from + pageSize - 1);
