@@ -561,6 +561,13 @@
       "when": 1792866651253,
       "tag": "0079_lock_progress_friends_challenges",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1792867012785,
+      "tag": "0080_apply_pending_0078_0079",
+      "breakpoints": true
     }
   ]
 }
