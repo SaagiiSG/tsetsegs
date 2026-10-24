@@ -4893,6 +4893,59 @@ export type Database = {
           },
         ]
       }
+      support_requests: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          institution_id: string | null
+          message: string
+          name: string
+          notified_at: string | null
+          role: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          institution_id?: string | null
+          message: string
+          name: string
+          notified_at?: string | null
+          role: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          institution_id?: string | null
+          message?: string
+          name?: string
+          notified_at?: string | null
+          role?: string
+          status?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -6208,6 +6261,10 @@ export type Database = {
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
       landing_public_stats: { Args: never; Returns: Json }
+      live_answer_allowed: {
+        Args: { _participant: string; _question: string; _session: string }
+        Returns: boolean
+      }
       live_session_find_participant: {
         Args: { p_phone: string; p_session_id: string }
         Returns: {
@@ -6516,6 +6573,14 @@ export type Database = {
           total: number
         }[]
       }
+      sprint_points_breakdown: {
+        Args: { _sprint_id: string; _student_ids: string[] }
+        Returns: {
+          category: string
+          points: number
+          student_account_id: string
+        }[]
+      }
       student_account_by_share_token: {
         Args: { _token: string }
         Returns: {
@@ -6592,6 +6657,13 @@ export type Database = {
         }
         Returns: number
       }
+      student_points_history: {
+        Args: { _since?: string; _student_id: string }
+        Returns: {
+          created_at: string
+          points: number
+        }[]
+      }
       student_practised_recently: {
         Args: { p_student: string }
         Returns: boolean
@@ -6618,6 +6690,11 @@ export type Database = {
         }
         Returns: string
       }
+      submit_support_request: {
+        Args: { _institution: string; _message: string; _subject: string }
+        Returns: string
+      }
+      support_can_contact: { Args: { _institution: string }; Returns: boolean }
       tenant_access_status: { Args: { _slug: string }; Returns: Json }
       tenant_center_blocked: {
         Args: { _institution: string }
@@ -6663,6 +6740,7 @@ export type Database = {
         Args: { _institution: string; p_sim: number }
         Returns: undefined
       }
+      tenant_settings: { Args: { _institution: string }; Returns: Json }
       tenant_sprint_leaderboard: {
         Args: { _sprint: string }
         Returns: {
