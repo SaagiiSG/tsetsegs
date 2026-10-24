@@ -505,6 +505,13 @@
       "when": 1792798837531,
       "tag": "0071_lock_notes_bookings_live_prep_exact",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792861607437,
+      "tag": "0072_restore_mn_variant_overwrites",
+      "breakpoints": true
     }
   ]
 }
