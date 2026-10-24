@@ -6173,6 +6173,10 @@ export type Database = {
           total_attempts: number
         }[]
       }
+      grade_intl_student_answer: {
+        Args: { p_answer: string; p_question: string }
+        Returns: boolean
+      }
       grade_student_answer: {
         Args: { p_answer: string; p_question: string }
         Returns: boolean
