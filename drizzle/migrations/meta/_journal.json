@@ -512,6 +512,13 @@
       "when": 1792861607437,
       "tag": "0072_restore_mn_variant_overwrites",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792861710885,
+      "tag": "0073_apply_pending_0072",
+      "breakpoints": true
     }
   ]
 }
