@@ -106,7 +106,7 @@ export default function InvestorDemo() {
   </div>;
   const err = demo.error && <p role="alert" className="text-sm text-destructive">{demo.error}</p>;
   const sampleNote = <p className="text-xs text-muted-foreground pt-3">Fictional sample data. Your changes are stored only in this demo and expire in 15 minutes.</p>;
-  const sets = [['68 Questions', 'Core SAT math patterns', 54, 68, 'blue', 'sky', Target, 'hsl(207 90% 95%)', CARD_WAVES.blue], ['150 Hard', 'Hardest problems for 800', 98, 150, 'violet', 'violet', Mountain, 'hsl(255 90% 97%)', CARD_WAVES.violet], ['Updated set', 'Freshly explained problems', 288, 288, 'pink', 'pink', Sparkles, 'hsl(300 70% 97%)', CARD_WAVES.pink]] as const;
+  const sets = [['68', 'Core SAT math patterns', 54, 68, 'blue', 'sky', Target, 'hsl(207 90% 95%)', CARD_WAVES.blue], ['150', 'Hardest problems for 800', 98, 150, 'violet', 'violet', Mountain, 'hsl(255 90% 97%)', CARD_WAVES.violet], ['CB', 'All other math, including the new 120', 288, 288, 'pink', 'pink', Sparkles, 'hsl(300 70% 97%)', CARD_WAVES.pink]] as const;
   const studentNav = [['Home', 'Home', Home], ['Practice', 'Practice', BookOpen], ['Roadmap', 'Concept videos', PlayCircle], ['Speed', 'Speed mode', Zap], ['Leaderboard', 'Leaderboard', Trophy], ['Analytics', 'Analytics', BarChart3], ['Review', 'Review mistakes', RotateCcw], ['Badges', 'Badges', Award]] as const;
   const dark = resolvedTheme === 'dark';
 

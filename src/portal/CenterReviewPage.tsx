@@ -7,13 +7,16 @@ import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { MathText } from '@/components/MathText';
+import { PRACTICE_SETS, inPracticeSet } from './practiceSets';
 import { supabase } from '@/integrations/supabase/client';
 import type { QMeta } from './questionMeta';
 import { centerReviewModel, type ReviewAttempt } from './centerReviewModel';
 
 type Detail = { id: string; question_id: string | null; question_text: string; question_set: string | null };
 const chartConfig = { score: { label: 'Mastery', color: 'hsl(var(--primary))' } };
-const source = (s: string | null) => s === 'SATMathTraining800' ? '150 Hard' : s === 'ANP120Aug3' ? 'New 120' : s;
+// Math questions are named by their practice tab (68, 150, CB), the names students see on Practice.
+const source = (s: string | null, subject: 'math' | 'english') =>
+  subject === 'math' ? PRACTICE_SETS.find(p => inPracticeSet(p.key, s))?.label ?? s : s;
 
 export function CenterReviewPage({ attempts, meta, studentId }: { attempts: ReviewAttempt[]; meta: Record<string, QMeta>; studentId: string }) {
   const navigate = useNavigate();
@@ -59,7 +62,7 @@ export function CenterReviewPage({ attempts, meta, studentId }: { attempts: Revi
           {details.isError && <p role="alert" className="text-sm text-destructive">Question previews couldn’t load. <Button variant="link" onClick={() => details.refetch()}>Try again</Button></p>}
           {shown.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4">
             {shown.map(a => { const q = details.data?.[a.question_id]; return <Button key={a.question_id} variant="outline" onClick={() => open(a.question_id)} className="h-auto min-h-36 w-full min-w-0 flex-col items-stretch justify-start gap-2 whitespace-normal rounded-xl border-destructive/20 bg-destructive/5 p-3 text-left hover:border-primary/40 hover:bg-accent">
-              <span className="flex items-center justify-between gap-2"><XCircle className="h-4 w-4 shrink-0 text-destructive" /><span className="truncate rounded-full bg-accent px-2 py-0.5 text-[10px] text-accent-foreground">{source(q?.question_set ?? null) ?? subject}</span></span>
+              <span className="flex items-center justify-between gap-2"><XCircle className="h-4 w-4 shrink-0 text-destructive" /><span className="truncate rounded-full bg-accent px-2 py-0.5 text-[10px] text-accent-foreground">{source(q?.question_set ?? null, subject) ?? subject}</span></span>
               <span className="truncate font-mono text-xs font-semibold">{q?.question_id ?? a.question_id.slice(0, 8)}</span><span className="text-xs font-medium">{meta[a.question_id]?.domain}</span>
               <span className="line-clamp-2 text-xs font-normal text-muted-foreground"><MathText text={q?.question_text ?? 'Loading preview…'} /></span>
             </Button>; })}
