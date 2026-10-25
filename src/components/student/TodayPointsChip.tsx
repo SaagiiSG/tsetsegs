@@ -3,15 +3,15 @@ import { animate, motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
+import { useOptionalStudentAuth } from '@/contexts/StudentAuthContext';
 import { PointsFlyer } from './PointsFlyer';
 import { cn } from '@/lib/utils';
 
 /** Sum of points the server actually paid since local midnight. */
-function useTodayPoints(studentId?: string) {
+function useTodayPoints(studentId?: string, enabled = true) {
   return useQuery({
     queryKey: ['today-points', studentId],
-    enabled: !!studentId,
+    enabled: !!studentId && enabled,
     staleTime: 15000,
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
@@ -37,9 +37,11 @@ function useTodayPoints(studentId?: string) {
 }
 
 /** "+N today" chip: green border flash, count-up, and flyer landing target. */
-export function TodayPointsChip() {
-  const { student } = useStudentAuth();
-  const { data: todayPoints } = useTodayPoints(student?.id);
+export function TodayPointsChip({ points }: { points?: number } = {}) {
+  const student = useOptionalStudentAuth()?.student;
+  // `points` is supplied by the center portal, which has no StudentAuth and computes its own total.
+  const { data } = useTodayPoints(student?.id, points === undefined);
+  const todayPoints = points ?? data;
 
   // The number only changes when a flying "+N" lands, so the reward feels caused.
   const todayRef = useRef<HTMLDivElement>(null);

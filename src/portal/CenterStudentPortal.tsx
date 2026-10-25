@@ -25,7 +25,8 @@ import { allPages } from './centerApi';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
 import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
-import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory } from './CenterStreak';
+import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING } from './CenterStreak';
+import { CenterTopBar } from './CenterTopBar';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser, usePracticeQuestions } from './CenterPracticeBrowser';
 import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
@@ -61,7 +62,6 @@ const SET_LOOK = {
   SATMathTraining800: { blurb: 'Hardest problems for 800', family: 'violet', btn: 'violet', icon: Mountain, wash: 'hsl(255 90% 97%)', wave: CARD_WAVES.violet },
   CB: { blurb: 'All other math, including the new 120', family: 'pink', btn: 'pink', icon: Sparkles, wash: 'hsl(300 70% 97%)', wave: CARD_WAVES.pink },
 } as const;
-const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
 
 /** Everything the student pages share: profile, class, attendance, attempts + question meta. */
 function useMe() {
@@ -74,7 +74,7 @@ function useMe() {
       const [cls, att, attempts] = await Promise.all([
         s.class_id ? supabase.from('tenant_classes').select('name, schedule').eq('id', s.class_id).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from('tenant_attendance').select('session_date, status').eq('student_id', s.id).order('session_date', { ascending: false }).limit(60),
-        allPages(p => supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds').eq('student_id', s.id).order('created_at', { ascending: false }).order('id').range(p, p + 999), 10000),
+        allPages(p => supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds, points').eq('student_id', s.id).order('created_at', { ascending: false }).order('id').range(p, p + 999), 10000),
       ]);
       const list = attempts;
       const vids = (await supabase.from('tenant_video_progress').select('video_id, completed_at').eq('student_id', s.id)).data ?? [];
@@ -208,13 +208,15 @@ export default function CenterStudentPortal() {
         </aside>
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="lg:hidden flex items-center gap-2"><CenterLogo center={center} className="h-8 w-8" /><p className="font-semibold">{centerDisplayName(center)}</p></div>
-            <div className="ml-auto flex items-center gap-1">
+          <header className="student-header sticky top-2 z-30 mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur">
+            <div className="lg:hidden flex min-w-0 items-center gap-2"><CenterLogo center={center} className="h-8 w-8 shrink-0" /><p className="truncate font-semibold">{centerDisplayName(center)}</p></div>
+            <div className="hidden lg:block" />
+            {me.data ? <CenterTopBar studentId={me.data.student.id} attempts={me.data.attempts} meta={me.data.meta} /> : <div />}
+            <div className="flex items-center justify-end gap-1">
               <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
               <Button variant="ghost" size="icon" className="lg:hidden rounded-full" onClick={signOut} aria-label="Log out"><LogOut className="h-4 w-4" /></Button>
             </div>
-          </div>
+          </header>
           {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
             ? <p className="text-sm">Your account isn't linked. Contact your center.</p>
             : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
@@ -415,7 +417,7 @@ function useRecordAttempt(me: Me) {
   return async (questionId: string, ok: boolean, seconds?: number, answer?: string) => {
     const key = ['center-student', center.id, userId];
     const { data: row } = await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, answer: answer ?? '', time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null })
-      .select('question_id, is_correct, created_at, time_spent_seconds').single();
+      .select('question_id, is_correct, created_at, time_spent_seconds, points').single();
     if (!row) return qc.invalidateQueries({ queryKey: key });
     // Add the server-graded row to the cached history instead of re-reading every answer.
     const meta = me.meta[questionId] ? {} : await loadQuestionMeta([questionId]);
