@@ -41,7 +41,7 @@ export function shouldShowRingNudge(s: { goalsSet: boolean; ready: boolean; done
 export function ringNudgeCopy(s: ReturnType<typeof ringStatus>) {
   const q = s.questionsLeft && `${s.questionsLeft} more ${s.questionsLeft === 1 ? 'question' : 'questions'}`;
   const sp = s.speedLeft && `${s.speedLeft} ${s.questionsLeft ? '' : 'more '}speed ${s.speedLeft === 1 ? 'session' : 'sessions'}`;
-  return `You're ${s.pct}% there. ${[q, sp].filter(Boolean).join(' and ')}.`;
+  return `You're ${s.done ? s.pct : Math.min(99, s.pct)}% there. ${[q, sp].filter(Boolean).join(' and ')}.`;
 }
 
 // undefined = sprint list still loading; null = no active sprint (use all-time board).

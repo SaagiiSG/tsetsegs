@@ -267,17 +267,24 @@ function HomePage({ me }: { me: Me }) {
   const [ringOpen, setRingOpen] = useState(false);
   useEffect(() => {
     const key = `center_goals_seen_${me.student.id}`;
-    if (goals.data && !goals.data.isSet && !localStorage.getItem(key)) { setGoalOpen(true); localStorage.setItem(key, '1'); }
+    if (!goals.data || goals.data.isSet) return;
+    let seen: string | null = null;
+    try { seen = localStorage.getItem(key); } catch { /* storage blocked: treat as unseen */ }
+    if (seen) return;
+    setGoalOpen(true);
+    try { localStorage.setItem(key, '1'); } catch { /* ignore */ }
   }, [goals.data, me.student.id]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
   const [nudgeOpen, setNudgeOpen] = useState(false);
+  const nudgeShown = useRef(false); // at most once per mount even when storage fails
   // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes).
   useEffect(() => {
-    if (goalOpen || !goals.data) return;
+    if (goalOpen || !goals.data || nudgeShown.current) return;
     const key = `center_ring_nudge_${me.student.id}`, today = dayKey(new Date());
     let lastShown: string | null = null;
     try { lastShown = localStorage.getItem(key); } catch { /* storage blocked: may show again, fine */ }
     if (!shouldShowRingNudge({ goalsSet: goals.data.isSet, ready: prog.ready, done: ringStatus(prog, goals.data).done, lastShown, today })) return;
+    nudgeShown.current = true;
     setNudgeOpen(true);
     try { localStorage.setItem(key, today); } catch { /* ignore */ }
   }, [goalOpen, goals.data, prog, me.student.id]);

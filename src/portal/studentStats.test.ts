@@ -57,6 +57,7 @@ describe('ring nudge', () => {
   });
   it('goals not set: the old "Set your daily ring" pop-up goes first', () => expect(shouldShowRingNudge({ ...base, goalsSet: false })).toBe(false));
   it('waits for speed runs to load', () => expect(shouldShowRingNudge({ ...base, ready: false })).toBe(false));
+  it('never says 100% before the ring is closed', () => expect(ringNudgeCopy(ringStatus({ speed: 1, hard: 100, medium: 199 }, { speed: 1, hard: 100, medium: 200 }))).toBe("You're 99% there. 1 more question."));
   it('says what is left in plain words', () => {
     expect(ringNudgeCopy(ringStatus({ speed: 1, hard: 1, medium: 1 }, { speed: 1, hard: 3, medium: 6 }))).toBe("You're 30% there. 7 more questions.");
     expect(ringNudgeCopy(ringStatus({ speed: 0, hard: 3, medium: 6 }, { speed: 1, hard: 3, medium: 6 }))).toBe("You're 90% there. 1 more speed session.");
