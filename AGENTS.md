@@ -21,6 +21,7 @@
 - Center class join codes enroll students instantly (the code is the invitation); center live sessions use tenant_live_sessions/tenant_live_answers over realtime so they stay isolated from the main live_sessions tables.
 - Center SAT simulation uses shared satSimulation with tenant Math attempts and intDB difficulty; never a student-taken test or main student query.
 - Center rankings/history use tenant attempts and sprint snapshots, never global rankings. Stored tier keys remain stable; rename display labels to preserve history, themes and badges.
+- Center onboarding answers live on the student's own `tenant_student_goals` row; only `tenant_students` created after 00XX (`onboarding_eligible`) are onboarded; classmate profiles are read only through `tenant_student_profile` (same center, no phone).
 - Customer Review Mistakes uses a tenant-attempt data adapter and international question previews with data-agnostic chart primitives, so matching the main review layout never grants access to main student records.
 - `/admin` shows platform data; `/admin/tsetsegs/*` isolates in-house data.
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
