@@ -12,6 +12,7 @@ import { TierLadder } from '@/components/student/leaderboard/TierLadder';
 import { CurrentSprintTab, AllTimeTab, MyRankTab } from '@/components/student/leaderboard';
 import { SkyListSkeleton } from './SkySkeleton';
 import type { LeaderboardEntry, SprintInfo, AllTimeEntry, AllTimeLimit, AllTimeWindow } from '@/hooks/useLeaderboard';
+import { centerLevel } from './centerProfile';
 import { CenterStudentProfileDialog } from './CenterStudentProfileDialog';
 import { sprintPointsByDay } from './sprintPoints';
 import { allPages } from './centerApi';
@@ -73,13 +74,13 @@ export function CenterRankings({ studentId }: { studentId: string }) {
   const entries: LeaderboardEntry[] = useMemo(() => (board.data ?? []).map(r => {
     const tier = asTier(r.tier);
     const cutoff = TIER_PROMOTION_CUTOFFS[tier] ?? 10;
-    return { rank: r.standing, userId: r.student_id, username: r.name, level: Math.max(1, Math.floor(Math.log2(r.points / 100 + 1)) + 1), totalPoints: r.points,
+    return { rank: r.standing, userId: r.student_id, username: r.name, level: centerLevel(r.points).level, totalPoints: r.points,
       currentTier: tier, groupNumber: 1, isAdvancing: r.standing <= cutoff && r.points > 0, isAtRisk: false, isTop1: r.standing === 1 && r.points > 0,
       reservedNextTier: null, pointsBreakdown: { ...EMPTY_BREAKDOWN, questions: Number(r.practice_points), speedSessions: Number(r.speed_points) } };
   }), [board.data]);
 
   const allTimeEntries: AllTimeEntry[] = useMemo(() => (allTime.data ?? []).slice(0, limit).map(r => ({
-    userId: r.student_id, username: r.name, level: Math.max(1, Math.floor(Math.log2(r.points / 100 + 1)) + 1), totalPoints: r.points, highestTier: asTier(r.tier),
+    userId: r.student_id, username: r.name, level: centerLevel(r.points).level, totalPoints: r.points, highestTier: asTier(r.tier),
     rubyWeeks: 0, isRubyLegend: false, satMathScore: null, satEnglishScore: null, satTotalScore: null, satScoreDate: null,
   })), [allTime.data, limit]);
 

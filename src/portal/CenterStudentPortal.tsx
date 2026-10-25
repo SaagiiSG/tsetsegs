@@ -39,6 +39,8 @@ import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSi
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
+import { CenterProfileView } from './CenterProfileView';
+import { centerBadges } from './centerProfile';
 import { RoadmapPreview } from './RoadmapPreview';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
@@ -184,6 +186,7 @@ export default function CenterStudentPortal() {
                 <Route path="leaderboard" element={<CenterRankings studentId={me.data.student.id} />} />
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
+                <Route path="profile" element={<CenterProfileView studentId={me.data.student.id} name={me.data.student.name} />} />
                 <Route path="settings" element={<StudentSettingsPage />} />
                 <Route path="help" element={<CenterHelpPage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
@@ -651,18 +654,11 @@ function VideosPage({ me }: { me: Me }) {
 
 function BadgesPage({ me }: { me: Me }) {
   const totals = useSetTotals();
-  const n = me.attempts.length, c = me.attempts.filter(a => a.is_correct).length;
-  const solved = new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id));
-  const present = me.att.filter(a => a.status === 'present' || a.status === 'late').length;
-  const setDone = (k: string) => { const ids = totals.data?.[k] ?? []; return ids.length > 0 && ids.every(id => solved.has(id)); };
-  const badges = [
-    { name: 'First steps', desc: 'Answer 10 questions', got: n >= 10, prog: [n, 10] },
-    { name: 'Centurion', desc: 'Answer 100 questions', got: n >= 100, prog: [n, 100] },
-    { name: 'Marathon', desc: 'Answer 500 questions', got: n >= 500, prog: [n, 500] },
-    { name: 'Sharpshooter', desc: '80% accuracy over 50+ questions', got: n >= 50 && c / n >= 0.8, prog: [n >= 50 ? Math.round(100 * c / n) : n, n >= 50 ? 80 : 50] },
-    { name: 'Regular', desc: 'Attend 10 classes', got: present >= 10, prog: [present, 10] },
-    ...PRACTICE_SETS.map(s => ({ name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: setDone(s.key), prog: [(totals.data?.[s.key] ?? []).filter(id => solved.has(id)).length, (totals.data?.[s.key] ?? []).length || 1] })),
-  ];
+  const badges = centerBadges({
+    answered: me.attempts.length, correct: me.attempts.filter(a => a.is_correct).length,
+    solved: new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)),
+    present: me.att.filter(a => a.status === 'present' || a.status === 'late').length, setIds: totals.data,
+  });
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Badges <span className="text-base text-muted-foreground font-mono">{badges.filter(b => b.got).length}/{badges.length}</span></h1>
