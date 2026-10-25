@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 import { computeGoals, DEFAULT_GOALS, type GoalIntensity } from '@/hooks/useDailyGoals';
 import { useCenter } from './centerContext';
 import type { QMeta } from './questionMeta';
+import { MiniRing, SKY_RING } from './CenterStreak';
+import { ringStatus, ringNudgeCopy, type Ring } from './studentStats';
 
 export type CenterGoals = {
   speed: number; hard: number; medium: number; intensity: GoalIntensity | null; sat_date: string | null; isSet: boolean;
@@ -134,6 +136,23 @@ export function CenterGoalDialog({ open, onOpenChange, studentId, goals }: { ope
           </div>
           <Button className="w-full" onClick={save} disabled={saving}><Check className="h-4 w-4" />Save goals</Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function CenterRingNudge({ open, onOpenChange, progress, goals, onStart }: { open: boolean; onOpenChange: (o: boolean) => void; progress: Ring; goals: Ring; onStart: () => void }) {
+  const s = ringStatus(progress, goals);
+  const frac = (k: keyof Ring): number => (goals[k] ? progress[k] / goals[k] : 0);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm text-center">
+        <DialogHeader className="items-center">
+          <DialogTitle>Let's close your ring today</DialogTitle>
+          <DialogDescription>{ringNudgeCopy(s)}</DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center py-2"><MiniRing size={96} stroke={9} gap={3} p={[frac('speed'), frac('hard'), frac('medium')]} colors={SKY_RING} /></div>
+        <Button onClick={onStart}>Start practicing</Button>
       </DialogContent>
     </Dialog>
   );

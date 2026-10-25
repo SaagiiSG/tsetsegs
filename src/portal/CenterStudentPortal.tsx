@@ -23,13 +23,13 @@ import { StudentLive, isCorrect } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { allPages } from './centerApi';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
-import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
+import { CenterGoalDialog, CenterRingNudge, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
 import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
-import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING } from './CenterStreak';
+import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING, dayKey } from './CenterStreak';
 import { CenterTopBar } from './CenterTopBar';
 import { StudentRail, NAV } from './StudentRail';
 import { emitPointsEarned } from '@/components/student/PointsFlyer';
-import { attemptPoints, runPoints } from './studentStats';
+import { attemptPoints, runPoints, ringStatus, shouldShowRingNudge } from './studentStats';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser, usePracticeQuestions, useSetTotals } from './CenterPracticeBrowser';
 import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
@@ -270,6 +270,17 @@ function HomePage({ me }: { me: Me }) {
     if (goals.data && !goals.data.isSet && !localStorage.getItem(key)) { setGoalOpen(true); localStorage.setItem(key, '1'); }
   }, [goals.data, me.student.id]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const [nudgeOpen, setNudgeOpen] = useState(false);
+  // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes).
+  useEffect(() => {
+    if (goalOpen || !goals.data) return;
+    const key = `center_ring_nudge_${me.student.id}`, today = dayKey(new Date());
+    let lastShown: string | null = null;
+    try { lastShown = localStorage.getItem(key); } catch { /* storage blocked: may show again, fine */ }
+    if (!shouldShowRingNudge({ goalsSet: goals.data.isSet, ready: prog.ready, done: ringStatus(prog, goals.data).done, lastShown, today })) return;
+    setNudgeOpen(true);
+    try { localStorage.setItem(key, today); } catch { /* ignore */ }
+  }, [goalOpen, goals.data, prog, me.student.id]);
   const videoIds = (usePublishedVideos().data ?? []).map(v => v.id);
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
@@ -308,6 +319,7 @@ function HomePage({ me }: { me: Me }) {
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
+        <CenterRingNudge open={nudgeOpen} onOpenChange={setNudgeOpen} progress={prog} goals={g} onStart={() => { setNudgeOpen(false); navigate('/student/practice?mode=random'); }} />
         <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
           {PRACTICE_SETS.map(s => {

@@ -34,6 +34,16 @@ export function ringStatus(progress: Ring, goals: Ring) {
   };
 }
 
+export function shouldShowRingNudge(s: { goalsSet: boolean; ready: boolean; done: boolean; lastShown: string | null; today: string }) {
+  return s.goalsSet && s.ready && !s.done && s.lastShown !== s.today;
+}
+
+export function ringNudgeCopy(s: ReturnType<typeof ringStatus>) {
+  const q = s.questionsLeft && `${s.questionsLeft} more ${s.questionsLeft === 1 ? 'question' : 'questions'}`;
+  const sp = s.speedLeft && `${s.speedLeft} ${s.questionsLeft ? '' : 'more '}speed ${s.speedLeft === 1 ? 'session' : 'sessions'}`;
+  return `You're ${s.pct}% there. ${[q, sp].filter(Boolean).join(' and ')}.`;
+}
+
 // undefined = sprint list still loading; null = no active sprint (use all-time board).
 export function activeSprintId(sprints: { id: string; status: string }[] | undefined): string | null | undefined {
   if (!sprints) return undefined;

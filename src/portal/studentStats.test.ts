@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { attemptPoints, runPoints, todayPoints, ringStatus, activeSprintId, rankFromBoard } from './studentStats';
+import { attemptPoints, runPoints, todayPoints, ringStatus, activeSprintId, rankFromBoard, shouldShowRingNudge, ringNudgeCopy } from './studentStats';
 const at = (s: string) => new Date(s).toISOString();
 const now = new Date('2026-10-25T15:00:00');
 describe('todayPoints', () => {
@@ -44,5 +44,23 @@ describe('rank chip', () => {
     expect(rankFromBoard(rows, 'b')).toEqual({ place: 2, tier: 'unranked' });
     expect(rankFromBoard(rows, 'zzz')).toBeNull();
     expect(rankFromBoard(undefined, 'a')).toBeNull();
+  });
+});
+
+describe('ring nudge', () => {
+  const base = { goalsSet: true, ready: true, done: false, lastShown: null, today: '2026-10-25' };
+  it('shows once a day until the ring is closed', () => {
+    expect(shouldShowRingNudge(base)).toBe(true);
+    expect(shouldShowRingNudge({ ...base, lastShown: '2026-10-25' })).toBe(false);
+    expect(shouldShowRingNudge({ ...base, lastShown: '2026-10-24' })).toBe(true);
+    expect(shouldShowRingNudge({ ...base, done: true })).toBe(false);
+  });
+  it('goals not set: the old "Set your daily ring" pop-up goes first', () => expect(shouldShowRingNudge({ ...base, goalsSet: false })).toBe(false));
+  it('waits for speed runs to load', () => expect(shouldShowRingNudge({ ...base, ready: false })).toBe(false));
+  it('says what is left in plain words', () => {
+    expect(ringNudgeCopy(ringStatus({ speed: 1, hard: 1, medium: 1 }, { speed: 1, hard: 3, medium: 6 }))).toBe("You're 30% there. 7 more questions.");
+    expect(ringNudgeCopy(ringStatus({ speed: 0, hard: 3, medium: 6 }, { speed: 1, hard: 3, medium: 6 }))).toBe("You're 90% there. 1 more speed session.");
+    expect(ringNudgeCopy(ringStatus({ speed: 0, hard: 1, medium: 1 }, { speed: 2, hard: 5, medium: 10 }))).toBe("You're 12% there. 13 more questions and 2 speed sessions.");
+    expect(ringNudgeCopy(ringStatus({ speed: 0, hard: 0, medium: 0 }, { speed: 2, hard: 5, medium: 10 }))).toBe("You're 0% there. 15 more questions and 2 speed sessions.");
   });
 });

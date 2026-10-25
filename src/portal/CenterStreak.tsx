@@ -12,7 +12,7 @@ export const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' }
 type Run = { created_at: string };
 type Goals = { speed: number; hard: number; medium: number };
 
-const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /**
  * Streak stats derived from a center student's attempts. Freezers: one earned per
@@ -20,7 +20,7 @@ const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
  */
 export function useCenterStreak(attempts: { created_at: string }[]) {
   return useMemo(() => {
-    const days = [...new Set(attempts.map(a => key(new Date(a.created_at))))].sort();
+    const days = [...new Set(attempts.map(a => dayKey(new Date(a.created_at))))].sort();
     const set = new Set(days);
     let run = 0, longest = 0, earned = 0, used = 0, prev: Date | null = null;
     for (const k of days) {
@@ -38,7 +38,7 @@ export function useCenterStreak(attempts: { created_at: string }[]) {
     const last = prev ? Math.round((today.getTime() - prev.getTime()) / 86400000) : 99;
     const freezers = Math.max(0, Math.min(3, earned - used));
     const current = last <= 1 || (last === 2 && freezers > 0) ? run : 0;
-    return { current, longest, totalDays: days.length, freezers, practicedToday: set.has(key(today)), activeDays: set };
+    return { current, longest, totalDays: days.length, freezers, practicedToday: set.has(dayKey(today)), activeDays: set };
   }, [attempts]);
 }
 export type CenterStreak = ReturnType<typeof useCenterStreak>;
@@ -67,11 +67,11 @@ export function useCenterRingHistory(attempts: Attempt[], runs: Run[], meta: Rec
   return useMemo(() => {
     const b: Record<string, { speed: number; hard: Set<string>; medium: Set<string> }> = {};
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
-    for (let i = 0; i < days; i++) { const d = new Date(start); d.setDate(start.getDate() + i); b[key(d)] = { speed: 0, hard: new Set(), medium: new Set() }; }
-    for (const r of runs) { const k = key(new Date(r.created_at)); if (b[k]) b[k].speed++; }
+    for (let i = 0; i < days; i++) { const d = new Date(start); d.setDate(start.getDate() + i); b[dayKey(d)] = { speed: 0, hard: new Set(), medium: new Set() }; }
+    for (const r of runs) { const k = dayKey(new Date(r.created_at)); if (b[k]) b[k].speed++; }
     for (const a of attempts) {
       if (!a.is_correct) continue;
-      const k = key(new Date(a.created_at)); if (!b[k]) continue;
+      const k = dayKey(new Date(a.created_at)); if (!b[k]) continue;
       const d = (meta[a.question_id]?.difficulty_level ?? '').toLowerCase();
       if (d === 'hard') b[k].hard.add(a.question_id); else if (d === 'medium') b[k].medium.add(a.question_id);
     }
@@ -144,7 +144,7 @@ function Calendar({ active }: { active: Set<string> }) {
         {Array.from({ length: first }).map((_, i) => <span key={'e' + i} />)}
         {Array.from({ length: n }).map((_, i) => {
           const d = new Date(month.getFullYear(), month.getMonth(), i + 1);
-          const on = active.has(key(d)), today = key(d) === key(new Date());
+          const on = active.has(dayKey(d)), today = dayKey(d) === dayKey(new Date());
           return <span key={i} className={cn('aspect-square rounded-lg grid place-items-center text-xs font-mono', on ? 'bg-foreground text-background' : 'text-muted-foreground', today && !on && 'ring-1 ring-foreground/40')}>{on ? <Flame className="h-3 w-3" /> : i + 1}</span>;
         })}
       </div>

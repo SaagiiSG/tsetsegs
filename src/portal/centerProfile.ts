@@ -1,6 +1,7 @@
 import type { ActivityDay, RankHistoryEntry } from '@/hooks/useStudentProfile';
 import { TIER_ORDER, type TierType } from '@/data/badgeDefinitions';
 import { PRACTICE_SETS } from './practiceSets';
+import { dayKey } from './CenterStreak';
 
 /** Same formula as the leaderboard: level L starts at 100 * (2^(L-1) - 1) points. */
 export function centerLevel(points: number): { level: number; progress: number; toNext: number } {
@@ -30,7 +31,6 @@ export function centerBadges(i: { answered: number; correct: number; present: nu
 export type RawProfile = { name: string; class_name: string | null; joined: string; tier: string; points: number; practice_answered: number; practice_correct: number; math_correct: number; english_correct: number; speed_runs: number; best_speed: number | null; present: number; solved_ids: string[]; last_active: string | null; activity: { date: string; points: number; answers: number }[]; history: { sprint: string; tier: string; next_tier: string; position: number; points: number }[] };
 
 const asTier = (t: string): TierType => (TIER_ORDER as readonly string[]).includes(t) ? t as TierType : 'unranked';
-const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export function toProfileView(raw: RawProfile, sprintNumbers: Record<string, number>, today = new Date()): { activity: ActivityDay[]; activeDays: string[]; rankHistory: RankHistoryEntry[]; tier: TierType; level: ReturnType<typeof centerLevel> } {
   const byDay = new Map(raw.activity.map(a => [a.date, a]));
