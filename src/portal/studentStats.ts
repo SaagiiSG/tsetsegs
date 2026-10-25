@@ -3,6 +3,9 @@ import { TIER_ORDER, type TierType } from '@/data/badgeDefinitions';
 export type Ring = { speed: number; hard: number; medium: number };
 
 // Board rule: points ?? (is_correct ? 10 : 0) per attempt, correct * 10 per speed run.
+export const attemptPoints = (a: { is_correct: boolean; points: number | null }) => a.points ?? (a.is_correct ? 10 : 0);
+export const runPoints = (r: { correct: number }) => r.correct * 10;
+
 export function todayPoints(
   attempts: { created_at: string; is_correct: boolean; points: number | null }[],
   runs: { created_at: string; correct: number }[],
@@ -11,8 +14,8 @@ export function todayPoints(
   const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const today = (s: string) => new Date(s).getTime() >= midnight;
   return (
-    attempts.filter((a) => today(a.created_at)).reduce((n, a) => n + (a.points ?? (a.is_correct ? 10 : 0)), 0) +
-    runs.filter((r) => today(r.created_at)).reduce((n, r) => n + r.correct * 10, 0)
+    attempts.filter((a) => today(a.created_at)).reduce((n, a) => n + attemptPoints(a), 0) +
+    runs.filter((r) => today(r.created_at)).reduce((n, r) => n + runPoints(r), 0)
   );
 }
 

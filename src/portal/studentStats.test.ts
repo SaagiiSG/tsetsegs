@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todayPoints, ringStatus, activeSprintId, rankFromBoard } from './studentStats';
+import { attemptPoints, runPoints, todayPoints, ringStatus, activeSprintId, rankFromBoard } from './studentStats';
 const at = (s: string) => new Date(s).toISOString();
 const now = new Date('2026-10-25T15:00:00');
 describe('todayPoints', () => {
@@ -15,6 +15,15 @@ describe('todayPoints', () => {
     expect(todayPoints(attempts, runs, now)).toBe(55);
   });
   it('zero data', () => expect(todayPoints([], [], now)).toBe(0));
+});
+describe('points flown', () => {
+  it('flies exactly what the chip adds', () => {
+    const t = at('2026-10-25T14:00:00');
+    const row = { created_at: t, is_correct: true, points: 5 }, legacy = { created_at: t, is_correct: true, points: null }, run = { created_at: t, correct: 3 };
+    expect(attemptPoints(row)).toBe(5); expect(attemptPoints(legacy)).toBe(10); expect(attemptPoints({ is_correct: false, points: 0 })).toBe(0);
+    expect(runPoints(run)).toBe(30);
+    expect(todayPoints([row, legacy], [run], now) - todayPoints([legacy], [], now)).toBe(attemptPoints(row) + runPoints(run));
+  });
 });
 describe('ringStatus', () => {
   it('counts closed rings, percent and what is left', () => {

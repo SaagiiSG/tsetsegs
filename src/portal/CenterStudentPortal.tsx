@@ -27,6 +27,8 @@ import { CenterGoalDialog, useCenterDailyProgress, useCenterGoals } from './Cent
 import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
 import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING } from './CenterStreak';
 import { CenterTopBar } from './CenterTopBar';
+import { emitPointsEarned } from '@/components/student/PointsFlyer';
+import { attemptPoints, runPoints } from './studentStats';
 import { CenterAnalyticsPage } from './CenterAnalytics';
 import { CenterPracticeBrowser, usePracticeQuestions } from './CenterPracticeBrowser';
 import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
@@ -418,10 +420,14 @@ function useRecordAttempt(me: Me) {
     const key = ['center-student', center.id, userId];
     const { data: row } = await supabase.from('tenant_attempts').insert({ institution_id: center.id, student_id: me.student.id, question_id: questionId, is_correct: ok, answer: answer ?? '', time_spent_seconds: seconds != null ? Math.max(1, Math.min(3600, Math.round(seconds))) : null })
       .select('question_id, is_correct, created_at, time_spent_seconds, points').single();
-    if (!row) return qc.invalidateQueries({ queryKey: key });
+    if (!row) { qc.invalidateQueries({ queryKey: key }); return null; }
+    const paid = attemptPoints(row);
+    emitPointsEarned(paid); // emit first: the chip holds its number until "+N" lands
+    if (paid > 0) for (const k of ['center-board', 'center-all-time']) qc.invalidateQueries({ queryKey: [k, center.id] });
     // Add the server-graded row to the cached history instead of re-reading every answer.
     const meta = me.meta[questionId] ? {} : await loadQuestionMeta([questionId]);
     qc.setQueryData<Me>(key, old => old && { ...old, attempts: [row, ...old.attempts], meta: { ...old.meta, ...meta } });
+    return { is_correct: row.is_correct, points: paid };
   };
 }
 
@@ -595,8 +601,8 @@ function SpeedPage({ me }: { me: Me }) {
   const done = qs && (i >= qs.length || timeUp);
   useEffect(() => {
     if (!done || !qs?.length || !cfg) return;
-    supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: Math.max(score.length, 1), duration_seconds: cfg.duration, total_time_seconds: cfg.duration - left, category: cfg.category })
-      .then(() => qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }));
+    supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: Math.max(score.length, 1), duration_seconds: cfg.duration, total_time_seconds: cfg.duration - left, category: cfg.category }).select('correct').single()
+      .then(({ data }) => { if (data) emitPointsEarned(runPoints(data)); qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }); });
   }, [done]);
   const answer = useCallback(async (given: string) => {
     if (!q) return;
