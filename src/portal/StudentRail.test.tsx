@@ -12,5 +12,9 @@ describe('student rail', () => {
     for (const l of ['Home', 'Practice', 'Concept videos', 'Speed mode', 'Leaderboard', 'Analytics', 'Review mistakes', 'Badges', 'Help', 'Profile', 'Settings', 'Dark mode', 'Log out']) expect(html).toContain(l);
     expect(html).toContain('href="/student/profile"'); expect(html).toContain('role="switch"');
   });
+  it('opens on hover and keyboard focus only', () => {
+    const cls = html.match(/<aside class="([^"]*)"/)![1];
+    expect(cls).toContain('has-[:focus-visible]:w-60'); expect(cls).not.toContain('focus-within');
+  });
   it('shows Log out in red', () => expect(html).toMatch(/class="[^"]*text-destructive[^"]*"[^>]*>(?:(?!<\/button>).)*Log out/s));
 });

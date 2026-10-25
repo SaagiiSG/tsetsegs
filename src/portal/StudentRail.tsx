@@ -20,7 +20,7 @@ export const NAV = [
 
 const row = 'sky-nav flex h-12 w-full items-center gap-4 rounded-full px-[1.15rem] text-base transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 // Labels stay in the DOM (screen readers) and only fade in while the rail is open.
-const label = 'whitespace-nowrap opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover/rail:opacity-100 group-focus-within/rail:opacity-100';
+const label = 'whitespace-nowrap opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100';
 
 /** Desktop sidebar: icons only at rest, opens over the page on hover or keyboard focus. */
 export function StudentRail() {
@@ -28,7 +28,7 @@ export function StudentRail() {
   const { resolvedTheme, setTheme } = useTheme();
   const link = ({ isActive }: { isActive: boolean }) => `${row} ${isActive ? 'font-medium' : ''}`;
   return (
-    <aside className="group/rail hidden lg:flex fixed left-4 top-4 bottom-4 z-40 w-20 hover:w-60 focus-within:w-60 flex-col overflow-hidden sky-sidebar p-3 transition-[width] duration-300 motion-reduce:transition-none">
+    <aside className="group/rail hidden lg:flex fixed left-4 top-4 bottom-4 z-40 w-20 hover:w-60 has-[:focus-visible]:w-60 flex-col overflow-hidden sky-sidebar p-3 transition-[width] duration-300 motion-reduce:transition-none">
       <div className="flex items-center gap-3 px-1 pt-2 pb-4">
         <CenterLogo center={center} className="h-11 w-11 shrink-0 sky-avatar" />
         <p className={`min-w-0 truncate font-semibold ${label}`}>{centerDisplayName(center)}</p>
