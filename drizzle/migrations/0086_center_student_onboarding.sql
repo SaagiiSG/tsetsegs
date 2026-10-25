@@ -60,5 +60,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.tenant_student_profile(uuid, uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.tenant_student_profile(uuid, uuid, text) TO authenticated;
 
-DO $$ BEGIN RAISE NOTICE '00XX applied: center onboarding answers, onboarding cutoff, full classmate profiles'; END $$;
+DO $$ BEGIN RAISE NOTICE '0086 applied: center onboarding answers, onboarding cutoff, full classmate profiles'; END $$;
 NOTIFY pgrst, 'reload schema';
