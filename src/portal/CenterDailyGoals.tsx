@@ -11,7 +11,11 @@ import { computeGoals, DEFAULT_GOALS, type GoalIntensity } from '@/hooks/useDail
 import { useCenter } from './centerContext';
 import type { QMeta } from './questionMeta';
 
-export type CenterGoals = { speed: number; hard: number; medium: number; intensity: GoalIntensity | null; sat_date: string | null; isSet: boolean };
+export type CenterGoals = {
+  speed: number; hard: number; medium: number; intensity: GoalIntensity | null; sat_date: string | null; isSet: boolean;
+  target_score: number | null; prior_score: number | null; weak_section: string | null; onboarding_step: number | null; onboarding_done_at: string | null;
+};
+const NO_ONBOARDING = { target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null };
 
 /** Daily ring goals for a center student (tenant_student_goals). */
 export function useCenterGoals(studentId: string) {
@@ -19,10 +23,19 @@ export function useCenterGoals(studentId: string) {
   return useQuery({
     queryKey: ['center-goals', studentId],
     queryFn: async (): Promise<CenterGoals> => {
-      const { data } = await supabase.from('tenant_student_goals').select('*').eq('student_id', studentId).maybeSingle();
-      if (!data) return { ...DEFAULT_GOALS, sat_date: null, isSet: false, intensity: null };
-      return { speed: data.speed, hard: data.hard, medium: data.medium, intensity: data.intensity as GoalIntensity | null, sat_date: data.sat_date, isSet: true };
+      const { data, error } = await supabase.from('tenant_student_goals').select('*').eq('student_id', studentId).maybeSingle();
+      // Throw so an unreadable row is "unknown", never "no ring yet" (that would restart onboarding or the old pop-up).
+      if (error) throw error;
+      if (!data) return { ...DEFAULT_GOALS, sat_date: null, isSet: false, intensity: null, ...NO_ONBOARDING };
+      return {
+        speed: data.speed, hard: data.hard, medium: data.medium, intensity: data.intensity as GoalIntensity | null, sat_date: data.sat_date,
+        // A half-finished onboarding row only holds answers; the ring counts as set once onboarding is done (or it was set the old way).
+        isSet: data.onboarding_step == null || !!data.onboarding_done_at,
+        target_score: data.target_score ?? null, prior_score: data.prior_score ?? null, weak_section: data.weak_section ?? null,
+        onboarding_step: data.onboarding_step ?? null, onboarding_done_at: data.onboarding_done_at ?? null,
+      };
     },
+    enabled: !!studentId,
     meta: { institution: center.id },
   });
 }
@@ -46,7 +59,7 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
   }, [attempts, meta, runs.data, runs.isSuccess]);
 }
 
-const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [
+export const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [
   { key: 'intense', label: 'Intense', blurb: 'Big daily push', icon: Flame },
   { key: 'gradual', label: 'Gradual', blurb: 'Steady progress', icon: Zap },
   { key: 'with_the_flow', label: 'With the flow', blurb: 'Light and consistent', icon: Wind },

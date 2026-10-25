@@ -25,6 +25,5 @@ export const demoLessons = [
 export type DemoAttempt = { question: number; correct: boolean; seconds: number; createdAt: string };
 export type DemoState = { attempts: DemoAttempt[]; attendance: Record<string, string>; classes: { name: string }[]; announcements: { text: string; createdAt: string }[]; completedVideos: string[]; goals: { speed: number; hard: number; medium: number } };
 export type DemoSession = { expiresAt: string; state: DemoState };
-// College Board's 2026–27 SAT dates. shortcut: the list runs out after Mar 2027, add the next year's dates then.
-export const demoSatDates = ['2026-11-07', '2026-12-05', '2027-03-06'];
+export { SAT_DATES as demoSatDates } from '@/lib/satDates';
 export const demoHistory = Array.from({ length: 14 }, (_, i) => ({ day: `Day ${i + 1}`, accuracy: 63 + Math.round(i * 1.8) + (i % 3) * 2, seconds: 110 - i * 3 }));

@@ -51,6 +51,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Bell, UserRound, GripVertical, GripHorizontal, LifeBuoy } from 'lucide-react';
 import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
+import { CenterOnboarding } from './CenterOnboarding';
+import { onboardingStep } from './onboarding';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -90,6 +92,19 @@ function useMe() {
   });
 }
 type Me = NonNullable<ReturnType<typeof useMe>['data']>;
+
+/** Students created after 0086 get onboarding until it's done; everyone else, and any failed read, gets the portal. */
+function useOnboardingGate(me?: Me) {
+  const id = me?.student.id ?? '';
+  // Own read so useMe still works before 0086 is applied. An error is data null = not eligible (no retries holding the skeleton),
+  // and it's read once per session so a flaky refetch can't pull a student out of onboarding halfway.
+  const eligible = useQuery({
+    queryKey: ['center-onboarding-eligible', id], enabled: !!id, staleTime: Infinity,
+    queryFn: async () => (await supabase.from('tenant_students').select('onboarding_eligible, sat_month').eq('id', id).maybeSingle()).data,
+  });
+  const goals = useCenterGoals(id);
+  return { loading: !!id && (eligible.isPending || goals.isPending), step: onboardingStep(eligible.data?.onboarding_eligible, goals.data), satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
+}
 
 /* ------------------------------ Shell ------------------------------ */
 
@@ -142,11 +157,14 @@ function MovableDock() {
 export default function CenterStudentPortal() {
   const { center } = useCenter();
   const me = useMe();
+  const gate = useOnboardingGate(me.data);
   const [notesOpen, setNotesOpen] = useState(false);
   useEffect(() => {
     document.body.classList.add('student-portal', 'customer-student-portal');
     return () => document.body.classList.remove('student-portal', 'customer-student-portal');
   }, []);
+
+  if (me.data && gate.step != null) return <OnboardingRoute me={me.data} start={gate.step} satMonth={gate.satMonth} goals={gate.goals} />;
 
   return (
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
@@ -164,7 +182,7 @@ export default function CenterStudentPortal() {
               <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
             </div>
           </header>
-          {me.isLoading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
+          {me.isLoading || gate.loading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
             ? <p className="text-sm">Your account isn't linked. Contact your center.</p>
             : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
             <div className="max-w-[1400px] mx-auto space-y-5">
@@ -199,6 +217,12 @@ export default function CenterStudentPortal() {
       <MovableDock />
     </div>
   );
+}
+
+/** Onboarding replaces the whole shell (no rail, top bar or dock). */
+function OnboardingRoute({ me, start, satMonth, goals }: { me: Me; start: number; satMonth: string | null; goals: ReturnType<typeof useOnboardingGate>['goals'] }) {
+  const record = useRecordAttempt(me);
+  return <CenterOnboarding studentId={me.student.id} attempts={me.attempts} meta={me.meta} start={start} satMonth={satMonth} goals={goals} record={record} />;
 }
 
 function AnalyticsRoute({ me }: { me: Me }) {
