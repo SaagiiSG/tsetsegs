@@ -19,12 +19,12 @@ Success: a new center student finishes a 2-minute onboarding with a daily ring s
 4. **Profile page** for center students, mirroring the main app's `src/pages/student/StudentProfile.tsx` (`ProfileHeader`, `ActivityHeatmap`, `FeaturedBadges`, `PerformanceStatsGrid`, `RankHistoryGraph` …): current badges, activity map, rank history, and basic stats — points collected, questions solved, speed sessions completed. Center data only.
 5. **Onboarding** (approved mockup `onboarding-flow.html`), shown once after the student creates their password and before they first see home:
    1. Welcome — "[Center name] set you up on FlowersOS. 5 quick steps, about 2 minutes." Center logo/colour.
-   2. When is your SAT? — real upcoming dates (same source as the demo's dates / `tenant` SAT schedule if the center has one) + "Not sure yet".
-   3. Target score — slider 1000–1600, step 50, + "Help me pick".
-   4. Taken a practice SAT? — "Not yet" or "Yes, about ___".
+   2. When is your SAT? — real upcoming official SAT dates (2026–27: Aug 22, Sep 12, Oct 3, Nov 7, Dec 5 2026; Mar 6, May 1, Jun 5 2027 — only future ones shown) + "Not sure yet".
+   3. Taken a practice SAT? — "Not yet" or "Yes, about ___".
+   4. Target score — slider 1000–1600, step 50, + "Help me pick" (uses the step 3 answer, so it comes after it).
    5. Which part feels harder? — Math / Reading and Writing / About the same.
    6. One real SAT question from that section (easy, untimed, not seen before) → explanation, points, ring starts filling. Counts like any practice answer.
-   7. Set your daily ring — the existing Intense / Gradual / With the flow choices from `CenterGoalDialog`, defaulted from the SAT date, with honest maths ("About 20 questions a day. Your score prediction unlocks in about 3 weeks.") → "I'm in".
+   7. Set your daily ring — the existing Intense / Gradual / With the flow choices from `CenterGoalDialog`, defaulted from the SAT date, with honest maths ("About 20 questions a day. Your Math score prediction unlocks in about 3 weeks." — the prediction is Math-only, so the copy says so) → "I'm in".
    - Then home opens with a pop-up: **"Let's close your ring today"** — ring with today's progress, "You're 30% there. 14 more questions.", button **Start practicing**.
    - Layout: desktop 50/50 split (left: center colours/logo + a picture that reacts to answers; right: question + big buttons); phone: picture becomes a short band on top, button at the bottom by the thumb. Thin progress bar on top. Steps 2–5 skippable; step 7 has a default so one tap works. Answers save as they go; a closed tab resumes where it stopped. Reminders are not asked here.
    - The onboarding **replaces** today's first-visit "Set your daily ring" pop-up for new students. Existing students who already set a ring never see onboarding.
