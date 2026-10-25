@@ -36,6 +36,7 @@ export function useCenterGoals(studentId: string) {
       };
     },
     enabled: !!studentId,
+    retry: 1,
     meta: { institution: center.id },
   });
 }

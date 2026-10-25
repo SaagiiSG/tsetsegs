@@ -37,7 +37,7 @@ const SAVE_ERROR = "We couldn't save that. Check your connection and try again."
 
 function Choice({ on, onClick, disabled, children }: { on: boolean; onClick: () => void; disabled?: boolean; children: ReactNode }) {
   return (
-    <button type="button" role="radio" aria-checked={on} disabled={disabled} onClick={onClick}
+    <button type="button" aria-pressed={on} disabled={disabled} onClick={onClick}
       className={cn('flex w-full min-h-14 items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left font-medium transition-[background-color,border-color,transform] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:active:scale-100',
         on ? 'border-primary bg-primary/10' : 'border-transparent bg-card shadow-sm hover:bg-muted/60')}>
       {children}
@@ -57,6 +57,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const [saving, setSaving] = useState(false);
   // undefined = not answered yet, null = "Not sure yet".
   const [satDate, setSatDate] = useState<string | null | undefined>(goals?.sat_date ?? dates.prefill ?? undefined);
+  const [savedSat, setSavedSat] = useState(goals?.sat_date ?? null); // a skipped step 2 saves no date
   const [prior, setPrior] = useState<'no' | 'yes' | null>(goals?.prior_score != null ? 'yes' : null);
   const [priorText, setPriorText] = useState(goals?.prior_score != null ? String(goals.prior_score) : '');
   const [target, setTarget] = useState(goals?.target_score ?? 1300);
@@ -72,7 +73,8 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const priorNum = Number(priorText);
   const priorOk = Number.isInteger(priorNum) && priorNum >= 400 && priorNum <= 1600; // tenant_student_goals CHECK
   const priorScore = prior === 'yes' && priorOk ? priorNum : null;
-  const days = satDate ? Math.ceil((new Date(`${satDate}T00:00:00`).getTime() - Date.now()) / 86400000) : null;
+  const daysTo = (d: string | null | undefined) => (d ? Math.ceil((new Date(`${d}T00:00:00`).getTime() - Date.now()) / 86400000) : null);
+  const days = daysTo(savedSat), shownDays = daysTo(satDate);
   const intensity = pace ?? defaultIntensity(days);
   const vals = computeGoals(intensity, days);
   const prog = useCenterDailyProgress(studentId, attempts, meta);
@@ -103,8 +105,16 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
     setSaving(true);
     const { error } = await supabase.from('tenant_student_goals').upsert({ student_id: studentId, institution_id: center.id, onboarding_step: next, ...patch });
     if (error) toast.error(SAVE_ERROR);
-    else if (patch.onboarding_done_at) { await qc.invalidateQueries({ queryKey: ['center-goals', studentId] }); navigate('/student', { replace: true }); }
-    else setStep(next);
+    else if (patch.onboarding_done_at) {
+      const done = patch.onboarding_done_at;
+      // Cache the finished row so the gate opens home even if the refetch fails.
+      qc.setQueryData<CenterGoals>(['center-goals', studentId], old => old && { ...old, ...vals, intensity, sat_date: savedSat, isSet: true, onboarding_step: 7, onboarding_done_at: done });
+      qc.invalidateQueries({ queryKey: ['center-goals', studentId] });
+      navigate('/student', { replace: true });
+    } else {
+      if ('sat_date' in patch) setSavedSat(patch.sat_date ?? null);
+      setStep(next);
+    }
     setSaving(false);
   };
 
@@ -134,7 +144,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const titles = [first ? `Welcome, ${first}` : 'Welcome', 'When is your SAT?', 'Taken a practice SAT?', 'Target score', 'Which part feels harder?', 'Try one real SAT question', 'Set your daily ring'];
   // The picture side echoes the latest answer: [big value, caption].
   const [answer, caption]: [string | null, string] =
-    step === 2 ? [days != null && days >= 0 ? String(days) : null, days === 1 ? 'day to your SAT' : 'days to your SAT']
+    step === 2 ? [shownDays != null && shownDays >= 0 ? String(shownDays) : null, shownDays === 1 ? 'day to your SAT' : 'days to your SAT']
     : step === 3 ? [priorScore != null ? String(priorScore) : prior === 'no' ? 'Not yet' : null, priorScore != null ? 'practice score' : '']
     : step === 4 ? [String(target), 'target score']
     : step === 5 ? [SECTIONS.find(s => s[0] === weak)?.[1] ?? null, 'feels harder']
@@ -168,12 +178,12 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
           <div key={step} className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 lg:pt-[16vh]">
             <h1 id={titleId} ref={title} tabIndex={-1} className="text-3xl font-bold outline-none lg:text-4xl">{titles[step - 1]}</h1>
             {step === 1 && <p className="text-lg sky-body">{welcomeCopy(centerDisplayName(center))}</p>}
-            {step === 2 && <div role="radiogroup" aria-labelledby={titleId} className="grid gap-2">
+            {step === 2 && <div role="group" aria-labelledby={titleId} className="grid gap-2">
               {dates.options.map(o => <Choice key={o.value} on={satDate === o.value} onClick={() => setSatDate(o.value)}>{o.label}</Choice>)}
               <Choice on={satDate === null} onClick={() => setSatDate(null)}>Not sure yet</Choice>
             </div>}
             {step === 3 && <div className="space-y-3">
-              <div role="radiogroup" aria-labelledby={titleId} className="grid gap-2">
+              <div role="group" aria-labelledby={titleId} className="grid gap-2">
                 <Choice on={prior === 'no'} onClick={() => setPrior('no')}>Not yet</Choice>
                 <Choice on={prior === 'yes'} onClick={() => setPrior('yes')}>Yes, about</Choice>
               </div>
@@ -183,12 +193,12 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                 {priorText && !priorOk && <p className="text-sm text-status-risk">Enter a score from 400 to 1600.</p>}
               </>}
             </div>}
-            {step === 4 && <div role="group" aria-labelledby={titleId} className="space-y-5">
-              <Slider min={1000} max={1600} step={50} value={[target]} onValueChange={([v]) => setTarget(v)} className="py-2" />
+            {step === 4 && <div className="space-y-5">
+              <Slider min={1000} max={1600} step={50} value={[target]} onValueChange={([v]) => setTarget(v)} aria-label="Target score" className="py-2" />
               <div className="flex justify-between font-mono text-xs sky-body"><span>1000</span><span>1600</span></div>
               <Button variant="outline" className="rounded-full" onClick={() => setTarget(helpMePick(priorScore))}><Wand2 className="h-4 w-4" />Help me pick</Button>
             </div>}
-            {step === 5 && <div role="radiogroup" aria-labelledby={titleId} className="grid gap-2">
+            {step === 5 && <div role="group" aria-labelledby={titleId} className="grid gap-2">
               {SECTIONS.map(([v, l]) => <Choice key={v} on={weak === v} onClick={() => setWeak(v)}>{l}</Choice>)}
             </div>}
             {step === 6 && (q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="sky-body">We couldn't load a question right now. You'll find plenty in Practice.</p> : (
@@ -197,7 +207,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                   {q.passage_text && <div className="border-l-2 pl-4 text-sm leading-relaxed"><MathText text={q.passage_text} /></div>}
                   <div className="leading-relaxed"><MathText text={q.question_text} /></div>
                   <QuestionFigures svg={q.figure_svg} description={q.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-64 rounded border bg-background" />
-                  <div role="radiogroup" aria-label="Answer choices" className="grid gap-2">
+                  <div role="group" aria-label="Answer choices" className="grid gap-2">
                     {choices.map(c => <Choice key={c.letter} on={picked === c.letter} disabled={solved || saving} onClick={() => setPicked(c.letter)}>
                       <span className="w-5 font-mono text-sm">{c.letter}</span><span className="min-w-0 flex-1 font-normal">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span>
                     </Choice>)}
@@ -208,7 +218,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
               </div>
             ))}
             {step === 7 && <div className="space-y-4">
-              <div role="radiogroup" aria-labelledby={titleId} className="grid gap-2">
+              <div role="group" aria-labelledby={titleId} className="grid gap-2">
                 {INTENSITIES.map(({ key, label, blurb, icon: I }) => <Choice key={key} on={intensity === key} onClick={() => setPace(key)}>
                   <I className="h-5 w-5 shrink-0" /><span><span className="block">{label}</span><span className="block text-sm font-normal sky-body">{blurb}</span></span>
                 </Choice>)}

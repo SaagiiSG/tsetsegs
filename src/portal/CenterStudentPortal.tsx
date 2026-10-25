@@ -95,15 +95,17 @@ type Me = NonNullable<ReturnType<typeof useMe>['data']>;
 
 /** Students created after 0086 get onboarding until it's done; everyone else, and any failed read, gets the portal. */
 function useOnboardingGate(me?: Me) {
-  const id = me?.student.id ?? '';
-  // Own read so useMe still works before 0086 is applied. An error is data null = not eligible (no retries holding the skeleton),
-  // and it's read once per session so a flaky refetch can't pull a student out of onboarding halfway.
+  const { center, userId } = useCenter();
+  // Own read beside useMe, so useMe still works before 0086 is applied. An error is data null = not eligible (no retries
+  // holding the skeleton), and it's read once per session so a flaky refetch can't pull a student out of onboarding halfway.
   const eligible = useQuery({
-    queryKey: ['center-onboarding-eligible', id], enabled: !!id, staleTime: Infinity,
-    queryFn: async () => (await supabase.from('tenant_students').select('onboarding_eligible, sat_month').eq('id', id).maybeSingle()).data,
+    queryKey: ['center-onboarding-eligible', center.id, userId], enabled: !!userId, staleTime: Infinity,
+    queryFn: async () => (await supabase.from('tenant_students').select('onboarding_eligible, sat_month').eq('institution_id', center.id).eq('user_id', userId!).maybeSingle()).data,
   });
-  const goals = useCenterGoals(id);
-  return { loading: !!id && (eligible.isPending || goals.isPending), step: onboardingStep(eligible.data?.onboarding_eligible, goals.data), satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
+  const goals = useCenterGoals(me?.student.id ?? '');
+  // Only eligible students wait on the goals read (and only once useMe has a student); everyone else's home never does.
+  const loading = (!!userId && eligible.isPending) || (!!me && eligible.data?.onboarding_eligible === true && goals.isPending);
+  return { loading, step: onboardingStep(eligible.data?.onboarding_eligible, goals.data), satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
 }
 
 /* ------------------------------ Shell ------------------------------ */

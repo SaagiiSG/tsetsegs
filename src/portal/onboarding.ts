@@ -12,7 +12,7 @@ export function onboardingStep(eligible: boolean | undefined, goals: CenterGoals
 
 export const canSkip = (step: number) => step >= 2 && step <= 5;
 
-export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 5 quick steps, about 2 minutes.`;
+export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
 
 /** Official SAT dates from today on; the admin's SAT month (YYYY-MM) picks its real date when that date is still ahead. */
 export function satDateOptions(now: Date, satMonth: string | null) {

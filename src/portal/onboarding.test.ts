@@ -14,7 +14,7 @@ describe('who sees onboarding', () => {
   it('lets only steps 2-5 be skipped', () => expect([1, 2, 3, 4, 5, 6, 7].map(canSkip)).toEqual([false, true, true, true, true, false, false]));
 });
 describe('steps', () => {
-  it('welcome', () => expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 5 quick steps, about 2 minutes.'));
+  it('welcome', () => expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 6 quick steps, about 2 minutes.'));
   it('lists real upcoming SAT dates and prefills the center month', () => {
     const o = satDateOptions(new Date('2026-10-25T12:00:00'), null);
     expect(o.options.map(d => d.value)).toEqual(['2026-11-07', '2026-12-05', '2027-03-06', '2027-05-01', '2027-06-05']);
