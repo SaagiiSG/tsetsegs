@@ -70,7 +70,7 @@ export function CenterStudentProfileDialog({ studentId, name, open, onOpenChange
               <p className="mb-2 text-sm font-semibold">Recent sprints</p>
               {!p.history.length ? <p className="text-sm text-muted-foreground">No finished sprints yet.</p> : (
                 <div className="divide-y rounded-xl border">
-                  {p.history.map((h, i) => (
+                  {p.history.slice(-5).reverse().map((h, i) => (
                     <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
                       <div className="min-w-0"><p className="truncate font-medium">{h.sprint}</p><p className="text-xs text-muted-foreground">{tierName(h.tier)} <ArrowUpRight className="inline h-3 w-3" /> {tierName(h.next_tier)}</p></div>
                       <div className="text-right font-mono"><p>#{h.position}</p><p className="text-xs text-muted-foreground">{h.points} pts</p></div>
