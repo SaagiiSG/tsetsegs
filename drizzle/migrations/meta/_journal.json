@@ -589,6 +589,13 @@
       "when": 1792875258990,
       "tag": "0083_apply_pending_0081_0082",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1792886506128,
+      "tag": "0084_settings_signout_and_fast_reads",
+      "breakpoints": true
     }
   ]
 }
