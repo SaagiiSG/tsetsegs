@@ -49,7 +49,7 @@ export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () =>
 export function RingChip({ p, closed, onClick }: { p: [number, number, number]; closed: number; onClick?: () => void }) {
   return (
     <button type="button" onClick={onClick} className="hidden md:inline-flex student-chip shrink-0" title="Daily rings" aria-label={`${closed} of 3 daily rings closed`}>
-      <MiniRing size={18} p={p} colors={SKY_RING} />
+      <MiniRing size={18} stroke={1.5} gap={1} p={p} colors={SKY_RING} />
       <span className="tabular-nums">{`${closed}/3`}</span>
     </button>
   );
@@ -70,8 +70,8 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
   const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
   return (
     <div className="flex items-center justify-center gap-2">
-      <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs) : undefined} />
+      <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <RankChip rank={rank} onClick={() => navigate('/student/leaderboard')} />
       {prog.ready && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} onClick={() => setRingOpen(true)} />}
       <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streak} history={history} goals={goals} />

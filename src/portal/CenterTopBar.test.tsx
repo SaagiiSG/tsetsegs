@@ -11,5 +11,9 @@ describe('top bar chips', () => {
     const streak = html(<StreakChip days={5} />);
     expect(streak).toContain('>5<'); expect(streak).not.toContain('hidden');
   });
+  it('draws the mini ring with positive radii', () => {
+    const radii = [...html(<RingChip p={[1, 0.4, 1]} closed={2} />).matchAll(/ r="([^"]+)"/g)].map(m => Number(m[1]));
+    expect(radii).toHaveLength(6); expect(radii.every(r => r > 0)).toBe(true);
+  });
   it('shows no rank chip until the rank is real', () => expect(html(<RankChip rank={null} />)).toBe(''));
 });

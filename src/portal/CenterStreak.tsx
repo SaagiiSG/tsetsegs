@@ -43,8 +43,8 @@ export function useCenterStreak(attempts: { created_at: string }[]) {
 }
 export type CenterStreak = ReturnType<typeof useCenterStreak>;
 
-export function MiniRing({ size = 52, p, colors = COLORS }: { size?: number; p: [number, number, number]; colors?: typeof COLORS }) {
-  const stroke = 5, gap = 2, c = size / 2;
+export function MiniRing({ size = 52, p, colors = COLORS, stroke = 5, gap = 2 }: { size?: number; p: [number, number, number]; colors?: typeof COLORS; stroke?: number; gap?: number }) {
+  const c = size / 2;
   const radii = [c - stroke / 2 - 1, c - stroke * 1.5 - gap - 1, c - stroke * 2.5 - gap * 2 - 1];
   const cols = [colors.speed, colors.hard, colors.medium];
   return (
