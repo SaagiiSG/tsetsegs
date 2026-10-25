@@ -31,7 +31,7 @@ import { StudentRail, NAV } from './StudentRail';
 import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { attemptPoints, runPoints } from './studentStats';
 import { CenterAnalyticsPage } from './CenterAnalytics';
-import { CenterPracticeBrowser, usePracticeQuestions } from './CenterPracticeBrowser';
+import { CenterPracticeBrowser, usePracticeQuestions, useSetTotals } from './CenterPracticeBrowser';
 import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
 import { CenterReviewPage } from './CenterReviewPage';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
@@ -39,7 +39,7 @@ import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSi
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
-import { CenterProfileView } from './CenterProfileView';
+import { CenterProfileView, CenterBadgeGrid } from './CenterProfileView';
 import { centerBadges } from './centerProfile';
 import { RoadmapPreview } from './RoadmapPreview';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
@@ -90,13 +90,6 @@ function useMe() {
   });
 }
 type Me = NonNullable<ReturnType<typeof useMe>['data']>;
-
-/** Question ids per practice tab, from the same list and rule the practice tabs count with. */
-function useSetTotals() {
-  const questions = usePracticeQuestions().data;
-  const data = useMemo(() => questions && Object.fromEntries(PRACTICE_SETS.map(s => [s.key, practiceSetIds(s.key, questions)])) as Record<string, string[]>, [questions]);
-  return { data };
-}
 
 /* ------------------------------ Shell ------------------------------ */
 
@@ -662,12 +655,7 @@ function BadgesPage({ me }: { me: Me }) {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Badges <span className="text-base text-muted-foreground font-mono">{badges.filter(b => b.got).length}/{badges.length}</span></h1>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{badges.map(b => (
-        <Glass key={b.name} className={b.got ? '' : 'opacity-60'}>
-          <Award className={`h-6 w-6 ${b.got ? '' : 'text-muted-foreground'}`} style={b.got ? { color: 'hsl(var(--section-glow))' } : undefined} />
-          <p className="font-medium mt-2">{b.name}</p><p className="text-xs text-muted-foreground">{b.desc}</p>
-          {!b.got && <div className="h-1 rounded-full bg-muted overflow-hidden mt-3"><div className="h-full bg-foreground/60" style={{ width: `${Math.min(100, pct(b.prog[0], b.prog[1]))}%` }} /></div>}
-        </Glass>))}</div>
+      <CenterBadgeGrid badges={badges} heading={false} />
     </div>
   );
 }

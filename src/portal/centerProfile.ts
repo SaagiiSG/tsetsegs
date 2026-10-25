@@ -32,16 +32,17 @@ export type RawProfile = { name: string; class_name: string | null; joined: stri
 const asTier = (t: string): TierType => (TIER_ORDER as readonly string[]).includes(t) ? t as TierType : 'unranked';
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-export function toProfileView(raw: RawProfile, today = new Date()): { activity: ActivityDay[]; activeDays: string[]; rankHistory: RankHistoryEntry[]; tier: TierType; level: ReturnType<typeof centerLevel> } {
+export function toProfileView(raw: RawProfile, sprintNumbers: Record<string, number>, today = new Date()): { activity: ActivityDay[]; activeDays: string[]; rankHistory: RankHistoryEntry[]; tier: TierType; level: ReturnType<typeof centerLevel> } {
   const byDay = new Map(raw.activity.map(a => [a.date, a]));
   const activity: ActivityDay[] = Array.from({ length: 365 }, (_, i) => {
     const date = dayKey(new Date(today.getFullYear(), today.getMonth(), today.getDate() - (364 - i)));
     const a = byDay.get(date);
     return { date, points: a?.points ?? 0, sessionsCount: a?.answers ?? 0 };
   });
-  const rankHistory = raw.history.map((h, i): RankHistoryEntry => {
+  // shortcut: matched by sprint name; two sprints with the same name in one center share a number — return sprint ids from the RPC if that happens
+  const rankHistory = raw.history.filter(h => sprintNumbers[h.sprint] != null).map((h): RankHistoryEntry => {
     const a = asTier(h.tier), b = asTier(h.next_tier);
-    return { sprint: h.sprint, sprintNumber: i + 1, seasonNumber: 1, rank: TIER_ORDER.indexOf(b) > TIER_ORDER.indexOf(a) ? b : a, finalPoints: h.points, position: h.position };
+    return { sprint: h.sprint, sprintNumber: sprintNumbers[h.sprint], seasonNumber: 1, rank: TIER_ORDER.indexOf(b) > TIER_ORDER.indexOf(a) ? b : a, finalPoints: h.points, position: h.position };
   });
-  return { activity, activeDays: raw.activity.filter(a => a.answers > 0).map(a => a.date), rankHistory, tier: asTier(raw.tier), level: centerLevel(raw.points) };
+  return { activity, activeDays: activity.filter(d => d.sessionsCount > 0).map(d => d.date), rankHistory, tier: asTier(raw.tier), level: centerLevel(raw.points) };
 }

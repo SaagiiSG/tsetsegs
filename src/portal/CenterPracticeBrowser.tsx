@@ -141,3 +141,10 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
     </div>
   );
 }
+
+/** Question ids per practice tab, from the same list and rule the practice tabs count with. */
+export function useSetTotals() {
+  const questions = usePracticeQuestions().data;
+  const data = useMemo(() => questions && Object.fromEntries(PRACTICE_SETS.map(s => [s.key, practiceSetIds(s.key, questions)])) as Record<string, string[]>, [questions]);
+  return { data };
+}

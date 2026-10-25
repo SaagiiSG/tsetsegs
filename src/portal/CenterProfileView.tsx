@@ -6,15 +6,15 @@ import { ProfileHeader, ActivityHeatmap, RankHistoryGraph } from '@/components/s
 import { useCenter } from './centerContext';
 import { SkyListSkeleton } from './SkySkeleton';
 import { useCenterStreak } from './CenterStreak';
-import { usePracticeQuestions } from './CenterPracticeBrowser';
-import { PRACTICE_SETS, practiceSetIds } from './practiceSets';
+import { useSetTotals } from './CenterPracticeBrowser';
+import { useCenterSprints } from './admin/ToolPages';
 import { pct } from './questionMeta';
 import { centerBadges, toProfileView, type CenterBadge, type RawProfile } from './centerProfile';
 
-export function CenterBadgeGrid({ badges }: { badges: CenterBadge[] }) {
+export function CenterBadgeGrid({ badges, heading = true }: { badges: CenterBadge[]; heading?: boolean }) {
   return (
     <div className="sky-card !p-4">
-      <p className="mb-3 font-semibold">Badges <span className="font-mono text-sm text-muted-foreground">{badges.filter(b => b.got).length}/{badges.length}</span></p>
+      {heading && <p className="mb-3 font-semibold">Badges <span className="font-mono text-sm text-muted-foreground">{badges.filter(b => b.got).length}/{badges.length}</span></p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{badges.map(b => (
         <div key={b.name} className={`min-w-0 rounded-xl border p-3 ${b.got ? '' : 'opacity-60'}`}>
           <Award className={`h-5 w-5 ${b.got ? '' : 'text-muted-foreground'}`} style={b.got ? { color: 'hsl(var(--section-glow))' } : undefined} />
@@ -37,17 +37,19 @@ export function CenterProfileView({ studentId, name }: { studentId: string; name
       return data as unknown as RawProfile | null;
     },
   });
-  const questions = usePracticeQuestions().data;
+  const totals = useSetTotals();
+  const sprints = useCenterSprints();
   const raw = q.data;
-  const v = useMemo(() => raw ? toProfileView(raw) : null, [raw]);
+  const sprintNumbers = useMemo(() => Object.fromEntries((sprints.data ?? []).map((s, i, l) => [s.name, l.length - i])), [sprints.data]);
+  const v = useMemo(() => raw && sprints.data ? toProfileView(raw, sprintNumbers) : null, [raw, sprints.data, sprintNumbers]);
   const streak = useCenterStreak(useMemo(() => (v?.activeDays ?? []).map(d => ({ created_at: `${d}T12:00:00` })), [v]));
   const badges = useMemo(() => raw ? centerBadges({
     answered: raw.practice_answered, correct: raw.practice_correct, present: raw.present, solved: new Set(raw.solved_ids),
-    setIds: questions && Object.fromEntries(PRACTICE_SETS.map(s => [s.key, practiceSetIds(s.key, questions)])),
-  }) : [], [raw, questions]);
+    setIds: totals.data,
+  }) : [], [raw, totals.data]);
 
-  if (q.isLoading) return <div className="py-6"><SkyListSkeleton rows={4} /></div>;
-  if (q.error) return <p role="alert" className="py-8 text-center text-destructive">Could not load this profile.</p>;
+  if (q.isLoading || sprints.isLoading) return <div className="py-6"><SkyListSkeleton rows={4} /></div>;
+  if (q.error || sprints.error) return <p role="alert" className="py-8 text-center text-destructive">Could not load this profile.</p>;
   if (!raw || !v) return <p className="py-8 text-center text-muted-foreground">This student is no longer active.</p>;
 
   const stats = [
