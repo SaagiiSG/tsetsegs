@@ -11,6 +11,14 @@ export function onboardingStep(eligible: boolean | undefined, goals: CenterGoals
   return goals.onboarding_step ?? (goals.isSet || hasAttempts ? null : 1);
 }
 
+export type GateLatch = { user: string; step: number | null } | null;
+/** The gate decides once per signed-in user, when its reads settle, so neither a late goals refetch nor the step-6 answer
+ *  (which makes hasAttempts true while the cached row still says no step) can flip it mid-flow. A new user decides afresh. */
+export function latchGate(prev: GateLatch, user: string, settled: boolean, live: number | null): GateLatch {
+  if (prev && prev.user === user) return prev;
+  return settled ? { user, step: live } : null;
+}
+
 /** Steps 2-5 can be skipped; step 6 too once an answer failed to save, so a broken connection can't trap the student. */
 export const canSkip = (step: number, saveFailed = false) => (step >= 2 && step <= 5) || (step === 6 && saveFailed);
 

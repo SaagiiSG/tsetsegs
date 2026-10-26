@@ -52,7 +52,7 @@ import { Bell, UserRound, GripVertical, GripHorizontal, LifeBuoy } from 'lucide-
 import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 import { CenterOnboarding } from './CenterOnboarding';
-import { onboardingStep } from './onboarding';
+import { onboardingStep, latchGate, type GateLatch } from './onboarding';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -105,11 +105,13 @@ function useOnboardingGate(me?: Me) {
   const goals = useCenterGoals(me?.student.id ?? '');
   // Only eligible students wait on the goals read (and only once useMe has a student); everyone else's home never does.
   const loading = (!!userId && eligible.isPending) || (!!me && eligible.data?.onboarding_eligible === true && goals.isPending);
-  const step = onboardingStep(eligible.data?.onboarding_eligible, goals.data, !!me?.attempts.length);
-  // Once the portal has shown, a late goals refetch must never swap it for onboarding mid-practice; onboarding -> portal still works.
-  const portalShown = useRef(false);
-  if (me && !loading && step === null) portalShown.current = true;
-  return { loading, step: portalShown.current ? null : step, satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
+  const live = onboardingStep(eligible.data?.onboarding_eligible, goals.data, !!me?.attempts.length);
+  // Latched once the reads settle (a failed goals read latches the portal; onboarding resumes next visit). Finishing still
+  // exits: "I'm in" caches onboarding_done_at.
+  const latch = useRef<GateLatch>(null);
+  latch.current = latchGate(latch.current, userId ?? '', !!me && !loading, live);
+  const step = latch.current?.step != null && !goals.data?.onboarding_done_at ? latch.current.step : null;
+  return { loading, step, satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
 }
 
 /* ------------------------------ Shell ------------------------------ */

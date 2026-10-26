@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { onboardingStep, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, questionSubjects, stepSixMessage } from './onboarding';
+import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, questionSubjects, stepSixMessage } from './onboarding';
 const goals = (o = {}) => ({ speed: 2, hard: 5, medium: 10, intensity: null, sat_date: null, isSet: true, target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null, ...o });
 describe('who sees onboarding', () => {
   it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }), false)).toBeNull(); expect(onboardingStep(false, undefined, false)).toBeNull(); });
@@ -19,6 +19,17 @@ describe('who sees onboarding', () => {
     expect([1, 2, 3, 4, 5, 6, 7].map(s => canSkip(s))).toEqual([false, true, true, true, true, false, false]);
     expect([5, 6, 7].map(s => canSkip(s, true))).toEqual([true, true, false]);
   });
+});
+describe('gate latch', () => {
+  it('waits for the reads, then keeps its first decision for that user', () => {
+    expect(latchGate(null, 'u', false, 1)).toBeNull();
+    const l = latchGate(null, 'u', true, 1);
+    expect(l).toEqual({ user: 'u', step: 1 });
+    expect(latchGate(l, 'u', true, null)).toBe(l); // the step-6 answer makes the live value null: still onboarding
+    const portal = latchGate(null, 'u', true, null);
+    expect(latchGate(portal, 'u', true, 4)).toBe(portal); // a late refetch never swaps practice for onboarding
+  });
+  it('decides afresh for a different user on the same tab', () => expect(latchGate({ user: 'u', step: null }, 'v', true, 1)).toEqual({ user: 'v', step: 1 }));
 });
 describe('steps', () => {
   it('welcome', () => expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 6 quick steps, about 2 minutes.'));
