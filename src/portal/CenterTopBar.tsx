@@ -18,10 +18,11 @@ type Rank = { place: number; tier: TierType };
 export function useCenterRank(studentId: string): Rank | null {
   const { center } = useCenter();
   const sid = activeSprintId(useCenterSprints().data);
-  // Same query keys as CenterRankings so the two share one cache entry.
-  const sprint = useQuery({ queryKey: ['center-board', center.id, sid], enabled: !!sid,
+  // Same query keys as CenterRankings so the two share one cache entry. staleTime: the board is a center-wide read on every
+  // portal load; a paid answer still refreshes it at once by invalidating these keys.
+  const sprint = useQuery({ queryKey: ['center-board', center.id, sid], enabled: !!sid, staleTime: 30_000,
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: sid! }); if (error) throw error; return data ?? []; } });
-  const allTime = useQuery({ queryKey: ['center-all-time', center.id, 'all'], enabled: sid === null,
+  const allTime = useQuery({ queryKey: ['center-all-time', center.id, 'all'], enabled: sid === null, staleTime: 30_000,
     queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id }); if (error) throw error; return data ?? []; } });
   return rankFromBoard(sid ? sprint.data : sid === null ? allTime.data : undefined, studentId);
 }
@@ -35,10 +36,11 @@ export function StreakChip({ days, onClick }: { days: number; onClick?: () => vo
   );
 }
 
+// max-md:!hidden: the unlayered .student-chip display (index.css) beats a plain `hidden`, and the main app shares that rule.
 export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () => void }) {
   if (!rank) return null;
   return (
-    <button type="button" onClick={onClick} className="hidden md:inline-flex student-chip shrink-0" title="Leaderboard" aria-label={`Rank ${rank.place}, ${TIER_DISPLAY_NAMES[rank.tier]}`}>
+    <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Leaderboard" aria-label={`Rank ${rank.place}, ${TIER_DISPLAY_NAMES[rank.tier]}`}>
       <Trophy className="h-3.5 w-3.5 text-primary" />
       <span className="tabular-nums">{`#${rank.place}`}</span>
       <span className="text-[9px] text-muted-foreground">{TIER_DISPLAY_NAMES[rank.tier]}</span>
@@ -48,7 +50,7 @@ export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () =>
 
 export function RingChip({ p, closed, onClick }: { p: [number, number, number]; closed: number; onClick?: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="hidden md:inline-flex student-chip shrink-0" title="Daily rings" aria-label={`${closed} of 3 daily rings closed`}>
+    <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Daily rings" aria-label={`${closed} of 3 daily rings closed`}>
       <MiniRing size={18} stroke={1.5} gap={1} p={p} colors={SKY_RING} />
       <span className="tabular-nums">{`${closed}/3`}</span>
     </button>
@@ -63,7 +65,8 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
   const [ringOpen, setRingOpen] = useState(false);
   const streak = useCenterStreak(attempts);
   const prog = useCenterDailyProgress(studentId, attempts, meta);
-  const goals = useCenterGoals(studentId).data ?? { speed: 2, hard: 5, medium: 10 };
+  const goalsRead = useCenterGoals(studentId);
+  const goals = goalsRead.data ?? { speed: 2, hard: 5, medium: 10 };
   const history = useCenterRingHistory(attempts, prog.runs, meta);
   const rank = useCenterRank(studentId);
   const status = ringStatus(prog, goals);
@@ -73,7 +76,7 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
       <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs) : undefined} />
       <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <RankChip rank={rank} onClick={() => navigate('/student/leaderboard')} />
-      {prog.ready && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} onClick={() => setRingOpen(true)} />}
+      {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} onClick={() => setRingOpen(true)} />}
       <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streak} history={history} goals={goals} />
       <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={history} goals={goals} />
     </div>

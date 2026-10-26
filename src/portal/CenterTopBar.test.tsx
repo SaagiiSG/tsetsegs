@@ -5,9 +5,9 @@ import { RankChip, RingChip, StreakChip } from './CenterTopBar';
 describe('top bar chips', () => {
   it('keeps rank and ring off phones, streak on', () => {
     const rank = html(<RankChip rank={{ place: 3, tier: 'platinum' }} />);
-    expect(rank).toContain('#3'); expect(rank).toContain('Emerald'); expect(rank).toMatch(/class="hidden md:inline-flex/);
+    expect(rank).toContain('#3'); expect(rank).toContain('Emerald'); expect(rank).toMatch(/class="max-md:!hidden student-chip/);
     const ring = html(<RingChip p={[1, 0.4, 1]} closed={2} />);
-    expect(ring).toContain('2/3'); expect(ring).toMatch(/class="hidden md:inline-flex/);
+    expect(ring).toContain('2/3'); expect(ring).toMatch(/class="max-md:!hidden student-chip/);
     const streak = html(<StreakChip days={5} />);
     expect(streak).toContain('>5<'); expect(streak).not.toContain('hidden');
   });

@@ -15,6 +15,7 @@ describe('student rail', () => {
   it('opens on hover and keyboard focus only', () => {
     const cls = html.match(/<aside class="([^"]*)"/)![1];
     expect(cls).toContain('has-[:focus-visible]:w-60'); expect(cls).not.toContain('focus-within');
+    expect(cls).toContain('[@media(hover:hover)]:hover:w-60'); expect(cls.split(' ')).not.toContain('hover:w-60');
   });
-  it('shows Log out in red', () => expect(html).toMatch(/class="[^"]*text-destructive[^"]*"[^>]*>(?:(?!<\/button>).)*Log out/s));
+  it('shows Log out in red over the .sky-nav colour', () => expect(html).toMatch(/class="[^"]*!text-destructive[^"]*"[^>]*>(?:(?!<\/button>).)*Log out/s));
 });
