@@ -47,7 +47,7 @@ function Choice({ on, onClick, disabled, children }: { on: boolean; onClick: () 
 
 /** First-run flow for a new center student: answers save as they go, step 7 sets the daily ring. */
 export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, goals, record }: { studentId: string; attempts: Attempt[]; meta: Record<string, QMeta>; start: number; satMonth: string | null; goals: CenterGoals | undefined; record: RecordFn }) {
-  const { center, name } = useCenter();
+  const { center, name, signOut } = useCenter();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const titleId = useId();
@@ -68,6 +68,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const [tries, setTries] = useState(0);
   const [solved, setSolved] = useState(false); // correct, or both tries used
   const [msg, setMsg] = useState('');
+  const [answerFailed, setAnswerFailed] = useState(false); // the last step-6 answer didn't save: offer Skip
   const startedAt = useRef(0);
 
   const priorNum = Number(priorText);
@@ -125,6 +126,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
     const res = await record(q.id, isCorrect(q, picked), (Date.now() - startedAt.current) / 1000, picked);
     setSaving(false);
     setMsg(stepSixMessage(res, tryNo, q.difficulty_level));
+    setAnswerFailed(!res);
     if (!res) return; // not saved: same try again
     setTries(tryNo);
     if (res.is_correct || tryNo === 2) setSolved(true); else setPicked('');
@@ -174,7 +176,9 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
           </div>
         </aside>
 
-        <main className="flex min-w-0 flex-col">
+        <main className="relative flex min-w-0 flex-col">
+          {/* Shared phones and wrong accounts need a way out before onboarding is done. */}
+          <Button variant="ghost" size="sm" className="absolute right-2 top-0 h-8 text-muted-foreground lg:top-3" onClick={signOut}>Log out</Button>
           <div key={step} className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 lg:pt-[16vh]">
             <h1 id={titleId} ref={title} tabIndex={-1} className="text-3xl font-bold outline-none lg:text-4xl">{titles[step - 1]}</h1>
             {step === 1 && <p className="text-lg sky-body">{welcomeCopy(centerDisplayName(center))}</p>}
@@ -228,7 +232,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
           </div>
           <div className="sticky bottom-0 pb-[env(safe-area-inset-bottom)]" style={{ background: 'linear-gradient(hsl(var(--student-canvas) / 0), hsl(var(--student-canvas)) 35%)' }}>
             <div className="mx-auto flex w-full max-w-md gap-2 px-5 py-4 lg:pb-12">
-              {canSkip(step) && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => save({}, step + 1)}>Skip</Button>}
+              {canSkip(step, answerFailed) && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => save({}, step + 1)}>Skip</Button>}
               <Button size="lg" className="h-12 flex-1 rounded-full text-base" disabled={!action.ready || saving} onClick={action.run}>{action.label}<ArrowRight className="h-5 w-5" /></Button>
             </div>
           </div>

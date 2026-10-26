@@ -4,13 +4,15 @@ import { localDate } from './centerApi';
 import { CENTER_SAT_UNLOCK_AT } from './centerSatSimulation';
 import type { CenterGoals } from './CenterDailyGoals';
 
-/** Step to open onboarding at, or null for the normal portal. Unknown eligibility or goals means no onboarding. */
-export function onboardingStep(eligible: boolean | undefined, goals: CenterGoals | undefined): number | null {
-  if (!eligible || !goals || goals.onboarding_done_at) return null;
-  return goals.onboarding_step ?? (goals.isSet ? null : 1);
+/** Step to open onboarding at, or null for the normal portal. Unknown eligibility or goals means no onboarding.
+ *  A student with answers but no onboarding row started on the old frontend, so they're never forced in. */
+export function onboardingStep(eligible: boolean | undefined, goals: CenterGoals | undefined, hasAttempts: boolean): number | null {
+  if (eligible !== true || !goals || goals.onboarding_done_at) return null;
+  return goals.onboarding_step ?? (goals.isSet || hasAttempts ? null : 1);
 }
 
-export const canSkip = (step: number) => step >= 2 && step <= 5;
+/** Steps 2-5 can be skipped; step 6 too once an answer failed to save, so a broken connection can't trap the student. */
+export const canSkip = (step: number, saveFailed = false) => (step >= 2 && step <= 5) || (step === 6 && saveFailed);
 
 export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
 

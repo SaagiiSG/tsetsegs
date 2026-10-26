@@ -2,16 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { onboardingStep, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, questionSubjects, stepSixMessage } from './onboarding';
 const goals = (o = {}) => ({ speed: 2, hard: 5, medium: 10, intensity: null, sat_date: null, isSet: true, target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null, ...o });
 describe('who sees onboarding', () => {
-  it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }))).toBeNull(); expect(onboardingStep(false, undefined)).toBeNull(); });
-  it('fails closed when eligibility could not be read', () => expect(onboardingStep(undefined, goals({ isSet: false }))).toBeNull());
-  it('starts a new student at step 1', () => expect(onboardingStep(true, goals({ isSet: false }))).toBe(1));
-  it('resumes where a closed tab stopped', () => expect(onboardingStep(true, goals({ onboarding_step: 4 }))).toBe(4));
-  it('skips a ring set the old way, a finished run, and an unreadable goals row', () => {
-    expect(onboardingStep(true, goals())).toBeNull();
-    expect(onboardingStep(true, goals({ onboarding_step: 7, onboarding_done_at: '2026-10-25T10:00:00Z' }))).toBeNull();
-    expect(onboardingStep(true, undefined)).toBeNull();
+  it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }), false)).toBeNull(); expect(onboardingStep(false, undefined, false)).toBeNull(); });
+  it('fails closed when eligibility could not be read', () => expect(onboardingStep(undefined, goals({ isSet: false }), false)).toBeNull());
+  it('starts a new student at step 1', () => expect(onboardingStep(true, goals({ isSet: false }), false)).toBe(1));
+  it('never forces in a student who answered before onboarding shipped', () => expect(onboardingStep(true, goals({ isSet: false }), true)).toBeNull());
+  it('resumes where a closed tab stopped, even after the step-6 answer', () => {
+    expect(onboardingStep(true, goals({ onboarding_step: 4 }), false)).toBe(4);
+    expect(onboardingStep(true, goals({ isSet: false, onboarding_step: 7 }), true)).toBe(7);
   });
-  it('lets only steps 2-5 be skipped', () => expect([1, 2, 3, 4, 5, 6, 7].map(canSkip)).toEqual([false, true, true, true, true, false, false]));
+  it('skips a ring set the old way, a finished run, and an unreadable goals row', () => {
+    expect(onboardingStep(true, goals(), false)).toBeNull();
+    expect(onboardingStep(true, goals({ onboarding_step: 7, onboarding_done_at: '2026-10-25T10:00:00Z' }), false)).toBeNull();
+    expect(onboardingStep(true, undefined, false)).toBeNull();
+  });
+  it('lets only steps 2-5 be skipped, and step 6 after a failed save', () => {
+    expect([1, 2, 3, 4, 5, 6, 7].map(s => canSkip(s))).toEqual([false, true, true, true, true, false, false]);
+    expect([5, 6, 7].map(s => canSkip(s, true))).toEqual([true, true, false]);
+  });
 });
 describe('steps', () => {
   it('welcome', () => expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 6 quick steps, about 2 minutes.'));

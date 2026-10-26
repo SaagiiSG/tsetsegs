@@ -45,7 +45,7 @@ import { RoadmapPreview } from './RoadmapPreview';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Bell, UserRound, GripVertical, GripHorizontal, LifeBuoy } from 'lucide-react';
@@ -105,28 +105,30 @@ function useOnboardingGate(me?: Me) {
   const goals = useCenterGoals(me?.student.id ?? '');
   // Only eligible students wait on the goals read (and only once useMe has a student); everyone else's home never does.
   const loading = (!!userId && eligible.isPending) || (!!me && eligible.data?.onboarding_eligible === true && goals.isPending);
-  return { loading, step: onboardingStep(eligible.data?.onboarding_eligible, goals.data), satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
+  const step = onboardingStep(eligible.data?.onboarding_eligible, goals.data, !!me?.attempts.length);
+  // Once the portal has shown, a late goals refetch must never swap it for onboarding mid-practice; onboarding -> portal still works.
+  const portalShown = useRef(false);
+  if (me && !loading && step === null) portalShown.current = true;
+  return { loading, step: portalShown.current ? null : step, satMonth: eligible.data?.sat_month ?? null, goals: goals.data };
 }
 
 /* ------------------------------ Shell ------------------------------ */
 
 type DockEdge = 'bottom' | 'top' | 'left' | 'right';
+// Top and side docks start below the sticky header (54px tall, from 12px on phones and 24px from md), so they never cover its
+// chips; a top dock also widens the gap under the header (shell) so it doesn't cover the page's first line.
 const DOCK_ALIGN: Record<DockEdge, string> = {
-  bottom: 'items-end justify-center pb-3', top: 'items-start justify-center pt-3',
-  left: 'items-center justify-start pl-3', right: 'items-center justify-end pr-3',
+  bottom: 'items-end justify-center pb-3', top: 'items-start justify-center pt-[4.5rem] md:pt-[5.5rem]',
+  left: 'items-center justify-start pl-3 pt-[4.5rem] md:pt-[5.5rem]', right: 'items-center justify-end pr-3 pt-[4.5rem] md:pt-[5.5rem]',
 };
 const DOCK_SPRING = { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.8 };
 const DOCK_KEY = 'center_dock_edge';
 
 /** Floating dock for phones/iPad: drag the handle and it snaps to the nearest screen edge (vertical on left/right). */
-function MovableDock() {
+function MovableDock({ edge, setEdge }: { edge: DockEdge; setEdge: (e: DockEdge) => void }) {
   const { signOut } = useCenter();
   const { resolvedTheme, setTheme } = useTheme();
   const dark = resolvedTheme === 'dark';
-  const [edge, setEdge] = useState<DockEdge>(() => {
-    const v = localStorage.getItem(DOCK_KEY);
-    return v === 'top' || v === 'left' || v === 'right' ? v : 'bottom';
-  });
   const x = useMotionValue(0), y = useMotionValue(0);
   const controls = useDragControls();
   const vertical = edge === 'left' || edge === 'right';
@@ -150,7 +152,7 @@ function MovableDock() {
         {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} aria-label={label} draggable={false} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
         ))}
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side={side} align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/profile"><UserRound className="h-4 w-4 mr-2"/>Profile</NavLink></DropdownMenuItem><DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem><DropdownMenuItem onSelect={e => { e.preventDefault(); setTheme(dark ? 'light' : 'dark'); }}><Moon className="h-4 w-4 mr-2"/>Dark mode<Switch className="ml-auto" tabIndex={-1} checked={dark} aria-hidden /></DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={signOut}><LogOut className="h-4 w-4 mr-2"/>Log out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side={side} align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/profile"><UserRound className="h-4 w-4 mr-2"/>Profile</NavLink></DropdownMenuItem><DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem><DropdownMenuCheckboxItem className="pl-2 [&>span:first-child]:hidden" checked={dark} onCheckedChange={c => setTheme(c ? 'dark' : 'light')} onSelect={e => e.preventDefault()}><Moon className="h-4 w-4 mr-2"/>Dark mode<Switch className="ml-auto pointer-events-none" tabIndex={-1} checked={dark} aria-hidden /></DropdownMenuCheckboxItem><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive dark:text-red-400 dark:focus:text-red-400" onSelect={signOut}><LogOut className="h-4 w-4 mr-2"/>Log out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </motion.nav>
     </div>
   );
@@ -161,6 +163,11 @@ export default function CenterStudentPortal() {
   const me = useMe();
   const gate = useOnboardingGate(me.data);
   const [notesOpen, setNotesOpen] = useState(false);
+  // The shell owns the dock edge so a top dock can push the page content below itself.
+  const [dockEdge, setDockEdge] = useState<DockEdge>(() => {
+    const v = localStorage.getItem(DOCK_KEY);
+    return v === 'top' || v === 'left' || v === 'right' ? v : 'bottom';
+  });
   useEffect(() => {
     document.body.classList.add('student-portal', 'customer-student-portal');
     return () => document.body.classList.remove('student-portal', 'customer-student-portal');
@@ -176,7 +183,7 @@ export default function CenterStudentPortal() {
         <StudentRail />
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
-          <header className="student-header sticky top-2 z-30 mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur">
+          <header className={`student-header sticky top-2 z-30 mb-4 ${dockEdge === 'top' ? 'max-lg:mb-[4.5rem]' : ''} grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur`}>
             <div className="lg:hidden flex min-w-0 items-center gap-2"><CenterLogo center={center} className="h-8 w-8 shrink-0" /><p className="truncate font-semibold">{centerDisplayName(center)}</p></div>
             <div className="hidden lg:block" />
             {me.data ? <CenterTopBar studentId={me.data.student.id} attempts={me.data.attempts} meta={me.data.meta} /> : <div />}
@@ -216,7 +223,7 @@ export default function CenterStudentPortal() {
         </SheetContent>
       </Sheet>
 
-      <MovableDock />
+      <MovableDock edge={dockEdge} setEdge={setDockEdge} />
     </div>
   );
 }
@@ -248,6 +255,9 @@ function Ring({ value, goal, label }: { value: number; goal: number; label: stri
   );
 }
 
+/** Students already nudged this session, so blocked storage can't reopen it on every return to Home. */
+const nudgeShown = new Set<string>();
+
 function HomePage({ me }: { me: Me }) {
   const navigate = useNavigate();
   const totals = useSetTotals();
@@ -276,18 +286,18 @@ function HomePage({ me }: { me: Me }) {
   }, [goals.data, me.student.id]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
   const [nudgeOpen, setNudgeOpen] = useState(false);
-  const nudgeShown = useRef(false); // at most once per mount even when storage fails
+  const nudgeKey = `center_ring_nudge_${me.student.id}`;
   // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes).
   useEffect(() => {
-    if (goalOpen || !goals.data || nudgeShown.current) return;
-    const key = `center_ring_nudge_${me.student.id}`, today = dayKey(new Date());
+    if (goalOpen || !goals.data || nudgeShown.has(me.student.id)) return;
     let lastShown: string | null = null;
-    try { lastShown = localStorage.getItem(key); } catch { /* storage blocked: may show again, fine */ }
-    if (!shouldShowRingNudge({ goalsSet: goals.data.isSet, ready: prog.ready, done: ringStatus(prog, goals.data).done, lastShown, today })) return;
-    nudgeShown.current = true;
+    try { lastShown = localStorage.getItem(nudgeKey); } catch { /* storage blocked: the session flag still limits it to once */ }
+    if (!shouldShowRingNudge({ goalsSet: goals.data.isSet, ready: prog.ready, done: ringStatus(prog, goals.data).done, lastShown, today: dayKey(new Date()) })) return;
+    nudgeShown.add(me.student.id);
     setNudgeOpen(true);
-    try { localStorage.setItem(key, today); } catch { /* ignore */ }
-  }, [goalOpen, goals.data, prog, me.student.id]);
+  }, [goalOpen, goals.data, prog, me.student.id, nudgeKey]);
+  // The day counts as nudged only once the student closed it, by dismissing or by "Start practicing".
+  const closeNudge = () => { setNudgeOpen(false); try { localStorage.setItem(nudgeKey, dayKey(new Date())); } catch { /* ignore */ } };
   const videoIds = (usePublishedVideos().data ?? []).map(v => v.id);
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
@@ -326,7 +336,7 @@ function HomePage({ me }: { me: Me }) {
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
-        <CenterRingNudge open={nudgeOpen} onOpenChange={setNudgeOpen} progress={prog} goals={g} onStart={() => { setNudgeOpen(false); navigate('/student/practice?mode=random'); }} />
+        <CenterRingNudge open={nudgeOpen} onOpenChange={o => { if (!o) closeNudge(); }} progress={prog} goals={g} onStart={() => { closeNudge(); navigate('/student/practice?mode=random'); }} />
         <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
           {PRACTICE_SETS.map(s => {
