@@ -5744,45 +5744,30 @@ export type Database = {
           institution_id: string
           intensity: string | null
           medium: number
-          onboarding_done_at: string | null
-          onboarding_step: number | null
-          prior_score: number | null
           sat_date: string | null
           set_at: string
           speed: number
           student_id: string
-          target_score: number | null
-          weak_section: string | null
         }
         Insert: {
           hard?: number
           institution_id: string
           intensity?: string | null
           medium?: number
-          onboarding_done_at?: string | null
-          onboarding_step?: number | null
-          prior_score?: number | null
           sat_date?: string | null
           set_at?: string
           speed?: number
           student_id: string
-          target_score?: number | null
-          weak_section?: string | null
         }
         Update: {
           hard?: number
           institution_id?: string
           intensity?: string | null
           medium?: number
-          onboarding_done_at?: string | null
-          onboarding_step?: number | null
-          prior_score?: number | null
           sat_date?: string | null
           set_at?: string
           speed?: number
           student_id?: string
-          target_score?: number | null
-          weak_section?: string | null
         }
         Relationships: [
           {
@@ -5802,7 +5787,6 @@ export type Database = {
           id: string
           institution_id: string
           name: string
-          onboarding_eligible: boolean
           phone: string
           real_sat_date: string | null
           real_sat_math: number | null
@@ -5817,7 +5801,6 @@ export type Database = {
           id?: string
           institution_id: string
           name: string
-          onboarding_eligible?: boolean
           phone: string
           real_sat_date?: string | null
           real_sat_math?: number | null
@@ -5832,7 +5815,6 @@ export type Database = {
           id?: string
           institution_id?: string
           name?: string
-          onboarding_eligible?: boolean
           phone?: string
           real_sat_date?: string | null
           real_sat_math?: number | null
@@ -6784,7 +6766,7 @@ export type Database = {
         }[]
       }
       tenant_student_profile: {
-        Args: { _institution: string; _student: string; _tz?: string }
+        Args: { _institution: string; _student: string }
         Returns: Json
       }
       tenant_update_settings: {
