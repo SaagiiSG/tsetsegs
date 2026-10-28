@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flame, Calendar } from 'lucide-react';
@@ -28,6 +28,7 @@ export function ActivityHeatmap({
   totalActiveDays
 }: ActivityHeatmapProps) {
   const [hoveredDay, setHoveredDay] = useState<ActivityDay | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
 
   // Organize data into weeks for grid display
   const weeks = useMemo(() => {
@@ -73,6 +74,8 @@ export function ActivityHeatmap({
       if (firstValidDay) {
         const month = format(parseISO(firstValidDay.date), 'MMM');
         if (month !== lastMonth) {
+          // A month starting within 3 weeks of the last label would print on top of it ("OctNov").
+          if (result.length && weekIdx - result[result.length - 1].colStart < 3) result.pop();
           result.push({ label: month, colStart: weekIdx });
           lastMonth = month;
         }
@@ -81,6 +84,9 @@ export function ActivityHeatmap({
 
     return result;
   }, [weeks]);
+
+  // A phone can't fit the whole year: open on the latest weeks so today is in view.
+  useEffect(() => { if (scroller.current) scroller.current.scrollLeft = scroller.current.scrollWidth; }, [weeks]);
 
   return (
     <Card className="bg-card/50 backdrop-blur border-border/50">
@@ -103,49 +109,54 @@ export function ActivityHeatmap({
         </div>
       </CardHeader>
       <CardContent>
-        {/* Month labels */}
-        <div className="relative h-4 mb-1 overflow-hidden">
-          {months.map((month, idx) => (
-            <span
-              key={idx}
-              className="absolute text-xs text-muted-foreground"
-              style={{ left: `${(month.colStart / weeks.length) * 100}%` }}
-            >
-              {month.label}
-            </span>
-          ))}
-        </div>
-
-        {/* Heatmap grid */}
         <TooltipProvider delayDuration={100}>
-          <div className="flex gap-[2px] overflow-x-auto pb-2">
-            {weeks.map((week, weekIdx) => (
-              <div key={weekIdx} className="flex flex-col gap-[2px]">
-                {week.map((day, dayIdx) => (
-                  <Tooltip key={dayIdx}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          'w-2.5 h-2.5 rounded-sm transition-all cursor-pointer hover:ring-1 hover:ring-primary',
-                          day.points < 0 ? 'bg-transparent' : getIntensityClass(day.points)
-                        )}
-                        onMouseEnter={() => day.points >= 0 && setHoveredDay(day)}
-                        onMouseLeave={() => setHoveredDay(null)}
-                      />
-                    </TooltipTrigger>
-                    {day.date && day.points >= 0 && (
-                      <TooltipContent className="text-xs">
-                        <p className="font-semibold">{format(parseISO(day.date), 'MMMM d, yyyy')}</p>
-                        <p>{day.points.toLocaleString()} pts</p>
-                        {day.sessionsCount > 0 && (
-                          <p className="text-muted-foreground">{day.sessionsCount} sessions</p>
-                        )}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
+          <div ref={scroller} className="overflow-x-auto pb-2">
+            {/* pr-6 leaves room for the last month label, which is absolute and doesn't widen w-max */}
+            <div className="w-max pr-6">
+              {/* Month labels: one week column = 10px cell + 2px gap, so labels scroll with the grid */}
+              <div className="relative h-4 mb-1">
+                {months.map((month, idx) => (
+                  <span
+                    key={idx}
+                    className="absolute text-xs text-muted-foreground"
+                    style={{ left: `${month.colStart * 12}px` }}
+                  >
+                    {month.label}
+                  </span>
                 ))}
               </div>
-            ))}
+
+              {/* Heatmap grid */}
+              <div className="flex gap-[2px]">
+                {weeks.map((week, weekIdx) => (
+                  <div key={weekIdx} className="flex flex-col gap-[2px]">
+                    {week.map((day, dayIdx) => (
+                      <Tooltip key={dayIdx}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              'w-2.5 h-2.5 rounded-sm transition-all cursor-pointer hover:ring-1 hover:ring-primary',
+                              day.points < 0 ? 'bg-transparent' : getIntensityClass(day.points)
+                            )}
+                            onMouseEnter={() => day.points >= 0 && setHoveredDay(day)}
+                            onMouseLeave={() => setHoveredDay(null)}
+                          />
+                        </TooltipTrigger>
+                        {day.date && day.points >= 0 && (
+                          <TooltipContent className="text-xs">
+                            <p className="font-semibold">{format(parseISO(day.date), 'MMMM d, yyyy')}</p>
+                            <p>{day.points.toLocaleString()} pts</p>
+                            {day.sessionsCount > 0 && (
+                              <p className="text-muted-foreground">{day.sessionsCount} sessions</p>
+                            )}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </TooltipProvider>
 
