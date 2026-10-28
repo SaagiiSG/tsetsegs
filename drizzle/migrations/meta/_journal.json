@@ -610,6 +610,13 @@
       "when": 1792957652762,
       "tag": "0086_center_student_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1793212038173,
+      "tag": "0087_tenant_activity_indexes",
+      "breakpoints": true
     }
   ]
 }
