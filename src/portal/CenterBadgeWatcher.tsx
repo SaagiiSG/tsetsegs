@@ -10,6 +10,7 @@ import { useCenter } from './centerContext';
 import { badgesToCelebrate } from './badgeQueue';
 import type { CenterBadge } from './centerProfile';
 import { usePopupTurn } from './popupGate';
+import { AREA_COLOR } from './videoTopics';
 
 const PIECES: Partial<Record<BadgeRarity, number>> = { common: 120, uncommon: 180, rare: 240, epic: 320, legendary: 420 };
 // Generated types don't know 0092's table yet.
@@ -65,7 +66,8 @@ export function CenterBadgeWatcher({ studentId, badges, liveUp = false }: { stud
           width={window.innerWidth}
           height={window.innerHeight}
           numberOfPieces={PIECES[current.rarity] ?? 120}
-          colors={[colors.primary, colors.secondary, colors.glow]}
+          // Rarity colours plus the portal's four area colours: a grey common badge still gets a bright burst.
+          colors={[colors.primary, colors.secondary, colors.glow, ...Object.values(AREA_COLOR).map(c => c.light)]}
           recycle={false}
           className="pointer-events-none"
           style={{ position: 'fixed', zIndex: 101 }}
