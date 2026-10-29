@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const { institution_customers: center, ...fields } = request
     const result = await sendTemplateEmail(templateName, recipient, {
       // Reply goes straight to the staff member (the email is their login, copied from tenant_members).
-      templateData: { ...fields, center_name: center?.name }, idempotencyKey: `support-request-${id}`, replyTo: request.email?.trim(),
+      templateData: { ...fields, center_name: (Array.isArray(center) ? center[0] : center as { name?: string } | null)?.name }, idempotencyKey: `support-request-${id}`, replyTo: request.email?.trim(),
     })
     await log(result.sent ? 'sent' : 'suppressed')
   } catch (sendError) {
