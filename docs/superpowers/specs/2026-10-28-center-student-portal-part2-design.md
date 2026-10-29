@@ -1,6 +1,6 @@
 # Center student portal — part 2: concept videos by topic, practice tests, badge colours
 
-Date: 28 Oct 2026. Owner: Saagii. Status: draft for Saagii's review. Part 1 (top bar, rail, profile, onboarding) is live on main as of fc23c8b1.
+Date: 28 Oct 2026. Owner: Saagii. Status: approved by Saagii 29 Oct ("that looks about right"). Part 1 (top bar, rail, profile, onboarding) is live on main as of fc23c8b1.
 
 Supporting files in `docs/superpowers/specs/2026-10-28-center-student-portal-part2/`:
 - `videos-mockup.html` — the three directions shown; Saagii picked **A. Topic units**. (A body fragment; the brainstorm server wrapped it in a page.)
