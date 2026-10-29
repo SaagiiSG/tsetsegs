@@ -42,7 +42,9 @@ import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
 import { CenterSatUnlockIsland } from './CenterSatUnlockIsland';
 import { CenterRankings } from './CenterRankings';
 import { CenterProfileView, CenterBadgeGrid } from './CenterProfileView';
-import { centerBadges } from './centerProfile';
+import { centerBadges, type CenterBadge } from './centerProfile';
+import { CenterBadgeWatcher } from './CenterBadgeWatcher';
+import { usePopupTurn } from './popupGate';
 import { RoadmapPreview } from './RoadmapPreview';
 import { topicUnits } from './videoTopics';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
@@ -201,6 +203,7 @@ export default function CenterStudentPortal() {
             : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
+              <MyBadgeWatcher me={me.data} />
               <Routes>
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
@@ -282,29 +285,37 @@ function HomePage({ me }: { me: Me }) {
   const [goalOpen, setGoalOpen] = useState(false);
   const [streakOpen, setStreakOpen] = useState(false);
   const [ringOpen, setRingOpen] = useState(false);
+  const [goalDue, setGoalDue] = useState(false);
+  const goalSeenKey = `center_goals_seen_${me.student.id}`;
   useEffect(() => {
-    const key = `center_goals_seen_${me.student.id}`;
     if (!goals.data || goals.data.isSet) return;
     let seen: string | null = null;
-    try { seen = localStorage.getItem(key); } catch { /* storage blocked: treat as unseen */ }
+    try { seen = localStorage.getItem(goalSeenKey); } catch { /* storage blocked: treat as unseen */ }
     if (seen) return;
+    setGoalDue(true);
+  }, [goals.data, goalSeenKey]);
+  // The first-visit goal dialog waits its turn too, so it never stacks on the badge pop-up.
+  const goalTurn = usePopupTurn('ring-goals', goalDue);
+  useEffect(() => {
+    if (!goalTurn) return;
     setGoalOpen(true);
-    try { localStorage.setItem(key, '1'); } catch { /* ignore */ }
-  }, [goals.data, me.student.id]);
+    try { localStorage.setItem(goalSeenKey, '1'); } catch { /* ignore */ }
+  }, [goalTurn, goalSeenKey]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
-  const [nudgeOpen, setNudgeOpen] = useState(false);
+  const [nudgeDue, setNudgeDue] = useState(false);
   const nudgeKey = `center_ring_nudge_${me.student.id}`;
-  // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes).
+  // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes),
+  // and waits its turn behind badge pop-ups, live games and any other dialog.
   useEffect(() => {
     if (goalOpen || !goals.data || nudgeShown.has(me.student.id)) return;
     let lastShown: string | null = null;
     try { lastShown = localStorage.getItem(nudgeKey); } catch { /* storage blocked: the session flag still limits it to once */ }
     if (!shouldShowRingNudge({ goalsSet: goals.data.isSet, ready: prog.ready, done: ringStatus(prog, goals.data).done, lastShown, today: dayKey(new Date()) })) return;
-    nudgeShown.add(me.student.id);
-    setNudgeOpen(true);
+    setNudgeDue(true);
   }, [goalOpen, goals.data, prog, me.student.id, nudgeKey]);
-  // The day counts as nudged only once the student closed it, by dismissing or by "Start practicing".
-  const closeNudge = () => { setNudgeOpen(false); try { localStorage.setItem(nudgeKey, dayKey(new Date())); } catch { /* ignore */ } };
+  const nudgeOpen = usePopupTurn('ring-nudge', nudgeDue);
+  // The day counts as nudged only once the student closed it, by dismissing or by "Start practicing". Closing gives the turn back.
+  const closeNudge = () => { nudgeShown.add(me.student.id); setNudgeDue(false); try { localStorage.setItem(nudgeKey, dayKey(new Date())); } catch { /* ignore */ } };
   // Topic order, so the preview follows the videos page's "Up next".
   const videoIds = topicUnits(usePublishedVideos().data ?? [], new Set(me.videosDone)).flatMap(u => u.items.map(i => i.video.id));
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
@@ -345,7 +356,7 @@ function HomePage({ me }: { me: Me }) {
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterRingNudge open={nudgeOpen} onOpenChange={o => { if (!o) closeNudge(); }} progress={prog} goals={g} onStart={() => { closeNudge(); navigate('/student/practice?mode=random'); }} />
-        <CenterGoalDialog open={goalOpen} onOpenChange={setGoalOpen} studentId={me.student.id} goals={goals.data} />
+        <CenterGoalDialog open={goalOpen} onOpenChange={o => { setGoalOpen(o); if (!o) setGoalDue(false); }} studentId={me.student.id} goals={goals.data} />
         <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
           {PRACTICE_SETS.map(s => {
             const ids = totals.data?.[s.key] ?? [];
@@ -708,13 +719,25 @@ function VideosPage({ me }: { me: Me }) {
 
 /* ------------------------------ Badges ------------------------------ */
 
-function BadgesPage({ me }: { me: Me }) {
+/** The student's center badges, worked out in the browser. Null until the practice sets load, so a master badge isn't judged early. */
+function useMyCenterBadges(me: Me): CenterBadge[] | null {
   const totals = useSetTotals();
-  const badges = centerBadges({
+  if (!totals.data) return null;
+  return centerBadges({
     answered: me.attempts.length, correct: me.attempts.filter(a => a.is_correct).length,
     solved: new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)),
     present: me.att.filter(a => a.status === 'present' || a.status === 'late').length, setIds: totals.data,
   });
+}
+
+function MyBadgeWatcher({ me }: { me: Me }) {
+  const badges = useMyCenterBadges(me);
+  return <CenterBadgeWatcher studentId={me.student.id} badges={badges} />;
+}
+
+function BadgesPage({ me }: { me: Me }) {
+  const badges = useMyCenterBadges(me);
+  if (!badges) return <SkyCardSkeleton />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Badges <span className="text-base text-muted-foreground font-mono">{badges.filter(b => b.got).length}/{badges.length}</span></h1>
