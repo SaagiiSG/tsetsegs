@@ -27,8 +27,9 @@
 - **Migrations:**
   - Each is a file in `drizzle/migrations/` with a `meta/_journal.json` entry and a `meta/00NN_snapshot.json`. The snapshot is the previous one with a new `id` and with `prevId` set to the previous `id`.
   - Every migration ends with `NOTIFY pgrst, 'reload schema';`.
-  - Numbers here assume 0088 is the last one. Before pushing, check `git ls-tree origin/main drizzle/migrations/` and renumber if Lovable added files.
+  - Numbers here assume 0089 is the last one (Lovable's empty `0089_apply_pending_0088.sql`). Before pushing, check `git ls-tree origin/main drizzle/migrations/` and renumber if Lovable added files.
 - **Main app:** pages look the same as before. The only main-app edit allowed is `BadgeCard` hiding its "Worth" line when `pointValue` is 0.
+- **No `Array.prototype.at`** in app or test code: Lovable's preview build rejects it (it rewrote two `.at(-1)` test lines on 29 Oct). Use `arr[arr.length - 1]`.
 - **Tests:** `npx vitest run` passes. `npx tsc --noEmit -p tsconfig.app.json` shows only the 2 existing `shaders/react` errors.
 
 ## Review Focus
@@ -44,8 +45,8 @@
 ### Task 1: Topic data migration
 
 **Files:**
-- Create: `drizzle/migrations/0089_center_video_topics.sql`
-- Create: `drizzle/migrations/meta/0089_snapshot.json`
+- Create: `drizzle/migrations/0090_center_video_topics.sql`
+- Create: `drizzle/migrations/meta/0090_snapshot.json`
 - Modify: `drizzle/migrations/meta/_journal.json`
 
 **Interfaces:**
@@ -60,9 +61,9 @@
   4. `UPDATE public.concept_videos SET title = replace(title, 'Quadractic', 'Quadratic') WHERE title LIKE '%Quadractic%';`
 
   Head the file with a 2-line comment: why (Saagii 28 Oct: book order, 26 College Panda topics, two mislabels fixed). Escape any `'` in names. End with `NOTIFY pgrst, 'reload schema';`.
-- [ ] **Step 2: Verify the file.** `grep -c "::uuid" drizzle/migrations/0089_center_video_topics.sql` gives `129`. The ord values are exactly 1..129 once each (check with a node one-liner over the file).
-- [ ] **Step 3: Add the journal entry** (`idx 89`, `tag 0089_center_video_topics`) **and the snapshot.**
-- [ ] **Step 4: Commit:** `git commit -m "0089: concept videos get their College Panda topic and book order; fix two mislabels"`
+- [ ] **Step 2: Verify the file.** `grep -c "::uuid" drizzle/migrations/0090_center_video_topics.sql` gives `129`. The ord values are exactly 1..129 once each (check with a node one-liner over the file).
+- [ ] **Step 3: Add the journal entry** (`idx 90`, `tag 0090_center_video_topics`) **and the snapshot.**
+- [ ] **Step 4: Commit:** `git commit -m "0090: concept videos get their College Panda topic and book order; fix two mislabels"`
 
 ### Task 2: Topic model (pure)
 
@@ -116,12 +117,12 @@
 ### Task 3: Practice test engine and badge "seen" rows (migrations)
 
 **Files:**
-- Create: `drizzle/migrations/0090_center_practice_tests.sql`
-- Create: `drizzle/migrations/0091_center_badge_celebrations.sql`
+- Create: `drizzle/migrations/0091_center_practice_tests.sql`
+- Create: `drizzle/migrations/0092_center_badge_celebrations.sql`
 - Create: the two snapshots and two journal entries.
 
 **Interfaces:**
-- Produces, in 0090:
+- Produces, in 0091:
   - **Table `public.tenant_test_attempts`**, with columns:
     - `id uuid pk default gen_random_uuid()`
     - `institution_id uuid not null → institution_customers`
@@ -162,15 +163,15 @@
       - `math_score = (round((200 + correct::numeric / total * 600) / 10) * 10)::int`;
       - `status = 'completed'`, `completed_at = now()`.
   - All four functions are SECURITY DEFINER with `search_path = public`. `REVOKE ALL … FROM PUBLIC, anon`, then `GRANT EXECUTE … TO authenticated`.
-- Produces, in 0091:
+- Produces, in 0092:
   - **Table `public.tenant_badge_celebrations`**: `student_id uuid not null → tenant_students on delete cascade`, `institution_id uuid not null → institution_customers`, `badge_key text not null`, `celebrated_at timestamptz not null default now()`, `primary key (student_id, badge_key)`.
   - RLS: students `SELECT` and `INSERT` their own rows (`student_id = tenant_my_student_id(institution_id)`).
   - `GRANT SELECT, INSERT TO authenticated`.
 
-- [ ] **Step 1: Write 0090.** Use 0014 as the template for locking, owner checks and redaction. Head comment: center practice tests use the Tsetsegs tests, but read only the International copies (Saagii 28 Oct); keys stay hidden until finished; graded on the server.
-- [ ] **Step 2: Write 0091,** with a one-line head comment: a badge pop-up shows once per student per badge, on any device.
-- [ ] **Step 3: Add the journal entries and snapshots** (0090 after 0089, 0091 after 0090). Run `node -e 'require("./drizzle/migrations/meta/_journal.json")'`. Expected: no error.
-- [ ] **Step 4: Commit both:** `0090/0091: center practice test engine (International copies, server graded) and badge seen rows`
+- [ ] **Step 1: Write 0091.** Use 0014 as the template for locking, owner checks and redaction. Head comment: center practice tests use the Tsetsegs tests, but read only the International copies (Saagii 28 Oct); keys stay hidden until finished; graded on the server.
+- [ ] **Step 2: Write 0092,** with a one-line head comment: a badge pop-up shows once per student per badge, on any device.
+- [ ] **Step 3: Add the journal entries and snapshots** (0091 after 0090, 0092 after 0091). Run `node -e 'require("./drizzle/migrations/meta/_journal.json")'`. Expected: no error.
+- [ ] **Step 4: Commit both:** `0091/0092: center practice test engine (International copies, server graded) and badge seen rows`
 
 ### Task 4: Database milestone (push migrations, Lovable applies, live probe)
 
@@ -178,15 +179,15 @@
 - Create: `<scratchpad>/portal-e2e/db-probe.mjs`. The scratchpad is the session scratchpad. The probe reuses `.env` and the zz login flow from `run.mjs`: `tenant-accounts` `student_lookup`, then the password grant.
 
 - [ ] **Step 1: Put only the migration commits from Tasks 1 and 3 on main.**
-  1. `git fetch origin` and check the newest number in `drizzle/migrations/` on origin/main. If it isn't 0088, renumber 0089–0091 (files, journal, snapshots) and amend.
+  1. `git fetch origin` and check the newest number in `drizzle/migrations/` on origin/main. If it isn't 0089, renumber 0090–0092 (files, journal, snapshots) and amend.
   2. `git switch -c db/part2 origin/main`, cherry-pick the two migration commits, then `git push origin db/part2:main`. This must be a fast-forward.
   3. `git switch feat/center-portal-part2 && git rebase origin/main`.
 - [ ] **Step 2: Hand Saagii this Lovable prompt** (adjust the numbers if renumbered). Wait for his paste-back.
   ```
   Please apply these migration files in order, exactly as written, then paste me the results:
-  drizzle/migrations/0089_center_video_topics.sql
-  drizzle/migrations/0090_center_practice_tests.sql
-  drizzle/migrations/0091_center_badge_celebrations.sql
+  drizzle/migrations/0090_center_video_topics.sql
+  drizzle/migrations/0091_center_practice_tests.sql
+  drizzle/migrations/0092_center_badge_celebrations.sql
   After applying:
   1. select module, count(*) from concept_videos where is_published group by module order by 1;
   2. select min(order_index), max(order_index), count(distinct order_index) from concept_videos where is_published;
@@ -419,9 +420,9 @@
 - Create: `<scratchpad>/portal-e2e/part2.mjs`, the browser check. It uses `cdp.mjs`, `line` and `results`, like `run.mjs`.
 
 - [ ] **Step 1: Update AGENTS.md** with three lines:
-  - Center practice tests are intended. They're the published Tsetsegs tests, served only from International copies through `tenant_test_*` (0090). This is different from the switched-off SAT simulation test, which stays off.
+  - Center practice tests are intended. They're the published Tsetsegs tests, served only from International copies through `tenant_test_*` (0091). This is different from the switched-off SAT simulation test, which stays off.
   - Center concept video units come from `concept_videos.module` matching a College Panda topic name in `src/portal/videoTopics.ts`, in `order_index` book order.
-  - Center badge pop-ups show once per student per badge (`tenant_badge_celebrations`, 0091). Every portal pop-up goes through `src/portal/popupGate.ts`.
+  - Center badge pop-ups show once per student per badge (`tenant_badge_celebrations`, 0092). Every portal pop-up goes through `src/portal/popupGate.ts`.
 - [ ] **Step 2: Write `part2.mjs`.**
   - **Setup:** run each check on phone (375×812), narrow (768×1024) and desktop (1280×860), in light and dark. Sign in with the zz accounts against the live DB, with Vite on 8095.
   - **Videos:**
