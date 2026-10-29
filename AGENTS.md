@@ -24,6 +24,9 @@
 - Center rankings/history use tenant attempts and sprint snapshots, never global rankings. Stored tier keys remain stable; rename display labels to preserve history, themes and badges.
 - Center onboarding answers live on the student's own `tenant_student_goals` row; only `tenant_students` created after 0086 (`onboarding_eligible`) are onboarded; classmate profiles are read only through `tenant_student_profile` (same center, no phone).
 - Customer Review Mistakes uses a tenant-attempt data adapter and international question previews with data-agnostic chart primitives, so matching the main review layout never grants access to main student records.
+- Center practice tests are intended: they are the published Tsetsegs tests, served only from International copies through `tenant_test_*` (0091). This is separate from the switched-off SAT simulation test, which stays off.
+- Center concept video units come from `concept_videos.module` matching a College Panda topic name in `src/portal/videoTopics.ts`, in `order_index` book order.
+- Center badge pop-ups show once per student per badge (`tenant_badge_celebrations`, 0092). Every portal pop-up goes through `src/portal/popupGate.ts`.
 - `/admin` shows platform data; `/admin/tsetsegs/*` isolates in-house data.
 - Center payment blocking is enforced server-side via `institution_customers.access_blocked_at` in `tenant_has_role`, not just by the portal lock screen.
 - Center staff reach FlowersOS only through the Contact FlowersOS form (`submit_support_request`, which checks `tenant_members` directly so blocked centers can still write; there is no support mailbox). Requests land in `/admin/support` and `notify-support-request` emails the owner once per request, with Reply-To set to the staff member.
