@@ -8,3 +8,6 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 export const testCardLine = (t: PracticeTest) => `${plural(t.modules, 'module')} · ${plural(t.questions, 'question')} · ${plural(t.minutes, 'minute')}`;
 
 export const testCardAction = (t: PracticeTest): 'Start' | 'Resume' => (t.open_attempt ? 'Resume' : 'Start');
+
+export const historyLine = (a: { status: string; current_module: number; math_score: number | null }) =>
+  a.status !== 'completed' ? `In progress · Module ${a.current_module + 1}` : a.math_score != null ? `Math ${a.math_score}` : 'Completed';

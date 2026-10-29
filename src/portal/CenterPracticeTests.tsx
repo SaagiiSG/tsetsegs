@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCenter } from './centerContext';
 import { SkyListSkeleton } from './SkySkeleton';
-import { testCardAction, testCardLine, type PracticeTest } from './practiceTests';
+import { historyLine, testCardAction, testCardLine, type PracticeTest } from './practiceTests';
 
 type Attempt = { id: string; test_name: string; started_at: string; status: string; current_module: number; math_score: number | null };
 
@@ -59,7 +59,7 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
         {history.isLoading ? <SkyListSkeleton /> : history.error ? <Failed onRetry={() => history.refetch()} /> : !history.data?.length ? <p className="text-muted-foreground">Your finished tests will appear here.</p> :
           history.data.map(a => <div key={a.id} className="sky-card flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0"><p className="font-semibold">{a.test_name}</p><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
-              <p className="text-sm">{a.status === 'completed' ? `Math ${a.math_score}` : `In progress · Module ${a.current_module + 1}`}</p></div>
+              <p className="text-sm">{historyLine(a)}</p></div>
             <Button variant="outline" onClick={() => navigate(`/student/tests/${a.id}`)}>{a.status === 'completed' ? 'Review' : 'Resume'}</Button>
           </div>)}
       </TabsContent>
