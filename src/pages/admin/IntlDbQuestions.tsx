@@ -226,6 +226,9 @@ export default function IntlDbQuestions() {
                 <CardContent className="p-4 space-y-2">
                   <button className="w-full flex items-start gap-3 text-left" onClick={() => setOpen(isOpen ? null : r.id)}>
                     <span className="font-mono text-sm font-semibold shrink-0">{r.question_id}</span>
+                    {r.ext_question_id && (
+                      <span className="font-mono text-xs text-muted-foreground shrink-0 rounded border px-1.5 py-0.5" title="External ID">{r.ext_question_id}</span>
+                    )}
                     <span className="flex-1 text-sm text-muted-foreground line-clamp-2">{r.question_text}</span>
                     <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
                       {hasExpl(r)
