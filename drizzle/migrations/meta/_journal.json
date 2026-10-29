@@ -624,6 +624,13 @@
       "when": 1793252716779,
       "tag": "0088_lock_banks_to_staff_and_centers",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1793253638319,
+      "tag": "0089_apply_pending_0088",
+      "breakpoints": true
     }
   ]
 }
