@@ -8,7 +8,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { motion } from 'framer-motion';
 import { 
-  Home, Clapperboard, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
+  Home, BookOpen, Zap, Brain, BarChart3, Trophy, Settings, LogOut, User, Languages,
   ChevronDown, ChevronRight, FileText, Armchair, Flag, Flame, Snowflake, Swords, Flower2, Award,
   ShieldCheck, ClipboardList, Search
 } from 'lucide-react';
@@ -58,7 +58,6 @@ const learningItems: NavItem[] = [
 
 const toolsItems: NavItem[] = [
   { to: '/practice/search', icon: Search, label: 'Search Questions' },
-  { to: '/practice/concept-videos', icon: Clapperboard, label: 'Concept Videos' },
   { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
   { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
   { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
@@ -265,7 +264,7 @@ export function StudentDashboardSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {toolsItems.filter((i) => i.to !== '/practice/concept-videos' || student?.cohort === 'intl').map(renderNavItem)}
+                  {toolsItems.map(renderNavItem)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>

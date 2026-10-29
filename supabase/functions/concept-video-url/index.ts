@@ -1,7 +1,6 @@
 // Issues short-lived signed URLs for uploaded concept videos (private bucket).
-// Callers: signed-in accounts (auth JWT) or students with a valid student token
-// (x-student-token header). Storage requests from the browser don't carry the
-// student token, so signed URLs are minted here with the service role instead.
+// Callers: Tsetsegs staff and center accounts (auth JWT). The main app has no concept
+// videos, so student tokens are refused (Saagii, 28 Oct).
 
 import { corsHeaders } from '../_shared/cors.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -17,11 +16,6 @@ function json(payload: unknown, status = 200) {
   })
 }
 
-async function sha256Hex(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
@@ -30,35 +24,19 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   if (!supabaseUrl || !serviceKey) return json({ error: 'Server misconfigured' }, 500)
 
-  // Auth: either a signed-in account or a valid student token.
-  let allowed = false
-
+  // Same check as the concept_videos read rule (0088), run as the caller.
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
   const auth = req.headers.get('Authorization') ?? ''
-  if (auth.startsWith('Bearer ')) {
+  let allowed = false
+  if (anonKey && auth.startsWith('Bearer ')) {
     try {
-      const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-        headers: { apikey: serviceKey, Authorization: auth },
+      const res = await fetch(`${supabaseUrl}/rest/v1/rpc/is_staff_or_center_member`, {
+        method: 'POST',
+        headers: { apikey: anonKey, Authorization: auth, 'Content-Type': 'application/json' },
+        body: '{}',
       })
-      if (res.ok) allowed = true
-    } catch (_err) { /* fall through to student token */ }
-  }
-
-  if (!allowed) {
-    const token = req.headers.get('x-student-token') ?? ''
-    if (token.length >= 32) {
-      const admin = createClient(supabaseUrl, serviceKey)
-      const { data } = await admin
-        .from('student_sessions')
-        .select('student_account_id, student_accounts!inner(is_blocked)')
-        .eq('token_hash', await sha256Hex(token))
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString())
-        .limit(1)
-        .maybeSingle()
-      if (data && !(data as { student_accounts?: { is_blocked?: boolean } }).student_accounts?.is_blocked) {
-        allowed = true
-      }
-    }
+      allowed = res.ok && (await res.json()) === true
+    } catch (_err) { /* not allowed */ }
   }
 
   if (!allowed) return json({ error: 'Please sign in' }, 401)

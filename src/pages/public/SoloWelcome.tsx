@@ -4,7 +4,6 @@ import { ArrowRight, Lock, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
-import { SoloAuthPanel } from '@/components/auth/SoloAuthPanel';
 import { BrandMark } from '@/components/BrandMark';
 
 type Solo = { name: string; plan: string; premium_until: string | null };
@@ -42,7 +41,8 @@ export default function SoloWelcome() {
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-semibold">flowersos</span></div>
         {session === undefined ? <p className="text-sm text-muted-foreground">{text('Ачаалж байна…', 'Loading…')}</p> : !session ? (
-          <><h1 className="lv-h2">{text('Үнэгүй эхлэх', 'Start free')}</h1><SoloAuthPanel /></>
+          // Solo sign-up is closed until there is a paywall (Saagii, 28 Oct).
+          <><h1 className="lv-h2">{text('Бие даан суралцах бүртгэл одоогоор хаалттай', 'Solo accounts are closed for now')}</h1><Button asChild className="rounded-full"><a href={`/demo?signup=practice&lang=${lang}`}>{text('Демо үзэх', 'Try the demo')}<ArrowRight className="h-4 w-4" /></a></Button></>
         ) : (
           <>
             <h1 className="lv-h2">{text(`Тавтай морил${solo?.name ? `, ${solo.name}` : ''}!`, `Welcome${solo?.name ? `, ${solo.name}` : ''}!`)}</h1>

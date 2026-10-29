@@ -29,7 +29,7 @@ const Index = () => {
 
   const CTA = ({ center }: { center?: boolean }) => (
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
-      <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Үнэгүй эхлэх", "Start free")}<ArrowRight /></Button>
+      <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Демо үзэх", "Try the demo")}<ArrowRight /></Button>
       <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
     </div>
@@ -51,7 +51,7 @@ const Index = () => {
   ];
 
   const more = [
-    { icon: PlayCircle, l: text("Ойлголтын видео", "Concept videos") }, { icon: PenLine, l: text("Тэмдэглэл", "Notes on questions") },
+    { icon: PlayCircle, l: text("Тестийн тайлбар видео", "Test explanation videos") }, { icon: PenLine, l: text("Тэмдэглэл", "Notes on questions") },
     { icon: Radio, l: text("Шууд ангийн тест", "Live class quizzes") }, { icon: Users, l: text("Эцэг эхэд тайлан", "Parent progress link") },
     { icon: CalendarCheck, l: text("Ирц", "Attendance") }, { icon: MonitorPlay, l: text("Bluebook симулятор", "Bluebook simulator") },
     { icon: Flame, l: text("Streak", "Study streaks") }, { icon: Trophy, l: text("Тэмдэг", "Badges") },

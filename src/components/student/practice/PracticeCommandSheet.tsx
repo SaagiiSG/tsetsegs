@@ -1,4 +1,3 @@
-import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CommandDialog,
@@ -13,7 +12,7 @@ import {
 import {
   PlayCircle, BookOpen, Zap, Brain, BarChart3, Trophy, Languages, Armchair,
   User, Settings, FileText, Calculator, Bookmark, Home, RotateCcw, Star, Swords, ClipboardList, ShieldCheck,
-  Flower2, Search, Clapperboard,
+  Flower2, Search,
 } from 'lucide-react';
 import { usePracticeCommandSheet } from './PracticeCommandSheetContext';
 import { usePracticeRecents } from '@/hooks/usePracticeRecents';
@@ -45,7 +44,6 @@ const QUICK_ROUTES: QuickRoute[] = [
   { path: '/practice/exam-results', label: 'Exam Results', icon: ClipboardList, hint: 'Class exam scores', group: 'jump' },
   { path: '/practice/proctor-results', label: 'My Mock Tests', icon: ShieldCheck, hint: 'Proctored test history', group: 'jump' },
   { path: '/practice/search', label: 'Search Questions', icon: Search, hint: 'Keyword search all sets', group: 'tools' },
-  { path: '/practice/concept-videos', label: 'Concept Videos', icon: Clapperboard, hint: 'Short math concept lessons', group: 'tools' },
   { path: '/practice/booking', label: 'Book a Seat', icon: Armchair, group: 'tools' },
   { path: '/practice/stats', label: 'Statistics', icon: BarChart3, group: 'tools' },
   { path: '/practice/badges', label: 'Badges', icon: Star, group: 'tools' },
@@ -55,7 +53,6 @@ const QUICK_ROUTES: QuickRoute[] = [
 
 export function PracticeCommandSheet() {
   const { open, setOpen } = usePracticeCommandSheet();
-  const { student } = useStudentAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { recents, recordRoute } = usePracticeRecents();
@@ -142,7 +139,7 @@ export function PracticeCommandSheet() {
               </CommandItem>
             </>
           )}
-          {QUICK_ROUTES.filter((r) => r.group === 'tools' && (r.path !== '/practice/concept-videos' || student?.cohort === 'intl')).map((r) => (
+          {QUICK_ROUTES.filter((r) => r.group === 'tools').map((r) => (
             <CommandItem key={r.path} onSelect={() => go(r.path, r.label)}>
               <r.icon className="mr-2 h-4 w-4" />
               <span>{r.label}</span>

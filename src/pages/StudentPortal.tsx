@@ -1,4 +1,3 @@
-import { SoloAuthPanel } from '@/components/auth/SoloAuthPanel';
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -518,7 +517,6 @@ export default function StudentPortal() {
         )}
 
         <div className="text-center space-y-1">
-          <div className="text-left rounded-3xl border border-border p-5 mb-4 space-y-3"><p className="font-semibold">{text('Бие даан суралцах уу? Үнэгүй бүртгүүлээрэй', 'Studying on your own? Sign up free')}</p><SoloAuthPanel /></div>
           <Link to="/student-register" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
             {text('Анги руу бүртгүүлэх хүсэлт', 'Request to join a class')}
           </Link>

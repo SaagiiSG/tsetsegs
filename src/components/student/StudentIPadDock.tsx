@@ -5,7 +5,7 @@ import { GripVertical, GripHorizontal } from 'lucide-react';
 import {
   Home, BookOpen, Zap, Trophy, Swords, MoreHorizontal,
   FileText, Brain, Armchair, Languages, BarChart3, Flag,
-  User, Settings, LogOut, Flower2, Award, ShieldCheck, ClipboardList, Search, Clapperboard,
+  User, Settings, LogOut, Flower2, Award, ShieldCheck, ClipboardList, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -46,7 +46,6 @@ const moreGroups: { label: string; items: DockItem[] }[] = [
     label: 'Tools',
     items: [
       { to: '/practice/search', icon: Search, label: 'Search Questions' },
-      { to: '/practice/concept-videos', icon: Clapperboard, label: 'Concept Videos' },
       { to: '/practice/booking', icon: Armchair, label: 'Book Seat' },
       { to: '/practice/vocabulary', icon: Languages, label: 'Vocabulary' },
       { to: '/practice/stats', icon: BarChart3, label: 'Statistics' },
@@ -116,8 +115,7 @@ function loadEdge(): DockEdge {
 export function StudentIPadDock() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [edge, setEdge] = useState<DockEdge>(() => loadEdge());
-  const { logout, student } = useStudentAuth();
-  const isIntl = student?.cohort === 'intl';
+  const { logout } = useStudentAuth();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const dragControls = useDragControls();
@@ -238,7 +236,7 @@ export function StudentIPadDock() {
                       {group.label}
                     </p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {group.items.filter((item) => item.to !== '/practice/concept-videos' || isIntl).map((item) => {
+                      {group.items.map((item) => {
                         const Icon = item.icon;
                         return (
                           <NavLink

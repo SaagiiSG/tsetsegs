@@ -13,7 +13,6 @@ import AuthSplitLayout, {
   authInputClasses,
   authLabelClasses,
   authPrimaryButtonClasses,
-  authGhostButtonClasses,
 } from "@/components/auth/AuthSplitLayout";
 
 export default function Login() {
@@ -29,7 +28,6 @@ export default function Login() {
   // Admin form state
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
 
   // Teacher form state
@@ -38,7 +36,7 @@ export default function Login() {
   const [teacherLoading, setTeacherLoading] = useState(false);
 
   // Auth contexts
-  const { signIn: adminSignIn, signUp: adminSignUp, user: adminUser, isAdmin, isLoading: authLoading } = useAuth();
+  const { signIn: adminSignIn, user: adminUser, isAdmin, isLoading: authLoading } = useAuth();
   const { signIn: teacherSignIn, user: teacherUser, needsPasswordChange } = useTeacherAuth();
 
   // Track whether a fresh login just succeeded
@@ -98,30 +96,17 @@ export default function Login() {
 
     setAdminLoading(true);
     try {
-      if (isSignUp) {
-        const { error } = await adminSignUp(adminEmail, adminPassword);
-        if (error) throw error;
+      const { error } = await adminSignIn(adminEmail, adminPassword);
+      if (error) {
         toast({
-          title: text('Амжилттай', 'Success'),
-          description: text('Бүртгэл үүслээ. Админы зөвшөөрлийг хүлээнэ үү.', 'Account created successfully. Please wait for admin approval.'),
+          title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
+          description: error.message,
+          variant: "destructive",
         });
-        setIsSignUp(false);
-        setAdminEmail("");
-        setAdminPassword("");
         setAdminLoading(false);
       } else {
-        const { error } = await adminSignIn(adminEmail, adminPassword);
-        if (error) {
-          toast({
-            title: text('Нэвтрэхэд алдаа гарлаа', 'Login Failed'),
-            description: error.message,
-            variant: "destructive",
-          });
-          setAdminLoading(false);
-        } else {
-          // Signal that a fresh login succeeded — useEffect will handle redirect
-          setLoginSucceeded(true);
-        }
+        // Signal that a fresh login succeeded — useEffect will handle redirect
+        setLoginSucceeded(true);
       }
     } catch (error: any) {
       toast({
@@ -250,22 +235,11 @@ export default function Login() {
                     {adminLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {isSignUp ? text('Бүртгэж байна...', 'Creating Account...') : text('Нэвтэрч байна...', 'Signing In...')}
+                        {text('Нэвтэрч байна...', 'Signing In...')}
                       </>
-                    ) : isSignUp ? (
-                      text('Бүртгүүлэх', 'Sign Up')
                     ) : (
                       text('Нэвтрэх', 'Login')
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className={authGhostButtonClasses}
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    disabled={adminLoading}
-                  >
-                    {isSignUp ? text('Бүртгэлтэй юу? Нэвтрэх', 'Already have an account? Login') : text('Бүртгэлгүй юу? Бүртгүүлэх', 'Need an account? Sign Up')}
                   </Button>
                 </form>
               </TabsContent>

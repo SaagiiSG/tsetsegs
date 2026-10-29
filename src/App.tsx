@@ -13,16 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TeacherAuthProvider } from "./contexts/TeacherAuthContext";
-import { StudentAuthProvider, useStudentAuth } from "./contexts/StudentAuthContext";
-import type { ReactNode } from "react";
-
-// Concept videos are international-only: Mongolian students get redirected away.
-function IntlOnlyRoute({ children }: { children: ReactNode }) {
-  const { student, isLoading } = useStudentAuth();
-  if (isLoading) return null;
-  if (student?.cohort !== 'intl') return <Navigate to="/practice/home" replace />;
-  return <>{children}</>;
-}
+import { StudentAuthProvider } from "./contexts/StudentAuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
@@ -84,7 +75,6 @@ import StudentClosingReport from "./pages/student/StudentClosingReport";
 import StudentMyFlags from "./pages/student/StudentMyFlags";
 import StudentExamResults from "./pages/student/StudentExamResults";
 import StudentQuestionSearch from "./pages/student/StudentQuestionSearch";
-import StudentConceptVideos from "./pages/student/StudentConceptVideos";
 import StudentProctorResults from "./pages/student/StudentProctorResults";
 
 // Mini Challenges
@@ -288,7 +278,8 @@ const MainApp = () => (
                     <Route path="reading" element={<StudentReadingModule />} />
                     <Route path="bug-report" element={<StudentBugReport />} />
                     <Route path="search" element={<StudentQuestionSearch />} />
-                    <Route path="concept-videos" element={<IntlOnlyRoute><StudentConceptVideos /></IntlOnlyRoute>} />
+                    {/* Concept videos are for centers and solo students only (Saagii, 28 Oct). */}
+                    <Route path="concept-videos" element={<Navigate to="/practice/home" replace />} />
                     <Route path="my-flags" element={<StudentMyFlags />} />
                     <Route path="exam-results" element={<StudentExamResults />} />
                     <Route path="proctor-results" element={<StudentProctorResults />} />
