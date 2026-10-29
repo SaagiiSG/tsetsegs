@@ -18,6 +18,6 @@ describe('ActivityHeatmap month labels', () => {
   it('never overlap: a month that starts within 3 weeks of the last label replaces it', () => {
     labels.slice(1).forEach((l, i) => expect(l.left - labels[i].left).toBeGreaterThanOrEqual(36));
     expect(labels[0].month).toBe('Nov');
-    expect(labels.at(-1)!.month).toBe('Oct');
+    expect(labels[labels.length - 1]?.month).toBe('Oct');
   });
 });

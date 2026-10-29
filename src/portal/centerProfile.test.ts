@@ -14,8 +14,8 @@ describe('toProfileView', () => {
   it('fills a full year and maps rank history', () => {
     const v = toProfileView(raw, nums, today);
     expect(v.activity).toHaveLength(365); expect(v.activity[0].date).toBe('2025-10-26');
-    expect(v.activity.at(-1)).toEqual({ date: '2026-10-25', points: 0, sessionsCount: 0 });
-    expect(v.activity.at(-2)).toEqual({ date: '2026-10-24', points: 15, sessionsCount: 2 });
+    expect(v.activity[v.activity.length - 1]).toEqual({ date: '2026-10-25', points: 0, sessionsCount: 0 });
+    expect(v.activity[v.activity.length - 2]).toEqual({ date: '2026-10-24', points: 15, sessionsCount: 2 });
     expect(v.activeDays).toEqual(['2026-10-23', '2026-10-24']);
     expect(v.rankHistory).toEqual([
       { sprint: 'Sprint 1', sprintNumber: 3, seasonNumber: 1, rank: 'gold', finalPoints: 120, position: 4 },
