@@ -62,8 +62,8 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
       if (d === 'hard') hard.add(a.question_id); else if (d === 'medium') medium.add(a.question_id);
     }
     const speed = (runs.data ?? []).filter(r => new Date(r.created_at) >= start).length;
-    return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: runs.isSuccess, failed: runs.isError };
-  }, [attempts, meta, runs.data, runs.isSuccess, runs.isError]);
+    return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: !!runs.data, failed: runs.isError && !runs.data };
+  }, [attempts, meta, runs.data, runs.isError]);
 }
 
 export const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [

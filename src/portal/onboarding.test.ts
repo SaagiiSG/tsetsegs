@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, questionSubjects, stepSixMessage } from './onboarding';
+import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, backStep, questionSubjects, stepSixMessage } from './onboarding';
 const goals = (o = {}) => ({ speed: 2, hard: 5, medium: 10, intensity: null, sat_date: null, isSet: true, target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null, ...o });
 describe('who sees onboarding', () => {
   it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }), false)).toBeNull(); expect(onboardingStep(false, undefined, false)).toBeNull(); });
@@ -50,6 +50,7 @@ describe('steps', () => {
     expect(ringPlanCopy({ hard: 5, medium: 10 }, 400, null)).toBe('About 15 questions a day. Your Math score prediction unlocks in about a week.');
     expect(ringPlanCopy({ hard: 5, medium: 10 }, 440, null)).toBe('About 15 questions a day. Your Math score prediction is already unlocked.');
   });
+  it('Back skips the step-6 question and stops at step 1', () => expect([1, 2, 6, 7].map(backStep)).toEqual([null, 1, 5, 5]));
   it('R&W pickers hear the prediction is Math only', () => {
     expect(ringPlanCopy({ hard: 5, medium: 10 }, 100, 'reading_writing')).toBe('About 15 questions a day. The score prediction covers Math only and unlocks after 340 more Math questions.');
     expect(ringPlanCopy({ hard: 5, medium: 10 }, 440, 'reading_writing')).toBe('About 15 questions a day. The score prediction covers Math only and is already unlocked.');

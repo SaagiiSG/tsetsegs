@@ -23,7 +23,7 @@ import { SkyCardSkeleton } from './SkySkeleton';
 import { isCorrect } from './LiveSession';
 import { centerSatProgress } from './centerSatSimulation';
 import type { QMeta } from './questionMeta';
-import { canSkip, defaultIntensity, helpMePick, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
+import { backStep, canSkip, defaultIntensity, helpMePick, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
 
 export type RecordFn = (questionId: string, ok: boolean, seconds?: number, answer?: string) => Promise<{ is_correct: boolean; points: number } | null>;
 type Attempt = { question_id: string; is_correct: boolean; created_at: string; time_spent_seconds: number | null };
@@ -83,7 +83,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   useEffect(() => { title.current?.focus(); }, [step]);
 
   useEffect(() => {
-    if (step !== 6) return;
+    if (step !== 6 || q) return; // coming back to step 6 keeps the question and the answer
     let live = true;
     (async () => {
       const base = () => supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false)
@@ -232,7 +232,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
           </div>
           <div className="sticky bottom-0 pb-[env(safe-area-inset-bottom)]" style={{ background: 'linear-gradient(hsl(var(--student-canvas) / 0), hsl(var(--student-canvas)) 35%)' }}>
             <div className="mx-auto flex w-full max-w-md gap-2 px-5 py-4 lg:pb-12">
-              {step >= 2 && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => setStep(step === 7 ? 5 : step - 1)}>Back</Button>}
+              {backStep(step) != null && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => setStep(backStep(step)!)}>Back</Button>}
               {canSkip(step, answerFailed) && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => save({}, step + 1)}>Skip</Button>}
               <Button size="lg" className="h-12 flex-1 rounded-full text-base" disabled={!action.ready || saving} onClick={action.run}>{action.label}<ArrowRight className="h-5 w-5" /></Button>
             </div>

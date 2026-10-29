@@ -33,6 +33,9 @@ export function usePracticeQuestions() {
   });
 }
 
+export const LoadError = ({ onRetry }: { onRetry: () => void }) =>
+  <div className="sky-card space-y-3"><p className="text-sm">Couldn't load questions.</p><Button variant="outline" onClick={onRetry}>Try again</Button></div>;
+
 /** Main-site style practice browser: subject + set tabs, overall progress, domain tree and question code grid. */
 export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {
   attempts: Attempt[]; subject: 'math' | 'english'; setKey: string;
@@ -72,7 +75,7 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
   const bar = (c: number, n: number) => <div className="sky-track !h-1.5 w-full"><div className="h-full rounded-full sky-fill-accent transition-all" style={{ width: `${n ? (100 * c) / n : 0}%` }} /></div>;
 
   // Counts from a failed read would all be a false 0, so show one honest line instead.
-  if (data.isError) return <div className="sky-card space-y-3"><p className="text-sm">Couldn't load questions.</p><Button variant="outline" onClick={() => data.refetch()}>Try again</Button></div>;
+  if (data.isError && !data.data) return <LoadError onRetry={() => data.refetch()} />;
 
   return (
     <div className="space-y-4">

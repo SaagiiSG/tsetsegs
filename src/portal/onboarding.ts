@@ -22,6 +22,9 @@ export function latchGate(prev: GateLatch, user: string, settled: boolean, live:
 /** Steps 2-5 can be skipped; step 6 too once an answer failed to save, so a broken connection can't trap the student. */
 export const canSkip = (step: number, saveFailed = false) => (step >= 2 && step <= 5) || (step === 6 && saveFailed);
 
+/** Where Back goes. Step 7 skips the step-6 question so it is never answered twice. */
+export const backStep = (step: number) => (step <= 1 ? null : step === 7 ? 5 : step - 1);
+
 export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
 
 /** Official SAT dates from today on; the admin's SAT month (YYYY-MM) picks its real date when that date is still ahead. */

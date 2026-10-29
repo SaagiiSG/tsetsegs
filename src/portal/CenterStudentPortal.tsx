@@ -342,7 +342,7 @@ function HomePage({ me }: { me: Me }) {
       </div>
       <div className="grid gap-4 md:grid-cols-12">
         <div className="md:col-span-4 lg:col-span-3 md:min-h-[320px]">
-          <DailyRing
+          {prog.failed ? <div role="alert" className="sky-card h-full text-sm text-muted-foreground">Couldn't load today's speed runs.</div> : <DailyRing
             speed={{ current: prog.speed, goal: g.speed }}
             hard={{ current: prog.hard, goal: g.hard }}
             medium={{ current: prog.medium, goal: g.medium }}
@@ -351,8 +351,7 @@ function HomePage({ me }: { me: Me }) {
             colors={SKY_RING}
             decor={AURORA}
             className="sky-card !p-0"
-          />
-          {prog.failed && <p role="alert" className="mt-2 text-xs text-muted-foreground">Couldn't load today's speed runs.</p>}
+          />}
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
