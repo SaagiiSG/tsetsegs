@@ -84,7 +84,7 @@
     | Geometry & Trig | `#E07CC8` | `#EBA3DA` |
 
   - `type VideoState = 'done' | 'open' | 'locked'`
-  - `type TopicUnit<V> = { n: number | null; name: string; area: Area | null; items: { video: V; state: VideoState }[]; watched: number }`
+  - `type TopicUnit<V> = { n: number | null; name: string; area: Area | null; items: { video: V; state: VideoState }[]; watched: number; total: number }`
   - `function topicUnits<V extends { id: string; module: string | null; order_index: number }>(videos: V[], done: Set<string>): TopicUnit<V>[]`. Units are in topic-number order and skip topics with no videos. Items are sorted by `order_index`. The "More videos" unit (`n: null, area: null`) comes last and only when needed.
   - **State rule:** a watched video is `'done'`. The first unwatched video in its unit is `'open'`. Every later unwatched video is `'locked'`.
   - `function upNext<V>(units: TopicUnit<V>[]): { unitIndex: number; videoId: string } | null`: the `'open'` item in the first unit that has one.
@@ -265,7 +265,8 @@
 - [ ] **Step 3: Implement.**
   - **Rail:** add `{ to: '/student/tests', label: 'Practice tests', icon: ClipboardList }` to `NAV`, right after Concept videos.
   - **Page:** shadcn `Tabs` with "Tests" and "My test history".
-    - **Tests tab:** a card per test with the name, `Month YYYY`, `testCardLine`, `Last score {n}` when not null, and a Start/Resume button. Start calls `tenant_test_start` and navigates to `/student/tests/{id}`.
+    - **Tests tab:** a card per test with the name, `Month YYYY` (from the numeric `test_month`/`test_year`, left out when null), `testCardLine`, `Last score {n}` when not null, and a Start/Resume button. Start calls `tenant_test_start` and navigates to `/student/tests/{id}`.
+    - **Queries:** keyed `['center-tests', center.id, …]` so the runner's invalidation refreshes both tabs.
     - **History tab:** `tenant_test_attempts` (select every column except `paper`), newest first. Each row shows the test name, the date, and either `Math {math_score}` or `In progress · Module {current_module + 1}`, with a Review or Resume button.
     - **Header:** `Practice tests` with the subtitle `Tsetsegs SAT Math tests. Practice scores are estimates, not official SAT scores.`
     - **States:** loading (`SkyListSkeleton`), error (`role="alert"` plus Try again), and empty history (`Your finished tests will appear here.`).
@@ -295,7 +296,7 @@
   - Remove the break and the R&W branches. The header is `{test_name}` on top of `Module {n} of {count}`.
   - The finish button says `Finish module` until the last module, then `Finish test`.
   - When completed, the score block shows `{math_score}` with `Practice score (estimate) · {math_correct}/{math_total} correct`.
-  - The review buttons are `Module 1` and `Module 2`. Review shows `Your answer`, `Correct answer` and the rationale. With no rationale it shows `No explanation yet.`
+  - The review buttons are `Module 1` and `Module 2`. Review shows `Your answer` (`Omitted` when blank), `Correct answer` and the rationale. With no rationale it shows `No explanation yet.`
   - Add `ReferenceSheet` (mounted once) plus a `Reference` button calling `toggleReferenceSheet()` next to Calculator.
   - Back links go to `/student/tests`, and the query invalidation key is `['center-tests', center.id]`.
   - Use `moduleSecondsLeft` for the timer. Keep the existing auto-advance-at-0 and reconnect logic.
@@ -398,7 +399,7 @@
   - `useCenterDailyProgress(...)` also returns `failed: boolean` (`runs.isError`).
 
 - [ ] **Step 1: Write the failing tests** in `onboarding.test.ts`:
-  - `R&W pickers hear the prediction is Math only`. `ringPlanCopy({ hard: 5, medium: 10 }, 100, 'reading_writing')` returns `'About 15 questions a day. The score prediction covers Math only and unlocks after 340 more Math questions.'` (`CENTER_SAT_UNLOCK_AT` is 440.)
+  - `R&W pickers hear the prediction is Math only` (`weak` is `'math' | 'reading_writing' | 'same'`; only `'reading_writing'` changes the copy). `ringPlanCopy({ hard: 5, medium: 10 }, 100, 'reading_writing')` returns `'About 15 questions a day. The score prediction covers Math only and unlocks after 340 more Math questions.'` (`CENTER_SAT_UNLOCK_AT` is 440.)
   - `Math pickers keep today's copy`: `ringPlanCopy({ hard: 5, medium: 10 }, 100, 'math')` equals today's output for the same input.
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Implement.**
