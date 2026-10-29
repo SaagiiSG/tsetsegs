@@ -18,6 +18,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 const variationSchema = z.object({
   question_text: z.string().min(1, 'Question text is required'),
@@ -58,6 +59,8 @@ interface QuestionFormProps {
 export function QuestionForm({ open, onOpenChange, editingQuestion, table = 'questions' }: QuestionFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // A redrawn SVG figure wins over the uploaded image everywhere students look, so the editor shows it too.
+  const drawing: string | null = editingQuestion?.figure_svg || null;
   const [isUploading, setIsUploading] = useState(false);
   const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
   const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
@@ -606,7 +609,12 @@ export function QuestionForm({ open, onOpenChange, editingQuestion, table = 'que
                 <p className="text-xs text-muted-foreground mb-2 md:mb-3 hidden sm:block">
                   Upload your Figma/Canva exported image here
                 </p>
-                {imagePreview ? (
+                {drawing ? (
+                  <div className="space-y-2">
+                    <QuestionFigures svg={drawing} description={editingQuestion?.figure_description} />
+                    <p className="text-xs text-muted-foreground">Drawn figure. Students see this one, not an uploaded image.</p>
+                  </div>
+                ) : imagePreview ? (
                   <div className="relative w-full">
                     <img 
                       src={imagePreview} 
@@ -1088,7 +1096,7 @@ export function QuestionForm({ open, onOpenChange, editingQuestion, table = 'que
                 </div>
 
                 {/* Preview Image */}
-                {imagePreview && (
+                {drawing ? <QuestionFigures svg={drawing} description={editingQuestion?.figure_description} /> : imagePreview && (
                   <div className="rounded-lg border overflow-hidden bg-white relative group">
                     <img 
                       src={imagePreview} 

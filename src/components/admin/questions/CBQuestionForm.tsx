@@ -20,6 +20,7 @@ import { ImageCropper } from './ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathText } from '@/components/MathText';
 import { Badge } from '@/components/ui/badge';
+import { QuestionFigures } from '@/components/QuestionFigures';
 
 const cbQuestionSchema = z.object({
   question_id: z.string().min(1, 'Question ID is required'),
@@ -52,6 +53,8 @@ interface CBQuestionFormProps {
 export function CBQuestionForm({ open, onOpenChange, editingQuestion, table = 'questions' }: CBQuestionFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // A redrawn SVG figure wins over the uploaded image everywhere students look, so the editor shows it too.
+  const drawing: string | null = editingQuestion?.figure_svg || null;
   const [isUploading, setIsUploading] = useState(false);
   const [choiceImageFiles, setChoiceImageFiles] = useState<Record<string, File | null>>({ A: null, B: null, C: null, D: null });
   const [choiceImagePreviews, setChoiceImagePreviews] = useState<Record<string, string | null>>({ A: null, B: null, C: null, D: null });
@@ -565,7 +568,12 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion, table = 'q
                   <Label className="text-sm font-medium mb-2 block">
                     Question Image (for graphs, tables, figures)
                   </Label>
-                  {imagePreview ? (
+                  {drawing ? (
+                    <div className="space-y-2">
+                      <QuestionFigures svg={drawing} description={editingQuestion?.figure_description} />
+                      <p className="text-xs text-muted-foreground">Drawn figure. Students see this one, not an uploaded image.</p>
+                    </div>
+                  ) : imagePreview ? (
                     <div className="relative w-full">
                       <img 
                         src={imagePreview} 
@@ -845,7 +853,7 @@ export function CBQuestionForm({ open, onOpenChange, editingQuestion, table = 'q
                 )}
 
                 {/* Image Preview */}
-                {imagePreview && (
+                {drawing ? <QuestionFigures svg={drawing} description={editingQuestion?.figure_description} /> : imagePreview && (
                   <div className="border rounded-lg overflow-hidden bg-white relative group">
                     <img 
                       src={imagePreview} 
