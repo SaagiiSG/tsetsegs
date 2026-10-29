@@ -652,6 +652,13 @@
       "when": 1793255903403,
       "tag": "0092_center_badge_celebrations",
       "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1793255903404,
+      "tag": "0093_student_bank_reads_when_signed_in",
+      "breakpoints": true
     }
   ]
 }
