@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Award } from 'lucide-react';
+import { BadgeCard } from '@/components/student/badges/BadgeCard';
+import type { StudentBadge } from '@/hooks/useBadges';
 import { supabase } from '@/integrations/supabase/client';
 import { ProfileHeader, ActivityHeatmap, RankHistoryGraph } from '@/components/student/profile';
 import { useCenter } from './centerContext';
@@ -11,16 +12,20 @@ import { useCenterSprints } from './admin/ToolPages';
 import { pct } from './questionMeta';
 import { centerBadges, toProfileView, type CenterBadge, type RawProfile } from './centerProfile';
 
+export function toStudentBadge(b: CenterBadge): StudentBadge {
+  return {
+    id: b.key, badgeId: b.key, isUnlocked: b.got, unlockedAt: null, requirementsProgress: {},
+    progress: b.got ? 100 : Math.min(99, pct(b.prog[0], b.prog[1])),
+    badge: { id: b.key, name: b.name, description: b.desc, rarity: b.rarity, pointValue: 0, iconName: b.icon, category: 'discipline', requirements: [] },
+  };
+}
+
 export function CenterBadgeGrid({ badges, heading = true }: { badges: CenterBadge[]; heading?: boolean }) {
   return (
     <div className="sky-card !p-4">
       {heading && <p className="mb-3 font-semibold">Badges <span className="font-mono text-sm text-muted-foreground">{badges.filter(b => b.got).length}/{badges.length}</span></p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{badges.map(b => (
-        <div key={b.name} className={`min-w-0 rounded-xl border p-3 ${b.got ? '' : 'opacity-60'}`}>
-          <Award className={`h-5 w-5 ${b.got ? '' : 'text-muted-foreground'}`} style={b.got ? { color: 'hsl(var(--section-glow))' } : undefined} />
-          <p className="mt-1.5 text-sm font-medium">{b.name}</p><p className="text-xs text-muted-foreground">{b.desc}</p>
-          {!b.got && <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full bg-foreground/60" style={{ width: `${Math.min(100, pct(b.prog[0], b.prog[1]))}%` }} /></div>}
-        </div>))}
+        <BadgeCard key={b.key} badge={toStudentBadge(b)} />))}
       </div>
     </div>
   );

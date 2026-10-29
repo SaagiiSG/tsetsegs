@@ -1,5 +1,5 @@
 import type { ActivityDay, RankHistoryEntry } from '@/hooks/useStudentProfile';
-import { TIER_ORDER, type TierType } from '@/data/badgeDefinitions';
+import { TIER_ORDER, type BadgeRarity, type TierType } from '@/data/badgeDefinitions';
 import { PRACTICE_SETS } from './practiceSets';
 import { dayKey } from './CenterStreak';
 
@@ -11,19 +11,20 @@ export function centerLevel(points: number): { level: number; progress: number; 
   return { level, progress: Math.round(100 * (points - from) / (to - from)), toNext: to - points };
 }
 
-export type CenterBadge = { name: string; desc: string; got: boolean; prog: [number, number] };
+export type CenterBadge = { key: string; name: string; desc: string; got: boolean; prog: [number, number]; rarity: BadgeRarity; icon: string };
+const MASTER_LOOK: Record<string, { rarity: BadgeRarity; icon: string }> = { SATMathTraining800: { rarity: 'legendary', icon: 'Crown' }, CB: { rarity: 'epic', icon: 'Diamond' } };
 export function centerBadges(i: { answered: number; correct: number; present: number; solved: Set<string>; setIds?: Record<string, string[]> }): CenterBadge[] {
   const { answered: n, correct: c, present, solved } = i;
   const done = (k: string) => (i.setIds?.[k] ?? []).filter(id => solved.has(id)).length;
   return [
-    { name: 'First steps', desc: 'Answer 10 questions', got: n >= 10, prog: [n, 10] },
-    { name: 'Centurion', desc: 'Answer 100 questions', got: n >= 100, prog: [n, 100] },
-    { name: 'Marathon', desc: 'Answer 500 questions', got: n >= 500, prog: [n, 500] },
-    { name: 'Sharpshooter', desc: '80% accuracy over 50+ questions', got: n >= 50 && c / n >= 0.8, prog: [n >= 50 ? Math.round(100 * c / n) : n, n >= 50 ? 80 : 50] },
-    { name: 'Regular', desc: 'Attend 10 classes', got: present >= 10, prog: [present, 10] },
+    { key: 'first_steps', rarity: 'common', icon: 'Star', name: 'First steps', desc: 'Answer 10 questions', got: n >= 10, prog: [n, 10] },
+    { key: 'centurion', rarity: 'uncommon', icon: 'Medal', name: 'Centurion', desc: 'Answer 100 questions', got: n >= 100, prog: [n, 100] },
+    { key: 'marathon', rarity: 'rare', icon: 'Mountain', name: 'Marathon', desc: 'Answer 500 questions', got: n >= 500, prog: [n, 500] },
+    { key: 'sharpshooter', rarity: 'rare', icon: 'Target', name: 'Sharpshooter', desc: '80% accuracy over 50+ questions', got: n >= 50 && c / n >= 0.8, prog: [n >= 50 ? Math.round(100 * c / n) : n, n >= 50 ? 80 : 50] },
+    { key: 'regular', rarity: 'uncommon', icon: 'Clock', name: 'Regular', desc: 'Attend 10 classes', got: present >= 10, prog: [present, 10] },
     ...PRACTICE_SETS.map((s): CenterBadge => {
       const total = i.setIds?.[s.key]?.length ?? 0;
-      return { name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: total > 0 && done(s.key) === total, prog: [done(s.key), total || 1] };
+      return { key: `master_${s.key}`, ...(MASTER_LOOK[s.key] ?? { rarity: 'epic', icon: 'Gem' }), name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: total > 0 && done(s.key) === total, prog: [done(s.key), total || 1] };
     }),
   ];
 }

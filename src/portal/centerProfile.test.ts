@@ -39,3 +39,11 @@ describe('centerBadges', () => it('uses the Badges page rules', () => {
   expect(b.find(x => x.name === '150 master')!.prog).toEqual([1, 2]);
   expect(b.find(x => x.name === 'CB master')).toMatchObject({ got: false, prog: [0, 1] });
 }));
+describe('center badge identity', () => it('badges carry key, rarity and icon', () => {
+  const b = centerBadges({ answered: 0, correct: 0, present: 0, solved: new Set(), setIds: {} });
+  expect(new Set(b.map(x => x.key)).size).toBe(b.length);
+  expect(b.map(x => [x.key, x.rarity, x.icon])).toEqual([
+    ['first_steps', 'common', 'Star'], ['centurion', 'uncommon', 'Medal'], ['marathon', 'rare', 'Mountain'], ['sharpshooter', 'rare', 'Target'],
+    ['regular', 'uncommon', 'Clock'], ['master_68', 'epic', 'Gem'], ['master_SATMathTraining800', 'legendary', 'Crown'], ['master_CB', 'epic', 'Diamond'],
+  ]);
+}));

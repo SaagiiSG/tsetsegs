@@ -92,9 +92,11 @@ export function BadgeCard({ badge, onClick }: BadgeCardProps) {
         <p className={cn("text-xs font-medium", colors.text)}>
           {getRarityLabel(badgeDef.rarity)}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Worth: {badgeDef.pointValue.toLocaleString()} pts
-        </p>
+        {badgeDef.pointValue > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Worth: {badgeDef.pointValue.toLocaleString()} pts
+          </p>
+        )}
       </div>
 
       {/* Progress bar for incomplete */}
