@@ -659,6 +659,13 @@
       "when": 1793255903404,
       "tag": "0093_student_bank_reads_when_signed_in",
       "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1793291491993,
+      "tag": "0094_apply_pending_0090_0093",
+      "breakpoints": true
     }
   ]
 }
