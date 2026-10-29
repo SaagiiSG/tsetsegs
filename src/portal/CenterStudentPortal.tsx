@@ -35,6 +35,7 @@ import { CenterPracticeBrowser, usePracticeQuestions, useSetTotals } from './Cen
 import { PRACTICE_SETS, CB_FILTER, practiceSetFromParam, practiceSetIds } from './practiceSets';
 import { CenterReviewPage } from './CenterReviewPage';
 import { CenterPracticeTests } from './CenterPracticeTests';
+import { CenterPracticeTest } from './CenterPracticeTest';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
 import { centerSatSimulation, centerSatProgress } from './centerSatSimulation';
@@ -210,6 +211,7 @@ export default function CenterStudentPortal() {
                 <Route path="leaderboard" element={<CenterRankings studentId={me.data.student.id} />} />
                 <Route path="videos" element={<VideosPage me={me.data} />} />
                 <Route path="tests" element={<CenterPracticeTests studentId={me.data.student.id} />} />
+                <Route path="tests/:attemptId" element={<CenterPracticeTest />} />
                 <Route path="badges" element={<BadgesPage me={me.data} />} />
                 <Route path="profile" element={<CenterProfileView studentId={me.data.student.id} name={me.data.student.name} />} />
                 <Route path="settings" element={<StudentSettingsPage />} />
