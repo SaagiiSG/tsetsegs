@@ -1449,3 +1449,25 @@ body.customer-student-portal a.bg-primary { background-image: linear-gradient(18
 .sky-depth-cloud { background-position: center bottom; background-size: max(100%, 1000px) auto; }
 .dark .sky-depth { display: none; }
 @media (prefers-reduced-transparency: reduce) { .sky-depth { display: none; } }
+
+/* Concept videos: one colour per topic unit. --unit-light/--unit-dark come inline from AREA_COLOR.
+   Ink is a near-black of the same hue (white fails contrast on the orange and pink fills). */
+.sky-unit {
+  --unit: var(--unit-light);
+  --unit-ink: color-mix(in srgb, var(--unit) 12%, #05050F);
+  --unit-shade: color-mix(in srgb, var(--unit) 72%, #05050F);
+}
+.dark .sky-unit { --unit: var(--unit-dark); }
+.sky-unit-banner { background: var(--unit); color: var(--unit-ink); box-shadow: 0 5px 0 var(--unit-shade); }
+.sky-node { background: var(--unit); color: var(--unit-ink); box-shadow: 0 6px 0 var(--unit-shade); }
+.sky-node-open { box-shadow: 0 6px 0 var(--unit-shade), 0 0 0 6px color-mix(in srgb, var(--unit) 30%, transparent); }
+/* Soft cloud bank at the foot of an open unit, behind the chest (never behind text); drifts slowly. */
+.sky-clouds-band {
+  position: absolute; inset: auto 0 0; height: 6.5rem; pointer-events: none;
+  background-repeat: no-repeat; background-position: center bottom; background-size: 760px auto, 1000px auto;
+  -webkit-mask-image: radial-gradient(closest-side, #000 45%, transparent); mask-image: radial-gradient(closest-side, #000 45%, transparent);
+  opacity: .7; animation: sky-cloud-drift 50s ease-in-out infinite alternate;
+}
+.dark .sky-clouds-band { opacity: .08; }
+@keyframes sky-cloud-drift { from { transform: translateX(-4%); } to { transform: translateX(4%); } }
+@media (prefers-reduced-motion: reduce) { .sky-clouds-band { animation: none; } }

@@ -42,6 +42,7 @@ import { CenterRankings } from './CenterRankings';
 import { CenterProfileView, CenterBadgeGrid } from './CenterProfileView';
 import { centerBadges } from './centerProfile';
 import { RoadmapPreview } from './RoadmapPreview';
+import { topicUnits } from './videoTopics';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
@@ -300,7 +301,8 @@ function HomePage({ me }: { me: Me }) {
   }, [goalOpen, goals.data, prog, me.student.id, nudgeKey]);
   // The day counts as nudged only once the student closed it, by dismissing or by "Start practicing".
   const closeNudge = () => { setNudgeOpen(false); try { localStorage.setItem(nudgeKey, dayKey(new Date())); } catch { /* ignore */ } };
-  const videoIds = (usePublishedVideos().data ?? []).map(v => v.id);
+  // Topic order, so the preview follows the videos page's "Up next".
+  const videoIds = topicUnits(usePublishedVideos().data ?? [], new Set(me.videosDone)).flatMap(u => u.items.map(i => i.video.id));
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
   const simulation = useMemo(() => centerSatSimulation(me.attempts, me.meta), [me.attempts, me.meta]);
