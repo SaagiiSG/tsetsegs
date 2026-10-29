@@ -116,11 +116,17 @@ export function TeacherLive({ classId, studentCount }: { classId: string; studen
 }
 
 /* ---------------- Student player ---------------- */
+/** The class's live game, if one is running. Shared with the badge watcher, which steps aside while it's up. */
+export const liveSessionQuery = (classId: string) => ({
+  queryKey: ['center-live-student', classId],
+  queryFn: async () => (await supabase.from('tenant_live_sessions').select('*').eq('class_id', classId).eq('status', 'live').order('created_at', { ascending: false }).limit(1).maybeSingle()).data,
+});
+
 export function StudentLive({ studentId, classId }: { studentId: string; classId: string }) {
   const { center } = useCenter();
   const qc = useQueryClient();
   const key = ['center-live-student', classId];
-  const session = useQuery({ queryKey: key, queryFn: async () => (await supabase.from('tenant_live_sessions').select('*').eq('class_id', classId).eq('status', 'live').order('created_at', { ascending: false }).limit(1).maybeSingle()).data });
+  const session = useQuery(liveSessionQuery(classId));
   useLiveRefetch('tenant_live_sessions', `class_id=eq.${classId}`, key);
   const s = session.data;
   const qid = s?.question_ids[s.current_index];

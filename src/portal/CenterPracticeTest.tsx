@@ -104,7 +104,7 @@ export function CenterPracticeTest() {
   if (query.isLoading) return <SkyCardSkeleton />;
   if (query.error || !state || !module) return <div className="sky-card space-y-3"><p role="alert">Could not load this test.</p><Button variant="outline" onClick={() => query.refetch()}>Try again</Button></div>;
   const choices = q ? normaliseChoices(q.multiple_choice_options, q.choice_images) : [];
-  return <div className="space-y-5">
+  return <div className="space-y-5" data-popup-hold={!completed || undefined}>
     <header className="flex flex-wrap justify-between items-center gap-3"><div className="min-w-0"><Button variant="ghost" className="px-0" onClick={() => navigate('/student/tests')}><ArrowLeft className="h-4 w-4"/>Practice tests</Button><h1 className="text-xl font-semibold">{state.test_name}</h1><p className="text-sm text-muted-foreground">Module {moduleIndex + 1} of {state.paper.length}</p></div>
       {completed ? state.math_score != null && <div className="text-right"><p className="font-mono text-2xl">{state.math_score}</p><p className="text-xs text-muted-foreground">Practice score (estimate) · {state.math_correct}/{state.math_total} correct</p></div> : <div className="text-right"><p className="font-mono text-2xl flex gap-2 items-center"><Timer className="h-5 w-5"/>{formatTime(seconds)}</p><p className="text-xs text-muted-foreground" role="status">{saveLabel}</p></div>}</header>
     {completed && <div className="flex flex-wrap gap-2">{state.paper.map((_, i) => <Button key={i} variant={reviewModule === i ? 'default' : 'outline'} onClick={() => { setReviewModule(i); setIndex(0); }}>Module {i + 1}</Button>)}</div>}

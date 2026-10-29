@@ -19,7 +19,7 @@ import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter }
 import { StudentAnnouncements } from './StudentExtras';
 import { SkyHomeSkeleton, SkyListSkeleton, SkyCardSkeleton } from './SkySkeleton';
 import { SprintLeaderboard, useCenterSprints } from './admin/ToolPages';
-import { StudentLive, isCorrect } from './LiveSession';
+import { StudentLive, isCorrect, liveSessionQuery } from './LiveSession';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { allPages } from './centerApi';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
@@ -654,7 +654,7 @@ function SpeedPage({ me }: { me: Me }) {
   if (!q) return <p className="text-sm text-muted-foreground">No questions available.</p>;
   const choices = normaliseChoices(q.multiple_choice_options, q.choice_images);
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-popup-hold>
       <div className="flex items-center gap-3">
         <span className="font-mono text-sm">{i + 1}/{qs.length}</span>
         <div className="sky-track flex-1 !h-1.5 overflow-hidden"><div className={`h-full transition-[width] duration-1000 ease-linear ${left < 15 ? '' : 'sky-fill-accent'}`} style={left < 15 ? { width: `${(left / SPEED_SECONDS) * 100}%`, background: 'hsl(var(--destructive))' } : { width: `${(left / SPEED_SECONDS) * 100}%` }} /></div>
@@ -732,12 +732,17 @@ function useMyCenterBadges(me: Me): CenterBadge[] | null {
 
 function MyBadgeWatcher({ me }: { me: Me }) {
   const badges = useMyCenterBadges(me);
-  return <CenterBadgeWatcher studentId={me.student.id} badges={badges} />;
+  // Same cached query as StudentLive, so a badge pop-up steps aside when a live game starts.
+  const live = useQuery({ ...liveSessionQuery(me.student.class_id ?? ''), enabled: !!me.student.class_id });
+  return <CenterBadgeWatcher studentId={me.student.id} badges={badges} liveUp={!!live.data} />;
 }
 
 function BadgesPage({ me }: { me: Me }) {
   const badges = useMyCenterBadges(me);
-  if (!badges) return <SkyCardSkeleton />;
+  const questions = usePracticeQuestions();
+  if (!badges) return questions.isError
+    ? <div className="space-y-3"><p className="text-sm">Couldn't load badges.</p><Button variant="outline" onClick={() => questions.refetch()}>Try again</Button></div>
+    : <SkyCardSkeleton />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Badges <span className="text-base text-muted-foreground font-mono">{badges.filter(b => b.got).length}/{badges.length}</span></h1>

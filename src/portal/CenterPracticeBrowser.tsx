@@ -18,11 +18,14 @@ export function usePracticeQuestions() {
     queryKey: ['center-practice-browser'],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const [{ data: cats }, ...pages] = await Promise.all([
+      const [{ data: cats, error }, ...pages] = await Promise.all([
         supabase.from('question_categories').select('id, name'),
         ...[0, 1, 2, 3].map(p => supabase.from('intl_questions').select('id, question_id, subject, question_set, category_id, skill')
           .eq('is_active', true).eq('hide_from_practice', false).order('question_id').range(p * 1000, p * 1000 + 999)),
       ]);
+      // A partial list would shrink the set totals and could award a master badge early, so any failed read fails the whole query.
+      const failed = error ?? pages.find(p => p.error)?.error;
+      if (failed) throw failed;
       const cat = Object.fromEntries((cats ?? []).map(c => [c.id, c.name]));
       const rows = pages.flatMap(p => (p.data ?? []) as Row[]);
       return rows.map(r => ({ ...r, domain: (r.category_id && cat[r.category_id]) || 'Other', sub: (r.subject ?? 'math').toLowerCase() as 'math' | 'english' }));
