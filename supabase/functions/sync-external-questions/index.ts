@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { buildContentPatch, ORIGINALS_ONLY } from "./contentPatch.ts";
+import { buildContentPatch, keepsExplainedQuestion, ORIGINALS_ONLY } from "./contentPatch.ts";
 import { existingMatcher, type ExistingRow } from "./existingMatch.ts";
 import { sanitizeSvg } from "../_shared/svgFigure.ts";
 
@@ -341,7 +341,9 @@ Deno.serve(async (req) => {
       }
 
       const skipImageDiffs = body.skip_image_diffs === true;
-      let updated = 0, unchanged = 0, errors = 0, skippedImages = 0;
+      const forced = new Set<string>(Array.isArray(body.force_ids) ? body.force_ids.map(String) : []);
+      const kept: { question_id: string; before_text: string; after_text: string }[] = [];
+      let updated = 0, unchanged = 0, errors = 0, skippedImages = 0, keptExplained = 0;
       const errorDetails: string[] = [];
       const changes: any[] = [];
 
@@ -361,6 +363,11 @@ Deno.serve(async (req) => {
           const next: any = normalizeQuestion(m.ext, {}, null);
           const patch = buildContentPatch(cur, next, FIELDS, skipImageDiffs, figuresOnly ? FIELDS : undefined);
           const changed = Object.keys(patch);
+          if (changed.length && keepsExplainedQuestion(cur, figuresOnly, forced.has(cur.question_id))) {
+            keptExplained++;
+            if (kept.length < 200) kept.push({ question_id: cur.question_id, before_text: cur.question_text, after_text: next.question_text });
+            return;
+          }
           if (changed.length === 0) unchanged++;
           // Skip questions whose figure link differs — our hosted images win over external links
           if (skipImageDiffs && norm(cur.question_image_url) !== norm(next.question_image_url)) skippedImages++;
@@ -409,6 +416,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           mode: "update", figures_only: figuresOnly, preview: dry_run, success: errors === 0,
           total_found: filteredQuestions.length, updated, unchanged, not_found: notFound, inserted, errors, skipped_images: skippedImages,
+          kept_explained: keptExplained, kept,
           changes, has_more: hasMore, next_offset: offset + safeLimit,
           error_details: errorDetails.slice(0, 10),
         }),

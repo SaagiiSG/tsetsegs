@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildContentPatch, ORIGINALS_ONLY } from '../../supabase/functions/sync-external-questions/contentPatch';
+import { buildContentPatch, keepsExplainedQuestion, ORIGINALS_ONLY } from '../../supabase/functions/sync-external-questions/contentPatch';
 
 describe('question sync', () => {
   it('imports an explanation while preserving the hosted image', () => {
@@ -12,6 +12,13 @@ describe('question sync', () => {
     const figs = ['figure_svg', 'figure_description'];
     expect(buildContentPatch({ figure_svg: '<svg>old</svg>', figure_description: 'd' }, { figure_svg: '<svg>new</svg>', figure_description: 'd' }, figs, false, figs)).toEqual({ figure_svg: '<svg>new</svg>' });
     expect(buildContentPatch({ figure_svg: '<svg>local</svg>', figure_description: 'local' }, { figure_svg: null, figure_description: '' }, figs, false, figs)).toEqual({});
+  });
+  it('keeps an explained question unless an admin picked it; figures-only runs are not blocked', () => {
+    expect(keepsExplainedQuestion({ rationale: 'Step 1: …' }, false, false)).toBe(true);
+    expect(keepsExplainedQuestion({ rationale: 'Step 1: …' }, false, true)).toBe(false);
+    expect(keepsExplainedQuestion({ rationale: '  ' }, false, false)).toBe(false);
+    expect(keepsExplainedQuestion({ rationale: null }, false, false)).toBe(false);
+    expect(keepsExplainedQuestion({ rationale: 'Step 1: …' }, true, false)).toBe(false);
   });
   it('figures-only keeps originals (is_variant false or null) and drops variants', () => {
     expect(ORIGINALS_ONLY).toBe('is_variant.is.null,is_variant.eq.false');

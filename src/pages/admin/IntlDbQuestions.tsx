@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MathText } from '@/components/MathText';
 import { CheckCircle2, ChevronDown, ChevronUp, CircleDashed, Download, PencilLine, RefreshCw, Search } from 'lucide-react';
@@ -32,7 +33,9 @@ export default function IntlDbQuestions() {
   const [formOpen, setFormOpen] = useState(false);
   const [cbFormOpen, setCbFormOpen] = useState(false);
   const [syncing, setSyncing] = useState<null | 'checking' | 'importing'>(null);
-  const [syncResult, setSyncResult] = useState<null | { found: number; changed: number; inserted: number; errors: number; dryRun: boolean; banks?: { intl: number; mn: number } }>(null);
+  type Kept = { question_id: string; before_text: string; after_text: string };
+  const [syncResult, setSyncResult] = useState<null | { found: number; changed: number; inserted: number; errors: number; dryRun: boolean; banks?: { intl: number; mn: number }; kept: Kept[] }>(null);
+  const [force, setForce] = useState<Set<string>>(new Set());
 
   const { data = [], isLoading, refetch } = useQuery({
     queryKey: ['intl-db-variant-questions'],
@@ -87,11 +90,12 @@ export default function IntlDbQuestions() {
   };
 
   // figures: copy redrawn figures (only the drawing) into both banks, intDB first, then the Mongolian bank.
-  const runSync = async (dryRun: boolean, figures = false) => {
+  // forceIds: explained questions the admin picked to overwrite anyway; every other explained question is kept.
+  const runSync = async (dryRun: boolean, figures = false, forceIds: string[] = []) => {
     setSyncing(dryRun ? 'checking' : 'importing');
-    const agg = { found: 0, changed: 0, inserted: 0, errors: 0 };
+    const agg = { found: 0, changed: 0, inserted: 0, errors: 0, kept: [] as Kept[] };
     const banks = { intl: 0, mn: 0 };
-    const show = () => setSyncResult({ ...agg, dryRun, ...(figures ? { banks: { ...banks } } : {}) });
+    const show = () => setSyncResult({ ...agg, kept: [...agg.kept], dryRun, ...(figures ? { banks: { ...banks } } : {}) });
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData.session) throw new Error("Please sign in again before updating questions.");
@@ -100,7 +104,7 @@ export default function IntlDbQuestions() {
         let offset = 0, hasMore = true;
         while (hasMore) {
           const { data: d, error } = await supabase.functions.invoke('sync-external-questions', {
-            body: { mode: 'update', dry_run: dryRun, offset, limit: batchSize, ...(target ? { figures_only: true, target } : { skip_image_diffs: true }) },
+            body: { mode: 'update', dry_run: dryRun, offset, limit: batchSize, ...(target ? { figures_only: true, target } : { skip_image_diffs: true, force_ids: forceIds }) },
           });
           if (error) {
             let detail = error.message;
@@ -113,6 +117,9 @@ export default function IntlDbQuestions() {
           if (!d || d.error) throw new Error(d?.error || "No update result returned.");
           // An older server ignores figures_only and runs a full content update, which would overwrite Mongolian questions.
           if (target && d.figures_only !== true) throw new Error("The server is still running the old sync, which would overwrite whole questions. Deploy sync-external-questions, then check again.");
+          // An older server overwrites explained questions; the check refuses, and Import only unlocks after a clean check.
+          if (!target && d.total_found > 0 && d.kept_explained === undefined) throw new Error("The server is still running the old import, which overwrites questions that have an explanation. Deploy sync-external-questions, then check again.");
+          if (!target) agg.kept.push(...((d.kept ?? []) as Kept[]));
           if (target !== 'mn') agg.found += d?.total_found || 0; // both banks scan the same external rows
           agg.changed += d?.updated || 0;
           agg.inserted += d?.inserted || 0;
@@ -130,7 +137,8 @@ export default function IntlDbQuestions() {
       if (!dryRun) {
         toast(figures
           ? { title: 'Figures updated', description: `${banks.intl} in intDB, ${banks.mn} in the Mongolian bank.` }
-          : { title: 'Imported into intDB', description: `${agg.changed} updated, ${agg.inserted} added.` });
+          : { title: 'Imported into intDB', description: `${agg.changed} updated, ${agg.inserted} added, ${agg.kept.length} with an explanation kept.` });
+        setForce(new Set());
         refetch();
       }
     } catch (e: any) {
@@ -179,7 +187,31 @@ export default function IntlDbQuestions() {
           {syncResult.banks && <span className="text-muted-foreground">Figures — intDB: <span className="font-mono">{syncResult.banks.intl}</span>, Mongolian bank: <span className="font-mono">{syncResult.banks.mn}</span></span>}
           {!syncResult.dryRun && !syncResult.banks && <span className="text-muted-foreground">Added: <span className="font-mono">{syncResult.inserted}</span></span>}
           {syncResult.errors > 0 && <span className="text-destructive">Errors: {syncResult.errors}</span>}
-          {syncResult.dryRun && !syncing && syncResult.changed === 0 && <span className="text-muted-foreground">Everything is already up to date.</span>}
+          {syncResult.dryRun && !syncing && syncResult.changed === 0 && syncResult.kept.length === 0 && <span className="text-muted-foreground">Everything is already up to date.</span>}
+        </CardContent></Card>
+      )}
+
+      {syncResult && !syncResult.banks && syncResult.kept.length > 0 && (
+        <Card><CardContent className="p-4 space-y-3 text-sm">
+          <p>
+            <span className="font-medium">Kept {syncResult.kept.length} questions that have an explanation.</span>{' '}
+            <span className="text-muted-foreground">The external database has a different version of each. Importing it would leave the explanation solving a different question. Pick any you want to replace anyway.</span>
+          </p>
+          <div className="max-h-72 overflow-y-auto divide-y rounded-md border">
+            {syncResult.kept.map((k) => (
+              <label key={k.question_id} className="flex gap-3 p-3 cursor-pointer">
+                <Checkbox checked={force.has(k.question_id)} onCheckedChange={(on) => setForce((f) => { const n = new Set(f); if (on) n.add(k.question_id); else n.delete(k.question_id); return n; })} />
+                <span className="min-w-0 space-y-1">
+                  <span className="font-mono block">{k.question_id}</span>
+                  <span className="block text-muted-foreground">Now: {k.before_text.slice(0, 140)}</span>
+                  <span className="block text-muted-foreground">External: {k.after_text.slice(0, 140)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <Button size="sm" variant="outline" disabled={!!syncing || force.size === 0} onClick={() => runSync(false, false, [...force])}>
+            Import selected anyway ({force.size})
+          </Button>
         </CardContent></Card>
       )}
 
