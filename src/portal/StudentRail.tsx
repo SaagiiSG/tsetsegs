@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import {
-  Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, BarChart3, LifeBuoy, UserRound, Settings, Moon, LogOut,
+  Home, BookOpen, ClipboardList, RotateCcw, Zap, Trophy, PlayCircle, Award, BarChart3, LifeBuoy, UserRound, Settings, Moon, LogOut,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
@@ -10,6 +10,7 @@ export const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
   { to: '/student/practice', label: 'Practice', icon: BookOpen },
   { to: '/student/videos', label: 'Concept videos', icon: PlayCircle },
+  { to: '/student/tests', label: 'Practice tests', icon: ClipboardList },
   { to: '/student/speed', label: 'Speed mode', icon: Zap },
   { to: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/student/analytics', label: 'Analytics', icon: BarChart3 },

@@ -9,8 +9,8 @@ const html = renderToStaticMarkup(<MemoryRouter initialEntries={['/student']}><C
 describe('student rail', () => {
   it('has no emoji', () => expect(html).not.toMatch(/\p{Extended_Pictographic}/u));
   it('keeps the pages and adds the account block', () => {
-    for (const l of ['Home', 'Practice', 'Concept videos', 'Speed mode', 'Leaderboard', 'Analytics', 'Review mistakes', 'Badges', 'Help', 'Profile', 'Settings', 'Dark mode', 'Log out']) expect(html).toContain(l);
-    expect(html).toContain('href="/student/profile"'); expect(html).toContain('role="switch"');
+    for (const l of ['Home', 'Practice', 'Concept videos', 'Practice tests', 'Speed mode', 'Leaderboard', 'Analytics', 'Review mistakes', 'Badges', 'Help', 'Profile', 'Settings', 'Dark mode', 'Log out']) expect(html).toContain(l);
+    expect(html).toContain('href="/student/profile"'); expect(html).toContain('href="/student/tests"'); expect(html).toContain('role="switch"');
   });
   it('opens on hover and keyboard focus only', () => {
     const cls = html.match(/<aside class="([^"]*)"/)![1];
