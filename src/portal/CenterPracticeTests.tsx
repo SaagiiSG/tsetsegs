@@ -22,7 +22,7 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
   const { center } = useCenter();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
-  const tests = useQuery({ queryKey: ['center-tests', center.id, 'list'], queryFn: async () => {
+  const tests = useQuery({ queryKey: ['center-tests', center.id, 'list', studentId], queryFn: async () => {
     const { data, error } = await supabase.rpc('tenant_practice_tests' as never, { _institution: center.id } as never); if (error) throw error;
     return (data ?? []) as unknown as PracticeTest[];
   } });
@@ -52,7 +52,7 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
               {monthYear(t) && <p className="text-sm text-muted-foreground">{monthYear(t)}</p>}
               <p className="text-sm text-muted-foreground">{testCardLine(t)}</p>
               {t.last_score != null && <p className="text-sm">Last score {t.last_score}</p>}</div>
-            <button type="button" className="sky-btn sky-btn-blue" disabled={busy === t.id} onClick={() => t.open_attempt ? navigate(`/student/tests/${t.open_attempt}`) : start(t)}>{testCardAction(t)}</button>
+            <Button className="sky-btn sky-btn-blue" disabled={busy === t.id} onClick={() => t.open_attempt ? navigate(`/student/tests/${t.open_attempt}`) : start(t)}>{testCardAction(t)}</Button>
           </div>)}
       </TabsContent>
       <TabsContent value="history" className="space-y-3">

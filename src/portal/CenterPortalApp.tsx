@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [canContact, setCanContact] = useState(false);
   const [staffSignIn, setStaffSignIn] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     document.body.classList.add('admin-theme');
@@ -61,7 +63,8 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     if (access?.blocked && center && session) supabase.rpc('support_can_contact', { _institution: center.id }).then(({ data }) => setCanContact(!!data));
   }, [access?.blocked, center, session]);
 
-  const signOut = async () => { await supabase.auth.signOut(); setRole(null); navigate('/'); };
+  // Clear the cache so the next student on a shared device never sees this one's data.
+  const signOut = async () => { await supabase.auth.signOut(); queryClient.clear(); setRole(null); navigate('/'); };
 
   // Center login security: students and teachers are signed out when their sign-in is older than the
   // center's session length or predates an admin "sign everyone out". Center admins are never forced out.
