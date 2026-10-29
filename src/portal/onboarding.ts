@@ -42,8 +42,12 @@ export function defaultIntensity(daysToSat: number | null): GoalIntensity {
 }
 
 /** Daily questions in the ring, and how long until the Math prediction unlocks at that pace. */
-export function ringPlanCopy(goals: { hard: number; medium: number }, distinctMath: number) {
+export function ringPlanCopy(goals: { hard: number; medium: number }, distinctMath: number, weak: string | null) {
   const perDay = goals.hard + goals.medium;
+  if (weak === 'reading_writing') {
+    const left = CENTER_SAT_UNLOCK_AT - distinctMath;
+    return `About ${perDay} questions a day. The score prediction covers Math only and ${left <= 0 ? 'is already unlocked' : `unlocks after ${left} more Math questions`}.`;
+  }
   const head = `About ${perDay} questions a day. Your Math score prediction`;
   if (distinctMath >= CENTER_SAT_UNLOCK_AT) return `${head} is already unlocked.`;
   const weeks = Math.max(1, Math.round(Math.ceil((CENTER_SAT_UNLOCK_AT - distinctMath) / perDay) / 7));

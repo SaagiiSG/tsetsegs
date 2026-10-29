@@ -45,10 +45,17 @@ describe('steps', () => {
   it('help me pick', () => expect([null, 1500, 1200, 1230, 700].map(helpMePick)).toEqual([1300, 1600, 1350, 1400, 1000]));
   it('defaults the ring pace from the SAT date', () => expect([null, 13, 60, 90, 200].map(defaultIntensity)).toEqual(['gradual', 'intense', 'intense', 'gradual', 'with_the_flow']));
   it('does honest maths', () => {
-    expect(ringPlanCopy({ hard: 5, medium: 10 }, 0)).toBe('About 15 questions a day. Your Math score prediction unlocks in about 4 weeks.');
-    expect(ringPlanCopy({ hard: 8, medium: 15 }, 0)).toBe('About 23 questions a day. Your Math score prediction unlocks in about 3 weeks.');
-    expect(ringPlanCopy({ hard: 5, medium: 10 }, 400)).toBe('About 15 questions a day. Your Math score prediction unlocks in about a week.');
-    expect(ringPlanCopy({ hard: 5, medium: 10 }, 440)).toBe('About 15 questions a day. Your Math score prediction is already unlocked.');
+    expect(ringPlanCopy({ hard: 5, medium: 10 }, 0, null)).toBe('About 15 questions a day. Your Math score prediction unlocks in about 4 weeks.');
+    expect(ringPlanCopy({ hard: 8, medium: 15 }, 0, null)).toBe('About 23 questions a day. Your Math score prediction unlocks in about 3 weeks.');
+    expect(ringPlanCopy({ hard: 5, medium: 10 }, 400, null)).toBe('About 15 questions a day. Your Math score prediction unlocks in about a week.');
+    expect(ringPlanCopy({ hard: 5, medium: 10 }, 440, null)).toBe('About 15 questions a day. Your Math score prediction is already unlocked.');
+  });
+  it('R&W pickers hear the prediction is Math only', () => {
+    expect(ringPlanCopy({ hard: 5, medium: 10 }, 100, 'reading_writing')).toBe('About 15 questions a day. The score prediction covers Math only and unlocks after 340 more Math questions.');
+    expect(ringPlanCopy({ hard: 5, medium: 10 }, 440, 'reading_writing')).toBe('About 15 questions a day. The score prediction covers Math only and is already unlocked.');
+  });
+  it('Math pickers keep today\'s copy', () => {
+    for (const w of ['math', 'same', null]) expect(ringPlanCopy({ hard: 5, medium: 10 }, 100, w)).toBe('About 15 questions a day. Your Math score prediction unlocks in about 3 weeks.');
   });
   it('picks the question section', () => { expect(questionSubjects('reading_writing')).toEqual(['english', 'English']); expect(questionSubjects('same')).toEqual(['math', 'Math']); expect(questionSubjects(null)).toEqual(['math', 'Math']); });
   it('never promises ring progress it did not make', () => {

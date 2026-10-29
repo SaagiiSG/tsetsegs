@@ -47,7 +47,11 @@ export function useCenterGoals(studentId: string) {
 export function useCenterDailyProgress(studentId: string, attempts: { question_id: string; is_correct: boolean; created_at: string }[], meta: Record<string, QMeta>) {
   const runs = useQuery({
     queryKey: ['center-speed-runs', studentId],
-    queryFn: async () => (await supabase.from('tenant_speed_runs').select('created_at, correct, total').eq('student_id', studentId).order('created_at', { ascending: false }).limit(500)).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tenant_speed_runs').select('created_at, correct, total').eq('student_id', studentId).order('created_at', { ascending: false }).limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   return useMemo(() => {
     const start = new Date(); start.setHours(0, 0, 0, 0);
@@ -58,8 +62,8 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
       if (d === 'hard') hard.add(a.question_id); else if (d === 'medium') medium.add(a.question_id);
     }
     const speed = (runs.data ?? []).filter(r => new Date(r.created_at) >= start).length;
-    return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: runs.isSuccess };
-  }, [attempts, meta, runs.data, runs.isSuccess]);
+    return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: runs.isSuccess, failed: runs.isError };
+  }, [attempts, meta, runs.data, runs.isSuccess, runs.isError]);
 }
 
 export const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [

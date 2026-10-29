@@ -227,11 +227,12 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                   <I className="h-5 w-5 shrink-0" /><span><span className="block">{label}</span><span className="block text-sm font-normal sky-body">{blurb}</span></span>
                 </Choice>)}
               </div>
-              <p className="sky-body">{ringPlanCopy(vals, centerSatProgress(attempts, meta))} You can change it any time.</p>
+              <p className="sky-body">{ringPlanCopy(vals, centerSatProgress(attempts, meta), weak)} You can change it any time.</p>
             </div>}
           </div>
           <div className="sticky bottom-0 pb-[env(safe-area-inset-bottom)]" style={{ background: 'linear-gradient(hsl(var(--student-canvas) / 0), hsl(var(--student-canvas)) 35%)' }}>
             <div className="mx-auto flex w-full max-w-md gap-2 px-5 py-4 lg:pb-12">
+              {step >= 2 && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => setStep(step === 7 ? 5 : step - 1)}>Back</Button>}
               {canSkip(step, answerFailed) && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={saving} onClick={() => save({}, step + 1)}>Skip</Button>}
               <Button size="lg" className="h-12 flex-1 rounded-full text-base" disabled={!action.ready || saving} onClick={action.run}>{action.label}<ArrowRight className="h-5 w-5" /></Button>
             </div>

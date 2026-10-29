@@ -352,6 +352,7 @@ function HomePage({ me }: { me: Me }) {
             decor={AURORA}
             className="sky-card !p-0"
           />
+          {prog.failed && <p role="alert" className="mt-2 text-xs text-muted-foreground">Couldn't load today's speed runs.</p>}
         </div>
         <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
