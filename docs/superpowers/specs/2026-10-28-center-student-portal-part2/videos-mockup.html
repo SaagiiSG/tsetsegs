@@ -1,0 +1,147 @@
+<style>
+  .phs { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-top: 18px; }
+  .phwrap { display: flex; flex-direction: column; gap: 12px; width: 332px; cursor: pointer; border-radius: 28px; padding: 10px; border: 2px solid transparent; }
+  .phwrap.selected { border-color: var(--selected-border); background: var(--selected-bg); }
+  .phwrap h3 { margin: 0 6px; }
+  .phwrap p { margin: 0 6px; font-size: 13px; opacity: .8; }
+  .ph { width: 312px; height: 640px; border-radius: 38px; overflow: hidden; position: relative; border: 6px solid #15161b;
+        background: linear-gradient(180deg, #E8F1FE 0%, #F2EFFE 55%, #FCF4FA 100%); font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #15161b; }
+  .ph * { box-sizing: border-box; }
+  .top { display: flex; align-items: center; gap: 8px; margin: 10px; padding: 7px 10px; background: rgba(255,255,255,.85); border-radius: 20px; font-size: 12px; box-shadow: 0 4px 14px -10px #5a58e1; }
+  .av { width: 26px; height: 26px; border-radius: 9px; background: #7B6CF6; color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .chip { font-family: ui-monospace, monospace; font-weight: 700; }
+  .chip small { font-weight: 500; opacity: .6; }
+  .v { --c: #7B6CF6; --d: #5A4BD9; --l: #E6E1FF; --m: #CFC7FB; }
+  .o { --c: #FB8A4C; --d: #DD6726; --l: #FDE6D7; --m: #F8CBAE; }
+  .b { --c: #3B8DF5; --d: #1F6BD0; --l: #DCEBFF; --m: #BBD6FA; }
+  .p { --c: #E07CC8; --d: #C2599F; --l: #FBE2F2; --m: #F2C3E4; }
+  .banner { margin: 4px 12px 0; padding: 14px 14px 12px; border-radius: 20px; color: #fff; background: linear-gradient(160deg, var(--c), var(--d)); box-shadow: 0 6px 0 var(--d); position: relative; }
+  .banner .k { font-size: 10px; letter-spacing: .08em; font-weight: 700; opacity: .8; }
+  .banner .t { font-size: 18px; font-weight: 800; margin-top: 2px; }
+  .banner .s { font-size: 12px; opacity: .9; margin-top: 6px; }
+  .banner .ic { position: absolute; right: 12px; top: 14px; width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,.22); display: grid; place-items: center; border: 1.5px solid rgba(255,255,255,.35); }
+  .banner.mini { padding: 11px 14px; box-shadow: 0 4px 0 var(--d); margin-top: 12px; }
+  .banner.mini .t { font-size: 15px; }
+  .banner.mini .ic { top: 9px; width: 30px; height: 30px; }
+  .path { position: relative; height: 372px; margin: 0 12px; }
+  .node { position: absolute; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; }
+  .node.done { background: var(--c); color: #fff; box-shadow: 0 5px 0 var(--d); }
+  .node.cur { width: 64px; height: 64px; background: var(--c); color: #fff; box-shadow: 0 6px 0 var(--d), 0 0 0 6px #fff, 0 0 0 10px var(--m); }
+  .node.next { background: var(--l); color: var(--c); box-shadow: 0 5px 0 var(--m); }
+  .node.chest { background: #FFE9A8; color: #C98A00; box-shadow: 0 5px 0 #F2C94C; border-radius: 18px; }
+  .bubble { position: absolute; white-space: nowrap; background: #fff; color: var(--d); font-weight: 800; font-size: 12px; padding: 5px 10px; border-radius: 10px; border: 2px solid var(--m); }
+  .pop { position: absolute; background: #fff; border-radius: 16px; padding: 10px 12px; width: 190px; box-shadow: 0 10px 24px -14px #4b3fc0; border: 1.5px solid var(--l); font-size: 12px; }
+  .pop b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .pop .btn { margin-top: 8px; background: var(--c); color: #fff; text-align: center; font-weight: 800; border-radius: 10px; padding: 7px; box-shadow: 0 3px 0 var(--d); }
+  .art { position: absolute; border-radius: 30px; display: grid; place-items: center; font-weight: 800; color: var(--d); background: linear-gradient(170deg, var(--l), var(--m)); }
+  .dot { position: absolute; border-radius: 50%; background: var(--m); }
+  .sq { position: absolute; border-radius: 6px; background: var(--l); transform: rotate(18deg); }
+  /* B */
+  .h { margin: 6px 16px 0; }
+  .h .t { font-size: 22px; font-weight: 800; }
+  .h .s { font-size: 12px; color: #5d6170; margin-top: 2px; }
+  .bar { height: 6px; background: #DCE6F7; border-radius: 9px; overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: var(--c, #7B6CF6); border-radius: 9px; }
+  .card2 { margin: 10px 12px 0; background: rgba(255,255,255,.9); border-radius: 20px; padding: 12px; box-shadow: 0 6px 18px -14px #4b3fc0; }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .tile { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-weight: 800; color: var(--d); background: linear-gradient(170deg, var(--l), var(--m)); box-shadow: 0 4px 0 var(--m); flex-shrink: 0; font-size: 17px; }
+  .card2 .t { font-weight: 800; font-size: 15px; }
+  .card2 .s { font-size: 11.5px; color: #5d6170; }
+  .chev { margin-left: auto; color: #8a8fa0; }
+  .tl { margin: 12px 0 0 14px; border-left: 3px solid var(--l); padding-left: 0; }
+  .tl .it { display: flex; align-items: center; gap: 10px; margin: 0 0 9px -14px; font-size: 12.5px; }
+  .tl .n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+  .tl .n.d { background: var(--c); color: #fff; box-shadow: 0 2px 0 var(--d); }
+  .tl .n.c { background: var(--c); color: #fff; box-shadow: 0 0 0 4px var(--m); }
+  .tl .n.x { background: var(--l); color: var(--c); }
+  .tl .go { margin-left: auto; background: var(--c); color: #fff; font-weight: 800; font-size: 11px; padding: 5px 10px; border-radius: 9px; box-shadow: 0 2px 0 var(--d); }
+  .more { font-size: 11.5px; color: var(--d); font-weight: 700; margin-left: 16px; }
+  /* C */
+  .sticky { margin: 0 12px; padding: 10px 12px; border-radius: 18px; color: #fff; background: linear-gradient(160deg, var(--c), var(--d)); box-shadow: 0 5px 0 var(--d); display: flex; align-items: center; gap: 10px; }
+  .sticky .t { font-weight: 800; font-size: 15px; }
+  .sticky .s { font-size: 11px; opacity: .9; }
+  .sticky .pill { margin-left: auto; background: rgba(255,255,255,.22); border: 1.5px solid rgba(255,255,255,.4); border-radius: 11px; padding: 6px 9px; font-size: 11px; font-weight: 800; display: flex; gap: 5px; align-items: center; }
+  .divider { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--d); }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 2px; background: var(--m); border-radius: 2px; }
+  .note { font-size: 11px; color: #5d6170; text-align: center; margin-top: 6px; }
+</style>
+
+<h2>Concept videos: which direction feels right?</h2>
+<p class="subtitle">Three phone mockups in the center's sky colours. Each College Panda topic gets one flat colour family, picked by its SAT area (my guess): Advanced Math violet, Problem Solving &amp; Data orange, Algebra blue, Geometry pink. Topic names are examples until we have your list of 26. Click the one closest to what you want, then tell me what to change.</p>
+
+<div class="phs">
+
+  <!-- A -->
+  <div class="phwrap" data-choice="a" onclick="toggleSelect(this)">
+    <h3>A. Topic units (closest to Duolingo)</h3>
+    <p>Each topic is a coloured banner with a winding path of chunky buttons. A big flat picture sits beside the path, and a chest closes each topic. Video titles show when you tap a button. Finished topics fold up into a slim banner.</p>
+    <div class="ph v">
+      <div class="top"><span class="av">Z</span><span class="chip">+30 <small>today</small></span><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FA7433" stroke-width="2.4" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3-1-3 0-6 1-9z"/></svg>3</span></div>
+      <div class="banner"><div class="k">TOPIC 1 · ADVANCED MATH</div><div class="t">Exponents &amp; Radicals</div><div class="s">3 of 12 watched</div>
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 5h11a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M8 9h6M8 13h6"/></svg></div></div>
+      <div class="path" style="height:384px">
+        <div class="art" style="left:6px;top:96px;width:112px;height:112px;font-size:40px"><span>x<sup style="font-size:22px">2</sup></span></div>
+        <div class="dot" style="left:18px;top:228px;width:16px;height:16px"></div>
+        <div class="sq" style="left:92px;top:72px;width:18px;height:18px"></div>
+        <div class="dot" style="left:104px;top:236px;width:10px;height:10px;background:var(--c)"></div>
+        <div class="node done" style="left:150px;top:12px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <div class="node done" style="left:186px;top:72px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <div class="node done" style="left:192px;top:132px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <div class="bubble" style="left:76px;top:206px">UP NEXT</div>
+        <div class="node cur" style="left:150px;top:200px"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg></div>
+        <div class="pop" style="left:62px;top:282px"><b>The 8 laws of exponents: Law 4</b>3 min · solved by hand<div class="btn">WATCH</div></div>
+      </div>
+      <div class="banner mini o"><div class="k">TOPIC 2 · PROBLEM SOLVING</div><div class="t">Percent</div><div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="phwrap" data-choice="b" onclick="toggleSelect(this)">
+    <h3>B. Topic shelf (calmer)</h3>
+    <p>A list of 26 topic cards, each with a flat picture tile and a progress bar. Tap a card to open it, and its videos show as a short timeline with the next one ready to play. Quick to scan, less winding.</p>
+    <div class="ph v">
+      <div class="top"><span class="av">Z</span><span class="chip">+30 <small>today</small></span><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FA7433" stroke-width="2.4" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3-1-3 0-6 1-9z"/></svg>3</span></div>
+      <div class="h"><div class="t">Concept videos</div><div class="s">26 topics · 3 of 129 watched</div><div class="bar"><i style="width:3%"></i></div></div>
+      <div class="card2 v">
+        <div class="row"><div class="tile"><span>x<sup style="font-size:11px">2</sup></span></div><div><div class="t">Exponents &amp; Radicals</div><div class="s">12 videos · 3 watched</div></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg></span></div>
+        <div class="bar" style="background:var(--l)"><i style="width:25%"></i></div>
+        <div class="tl">
+          <div class="it"><span class="n d"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Law 1</div>
+          <div class="it"><span class="n d"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Law 2</div>
+          <div class="it"><span class="n d"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Law 3</div>
+          <div class="it"><span class="n c"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg></span><b>Law 4</b><span class="go">WATCH</span></div>
+          <div class="it"><span class="n x"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>Law 5</div>
+        </div>
+        <div class="more">+ 7 more</div>
+      </div>
+      <div class="card2 o"><div class="row"><div class="tile">%</div><div><div class="t">Percent</div><div class="s">6 videos</div></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span></div></div>
+      <div class="card2 b"><div class="row"><div class="tile" style="font-size:13px">y=mx</div><div><div class="t">Lines</div><div class="s">9 videos</div></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span></div></div>
+      <div class="card2 p"><div class="row"><div class="tile"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"><path d="M12 4l9 16H3z"/></svg></div><div><div class="t">Triangles</div><div class="s">8 videos</div></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span></div></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="phwrap" data-choice="c" onclick="toggleSelect(this)">
+    <h3>C. One long path, sticky topic banner</h3>
+    <p>Duolingo's scroll feel. One path runs through all 26 topics. A banner pinned to the top changes colour and name as you scroll into each topic. Topics are split by labelled lines, with small flat shapes along the way. "Topics" opens the list to jump around.</p>
+    <div class="ph v">
+      <div class="top"><span class="av">Z</span><span class="chip">+30 <small>today</small></span><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FA7433" stroke-width="2.4" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3-1-3 0-6 1-9z"/></svg>3</span></div>
+      <div class="sticky"><div><div class="t">Exponents &amp; Radicals</div><div class="s">Topic 1 · 3 of 12</div></div><div class="pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Topics</div></div>
+      <div class="path" style="height:520px">
+        <div class="node done" style="left:118px;top:22px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <div class="art" style="left:196px;top:30px;width:70px;height:70px;font-size:24px;border-radius:22px">√</div>
+        <div class="node done" style="left:76px;top:92px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <div class="bubble" style="left:30px;top:186px">UP NEXT</div>
+        <div class="node cur" style="left:110px;top:176px"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l11-6.5z"/></svg></div>
+        <div class="dot" style="left:228px;top:150px;width:14px;height:14px"></div>
+        <div class="node next" style="left:170px;top:260px"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></div>
+        <div class="node chest" style="left:120px;top:334px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M4 10h16v9H4z"/><path d="M4 10a8 5 0 0 1 16 0"/><path d="M11 13h2v2h-2z"/></svg></div>
+        <div class="divider o" style="top:412px">Topic 2 · Percent</div>
+        <div class="art o" style="left:20px;top:446px;width:62px;height:62px;font-size:26px;border-radius:20px">%</div>
+        <div class="node next o" style="left:126px;top:452px"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<p class="note" style="margin-top:20px">Not shown yet: dark mode, desktop width, and the colour pass on the rest of the portal.</p>

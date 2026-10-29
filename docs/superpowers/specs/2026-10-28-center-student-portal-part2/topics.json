@@ -1,0 +1,827 @@
+[
+ {
+  "topic": 1,
+  "name": "Exponents & Radicals",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "80467a61-ea60-4378-8965-34466d8050ec",
+    "order_index": 1,
+    "title": "The 8 laws of exponents- Law 1"
+   },
+   {
+    "id": "e900e3e3-960a-44d1-8a9b-f0292ed23e8d",
+    "order_index": 2,
+    "title": "The 8 laws of exponents- Law 2"
+   },
+   {
+    "id": "701361f0-c671-44d9-a698-e7ce95454b14",
+    "order_index": 3,
+    "title": "The 8 laws of exponents- Law 3"
+   },
+   {
+    "id": "346ac606-8028-4362-b298-d2f650b0dc3f",
+    "order_index": 4,
+    "title": "The 8 laws of exponents- Law 4"
+   },
+   {
+    "id": "9e1fba65-5a53-458c-9b1d-f57cad7f32ae",
+    "order_index": 5,
+    "title": "The 8 laws of exponents- Law 5"
+   },
+   {
+    "id": "1b33d203-1012-44cf-b45a-d9e04230e612",
+    "order_index": 6,
+    "title": "The 8 laws of exponents- Law 6"
+   },
+   {
+    "id": "8af96526-4f40-4ea5-9724-91634416305b",
+    "order_index": 7,
+    "title": "The 8 laws of exponents- Law 7"
+   },
+   {
+    "id": "26930b99-e82d-435e-a132-a44b9d84792c",
+    "order_index": 8,
+    "title": "The 8 laws of exponents- Law 8"
+   },
+   {
+    "id": "0a692e07-cc2b-453a-8854-67a747fa9a23",
+    "order_index": 9,
+    "title": "Exponents Example Question 1- Solved by hand"
+   },
+   {
+    "id": "f14b1ddb-27ae-4a99-a0dc-85cc28abb2ef",
+    "order_index": 10,
+    "title": "Exponents Example Question 1- Solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 2,
+  "name": "Expressions",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "a98e027f-1b9e-43ef-8e98-44ef2f0e065d",
+    "order_index": 11,
+    "title": "Expressions- Combining like terms"
+   },
+   {
+    "id": "c43c179b-4321-4198-9fa6-cba3888ded5a",
+    "order_index": 12,
+    "title": "Expressions- Expanding"
+   },
+   {
+    "id": "316df8d2-daf9-45c9-bd09-d43a98fd936a",
+    "order_index": 13,
+    "title": "Expressions- FOIL Method for multiplying binomials"
+   },
+   {
+    "id": "6dc272d1-58a4-402f-a444-9502a2021f87",
+    "order_index": 14,
+    "title": "Expressions- FOIL Method Example"
+   },
+   {
+    "id": "74eb30f6-920b-4ef1-b82d-671243b2ebd3",
+    "order_index": 15,
+    "title": "Expressions- Factoring algebraic expressions"
+   },
+   {
+    "id": "54d95f31-e737-4b31-add6-e0ac2860b377",
+    "order_index": 16,
+    "title": "Expressions- Factoring Quadractic Equations 1"
+   },
+   {
+    "id": "d9db1629-7244-4d62-8c6c-31f1a048f081",
+    "order_index": 17,
+    "title": "Expressions- Factoring Quadratic Equations 2 AC Method"
+   },
+   {
+    "id": "e550a934-0888-46c0-bd87-e097a7070a28",
+    "order_index": 18,
+    "title": "Expressions- Adding and subtracting algebraic fractions"
+   },
+   {
+    "id": "18fbc135-0bd7-44d8-b95a-1bf9150ddefe",
+    "order_index": 19,
+    "title": "Expressions- Multiplying algebraic fractions"
+   },
+   {
+    "id": "51d7ac72-cf3e-46d0-8782-632451368a8f",
+    "order_index": 20,
+    "title": "Expressions- Dividing algebraic fractions"
+   },
+   {
+    "id": "359cc1d0-2a97-4e43-afd8-fa1220c7395b",
+    "order_index": 21,
+    "title": "Expressions- Dividing algebraic fractions example"
+   },
+   {
+    "id": "6da40fa9-07fc-484b-93ef-768b8a60359e",
+    "order_index": 22,
+    "title": "Expressions- Splitting algebraic fractions"
+   },
+   {
+    "id": "6798c888-2809-4803-b012-7fcd1f911c38",
+    "order_index": 23,
+    "title": "Expressions- Example Question 1 solved by hand"
+   },
+   {
+    "id": "547e9d2d-af48-4ddb-9e6e-64e7e819e0a5",
+    "order_index": 24,
+    "title": "Expressions- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "d73d92cf-ccd7-4b45-af3a-5ce4cbb54617",
+    "order_index": 25,
+    "title": "Expressions- Example Question 2 solved by hand"
+   },
+   {
+    "id": "e043352d-4fb9-476b-8be1-bc2129875b84",
+    "order_index": 26,
+    "title": "Expressions- Example Question 2 solved using desmos"
+   },
+   {
+    "id": "cc55cd18-1339-436b-8630-f71fdde390a5",
+    "order_index": 27,
+    "title": "Expressions- Must memorize algebraic formulas"
+   }
+  ]
+ },
+ {
+  "topic": 3,
+  "name": "Manipulating & Solving Equations",
+  "area": "Algebra",
+  "videos": [
+   {
+    "id": "9c641de7-a36b-4c1a-9592-71f7871e2a2a",
+    "order_index": 28,
+    "title": "Equations- How to find equation solutions using desmos"
+   },
+   {
+    "id": "b1e7a901-24a5-47c8-874c-32a971ddb4e9",
+    "order_index": 29,
+    "title": "Equations- How to find quadratic equation solutions using desmos"
+   },
+   {
+    "id": "147882c9-68d4-4e4c-ba7b-3879b3493ba8",
+    "order_index": 31,
+    "title": "How to isolate a variable / In terms of types of questions by hand"
+   },
+   {
+    "id": "130f582e-d17b-4cbc-9ba4-aa5742383ac1",
+    "order_index": 32,
+    "title": "How to isolate a variable / in terms of types of questions using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 4,
+  "name": "Other Types of Equation Questions",
+  "area": "Algebra",
+  "videos": [
+   {
+    "id": "2d517eac-0109-4936-b638-6c01ccda864c",
+    "order_index": 30,
+    "title": "Equations- How to find absolute value equation solutions using desmos"
+   },
+   {
+    "id": "544d0874-80c0-45c8-a663-7477aed73674",
+    "order_index": 33,
+    "title": "Linear Equation- One solution, Infinitely many solutions, No solution"
+   },
+   {
+    "id": "b039994d-0f53-4c9b-83f7-690017889bfb",
+    "order_index": 34,
+    "title": "Infinitely many solutions example question solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 5,
+  "name": "Functions",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "a94122d4-d0b0-4866-a530-8da3020f13ed",
+    "order_index": 35,
+    "title": "Functions- Introduction"
+   },
+   {
+    "id": "055e34b0-44eb-4f94-b993-03ee5fdbea44",
+    "order_index": 36,
+    "title": "How to read x,y coordinates in the xy-plane"
+   },
+   {
+    "id": "f9066936-3069-4b83-9d2d-9eb1f608fc94",
+    "order_index": 37,
+    "title": "Functions- X-intercepts and y-intercepts"
+   },
+   {
+    "id": "1ed74c87-1dd4-4687-bece-5cfbfa4327a8",
+    "order_index": 38,
+    "title": "Functions- Undefined function"
+   },
+   {
+    "id": "fa8db8f8-f539-4f7e-8c14-cb9c73059537",
+    "order_index": 39,
+    "title": "Functions- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "efa173ee-af30-479a-947c-101078ef5fe4",
+    "order_index": 40,
+    "title": "Functions- Example Question 2 solved using desmos"
+   },
+   {
+    "id": "2c1791e9-3dde-4aa5-93fa-024820f7522b",
+    "order_index": 41,
+    "title": "Functions- Example Question 3 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 6,
+  "name": "Lines & Linear Relationships",
+  "area": "Algebra",
+  "videos": [
+   {
+    "id": "e0895262-724b-482c-88be-7369bdbf20bd",
+    "order_index": 42,
+    "title": "Lines- Slope (by hand and using desmos)"
+   },
+   {
+    "id": "218d9f10-8f68-4cdc-ac79-6dafbe3b15c1",
+    "order_index": 43,
+    "title": "Lines- Parallel and Perpendicular lines"
+   },
+   {
+    "id": "9aeccd49-1b40-4de9-ad8f-9df87d6a83f3",
+    "order_index": 44,
+    "title": "Lines- Finding the slope using desmos"
+   },
+   {
+    "id": "bdc5057a-9e41-4951-9f7c-3d53cb8b0af6",
+    "order_index": 45,
+    "title": "Lines- Finding the y-intercept when the slope and one point on the line is present"
+   },
+   {
+    "id": "455b70da-d6b6-4efe-b6a4-d84d6a6bd665",
+    "order_index": 46,
+    "title": "Lines- Parallel Lines question example solved using desmos"
+   },
+   {
+    "id": "b059c78c-427e-49c5-a82f-b4babdb3c72e",
+    "order_index": 47,
+    "title": "Lines- Perpendicular Lines example question solved using desmos"
+   },
+   {
+    "id": "ac40ac08-237c-486a-80b4-8348481f7a24",
+    "order_index": 48,
+    "title": "Lines- Example Question solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 7,
+  "name": "Interpreting Linear Equations & Models",
+  "area": "Algebra",
+  "videos": []
+ },
+ {
+  "topic": 8,
+  "name": "Percent",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "1a8aec55-a817-4d47-bb4e-e9ca705ce96f",
+    "order_index": 49,
+    "title": "Percent- All the formulas you must memorize"
+   },
+   {
+    "id": "54e308e5-b459-4f67-aa4d-df1727f79179",
+    "order_index": 50,
+    "title": "Percent- Example Question solved using desmos"
+   },
+   {
+    "id": "3e442e35-c4bb-4176-a1d9-46dee1a156b0",
+    "order_index": 51,
+    "title": "Percent- Percent Change Example Question"
+   }
+  ]
+ },
+ {
+  "topic": 9,
+  "name": "Exponential vs. Linear Growth",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "84ab9aad-2595-465b-8f16-dda8b0ead8da",
+    "order_index": 52,
+    "title": "Exponential Growth and Decay formula and examples"
+   },
+   {
+    "id": "85f7be7f-779d-4fc6-a6c2-b1dbbce08f4d",
+    "order_index": 53,
+    "title": "Exponential function- Required time \"k\""
+   },
+   {
+    "id": "35e9cf5a-3539-41c8-af48-93d5ea1966a2",
+    "order_index": 54,
+    "title": "Exponential function- Converting time units example 1"
+   },
+   {
+    "id": "5258e962-8289-4506-94d7-93e737bac860",
+    "order_index": 55,
+    "title": "Exponential function- Converting time units example 2"
+   },
+   {
+    "id": "56505758-1ba4-49ce-833b-ccb762a89b75",
+    "order_index": 56,
+    "title": "Exponential function- Example Question solved using desmos"
+   },
+   {
+    "id": "1574883f-4d4e-42eb-ad99-7b3f795d7be8",
+    "order_index": 57,
+    "title": "Exponential Function- Example Question 2 solved using desmos"
+   },
+   {
+    "id": "dacb205b-c583-4188-bbed-f733a64d2439",
+    "order_index": 58,
+    "title": "Exponential Function- Example Question 3 by hand"
+   },
+   {
+    "id": "963d4183-36af-4aa9-adda-996fa0f9841f",
+    "order_index": 59,
+    "title": "Lines- Linear Growth and Decay and Examples"
+   },
+   {
+    "id": "d55bc608-3682-447f-9bc0-09d453104a41",
+    "order_index": 60,
+    "title": "Linear Vs Exponential Growth and Decay"
+   }
+  ]
+ },
+ {
+  "topic": 10,
+  "name": "Rates, Conversions, & Ratios",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "3dc3ad9f-ec23-4c5d-a827-0d54d063fd1d",
+    "order_index": 61,
+    "title": "Rates- Conversion Factor Approach"
+   },
+   {
+    "id": "85ddef84-8b0e-4b2c-99ee-5a278ff083bf",
+    "order_index": 62,
+    "title": "Rates- Example Question 1 solved by hand"
+   },
+   {
+    "id": "fa24bdfe-e8e7-478b-8771-275de26dbd6e",
+    "order_index": 63,
+    "title": "Rates- Introduction and example"
+   }
+  ]
+ },
+ {
+  "topic": 11,
+  "name": "Word Problems",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "221f4e7a-de83-42e1-a8bd-3f0ca50683fc",
+    "order_index": 64,
+    "title": "Word Problems- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "48735c70-43fb-4f2a-9b93-71881d68b6ee",
+    "order_index": 65,
+    "title": "Word Problem-Example question 2"
+   },
+   {
+    "id": "36069b94-1aa0-41bd-977a-66ae86e54002",
+    "order_index": 66,
+    "title": "Word Problem- Example Question 3"
+   }
+  ]
+ },
+ {
+  "topic": 12,
+  "name": "Quadratic Equations",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "58067792-430d-46de-af56-8fe458104d83",
+    "order_index": 67,
+    "title": "Quadratic Equations- Discriminant and Quadratic Formula"
+   },
+   {
+    "id": "689bbf8e-cd8a-4dc3-8f76-2a82f9a82249",
+    "order_index": 68,
+    "title": "Quadratic Equations- Vieta's formula"
+   }
+  ]
+ },
+ {
+  "topic": 13,
+  "name": "Systems of Equations",
+  "area": "Algebra",
+  "videos": [
+   {
+    "id": "188c0fbc-6a30-41ee-9a39-5bfcde776ade",
+    "order_index": 82,
+    "title": "Systems of Equations- Introduction"
+   },
+   {
+    "id": "f45634f6-3098-4725-a713-bad085771608",
+    "order_index": 83,
+    "title": "Systems of Equations- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "a4a2babf-5b46-4a6b-951b-173fa7de8f6f",
+    "order_index": 84,
+    "title": "Systems of Equations- Example Question 2 solved using desmos"
+   },
+   {
+    "id": "c95cb361-d438-410c-b0db-5f26fe62dffb",
+    "order_index": 85,
+    "title": "Systems of Equations- Example Question 3 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 14,
+  "name": "Inequalities",
+  "area": "Algebra",
+  "videos": [
+   {
+    "id": "070201bb-3fd2-45e3-b17a-13a521271a7d",
+    "order_index": 86,
+    "title": "Inequalities- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "708adf98-716d-4158-90c7-e771fe874e1c",
+    "order_index": 87,
+    "title": "Inequalities- Example Question 2 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 15,
+  "name": "Function Transformations",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "9068f7ca-0b40-4df8-adfd-413dcded25de",
+    "order_index": 88,
+    "title": "Function Transformations- Introduction"
+   },
+   {
+    "id": "cb2a8652-cad4-456d-8c30-2613ceee1821",
+    "order_index": 89,
+    "title": "Function Transformations- Horizontal shifts"
+   },
+   {
+    "id": "52da02ca-6d96-430e-bbfb-83cbad7e9546",
+    "order_index": 90,
+    "title": "Function Transformations- Example Question 1 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 16,
+  "name": "Quadratic Functions",
+  "area": "Advanced Math",
+  "videos": [
+   {
+    "id": "df51b877-a1ea-4191-b6a7-ea5cda9961ab",
+    "order_index": 69,
+    "title": "Quadratic Functions- Parabola opening direction and y-intercept"
+   },
+   {
+    "id": "0f8b3c85-8d1d-44b9-9e85-002966930493",
+    "order_index": 70,
+    "title": "Quadratic Functions- Vertex form (minimum and maximum)"
+   },
+   {
+    "id": "522f81bd-f6de-4569-8e49-dc67b4c75180",
+    "order_index": 71,
+    "title": "Quadratic Functions- Intercept form"
+   },
+   {
+    "id": "514205d3-dfc8-45e9-908c-58b1f760e1d9",
+    "order_index": 72,
+    "title": "Quadratic Functions- How to factor quadratic equations using desmos"
+   },
+   {
+    "id": "e8afcab6-913b-457f-b8f3-755cedc8ba51",
+    "order_index": 73,
+    "title": "Quadratic Functions- Locating X,Y-intercepts and Vertex using desmos"
+   },
+   {
+    "id": "7ef1772b-998e-4e1f-a35a-f4a52f7e7ffa",
+    "order_index": 74,
+    "title": "Quadratic Functions- How discriminant changes x-intercepts"
+   },
+   {
+    "id": "a89a0a52-1ae6-451d-b956-7a6bde8259b3",
+    "order_index": 75,
+    "title": "Quadratic Functions- How to find the vertex x coordinate using 2 x-intercepts"
+   },
+   {
+    "id": "fb787a25-389d-4b45-b100-e7d950c2668e",
+    "order_index": 76,
+    "title": "Quadratic Functions- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "fb8866d2-de6d-4d1b-96d1-77db038034b3",
+    "order_index": 77,
+    "title": "Quadratic Functions- Example Question 2 solved"
+   },
+   {
+    "id": "2cc2721b-7ea8-4184-8436-59e94349daa4",
+    "order_index": 78,
+    "title": "Quadratic Functions- Example Question 3 solved using desmos"
+   },
+   {
+    "id": "e04d4532-b968-41ff-bb2f-7b9f490a9744",
+    "order_index": 79,
+    "title": "Quadratic Functions- Example Question 4 solved using desmos"
+   },
+   {
+    "id": "16cb83e5-19fe-49b6-8f8a-1e52fdde44e0",
+    "order_index": 80,
+    "title": "Quadratic Functions- Example Question 5 solved using desmos"
+   },
+   {
+    "id": "1b43ee8f-98e8-471b-aff2-10b05d77d2e1",
+    "order_index": 81,
+    "title": "Quadratic Functions- Example Question 6 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 17,
+  "name": "Angles",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "aa58966d-cf66-47bf-bb48-e4159c8ffc41",
+    "order_index": 91,
+    "title": "Angles- Introduction"
+   },
+   {
+    "id": "7f1526d1-5182-48f7-90cd-5d3a690bded5",
+    "order_index": 92,
+    "title": "Angles- Polygons"
+   },
+   {
+    "id": "49fc7fd1-5147-4a89-bd17-cafab9b09df1",
+    "order_index": 93,
+    "title": "Angles- Example Question 1"
+   }
+  ]
+ },
+ {
+  "topic": 18,
+  "name": "Triangles",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "d424826f-3ff1-45fe-8aa3-7c0460635a97",
+    "order_index": 94,
+    "title": "Triangles- Area"
+   },
+   {
+    "id": "29f136d6-d1f4-4397-ac65-aa7fbaef0482",
+    "order_index": 95,
+    "title": "Triangles- Types of triangles"
+   },
+   {
+    "id": "7f781988-f7d2-4b2d-b1f6-0fb592a38dc2",
+    "order_index": 96,
+    "title": "Triangles- Special Right Triangles"
+   },
+   {
+    "id": "d70f04fd-7cb1-4ec5-a22f-4e3d6c92041a",
+    "order_index": 97,
+    "title": "Triangles- Congruent Triangles"
+   },
+   {
+    "id": "4d686144-d376-4c6a-a6ef-38618becad90",
+    "order_index": 98,
+    "title": "Triangles- Similar Triangles"
+   },
+   {
+    "id": "0cdb258f-2fa6-4ad7-b2c2-dd22fde491da",
+    "order_index": 99,
+    "title": "Triangles- Euclid's theorem"
+   },
+   {
+    "id": "65f8373d-bf44-43db-b04f-49cc2e93005c",
+    "order_index": 100,
+    "title": "Triangles- Example Question 1"
+   },
+   {
+    "id": "d50c5bcd-823f-498c-a901-a9e01e44be22",
+    "order_index": 101,
+    "title": "Triangles- Example Question 2"
+   },
+   {
+    "id": "8844b29d-837a-406a-9826-e6738f4a5ca8",
+    "order_index": 102,
+    "title": "Triangles- Example Question 3"
+   }
+  ]
+ },
+ {
+  "topic": 19,
+  "name": "Circles",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "d13b803a-91c0-4955-b981-083abbf8f8be",
+    "order_index": 103,
+    "title": "Circles- Introduction"
+   },
+   {
+    "id": "91be19ff-8062-41ef-ab59-98a8187cd1f2",
+    "order_index": 104,
+    "title": "Circles- Circle equation and finding radius using desmos"
+   },
+   {
+    "id": "b3ba5afe-44a6-49df-bf46-996975e16d4b",
+    "order_index": 105,
+    "title": "Circles- Completing Square"
+   },
+   {
+    "id": "dd4417d1-ac01-4ea5-8bfe-1f27f4c6b5ef",
+    "order_index": 106,
+    "title": "Circles- Arc Length and Arc Sector"
+   },
+   {
+    "id": "3ca18d40-8c9b-4027-840c-1976702a05ef",
+    "order_index": 107,
+    "title": "Circles- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "cf30c126-0cdd-4e04-9f70-1f95ecbcf9ba",
+    "order_index": 108,
+    "title": "Circles- Example Question 2 solved by hand and desmos"
+   },
+   {
+    "id": "e1e7b2e3-44a2-45ef-ad44-5408fd9acab7",
+    "order_index": 109,
+    "title": "Circles- Tangent Line (Example Question 3 solved using desmos)"
+   }
+  ]
+ },
+ {
+  "topic": 20,
+  "name": "Radians",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "c366398c-f782-4a85-a263-3ba62dd65873",
+    "order_index": 110,
+    "title": "Radians- Introduction and Example Question"
+   }
+  ]
+ },
+ {
+  "topic": 21,
+  "name": "Trigonometry",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "8ac88cd1-87ea-4bad-b5b2-e8ad83fa1a79",
+    "order_index": 111,
+    "title": "Trigonometry- Introduction"
+   },
+   {
+    "id": "6ed2a4f0-fec4-4c6d-ba5e-4f61294408f8",
+    "order_index": 112,
+    "title": "Trigonometry- Complementary angles"
+   },
+   {
+    "id": "60f301fe-8d1a-4a35-915e-ad6a37af02c8",
+    "order_index": 113,
+    "title": "Trigonometry- Unit Circle"
+   },
+   {
+    "id": "0531c010-5b4b-47fd-8cab-5d65702ad16d",
+    "order_index": 114,
+    "title": "Trigonometry- Example Question 1"
+   },
+   {
+    "id": "bbfe2149-7543-42aa-a62b-f8263c72de20",
+    "order_index": 115,
+    "title": "Trigonometry- Example Question 2"
+   },
+   {
+    "id": "f1103ed3-3bc8-45b2-972f-d4c193903557",
+    "order_index": 116,
+    "title": "Trigonometry- Example Question 3"
+   }
+  ]
+ },
+ {
+  "topic": 22,
+  "name": "Area, Perimeter, & Volume",
+  "area": "Geometry & Trig",
+  "videos": [
+   {
+    "id": "457929dd-374f-4751-ae95-fc812a07e0b7",
+    "order_index": 118,
+    "title": "Geometry- Ratio of side, area and volume in polygons"
+   },
+   {
+    "id": "f4e64f48-0c0f-4091-b88b-7af5b9dc9dd6",
+    "order_index": 119,
+    "title": "Geometry- Density"
+   },
+   {
+    "id": "f5830d6d-a8d2-4fb3-b46f-a25562c6d8f4",
+    "order_index": 120,
+    "title": "Geometry- Surface Area Example Question"
+   },
+   {
+    "id": "d9889b26-468a-410e-9f6c-47227bffb665",
+    "order_index": 121,
+    "title": "Geometry- Volume Example Question"
+   }
+  ]
+ },
+ {
+  "topic": 23,
+  "name": "Reading Data",
+  "area": "Problem Solving & Data",
+  "videos": []
+ },
+ {
+  "topic": 24,
+  "name": "Probability",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "76dc6870-cc9d-4f3e-bc9c-6aaebe31fa05",
+    "order_index": 117,
+    "title": "Probability- Introduction, Examples"
+   }
+  ]
+ },
+ {
+  "topic": 25,
+  "name": "Statistics I",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "b175e0c9-535f-4ed6-8ec7-797199ae10a9",
+    "order_index": 122,
+    "title": "Statistics- Introduction"
+   },
+   {
+    "id": "c52c6d9f-c17c-492a-b51f-32a716928253",
+    "order_index": 123,
+    "title": "Statistics- Standard deviation"
+   },
+   {
+    "id": "81a9bc6c-5e53-480d-9116-d9bb4f590ef6",
+    "order_index": 124,
+    "title": "Statistics- Boxplot"
+   },
+   {
+    "id": "ecced0e6-feac-4898-abc7-2f619b745985",
+    "order_index": 125,
+    "title": "Statistics- Example Question 1 solved using desmos"
+   },
+   {
+    "id": "9db55bdb-c26f-49d0-b98c-93f323cc4709",
+    "order_index": 126,
+    "title": "Statistics- Example Question 2"
+   },
+   {
+    "id": "16039cf1-7afb-4e29-adba-fe4a89c4e5c2",
+    "order_index": 127,
+    "title": "Statistics- Example Question 3 solved using desmos"
+   }
+  ]
+ },
+ {
+  "topic": 26,
+  "name": "Statistics II",
+  "area": "Problem Solving & Data",
+  "videos": [
+   {
+    "id": "d56ac921-8f74-4ce0-aa44-90ea3ac193f8",
+    "order_index": 128,
+    "title": "Statistics 2- Sample and margin of error"
+   },
+   {
+    "id": "a13ce515-4aea-4c6e-9397-a35934e87185",
+    "order_index": 129,
+    "title": "Statistics 2- Example question 1"
+   }
+  ]
+ }
+]
