@@ -6278,6 +6278,7 @@ export type Database = {
       }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
+      is_staff_or_center_member: { Args: never; Returns: boolean }
       landing_public_stats: { Args: never; Returns: Json }
       live_answer_allowed: {
         Args: { _participant: string; _question: string; _session: string }
