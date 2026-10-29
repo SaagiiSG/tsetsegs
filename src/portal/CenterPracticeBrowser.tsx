@@ -71,6 +71,9 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
   const tab = (active: boolean) => `inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors active:scale-[0.97] ${active ? 'bg-accent text-accent-foreground' : 'text-foreground/70 hover:text-foreground'}`;
   const bar = (c: number, n: number) => <div className="sky-track !h-1.5 w-full"><div className="h-full rounded-full sky-fill-accent transition-all" style={{ width: `${n ? (100 * c) / n : 0}%` }} /></div>;
 
+  // Counts from a failed read would all be a false 0, so show one honest line instead.
+  if (data.isError) return <div className="sky-card space-y-3"><p className="text-sm">Couldn't load questions.</p><Button variant="outline" onClick={() => data.refetch()}>Try again</Button></div>;
+
   return (
     <div className="space-y-4">
       <section className="sky-card space-y-4">
