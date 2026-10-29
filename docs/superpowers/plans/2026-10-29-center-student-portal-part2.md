@@ -238,6 +238,19 @@
     - locked = muted with a lock.
   - Keep the header and total count, the search and label filter (flat list while filtering, labelled "Topic {n}" instead of "Lesson {i}"), and the video dialog with "Mark as watched" exactly as today.
   - Change the subtitle to `Pick any topic. Inside a topic, each video unlocks the next.`
+  - **Cloudy sky feel (Saagii, 29 Oct: "add in the design elements and the cloudy feel"):**
+    - Reuse the portal's own sky art in `src/assets/sky/`; draw no new art for this.
+    - The topic banners carry the matching card wave, as on the home cards (`CARD_WAVES` in `CenterStudentPortal.tsx`). The wave families map from `topicUnits` like this:
+
+      | Area | Wave |
+      |---|---|
+      | Advanced Math | `09-card-wave-violet.svg` |
+      | Algebra | `09-card-wave-blue.svg` |
+      | Problem Solving & Data | `09-card-wave-orange.svg` |
+      | Geometry & Trig | `09-card-wave-pink.svg` |
+
+    - A soft cloud band (`05-clouds-far.svg`/`06-clouds-mid.svg`) sits between units and behind the path. It drifts slowly sideways through a CSS keyframe, and stays still under `prefers-reduced-motion`.
+    - It must stay calm and readable: clouds at low opacity, never behind text, no sideways scroll at 375px. Check dark mode.
 - [ ] **Step 4: Update home** so `videoIds` = `topicUnits(videos, new Set(me.videosDone)).flatMap(u => u.items.map(i => i.video.id))`. `RoadmapPreview` then follows "Up next".
 - [ ] **Step 5: Run** `npx vitest run src/portal`. Expected: PASS.
 - [ ] **Step 6: Commit:** `feat(portal): concept videos as colourful College Panda topic units`
@@ -385,6 +398,12 @@
     - `queue = badgesToCelebrate(badges, seen ∪ collected)`, then `usePopupTurn('badges', queue.length > 0)`.
     - When it's this watcher's turn, render main's `BadgeUnlockCelebration` with `{ id: key, name, description: desc, rarity, iconName: icon, pointValue: 0 }` and `remaining = queue.length - 1`.
     - Collect inserts one row. Collect all inserts every queued row (`upsert`, `ignoreDuplicates`).
+    - **Make it a rush (Saagii, 29 Oct: "animations and it should provoke dopamine"):** main's pop-up already does the glow, shockwave, sparks, medallion landing, shimmer and phone buzz. Keep it unchanged and add a center-only confetti burst on top, from `react-confetti` (already a dependency; see `ChallengeWinCelebration.tsx`):
+      - It fires when each badge opens and uses the badge's rarity colours (`RARITY_COLORS[rarity].primary/secondary/glow`).
+      - `recycle={false}`. The piece count grows with rarity: common 120, uncommon 180, rare 240, epic 320, legendary 420.
+      - It sits above the dialog overlay and passes clicks through (`pointer-events-none`).
+      - It's skipped entirely under `prefers-reduced-motion`.
+      - No sound, because students are in class.
   - **Ring nudge (M4):** HomePage keeps its "due" logic (`shouldShowRingNudge`, `nudgeShown`, the localStorage day key), but opens only when `usePopupTurn('ring-nudge', due)` is true. It releases on close.
 - [ ] **Step 4: Run** `npx vitest run src/portal`. Expected: PASS.
 - [ ] **Step 5: Commit:** `feat(portal): badge unlock pop-up; pop-ups wait for live games and other dialogs`
@@ -455,7 +474,11 @@
   - **Part 1 re-check:** top bar chips, rail hover, profile page, ring nudge.
 - [ ] **Step 3: Run** `node <scratchpad>/portal-e2e/part2.mjs`. Expected: every line `true`. Fix failures in the owning task's files and re-run.
 - [ ] **Step 4: Ask Saagii to check the main app's own profile heatmap** with a real Tsetsegs student (it hasn't been seen in a browser since the 28 Oct fix). Include it in a Lovable "test with real accounts" prompt.
-- [ ] **Step 5: Run the full suite one more time,** then merge.
+- [ ] **Step 5: Write Saagii's hand-test checklist** (Saagii, 29 Oct: "gimme everything that I need to test by hand as a non technical user").
+  - It covers every feature in this part plus the part-1 leftovers. Each item is one thing to do and one thing he should see, in plain sixth-grade words with no code terms.
+  - It names the zz test logins to use and which device (phone or laptop).
+  - It goes to him at the end, published as a checklist page he can tick off.
+- [ ] **Step 6: Run the full suite one more time,** then merge.
   - Run `npx vitest run` and `npx tsc --noEmit -p tsconfig.app.json`.
   - `git fetch && git rebase origin/main && git push origin HEAD:main`, only as a fast-forward.
   - Tell Saagii to publish from Lovable.
