@@ -60,6 +60,8 @@ export function CenterPracticeTest() {
     // Review shows only what the server graded.
     const merged = state.status === 'completed' ? state.answers : { ...state.answers, ...local };
     answersRef.current = merged; setAnswers(merged); setIndex(0);
+    // A new module or status means the server already moved past any advance whose reply was lost.
+    pendingAdvance.current = false;
   }, [state?.id, state?.current_module, state?.status]);
   // Every save names its module: the server ignores a stale one (double click, timer racing a click, retry).
   function save(next: Record<string, Answer>) {
