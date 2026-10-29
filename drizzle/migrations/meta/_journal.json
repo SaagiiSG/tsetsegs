@@ -694,6 +694,13 @@
       "when": 1793307858468,
       "tag": "0098_apply_pending_0097",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1793307858469,
+      "tag": "0099_fix_english_explanation_slips",
+      "breakpoints": true
     }
   ]
 }
