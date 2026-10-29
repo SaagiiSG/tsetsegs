@@ -673,6 +673,13 @@
       "when": 1793291491994,
       "tag": "0095_restore_intl_variants_and_fix_explanations",
       "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1793306941826,
+      "tag": "0096_apply_pending_0095",
+      "breakpoints": true
     }
   ]
 }
