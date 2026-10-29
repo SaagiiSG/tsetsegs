@@ -90,9 +90,11 @@ function useMe() {
         allPages(p => supabase.from('tenant_attempts').select('question_id, is_correct, created_at, time_spent_seconds, points').eq('student_id', s.id).order('created_at', { ascending: false }).order('id').range(p, p + 999), 10000),
       ]);
       const list = attempts;
-      const vids = (await supabase.from('tenant_video_progress').select('video_id, completed_at').eq('student_id', s.id)).data ?? [];
+      // Throws rather than reading as "nothing watched".
+      const vids = await supabase.from('tenant_video_progress').select('video_id, completed_at').eq('student_id', s.id);
+      if (vids.error) throw vids.error;
       const meta = await loadQuestionMeta(list.map(a => a.question_id));
-      return { student: s, cls: cls.data as { name: string; schedule: string | null } | null, att: att.data ?? [], attempts: list, meta, videosDone: vids.map(v => v.video_id) };
+      return { student: s, cls: cls.data as { name: string; schedule: string | null } | null, att: att.data ?? [], attempts: list, meta, videosDone: (vids.data ?? []).map(v => v.video_id) };
     },
   });
 }
@@ -268,7 +270,7 @@ function Ring({ value, goal, label }: { value: number; goal: number; label: stri
 /** Students already nudged this session, so blocked storage can't reopen it on every return to Home. */
 const nudgeShown = new Set<string>();
 
-function HomePage({ me }: { me: Me }) {
+export function HomePage({ me }: { me: Me }) {
   const navigate = useNavigate();
   const totals = useSetTotals();
   const today = new Date().toDateString();
@@ -316,8 +318,11 @@ function HomePage({ me }: { me: Me }) {
   const nudgeOpen = usePopupTurn('ring-nudge', nudgeDue);
   // The day counts as nudged only once the student closed it, by dismissing or by "Start practicing". Closing gives the turn back.
   const closeNudge = () => { nudgeShown.add(me.student.id); setNudgeDue(false); try { localStorage.setItem(nudgeKey, dayKey(new Date())); } catch { /* ignore */ } };
-  // Topic order, so the preview follows the videos page's "Up next".
-  const videoIds = topicUnits(usePublishedVideos().data ?? [], new Set(me.videosDone)).flatMap(u => u.items.map(i => i.video.id));
+  // Topic order and per-video state, exactly as the videos page shows them.
+  const videos = usePublishedVideos();
+  const videosFailed = videos.isError && !videos.data;
+  const videoItems = topicUnits(videos.data ?? [], new Set(me.videosDone)).flatMap(u => u.items.map(i => ({ id: i.video.id, state: i.state })));
+  const videosWatched = videoItems.filter(i => i.state === 'done').length;
   const ringHistory = useCenterRingHistory(me.attempts, prog.runs, me.meta);
   const ringDone = prog.speed >= g.speed && prog.hard >= g.hard && prog.medium >= g.medium;
   const simulation = useMemo(() => centerSatSimulation(me.attempts, me.meta), [me.attempts, me.meta]);
@@ -333,7 +338,7 @@ function HomePage({ me }: { me: Me }) {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold">Hey {first} <span aria-hidden>👋</span></h1>
+          <h1 className="text-3xl md:text-4xl font-bold">Hey {first}</h1>
           <p className="text-lg sky-body mt-1">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
         </div>
         <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="sky-pill">
@@ -407,10 +412,12 @@ function HomePage({ me }: { me: Me }) {
               <span className="sky-tile sky-tile-video"><PlayCircle /></span>
               <div><p className="text-lg font-bold leading-tight">Concept videos</p><p className="text-sm text-muted-foreground">Your video roadmap</p></div>
             </div>
-            <p className="font-mono text-4xl font-bold">{me.videosDone.filter(id => videoIds.includes(id)).length}<span className="text-xl font-normal sky-ink-soft">/{videoIds.length || '…'}</span></p>
-            <div className="sky-track"><div className="sky-fill-violet" style={{ width: `${pct(me.videosDone.filter(id => videoIds.includes(id)).length, videoIds.length)}%` }} /></div>
+            {videosFailed ? <p className="sky-body">Couldn't load videos.</p> : <>
+              <p className="font-mono text-4xl font-bold">{videosWatched}<span className="text-xl font-normal sky-ink-soft">/{videoItems.length || '…'}</span></p>
+              <div className="sky-track"><div className="sky-fill-violet" style={{ width: `${pct(videosWatched, videoItems.length)}%` }} /></div>
+            </>}
             <span className="sky-link">Continue your roadmap<ArrowRight className="h-4 w-4" /></span>
-            <RoadmapPreview videoIds={videoIds} completed={me.videosDone} />
+            <RoadmapPreview items={videoItems} />
           </Glass>
         </button>
         <Glass className="sky-decor space-y-4" style={{ '--wave': `url(${CARD_WAVES.orange})` } as React.CSSProperties}>
@@ -709,7 +716,12 @@ function LeaderboardPage({ me }: { me: Me }) {
 function usePublishedVideos() {
   return useQuery({
     queryKey: ['center-concept-videos'],
-    queryFn: async () => (await supabase.from('concept_videos').select('*').eq('is_published', true).order('order_index')).data ?? [],
+    queryFn: async () => {
+      // Throws so a failed read says so instead of "No videos yet." and 0 watched.
+      const { data, error } = await supabase.from('concept_videos').select('*').eq('is_published', true).order('order_index');
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 }
 

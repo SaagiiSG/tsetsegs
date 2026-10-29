@@ -33,8 +33,8 @@ export function usePracticeQuestions() {
   });
 }
 
-export const LoadError = ({ onRetry }: { onRetry: () => void }) =>
-  <div className="sky-card space-y-3"><p className="text-sm">Couldn't load questions.</p><Button variant="outline" onClick={onRetry}>Try again</Button></div>;
+export const LoadError = ({ onRetry, what = 'questions' }: { onRetry: () => void; what?: string }) =>
+  <div className="sky-card space-y-3"><p className="text-sm">{`Couldn't load ${what}.`}</p><Button variant="outline" onClick={onRetry}>Try again</Button></div>;
 
 /** Main-site style practice browser: subject + set tabs, overall progress, domain tree and question code grid. */
 export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, onSet, onOpen, onRandom }: {

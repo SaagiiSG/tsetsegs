@@ -14,6 +14,7 @@ import cloudsMid from '@/assets/sky/06-clouds-mid.svg';
 import { cn } from '@/lib/utils';
 import { useCenter } from './centerContext';
 import { SkyListSkeleton } from './SkySkeleton';
+import { LoadError } from './CenterPracticeBrowser';
 import { CARD_WAVES } from './SkyDepth';
 import { AREA_COLOR, topicUnits, upNext, type Area, type VideoState } from './videoTopics';
 import { AreaArt, Chest } from './topicArt';
@@ -72,7 +73,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
       {list.length > 0 && <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${(watched / list.length) * 100}%`, background: 'hsl(var(--section-glow))' }} /></div>}
       {list.length > 0 && <VideoLabelFilter labels={labels} query={query} onQuery={setQuery} active={label} onActive={setLabel} />}
 
-      {videos.isLoading ? <SkyListSkeleton rows={4} /> : !list.length ? <p className="text-sm text-muted-foreground">No videos yet.</p> : filtering ? (
+      {videos.isLoading ? <SkyListSkeleton rows={4} /> : videos.isError && !videos.data ? <LoadError what="videos" onRetry={() => videos.refetch()} /> : !list.length ? <p className="text-sm text-muted-foreground">No videos yet.</p> : filtering ? (
         !filtered.length ? <p className="text-sm text-muted-foreground">No videos match.</p> : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(v => {
             const info = byId.get(v.id), st: VideoState = info?.state ?? 'locked';
@@ -91,12 +92,12 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
             return (
               <Collapsible key={u.n ?? 'more'} defaultOpen={ui === next?.unitIndex} className="sky-unit"
                 style={{ '--unit-light': c.light, '--unit-dark': c.dark, '--wave': `url(${u.area ? WAVE[u.area] : CARD_WAVES.blue})` } as React.CSSProperties}>
-                <CollapsibleTrigger className="sky-unit-banner sky-decor group relative overflow-hidden w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left">
-                  <div className="min-w-0 flex-1">
-                    {u.area && <p className="text-[11px] font-semibold uppercase tracking-wide">{u.area}</p>}
-                    <p className="text-lg font-bold leading-snug">{u.n ? `Topic ${u.n} · ${u.name}` : u.name}</p>
-                    <p className="text-sm font-medium mt-0.5">{`${u.watched}/${u.total} watched`}</p>
-                  </div>
+                <CollapsibleTrigger className="sky-unit-banner sky-decor group relative overflow-hidden w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background">
+                  <span className="block min-w-0 flex-1">
+                    {u.area && <span className="block text-[11px] font-semibold uppercase tracking-wide">{u.area}</span>}
+                    <span className="block text-lg font-bold leading-snug">{u.n ? `Topic ${u.n} · ${u.name}` : u.name}</span>
+                    <span className="block text-sm font-medium mt-0.5">{`${u.watched}/${u.total} watched`}</span>
+                  </span>
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/25"><ChevronDown className="h-5 w-5 transition-transform group-data-[state=open]:rotate-180" /></span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="relative overflow-hidden">

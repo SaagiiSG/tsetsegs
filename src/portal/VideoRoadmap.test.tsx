@@ -28,4 +28,21 @@ describe('concept videos by topic', () => {
     expect(html.match(/>Start</g)).toHaveLength(1);
   });
   it('no emoji', () => expect(html).not.toMatch(/\p{Extended_Pictographic}/u));
+  it('banner text is inline inside the button, with a focus ring', () => {
+    const banner = html.slice(html.lastIndexOf('<button', html.indexOf('Topic 1 · Exponents')), html.indexOf('Topic 1 · Exponents'));
+    expect(banner).toContain('focus-visible:ring-2');
+    expect(banner).not.toMatch(/<(div|p)\b/);
+  });
+  it('a failed read says so, with Try again, and no 0 watched', () => {
+    const failed = { data: undefined, isLoading: false, isError: true, refetch: () => {} } as unknown as UseQueryResult<unknown[]>;
+    const out = renderToStaticMarkup(
+      <QueryClientProvider client={new QueryClient()}><CenterContext.Provider value={ctx}>
+        <VideoRoadmap videos={failed} me={{ student: { id: 's' }, videosDone: [] }} />
+      </CenterContext.Provider></QueryClientProvider>,
+    );
+    expect(out).toContain('Couldn&#x27;t load videos.');
+    expect(out).toContain('Try again');
+    expect(out).not.toContain('No videos yet.');
+    expect(out).not.toMatch(/watched/);
+  });
 });
