@@ -5242,6 +5242,42 @@ export type Database = {
           },
         ]
       }
+      tenant_badge_celebrations: {
+        Row: {
+          badge_key: string
+          celebrated_at: string
+          institution_id: string
+          student_id: string
+        }
+        Insert: {
+          badge_key: string
+          celebrated_at?: string
+          institution_id: string
+          student_id: string
+        }
+        Update: {
+          badge_key?: string
+          celebrated_at?: string
+          institution_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_badge_celebrations_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_badge_celebrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_classes: {
         Row: {
           created_at: string
@@ -5853,6 +5889,82 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_test_attempts: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          current_module: number
+          id: string
+          institution_id: string
+          math_correct: number | null
+          math_score: number | null
+          math_total: number | null
+          module_started_at: string
+          paper: Json
+          started_at: string
+          status: string
+          student_id: string
+          test_id: string | null
+          test_name: string
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          institution_id: string
+          math_correct?: number | null
+          math_score?: number | null
+          math_total?: number | null
+          module_started_at?: string
+          paper?: Json
+          started_at?: string
+          status?: string
+          student_id: string
+          test_id?: string | null
+          test_name: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          institution_id?: string
+          math_correct?: number | null
+          math_score?: number | null
+          math_total?: number | null
+          module_started_at?: string
+          paper?: Json
+          started_at?: string
+          status?: string
+          student_id?: string
+          test_id?: string | null
+          test_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_test_attempts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_test_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_test_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "bluebook_tests"
             referencedColumns: ["id"]
           },
         ]
@@ -6749,6 +6861,7 @@ export type Database = {
         }[]
       }
       tenant_my_student_id: { Args: { _institution: string }; Returns: string }
+      tenant_practice_tests: { Args: { _institution: string }; Returns: Json }
       tenant_sat_save: {
         Args: { _advance?: boolean; _answers: Json; _attempt: string }
         Returns: undefined
@@ -6788,6 +6901,20 @@ export type Database = {
         Args: { _institution: string; _student: string; _tz?: string }
         Returns: Json
       }
+      tenant_test_save: {
+        Args: {
+          _advance?: boolean
+          _answers: Json
+          _attempt: string
+          _module?: number
+        }
+        Returns: undefined
+      }
+      tenant_test_start: {
+        Args: { _institution: string; _test: string }
+        Returns: string
+      }
+      tenant_test_state: { Args: { _attempt: string }; Returns: Json }
       tenant_update_settings: {
         Args: { _institution: string; _settings: Json }
         Returns: Json
