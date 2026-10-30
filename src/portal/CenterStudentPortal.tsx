@@ -188,7 +188,7 @@ export default function CenterStudentPortal() {
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
       <SkyDepth />
       <div className="relative z-[1] flex">
-        <div className="hidden lg:block m-4 w-20 shrink-0" aria-hidden />
+        <div className="hidden lg:block m-4 w-16 shrink-0" aria-hidden />
         <StudentRail />
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
