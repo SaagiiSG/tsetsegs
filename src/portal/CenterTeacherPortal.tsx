@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy, Settings,
+  Search, Pencil, BookOpen, Flame, ChevronRight, LifeBuoy, Settings,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +22,8 @@ import { allPages, localDate } from './centerApi';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
 import { MathText } from '@/components/MathText';
-import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionMeta';
+import { domainStats, loadQuestionMeta, pct } from './questionMeta';
+import CenterStudentCards, { DomainBars } from './CenterStudentCards';
 import { TeacherLive } from './LiveSession';
 import { CenterHelpPage } from './CenterHelp';
 import { ChangePasswordForm } from './ChangePasswordForm';
@@ -41,7 +42,7 @@ type CenterClass = {
   id: string; name: string; join_code: string; schedule: string | null;
   starts_on: string | null; created_at: string; studentCount: number;
 };
-type CenterStudent = { id: string; class_id: string | null; name: string; phone: string; user_id: string | null };
+type CenterStudent = { id: string; class_id: string | null; name: string; phone: string; user_id: string | null; sat_month: string | null };
 type Attempt = { student_id: string; question_id: string; is_correct: boolean; created_at: string };
 type AttRow = { student_id: string; class_id: string; status: string; session_date: string };
 
@@ -71,18 +72,6 @@ function InviteDialog({ name, code, onClose }: { name: string; code: string; onC
         <Button onClick={() => { navigator.clipboard.writeText(url); toast.success('Link copied'); }}><Copy className="h-4 w-4" />Copy link</Button>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function DomainBars({ stats }: { stats: DomainStat[] }) {
-  if (!stats.length) return <p className="text-sm text-muted-foreground">No practice yet.</p>;
-  return (
-    <ul className="space-y-3">{stats.map(s => (
-      <li key={s.domain} className="space-y-1">
-        <div className="flex justify-between text-sm"><span>{s.domain} <span className="text-xs text-muted-foreground capitalize">· {s.subject}</span></span>
-          <span className="font-mono text-xs">{pct(s.c, s.n)}% <span className="text-muted-foreground">({s.n})</span></span></div>
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-foreground/70 rounded-full" style={{ width: `${pct(s.c, s.n)}%` }} /></div>
-      </li>))}</ul>
   );
 }
 
@@ -172,84 +161,6 @@ function CenterClassCard({
 }
 
 /** Per-class domain mastery, loaded lazily when the Analytics tab opens. */
-/** Dedicated class hub — full attendance grid, roster with risk, domain mastery and live launcher. */
-function ClassHub({
-  cls, students, statsMap, history, attMap, date, onCycle, onInspect, onInvite, onBack, onLive,
-}: {
-  cls: CenterClass; students: CenterStudent[]; statsMap: Record<string, StudentStats>;
-  history: AttRow[]; attMap: Record<string, string>; date: string;
-  onCycle: (classId: string, studentId: string) => void; onInspect: (id: string) => void;
-  onInvite: () => void; onBack: () => void; onLive: () => void;
-}) {
-  const classHistory = history.filter(a => a.class_id === cls.id);
-  const dates = [...new Set([date, ...classHistory.map(a => a.session_date)])].sort().reverse().slice(0, 12).reverse();
-  const cell: Record<string, string> = {};
-  for (const a of classHistory) cell[`${a.student_id}|${a.session_date}`] = a.status;
-  for (const [sid, st] of Object.entries(attMap)) cell[`${sid}|${date}`] = st;
-  const totals = students.reduce((t, s) => { const st = statsMap[s.id]; return { n: t.n + (st?.n ?? 0), c: t.c + (st?.c ?? 0), p: t.p + (st?.present ?? 0), s: t.s + (st?.sessions ?? 0) }; }, { n: 0, c: 0, p: 0, s: 0 });
-  const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6';
-  const short = (d: string) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" className="!shadow-none" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
-      </div>
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} flex flex-wrap items-start justify-between gap-4`}>
-        <div className="relative min-w-0">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{cls.name}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{cls.schedule || 'No schedule set'}{cls.starts_on ? ` · started ${cls.starts_on}` : ''}</p>
-        </div>
-        <div className="relative flex flex-wrap items-center gap-2">
-          <button onClick={() => { navigator.clipboard.writeText(cls.join_code); toast.success('Join code copied'); }} className="font-mono text-sm border rounded-full px-3 py-1 hover:bg-muted flex items-center gap-1.5"><Copy className="h-3.5 w-3.5" />{cls.join_code}</button>
-          <Button variant="outline" size="sm" onClick={onInvite}><QrCode className="h-4 w-4" />Invite</Button>
-          <Button size="sm" onClick={onLive}><Radio className="h-4 w-4" />Start live session</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[['Students', students.length], ['Questions', totals.n], ['Accuracy', totals.n ? `${pct(totals.c, totals.n)}%` : '—'], ['Attendance', totals.s ? `${pct(totals.p, totals.s)}%` : '—']].map(([l, v]) => (
-          <div key={l as string} className="admin-glass-card rounded-2xl border p-4"><p className="text-xs text-muted-foreground">{l}</p><p className="font-mono text-2xl">{v}</p></div>
-        ))}
-      </div>
-
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <div className="relative flex items-center justify-between"><p className="font-medium">Attendance</p><p className="text-xs text-muted-foreground">Tap the {short(date)} column to mark</p></div>
-        <div className="relative overflow-x-auto">
-          {!students.length ? <p className="text-sm text-muted-foreground">No students yet — share the class QR code.</p> : (
-            <table className="w-full text-sm">
-              <thead><tr className="text-xs text-foreground/65 border-b border-border/60">
-                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 dark:bg-card backdrop-blur">Student</th>
-                {dates.map(d => <th key={d} className={`px-1.5 font-mono font-normal whitespace-nowrap ${d === date ? 'text-foreground' : ''}`}>{short(d)}</th>)}
-                <th className="text-left pl-3">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th>
-              </tr></thead>
-              <tbody className="divide-y divide-border/50">{students.map(s => {
-                const p = statsMap[s.id]; const risk = riskOf(p);
-                return <tr key={s.id}>
-                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 dark:bg-card backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
-                  {dates.map(d => { const st = cell[`${s.id}|${d}`]; return (
-                    <td key={d} className="px-1.5 text-center">{d === date
-                      ? <button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2 py-1 text-xs min-w-14 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button>
-                      : <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${st ? STATUS_STYLE[st] : 'text-muted-foreground/40'}`}>{st ? STATUS_LABEL[st][0] : '·'}</span>}</td>
-                  ); })}
-                  <td className="pl-3 font-mono">{p?.n ?? 0}</td>
-                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
-                  <td className="text-xs whitespace-nowrap">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
-                </tr>;
-              })}</tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <p className="relative font-medium">Domain mastery</p>
-        <div className="relative"><ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} /></div>
-      </div>
-    </div>
-  );
-}
-
 function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: string[] }) {
   const { data } = useQuery({
     enabled: studentIds.length > 0,
@@ -388,7 +299,7 @@ export default function CenterTeacherPortal() {
     queryKey: ['center-teacher-students', center.id, classIds.join(',')],
     queryFn: async () => {
       return allPages(p => supabase.from('tenant_students')
-        .select('id, class_id, name, phone, user_id').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
+        .select('id, class_id, name, phone, user_id, sat_month').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
     },
   });
   const allStudents = studentsQuery.data ?? [];
@@ -580,17 +491,14 @@ export default function CenterTeacherPortal() {
                 transition={slideTransition}
               >
                 {hubClass && (
-                  <ClassHub
+                  <CenterStudentCards
                     cls={hubClass}
-                    students={allStudents.filter(s => s.class_id === hubClass.id)}
-                    statsMap={statsMap}
-                    history={historyQuery.data?.att ?? []}
-                    attMap={attByClass[hubClass.id] ?? {}}
+                    students={studentsQuery.data?.filter(s => s.class_id === hubClass.id)}
+                    practice={historyQuery.data}
                     date={date}
-                    onCycle={cycle}
-                    onInspect={setInspect}
-                    onInvite={() => setInvite(hubClass)}
+                    onDateChange={setDate}
                     onBack={() => navigate('/teacher')}
+                    onInvite={() => setInvite(hubClass)}
                     onLive={() => { setLiveClassId(hubClass.id); navigate('/teacher'); handleModeChange('live'); }}
                   />
                 )}
