@@ -35,6 +35,11 @@ describe('center home', () => {
     expect(html).toContain('Hey Ana');
     expect(html).not.toMatch(/\p{Extended_Pictographic}/u);
   });
+  it('has no streak badge by the greeting; the top bar chip shows the streak', () => {
+    const html = render();
+    expect(html).not.toContain('day streak');
+    expect(html).not.toContain('Open streak details');
+  });
   it('roadmap preview opens the next topic\'s first video, like the videos page', () => {
     const preview = render().split('aria-label="Your video roadmap progress"')[1];
     const icons = [...preview.matchAll(/lucide-(check|play|lock)\b/g)].map(m => m[1]);

@@ -1430,6 +1430,16 @@ body.customer-student-portal.dark, .dark body.customer-student-portal {
 .customer-student-theme .student-dock { border-color: transparent; box-shadow: var(--shadow-card); }
 .customer-student-theme .student-dock a[aria-current="page"] { background: linear-gradient(180deg, #A18FFB, #7B68F4); color: #fff; box-shadow: var(--glow-accent); }
 
+/* Top bar from lg: no shared bar, each chip and the bell is its own pill. Tablet and phone keep the bar. */
+@media (min-width: 1024px) {
+  /* !important: the bar is painted by the `.student-theme .rounded-2xl.border` card rule above. pointer-events: content
+     scrolling under the empty part of the sticky header stays clickable. */
+  .customer-student-theme .student-header { background: transparent !important; border-color: transparent !important; box-shadow: none !important; pointer-events: none; }
+  .customer-student-theme .student-header > * { pointer-events: auto; }
+  .customer-student-theme .student-header .student-chip { box-shadow: var(--shadow-card); }
+  .customer-student-theme .student-header .student-bell { background: hsl(var(--card)); box-shadow: var(--shadow-card); }
+}
+
 body.customer-student-portal [role="dialog"] { border-color: transparent; border-radius: 1rem; box-shadow: var(--shadow-card), 0 30px 60px -30px hsl(212 60% 30% / .35); }
 body.customer-student-portal button.bg-primary,
 body.customer-student-portal a.bg-primary { background-image: linear-gradient(180deg, #A18FFB, #7B68F4); box-shadow: var(--glow-accent); }

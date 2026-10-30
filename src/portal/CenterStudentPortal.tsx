@@ -24,8 +24,8 @@ import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import { allPages } from './centerApi';
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { CenterGoalDialog, CenterRingNudge, useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
-import { Flame as FlameIcon, Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
-import { CenterStreakDialog, CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING, dayKey } from './CenterStreak';
+import { Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
+import { CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING, dayKey } from './CenterStreak';
 import { CenterTopBar } from './CenterTopBar';
 import { StudentRail, NAV } from './StudentRail';
 import { emitPointsEarned } from '@/components/student/PointsFlyer';
@@ -192,12 +192,11 @@ export default function CenterStudentPortal() {
         <StudentRail />
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
-          <header className={`student-header sticky top-2 z-30 mb-4 ${dockEdge === 'top' ? 'max-lg:mb-[4.5rem]' : ''} grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur`}>
+          <header className={`student-header sticky top-2 z-30 mb-4 ${dockEdge === 'top' ? 'max-lg:mb-[4.5rem]' : ''} grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur lg:flex lg:justify-end`}>
             <div className="lg:hidden flex min-w-0 items-center gap-2"><CenterLogo center={center} className="h-8 w-8 shrink-0" /><p className="truncate font-semibold">{centerDisplayName(center)}</p></div>
-            <div className="hidden lg:block" />
             {me.data ? <CenterTopBar studentId={me.data.student.id} attempts={me.data.attempts} meta={me.data.meta} /> : <div />}
             <div className="flex items-center justify-end gap-1">
-              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" className="student-bell rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
             </div>
           </header>
           {me.isLoading || gate.loading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
@@ -279,13 +278,10 @@ export function HomePage({ me }: { me: Me }) {
   const present = me.att.filter(a => a.status === 'present' || a.status === 'late').length;
   const domains = useMemo(() => domainStats(me.attempts, me.meta), [me]);
   const solved = useMemo(() => new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)), [me]);
-  const streakInfo = useCenterStreak(me.attempts);
-  const streak = streakInfo.current;
   const first = me.student.name.split(' ')[0];
   const goals = useCenterGoals(me.student.id);
   const prog = useCenterDailyProgress(me.student.id, me.attempts, me.meta);
   const [goalOpen, setGoalOpen] = useState(false);
-  const [streakOpen, setStreakOpen] = useState(false);
   const [ringOpen, setRingOpen] = useState(false);
   const [goalDue, setGoalDue] = useState(false);
   const goalSeenKey = `center_goals_seen_${me.student.id}`;
@@ -336,17 +332,13 @@ export function HomePage({ me }: { me: Me }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold">Hey {first}</h1>
-          <p className="text-lg sky-body mt-1">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
-        </div>
-        <button type="button" onClick={() => setStreakOpen(true)} aria-label="Open streak details" className="sky-pill">
-          <FlameIcon className="h-5 w-5 text-[#F77B25]" /><span className="font-mono font-semibold text-[#E06D2A]">{streak}</span><span className="sky-body">day streak</span>
-        </button>
+      <div>
+        <h1 className="text-3xl md:text-4xl font-bold">Hey {first}</h1>
+        <p className="text-lg sky-body mt-1">{!goals.data?.isSet ? 'Set up your daily ring to get started.' : ringDone ? 'Rings closed. Keep the streak going.' : "Let's close those rings today."}</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-12">
-        <div className="md:col-span-4 lg:col-span-3 md:min-h-[320px]">
+      {/* Tablet: 2 x 2 (the set cards join this grid via md:contents). Desktop: ring + three sets in one row. */}
+      <div className="grid gap-4 md:grid-cols-2 md:auto-rows-fr lg:grid-cols-12">
+        <div className="lg:col-span-3 md:min-h-[320px]">
           {prog.failed ? <div role="alert" className="sky-card h-full text-sm text-muted-foreground">Couldn't load today's speed runs.</div> : <DailyRing
             speed={{ current: prog.speed, goal: g.speed }}
             hard={{ current: prog.hard, goal: g.hard }}
@@ -358,11 +350,10 @@ export function HomePage({ me }: { me: Me }) {
             className="sky-card !p-0"
           />}
         </div>
-        <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streakInfo} history={ringHistory} goals={g} />
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterRingNudge open={nudgeOpen} onOpenChange={o => { if (!o) closeNudge(); }} progress={prog} goals={g} onStart={() => { closeNudge(); navigate('/student/practice?mode=random'); }} />
         <CenterGoalDialog open={goalOpen} onOpenChange={o => { setGoalOpen(o); if (!o) setGoalDue(false); }} studentId={me.student.id} goals={goals.data} />
-        <div className="md:col-span-8 lg:col-span-9 grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3 md:contents lg:grid lg:col-span-9">
           {PRACTICE_SETS.map(s => {
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
@@ -388,8 +379,8 @@ export function HomePage({ me }: { me: Me }) {
         </div>
       </div>
       {simulation ? <SatSimulationIsland latest={simulation} trend={simulation.trend} /> : <CenterSatUnlockIsland distinct={simulationProgress} />}
-      <div className="grid gap-3 lg:grid-cols-4">
-        <Glass className="sky-wash sky-decor lg:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)', '--wave': `url(${CARD_WAVES.blue})` } as React.CSSProperties}>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <Glass className="sky-wash sky-decor md:col-span-2 space-y-4 min-h-[180px]" style={{ '--wash': 'hsl(207 90% 96%)', '--wave': `url(${CARD_WAVES.blue})` } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <span className="sky-tile sky-tile-solid"><BarChart3 /></span>
             <div><p className="text-lg font-bold">Domain mastery</p><p className="text-sm text-muted-foreground">Your accuracy by topic</p></div>
