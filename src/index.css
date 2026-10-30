@@ -1491,6 +1491,24 @@ body.customer-student-portal a.bg-primary { background-image: linear-gradient(18
 .sky-unit-banner { background: var(--unit); color: var(--unit-ink); box-shadow: 0 5px 0 var(--unit-shade); }
 .sky-node { background: var(--unit); color: var(--unit-ink); box-shadow: 0 6px 0 var(--unit-shade); }
 .sky-node-open { box-shadow: 0 6px 0 var(--unit-shade), 0 0 0 6px color-mix(in srgb, var(--unit) 30%, transparent); }
+/* Hairline figures on the map, in the unit's colour family. The plate must be opaque and match what the figure sits on. */
+.sky-hairline {
+  --hairline-plate: color-mix(in srgb, var(--unit) 9%, hsl(var(--card)));
+  --hairline-hi: var(--unit-shade);
+  --hairline-edge: var(--unit);
+  --hairline-mid: color-mix(in srgb, var(--unit) 50%, hsl(var(--card)));
+  --hairline-lo: color-mix(in srgb, var(--unit) 24%, hsl(var(--card)));
+  background: var(--hairline-plate);
+}
+.dark .sky-hairline { --hairline-plate: color-mix(in srgb, var(--unit) 14%, hsl(var(--card))); --hairline-hi: color-mix(in srgb, var(--unit) 55%, #fff); }
+/* The padlock in a locked node: grey like the node, the shackle lights up in the unit's colour as it lifts. */
+.sky-hairline-lock {
+  --hairline-plate: hsl(var(--muted));
+  --hairline-hi: var(--unit);
+  --hairline-edge: hsl(var(--muted-foreground));
+  --hairline-mid: color-mix(in srgb, hsl(var(--muted-foreground)) 55%, hsl(var(--muted)));
+  --hairline-lo: color-mix(in srgb, hsl(var(--muted-foreground)) 25%, hsl(var(--muted)));
+}
 /* Soft cloud bank at the foot of an open unit, behind the chest (never behind text); drifts slowly. */
 .sky-clouds-band {
   position: absolute; inset: auto 0 0; height: 6.5rem; pointer-events: none;

@@ -17,7 +17,13 @@ import { SkyListSkeleton } from './SkySkeleton';
 import { LoadError } from './CenterPracticeBrowser';
 import { CARD_WAVES } from './SkyDepth';
 import { AREA_COLOR, topicUnits, upNext, type Area, type VideoState } from './videoTopics';
-import { AreaArt, Chest } from './topicArt';
+import { Chest } from './topicArt';
+import { HairlineFigure, type HairlineSpec } from './HairlineFigure';
+import parabola from './hairline/parabola.js';
+import balance from './hairline/balance.js';
+import unitcircle from './hairline/unitcircle.js';
+import scatter from './hairline/scatter.js';
+import padlock from './hairline/padlock.js';
 
 type Video = { id: string; title: string; description: string | null; module: string | null; domain: string; video_url: string; subtitles_vtt: string | null; labels: string[]; duration_minutes: number | null; order_index: number };
 type MeLite = { student: { id: string }; videosDone: string[] };
@@ -27,6 +33,8 @@ const OFFSETS = [0, 3, 4, 3, 0, -3, -4, -3];
 const WAVE: Record<Area, string> = { 'Advanced Math': CARD_WAVES.violet, Algebra: CARD_WAVES.blue, 'Problem Solving & Data': CARD_WAVES.orange, 'Geometry & Trig': CARD_WAVES.pink };
 // "More videos" (modules outside the 26 topics) has no area: a quiet slate.
 const MORE = { light: '#8C96AB', dark: '#B4BCCB' };
+// One live line figure per area, beside each open topic's path (Saagii, 30 Oct: hairline only on this map).
+const AREA_FIGURE: Record<Area, HairlineSpec> = { 'Advanced Math': parabola, Algebra: balance, 'Geometry & Trig': unitcircle, 'Problem Solving & Data': scatter };
 
 /**
  * Duolingo-style roadmap: one colourful unit per College Panda topic (book order). Any topic can be
@@ -102,8 +110,9 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
                 </CollapsibleTrigger>
                 <CollapsibleContent className="relative overflow-hidden">
                   <div aria-hidden className="sky-clouds-band" style={{ backgroundImage: `url(${cloudsMid}), url(${cloudsFar})` }} />
-                  {u.area && <AreaArt area={u.area} className="absolute left-1 top-8 h-24 w-24" />}
-                  <div className="relative flex flex-col items-center gap-5 pt-6 pb-8">
+                  {/* Below the first video's caption, beside the next ones (they lean right); the min height keeps it whole in a short topic. */}
+                  {u.area && <HairlineFigure figure={AREA_FIGURE[u.area]} play className="sky-hairline absolute left-0 top-44 z-10 w-[8.5rem] rounded-3xl sm:w-48" />}
+                  <div className={cn('relative flex flex-col items-center gap-5 pt-6 pb-8', u.area && 'min-h-[22rem]')}>
                     {u.items.map(({ video: v, state: st }, i) => (
                       <div key={v.id} className="flex flex-col items-center gap-1.5" style={{ transform: `translateX(${OFFSETS[i % OFFSETS.length]}rem)` }}>
                         {v.id === next?.videoId && <span className="rounded-full border-2 border-[color:var(--unit)] bg-card px-2.5 py-0.5 text-[11px] font-semibold shadow-sm animate-bounce motion-reduce:animate-none">Start</span>}
@@ -111,7 +120,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
                           type="button" disabled={st === 'locked'} onClick={() => setOpen(v)} aria-label={`${v.title} — ${st === 'done' ? 'watched' : st === 'locked' ? 'locked' : 'start'}`}
                           className={cn('relative h-16 w-16 rounded-full grid place-items-center transition-transform active:translate-y-1 active:shadow-none',
                             st === 'locked' ? 'bg-muted text-muted-foreground shadow-[0_6px_0_hsl(var(--border))] cursor-not-allowed' : `sky-node sky-node-${st}`)}>
-                          {st === 'done' ? <Check className="h-7 w-7" strokeWidth={3} /> : st === 'locked' ? <Lock className="h-6 w-6" /> : <Play className="h-7 w-7 translate-x-0.5 fill-current" />}
+                          {st === 'done' ? <Check className="h-7 w-7" strokeWidth={3} /> : st === 'locked' ? <HairlineFigure figure={padlock} className="sky-hairline-lock w-24 -translate-x-4 -translate-y-3.5" /> : <Play className="h-7 w-7 translate-x-0.5 fill-current" />}
                         </button>
                         <p className={cn('text-xs text-center max-w-[9rem] leading-tight', st === 'locked' ? 'text-muted-foreground' : 'font-medium')}>{v.title}</p>
                       </div>
