@@ -33,7 +33,7 @@ export const ACCOUNT_LINKS = [
 
 export const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 
-const row = 'sky-nav flex h-12 w-full items-center gap-4 rounded-full px-4 text-base transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'; // inset: the scrolling nav clips outer rings
+const row = 'sky-nav flex h-10 w-full items-center gap-4 rounded-full px-3 text-base transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'; // inset: the scrolling nav clips outer rings
 // Labels stay in the DOM (screen readers) and only fade in while the rail is open. Hover opens it only on hover-capable
 // devices, so a tap on a wide touch screen (iPad landscape) can't leave it stuck open.
 const label = 'whitespace-nowrap opacity-0 transition-opacity duration-200 motion-reduce:transition-none [@media(hover:hover)]:group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[menu=open]/rail:opacity-100';
@@ -56,7 +56,7 @@ function AccountMenu({ open, setOpen }: { open: boolean; setOpen: (o: boolean) =
           // A click after hover would toggle it shut; keep it open instead.
           onPointerDown={e => { if (e.pointerType === 'mouse' && open) e.preventDefault(); }}
           onKeyDown={() => { byHover.current = false; }}
-          className="sky-nav flex h-12 w-full items-center gap-3 rounded-full px-2 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+          className="sky-nav flex h-10 w-full items-center gap-3 rounded-full px-1 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
           <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full sky-avatar !text-xs font-semibold">{initials(name)}</span>
           <span className={`min-w-0 truncate font-medium ${label}`}>{name}</span>
         </button>
@@ -85,8 +85,8 @@ export function StudentRail() {
   const [menu, setMenu] = useState(false);
   const link = ({ isActive }: { isActive: boolean }) => `${row} ${isActive ? 'font-medium' : ''}`;
   return (
-    <aside data-menu={menu ? 'open' : undefined} className="group/rail hidden lg:flex fixed left-4 top-4 bottom-4 z-40 w-16 [@media(hover:hover)]:hover:w-60 has-[:focus-visible]:w-60 data-[menu=open]:w-60 flex-col overflow-hidden sky-sidebar p-2 transition-[width] duration-300 motion-reduce:transition-none">
-      <div className="flex items-center gap-3 px-1 pt-2 pb-4">
+    <aside data-menu={menu ? 'open' : undefined} className="group/rail hidden lg:flex fixed left-4 top-4 bottom-4 z-40 w-16 [@media(hover:hover)]:hover:w-60 has-[:focus-visible]:w-60 data-[menu=open]:w-60 flex-col overflow-hidden sky-sidebar p-3 transition-[width] duration-300 motion-reduce:transition-none">
+      <div className="flex items-center gap-3 pt-1 pb-4">
         <CenterLogo center={center} className="h-10 w-10 shrink-0 sky-avatar" />
         <p className={`min-w-0 truncate font-semibold ${label}`}>{centerDisplayName(center)}</p>
       </div>
