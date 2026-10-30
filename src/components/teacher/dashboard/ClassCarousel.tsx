@@ -1,17 +1,13 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ClassCardBig } from "./ClassCardBig";
-import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 
-interface Props {
-  batches: DashboardBatch[];
-  onRename: (b: DashboardBatch) => void;
-  onShowQR: (b: DashboardBatch) => void;
-}
-
-export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
+/** Sideways class strip with snapping. Shared by the main teacher dashboard and the center teacher portal. */
+export function ClassCarousel<T extends { id: string }>({ items: batches, renderCard }: {
+  items: T[];
+  renderCard: (item: T, index: number, isActive: boolean) => ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
@@ -196,8 +192,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
         style={{
           // Fade the cards themselves at the edges instead of painting an
           // opaque overlay, so the page atmosphere stays continuous behind.
-          maskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
+          maskImage: "linear-gradient(to right, transparent 0, black min(96px, 12vw), black calc(100% - min(96px, 12vw)), transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0, black min(96px, 12vw), black calc(100% - min(96px, 12vw)), transparent 100%)",
         }}
       >
         <div
@@ -216,13 +212,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
               className="flex items-center"
               style={{ scrollSnapAlign: "center" }}
             >
-              <ClassCardBig
-                batch={b}
-                index={i}
-                isActive={i === activeIndex}
-                onRename={onRename}
-                onShowQR={onShowQR}
-              />
+              {renderCard(b, i, i === activeIndex)}
             </div>
           ))}
         </div>

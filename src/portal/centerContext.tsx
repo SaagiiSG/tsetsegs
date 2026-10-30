@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { LogOut } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 
 export type PortalSettings = { display_name?: string; logo_url?: string; brand_color?: string; contact_email?: string; billing_email?: string; timezone?: string; session_days?: number; signout_before?: string; notify_new_students?: boolean; notify_overdue?: boolean; notify_inactive?: boolean };
@@ -32,19 +33,26 @@ export function hexToHslToken(hex: string): string | null {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+/** The brand as a primary token. A near-black brand vanishes on the dark background, so dark mode lifts it to 70% lightness. */
+export function brandPrimary(token: string, dark: boolean): string {
+  const [h, s, l] = token.split(' ');
+  return dark && parseInt(l) < 30 ? `${h} ${s} 70%` : token;
+}
+
 /** Applies the center brand color as primary/ring tokens on body so dialogs inherit it. */
 export function useCenterBrand(center: Center | null | undefined) {
   const color = center?.portal_settings?.brand_color;
+  const dark = useTheme().resolvedTheme === 'dark';
   useEffect(() => {
     const token = color ? hexToHslToken(color) : null;
     const body = document.body;
     if (!token) return;
-    const [, , l] = token.split(' ');
-    body.style.setProperty('--primary', token);
-    body.style.setProperty('--ring', token);
-    body.style.setProperty('--primary-foreground', parseInt(l) > 60 ? '0 0% 9%' : '0 0% 100%');
+    const primary = brandPrimary(token, dark);
+    body.style.setProperty('--primary', primary);
+    body.style.setProperty('--ring', primary);
+    body.style.setProperty('--primary-foreground', parseInt(primary.split(' ')[2]) > 60 ? '0 0% 9%' : '0 0% 100%');
     return () => { ['--primary', '--ring', '--primary-foreground'].forEach(p => body.style.removeProperty(p)); };
-  }, [color]);
+  }, [color, dark]);
 }
 
 export function CenterLogo({ center, className = 'h-8 w-8' }: { center: Center; className?: string }) {

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy,
+  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy, Settings,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,11 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { CenterLogo, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { allPages, localDate } from './centerApi';
-import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
 import { MathText } from '@/components/MathText';
@@ -26,6 +26,7 @@ import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionM
 import { TeacherLive } from './LiveSession';
 import { CenterHelpPage } from './CenterHelp';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { ClassCarousel } from '@/components/teacher/dashboard/ClassCarousel';
 
 type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
 const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
@@ -111,8 +112,7 @@ function CenterClassCard({
   return (
     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest}
       className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4 transition-transform hover:-translate-y-0.5">
-      <LiquidGlassFX />
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative flex flex-wrap items-start justify-between gap-3">
         <button onClick={onOpen} className="min-w-0 text-left group" aria-label={`Open ${cls.name}`}>
           <h3 className="font-semibold text-lg truncate group-hover:underline underline-offset-4 flex items-center gap-1.5">{cls.name}<ChevronRight className="h-4 w-4 opacity-50 group-hover:translate-x-0.5 transition-transform" /></h3>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -146,14 +146,14 @@ function CenterClassCard({
             <p className="text-sm text-muted-foreground py-4">No students yet — share the class QR code to enroll them.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-xs text-foreground/65 border-b border-border/60"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th></tr></thead>
+              <thead className="text-xs text-foreground/65 border-b border-border/60"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left hidden sm:table-cell">Questions</th><th className="text-left hidden sm:table-cell">Accuracy</th><th className="text-left">Status</th></tr></thead>
               <tbody className="divide-y divide-border/50">{students.map(s => {
                 const st = attMap[s.id]; const p = statsMap[s.id]; const risk = riskOf(p);
                 return <tr key={s.id}>
                   <td className="py-3"><button onClick={() => onInspect(s.id)} className="hover:underline text-left">{s.name}</button>{!s.user_id && <span className="ml-2 text-xs text-foreground/60">not signed up</span>}</td>
                   <td><button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
-                  <td className="font-mono">{p?.n ?? 0}</td>
-                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
+                  <td className="font-mono hidden sm:table-cell">{p?.n ?? 0}</td>
+                  <td className="font-mono hidden sm:table-cell">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
                   <td className="text-xs">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
                 </tr>;
               })}</tbody>
@@ -193,10 +193,9 @@ function ClassHub({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
+        <Button variant="ghost" size="sm" className="!shadow-none" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
       </div>
       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} flex flex-wrap items-start justify-between gap-4`}>
-        <LiquidGlassFX />
         <div className="relative min-w-0">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{cls.name}</h2>
           <p className="text-sm text-muted-foreground mt-1">{cls.schedule || 'No schedule set'}{cls.starts_on ? ` · started ${cls.starts_on}` : ''}</p>
@@ -215,20 +214,19 @@ function ClassHub({
       </div>
 
       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <LiquidGlassFX />
         <div className="relative flex items-center justify-between"><p className="font-medium">Attendance</p><p className="text-xs text-muted-foreground">Tap the {short(date)} column to mark</p></div>
         <div className="relative overflow-x-auto">
           {!students.length ? <p className="text-sm text-muted-foreground">No students yet — share the class QR code.</p> : (
             <table className="w-full text-sm">
               <thead><tr className="text-xs text-foreground/65 border-b border-border/60">
-                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 backdrop-blur">Student</th>
+                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 dark:bg-card backdrop-blur">Student</th>
                 {dates.map(d => <th key={d} className={`px-1.5 font-mono font-normal whitespace-nowrap ${d === date ? 'text-foreground' : ''}`}>{short(d)}</th>)}
                 <th className="text-left pl-3">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th>
               </tr></thead>
               <tbody className="divide-y divide-border/50">{students.map(s => {
                 const p = statsMap[s.id]; const risk = riskOf(p);
                 return <tr key={s.id}>
-                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
+                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 dark:bg-card backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
                   {dates.map(d => { const st = cell[`${s.id}|${d}`]; return (
                     <td key={d} className="px-1.5 text-center">{d === date
                       ? <button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2 py-1 text-xs min-w-14 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button>
@@ -245,7 +243,6 @@ function ClassHub({
       </div>
 
       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <LiquidGlassFX />
         <p className="relative font-medium">Domain mastery</p>
         <div className="relative"><ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} /></div>
       </div>
@@ -312,7 +309,6 @@ function PracticeBrowser() {
           {data.map(question => (
             <div key={question.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest}
               className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-2xl border p-4">
-              <LiquidGlassFX />
               <div className="relative space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
                   <span className="capitalize border rounded-full px-2 py-0.5">{question.subject}</span>
@@ -338,6 +334,7 @@ export default function CenterTeacherPortal() {
   const [intake, setIntake] = useState<'current' | 'previous' | 'all'>('current');
   const [date, setDate] = useState(localDate());
   const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [invite, setInvite] = useState<CenterClass | null>(null);
   const [rename, setRename] = useState<CenterClass | null>(null);
@@ -506,26 +503,32 @@ export default function CenterTeacherPortal() {
     { key: 'live', label: 'Live', icon: Radio },
   ];
 
-  const renderCard = (c: CenterClass) => (
-    <CenterClassCard
-      key={c.id}
-      cls={c}
-      students={allStudents.filter(s => s.class_id === c.id)}
-      statsMap={statsMap}
-      attMap={attByClass[c.id] ?? {}}
-      date={date}
-      onCycle={cycle}
-      onInspect={setInspect}
-      onOpen={() => navigate(`/teacher/class/${c.id}`)}
-      onInvite={() => setInvite(c)}
-      onRename={() => { setRename(c); setRenameValue(c.name); }}
-      canRename={role === 'center_admin'}
-    />
+  // Same look as the main dashboard's carousel: the centred card is sharp, its neighbours sit back.
+  const renderCard = (c: CenterClass, _i: number, isActive: boolean) => (
+    <motion.div
+      animate={{ opacity: isActive ? 1 : 0.55, scale: isActive ? 1 : 0.9, filter: isActive ? 'blur(0px)' : 'blur(1.5px)' }}
+      transition={{ type: 'spring', stiffness: 220, damping: 28, mass: 0.9 }}
+      className="shrink-0 w-[92vw] md:w-[85vw] max-w-[1400px]"
+    >
+      <CenterClassCard
+        cls={c}
+        students={allStudents.filter(s => s.class_id === c.id)}
+        statsMap={statsMap}
+        attMap={attByClass[c.id] ?? {}}
+        date={date}
+        onCycle={cycle}
+        onInspect={setInspect}
+        onOpen={() => navigate(`/teacher/class/${c.id}`)}
+        onInvite={() => setInvite(c)}
+        onRename={() => { setRename(c); setRenameValue(c.name); }}
+        canRename={role === 'center_admin'}
+      />
+    </motion.div>
   );
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope"
+      className="center-teacher min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope"
       style={{ '--section-glow': sectionGlow } as React.CSSProperties}
     >
       <div aria-hidden className="admin-page-atmosphere" />
@@ -547,19 +550,13 @@ export default function CenterTeacherPortal() {
               <span className="hidden md:inline text-xs">Search</span>
               <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">⌘K</kbd>
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
-              <Link to="/teacher/help" aria-label="Help"><LifeBuoy className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Help</span></Link>
-            </Button>
             {role === 'center_admin' && (
               <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
                 <Link to="/admin"><LayoutDashboard className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Admin view</span></Link>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" onClick={() => setPasswordOpen(true)} aria-label="Change password">
-              <KeyRound className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Password</span>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={signOut}>
-              <LogOut className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Logout</span>
+            <Button variant="outline" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -624,12 +621,12 @@ export default function CenterTeacherPortal() {
                         {Object.entries(groupedClasses).map(([key, list]) => key !== 'ungrouped' && (
                           <div key={key} className="space-y-3">
                             <h4 className="text-xs font-medium text-muted-foreground px-1 sticky top-16 bg-background/80 backdrop-blur py-1 z-10">{key}</h4>
-                            <div className="grid gap-4">{list.map(renderCard)}</div>
+                            <ClassCarousel items={list} renderCard={renderCard} />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="grid gap-4">{filteredClasses.map(renderCard)}</div>
+                      <ClassCarousel items={filteredClasses} renderCard={renderCard} />
                     )}
                   </div>
                 )}
@@ -637,20 +634,17 @@ export default function CenterTeacherPortal() {
                 {mode === 'analytics' && (
                   <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
                     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-4">
-                      <LiquidGlassFX />
                       <p className="relative font-medium">Domain mastery — all classes</p>
                       <div className="relative"><DomainBars stats={allDomains} /></div>
                     </div>
                     <div className="space-y-4">
                       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 grid grid-cols-2 gap-4">
-                        <LiquidGlassFX />
                         <div className="relative"><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-2xl">{grandTotals.n}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-2xl">{grandTotals.n ? `${pct(grandTotals.c, grandTotals.n)}%` : '—'}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Attendance</p><p className="font-mono text-2xl">{grandTotals.s ? `${pct(grandTotals.p, grandTotals.s)}%` : '—'}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Students</p><p className="font-mono text-2xl">{allStudents.length}</p></div>
                       </div>
                       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-2">
-                        <LiquidGlassFX />
                         <p className="relative font-medium text-sm">Needs attention</p>
                         <div className="relative">
                           {atRiskStudents.map(s => <button key={s.id} onClick={() => setInspect(s.id)} className="block text-sm hover:underline">{s.name}</button>)}
@@ -684,12 +678,13 @@ export default function CenterTeacherPortal() {
 
       {/* Floating glass mode dock — mirrors the main teacher dashboard dock */}
       {!!classes?.length && (
-        <nav aria-label="Teacher tools" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-2 py-1.5 flex items-center gap-1">
+        <nav aria-label="Teacher tools" className="center-teacher-dock fixed bottom-4 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-2 py-1.5 flex items-center gap-1">
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => { if (hubClass || isHelp) navigate('/teacher'); handleModeChange(key); }}
               aria-pressed={mode === key}
+              aria-label={label}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >
               <Icon className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
@@ -719,12 +714,28 @@ export default function CenterTeacherPortal() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Change password</DialogTitle><DialogDescription>Use it the next time you sign in.</DialogDescription></DialogHeader>
-          <ChangePasswordForm onDone={() => setPasswordOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      {/* Settings drawer: password, help and log out */}
+      <Sheet open={settingsOpen} onOpenChange={o => { setSettingsOpen(o); if (!o) setPasswordOpen(false); }}>
+        <SheetContent className="w-full sm:max-w-sm flex flex-col gap-1 overflow-y-auto">
+          <SheetHeader className="mb-3"><SheetTitle>Settings</SheetTitle></SheetHeader>
+          <Button variant="ghost" className="justify-start !shadow-none" aria-expanded={passwordOpen} onClick={() => setPasswordOpen(o => !o)}>
+            <KeyRound className="h-4 w-4" />Change password
+          </Button>
+          {passwordOpen && (
+            <div className="rounded-lg border p-4 mb-1 space-y-3">
+              <p className="text-xs text-muted-foreground">Use it the next time you sign in.</p>
+              <ChangePasswordForm onDone={() => setPasswordOpen(false)} />
+            </div>
+          )}
+          <Button variant="ghost" className="justify-start !shadow-none" asChild>
+            <Link to="/teacher/help" onClick={() => setSettingsOpen(false)}><LifeBuoy className="h-4 w-4" />Help</Link>
+          </Button>
+          <Separator className="my-2" />
+          <Button variant="ghost" className="justify-start !shadow-none" onClick={signOut}>
+            <LogOut className="h-4 w-4" />Log out
+          </Button>
+        </SheetContent>
+      </Sheet>
 
       {invite && <InviteDialog name={invite.name} code={invite.join_code} onClose={() => setInvite(null)} />}
 
