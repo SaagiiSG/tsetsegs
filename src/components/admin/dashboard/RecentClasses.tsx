@@ -15,9 +15,11 @@ interface RecentBatch {
 
 interface RecentClassesProps {
   batches: RecentBatch[];
+  viewAllTo?: string;
+  itemTo?: (id: string) => string;
 }
 
-export function RecentClasses({ batches }: RecentClassesProps) {
+export function RecentClasses({ batches, viewAllTo = '/admin/batches', itemTo = (id) => `/admin/analytics/${id}` }: RecentClassesProps) {
   const navigate = useNavigate();
 
   return (
@@ -32,7 +34,7 @@ export function RecentClasses({ batches }: RecentClassesProps) {
             variant="ghost" 
             size="sm" 
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/admin/batches')}
+            onClick={() => navigate(viewAllTo)}
           >
             View all
             <ChevronRight className="w-3 h-3 ml-1" />
@@ -50,7 +52,7 @@ export function RecentClasses({ batches }: RecentClassesProps) {
               <div 
                 key={batch.id}
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
-                onClick={() => navigate(`/admin/analytics/${batch.id}`)}
+                onClick={() => navigate(itemTo(batch.id))}
               >
                 {/* Course type badge */}
                 <Badge 

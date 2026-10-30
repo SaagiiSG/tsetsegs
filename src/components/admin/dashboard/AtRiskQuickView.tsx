@@ -13,6 +13,8 @@ interface AtRiskStudent {
 
 interface AtRiskQuickViewProps {
   students: AtRiskStudent[];
+  viewAllTo?: string;
+  itemTo?: (id: string) => string;
 }
 
 function getRiskBadgeStyle(riskScore: number): string {
@@ -27,7 +29,7 @@ function getRiskLabel(riskScore: number): string {
   return 'Medium';
 }
 
-export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
+export function AtRiskQuickView({ students, viewAllTo = '/admin/tsetsegs/analytics', itemTo = (id) => `/admin/student/${id}` }: AtRiskQuickViewProps) {
   const navigate = useNavigate();
 
   return (
@@ -42,7 +44,7 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
             variant="ghost" 
             size="sm" 
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/admin/tsetsegs/analytics')}
+            onClick={() => navigate(viewAllTo)}
           >
             View all
             <ChevronRight className="w-3 h-3 ml-1" />
@@ -61,7 +63,7 @@ export function AtRiskQuickView({ students }: AtRiskQuickViewProps) {
               <div 
                 key={student.id}
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
-                onClick={() => navigate(`/admin/student/${student.id}`)}
+                onClick={() => navigate(itemTo(student.id))}
               >
                 {/* Name */}
                 <span className="flex-1 text-sm font-medium truncate group-hover:text-primary transition-colors">

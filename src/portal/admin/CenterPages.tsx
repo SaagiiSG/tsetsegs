@@ -165,13 +165,6 @@ function SettingsForm({ initial }: { initial: PortalSettings }) {
             <p className="text-xs text-muted-foreground">After this, they need to sign in again. Admins are not affected.</p></div>
           <div className="flex items-center justify-between gap-3"><p className="text-sm">Sign out all students and teachers on every device</p><Button type="button" variant="outline" size="sm" onClick={signOutEveryone}>Sign everyone out</Button></div>
         </Section>
-        <Section title="Notifications">
-          <p className="text-xs text-muted-foreground">Shown on your dashboard.</p>
-          {([['notify_new_students', 'New students joined'], ['notify_overdue', 'Overdue payments'], ['notify_inactive', "Students who haven't practiced in 7 days"]] as const).map(([k, label]) => (
-            <div key={k} className="flex items-center justify-between"><Label htmlFor={`st-${k}`} className="font-normal">{label}</Label>
-              <Switch id={`st-${k}`} checked={s[k] !== false} onCheckedChange={v => setS({ ...s, [k]: v })} /></div>
-          ))}
-        </Section>
         <Button disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</Button>
       </form>
       <Section title="Appearance">

@@ -1,95 +1,39 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FolderPlus, Megaphone, UserPlus, Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { STATUS_LABEL, STATUS_STYLE, useCenter, type PortalSettings } from '../centerContext';
+import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { localDate } from '../centerApi';
-import { useCenterAdminData, useQuestionTopics, pct, money, type CenterAdminData } from './useCenterAdminData';
+import { useCenterAdminData, useQuestionTopics, pct } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
 import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
+import { DashboardView } from '@/components/admin/DashboardStats';
+import { activeSprintId } from '../studentStats';
+import { useCenterSprints } from './ToolPages';
+import { centerDashboard } from './centerDashboard';
 
 const ATTENDED = new Set(['present', 'late']);
 
-/** In-app notifications on the center dashboard; each can be switched off in Settings. */
-function CenterAlerts({ data, today }: { data: CenterAdminData; today: string }) {
-  const { center } = useCenter();
-  // Notification switches are admin-only settings, not in tenant_lookup's public copy.
-  const { data: ps } = useQuery({
-    queryKey: ['center-settings', center.id],
-    queryFn: async () => ((await supabase.rpc('tenant_settings', { _institution: center.id })).data ?? {}) as PortalSettings,
-  });
-  if (!ps) return null;
-  const week = Date.now() - 7 * 864e5;
-  const alerts: { text: string; to: string }[] = [];
-  if (ps.notify_new_students !== false) {
-    const n = data.students.filter(s => new Date(s.created_at).getTime() >= week).length;
-    if (n) alerts.push({ text: `${n} new student${n > 1 ? 's' : ''} joined this week`, to: '/admin/students' });
-  }
-  if (ps.notify_overdue !== false) {
-    const n = data.dues.filter(d => !d.paid_at && d.due_date < today).length;
-    if (n) alerts.push({ text: `${n} payment${n > 1 ? 's are' : ' is'} overdue`, to: '/admin/settings' });
-  }
-  if (ps.notify_inactive !== false) {
-    const activeIds = new Set(data.attempts.filter(a => new Date(a.created_at).getTime() >= week).map(a => a.student_id));
-    const n = data.students.filter(s => s.active && !activeIds.has(s.id)).length;
-    if (n) alerts.push({ text: `${n} student${n > 1 ? 's have' : ' has'} not practiced in 7 days`, to: '/admin/students' });
-  }
-  if (!alerts.length) return null;
-  return (
-    <ul aria-label="Notifications" className="space-y-2">
-      {alerts.map(a => (
-        <li key={a.text}><Link to={a.to} className="flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm hover:bg-muted/50">
-          <Bell className="h-4 w-4 text-muted-foreground" />{a.text}</Link></li>
-      ))}
-    </ul>
-  );
-}
-
 export function DashboardPage() {
+  const { center } = useCenter();
   const { data, isLoading } = useCenterAdminData();
-  const today = localDate();
-  const stats = useMemo(() => {
-    if (!data) return null;
-    const week = Date.now() - 7 * 864e5;
-    const recent = data.attempts.filter(a => new Date(a.created_at).getTime() >= week);
-    const att = data.attendance;
-    return {
-      students: data.students.filter(s => s.active).length,
-      active: new Set(recent.map(a => a.student_id)).size,
-      acc: pct(recent.filter(a => a.is_correct).length, recent.length),
-      attendance: pct(att.filter(a => ATTENDED.has(a.status)).length, att.length),
-    };
-  }, [data]);
-  if (isLoading || !data || !stats) return <Loading />;
-  const open = data.dues.filter(d => !d.paid_at);
+  const sid = activeSprintId(useCenterSprints().data);
+  // Same key as CenterRankings, so the running sprint's board is one cache entry.
+  const board = useQuery({ queryKey: ['center-board', center.id, sid], enabled: !!sid,
+    queryFn: async () => { const { data, error } = await supabase.rpc('tenant_student_board', { _institution: center.id, _sprint: sid! }); if (error) throw error; return data ?? []; } });
+  const solved = useQuery({ queryKey: ['center-solved', center.id],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('tenant_attempts').select('id', { count: 'exact', head: true }).eq('institution_id', center.id).eq('is_correct', true);
+      if (error) throw error; return count ?? 0;
+    } });
+  const weekIds = useMemo(() => (data?.attempts ?? []).filter(a => new Date(a.created_at).getTime() >= Date.now() - 7 * 864e5).map(a => a.question_id), [data]);
+  const topics = useQuestionTopics(weekIds);
+  const view = useMemo(() => data && centerDashboard(data, sid ? board.data ?? null : null, topics.data, solved.data ?? 0), [data, sid, board.data, topics.data, solved.data]);
+  if (isLoading || !view) return <Loading />;
   return (
-    <div className="space-y-8">
-      <PageHeader title="Dashboard" description="How your center is doing this week." />
-      <StatRow stats={[['Students', stats.students], ['Active this week', stats.active], ['Accuracy (7 days)', stats.acc], ['Attendance (30 days)', stats.attendance]]} />
-      <nav aria-label="Quick actions" className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm"><Link to="/admin/students"><UserPlus className="h-4 w-4" />Add student</Link></Button>
-        <Button asChild variant="outline" size="sm"><Link to="/admin/batches/new"><FolderPlus className="h-4 w-4" />Create batch</Link></Button>
-        <Button asChild variant="outline" size="sm"><Link to="/admin/announcements"><Megaphone className="h-4 w-4" />Post announcement</Link></Button>
-      </nav>
-      <CenterAlerts data={data} today={today} />
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Section title="Batches">
-          {data.classes.length ? <ul className="divide-y text-sm">{data.classes.map(c => (
-            <li key={c.id} className="py-2.5 flex justify-between gap-2"><span>{c.name}</span><span className="text-muted-foreground font-mono text-xs">{data.students.filter(s => s.class_id === c.id && s.active).length} students</span></li>
-          ))}</ul> : <Empty>No batches yet. <Link className="underline" to="/admin/batches/new">Create one</Link>.</Empty>}
-        </Section>
-        <Section title="Billing">
-          {open.length ? <ul className="divide-y text-sm">{open.map(d => (
-            <li key={d.id} className="py-2.5 flex justify-between gap-2"><span>{d.description || 'Payment'}</span>
-              <span className="flex items-center gap-2"><span className="font-mono">{money(d.amount, d.currency)}</span><span className="font-mono text-xs text-muted-foreground">{d.due_date}</span>
-                {d.due_date < today && <span className="text-xs rounded px-2 py-0.5 bg-status-risk/10 text-status-risk">Overdue</span>}</span></li>
-          ))}</ul> : <Empty>No open payments.</Empty>}
-        </Section>
-      </div>
-    </div>
+    <DashboardView title="Dashboard" {...view} isLoading={solved.isLoading}
+      links={{ sprints: '/admin/sprints', classes: '/admin/batches', classTo: () => '/admin/batches', atRisk: '/admin/students', studentTo: (id) => `/admin/students/${id}` }} />
   );
 }
 

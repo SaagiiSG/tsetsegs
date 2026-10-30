@@ -13,6 +13,7 @@ interface SprintLeader {
 
 interface SprintPreviewProps {
   leaders: SprintLeader[];
+  viewAllTo?: string;
 }
 
 const tierColors: Record<string, string> = {
@@ -25,7 +26,7 @@ const tierColors: Record<string, string> = {
  ruby: 'bg-status-risk/10 text-status-risk border-status-risk/20',
 };
 
-export function SprintPreview({ leaders }: SprintPreviewProps) {
+export function SprintPreview({ leaders, viewAllTo = '/admin/sprint-monitor' }: SprintPreviewProps) {
   const navigate = useNavigate();
 
   return (
@@ -40,7 +41,7 @@ export function SprintPreview({ leaders }: SprintPreviewProps) {
             variant="ghost" 
             size="sm" 
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/admin/sprint-monitor')}
+            onClick={() => navigate(viewAllTo)}
           >
             View all
             <ChevronRight className="w-3 h-3 ml-1" />
