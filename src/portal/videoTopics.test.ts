@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
+import topicsJson from '../../docs/superpowers/specs/2026-10-28-center-student-portal-part2/topics.json';
 import { TOPICS, topicUnits, upNext } from './videoTopics';
 
 type J = { topic: number; name: string; area: string; videos: { id: string; order_index: number }[] }[];
-const json: J = JSON.parse(readFileSync('docs/superpowers/specs/2026-10-28-center-student-portal-part2/topics.json', 'utf8'));
+const json = topicsJson as unknown as J;
 const v = (id: string, module: string | null, order_index: number) => ({ id, module, order_index });
 const states = (u: { items: { state: string }[] }) => u.items.map(i => i.state);
 
