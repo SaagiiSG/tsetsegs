@@ -7,8 +7,9 @@ export const unitKey = (u: { n: number | null }) => String(u.n ?? 'more');
 
 /** Every topic as a collapsed card in its area's colour; picking one shows its map. */
 export function TopicList({ units, selected, onPick }: { units: TopicUnit<Video>[]; selected: string | null; onPick: (key: string) => void }) {
+  // The padding leaves room for the chosen card's shift (8px) and ring (6px) inside the scrolling list.
   return (
-    <nav aria-label="Topics" className="space-y-3 p-1">
+    <nav aria-label="Topics" className="space-y-3 p-1.5 lg:pr-5">
       {units.map(u => {
         const key = unitKey(u), c = u.area ? AREA_COLOR[u.area] : MORE, active = key === selected;
         return (

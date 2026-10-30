@@ -1490,7 +1490,8 @@ body.customer-student-portal a.bg-primary { background-image: linear-gradient(18
 .dark .sky-unit { --unit: var(--unit-dark); }
 .sky-unit-banner { background: var(--unit); color: var(--unit-ink); box-shadow: 0 5px 0 var(--unit-shade); }
 .sky-topic-card { transition: transform 300ms cubic-bezier(.32,.72,0,1), box-shadow 300ms; }
-.sky-topic-card[data-active="true"] { transform: translateX(.5rem); box-shadow: 0 5px 0 var(--unit-shade), 0 0 0 3px #fff, 0 0 0 6px color-mix(in srgb, var(--unit) 45%, transparent); }
+/* The chosen topic is marked only beside its map (laptop); on a phone the list stands alone. */
+@media (min-width: 1024px) { .sky-topic-card[data-active="true"] { transform: translateX(.5rem); box-shadow: 0 5px 0 var(--unit-shade), 0 0 0 3px #fff, 0 0 0 6px color-mix(in srgb, var(--unit) 45%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .sky-topic-card { transition: none; } }
 .sky-node { background: var(--unit); color: var(--unit-ink); box-shadow: 0 6px 0 var(--unit-shade); }
 .sky-node-open { box-shadow: 0 6px 0 var(--unit-shade), 0 0 0 6px color-mix(in srgb, var(--unit) 30%, transparent); }
