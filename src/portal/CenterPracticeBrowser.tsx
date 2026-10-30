@@ -12,6 +12,8 @@ type Attempt = { question_id: string; is_correct: boolean };
 
 const ENGLISH = ['Information and Ideas', 'Craft and Structure', 'Expression of Ideas', 'Standard English Conventions'];
 const short = (d: string) => d.replace(/ and .*/, '').replace(/Advanced Math/, 'Advanced').replace(/Data Analysis.*/, 'Data').replace(/Geometry.*/, 'Geometry');
+// Same meaning as the main site's question navigator: green = solved at least once, red = tried but never right.
+const CARD = { done: 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/15', tried: 'border-red-500/40 bg-red-500/10 hover:bg-red-500/15' };
 
 /** Every practice question (light columns). The home cards share this list so their counts match the tabs. */
 export function usePracticeQuestions() {
@@ -129,21 +131,21 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
 
         <section className="sky-card lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
           {data.isLoading ? <div className="p-4"><SkyListSkeleton rows={5} /></div> : shown.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p> : (
-            // Container queries (arbitrary variants, no plugin): 3 cols narrow, 4 from 28rem, 6 from 38rem of the panel's own width.
+            // Container queries (arbitrary variants, no plugin): 2 cols narrow (phones), 4 from 31rem, 5 from 38rem of the panel's own width; below 31rem a 4-up row cuts the area labels.
             <div className="[container-type:inline-size]">
-              <div className="grid grid-cols-3 gap-2 [@container(min-width:28rem)]:grid-cols-4 [@container(min-width:38rem)]:grid-cols-6">
+              <div className="grid grid-cols-2 gap-2.5 [@container(min-width:31rem)]:grid-cols-4 [@container(min-width:38rem)]:grid-cols-5">
                 {shown.map(r => {
                   const s = status[r.id];
                   return (
                     <Button variant="ghost" key={r.id} onClick={() => onOpen(r.id)}
-                      className={`h-auto min-h-11 min-w-0 flex-col items-stretch justify-center gap-0.5 whitespace-normal rounded-xl border px-2 py-1.5 text-left transition-colors hover:bg-accent/50 active:scale-[0.98] ${s === 'done' ? 'border-primary/40 bg-primary/5' : ''}`}>
-                      <span className="truncate font-mono text-xs font-semibold leading-4">{r.question_id ?? r.id.slice(0, 6)}</span>
+                      className={`h-auto min-h-16 min-w-0 flex-col items-stretch justify-center gap-1 whitespace-normal rounded-xl border px-3 py-2.5 text-left transition-colors hover:bg-accent/50 active:scale-[0.98] ${s ? CARD[s] : ''}`}>
+                      <span className="truncate font-mono text-sm font-semibold leading-5">{r.question_id ?? r.id.slice(0, 6)}</span>
                       <span className="flex items-center justify-between gap-1">
-                        <span className="flex min-w-0 items-center gap-1 text-[11px] font-normal leading-4 text-muted-foreground">
+                        <span className="flex min-w-0 items-center gap-1.5 text-xs font-normal leading-4 text-muted-foreground">
                           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
                           <span className="truncate">{ENGLISH.includes(r.domain) ? r.domain.split(' ')[0] : short(r.domain)}</span>
                         </span>
-                        {s === 'done' ? <Check className="h-3.5 w-3.5 shrink-0" aria-label="Solved" /> : s === 'tried' ? <CircleDot className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Attempted" /> : null}
+                        {s === 'done' ? <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-label="Solved" /> : s === 'tried' ? <CircleDot className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" aria-label="Attempted" /> : null}
                       </span>
                     </Button>
                   );
