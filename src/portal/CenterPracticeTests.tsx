@@ -41,21 +41,21 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not start the test. Try again.'); }
     finally { setBusy(null); }
   }
-  return <div className="space-y-6 max-w-3xl">
+  return <div className="space-y-6 max-w-5xl">
     <header><h1 className="text-3xl font-bold">Practice tests</h1><p className="text-muted-foreground mt-2">Tsetsegs SAT Math tests. Practice scores are estimates, not official SAT scores.</p></header>
     <Tabs defaultValue="tests">
       <TabsList><TabsTrigger value="tests">Tests</TabsTrigger><TabsTrigger value="history">My test history</TabsTrigger></TabsList>
       <TabsContent value="tests" className="space-y-3">
         {tests.isLoading ? <SkyListSkeleton /> : tests.error ? <Failed onRetry={() => tests.refetch()} /> : !tests.data?.length ? <p className="text-muted-foreground">No tests are available yet.</p> :
-          tests.data.map(t => <div key={t.id} className="sky-card flex flex-wrap items-center justify-between gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tests.data.map(t => <div key={t.id} className="sky-card flex flex-col justify-between gap-4">
             <div className="min-w-0"><p className="font-semibold">{t.name}</p>
               {monthYear(t) && <p className="text-sm text-muted-foreground">{monthYear(t)}</p>}
               <p className="text-sm text-muted-foreground">{testCardLine(t)}</p>
               {t.last_score != null && <p className="text-sm">Last score {t.last_score}</p>}</div>
-            <Button className="sky-btn sky-btn-blue" disabled={busy === t.id} onClick={() => t.open_attempt ? navigate(`/student/tests/${t.open_attempt}`) : start(t)}>{testCardAction(t)}</Button>
-          </div>)}
+            <Button className="sky-btn sky-btn-blue w-full" disabled={busy === t.id} onClick={() => t.open_attempt ? navigate(`/student/tests/${t.open_attempt}`) : start(t)}>{testCardAction(t)}</Button>
+          </div>)}</div>}
       </TabsContent>
-      <TabsContent value="history" className="space-y-3">
+      <TabsContent value="history" className="space-y-3 max-w-3xl">
         {history.isLoading ? <SkyListSkeleton /> : history.error ? <Failed onRetry={() => history.refetch()} /> : !history.data?.length ? <p className="text-muted-foreground">Your finished tests will appear here.</p> :
           history.data.map(a => <div key={a.id} className="sky-card flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0"><p className="font-semibold">{a.test_name}</p><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
