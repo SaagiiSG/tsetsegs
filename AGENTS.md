@@ -37,3 +37,4 @@
 - Solo sign-up is closed until there's a paywall: no sign-up UI anywhere (student login, /solo, the demo, the staff login). Supabase sign-up stays on, because a main student's first Google link creates the account. A self-made account reads nothing paid. Solo plans are server-only. Google linking verifies Google identity and secret student token; layout unlocks before local OAuth cleanup to preserve practice.
 
 - External sync uses stable pagination and bounded parallel content/metadata writes to avoid timeouts; failures must not report completion.
+- Tests under `src/` read fixture/spec data through static JSON imports (`resolveJsonModule` is on in `tsconfig.app.json`), never Node's `fs`: the preview type check has no Node types and rejects them.
