@@ -722,6 +722,13 @@
       "when": 1793393895449,
       "tag": "0102_apply_pending_0101",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1793406729685,
+      "tag": "0104_center_schedule_templates",
+      "breakpoints": true
     }
   ]
 }

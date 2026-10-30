@@ -19,8 +19,26 @@ export async function fetchScheduleTemplates(): Promise<ScheduleTemplate[]> {
   return (data ?? []).map(t => ({ id: t.id, name: t.name, subject: t.subject, schedule_data: (t.schedule_data as unknown as TimeSlot[]) ?? [] }));
 }
 
-export function ScheduleTemplatesDialog({ open, onOpenChange, startInCreate = false, defaultSubject = 'math', onSaved }: {
-  open: boolean; onOpenChange: (o: boolean) => void; startInCreate?: boolean; defaultSubject?: 'math' | 'english'; onSaved?: (t: ScheduleTemplate) => void;
+/** Where saved schedules live. Main site: schedule_templates, split by subject. Centers pass their own (one list). */
+export type ScheduleStore = {
+  subjects: boolean;
+  list: () => Promise<ScheduleTemplate[]>;
+  save: (name: string, subject: string, slots: TimeSlot[]) => Promise<{ id?: string; error?: string }>;
+  remove: (id: string) => Promise<string | null>;
+};
+
+const mainStore: ScheduleStore = {
+  subjects: true,
+  list: fetchScheduleTemplates,
+  save: async (name, subject, slots) => {
+    const { data, error } = await supabase.from('schedule_templates').insert([{ name, subject, schedule_data: JSON.parse(JSON.stringify(slots)), is_global: true }]).select().single();
+    return error ? { error: error.message } : { id: data.id };
+  },
+  remove: async id => (await supabase.from('schedule_templates').delete().eq('id', id)).error?.message ?? null,
+};
+
+export function ScheduleTemplatesDialog({ open, onOpenChange, startInCreate = false, defaultSubject = 'math', onSaved, store = mainStore }: {
+  open: boolean; onOpenChange: (o: boolean) => void; startInCreate?: boolean; defaultSubject?: 'math' | 'english'; onSaved?: (t: ScheduleTemplate) => void; store?: ScheduleStore;
 }) {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [creating, setCreating] = useState(startInCreate);
@@ -29,24 +47,24 @@ export function ScheduleTemplatesDialog({ open, onOpenChange, startInCreate = fa
   const [slots, setSlots] = useState<TimeSlot[]>([{ day: 'monday', start_time: '16:40', end_time: '18:30' }]);
   const [saving, setSaving] = useState(false);
 
-  const load = () => fetchScheduleTemplates().then(setTemplates);
+  const load = () => store.list().then(setTemplates);
   useEffect(() => { if (open) { load(); setCreating(startInCreate); setSubject(defaultSubject); } }, [open, startInCreate, defaultSubject]);
 
   const save = async () => {
     if (!name.trim()) return toast.error('Give the schedule a name');
     if (slots.some(s => s.start_time >= s.end_time)) return toast.error('Each class must end after it starts');
     setSaving(true);
-    const { data, error } = await supabase.from('schedule_templates').insert([{ name: name.trim(), subject, schedule_data: JSON.parse(JSON.stringify(slots)), is_global: true }]).select().single();
+    const { id, error } = await store.save(name.trim(), subject, slots);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error || !id) return toast.error(error ?? 'Could not save the schedule');
     toast.success('Schedule saved');
-    const t = { id: data.id, name: data.name, subject: data.subject, schedule_data: slots };
+    const t = { id, name: name.trim(), subject, schedule_data: slots };
     setName(''); setSlots([{ day: 'monday', start_time: '16:40', end_time: '18:30' }]); setCreating(false); load();
     onSaved?.(t);
   };
   const remove = async (id: string) => {
-    const { error } = await supabase.from('schedule_templates').delete().eq('id', id);
-    if (error) return toast.error(error.message);
+    const error = await store.remove(id);
+    if (error) return toast.error(error);
     load();
   };
   const setSlot = (i: number, patch: Partial<TimeSlot>) => setSlots(s => s.map((x, j) => j === i ? { ...x, ...patch } : x));
@@ -61,14 +79,14 @@ export function ScheduleTemplatesDialog({ open, onOpenChange, startInCreate = fa
 
         {creating ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-[1fr_auto] gap-3">
+            <div className={store.subjects ? 'grid grid-cols-[1fr_auto] gap-3' : ''}>
               <div className="space-y-1.5"><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Mon/Wed/Fri evening" /></div>
-              <div className="space-y-1.5"><Label>Subject</Label>
+              {store.subjects && <div className="space-y-1.5"><Label>Subject</Label>
                 <Select value={subject} onValueChange={v => setSubject(v as 'math' | 'english')}>
                   <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="math">Math</SelectItem><SelectItem value="english">English</SelectItem></SelectContent>
                 </Select>
-              </div>
+              </div>}
             </div>
             <div className="space-y-2">
               {slots.map((s, i) => (
@@ -95,11 +113,11 @@ export function ScheduleTemplatesDialog({ open, onOpenChange, startInCreate = fa
           </div>
         ) : (
           <div className="space-y-4">
-            {(['math', 'english'] as const).map(sub => {
-              const list = templates.filter(t => t.subject === sub);
+            {(store.subjects ? ['math', 'english'] : [null]).map(sub => {
+              const list = sub ? templates.filter(t => t.subject === sub) : templates;
               return (
-                <div key={sub} className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{sub}</p>
+                <div key={sub ?? 'all'} className="space-y-2">
+                  {sub && <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{sub}</p>}
                   {list.length === 0 ? <p className="text-sm text-muted-foreground">None saved yet.</p> : (
                     <ul className="divide-y rounded-lg border">
                       {list.map(t => (

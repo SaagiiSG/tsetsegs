@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import {
-  BarChart3, CalendarCheck, CalendarClock, FolderPlus, GraduationCap, Inbox, LayoutDashboard, LogOut, Megaphone, Menu,
+  BarChart3, CalendarClock, GraduationCap, Inbox, LayoutDashboard, LogOut, Megaphone, Menu,
   Search, Settings, Trophy, Users, Layers, ExternalLink, LifeBuoy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,8 @@ import { cn } from '@/lib/utils';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { useCenterAdminData } from './admin/useCenterAdminData';
 import { DarkModeSetting } from './admin/CenterPages';
-import { DashboardPage, AnalyticsPage, ClassOverviewPage } from './admin/OverviewPages';
-import { BatchesPage, CreateBatchPage } from './admin/BatchPages';
+import { DashboardPage, AnalyticsPage } from './admin/OverviewPages';
+import { IntakePage } from './admin/BatchPages';
 import { StudentsPage, StudentDetailPage } from './admin/StudentPages';
 import { QuestionsPage, SprintsPage, AnnouncementsPage } from './admin/ToolPages';
 import { SatSchedulePage } from './admin/SatSchedulePage';
@@ -32,11 +32,9 @@ const SECTIONS: Section[] = [
   { title: 'Overview', glow: '217 91% 60%', items: [
     { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { to: 'class-overview', label: 'Class Overview', icon: CalendarCheck },
   ] },
   { title: 'Batches', glow: '262 83% 62%', items: [
-    { to: 'batches', label: 'All Batches', icon: Layers },
-    { to: 'batches/new', label: 'Create Batch', icon: FolderPlus },
+    { to: 'batches', label: 'Intake', icon: Layers },
   ] },
   { title: 'Students', glow: '152 60% 42%', items: [
     { to: 'students', label: 'Search Accounts', icon: GraduationCap },
@@ -263,9 +261,9 @@ export default function CenterAdminPortal() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="class-overview" element={<ClassOverviewPage />} />
-              <Route path="batches" element={<BatchesPage />} />
-              <Route path="batches/new" element={<CreateBatchPage />} />
+              <Route path="class-overview" element={<Navigate to="/admin/batches" replace />} />
+              <Route path="batches" element={<IntakePage />} />
+              <Route path="batches/new" element={<IntakePage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="students/:studentId" element={<StudentDetailPage />} />
               <Route path="registrations" element={<Navigate to="/admin/students" replace />} />

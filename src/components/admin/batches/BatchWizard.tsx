@@ -31,7 +31,7 @@ export function parseStudentList(text: string) {
 
 const uid = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-function Choice({ active, onClick, title, sub }: { active: boolean; onClick: () => void; title: string; sub?: string }) {
+export function Choice({ active, onClick, title, sub }: { active: boolean; onClick: () => void; title: string; sub?: string }) {
   return (
     <button type="button" onClick={onClick} className={`admin-glass-card text-left rounded-xl border p-4 transition ${active ? 'ring-2 ring-foreground/70 border-foreground/40' : 'hover:border-foreground/30'}`}>
       <div className="flex items-center justify-between gap-2"><span className="font-medium">{title}</span>{active && <Check className="h-4 w-4" />}</div>

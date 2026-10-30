@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
+import { useCenter } from '../centerContext';
 import { localDate } from '../centerApi';
 import { useCenterAdminData, useQuestionTopics, pct } from './useCenterAdminData';
 import { Bar, Empty, Loading, PageHeader, Section, StatRow } from './ui';
-import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
-import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { DashboardView } from '@/components/admin/DashboardStats';
 import { activeSprintId } from '../studentStats';
 import { useCenterSprints } from './ToolPages';
@@ -94,48 +91,6 @@ export function AnalyticsPage() {
           ))}</ul> : <Empty>No batches yet.</Empty>}
         </Section>
       </div>
-    </div>
-  );
-}
-
-export function ClassOverviewPage() {
-  const { data, isLoading } = useCenterAdminData();
-  const today = localDate();
-  if (isLoading || !data) return <Loading />;
-  const teacher = (id: string | null) => data.members.find(m => m.id === id)?.display_name ?? 'Unassigned';
-  const missed = data.students.filter(s => s.active).map(s => {
-    const rows = data.attendance.filter(a => a.student_id === s.id).sort((a, b) => b.session_date.localeCompare(a.session_date));
-    return { s, absent: rows.filter(r => r.status === 'absent').length };
-  }).filter(x => x.absent >= 3).sort((a, b) => b.absent - a.absent);
-  return (
-    <div className="space-y-10">
-      <PageHeader title="Class Overview" description={`Today, ${today}`} />
-      <Section title="Today's attendance">
-        {data.classes.length ? <div className="grid gap-4 md:grid-cols-2">{data.classes.map(c => {
-          const roster = data.students.filter(s => s.class_id === c.id && s.active);
-          const rows = data.attendance.filter(a => a.class_id === c.id && a.session_date === today);
-          const counts = Object.entries(rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.status]: (m[r.status] ?? 0) + 1 }), {}));
-          return <div key={c.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-card-glow admin-glass-liquid rounded-xl border p-4">
-            <LiquidGlassFX />
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-chillax font-semibold truncate">{c.name}</p>
-                <p className="text-xs text-foreground/65 mt-0.5">{c.schedule || 'No schedule'}</p>
-              </div>
-              <span className="font-mono text-xs text-foreground/70 whitespace-nowrap">{rows.length}/{roster.length} marked</span>
-            </div>
-            <p className="text-xs text-foreground/65 mt-3">Teacher · <span className="text-foreground">{teacher(c.teacher_member_id)}</span></p>
-            <div className="flex flex-wrap gap-1 mt-3">
-              {counts.length ? counts.map(([st, n]) => <span key={st} className={`text-xs rounded px-1.5 py-0.5 ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]} {n}</span>) : <span className="text-xs text-foreground/65">Attendance not taken yet</span>}
-            </div>
-          </div>;
-        })}</div> : <Empty>No batches yet.</Empty>}
-      </Section>
-      <Section title="Students who missed 3+ classes (30 days)">
-        {missed.length ? <ul className="divide-y text-sm">{missed.map(({ s, absent }) => (
-          <li key={s.id} className="py-2.5 flex justify-between gap-2"><Link to={`/admin/students/${s.id}`} className="hover:underline">{s.name}</Link><span className="text-xs rounded px-2 py-0.5 bg-status-risk/10 text-status-risk">{absent} absent</span></li>
-        ))}</ul> : <Empty>No one has missed 3 or more classes.</Empty>}
-      </Section>
     </div>
   );
 }
