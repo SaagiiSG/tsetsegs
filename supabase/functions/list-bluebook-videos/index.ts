@@ -279,7 +279,15 @@ Deno.serve(async (req) => {
             headers: { apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", Authorization: auth },
           })
         : null;
-      if (user?.ok) allowed = true;
+      if (user?.ok) {
+        // Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
+        if (String((await user.json()).email ?? "").toLowerCase().endsWith("@demo.flowersos.co")) {
+          return new Response(JSON.stringify({ error: "Turned off in the demo." }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        allowed = true;
+      }
     }
 
     if (!allowed) {
