@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, Copy, Plus, RotateCcw, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Copy, KeyRound, Plus, PowerOff, RefreshCw, RotateCcw, Search, Upload, User, UserCheck, UserX, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { phoneDigits } from '@/lib/tenant';
 import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
@@ -149,48 +153,150 @@ function ImportStudentsDialog({ data }: { data: CenterAdminData }) {
   );
 }
 
-export function StudentsPage() {
+function AddStudentDialog({ data }: { data: CenterAdminData }) {
   const { center } = useCenter();
-  const { data, isLoading } = useCenterAdminData();
   const refresh = useRefreshCenter();
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState(''); const [phone, setPhone] = useState(''); const [classId, setClassId] = useState<string | null>(null);
-  const [q, setQ] = useState(''); const [batch, setBatch] = useState('all');
-  const list = useMemo(() => {
-    const needle = q.trim().toLowerCase(); const digits = phoneDigits(q);
-    return (data?.students ?? []).filter(s => (batch === 'all' || (batch === 'none' ? !s.class_id : s.class_id === batch))
-      && (!needle || s.name.toLowerCase().includes(needle) || (!!digits && s.phone.includes(digits))));
-  }, [data, q, batch]);
-  if (isLoading || !data) return <Loading />;
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     const digits = phoneDigits(phone);
     if (digits.length < 6) return toast.error('Enter a valid phone number.');
     const { error } = await supabase.from('tenant_students').insert({ institution_id: center.id, name: name.trim(), phone: digits, class_id: classId });
     if (error) return toast.error(error.code === '23505' ? 'That phone number is already registered.' : error.message);
-    toast.success(`${name.trim()} added`); setName(''); setPhone(''); refresh();
+    toast.success(`${name.trim()} added`); setName(''); setPhone(''); refresh(); setOpen(false);
   };
-  const className = (id: string | null) => data.classes.find(c => c.id === id)?.name ?? '—';
   return (
-    <div className="space-y-8">
-      <PageHeader title="Search Accounts" description={`${data.students.filter(s => s.active).length} active students`} actions={<ImportStudentsDialog data={data} />} />
-      <form onSubmit={add} className="flex flex-wrap gap-3 items-end rounded-lg border p-4">
-        <div className="space-y-1"><Label htmlFor="s-name">Student name</Label><Input id="s-name" value={name} onChange={e => setName(e.target.value)} required /></div>
-        <div className="space-y-1"><Label htmlFor="s-phone">Phone</Label><Input id="s-phone" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} required /></div>
-        <div className="space-y-1"><Label>Batch</Label><ClassSelect value={classId} onChange={setClassId} classes={data.classes} label="Batch for new student" /></div>
-        <Button><Plus className="h-4 w-4" />Add student</Button>
-        <p className="basis-full text-xs text-muted-foreground">Students sign in to this portal with this phone number and create their own password the first time.</p>
-      </form>
-      <div className="flex flex-wrap gap-2">
-        <Input aria-label="Search students" placeholder="Search by name or phone…" value={q} onChange={e => setQ(e.target.value)} className="max-w-xs" />
-        <Select value={batch} onValueChange={setBatch}><SelectTrigger className="w-44" aria-label="Filter by batch"><SelectValue /></SelectTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Add student</Button></DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Add student</DialogTitle><DialogDescription>Students sign in to this portal with this phone number and create their own password the first time.</DialogDescription></DialogHeader>
+        <form onSubmit={add} className="space-y-4">
+          <div className="space-y-1.5"><Label htmlFor="s-name">Student name</Label><Input id="s-name" value={name} onChange={e => setName(e.target.value)} required /></div>
+          <div className="space-y-1.5"><Label htmlFor="s-phone">Phone</Label><Input id="s-phone" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} required /></div>
+          <div className="space-y-1.5"><Label>Batch</Label><ClassSelect value={classId} onChange={setClassId} classes={data.classes} label="Batch for new student" className="w-full" /></div>
+          <DialogFooter><Button><Plus className="h-4 w-4" />Add student</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Stat({ icon: Icon, label, value }: { icon: typeof User; label: string; value: number }) {
+  return (
+    <div className="admin-glass-card rounded-xl border p-4 flex items-center gap-3">
+      <Icon className="h-5 w-5 text-muted-foreground" />
+      <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-mono text-2xl tabular-nums">{value.toLocaleString()}</p></div>
+    </div>
+  );
+}
+
+const PAGE_SIZE = 50;
+const accountStatus = (s: CenterAdminData['students'][number]) => (!s.active ? 'Access removed' : s.user_id ? 'Signed up' : 'Not signed up yet');
+
+/** Same layout as the main Student Management page, on the center's students. */
+export function StudentsPage() {
+  const { center } = useCenter();
+  const { data, isLoading, isFetching } = useCenterAdminData();
+  const refresh = useRefreshCenter();
+  const navigate = useNavigate();
+  const [q, setQ] = useState(''); const [batch, setBatch] = useState('all'); const [page, setPage] = useState(1);
+  const [resetFor, setResetFor] = useState<CenterAdminData['students'][number] | null>(null);
+  const list = useMemo(() => {
+    const needle = q.trim().toLowerCase(); const digits = phoneDigits(q);
+    return (data?.students ?? []).filter(s => (batch === 'all' || (batch === 'none' ? !s.class_id : s.class_id === batch))
+      && (!needle || s.name.toLowerCase().includes(needle) || (!!digits && s.phone.includes(digits))));
+  }, [data, q, batch]);
+  if (isLoading || !data) return <Loading />;
+  const className = (id: string | null) => data.classes.find(c => c.id === id)?.name;
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const shown = list.slice((Math.min(page, pages) - 1) * PAGE_SIZE, Math.min(page, pages) * PAGE_SIZE);
+  const active = data.students.filter(s => s.active);
+  const resetPw = async () => {
+    if (!resetFor) return;
+    try { await centerAccounts({ action: 'reset_student', institution_id: center.id, student_id: resetFor.id }); toast.success('Password reset'); refresh(); }
+    catch (err) { toast.error((err as Error).message); }
+    setResetFor(null);
+  };
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-chillax text-2xl font-semibold tracking-tight">Student Management</h1>
+          <p className="text-sm text-muted-foreground">Search and manage your students</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input aria-label="Search students" value={q} onChange={e => { setQ(e.target.value); setPage(1); }} placeholder="Name or phone…" className="pl-9 h-9" />
+          </div>
+          <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" aria-label="Refresh" onClick={refresh}><RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} /></Button>
+        </div>
+      </div>
+
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        <Stat icon={User} label="Total students" value={data.students.length} />
+        <Stat icon={UserCheck} label="Signed up" value={active.filter(s => s.user_id).length} />
+        <Stat icon={UserX} label="Not signed up yet" value={active.filter(s => !s.user_id).length} />
+        <Stat icon={PowerOff} label="Access removed" value={data.students.length - active.length} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <AddStudentDialog data={data} />
+        <ImportStudentsDialog data={data} />
+        <Select value={batch} onValueChange={v => { setBatch(v); setPage(1); }}><SelectTrigger className="w-44 ml-auto" aria-label="Filter by batch"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All batches</SelectItem><SelectItem value="none">No batch</SelectItem>{data.classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
       </div>
-      {list.length ? <div className="overflow-x-auto"><table className="w-full text-sm min-w-[560px]"><thead className="text-xs text-muted-foreground border-b"><tr><th className="text-left py-2">Name</th><th className="text-left">Phone</th><th className="text-left">Batch</th><th className="text-left">Account</th></tr></thead>
-        <tbody className="divide-y">{list.map(s => (
-          <tr key={s.id} className="hover:bg-muted/40"><td className="py-3"><Link to={`/admin/students/${s.id}`} className={`hover:underline ${s.active ? '' : 'text-muted-foreground line-through'}`}>{s.name}</Link></td>
-            <td className="font-mono text-xs">{s.phone}</td><td className="text-muted-foreground">{className(s.class_id)}</td>
-            <td className="text-xs text-muted-foreground">{!s.active ? 'Access removed' : s.user_id ? 'Signed up' : 'Not signed up yet'}</td></tr>
-        ))}</tbody></table></div> : <Empty>No students match.</Empty>}
+
+      <div className="admin-glass-card rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-10 px-1"><span className="sr-only">Reset password</span></TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Batch</TableHead>
+              <TableHead>Added</TableHead>
+              <TableHead>Account</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {shown.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
+              : shown.map(s => (
+                <TableRow key={s.id} className="cursor-pointer" onClick={() => navigate(`/admin/students/${s.id}`)}>
+                  <TableCell className={`font-medium ${s.active ? '' : 'text-muted-foreground line-through'}`}>{s.name}</TableCell>
+                  <TableCell className="px-1" onClick={e => e.stopPropagation()}>
+                    <Tooltip><TooltipTrigger asChild><span>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Reset ${s.name}'s password`} disabled={!s.user_id || !s.active} onClick={() => setResetFor(s)}><KeyRound className="h-4 w-4" /></Button>
+                    </span></TooltipTrigger><TooltipContent>{s.user_id && s.active ? 'Reset password' : 'Reset password — not signed up yet'}</TooltipContent></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{s.phone}</TableCell>
+                  <TableCell className="text-sm max-w-[220px] truncate">{className(s.class_id) ?? <span className="text-muted-foreground">No batch</span>}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(s.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{accountStatus(s)}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-muted-foreground">
+          <span className="font-mono">{list.length.toLocaleString()} students</span>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)} aria-label="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
+            <span className="font-mono text-xs">{Math.min(page, pages)} / {pages}</span>
+            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={page >= pages} onClick={() => setPage(p => p + 1)} aria-label="Next page"><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      </div>
+
+      <AlertDialog open={!!resetFor} onOpenChange={o => !o && setResetFor(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset {resetFor?.name}'s password?</AlertDialogTitle>
+            <AlertDialogDescription>They will create a new one the next time they sign in.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={resetPw}>Reset password</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -219,7 +325,7 @@ export function StudentDetailPage() {
   });
   const s = data?.students.find(x => x.id === studentId);
   if (isLoading || !data) return <Loading />;
-  if (!s) return <Empty>Student not found. <Link to="/admin/students" className="underline">Back to accounts</Link></Empty>;
+  if (!s) return <Empty>Student not found. <Link to="/admin/students" className="underline">Back to Student Management</Link></Empty>;
   const update = async (patch: Record<string, unknown>, msg: string) => {
     const { error } = await supabase.from('tenant_students').update(patch).eq('id', s.id);
     if (error) toast.error(error.message); else { toast.success(msg); refresh(); }
@@ -233,7 +339,7 @@ export function StudentDetailPage() {
   const attended = h?.att.filter(a => a.status === 'present' || a.status === 'late').length ?? 0;
   return (
     <div className="space-y-8">
-      <Link to="/admin/students" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Search Accounts</Link>
+      <Link to="/admin/students" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Student Management</Link>
       <PageHeader title={s.name} description={`${s.phone} · ${!s.active ? 'Access removed' : s.user_id ? 'Signed up' : 'Not signed up yet'}`} actions={<>
         {s.user_id && <Button variant="outline" size="sm" onClick={resetPw}><RotateCcw className="h-4 w-4" />Reset password</Button>}
         <Button variant={s.active ? 'ghost' : 'outline'} size="sm" className={s.active ? 'text-destructive' : ''} onClick={() => update({ active: !s.active }, s.active ? 'Access removed' : 'Access restored')}>{s.active ? 'Remove access' : 'Restore access'}</Button>

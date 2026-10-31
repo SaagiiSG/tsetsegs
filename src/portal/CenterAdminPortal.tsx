@@ -37,7 +37,7 @@ const SECTIONS: Section[] = [
     { to: 'batches', label: 'Intake', icon: Layers },
   ] },
   { title: 'Students', glow: '152 60% 42%', items: [
-    { to: 'students', label: 'Search Accounts', icon: GraduationCap },
+    { to: 'students', label: 'Student Management', icon: GraduationCap },
   ] },
   { title: 'Tools', glow: '32 95% 50%', items: [
     { to: 'questions', label: 'Search Questions', icon: Search },
