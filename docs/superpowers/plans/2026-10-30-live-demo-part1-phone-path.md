@@ -18,7 +18,7 @@
 - Center name `Northside Academy`; visitor plays student **Maya Chen**, teacher **Ms. Rivera** (`Elena Rivera`), admin **Daniel Brooks**.
 - Demo storage keys: `sb-demo-student-auth-token`, `sb-demo-teacher-auth-token`, `sb-demo-admin-auth-token`. Real pages keep the default key.
 - Keep the existing entry URLs working unchanged: `/demo?role=<r>&preview=educator&lang=<l>&ref=<src>` and `/demo?signup=practice&lang=<l>` (student only, no side switch).
-- Migrations: next free number at build time. At plan time main is at `0102`, the teacher branch holds `0103`, the admin branch `0104`–`0105`; so this plan uses `0106` and `0107`. Re-check before pushing; renumber if taken. Each file starts with `SET lock_timeout = '3s';` and ends with `NOTIFY pgrst, 'reload schema';`; add a `meta/_journal.json` entry and a `meta/NNNN_snapshot.json` stub like 0102's.
+- Migrations: next free number at build time. Main is at `0102`; unpushed branches hold `0103`–`0107` (teacher 0103, 0106; admin 0104, 0105, 0107, confirmed with those sessions on 30 Oct), so this plan uses `0108` and `0109`. Re-check before pushing; renumber if taken. Before any push, bring the branch up to date with origin/main and keep `_journal.json` in idx order. Each file starts with `SET lock_timeout = '3s';` and ends with `NOTIFY pgrst, 'reload schema';`; add a `meta/_journal.json` entry and a `meta/NNNN_snapshot.json` stub like 0102's.
 - Lovable applies migrations and deploys edge functions; git sync carries front-end only. Never push front-end that needs a migration before that migration is live. Ask Saagii before every push to main. Never rebase or force-push main.
 - Every token policy covers `anon, authenticated` (0093 lesson). Supabase sign-up stays on. No `Array.prototype.at`. shadcn components only (`src/components/ui/*`).
 - A demo user changing their own password isn't blocked on the server in Plan 1: it's a throwaway account. Plan 3 adds the visible note.
@@ -35,10 +35,10 @@
 
 ---
 
-### Task 1: Demo flag, question slice and demo refusals (migration 0106)
+### Task 1: Demo flag, question slice and demo refusals (migration 0108)
 
 **Files:**
-- Create: `drizzle/migrations/0106_demo_centers.sql`, `drizzle/migrations/meta/0106_snapshot.json`
+- Create: `drizzle/migrations/0108_demo_centers.sql`, `drizzle/migrations/meta/0108_snapshot.json`
 - Modify: `drizzle/migrations/meta/_journal.json`
 - Test: `~/Developer/Saagii21/flowersos/tools/portal-e2e/demo-probe.mjs` (section `regression`)
 
@@ -68,7 +68,7 @@ line('real user is not a demo user', (await rpc('is_demo_user', {})).body === fa
 Run: `node demo-probe.mjs regression`
 Expected: the first three `true`; `details-only read works` and `real user is not a demo user` `FALSE` (functions don't exist yet).
 
-- [ ] **Step 3: Write `0106_demo_centers.sql`**
+- [ ] **Step 3: Write `0108_demo_centers.sql`**
 
 Contents, in order:
 1. The column, `demo_slice`, `is_demo_user()`, `is_demo_center()`.
@@ -92,21 +92,21 @@ Every copied function keeps a comment `-- Demo check (live-demo plan, 30 Oct): k
 
 - [ ] **Step 4: Register the migration**
 
-Add the `_journal.json` entry (`idx` = last + 1, `tag` `0106_demo_centers`) and the snapshot stub with `prevId` = 0102's id (or the latest at build time).
+Add the `_journal.json` entry (`idx` = last + 1, `tag` `0108_demo_centers`) and the snapshot stub with `prevId` = 0102's id (or the latest at build time).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add drizzle/migrations/0106_demo_centers.sql drizzle/migrations/meta
-git commit -m "0106: demo centers read only a small question slice; demo-only refusals"
+git add drizzle/migrations/0108_demo_centers.sql drizzle/migrations/meta
+git commit -m "0108: demo centers read only a small question slice; demo-only refusals"
 ```
 
 ---
 
-### Task 2: Sample center generator and copy bookkeeping (migration 0107)
+### Task 2: Sample center generator and copy bookkeeping (migration 0109)
 
 **Files:**
-- Create: `drizzle/migrations/0107_demo_copies.sql`, `drizzle/migrations/meta/0107_snapshot.json`
+- Create: `drizzle/migrations/0109_demo_copies.sql`, `drizzle/migrations/meta/0109_snapshot.json`
 - Modify: `drizzle/migrations/meta/_journal.json`
 - Test: `demo-probe.mjs` (section `copy`, written here, run in Task 4)
 
@@ -170,8 +170,8 @@ No `institution_payment_dues` and no `educator_demo_requests` (gotcha D).
 - [ ] **Step 4: Register the migration and commit**
 
 ```bash
-git add drizzle/migrations/0107_demo_copies.sql drizzle/migrations/meta
-git commit -m "0107: sample center generator and demo copy bookkeeping"
+git add drizzle/migrations/0109_demo_copies.sql drizzle/migrations/meta
+git commit -m "0109: sample center generator and demo copy bookkeeping"
 ```
 
 ---
@@ -248,11 +248,11 @@ git commit -m "demo edge function; tenant-accounts, video links and AI insights 
 - [ ] **Step 1: Re-check migration numbers**
 
 Run: `git fetch origin && git ls-tree --name-only origin/main drizzle/migrations | tail -3`, and check `feat/center-teacher-portal` and `feat/center-admin-batches` the same way.
-Expected: nothing else uses 0106/0107; otherwise renumber, fix the journal, and amend the two commits.
+Expected: nothing else uses 0108/0109; otherwise renumber, fix the journal, and amend the two commits.
 
 - [ ] **Step 2: Ask Saagii to push the three server commits to main**
 
-Only commits from Tasks 1–3, which change nothing for real users. Show him the list first. Then give him this Lovable prompt to paste: *"Apply migrations 0106_demo_centers and 0107_demo_copies in journal order. Deploy the edge functions demo, tenant-accounts, concept-video-url and student-analytics-insights. Then regenerate src/integrations/supabase/types.ts."*
+Only commits from Tasks 1–3, which change nothing for real users. Show him the list first. Then give him this Lovable prompt to paste: *"Apply migrations 0108_demo_centers and 0109_demo_copies in journal order. Deploy the edge functions demo, tenant-accounts, concept-video-url and student-analytics-insights. Then regenerate src/integrations/supabase/types.ts."*
 
 - [ ] **Step 3: Run the probe**
 
@@ -456,7 +456,7 @@ Commit any fixes as `fix(demo): …`.
 - [ ] **Step 1: Update `AGENTS.md`**
 
 - Line 6 becomes: "The demo (`/demo`) signs visitors in automatically as made-up sample people in a throwaway sample center (`institution_customers.is_demo`); never real data."
-- Add: "Demo checks live inside `is_staff_or_center_member` policies (0106), `tenant_practice_tests`, `tenant_sat_start`, `submit_support_request`, `admin_customer_activity`, and the edge functions `tenant-accounts`, `concept-video-url` and `student-analytics-insights`. Keep the demo line when rewriting any of them, and run `flowersos/tools/portal-e2e/demo-probe.mjs` after."
+- Add: "Demo checks live inside `is_staff_or_center_member` policies (0108), `tenant_practice_tests`, `tenant_sat_start`, `submit_support_request`, `admin_customer_activity`, and the edge functions `tenant-accounts`, `concept-video-url` and `student-analytics-insights`. Keep the demo line when rewriting any of them, and run `flowersos/tools/portal-e2e/demo-probe.mjs` after."
 - Commit: `git commit -am "AGENTS: demo signs visitors in as sample people; keep demo checks"`.
 
 - [ ] **Step 2: Ask Saagii before pushing**
