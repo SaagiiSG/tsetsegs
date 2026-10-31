@@ -35,6 +35,9 @@ DECLARE
 BEGIN
   IF NOT public.is_demo_center(_institution) THEN RAISE EXCEPTION 'Not a demo center'; END IF;
   PERFORM setseed(0.42);
+  -- The seed stays with this pooled connection, so it is replaced from a strong source when the build ends, failed or
+  -- not, for whatever runs on the connection next. This block runs to the matching EXCEPTION below.
+  BEGIN
 
   -- tenant_members.user_id is NOT NULL (0002) with no link to auth.users: a random stand-in until demo_attach_logins.
   INSERT INTO tenant_members (institution_id, user_id, role, display_name, email, created_at)
@@ -237,7 +240,10 @@ BEGIN
     (_institution, cls_b, 'Ryan Cooper', '5550191', 'Lakeview High School', '12', t0 - interval '1 day');
 
   -- No institution_payment_dues and no educator_demo_requests: tenant_has_role refuses a center with an open request.
-  -- The seed stays with this pooled connection, so reseed from a strong source for whatever runs on it next.
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM setseed(('x' || substr(md5(gen_random_uuid()::text), 1, 8))::bit(32)::int / 2147483648.0);
+    RAISE;
+  END;
   PERFORM setseed(('x' || substr(md5(gen_random_uuid()::text), 1, 8))::bit(32)::int / 2147483648.0);
   RETURN jsonb_build_object('admin_member_id', admin_m, 'teacher_member_id', rivera, 'student_id', maya);
 END $$;
@@ -246,8 +252,10 @@ GRANT EXECUTE ON FUNCTION public.demo_build_center(uuid) TO service_role;
 
 -- 3. Copy bookkeeping, called by the demo edge function.
 -- Limits: 100 unexpired copies at once (demo_busy); 5 per visitor or 40 per network address in the last hour (demo_limit).
+-- The lock is held through the whole build, so a start waits at most 3 s for the one before it, then fails with
+-- SQLSTATE 55P03 (the edge function answers demo_busy) instead of holding a shared API connection.
 CREATE FUNCTION public.demo_create(_visitor text, _ip text, _end_token_hash text) RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public SET lock_timeout = '3s' AS $$
 DECLARE inst uuid; new_slug text := 'demo-' || substr(md5(gen_random_uuid()::text), 1, 12); built jsonb; cp public.demo_copies;
 BEGIN
   PERFORM pg_advisory_xact_lock(7715402);
