@@ -20,12 +20,16 @@ ALTER TABLE public.demo_slice ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.demo_slice TO authenticated;
 CREATE POLICY "Signed-in accounts read the demo slice ids" ON public.demo_slice FOR SELECT TO authenticated USING (true);
 
--- Demo logins are the made-up @demo.flowersos.co emails the demo function creates. Only the email counts: membership
--- can be written by a demo admin (any user_id on their copy's students or staff), the email can't, so a real account
--- written into a copy keeps its own access. Never NULL: the read rules below use NOT is_demo_user().
+-- Two halves, either one makes a demo user: the made-up @demo.flowersos.co email the demo function gives every demo
+-- login, or a staff or roster row in a demo center (so a demo login that changes its own email stays held to the slice).
+-- The membership half is safe for real accounts only because demo_guard_login (below) refuses any non-demo account in a
+-- demo center: without it a demo admin could write a real person's id onto their copy and narrow that person's access.
+-- Never NULL: the read rules below use NOT is_demo_user().
 CREATE FUNCTION public.is_demo_user() RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) LIKE '%@demo.flowersos.co';
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) LIKE '%@demo.flowersos.co'
+    OR EXISTS (SELECT 1 FROM public.tenant_members m JOIN public.institution_customers c ON c.id = m.institution_id AND c.is_demo WHERE m.user_id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.tenant_students s JOIN public.institution_customers c ON c.id = s.institution_id AND c.is_demo WHERE s.user_id = auth.uid());
 $$;
 REVOKE ALL ON FUNCTION public.is_demo_user() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_demo_user() TO authenticated;
@@ -37,9 +41,9 @@ $$;
 REVOKE ALL ON FUNCTION public.is_demo_center(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_demo_center(uuid) TO authenticated, service_role;
 
--- Only demo logins (and the build's placeholder ids, which have no login) may sit in a demo center. A real account
--- there isn't a demo user, so it would read the whole bank and every test through the copy; this refuses it whoever
--- writes it (a demo admin via the 0002/0067 rules, a join, or the service role).
+-- Only demo logins (and the build's placeholder ids, which have no login) may sit in a demo center. This is what keeps
+-- is_demo_user()'s membership half from ever narrowing a real account; it refuses whoever writes the row (a demo admin
+-- via the 0002/0067 rules, a join, or the service role).
 CREATE FUNCTION public.demo_guard_login() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -152,7 +156,7 @@ GRANT EXECUTE ON FUNCTION public.can_read_concept_video(text) TO authenticated;
 -- tenant_proctor_tests, tenant_proctor_create and tenant_proctor_join. For a demo user a test counts only if every active
 -- International copy of every Math question is in the slice (fails closed), so no paper, practice or proctored, leaves it.
 -- It takes no center, so it asks who is calling: those four let into a demo center only its own staff and students,
--- and demo_guard_login keeps those to demo logins. Real centers and Tsetsegs staff: exactly 0106.
+-- and every one of them is a demo user. Real centers and Tsetsegs staff: exactly 0106.
 CREATE OR REPLACE FUNCTION public.tenant_eligible_tests() RETURNS jsonb LANGUAGE sql STABLE SET search_path=public AS $$
 SELECT COALESCE(jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'test_month',t.test_month,'test_year',t.test_year,'modules',s.modules,'questions',s.questions,'minutes',s.minutes)
 ORDER BY t.test_year DESC NULLS LAST,t.test_month DESC NULLS LAST,t.name),'[]'::jsonb)
