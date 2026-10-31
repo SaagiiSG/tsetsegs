@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { CenterContext, useCenterBrand, type Center, type CenterRole } from './centerContext';
 import { ContactSupport } from './ContactSupport';
 import CenterJoin from './CenterJoin';
+import { finishPendingGoogle } from './centerGoogle';
 import CenterSignIn from './CenterSignIn';
 import CenterAdminPortal from './CenterAdminPortal';
 import CenterTeacherPortal from './CenterTeacherPortal';
@@ -23,6 +25,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [staffSignIn, setStaffSignIn] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const googleFinish = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     document.body.classList.add('admin-theme');
@@ -44,6 +47,10 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     if (!session) { setRole(null); return; }
     let cancelled = false;
     (async () => {
+      // Finish a claim/link step parked before the Google redirect, once, before deciding who this is.
+      googleFinish.current ??= finishPendingGoogle(center).then((m) => { if (m) toast.error(m); });
+      await googleFinish.current;
+      if (cancelled) return;
       const uid = session.user.id;
       const [{ data: member }, { data: student }] = await Promise.all([
         supabase.from('tenant_members').select('role, display_name, active').eq('institution_id', center.id).eq('user_id', uid).maybeSingle(),
