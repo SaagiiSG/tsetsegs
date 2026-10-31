@@ -1,101 +1,203 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { centerAccounts } from './centerApi';
+import { startGoogle, takePending } from './centerGoogle';
 import { PasswordInput } from './PasswordInput';
-import {
-  AuthSplitLayout,
-  authInputClasses,
-  authLabelClasses,
-  authPrimaryButtonClasses,
-} from '@/components/auth/AuthSplitLayout';
+import { canContinue, joinSteps, type JoinForm, type JoinStep } from './joinSteps';
+import { AuthSplitLayout, authInputClasses, authLabelClasses } from '@/components/auth/AuthSplitLayout';
+
+const TITLES: Record<JoinStep, string> = {
+  start: 'Join your class',
+  name: 'What is your full name?',
+  phone: 'What is your phone number?',
+  email: 'What is your email?',
+  code: 'Enter your code',
+  password: 'Make a password',
+  school: 'Where do you study?',
+  done: '',
+};
 
 /** Public class sign-up reached from a class join link / QR code. The code is the invitation, so students are enrolled instantly. */
 export default function CenterJoin() {
   const { code = '' } = useParams();
   const { center } = useCenter();
-  const name = centerDisplayName(center);
+  const centerName = centerDisplayName(center);
   const navigate = useNavigate();
   const [cls, setCls] = useState<{ class_id: string; class_name: string } | null | undefined>(undefined);
-  const [form, setForm] = useState({ name: '', phone: '', email: '', school: '', grade: '', password: '' });
+  const [path, setPath] = useState<'google' | 'email'>('email');
+  const [step, setStep] = useState<JoinStep>('start');
+  const [form, setForm] = useState<JoinForm>({ name: '', phone: '', email: '', emailCode: '', password: '', school: '', grade: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [note, setNote] = useState('');
+  const title = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     supabase.rpc('tenant_join_lookup', { _slug: center.slug, _code: code }).then(({ data }) => setCls(data?.[0] ?? null));
   }, [center.slug, code]);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setBusy(true); setError('');
+  // Back from Google: the pending join is ours and a session exists, so carry on at the name step.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
+      if (!user) return;
+      const p = takePending(['join']);
+      if (!p || p.kind !== 'join' || p.code !== code) return;
+      const meta = user.user_metadata ?? {};
+      setPath('google');
+      setForm(f => ({ ...f, name: String(meta.full_name || meta.name || '') }));
+      setStep('name');
+    });
+  }, [code]);
+
+  useEffect(() => { title.current?.focus(); }, [step]);
+
+  const steps = joinSteps(path);
+  const idx = steps.indexOf(step);
+  const set = <K extends keyof JoinForm>(k: K, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const go = (s: JoinStep) => { setError(''); setNote(''); setStep(s); };
+  const next = () => go(steps[idx + 1]);
+  const back = () => go(steps[idx - 1]);
+  const accountExists = /already have an account/i.test(error);
+
+  const google = async () => {
+    setBusy(true); setError('');
+    const err = await startGoogle({ kind: 'join', code }, '/join/' + code);
+    if (err) { setError(err); setBusy(false); }
+  };
+
+  const sendCode = async () => {
+    setBusy(true); setError(''); setNote('');
     try {
-      const res = await centerAccounts<{ email: string }>({ action: 'register', slug: center.slug, code, ...form });
-      const { error: sErr } = await supabase.auth.signInWithPassword({ email: res.email, password: form.password });
-      if (sErr) throw new Error('Account created — sign in with your phone number and password.');
-      navigate('/student', { replace: true });
-    } catch (err) { setError((err as Error).message); }
+      await centerAccounts({ action: 'send_email_code', slug: center.slug, code, email: form.email.trim() });
+      return true;
+    } catch (e) { setError((e as Error).message); return false; }
     finally { setBusy(false); }
   };
 
+  const resend = async () => { if (await sendCode()) setNote('We sent a new code.'); };
+
+  const finish = async (skip = false) => {
+    const school = skip ? '' : form.school.trim(), grade = skip ? '' : form.grade.trim();
+    setBusy(true); setError('');
+    try {
+      if (path === 'google') {
+        const { error: err } = await supabase.rpc('tenant_join_with_google' as any, {
+          _slug: center.slug, _code: code, _name: form.name.trim(), _phone: form.phone, _school: school, _grade: grade,
+        });
+        if (err) throw new Error(err.message);
+        // The session object is unchanged by the join, so refresh it for the portal's role check.
+        await supabase.auth.refreshSession();
+      } else {
+        const res = await centerAccounts<{ email: string }>({
+          action: 'register_verified', slug: center.slug, code, name: form.name.trim(), phone: form.phone, email: form.email.trim(),
+          email_code: form.emailCode, password: form.password, school, grade,
+        });
+        const { error: sErr } = await supabase.auth.signInWithPassword({ email: res.email, password: form.password });
+        if (sErr) throw new Error('Your account is ready. Sign in with your phone number and password.');
+      }
+      navigate('/student', { replace: true });
+    } catch (e) {
+      const msg = (e as Error).message;
+      setError(msg);
+      // Send the student to the field the server is complaining about.
+      if (/already have an account/i.test(msg)) return;
+      if (/phone/i.test(msg)) setStep('phone');
+      else if (/code/i.test(msg) && path === 'email') setStep('code');
+    } finally { setBusy(false); }
+  };
+
+  const run = async () => {
+    if (step === 'email') { if (await sendCode()) next(); }
+    else if (step === 'school') await finish();
+    else next();
+  };
+
+  const label = step === 'school' ? (busy ? 'Joining…' : 'Join class') : 'Continue';
+  const skippable = step === 'school';
+
   return (
-    <AuthSplitLayout
-      eyebrow={name.toUpperCase()}
-      headline={cls ? `Join\n${cls.class_name}.` : 'Join your\nclass.'}
-      subline={`Create your ${name} account — it takes less than a minute.`}
-      accent={center.portal_settings?.brand_color || undefined}
-      features={[{ label: 'Instant enrollment' }, { label: 'SAT practice' }, { label: 'Live classes' }]}
-    >
+    <AuthSplitLayout headline="Join your class">
       <div className="space-y-8">
         <div className="space-y-3">
           <CenterLogo center={center} className="h-12 w-12" />
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
-            {cls ? <>Join <span className="text-white/60">{cls.class_name}</span></> : 'Create your account'}
-          </h1>
-          <p className="text-sm text-white/50">{name}</p>
+          <p className="text-sm text-muted-foreground">{centerName}{cls ? ` · ${cls.class_name}` : ''}</p>
         </div>
 
         {cls === undefined ? (
-          <p className="text-sm text-white/50">Loading…</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         ) : cls === null ? (
-          <p className="text-sm text-white/60">This join link isn't valid. Ask your teacher for a new one.</p>
+          <p className="text-sm text-muted-foreground">This join link isn't valid. Ask your teacher for a new one.</p>
         ) : (
-          <form onSubmit={submit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="j-name" className={authLabelClasses}>Full name</Label>
-              <Input id="j-name" autoComplete="name" value={form.name} onChange={set('name')} required className={authInputClasses} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="j-phone" className={authLabelClasses}>Phone number</Label>
-              <Input id="j-phone" inputMode="tel" autoComplete="tel" placeholder="+1 555 123 4567" value={form.phone} onChange={set('phone')} required className={authInputClasses} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="j-email" className={authLabelClasses}>Email (optional)</Label>
-              <Input id="j-email" type="email" autoComplete="email" value={form.email} onChange={set('email')} className={authInputClasses} />
-            </div>
-            <div className="grid grid-cols-[1fr_6rem] gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="j-school" className={authLabelClasses}>School</Label>
-                <Input id="j-school" value={form.school} onChange={set('school')} className={authInputClasses} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="j-grade" className={authLabelClasses}>Grade</Label>
-                <Input id="j-grade" value={form.grade} onChange={set('grade')} className={authInputClasses} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="j-pw" className={authLabelClasses}>Create a password</Label>
-              <PasswordInput id="j-pw" autoComplete="new-password" value={form.password} onChange={set('password')} required minLength={8} className={authInputClasses} />
-              <p className="text-xs text-white/35">8+ characters with letters and numbers. You'll sign in with your phone number.</p>
-            </div>
-            <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? 'Joining…' : 'Join class'}</Button>
-            {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-          </form>
+          <div className="space-y-6">
+            {step !== 'start' && <Progress value={(idx / (steps.length - 2)) * 100} aria-label="Sign-up progress" className="!h-1" />}
+            <h1 ref={title} tabIndex={-1} className="text-3xl font-bold outline-none">{step === 'start' ? `Join ${cls.class_name}` : TITLES[step]}</h1>
+
+            {step === 'start' && <div className="space-y-3">
+              <p className="text-lg text-muted-foreground">Make your {centerName} account. It takes about a minute.</p>
+              <Button size="lg" className="h-12 w-full rounded-full text-base" disabled={busy} onClick={google}>Continue with Google</Button>
+              <Button size="lg" variant="outline" className="h-12 w-full rounded-full text-base" disabled={busy} onClick={() => { setPath('email'); next(); }}>Use my email instead</Button>
+            </div>}
+
+            {step === 'name' && <Field id="j-name" label="Full name">
+              <Input id="j-name" autoFocus autoComplete="name" value={form.name} onChange={e => set('name', e.target.value)} className={authInputClasses} />
+            </Field>}
+            {step === 'phone' && <Field id="j-phone" label="Phone number" hint="Your center uses this to find you.">
+              <Input id="j-phone" autoFocus type="tel" inputMode="tel" autoComplete="tel" placeholder="+976 9911 2233" value={form.phone} onChange={e => set('phone', e.target.value)} className={authInputClasses} />
+            </Field>}
+            {step === 'email' && <Field id="j-email" label="Email">
+              <Input id="j-email" autoFocus type="email" autoComplete="email" value={form.email} onChange={e => set('email', e.target.value)} className={authInputClasses} />
+            </Field>}
+            {step === 'code' && <div className="space-y-3">
+              <p className="text-muted-foreground">We sent a 6-digit code to {form.email.trim()}.</p>
+              <InputOTP autoFocus maxLength={6} inputMode="numeric" aria-label="6-digit code" value={form.emailCode} onChange={v => set('emailCode', v.replace(/\D/g, ''))}>
+                <InputOTPGroup>{[0, 1, 2, 3, 4, 5].map(i => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>
+              </InputOTP>
+              <Button type="button" variant="link" className="h-auto p-0" disabled={busy} onClick={resend}>Send a new code</Button>
+            </div>}
+            {step === 'password' && <Field id="j-pw" label="Password" hint="At least 8 characters, with a letter and a number.">
+              <PasswordInput id="j-pw" autoFocus autoComplete="new-password" value={form.password} onChange={e => set('password', e.target.value)} className={authInputClasses} />
+            </Field>}
+            {step === 'school' && <div className="grid grid-cols-[1fr_6rem] gap-4">
+              <Field id="j-school" label="School">
+                <Input id="j-school" autoFocus value={form.school} onChange={e => set('school', e.target.value)} className={authInputClasses} />
+              </Field>
+              <Field id="j-grade" label="Grade">
+                <Input id="j-grade" value={form.grade} onChange={e => set('grade', e.target.value)} className={authInputClasses} />
+              </Field>
+            </div>}
+
+            {note && <p role="status" className="text-sm text-muted-foreground">{note}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">
+              {error}{accountExists && <> <Link to="/" className="font-semibold underline">Sign in</Link></>}
+            </p>}
+
+            {step !== 'start' && <div className="flex gap-2">
+              <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={busy} onClick={back}>Back</Button>
+              {skippable && <Button variant="ghost" size="lg" className="h-12 rounded-full" disabled={busy} onClick={() => finish(true)}>Skip</Button>}
+              <Button size="lg" className="h-12 flex-1 rounded-full text-base" disabled={busy || !canContinue(step, form)} onClick={run}>{label}<ArrowRight className="h-5 w-5" /></Button>
+            </div>}
+          </div>
         )}
       </div>
     </AuthSplitLayout>
+  );
+}
+
+function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className={authLabelClasses}>{label}</Label>
+      {children}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
