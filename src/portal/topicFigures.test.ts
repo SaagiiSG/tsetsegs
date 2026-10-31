@@ -20,6 +20,16 @@ describe('topicFigures', () => {
     const first = (n: number) => topicFigures(n, TOPICS.find(t => t.n === n)!.area)[0].name;
     expect([1, 3, 13, 16, 21, 24, 25].map(first)).toEqual(['cubes', 'balance', 'beams', 'parabola', 'unitcircle', 'jar', 'scatter']);
   });
+  it('Advanced Math topics show their own figures, in slot order', () => {
+    const names = (n: number) => topicFigures(n, 'Advanced Math').map(f => f.name);
+    expect(names(1).slice(0, 3)).toEqual(['cubes', 'pegs', 'fold']);
+    expect(names(2).slice(0, 4)).toEqual(['areatray', 'bins', 'foil', 'factor']);
+    expect(names(5).slice(0, 2)).toEqual(['machine', 'vending']);
+    expect(names(9).slice(0, 2)).toEqual(['stacks', 'cells']);
+    expect(names(12).slice(0, 2)).toEqual(['complete', 'throw']);
+    expect(names(15).slice(0, 2)).toEqual(['shift', 'mirror']);
+    expect(names(16).slice(0, 3)).toEqual(['parabola', 'fountain', 'halfpipe']);
+  });
   it('never repeats a figure within a topic, and fills at least two slots', () => {
     for (const t of TOPICS) {
       const names = topicFigures(t.n, t.area).map(f => f.name);

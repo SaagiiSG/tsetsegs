@@ -13,7 +13,7 @@ describe('one topic map', () => {
   it('a 10-video topic shows 3 area figures, left-right-left, and padlocks on locked videos', () => {
     const html = render(unitOf('Exponents & Radicals', 10, ['e1']), 'e2');
     expect(html.match(/data-side="(left|right)"/g)).toEqual(['data-side="left"', 'data-side="right"', 'data-side="left"']);
-    expect(html.match(/data-hairline="parabola"/g)).toHaveLength(1);
+    expect(html.match(/data-hairline="(cubes|pegs|fold)"/g)).toEqual(['data-hairline="cubes"', 'data-hairline="pegs"', 'data-hairline="fold"']);
     expect(html.match(/data-hairline="padlock"/g)).toHaveLength(8);
     expect(html.match(/>Start</g)).toHaveLength(1);
     expect(html).toContain('Topic 1 · Exponents &amp; Radicals');

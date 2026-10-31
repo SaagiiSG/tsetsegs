@@ -6,8 +6,9 @@ import { HL } from './kernel.js';
  * The pointer is the vertex: it lands on the plate (which never moves), snaps
  * to the nearest grid point, and the turning point follows on a spring. Across,
  * the whole rail slides; up and down, the arms follow the turning point's
- * height on a second spring. The rail is cut where it meets the ruled edge.
- * The slider is a, the opening.
+ * height on a second spring. Each arm ends on a diamond round the vertex, the
+ * ruled edge's own shape, and the vertex stays that far inside the edge, so
+ * the whole rail stays on the plate for every opening. The slider is a.
  *
  * The rail is a disc swept up its height and along the curve, so its outline
  * is the curve pushed out, on each side, to the farthest point of that swept
@@ -18,7 +19,8 @@ const {
   spring, stepS, flatDot, mk, place, pointer, put, register, disposer, solid,
 } = HL;
 
-const U = 12, Q = U / Math.SQRT2, L = 62, PB = 4, ED = 6.5, V = 5, TOP = 3;
+// SPAN + TOP stays 0.2 under ED: the rail's half-width and cap stay on the ruling.
+const U = 12, Q = U / Math.SQRT2, L = 62, PB = 4, ED = 6.5, V = 5, TOP = 1, SPAN = 5.3;
 const RW = 1.6, RH = 5, RB = 0.6, REST = [-1, -2];
 
 /** Graph (x, y) to world on the plate: the graph's x runs to the screen's right, its y away from the viewer. */
@@ -59,11 +61,11 @@ function mount({ stage, svg, read }, value) {
   }
   const add = (p, v) => [p[0] + v[0], p[1] + v[1]];
 
-  /** One arm, from the vertex outwards: near the vertex at height k, far out at k2; it stops at the ruled edge. */
+  /** One arm, from the vertex outwards: near the vertex at height k, far out at k2. It ends where t + at² reaches SPAN; the edge cut only catches a stray frame. */
   function arm(s, h, k, k2, a) {
-    const pts = [];
-    for (let t = 0; t <= 9; t += 0.1) {
-      const q = [h + s * t, lerp(k, k2, (t * t) / (t * t + 1)) + a * t * t];
+    const pts = [], T = (Math.sqrt(1 + 4 * a * SPAN) - 1) / (2 * a);
+    for (let i = 0, n = Math.ceil(T * 10); i <= n; i++) {
+      const t = (T * i) / n, q = [h + s * t, lerp(k, k2, (t * t) / (t * t + 1)) + a * t * t];
       const f = Math.abs(q[0]) + Math.abs(q[1]), p = pts[pts.length - 1];
       if (f > ED && p) {
         const fp = Math.abs(p[0]) + Math.abs(p[1]), u = (ED - fp) / (f - fp);
@@ -104,7 +106,9 @@ function mount({ stage, svg, read }, value) {
     const key = [H.x, K.x, K2.x, A.x].join();
     if (key === last) return;
     last = key;
-    const left = arm(-1, H.x, K.x, K2.x, A.x).reverse(), right = arm(1, H.x, K.x, K2.x, A.x);
+    // the lagging arms may not stand higher or lower than a vertex could at this h
+    const k2 = clamp(K2.x, Math.abs(H.x) - V, TOP - Math.abs(H.x));
+    const left = arm(-1, H.x, K.x, k2, A.x).reverse(), right = arm(1, H.x, K.x, k2, A.x);
     put(rod, rail(left.concat(right.slice(1)).map(([x, y]) => at(x, y, 0))));
     place(dot, at(H.x, K.x, RH));
   }
@@ -124,8 +128,8 @@ function mount({ stage, svg, read }, value) {
   function aim(p) {
     over = !!p;
     if (p) {
-      const [X, Y] = unproj(C, p[0], p[1], 0), h = clamp(Math.round((X - Y) / (2 * Q)), -V, V), e = V - Math.abs(h);
-      H.t = h; K.t = clamp(Math.round(-(X + Y) / (2 * Q)), -e, Math.min(TOP, e));
+      const [X, Y] = unproj(C, p[0], p[1], 0), h = clamp(Math.round((X - Y) / (2 * Q)), -(V + TOP) / 2, (V + TOP) / 2);
+      H.t = h; K.t = clamp(Math.round(-(X + Y) / (2 * Q)), Math.abs(h) - V, TOP - Math.abs(h));
     } else { H.t = REST[0]; K.t = REST[1]; }
     rod.sil.classList.toggle("hi", over);
     say();
@@ -146,6 +150,6 @@ export default {
   means: "A bent rail stands on a graphing plate; the pointer is its vertex, and the arms follow it on a spring.",
   rules: [1, 3, 8, 9],
   range: [0.5, 1, 2],
-  tour: [[241, 157], [139, 177], [200, 208], null],
+  tour: [[241, 177], [139, 187], [200, 208], null],
   mount,
 };
