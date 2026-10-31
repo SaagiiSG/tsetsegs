@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { LoadError } from './CenterPracticeBrowser';
 import { topicUnits, upNext, type VideoState } from './videoTopics';
 import { TopicMap, type Video } from './TopicMap';
 import { TopicList, unitKey } from './TopicList';
+import { useIsWide } from './useIsWide';
 
 type MeLite = { student: { id: string }; videosDone: string[] };
 
@@ -32,6 +33,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
   const navigate = useNavigate();
   const location = useLocation();
   const reduce = useReducedMotion();
+  const wide = useIsWide();
   const list = (videos.data ?? []) as Video[];
   const done = useMemo(() => new Set(me.videosDone), [me.videosDone]);
   const [open, setOpen] = useState<Video | null>(null);
@@ -46,14 +48,37 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
   const byId = useMemo(() => new Map(units.flatMap(u => u.items.map(it => [it.video.id, { state: it.state, topic: u.n ? `Topic ${u.n}` : u.name }] as const))), [units]);
   const watched = list.filter(v => done.has(v.id)).length;
 
-  // A topic named in the address counts only if we have it; otherwise the laptop shows the up-next topic.
+  // A topic named in the address counts only if we have it; otherwise the laptop shows the up-next topic as it was when
+  // the videos loaded, so finishing that topic keeps its map (and the opening chest) on screen.
   const asked = params.get('topic');
   const picked = asked !== null && units.some(u => unitKey(u) === asked) ? asked : null;
-  const selected = picked ?? (next ? unitKey(units[next.unitIndex]) : units.length ? unitKey(units[0]) : null);
+  const firstDefault = useRef<string | null>(null);
+  if (firstDefault.current === null && units.length) firstDefault.current = next ? unitKey(units[next.unitIndex]) : unitKey(units[0]);
+  const fallback = units.some(u => unitKey(u) === firstDefault.current) ? firstDefault.current : units.length ? unitKey(units[0]) : null;
+  const selected = picked ?? fallback;
   const unit = units.find(u => unitKey(u) === selected);
+  // A phone mounts a map only once a topic is picked, so a tap never shows another topic's map on the way in.
+  const showMap = !!unit && (!!picked || wide !== false);
+
+  // The portal scrolls inside #root. A phone remembers where the list was, to come back to it.
+  const mapRef = useRef<HTMLDivElement>(null);
+  const listTop = useRef(0);
+  const wasPicked = useRef(picked);
+  useEffect(() => {
+    const root = document.getElementById('root');
+    if (picked && picked !== wasPicked.current) {
+      // A newly picked map opens at its top: always on a phone; on a laptop only when its top is above the screen.
+      const el = mapRef.current;
+      if (el && (wide === false || el.getBoundingClientRect().top < 0)) el.scrollIntoView({ block: 'start' });
+    } else if (!picked && wasPicked.current && wide === false && root) root.scrollTop = listTop.current;
+    wasPicked.current = picked;
+  }, [picked, wide]);
 
   // On a laptop picking swaps the map in place; on a phone it opens the map as a new page, so back returns to the list.
-  const pick = (key: string) => setParams({ topic: key }, { replace: window.matchMedia('(min-width: 1024px)').matches });
+  const pick = (key: string) => {
+    if (wide === false) listTop.current = document.getElementById('root')?.scrollTop ?? 0;
+    setParams({ topic: key }, { replace: wide !== false });
+  };
   const back = () => (location.key !== 'default' ? navigate(-1) : setParams({}, { replace: true }));
 
   const markDone = async (v: Video) => {
@@ -96,10 +121,10 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
           <div data-column="list" className={cn('lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto', picked && 'max-lg:hidden')}>
             <TopicList units={units} selected={selected} onPick={pick} />
           </div>
-          <div data-column="map" className={cn('min-w-0', !picked && 'max-lg:hidden')}>
+          <div ref={mapRef} data-column="map" className={cn('min-w-0 scroll-mt-24', !picked && 'max-lg:hidden')}>
             <Button variant="ghost" className="lg:hidden -ml-2 mb-1" onClick={back}>‹ Topics</Button>
             <AnimatePresence mode="wait" initial={false}>
-              {unit && (
+              {showMap && unit && (
                 <motion.div key={selected} className="mx-auto w-full max-w-3xl"
                   initial={reduce ? false : { x: 48, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
                   transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}>

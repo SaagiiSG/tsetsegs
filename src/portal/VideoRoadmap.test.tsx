@@ -3,6 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack/react-query';
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+// The screen width: null (unknown, as on a server) renders like a laptop; tests set false for a phone.
+const screen = vi.hoisted(() => ({ wide: null as boolean | null }));
+vi.mock('./useIsWide', () => ({ useIsWide: () => screen.wide }));
 import { CenterContext } from './centerContext';
 import { VideoRoadmap } from './VideoRoadmap';
 const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
@@ -49,6 +52,15 @@ describe('concept videos page', () => {
     expect(column(picked, 'list')).toContain('max-lg:hidden');
     expect(column(picked, 'map')).not.toContain('max-lg:hidden');
     expect(picked).toContain('‹ Topics');
+  });
+  it('on a phone, no map is mounted until a topic is picked', () => {
+    screen.wide = false;
+    try {
+      const list = render('/student/videos');
+      expect(mapTitle(list)).toBeUndefined();
+      expect(list).not.toContain('data-hairline=');
+      expect(mapTitle(render('/student/videos?topic=5'))).toBe('Topic 5 · Functions');
+    } finally { screen.wide = null; }
   });
   it('no emoji', () => expect(render('/student/videos')).not.toMatch(/\p{Extended_Pictographic}/u));
   it('a failed read says so, with Try again, and no 0 watched', () => {
