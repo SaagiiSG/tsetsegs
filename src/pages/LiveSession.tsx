@@ -76,6 +76,7 @@ export default function LiveSession() {
   const [isJoining, setIsJoining] = useState(false);
   // The server holds the answer key: it grades each answer and reveals the right one once time is up.
   const [checking, setChecking] = useState(false);
+  const [sendFailed, setSendFailed] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [isRestoring, setIsRestoring] = useState(() => {
     // Synchronously check localStorage so we never flash the join form on refresh
@@ -90,6 +91,7 @@ export default function LiveSession() {
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const revealRef = useRef<ReturnType<typeof setTimeout>>();
+  const pendingAnswerRef = useRef<Promise<unknown>>();
   const questionStartRef = useRef<number>(0);
   const hasAnsweredRef = useRef(false);
 
@@ -197,7 +199,10 @@ export default function LiveSession() {
               .select("question_id")
               .eq("participant_id", participant.id);
             if (answers) {
-              setAnsweredQuestionIds(new Set(answers.map((a: any) => a.question_id)));
+              // The ref too, before startQuestion reads it (as handleJoin does).
+              const ids = new Set(answers.map((a) => a.question_id));
+              setAnsweredQuestionIds(ids);
+              answeredRef.current = ids;
             }
 
             if (data.status === "active") {
@@ -231,6 +236,7 @@ export default function LiveSession() {
     setIsCorrect(null);
     setPointsEarned(0);
     setChecking(false);
+    setSendFailed(false);
 
     // If this device already answered this question (refreshed mid-game), don't let them re-answer
     const alreadyAnswered = q ? answeredRef.current.has(q.id) : false;
@@ -241,10 +247,14 @@ export default function LiveSession() {
     setTimeLeft(timePerQ);
 
     // Ask for the right answer when this phone's time runs out (the server's ran out a moment earlier).
+    // Seeing it ends this player's turn on the server, so first let an answer still being checked land.
     clearTimeout(revealRef.current);
     if (q && joinCode) {
       revealRef.current = setTimeout(async () => {
-        const { data } = await supabase.rpc("live_session_reveal" as never, { _join_code: joinCode.toUpperCase(), _question: q.id } as never);
+        await pendingAnswerRef.current;
+        const pid = participantIdRef.current;
+        if (!pid) return;
+        const { data } = await supabase.rpc("live_session_reveal" as never, { _join_code: joinCode.toUpperCase(), _participant: pid, _question: q.id } as never);
         if (typeof data === "string") setRevealed((prev) => ({ ...prev, [q.id]: data }));
       }, timePerQ * 1000);
     }
@@ -263,8 +273,9 @@ export default function LiveSession() {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current);
+          // While an answer is being checked, keep ticking: a send that fails hands the question back, and time's up then.
           if (!hasAnsweredRef.current) {
+            clearInterval(timerRef.current);
             // Auto-submit inline to avoid stale closure
             hasAnsweredRef.current = true;
             setPhase("feedback");
@@ -397,7 +408,6 @@ export default function LiveSession() {
     const pid = participantIdRef.current;
     if (hasAnsweredRef.current || !sess || !pid || !joinCode) return;
     hasAnsweredRef.current = true;
-    clearInterval(timerRef.current);
 
     const index = currentIndexRef.current;
     const currentQ = questionsRef.current[index];
@@ -405,15 +415,30 @@ export default function LiveSession() {
 
     const timeTaken = Date.now() - questionStartRef.current;
     setChecking(true);
-    // The server grades the answer, records it and adds the points.
-    const { data, error } = await supabase.rpc("live_session_answer" as never, {
+    setSendFailed(false);
+    // The server grades the answer, records it and adds the points. A real promise, so the reveal can wait on it.
+    const call = Promise.resolve(supabase.rpc("live_session_answer" as never, {
       _join_code: joinCode.toUpperCase(),
       _participant: pid,
       _question: currentQ.id,
       _choice: choice,
       _time_taken_ms: timeTaken,
-    } as never);
-    if (error) console.error("Error submitting answer:", error);
+    } as never));
+    pendingAnswerRef.current = call;
+    const { data, error } = await call;
+    // The teacher moved on or ended the game while this was being checked: leave the screen alone.
+    const stillHere = currentIndexRef.current === index && phaseRef.current !== "finished";
+
+    // 42501 is the server refusing it (time up, or already answered). Anything else didn't get through: keep the question open.
+    if (error && error.code !== "42501") {
+      console.error("Error submitting answer:", error);
+      if (stillHere) {
+        hasAnsweredRef.current = false;
+        setChecking(false);
+        setSendFailed(true);
+      }
+      return;
+    }
     const result = error ? null : (data as unknown as { is_correct: boolean; points: number } | null);
     const points = result?.points ?? 0;
 
@@ -424,11 +449,11 @@ export default function LiveSession() {
       answeredRef.current = next;
       return next;
     });
-    // The teacher moved on while this answer was being checked: keep the points, leave the new question alone.
-    if (currentIndexRef.current !== index) return;
+    if (!stillHere) return;
 
+    clearInterval(timerRef.current);
     setChecking(false);
-    // Refused (time was up on the server): show it as "Time's up!".
+    // Refused (time was up on the server, or this phone already saw the answer): show it as "Time's up!".
     setSelectedAnswer(result ? choice : null);
     setIsCorrect(!!result?.is_correct);
     setPointsEarned(points);
@@ -600,6 +625,11 @@ export default function LiveSession() {
             </Button>
           ))}
         </div>
+        {sendFailed && (
+          <p role="alert" className="mt-3 text-center text-sm text-destructive">
+            Couldn't send — tap again
+          </p>
+        )}
       </div>
     );
   }

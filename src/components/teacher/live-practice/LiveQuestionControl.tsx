@@ -105,13 +105,15 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
         .eq("question_id", currentQ.id);
 
       if (data) {
+        // answer "" = the phone saw the answer at time-up without answering (0114's reveal): a time-out, not counted.
+        const answered = data.filter((a) => a.answer !== "");
         const dist: Record<string, number> = {};
         let correct = 0;
-        data.forEach((a) => {
+        answered.forEach((a) => {
           dist[a.answer] = (dist[a.answer] || 0) + 1;
           if (a.is_correct) correct++;
         });
-        setAnswerStats({ total: data.length, correct, distribution: dist });
+        setAnswerStats({ total: answered.length, correct, distribution: dist });
       }
     };
 
@@ -129,7 +131,7 @@ export function LiveQuestionControl({ sessionId, timePerQuestion, onFinish }: Li
         },
         (payload) => {
           const ans = payload.new as any;
-          if (ans.question_id === currentQ.id) {
+          if (ans.question_id === currentQ.id && ans.answer !== "") {
             setAnswerStats((prev) => ({
               total: prev.total + 1,
               correct: prev.correct + (ans.is_correct ? 1 : 0),
