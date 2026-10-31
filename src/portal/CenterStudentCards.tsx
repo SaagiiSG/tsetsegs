@@ -346,16 +346,15 @@ export default function CenterStudentCards({
     queryFn: async (): Promise<CardsData> => {
       const marks = (table: string) => allPages(p => untyped(table).select('student_id, session_date, status')
         .eq('class_id', cls.id).order('session_date').order('id').range(p, p + 999)) as unknown as Promise<Mark[]>;
-      // 0103 may not be live yet: its reads come back empty instead of failing the page.
-      const quiet = <T,>(read: PromiseLike<{ data: unknown; error: unknown }>) =>
-        Promise.resolve(read).then(({ data, error }) => (error ? [] : data ?? []) as T[], () => [] as T[]);
+      const rows = <T,>(read: PromiseLike<{ data: unknown; error: unknown }>) =>
+        Promise.resolve(read).then(({ data, error }) => { if (error) throw error; return (data ?? []) as T[]; });
       const [att, hw, tests, notes] = await Promise.all([
         marks('tenant_attendance'),
-        marks('tenant_homework').catch(() => [] as Mark[]),
+        marks('tenant_homework'),
         // No paper column: it isn't granted.
-        quiet<TestRow>(supabase.from('tenant_test_attempts').select('id, student_id, test_name, completed_at, math_score')
+        rows<TestRow>(supabase.from('tenant_test_attempts').select('id, student_id, test_name, completed_at, math_score')
           .in('student_id', ids).eq('status', 'completed').order('completed_at', { ascending: false })),
-        quiet<Note>(untyped('tenant_student_notes').select(NOTE_COLS).in('student_id', ids).order('created_at', { ascending: false })),
+        rows<Note>(untyped('tenant_student_notes').select(NOTE_COLS).in('student_id', ids).order('created_at', { ascending: false })),
       ]);
       return { att, hw, tests, notes };
     },
