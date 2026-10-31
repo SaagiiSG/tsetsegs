@@ -18,7 +18,7 @@ export function canContinue(step: JoinStep, f: JoinForm): boolean {
   }
 }
 
-// Exact server messages (tenant-accounts, emailCode.ts CODE_ERRORS, migration 0107) mapped to the step that fixes them.
+// Exact server messages (tenant-accounts, emailCode.ts CODE_ERRORS, migration 0110) mapped to the step that fixes them.
 const ERROR_STEPS: Record<string, JoinStep> = {
   'Enter a valid phone number.': 'phone',
   'This phone number is not active here. Ask your center.': 'phone',

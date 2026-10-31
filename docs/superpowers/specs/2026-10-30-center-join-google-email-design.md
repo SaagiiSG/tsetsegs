@@ -70,7 +70,7 @@ Connect flow (the student is signed in with phone + password):
 - **Switch to phone sign-in** (student page, Google accounts only): for a student who can't use Google (wrong account, lost account, school account blocks outside apps, Google blocked in their country). Sets `user_id` to null so the student creates a new password with their phone (the existing "create a password" step). **Keeps `email` and `google_email`** (Saagii, 30 Oct: "no disconnect google cuz center might want to send notif via email"), so the gate stays off and announcement emails still reach them. They can connect a Google account again later from the gate's connect flow, which replaces `google_email`.
 - To tell "signs in with Google" from "connected but signs in with phone", the row also stores `google_user_id` (the Google auth user that was connected). Signs in with Google = `user_id = google_user_id`. `student_lookup`'s `google` flag uses that, not `google_email`.
 
-## Data (migration 0107)
+## Data (migration 0110; first planned as 0107, which Lovable used for its own placeholder on 31 Oct)
 
 - `tenant_students`: `email text`, `google_email text`, `google_user_id uuid`, `google_due_on date DEFAULT (current_date + 7)`.
 - `tenant_email_codes`: email, center, code hash, expires_at (10 min), attempts, created_at. Service role only (written by the `tenant-accounts` function).
@@ -78,7 +78,7 @@ Connect flow (the student is signed in with phone + password):
 - RPCs, all `SECURITY DEFINER`, `search_path = public`, granted to `authenticated` only:
   - `tenant_join_with_google(_slug, _code, _name, _phone, _school, _grade)`: center enabled and not blocked; class by code; name ≥ 2; phone 6–15 digits; caller has an email in the JWT; caller isn't already a student or staff member of the center; phone not used by a student with an account (a phone held by an admin-added student with `user_id` null is claimed instead); same 200-per-hour cap as `register`; inserts the student (`user_id` = `google_user_id` = caller, `email` = `google_email` = JWT email) and a `tenant_registrations` row (approved).
   - `tenant_claim_with_google(_slug, _phone)`, `tenant_google_link_start(_institution)`, `tenant_google_link_finish(_token)` as above.
-- Migration number 0107: 0103 (teacher), 0104/0105 (this branch) and 0106 (teacher's proctored tests) come first. Bring the branch up to date with origin/main and keep `_journal.json` in idx order before pushing.
+- Migration number 0110: 0103 and 0106 (teacher, live 31 Oct), Lovable's 0107 placeholder, 0104/0105 (this branch) and 0108/0109 (live-demo session) come first. Bring the branch up to date with origin/main and keep `_journal.json` in idx order before pushing.
 
 ## Server (`tenant-accounts`, Lovable must deploy)
 
@@ -97,7 +97,7 @@ Connect flow (the student is signed in with phone + password):
 
 Saagii: "ask them if they are able to connect their google account if they are not then we will do email verification."
 
-- New column `tenant_students.email_verified_at` (migration 0107, edited in place). `register_verified` sets it on insert and on takeover, so students who joined by email never see the connect screen.
+- New column `tenant_students.email_verified_at` (migration 0110, edited in place). `register_verified` sets it on insert and on takeover, so students who joined by email never see the connect screen.
 - The connect screen first asks "Can you sign in with a Google account?". Yes runs the connect-Google flow above. No asks for an email, sends a 6-digit code, and takes the code. A match saves the email and `email_verified_at` on the student's row and the screen never comes back.
 - Two `tenant-accounts` actions for a signed-in active student of the center (no staff role needed): `student_email_code` and `student_email_verify`. Same code rules as the join page: 6 digits, 10 minutes, 5 tries (the try is charged before the verdict), 1 send per 60 s and 5 per hour per email, 300 per center per hour, suppressed address gives a 400. Template `center-email-code`.
 - "Later (N days left)" still lasts 7 days, then it is required. Google or a verified email both count as done.
@@ -113,7 +113,7 @@ Saagii: "ask them if they are able to connect their google account if they are n
 ## Constraints
 
 - Google can only be tested on the published site; Saagii will test it on `zz-signin-test.flowersos.co`. Everything else is tested locally (PGlite for the SQL, browser checks for the screens, the function logic by reading + a local Deno run if available).
-- Order on release: Lovable applies 0104, 0105 and 0107 and deploys `tenant-accounts` **before** the new join page is published, or the join page's email path fails. Until then the old one-form join keeps working.
+- Order on release: Lovable applies 0104, 0105 and 0110 and deploys `tenant-accounts` **before** the new join page is published, or the join page's email path fails. Until then the old one-form join keeps working.
 - shadcn components only; plain sixth-grade copy; no emoji; `Array.prototype.at` is not allowed (Lovable's preview).
 
 ## Left to the builder
@@ -122,13 +122,13 @@ Exact screen copy, the hashing scheme for codes and tokens (pgcrypto/sha256), ra
 
 ## Release steps
 
-1. The teacher session pushes 0103 first. Then this branch is brought up to date with origin/main: `_journal.json` stays in `idx` order (0103, 0104, 0105, 0106, 0107) and the snapshot `prevId`s are re-pointed into one chain: 0104 → 0103, 0105 → 0104, 0106 → 0105, 0107 → 0106.
+1. Bring this branch up to date with origin/main (the teacher's 0103/0106 and Lovable's 0107 placeholder landed 31 Oct; the live-demo session's 0108/0109 may land too). `_journal.json` stays in `idx` order and the snapshot `prevId`s form one chain: 0104 → 0103, 0105 → 0104, 0106 → 0105, 0107 → 0106, then 0108/0109 if present, and 0110 → the snapshot just before it.
 
-Steps 2–4 run right after the push, in one sitting. Until step 3 is done, nobody publishes (tell the teacher and live-demo sessions): the new join page, Google buttons and Start sprints need 0104/0105/0107 and the new function.
+Steps 2–4 run right after the push, in one sitting. Until step 3 is done, nobody publishes (tell the teacher and live-demo sessions): the new join page, Google buttons and Start sprints need 0104/0105/0110 and the new function.
 
 2. Before step 3, Saagii runs this on the live database (Lovable SQL editor or Supabase). It must return no rows, or the new unique index will fail:
    `SELECT institution_id, user_id, count(*) FROM tenant_students WHERE user_id IS NOT NULL GROUP BY 1,2 HAVING count(*) > 1;`
-3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply these migration files exactly as written: drizzle/migrations/0104_center_schedule_templates.sql, drizzle/migrations/0105_center_sprint_seasons.sql, drizzle/migrations/0107_center_join_google_email.sql. Deploy supabase/functions/tenant-accounts. Do not touch 0103 or 0106. Don't change or apply anything else. Apply them in this order. Only if all three applied without errors, deploy supabase/functions/tenant-accounts. If any fails, stop and tell me. Do not create or apply any other migration file." If Lovable writes its own "apply_pending" copy, it must use a number after 0109 (0108 and 0109 belong to the live-demo session).
+3. Lovable applies 0104, 0105 and 0110 and deploys the tenant-accounts function. Message to paste: "Apply these migration files exactly as written: drizzle/migrations/0104_center_schedule_templates.sql, drizzle/migrations/0105_center_sprint_seasons.sql, drizzle/migrations/0110_center_join_google_email.sql. Deploy supabase/functions/tenant-accounts. Do not touch any other migration file (0103, 0106, 0107, 0108, 0109 are already applied or belong to others). Don't change or apply anything else. Apply them in this order. Only if all three applied without errors, deploy supabase/functions/tenant-accounts. If any fails, stop and tell me. Do not create or apply any other migration file." If Lovable writes its own "apply_pending" copy, it must use a number after 0110.
 4. Publish.
 5. Saagii tests Google on zz-signin-test.flowersos.co:
    - Join with Google from a ZZ Batch link.

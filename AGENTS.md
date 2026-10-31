@@ -43,5 +43,5 @@
 
 - One auth user per student, in `tenant_students.user_id`; the student signs in with Google when `user_id = google_user_id`. `google_user_id` and `password_user_id` only remember the other logins.
 - `tenant_email_codes` and `tenant_google_links` are service-role/RPC only.
-- Join, claim and connect go through the 0107 RPCs.
+- Join, claim and connect go through the 0110 RPCs.
 - Never look a student up by anything but `user_id`.

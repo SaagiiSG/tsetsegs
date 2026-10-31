@@ -1,4 +1,4 @@
-/** New tenant_students columns (migration 0107). Optional: before it is applied, select('*') does not return them. */
+/** New tenant_students columns (migration 0110). Optional: before it is applied, select('*') does not return them. */
 export type GoogleFields = {
   user_id: string | null;
   email?: string | null; google_email?: string | null; google_user_id?: string | null; google_due_on?: string | null; email_verified_at?: string | null;
