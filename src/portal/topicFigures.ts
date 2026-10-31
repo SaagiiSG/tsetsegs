@@ -23,6 +23,14 @@ import shift from './hairline/shift.js';
 import mirror from './hairline/mirror.js';
 import fountain from './hairline/fountain.js';
 import halfpipe from './hairline/halfpipe.js';
+import crates from './hairline/crates.js';
+import vrail from './hairline/vrail.js';
+import rulers from './hairline/rulers.js';
+import ramp from './hairline/ramp.js';
+import stairs from './hairline/stairs.js';
+import lifts from './hairline/lifts.js';
+import numrail from './hairline/numrail.js';
+import fence from './hairline/fence.js';
 
 /** Where a figure sits: beside the video row it starts at (it leans away from the path), or in its own row after the chest. */
 export type FigureSlot = { side: 'left' | 'right'; anchor: number | 'end' };
@@ -39,8 +47,10 @@ const OWN: Partial<Record<number, HairlineSpec[]>> = {
   // Advanced Math (approved 31 Oct)
   1: [cubes, pegs, fold], 2: [areatray, bins, foil, factor], 5: [machine, vending], 9: [stacks, cells],
   12: [complete, throwBall], 15: [shift, mirror], 16: [parabola, fountain, halfpipe],
+  // Algebra (approved 31 Oct)
+  3: [balance, crates], 4: [vrail, rulers], 6: [ramp, stairs], 13: [beams, lifts], 14: [numrail, fence],
   // The rest approved so far
-  3: [balance], 13: [beams], 21: [unitcircle], 24: [jar], 25: [scatter],
+  21: [unitcircle], 24: [jar], 25: [scatter],
 };
 
 // shortcut: until every topic has its own figures, the rest of its slots borrow its area's set; drop once all 52 are in.
