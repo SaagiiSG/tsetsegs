@@ -458,7 +458,7 @@ Commit any fixes as `fix(demo): …`.
 - [ ] **Step 1: Update `AGENTS.md`**
 
 - Line 6 becomes: "The demo (`/demo`) signs visitors in automatically as made-up sample people in a throwaway sample center (`institution_customers.is_demo`); never real data."
-- Add: "Demo checks live inside the bank read rules (0108), `is_demo_user`, `demo_guard_login`, `tenant_eligible_tests`, `tenant_sat_start`, `submit_support_request`, `admin_customer_activity`, `search_questions`, and the edge functions `tenant-accounts`, `concept-video-url` and `student-analytics-insights`. Keep the demo line when rewriting any of them, and run `flowersos/tools/portal-e2e/demo-probe.mjs` after."
+- Add: "Demo checks live inside the bank read rules (0108), `is_demo_user`, `demo_guard_login`, `tenant_eligible_tests`, `tenant_sat_start`, `submit_support_request`, `admin_customer_activity`, `search_questions`, `demo_attach_logins`, 0111's `tenant_open_center`, `tenant_google_link_start`, `tenant_google_link_finish`, `tenant_switch_to_phone` and `tenant_give_google_time`, and the edge functions `tenant-accounts` (the `is_demo` guards have no marker comment, so this note is their protection), `concept-video-url` and `student-analytics-insights`. Keep the demo line when rewriting any of them, and run `flowersos/tools/portal-e2e/demo-probe.mjs` after."
 - Commit: `git commit -am "AGENTS: demo signs visitors in as sample people; keep demo checks"`.
 
 - [ ] **Step 2: Ask Saagii before pushing**
