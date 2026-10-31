@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Flag, Timer, BookOpen, ArrowLeft, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +33,7 @@ export function CenterPracticeTest() {
   const { attemptId } = useParams();
   const { center } = useCenter();
   const navigate = useNavigate();
+  const fromJoin = !!(useLocation().state as { proctored?: boolean } | null)?.proctored;
   const qc = useQueryClient();
   // No refetch on focus mid-test: the runner rereads after every advance, and a failed background read must not cost time.
   const query = useQuery({ queryKey: ['center-test-state', center.id, attemptId], enabled: !!attemptId, refetchInterval: q => q.state.data?.session && q.state.data.status !== 'completed' ? 10000 : false, refetchOnWindowFocus: q => q.state.data?.status === 'completed', queryFn: async () => {
@@ -106,7 +107,8 @@ export function CenterPracticeTest() {
   useEffect(() => { if (state && module && !completed && seconds === 0 && !pendingAdvance.current) void advance(); }, [seconds, completed, state?.current_module]);
   // Proctored and still open: count every time the student leaves the test and tell the server.
   const proctored = !!state?.session && !!module && !completed;
-  useExamLock(!!state?.session && !completed);
+  // From the proctor join the lock holds through the first load, so the chrome never flashes back.
+  useExamLock((fromJoin && !state) || (!!state?.session && !completed));
   const alive = useRef(true);
   const violations = useRef(0);
   // Leaving the page (Back, an in-app link) mid-test counts once more. A reload never unmounts, and the deferred check skips StrictMode's fake remount.
