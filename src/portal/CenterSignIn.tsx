@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { phoneDigits } from '@/lib/tenant';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
+import { startGoogle, type PendingGoogle } from './centerGoogle';
 import { PasswordInput } from './PasswordInput';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import {
@@ -27,7 +28,7 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
   const [tab, setTab] = useState<'student' | 'staff'>('student');
   // student
   const [phone, setPhone] = useState('');
-  const [stage, setStage] = useState<'phone' | 'password' | 'create'>('phone');
+  const [stage, setStage] = useState<'phone' | 'password' | 'create' | 'google'>('phone');
   const [studentEmail, setStudentEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -53,12 +54,21 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
   const studentLookup = run(async () => {
     const res = await call({ action: 'student_lookup', phone: phoneDigits(phone) });
     setStudentEmail(res.email ?? ''); setPassword(''); setConfirm('');
-    setStage(res.activated ? 'password' : 'create');
+    setStage(res.google ? 'google' : res.activated ? 'password' : 'create');
   });
   const studentSignIn = run(async () => {
     const { error } = await supabase.auth.signInWithPassword({ email: studentEmail, password });
     if (error) throw new Error(text('Нууц үг буруу байна.', 'Wrong password.'));
   });
+  // Usually redirects to Google; only comes back here with an error message.
+  const google = async (p: PendingGoogle | null) => {
+    setError(''); setNotice(''); setBusy(true);
+    const msg = await startGoogle(p, '/');
+    if (msg) { setError(msg); setBusy(false); }
+  };
+  const googleButton = (label: string, p: PendingGoogle | null) => (
+    <Button type="button" variant="outline" className={authGhostButtonClasses} disabled={busy} onClick={() => google(p)}>{label}</Button>
+  );
   const backToPhone = () => { setStage('phone'); setPassword(''); setConfirm(''); setError(''); };
   const createPassword = run(async () => {
     if (password !== confirm) throw new Error("Passwords don't match.");
@@ -105,7 +115,7 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
           </div>
         ) : signedInWithoutAccess ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{text(`Энэ бүртгэл ${name}-д нэвтрэх эрхгүй.`, `This account doesn't have access to ${name}.`)}</p>
+            <p className="text-sm text-muted-foreground">{text(`Энэ Google бүртгэл ${name}-ийн ямар ч сурагчтай холбогдоогүй байна. Утасны дугаараараа нэвтэрч ороод Google-ээ холбоно уу.`, `This Google account isn't connected to a student at ${name}. Sign in with your phone number, then connect Google.`)}</p>
             <Button className={authPrimaryButtonClasses} onClick={signOut}>{text('Өөр бүртгэлээр нэвтрэх', 'Use a different account')}</Button>
           </div>
         ) : (
@@ -128,6 +138,8 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
 
             {tab === 'student' && stage === 'phone' && (
               <form onSubmit={studentLookup} className="space-y-6">
+                {googleButton(text('Google-ээр үргэлжлүүлэх', 'Continue with Google'), null)}
+                <p className="text-center text-xs text-muted-foreground">{text('эсвэл утасны дугаараар', 'or use your phone number')}</p>
                 <div className="space-y-2">
                   <Label htmlFor="cp-phone" className={authLabelClasses}>{text('Утасны дугаар', 'Phone number')}</Label>
                   <Input id="cp-phone" inputMode="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)}
@@ -151,6 +163,14 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
               </form>
             )}
 
+            {tab === 'student' && stage === 'google' && (
+              <div className="space-y-6">
+                <p className="text-sm text-muted-foreground">{text('Энэ бүртгэл Google-ээр нэвтэрдэг.', 'This account signs in with Google.')}</p>
+                {googleButton(text('Google-ээр үргэлжлүүлэх', 'Continue with Google'), null)}
+                <Button type="button" variant="ghost" className={authGhostButtonClasses} onClick={backToPhone}>{text('Буцах', 'Back')}</Button>
+              </div>
+            )}
+
             {tab === 'student' && stage === 'create' && (
               <form onSubmit={createPassword} className="space-y-6">
                 <p className="text-sm text-muted-foreground">{text('Нууц үгээ үүсгэнэ үү (8+ тэмдэгт, үсэг ба тоо).', 'Create your password — 8+ characters, with letters and numbers.')}</p>
@@ -165,6 +185,8 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
                     required className={authInputClasses} />
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Үүсгэж байна…', 'Creating…') : text('Нууц үг үүсгэх', 'Create password')}</Button>
+                <p className="text-center text-xs text-muted-foreground">{text('эсвэл', 'or')}</p>
+                {googleButton(text('Google-ээр үргэлжлүүлэх', 'Or continue with Google'), { kind: 'claim', phone: phoneDigits(phone) })}
                 <Button type="button" variant="ghost" className={authGhostButtonClasses}
                   onClick={backToPhone}>
                   {text('Буцах', 'Back')}
