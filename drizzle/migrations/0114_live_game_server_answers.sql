@@ -1,6 +1,7 @@
 -- Live class game: the server checks answers (Saagii's pick after the 31 Oct security sweep, task 4b item C). Part 1 of 2.
--- DEPLOY ORDER: apply 0114, publish the page (src/pages/LiveSession.tsx, LiveQuestionControl.tsx), then apply 0115.
---   0114 only adds, so the old page keeps working on it. 0115 removes what the old page needs (the answer key in the
+-- DEPLOY ORDER: apply 0114, publish the page (src/pages/LiveSession.tsx, LiveQuestionControl.tsx), then add the pending removals file
+--   (docs/superpowers/specs/2026-10-30-live-demo/live-game-removals.sql.pending) as a new migration.
+--   0114 only adds, so the old page keeps working on it. The removals file removes what the old page needs (the answer key in the
 --   phone's question list, and the phone's direct answer and points writes).
 -- live_session_answer() grades one answer, records it and adds the points (the page did all three itself before),
 -- with LiveSession.tsx's old points formula and the page's own time taken, as before. live_session_reveal() hands a

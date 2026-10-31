@@ -473,3 +473,11 @@ Give Saagii this prompt: *"What is this project's auth rate limit for password s
 
 Run `demo.mjs` against `https://flowersos.co` with `E2E_BASE=https://flowersos.co` (skip the `limit message` stub).
 Expected: all `true`. Tell Saagii the result with the phone screenshots.
+
+## Plan 3 follow-ups
+
+- Admin "Sign everyone out" ends a demo; add it to the Turned off list.
+- Pending live-game removals SQL: `docs/superpowers/specs/2026-10-30-live-demo/live-game-removals.sql.pending`. Deploy order: apply 0114, publish the LiveSession page, then add the file as a new migration (next free number, journal `when` newer than Lovable's latest placeholder).
+- The sample center has empty homework, notes and proctor history.
+- Sample names read "Sprint N".
+- `live_session_answers` stays readable (given answers show through it and realtime).
