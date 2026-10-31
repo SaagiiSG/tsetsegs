@@ -11,8 +11,10 @@ import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { centerAccounts } from './centerApi';
 import { startGoogle, takePending } from './centerGoogle';
 import { PasswordInput } from './PasswordInput';
-import { canContinue, joinSteps, type JoinForm, type JoinStep } from './joinSteps';
+import { canContinue, joinSteps, stepForError, type JoinForm, type JoinStep } from './joinSteps';
 import { AuthSplitLayout, authInputClasses, authLabelClasses } from '@/components/auth/AuthSplitLayout';
+
+const ACCOUNT_READY = 'Your account is ready. Sign in with your phone number and password.';
 
 const TITLES: Record<JoinStep, string> = {
   start: 'Join your class',
@@ -66,7 +68,7 @@ export default function CenterJoin() {
   const go = (s: JoinStep) => { setError(''); setNote(''); setStep(s); };
   const next = () => go(steps[idx + 1]);
   const back = () => go(steps[idx - 1]);
-  const accountExists = /already have an account/i.test(error);
+  const accountExists = /already have an account/i.test(error) || error === ACCOUNT_READY;
 
   const google = async () => {
     setBusy(true); setError('');
@@ -102,16 +104,15 @@ export default function CenterJoin() {
           email_code: form.emailCode, password: form.password, school, grade,
         });
         const { error: sErr } = await supabase.auth.signInWithPassword({ email: res.email, password: form.password });
-        if (sErr) throw new Error('Your account is ready. Sign in with your phone number and password.');
+        if (sErr) throw new Error(ACCOUNT_READY);
       }
       navigate('/student', { replace: true });
     } catch (e) {
       const msg = (e as Error).message;
       setError(msg);
-      // Send the student to the field the server is complaining about.
-      if (/already have an account/i.test(msg)) return;
-      if (/phone/i.test(msg)) setStep('phone');
-      else if (/code/i.test(msg) && path === 'email') setStep('code');
+      // Show-only messages (account exists / account made) stay put; known field errors go back to their step.
+      const to = stepForError(msg);
+      if (to && steps.includes(to)) setStep(to);
     } finally { setBusy(false); }
   };
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canContinue, joinSteps, type JoinForm } from './joinSteps';
+import { canContinue, joinSteps, stepForError, type JoinForm } from './joinSteps';
 
 const empty: JoinForm = { name: '', phone: '', email: '', emailCode: '', password: '', school: '', grade: '' };
 
@@ -20,5 +20,15 @@ describe('joinSteps', () => {
     expect(canContinue('password', { ...empty, password: 'abcdefgh' })).toBe(false);
     expect(canContinue('password', { ...empty, password: 'abcdefg1' })).toBe(true);
     expect(canContinue('school', empty)).toBe(true);
+  });
+});
+
+describe('stepForError', () => {
+  it('routes known messages and ignores others', () => {
+    expect(stepForError('Enter a valid phone number.')).toBe('phone');
+    expect(stepForError('That code expired. Ask for a new one.')).toBe('code');
+    expect(stepForError('That password is too easy to guess. Pick another.')).toBe('password');
+    expect(stepForError('Your account is ready. Sign in with your phone number and password.')).toBeNull();
+    expect(stepForError('Something odd')).toBeNull();
   });
 });

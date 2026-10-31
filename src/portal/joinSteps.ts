@@ -17,3 +17,17 @@ export function canContinue(step: JoinStep, f: JoinForm): boolean {
     default: return true;
   }
 }
+
+// Exact server messages (tenant-accounts, emailCode.ts CODE_ERRORS, migration 0107) mapped to the step that fixes them.
+const ERROR_STEPS: Record<string, JoinStep> = {
+  'Enter a valid phone number.': 'phone',
+  'This phone number is not active here. Ask your center.': 'phone',
+  'Enter your full name.': 'name',
+  'Enter a valid email.': 'email',
+  'That code expired. Ask for a new one.': 'code',
+  'That code is not right. Check the email and try again.': 'code',
+  'Too many wrong tries. Ask for a new code.': 'code',
+  'Use at least 8 characters with letters and numbers.': 'password',
+  'That password is too easy to guess. Pick another.': 'password',
+};
+export const stepForError = (message: string): JoinStep | null => ERROR_STEPS[message] ?? null;
