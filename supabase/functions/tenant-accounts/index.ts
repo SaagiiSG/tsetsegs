@@ -75,7 +75,11 @@ Deno.serve(async (req) => {
       if (insErr || !row) throw insErr ?? new Error('Could not save code')
       const { data: center } = await admin.from('institution_customers').select('name').eq('id', t.tenant.id).maybeSingle()
       try {
-        await sendTemplateEmail('center-email-code', typedEmail, { templateData: { code, center_name: center?.name ?? '' } })
+        const r = await sendTemplateEmail('center-email-code', typedEmail, { templateData: { code, center_name: center?.name ?? '' } })
+        if (!r.sent) {
+          await admin.from('tenant_email_codes').delete().eq('id', row.id)
+          return json({ error: "We can't send email to this address. Use Google or another email." }, 400)
+        }
       } catch (e) {
         console.error('center email code failed', e)
         await admin.from('tenant_email_codes').delete().eq('id', row.id)
@@ -194,7 +198,7 @@ Deno.serve(async (req) => {
       if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
       const phone = digits(body.phone)
       if (phone.length < 6) return json({ error: 'Enter the phone number registered with your class.' }, 400)
-      const { data: student } = await admin.from('tenant_students').select('id, user_id, active, google_user_id')
+      const { data: student } = await admin.from('tenant_students').select('id, user_id, active, google_user_id, google_due_on')
         .eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
       if (!student || !student.active) return json({ error: 'This phone number is not registered with your center. Ask your center to add you.' }, 404)
       const email = `s-${student.id}@students.flowersos.co`
@@ -208,8 +212,11 @@ Deno.serve(async (req) => {
         email, password, email_confirm: true, user_metadata: { tenant_student_id: student.id },
       })
       if (error || !created.user) throw new Error(error?.message ?? 'Could not create account')
-      const { error: linkErr } = await admin.from('tenant_students').update({ user_id: created.user.id, password_user_id: created.user.id })
-        .eq('id', student.id).is('user_id', null)
+      const { error: linkErr } = await admin.from('tenant_students').update({
+        user_id: created.user.id, password_user_id: created.user.id,
+        // 7 days to connect Google; an admin-set later date stays.
+        google_due_on: [student.google_due_on, new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)].filter(Boolean).sort().pop(),
+      }).eq('id', student.id).is('user_id', null)
       if (linkErr) { await admin.auth.admin.deleteUser(created.user.id); throw linkErr }
       return json({ email })
     }

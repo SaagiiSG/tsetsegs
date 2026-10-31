@@ -1,5 +1,5 @@
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,14 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'student' | 'staff'>('student');
+  const [viaGoogle, setViaGoogle] = useState(false);
+  useEffect(() => {
+    if (!signedInWithoutAccess) return;
+    void supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      setViaGoogle(u?.app_metadata?.provider === 'google' || !!u?.app_metadata?.providers?.includes('google'));
+    });
+  }, [signedInWithoutAccess]);
   // student
   const [phone, setPhone] = useState('');
   const [stage, setStage] = useState<'phone' | 'password' | 'create' | 'google'>('phone');
@@ -115,7 +123,9 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
           </div>
         ) : signedInWithoutAccess ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{text(`Энэ Google бүртгэл ${name}-ийн ямар ч сурагчтай холбогдоогүй байна. Утасны дугаараараа нэвтэрч ороод Google-ээ холбоно уу.`, `This Google account isn't connected to a student at ${name}. Sign in with your phone number, then connect Google.`)}</p>
+            <p className="text-sm text-muted-foreground">{viaGoogle
+              ? text(`Энэ Google бүртгэл ${name}-ийн ямар ч сурагчтай холбогдоогүй байна. Утасны дугаараараа нэвтэрч ороод Google-ээ холбоно уу.`, `This Google account isn't connected to a student at ${name}. Sign in with your phone number, then connect Google.`)
+              : text(`Энэ бүртгэл ${name}-д нэвтрэх эрхгүй.`, `This account doesn't have access to ${name}.`)}</p>
             <Button className={authPrimaryButtonClasses} onClick={signOut}>{text('Өөр бүртгэлээр нэвтрэх', 'Use a different account')}</Button>
           </div>
         ) : (

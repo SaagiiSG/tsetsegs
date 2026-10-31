@@ -106,7 +106,8 @@ export default function CenterJoin() {
         const { error: sErr } = await supabase.auth.signInWithPassword({ email: res.email, password: form.password });
         if (sErr) throw new Error(ACCOUNT_READY);
       }
-      navigate('/student', { replace: true });
+      // '/' lets the portal's redirect place the student once the role is known.
+      navigate('/', { replace: true });
     } catch (e) {
       const msg = (e as Error).message;
       setError(msg);

@@ -9,6 +9,9 @@ ALTER TABLE public.tenant_sprints
   ADD COLUMN sprint_number integer CHECK (sprint_number BETWEEN 1 AND 3),
   ADD COLUMN auto_next boolean NOT NULL DEFAULT false;
 
+-- A second "Start sprints" (two tabs) cannot create the same season twice; the client maps this to a message.
+CREATE UNIQUE INDEX tenant_sprints_season_slot ON public.tenant_sprints (institution_id, season_number, sprint_number) WHERE season_number IS NOT NULL;
+
 CREATE OR REPLACE FUNCTION public.tenant_sprints_current(_institution uuid)
 RETURNS SETOF public.tenant_sprints LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path TO 'public' AS $$
 DECLARE cur public.tenant_sprints; tz text; today date; n integer := 0;

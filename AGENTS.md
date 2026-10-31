@@ -38,3 +38,10 @@
 
 - External sync uses stable pagination and bounded parallel content/metadata writes to avoid timeouts; failures must not report completion.
 - Tests under `src/` read fixture/spec data through static JSON imports (`resolveJsonModule` is on in `tsconfig.app.json`), never Node's `fs`: the preview type check has no Node types and rejects them.
+
+## Center student logins
+
+- One auth user per student, in `tenant_students.user_id`; the student signs in with Google when `user_id = google_user_id`. `google_user_id` and `password_user_id` only remember the other logins.
+- `tenant_email_codes` and `tenant_google_links` are service-role/RPC only.
+- Join, claim and connect go through the 0107 RPCs.
+- Never look a student up by anything but `user_id`.

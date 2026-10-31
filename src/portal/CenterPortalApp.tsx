@@ -72,7 +72,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   }, [access?.blocked, center, session]);
 
   // Clear the cache so the next student on a shared device never sees this one's data.
-  const signOut = async () => { await supabase.auth.signOut(); queryClient.clear(); setRole(null); navigate('/'); };
+  const signOut = async () => { try { sessionStorage.removeItem('center-google-later'); } catch { /* storage blocked */ } await supabase.auth.signOut(); queryClient.clear(); setRole(null); navigate('/'); };
 
   // Center login security: students and teachers are signed out when their sign-in is older than the
   // center's session length or predates an admin "sign everyone out". Center admins are never forced out.

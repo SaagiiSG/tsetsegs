@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
@@ -106,6 +107,7 @@ function StartSprintsDialog({ season, onStarted }: { season: number; onStarted: 
       status: 'active', season_number: season, sprint_number: 1, auto_next: true,
     } as never);
     setBusy(false);
+    if (error?.code === '23505') return toast.error('A season is already running. Refresh the page.');
     if (error) return toast.error(/season_number|auto_next|column/.test(error.message) ? 'Sprints that run on their own need the 0105 database update first.' : error.message);
     toast.success(`Season ${season} started`); setOpen(false); onStarted();
   };
@@ -188,11 +190,24 @@ export function SprintsPage() {
                   {running.status === 'active'
                     ? <Button size="sm" variant="outline" onClick={() => patch(running.id, { status: 'paused' }, 'Sprint paused')}><Pause className="h-4 w-4" />Pause</Button>
                     : <Button size="sm" variant="outline" onClick={() => patch(running.id, { status: 'active' }, 'Sprint resumed')}><Play className="h-4 w-4" />Resume</Button>}
-                  {running.season_number
-                    ? running.auto_next
-                      ? <Button size="sm" variant="ghost" onClick={() => patch(running.id, { auto_next: false }, 'The cycle stops after this sprint')}><CircleStop className="h-4 w-4" />Stop after this sprint</Button>
-                      : <Button size="sm" variant="ghost" onClick={() => patch(running.id, { auto_next: true }, 'Sprints will keep going')}><Repeat className="h-4 w-4" />Keep the cycle going</Button>
-                    : <Button size="sm" variant="ghost" onClick={() => patch(running.id, { status: 'finished' }, 'Sprint finished')}><CircleStop className="h-4 w-4" />Finish now</Button>}
+                  {running.season_number && (running.auto_next
+                    ? <Button size="sm" variant="ghost" onClick={() => patch(running.id, { auto_next: false }, 'The cycle stops after this sprint')}><CircleStop className="h-4 w-4" />Stop after this sprint</Button>
+                    : <Button size="sm" variant="ghost" onClick={() => patch(running.id, { auto_next: true }, 'Sprints will keep going')}><Repeat className="h-4 w-4" />Keep the cycle going</Button>)}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild><Button size="sm" variant="ghost"><CircleStop className="h-4 w-4" />Finish now</Button></AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Finish this sprint now?</AlertDialogTitle>
+                        <AlertDialogDescription>Ranks move up or down right away.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => running.season_number
+                          ? patch(running.id, { status: 'finished', auto_next: false }, 'Sprint finished. The cycle stopped.')
+                          : patch(running.id, { status: 'finished' }, 'Sprint finished')}>Finish now</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             ) : (

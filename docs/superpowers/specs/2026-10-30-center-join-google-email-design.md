@@ -112,10 +112,13 @@ Exact screen copy, the hashing scheme for codes and tokens (pgcrypto/sha256), ra
 
 ## Release steps
 
-1. The teacher session pushes 0103 first. Then this branch is brought up to date with origin/main: `_journal.json` stays in `idx` order (0103, 0104, 0105, 0106 if it has landed, 0107) and 0107's snapshot `prevId` is re-pointed to the newest snapshot before it.
+1. The teacher session pushes 0103 first. Then this branch is brought up to date with origin/main: `_journal.json` stays in `idx` order (0103, 0104, 0105, 0106, 0107) and the snapshot `prevId`s are re-pointed into one chain: 0104 → 0103, 0105 → 0104, 0106 → 0105, 0107 → 0106.
+
+Steps 2–4 run right after the push, in one sitting. Until step 3 is done, nobody publishes (tell the teacher and live-demo sessions): the new join page, Google buttons and Start sprints need 0104/0105/0107 and the new function.
+
 2. Before step 3, Saagii runs this on the live database (Lovable SQL editor or Supabase). It must return no rows, or the new unique index will fail:
    `SELECT institution_id, user_id, count(*) FROM tenant_students WHERE user_id IS NOT NULL GROUP BY 1,2 HAVING count(*) > 1;`
-3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply these migration files exactly as written: drizzle/migrations/0104_center_schedule_templates.sql, drizzle/migrations/0105_center_sprint_seasons.sql, drizzle/migrations/0107_center_join_google_email.sql. Deploy supabase/functions/tenant-accounts. Do not touch 0103 or 0106. Don't change or apply anything else."
+3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply these migration files exactly as written: drizzle/migrations/0104_center_schedule_templates.sql, drizzle/migrations/0105_center_sprint_seasons.sql, drizzle/migrations/0107_center_join_google_email.sql. Deploy supabase/functions/tenant-accounts. Do not touch 0103 or 0106. Don't change or apply anything else. Apply them in this order. Only if all three applied without errors, deploy supabase/functions/tenant-accounts. If any fails, stop and tell me. Do not create or apply any other migration file." If Lovable writes its own "apply_pending" copy, it must use a number after 0109 (0108 and 0109 belong to the live-demo session).
 4. Publish.
 5. Saagii tests Google on zz-signin-test.flowersos.co:
    - Join with Google from a ZZ Batch link.
