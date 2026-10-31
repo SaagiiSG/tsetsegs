@@ -101,6 +101,9 @@ export function ProctorLobby({ sessionId, onBack, onStarted }: { sessionId: stri
   const { session, rows, failed, load, setSession } = useRoom(sessionId, 4000);
   const [show, setShow] = useState(false);
   const [working, setWorking] = useState(false);
+  // Started or ended from another tab: the lobby has nothing left to do.
+  const gone = !!session && session.status !== 'lobby';
+  useEffect(() => { if (gone) onStarted(); }, [gone, onStarted]);
   if (!session) return <Loading failed={failed} onBack={onBack} />;
   const url = `${window.location.origin}/proctor/${session.join_code}`;
   const ready = rows.filter(r => r.oath_accepted_at).length;
@@ -118,8 +121,8 @@ export function ProctorLobby({ sessionId, onBack, onStarted }: { sessionId: stri
     const { error } = await rpc('tenant_proctor_start', { _session: sessionId });
     setWorking(false);
     if (error) {
-      // The session moved on without us (force-ended, or started from another tab).
-      if (/already started|ended/i.test(error.message)) { toast.error('This session has ended. Go back and refresh.'); load(); return; }
+      // The session moved on without us; the next poll sends us to the monitor.
+      if (/already started|ended/i.test(error.message)) { toast.error('This session already started.'); load(); return; }
       return toast.error('Could not start the test. Try again.');
     }
     onStarted();

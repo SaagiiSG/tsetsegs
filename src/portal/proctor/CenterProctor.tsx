@@ -46,9 +46,9 @@ function StartDialog({ open, onOpenChange, classes, onCreated }: { open: boolean
           : tests.isError ? <p role="alert" className="text-sm py-4">Could not load the tests.</p> : (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-xs">Practice test</Label>
+                <Label htmlFor="proctor-test" className="text-xs">Practice test</Label>
                 <Select value={testId} onValueChange={setTestId}>
-                  <SelectTrigger><SelectValue placeholder={tests.data?.length ? 'Choose a test' : 'No tests available yet'} /></SelectTrigger>
+                  <SelectTrigger id="proctor-test"><SelectValue placeholder={tests.data?.length ? 'Choose a test' : 'No tests available yet'} /></SelectTrigger>
                   <SelectContent>
                     {(tests.data ?? []).map(t => (
                       <SelectItem key={t.id} value={t.id}>{t.name}{t.test_year ? ` · ${t.test_month ?? ''}/${t.test_year}` : ''} · {t.minutes} min</SelectItem>
@@ -57,9 +57,9 @@ function StartDialog({ open, onOpenChange, classes, onCreated }: { open: boolean
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Class</Label>
+                <Label htmlFor="proctor-class" className="text-xs">Class</Label>
                 <Select value={classId} onValueChange={setClassId}>
-                  <SelectTrigger><SelectValue placeholder="Choose a class" /></SelectTrigger>
+                  <SelectTrigger id="proctor-class"><SelectValue placeholder="Choose a class" /></SelectTrigger>
                   <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
