@@ -38,6 +38,30 @@ describe('topicFigures', () => {
     expect(names(13).slice(0, 2)).toEqual(['beams', 'lifts']);
     expect(names(14).slice(0, 2)).toEqual(['numrail', 'fence']);
   });
+  it('Geometry & Trig topics show their own figures, in slot order', () => {
+    const names = (n: number) => topicFigures(n, 'Geometry & Trig').map(f => f.name);
+    expect([17, 18, 19, 20, 21, 22].map(names)).toEqual([
+      ['fan', 'scissors'], ['truss', 'tents'], ['wheel', 'sector'], ['string', 'dial'], ['unitcircle', 'ladder'], ['boxnet', 'pen'],
+    ]);
+  });
+  it('Problem Solving & Data topics show their own figures, in slot order', () => {
+    const names = (n: number) => topicFigures(n, 'Problem Solving & Data').map(f => f.name);
+    expect([8, 10, 11, 24, 25, 26].map(names)).toEqual([
+      ['hundred', 'coins'], ['gears', 'cups'], ['trains', 'tank'], ['jar', 'spinner'], ['scatter', 'tokens'], ['scoop', 'bracket'],
+    ]);
+  });
+  it('no figure appears in two topics; only the topics without their own (7, 23) borrow their area set', () => {
+    const owners = new Map<string, number>();
+    for (const t of TOPICS) {
+      if (t.n === 7 || t.n === 23) continue;
+      for (const f of topicFigures(t.n, t.area)) {
+        expect(owners.get(f.name) ?? t.n).toBe(t.n);
+        owners.set(f.name, t.n);
+      }
+    }
+    expect(owners.size).toBe(52);
+    expect(topicFigures(7, 'Algebra').length).toBeGreaterThanOrEqual(2);
+  });
   it('never repeats a figure within a topic, and fills at least two slots', () => {
     for (const t of TOPICS) {
       const names = topicFigures(t.n, t.area).map(f => f.name);
