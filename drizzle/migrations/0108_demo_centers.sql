@@ -20,13 +20,12 @@ ALTER TABLE public.demo_slice ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.demo_slice TO authenticated;
 CREATE POLICY "Signed-in accounts read the demo slice ids" ON public.demo_slice FOR SELECT TO authenticated USING (true);
 
--- Demo logins use made-up @demo.flowersos.co emails; anyone on a demo center's staff or roster counts too.
--- Never NULL: the read rules below use NOT is_demo_user(), and NULL would hide rows from real accounts.
+-- Demo logins are the made-up @demo.flowersos.co emails the demo function creates. Only the email counts: membership
+-- can be written by a demo admin (any user_id on their copy's students or staff), the email can't, so a real account
+-- written into a copy keeps its own access. Never NULL: the read rules below use NOT is_demo_user().
 CREATE FUNCTION public.is_demo_user() RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT COALESCE(lower(auth.jwt() ->> 'email') LIKE '%@demo.flowersos.co', false)
-    OR EXISTS (SELECT 1 FROM public.tenant_members m JOIN public.institution_customers c ON c.id = m.institution_id AND c.is_demo WHERE m.user_id = auth.uid())
-    OR EXISTS (SELECT 1 FROM public.tenant_students s JOIN public.institution_customers c ON c.id = s.institution_id AND c.is_demo WHERE s.user_id = auth.uid());
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) LIKE '%@demo.flowersos.co';
 $$;
 REVOKE ALL ON FUNCTION public.is_demo_user() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_demo_user() TO authenticated;
@@ -37,6 +36,24 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 REVOKE ALL ON FUNCTION public.is_demo_center(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_demo_center(uuid) TO authenticated, service_role;
+
+-- Only demo logins (and the build's placeholder ids, which have no login) may sit in a demo center. A real account
+-- there isn't a demo user, so it would read the whole bank and every test through the copy; this refuses it whoever
+-- writes it (a demo admin via the 0002/0067 rules, a join, or the service role).
+CREATE FUNCTION public.demo_guard_login() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.user_id IS NOT NULL AND public.is_demo_center(NEW.institution_id) AND EXISTS (
+    SELECT 1 FROM auth.users u WHERE u.id = NEW.user_id AND lower(coalesce(u.email, '')) NOT LIKE '%@demo.flowersos.co') THEN
+    RAISE EXCEPTION 'Turned off in the demo.';
+  END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public.demo_guard_login() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER demo_guard_login BEFORE INSERT OR UPDATE OF user_id, institution_id ON public.tenant_students
+  FOR EACH ROW EXECUTE FUNCTION public.demo_guard_login();
+CREATE TRIGGER demo_guard_login BEFORE INSERT OR UPDATE OF user_id, institution_id ON public.tenant_members
+  FOR EACH ROW EXECUTE FUNCTION public.demo_guard_login();
 
 -- 2. Fill the slice once (about 55 questions and 5 videos; spec section 3).
 DO $$
@@ -135,7 +152,7 @@ GRANT EXECUTE ON FUNCTION public.can_read_concept_video(text) TO authenticated;
 -- tenant_proctor_tests, tenant_proctor_create and tenant_proctor_join. For a demo user a test counts only if every active
 -- International copy of every Math question is in the slice (fails closed), so no paper, practice or proctored, leaves it.
 -- It takes no center, so it asks who is calling: those four let into a demo center only its own staff and students,
--- and is_demo_user() is true for all of them. Real centers and Tsetsegs staff: exactly 0106.
+-- and demo_guard_login keeps those to demo logins. Real centers and Tsetsegs staff: exactly 0106.
 CREATE OR REPLACE FUNCTION public.tenant_eligible_tests() RETURNS jsonb LANGUAGE sql STABLE SET search_path=public AS $$
 SELECT COALESCE(jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'test_month',t.test_month,'test_year',t.test_year,'modules',s.modules,'questions',s.questions,'minutes',s.minutes)
 ORDER BY t.test_year DESC NULLS LAST,t.test_month DESC NULLS LAST,t.name),'[]'::jsonb)

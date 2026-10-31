@@ -20,7 +20,7 @@ GRANT ALL ON public.demo_copies TO service_role;
 ALTER TABLE public.demo_copies ENABLE ROW LEVEL SECURITY;
 
 -- One row per start, kept when the copy is dropped, so a start-then-end loop still counts toward the hourly limits.
--- Cleanup prunes rows older than a day. Only the service role reads or writes it.
+-- Each start and each cleanup prunes rows older than a day. Only the service role reads or writes it.
 CREATE TABLE public.demo_starts (visitor text NOT NULL, ip text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
 CREATE INDEX demo_starts_created_at_idx ON public.demo_starts (created_at);
 REVOKE ALL ON public.demo_starts FROM anon, authenticated;
@@ -268,6 +268,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public SET lock_timeout = '3
 DECLARE inst uuid; new_slug text := 'demo-' || substr(md5(gen_random_uuid()::text), 1, 12); built jsonb; cp public.demo_copies;
 BEGIN
   PERFORM pg_advisory_xact_lock(7715402);
+  DELETE FROM demo_starts WHERE created_at < now() - interval '1 day'; -- also here: the cleanup job sleeps when no copies are left
   IF (SELECT count(*) FROM demo_copies WHERE expires_at > now()) >= 100 THEN RAISE EXCEPTION 'demo_busy'; END IF;
   IF (SELECT count(*) FROM demo_starts WHERE visitor = _visitor AND created_at > now() - interval '1 hour') >= 5
      OR (SELECT count(*) FROM demo_starts WHERE ip = _ip AND created_at > now() - interval '1 hour') >= 40 THEN
