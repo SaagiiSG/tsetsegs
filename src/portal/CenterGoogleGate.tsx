@@ -87,6 +87,7 @@ export default function CenterGoogleGate({ children }: { children: ReactNode }) 
             <div className="space-y-2">
               <Button className="w-full" disabled={busy || !email.trim()} onClick={() => send()}>Send code</Button>
               <Button variant="ghost" className="w-full" disabled={busy} onClick={() => go('ask')}>Back</Button>
+              {state === 'required' && <Button variant="ghost" className="w-full" onClick={signOut}>Sign out</Button>}
             </div>
           </>}
           {step === 'code' && <>
@@ -104,6 +105,7 @@ export default function CenterGoogleGate({ children }: { children: ReactNode }) 
               <Button className="w-full" disabled={busy || code.length < 6} onClick={verify}>Verify</Button>
               <Button variant="outline" className="w-full" disabled={busy} onClick={() => send(true)}>Send a new code</Button>
               <Button variant="ghost" className="w-full" disabled={busy} onClick={() => go('email')}>Back</Button>
+              {state === 'required' && <Button variant="ghost" className="w-full" onClick={signOut}>Sign out</Button>}
             </div>
           </>}
         </CardContent>

@@ -276,7 +276,7 @@ export function StudentsPage() {
                   </TableCell>
                   <TableCell className="font-mono text-sm">{s.phone}</TableCell>
                   <TableCell className="text-sm max-w-[200px] truncate">{gcols ? ((s as GoogleFields).email ?? <span className="text-muted-foreground">—</span>) : '—'}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{gcols ? googleStatus(s as GoogleFields) : '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{gcols ? googleStatus(s as GoogleFields, localDate()) : '—'}</TableCell>
                   <TableCell className="text-sm max-w-[220px] truncate">{className(s.class_id) ?? <span className="text-muted-foreground">No batch</span>}</TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(s.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{accountStatus(s)}</TableCell>

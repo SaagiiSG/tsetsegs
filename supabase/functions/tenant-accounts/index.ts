@@ -134,10 +134,10 @@ Deno.serve(async (req) => {
         if (!cur) await admin.from('tenant_students').delete().eq('id', studentId)
         return json({ error: /weak|leaked|compromised|guess/i.test(uErr?.message ?? '') ? 'That password is too easy to guess. Pick another.' : 'Could not create your account. Try again.' }, 400)
       }
-      // The admin-added row keeps its class and its admin-entered email; only a null class takes the link's.
+      // The admin-added row keeps its class; only a null class takes the link's. The email is the one just verified.
       const { data: linked } = await admin.from('tenant_students').update({
         user_id: created.user.id, password_user_id: created.user.id,
-        email: cur?.email ? cur.email : typedEmail, class_id: cur?.class_id ?? cls.id, email_verified_at: new Date().toISOString(),
+        email: typedEmail, class_id: cur?.class_id ?? cls.id, email_verified_at: new Date().toISOString(),
         // Email-path students get 7 days to connect Google; an admin-added row keeps a later date.
         ...(cur ? { google_due_on: [cur.google_due_on, new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)].filter(Boolean).sort().pop() } : {}),
       }).eq('id', studentId).is('user_id', null).select('id')
