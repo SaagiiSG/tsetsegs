@@ -1410,6 +1410,80 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_copies: {
+        Row: {
+          created_at: string
+          end_token_hash: string
+          expires_at: string
+          id: string
+          institution_id: string
+          ip: string
+          user_ids: string[]
+          visitor: string
+        }
+        Insert: {
+          created_at?: string
+          end_token_hash: string
+          expires_at?: string
+          id?: string
+          institution_id: string
+          ip: string
+          user_ids?: string[]
+          visitor: string
+        }
+        Update: {
+          created_at?: string
+          end_token_hash?: string
+          expires_at?: string
+          id?: string
+          institution_id?: string
+          ip?: string
+          user_ids?: string[]
+          visitor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_copies_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_slice: {
+        Row: {
+          item_id: string
+          kind: string
+        }
+        Insert: {
+          item_id: string
+          kind: string
+        }
+        Update: {
+          item_id?: string
+          kind?: string
+        }
+        Relationships: []
+      }
+      demo_starts: {
+        Row: {
+          created_at: string
+          ip: string
+          visitor: string
+        }
+        Insert: {
+          created_at?: string
+          ip: string
+          visitor: string
+        }
+        Update: {
+          created_at?: string
+          ip?: string
+          visitor?: string
+        }
+        Relationships: []
+      }
       desmos_usage_events: {
         Row: {
           closed_at: string | null
@@ -1860,6 +1934,7 @@ export type Database = {
           health: string
           health_notes: string
           id: string
+          is_demo: boolean
           last_check_in: string | null
           last_warning_at: string | null
           name: string
@@ -1881,6 +1956,7 @@ export type Database = {
           health?: string
           health_notes?: string
           id?: string
+          is_demo?: boolean
           last_check_in?: string | null
           last_warning_at?: string | null
           name: string
@@ -1902,6 +1978,7 @@ export type Database = {
           health?: string
           health_notes?: string
           id?: string
+          is_demo?: boolean
           last_check_in?: string | null
           last_warning_at?: string | null
           name?: string
@@ -5326,6 +5403,73 @@ export type Database = {
           },
         ]
       }
+      tenant_email_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          institution_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          institution_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          institution_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_email_codes_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_google_links: {
+        Row: {
+          expires_at: string
+          started_by: string
+          student_id: string
+          token_hash: string
+        }
+        Insert: {
+          expires_at: string
+          started_by: string
+          student_id: string
+          token_hash: string
+        }
+        Update: {
+          expires_at?: string
+          started_by?: string
+          student_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_google_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_homework: {
         Row: {
           class_id: string
@@ -5811,6 +5955,38 @@ export type Database = {
           },
         ]
       }
+      tenant_schedule_templates: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          name: string
+          slots: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          name: string
+          slots: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          slots?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_schedule_templates_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institution_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_speed_runs: {
         Row: {
           category: string | null
@@ -5860,29 +6036,38 @@ export type Database = {
       }
       tenant_sprints: {
         Row: {
+          auto_next: boolean
           created_at: string
           ends_on: string
           id: string
           institution_id: string
           name: string
+          season_number: number | null
+          sprint_number: number | null
           starts_on: string
           status: string
         }
         Insert: {
+          auto_next?: boolean
           created_at?: string
           ends_on: string
           id?: string
           institution_id: string
           name: string
+          season_number?: number | null
+          sprint_number?: number | null
           starts_on: string
           status?: string
         }
         Update: {
+          auto_next?: boolean
           created_at?: string
           ends_on?: string
           id?: string
           institution_id?: string
           name?: string
+          season_number?: number | null
+          sprint_number?: number | null
           starts_on?: string
           status?: string
         }
@@ -6015,10 +6200,16 @@ export type Database = {
           active: boolean
           class_id: string | null
           created_at: string
+          email: string | null
+          email_verified_at: string | null
+          google_due_on: string
+          google_email: string | null
+          google_user_id: string | null
           id: string
           institution_id: string
           name: string
           onboarding_eligible: boolean
+          password_user_id: string | null
           phone: string
           real_sat_date: string | null
           real_sat_math: number | null
@@ -6030,10 +6221,16 @@ export type Database = {
           active?: boolean
           class_id?: string | null
           created_at?: string
+          email?: string | null
+          email_verified_at?: string | null
+          google_due_on?: string
+          google_email?: string | null
+          google_user_id?: string | null
           id?: string
           institution_id: string
           name: string
           onboarding_eligible?: boolean
+          password_user_id?: string | null
           phone: string
           real_sat_date?: string | null
           real_sat_math?: number | null
@@ -6045,10 +6242,16 @@ export type Database = {
           active?: boolean
           class_id?: string | null
           created_at?: string
+          email?: string | null
+          email_verified_at?: string | null
+          google_due_on?: string
+          google_email?: string | null
+          google_user_id?: string | null
           id?: string
           institution_id?: string
           name?: string
           onboarding_eligible?: boolean
+          password_user_id?: string | null
           phone?: string
           real_sat_date?: string | null
           real_sat_math?: number | null
@@ -6383,6 +6586,7 @@ export type Database = {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
       }
+      can_read_concept_video: { Args: { _path: string }; Returns: boolean }
       challenge_finish_time_sprint: {
         Args: { _challenge_id: string }
         Returns: boolean
@@ -6463,6 +6667,33 @@ export type Database = {
         }[]
       }
       current_student_account_id: { Args: never; Returns: string }
+      demo_attach_logins: {
+        Args: {
+          _admin: string
+          _copy: string
+          _student: string
+          _teacher: string
+        }
+        Returns: undefined
+      }
+      demo_build_center: { Args: { _institution: string }; Returns: Json }
+      demo_cleanup_finish: { Args: never; Returns: undefined }
+      demo_create: {
+        Args: { _end_token_hash: string; _ip: string; _visitor: string }
+        Returns: Json
+      }
+      demo_drop: { Args: { _copy: string }; Returns: undefined }
+      demo_end_users: {
+        Args: { _copy: string; _end_token_hash: string }
+        Returns: string[]
+      }
+      demo_expired: {
+        Args: never
+        Returns: {
+          copy_id: string
+          user_ids: string[]
+        }[]
+      }
       fill_answer_matches: {
         Args: {
           p_alternates: string[]
@@ -6575,6 +6806,16 @@ export type Database = {
         Returns: boolean
       }
       hash_student_password: { Args: { password: string }; Returns: string }
+      intl_question_meta: {
+        Args: { _ids: string[] }
+        Returns: {
+          category_id: string
+          difficulty_level: string
+          id: string
+          skill: string
+          subject: string
+        }[]
+      }
       investor_demo_action: {
         Args: { _action: string; _payload: Json; _token: string }
         Returns: Json
@@ -6587,6 +6828,8 @@ export type Database = {
         Args: { _account_id: string; _challenge_id: string }
         Returns: boolean
       }
+      is_demo_center: { Args: { _institution: string }; Returns: boolean }
+      is_demo_user: { Args: never; Returns: boolean }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
       is_staff_or_center_member: { Args: never; Returns: boolean }
@@ -7030,7 +7273,17 @@ export type Database = {
         Args: { _institution: string }
         Returns: boolean
       }
+      tenant_claim_with_google: {
+        Args: { _phone: string; _slug: string }
+        Returns: Json
+      }
       tenant_eligible_tests: { Args: never; Returns: Json }
+      tenant_give_google_time: { Args: { _student: string }; Returns: string }
+      tenant_google_link_finish: { Args: { _token: string }; Returns: Json }
+      tenant_google_link_start: {
+        Args: { _institution: string }
+        Returns: string
+      }
       tenant_has_role: {
         Args: { _institution: string; _role: string }
         Returns: boolean
@@ -7050,6 +7303,18 @@ export type Database = {
           slug: string
         }[]
       }
+      tenant_join_with_google: {
+        Args: {
+          _code: string
+          _grade: string
+          _name: string
+          _phone: string
+          _school: string
+          _slug: string
+        }
+        Returns: Json
+      }
+      tenant_jwt_is_google: { Args: never; Returns: boolean }
       tenant_lookup: {
         Args: { _slug: string }
         Returns: {
@@ -7061,6 +7326,7 @@ export type Database = {
         }[]
       }
       tenant_my_student_id: { Args: { _institution: string }; Returns: string }
+      tenant_open_center: { Args: { _slug: string }; Returns: string }
       tenant_practice_tests: { Args: { _institution: string }; Returns: Json }
       tenant_proctor_code: { Args: never; Returns: string }
       tenant_proctor_create: {
@@ -7112,6 +7378,27 @@ export type Database = {
           student_id: string
         }[]
       }
+      tenant_sprints_current: {
+        Args: { _institution: string }
+        Returns: {
+          auto_next: boolean
+          created_at: string
+          ends_on: string
+          id: string
+          institution_id: string
+          name: string
+          season_number: number | null
+          sprint_number: number | null
+          starts_on: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tenant_sprints"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       tenant_student_board: {
         Args: { _institution: string; _since?: string; _sprint?: string }
         Returns: {
@@ -7130,6 +7417,7 @@ export type Database = {
         Args: { _institution: string; _student: string; _tz?: string }
         Returns: Json
       }
+      tenant_switch_to_phone: { Args: { _student: string }; Returns: Json }
       tenant_test_grade: { Args: { _attempt: string }; Returns: undefined }
       tenant_test_paper: { Args: { _test: string }; Returns: Json }
       tenant_test_save: {
@@ -7149,6 +7437,10 @@ export type Database = {
       tenant_update_settings: {
         Args: { _institution: string; _settings: Json }
         Returns: Json
+      }
+      tenant_user_in_center: {
+        Args: { _except?: string; _institution: string; _uid: string }
+        Returns: boolean
       }
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
