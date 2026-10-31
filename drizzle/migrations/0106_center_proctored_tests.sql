@@ -6,7 +6,7 @@
 CREATE TABLE public.tenant_proctor_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   institution_id uuid NOT NULL REFERENCES public.institution_customers(id),
-  class_id uuid NOT NULL REFERENCES public.tenant_classes(id) ON DELETE CASCADE,
+  class_id uuid REFERENCES public.tenant_classes(id) ON DELETE SET NULL, -- sessions outlive their class, so their attempts keep the gates
   test_id uuid NOT NULL REFERENCES public.bluebook_tests(id),
   title text NOT NULL,
   join_code text NOT NULL UNIQUE,
@@ -84,9 +84,9 @@ BEGIN
 SELECT * INTO a FROM public.tenant_test_attempts WHERE id=_attempt;
 IF a.id IS NULL OR a.student_id IS DISTINCT FROM public.tenant_my_student_id(a.institution_id) THEN RAISE EXCEPTION 'Not allowed'; END IF;
 SELECT * INTO s FROM public.tenant_proctor_sessions WHERE id=a.session_id;
-IF s.id IS NULL OR a.status='completed' OR (s.status IN ('active','finished') AND a.oath_accepted_at IS NOT NULL) THEN
+IF a.session_id IS NULL OR (s.id IS NOT NULL AND a.status='completed') OR (s.status IN ('active','finished') AND a.oath_accepted_at IS NOT NULL) THEN
 FOR m IN SELECT value FROM jsonb_array_elements(a.paper) LOOP
-SELECT jsonb_agg(CASE WHEN a.status='completed' AND (s.id IS NULL OR s.review_mode='explanations') THEN e.value||jsonb_build_object('rationale',(SELECT x.rationale FROM public.intl_questions x WHERE x.id=(e.value->>'id')::uuid))
+SELECT jsonb_agg(CASE WHEN a.status='completed' AND (a.session_id IS NULL OR s.review_mode='explanations') THEN e.value||jsonb_build_object('rationale',(SELECT x.rationale FROM public.intl_questions x WHERE x.id=(e.value->>'id')::uuid))
 WHEN a.status='completed' AND s.review_mode='correctness' THEN e.value-'answer'-'alternate_answers'-'rationale'||jsonb_build_object('correct',public.fill_answer_matches(a.answers->(e.value->>'id')->>'value',e.value->>'answer',ARRAY(SELECT jsonb_array_elements_text(COALESCE(NULLIF(e.value->'alternate_answers','null'::jsonb),'[]'::jsonb)))))
 ELSE e.value-'answer'-'alternate_answers'-'rationale' END ORDER BY e.ord) INTO qs FROM jsonb_array_elements(m->'questions') WITH ORDINALITY e(value,ord);
 p:=p||jsonb_build_array(jsonb_set(m,'{questions}',qs)); END LOOP;
