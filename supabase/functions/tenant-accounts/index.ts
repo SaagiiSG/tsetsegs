@@ -65,6 +65,9 @@ Deno.serve(async (req) => {
         .gte('created_at', new Date(now.getTime() - 3600e3).toISOString()).order('created_at', { ascending: false })
       const gate = canSend((sent ?? []).map((r) => r.created_at), now)
       if (!gate.ok) return json({ error: gate.error }, 429)
+      const { count: hourly } = await admin.from('tenant_email_codes').select('id', { count: 'exact', head: true }).eq('institution_id', t.tenant.id)
+        .gte('created_at', new Date(now.getTime() - 3600e3).toISOString())
+      if ((hourly ?? 0) > 300) return json({ error: 'Too many sign-ups right now. Please try again later.' }, 429)
       const code = newCode()
       const { data: row, error: insErr } = await admin.from('tenant_email_codes').insert({
         institution_id: t.tenant.id, email: typedEmail, code_hash: await hashCode(typedEmail, code), expires_at: new Date(now.getTime() + 600e3).toISOString(),
@@ -100,17 +103,18 @@ Deno.serve(async (req) => {
       const { count } = await admin.from('tenant_registrations').select('id', { count: 'exact', head: true }).eq('institution_id', tenant.id).gte('created_at', since)
       if ((count ?? 0) > 200) return json({ error: 'Too many sign-ups right now. Please try again later.' }, 429)
       // Same order as tenant_join_with_google: an existing login or an inactive row stops here, an admin-added row is taken over.
-      const { data: cur } = await admin.from('tenant_students').select('id, user_id, active, class_id, email').eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
+      const { data: cur } = await admin.from('tenant_students').select('id, user_id, active, class_id, email, google_due_on').eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
       if (cur?.user_id) return json({ error: 'You already have an account here. Sign in instead.' }, 409)
       if (cur && !cur.active) return json({ error: 'This phone number is not active here. Ask your center.' }, 403)
       // Newest code for this email in this center.
       const { data: codeRow } = await admin.from('tenant_email_codes').select('id, code_hash, expires_at, attempts').eq('institution_id', tenant.id).eq('email', typedEmail)
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       const verdict = checkCode(codeRow, await hashCode(typedEmail, String(body.email_code ?? '').trim()), new Date())
-      if (verdict !== 'ok') {
-        if (verdict === 'wrong' && codeRow) await admin.from('tenant_email_codes').update({ attempts: codeRow.attempts + 1 }).eq('id', codeRow.id)
-        return json({ error: CODE_ERRORS[verdict] }, 400)
-      }
+      if (verdict === 'expired' || verdict === 'locked') return json({ error: CODE_ERRORS[verdict] }, 400)
+      // Charge the attempt first (compare-and-set), so parallel guesses cannot dodge the limit; a lost race looks like a wrong code.
+      const { data: charged } = await admin.from('tenant_email_codes').update({ attempts: codeRow!.attempts + 1 })
+        .eq('id', codeRow!.id).eq('attempts', codeRow!.attempts).select('id')
+      if (!charged?.length || verdict === 'wrong') return json({ error: CODE_ERRORS.wrong }, 400)
       let studentId = cur?.id as string | undefined
       if (!studentId) {
         const { data: student, error: sErr } = await admin.from('tenant_students')
@@ -130,6 +134,8 @@ Deno.serve(async (req) => {
       const { data: linked } = await admin.from('tenant_students').update({
         user_id: created.user.id, password_user_id: created.user.id,
         email: cur?.email ? cur.email : typedEmail, class_id: cur?.class_id ?? cls.id,
+        // Email-path students get 7 days to connect Google; an admin-added row keeps a later date.
+        ...(cur ? { google_due_on: [cur.google_due_on, new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)].filter(Boolean).sort().pop() } : {}),
       }).eq('id', studentId).is('user_id', null).select('id')
       if (!linked?.length) {
         await admin.auth.admin.deleteUser(created.user.id)
@@ -272,13 +278,18 @@ Deno.serve(async (req) => {
 
     if (action === 'reset_student') {
       if (!isPlatformAdmin && !isCenterAdmin) return json({ error: 'Not allowed' }, 403)
-      const { data: student } = await admin.from('tenant_students').select('id, user_id, institution_id').eq('id', body.student_id).maybeSingle()
+      const { data: student } = await admin.from('tenant_students').select('id, user_id, institution_id, google_user_id').eq('id', body.student_id).maybeSingle()
       if (!student || student.institution_id !== institutionId) return json({ error: 'Not found' }, 404)
+      if (student.user_id && student.user_id === student.google_user_id)
+        return json({ error: 'This student signs in with Google. Use Switch to phone sign-in instead.' }, 400)
       if (student.user_id) {
-        await admin.from('tenant_students').update({ user_id: null, password_user_id: null }).eq('id', student.id)
+        await admin.from('tenant_students').update({ user_id: null }).eq('id', student.id)
         // Center admins can edit user_id, so only delete the login this function made for this student, never someone else's.
         const { data: u } = await admin.auth.admin.getUserById(student.user_id)
-        if (u?.user?.email === `s-${student.id}@students.flowersos.co`) await admin.auth.admin.deleteUser(student.user_id)
+        if (u?.user?.email === `s-${student.id}@students.flowersos.co`) {
+          await admin.auth.admin.deleteUser(student.user_id)
+          await admin.from('tenant_students').update({ password_user_id: null }).eq('id', student.id)
+        }
       }
       return json({ ok: true })
     }
