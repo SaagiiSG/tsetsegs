@@ -13,6 +13,7 @@ import CenterSignIn from './CenterSignIn';
 import CenterAdminPortal from './CenterAdminPortal';
 import CenterTeacherPortal from './CenterTeacherPortal';
 import CenterStudentPortal from './CenterStudentPortal';
+import CenterGoogleGate from './CenterGoogleGate';
 
 export default function CenterPortalApp({ slug }: { slug: string }) {
   const [center, setCenter] = useState<Center | null | undefined>(undefined);
@@ -127,7 +128,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />
-        <Route path="/student/*" element={role === 'student' ? <CenterStudentPortal /> : <Navigate to={home} replace />} />
+        <Route path="/student/*" element={role === 'student' ? <CenterGoogleGate><CenterStudentPortal /></CenterGoogleGate> : <Navigate to={home} replace />} />
         <Route path="*" element={<Navigate to={home} replace />} />
       </Routes>}
     </CenterContext.Provider>
