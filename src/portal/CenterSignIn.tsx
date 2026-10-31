@@ -186,7 +186,7 @@ export default function CenterSignIn({ signedInWithoutAccess, recovering = false
                 </div>
                 <Button className={authPrimaryButtonClasses} disabled={busy}>{busy ? text('Үүсгэж байна…', 'Creating…') : text('Нууц үг үүсгэх', 'Create password')}</Button>
                 <p className="text-center text-xs text-muted-foreground">{text('эсвэл', 'or')}</p>
-                {googleButton(text('Google-ээр үргэлжлүүлэх', 'Or continue with Google'), { kind: 'claim', phone: phoneDigits(phone) })}
+                {googleButton(text('Google-ээр үргэлжлүүлэх', 'Continue with Google'), { kind: 'claim', phone: phoneDigits(phone) })}
                 <Button type="button" variant="ghost" className={authGhostButtonClasses}
                   onClick={backToPhone}>
                   {text('Буцах', 'Back')}
