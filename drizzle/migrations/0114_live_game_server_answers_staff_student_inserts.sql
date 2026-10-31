@@ -43,7 +43,7 @@ REVOKE ALL ON FUNCTION public.live_session_question_list(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.live_session_question_list(text) TO anon, authenticated;
 
 -- One answer from a player's phone. Same checks as 0082's insert rule (a running game, the player and question
--- belong to it, one answer per question), plus: only the question on screen now, until 3 s after its time is up
+-- belong to it, one answer per question), plus: only the question on screen now, until 10 s after its time is up
 -- (a phone hears about each question a moment after the server). Games started before this migration have no
 -- start time; their answers are taken as before.
 CREATE OR REPLACE FUNCTION public.live_session_answer(_join_code text, _participant uuid, _question uuid, _choice text, _time_taken_ms integer)
@@ -66,7 +66,7 @@ BEGIN
   SELECT p.pos INTO pos FROM (SELECT question_id, row_number() OVER (ORDER BY order_index, id) - 1 AS pos
     FROM public.live_session_questions WHERE session_id = s.id) p WHERE p.question_id = _question;
   IF pos IS DISTINCT FROM s.current_question_index
-     OR now() >= s.question_started_at + make_interval(secs => s.time_per_question + 3) THEN
+     OR now() >= s.question_started_at + make_interval(secs => s.time_per_question + 10) THEN
     RAISE EXCEPTION 'Time is up' USING ERRCODE = '42501';
   END IF;
 
