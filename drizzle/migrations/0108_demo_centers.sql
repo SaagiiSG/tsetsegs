@@ -53,7 +53,7 @@ BEGIN
   WHERE t.is_published AND t.section_type = 'math'
   GROUP BY t.id
   HAVING bool_and(i.id IS NOT NULL)
-  ORDER BY count(*) FILTER (WHERE i.rationale IS NOT NULL) DESC, t.test_year DESC NULLS LAST, t.test_month DESC NULLS LAST, t.name
+  ORDER BY count(*) FILTER (WHERE coalesce(i.rationale, '') <> '') DESC, t.test_year DESC NULLS LAST, t.test_month DESC NULLS LAST, t.name
   LIMIT 1;
   IF test IS NULL THEN RAISE EXCEPTION '0108: no published Math test has International copies of every question'; END IF;
 
@@ -78,7 +78,7 @@ BEGIN
   -- A taste of English. These explanations are College Board's, not the teachers'.
   INSERT INTO public.demo_slice (item_id, kind)
   SELECT id, 'question' FROM public.intl_questions
-  WHERE is_active AND lower(subject) <> 'math' AND rationale IS NOT NULL
+  WHERE is_active AND lower(subject) <> 'math' AND coalesce(rationale, '') <> ''
   ORDER BY created_at DESC, id LIMIT 5;
 
   INSERT INTO public.demo_slice (item_id, kind)
@@ -91,16 +91,19 @@ END $$;
 -- 3. Read rules (same names as 0088): demo users read only the slice; everyone else as before.
 DROP POLICY IF EXISTS "Staff and centers view active intl questions" ON public.intl_questions;
 CREATE POLICY "Staff and centers view active intl questions" ON public.intl_questions FOR SELECT TO authenticated
-  USING (is_active AND (SELECT public.is_staff_or_center_member()) AND ((SELECT NOT public.is_demo_user()) OR id IN (SELECT item_id FROM public.demo_slice WHERE kind = 'question')));
+  USING (is_active AND (SELECT public.is_staff_or_center_member())
+    AND ((SELECT NOT public.is_demo_user()) OR id IN (SELECT item_id FROM public.demo_slice WHERE kind = 'question'))); -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
 
 DROP POLICY IF EXISTS "Staff and centers view published concept videos" ON public.concept_videos;
 CREATE POLICY "Staff and centers view published concept videos" ON public.concept_videos FOR SELECT TO authenticated
-  USING (is_published AND (SELECT public.is_staff_or_center_member()) AND ((SELECT NOT public.is_demo_user()) OR id IN (SELECT item_id FROM public.demo_slice WHERE kind = 'video')));
+  USING (is_published AND (SELECT public.is_staff_or_center_member())
+    AND ((SELECT NOT public.is_demo_user()) OR id IN (SELECT item_id FROM public.demo_slice WHERE kind = 'video'))); -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
 
 -- Uploaded files are stored as 'storage:<object name>' in concept_videos.video_url (src/lib/conceptVideos.ts).
 DROP POLICY IF EXISTS "Staff and centers read concept videos" ON storage.objects;
 CREATE POLICY "Staff and centers read concept videos" ON storage.objects FOR SELECT TO authenticated
-  USING (bucket_id = 'concept-videos' AND (SELECT public.is_staff_or_center_member()) AND ((SELECT NOT public.is_demo_user()) OR name IN (SELECT substr(v.video_url, 9) FROM public.concept_videos v JOIN public.demo_slice d ON d.item_id = v.id AND d.kind = 'video' WHERE v.video_url LIKE 'storage:%')));
+  USING (bucket_id = 'concept-videos' AND (SELECT public.is_staff_or_center_member())
+    AND ((SELECT NOT public.is_demo_user()) OR name IN (SELECT substr(v.video_url, 9) FROM public.concept_videos v JOIN public.demo_slice d ON d.item_id = v.id AND d.kind = 'video' WHERE v.video_url LIKE 'storage:%'))); -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
 
 -- 4. Question details without content, for any active International question: a demo center's sample history points
 -- at questions outside the slice, and topic mastery, the daily rings and the SAT simulation need their topic and
@@ -117,18 +120,19 @@ END $$;
 REVOKE ALL ON FUNCTION public.intl_question_meta(uuid[]) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.intl_question_meta(uuid[]) TO authenticated;
 
--- For concept-video-url (signs with the service role): the same rule as the bucket read above, for one file.
+-- For concept-video-url (signs with the service role), called with the caller's own token: the same rule as the bucket
+-- read above, for one file. Staff (previewing unpublished uploads) and real centers keep any path, as before.
 CREATE FUNCTION public.can_read_concept_video(_path text) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT public.is_staff_or_center_member() AND EXISTS (
-    SELECT 1 FROM public.concept_videos v
-    WHERE v.is_published AND v.video_url = 'storage:' || _path
-      AND (NOT public.is_demo_user() OR v.id IN (SELECT item_id FROM public.demo_slice WHERE kind = 'video')));
+  SELECT public.is_staff_or_center_member() AND ((SELECT NOT public.is_demo_user()) OR EXISTS (
+    SELECT 1 FROM public.concept_videos v JOIN public.demo_slice d ON d.item_id = v.id AND d.kind = 'video'
+    WHERE v.video_url = 'storage:' || _path));
 $$;
 REVOKE ALL ON FUNCTION public.can_read_concept_video(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.can_read_concept_video(text) TO authenticated;
 
--- 5. Practice tests (0091): a demo center is offered only the slice's test; tenant_test_start checks against this list.
+-- 5. Practice tests (0091): a demo center is offered a test only if every active International copy of every Math
+-- question is in the slice (fails closed); tenant_test_start checks against this list. Real centers: exactly 0091.
 CREATE OR REPLACE FUNCTION public.tenant_practice_tests(_institution uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 DECLARE sid uuid;
 BEGIN
@@ -137,9 +141,9 @@ RETURN COALESCE((SELECT jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'te
 'last_score',(SELECT a.math_score FROM public.tenant_test_attempts a WHERE a.student_id=sid AND a.test_id=t.id AND a.status='completed' ORDER BY a.completed_at DESC LIMIT 1),
 'open_attempt',(SELECT a.id FROM public.tenant_test_attempts a WHERE a.student_id=sid AND a.test_id=t.id AND a.status='in_progress' LIMIT 1))
 ORDER BY t.test_year DESC NULLS LAST,t.test_month DESC NULLS LAST,t.name)
-FROM public.bluebook_tests t CROSS JOIN LATERAL (SELECT count(*) modules,sum(mm.n) questions,sum(mm.mins) minutes,bool_and(mm.all_intl) all_intl FROM (SELECT m.time_limit_minutes mins,count(*) n,bool_and(i.id IS NOT NULL) all_intl FROM public.bluebook_modules m JOIN public.bluebook_module_questions mq ON mq.module_id=m.id LEFT JOIN public.questions q ON q.id=mq.question_id LEFT JOIN public.intl_questions i ON i.question_id=q.question_id AND i.is_active
-AND (NOT public.is_demo_center(_institution) OR i.id IN (SELECT item_id FROM public.demo_slice WHERE kind='question')) -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
-WHERE m.test_id=t.id AND m.section='math' GROUP BY m.id,m.time_limit_minutes) mm) s
+FROM public.bluebook_tests t CROSS JOIN LATERAL (SELECT count(*) modules,sum(mm.n) questions,sum(mm.mins) minutes,bool_and(mm.all_intl) all_intl FROM (SELECT m.time_limit_minutes mins,count(*) n,bool_and(i.id IS NOT NULL
+AND ((SELECT NOT public.is_demo_center(_institution)) OR i.id IN (SELECT item_id FROM public.demo_slice WHERE kind='question'))) all_intl -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
+FROM public.bluebook_modules m JOIN public.bluebook_module_questions mq ON mq.module_id=m.id LEFT JOIN public.questions q ON q.id=mq.question_id LEFT JOIN public.intl_questions i ON i.question_id=q.question_id AND i.is_active WHERE m.test_id=t.id AND m.section='math' GROUP BY m.id,m.time_limit_minutes) mm) s
 WHERE t.is_published AND t.section_type='math' AND s.modules>0 AND s.all_intl),'[]'::jsonb);
 END $$;
 REVOKE ALL ON FUNCTION public.tenant_practice_tests(uuid) FROM PUBLIC,anon;
