@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } } });
     const { data: { user } } = await sb.auth.getUser(auth.replace("Bearer ", ""));
     if (!user) return json({ error: "Please sign in again." }, 401);
+    if (user.email?.endsWith("@demo.flowersos.co")) return json({ error: "Turned off in the demo." }, 403);
 
     const { stats } = await req.json();
     if (!stats || typeof stats !== "object") return json({ error: "Missing stats" }, 400);

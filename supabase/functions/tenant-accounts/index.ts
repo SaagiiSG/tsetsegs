@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const action = String(body.action ?? '')
 
     const findTenant = async (slug: string) => {
-      const { data } = await admin.from('institution_customers').select('id, portal_enabled, status, access_blocked_at')
+      const { data } = await admin.from('institution_customers').select('id, portal_enabled, status, access_blocked_at, is_demo')
         .ilike('slug', String(slug ?? '').trim()).maybeSingle()
       return data && data.portal_enabled && data.status !== 'churned' ? data : null
     }
@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     if (action === 'register') {
       const tenant = await findTenant(body.slug)
       if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
+      if (tenant.is_demo) return json({ error: 'Turned off in the demo.' }, 403)
       if (tenant.access_blocked_at) return json({ error: 'This center is paused because of an overdue payment, so new sign-ups are closed. Please contact your center.' }, 403)
       const code = String(body.code ?? '').trim()
       const { data: cls } = await admin.from('tenant_classes').select('id').eq('institution_id', tenant.id).eq('join_code', code).maybeSingle()
@@ -196,6 +197,7 @@ Deno.serve(async (req) => {
     if (action === 'student_lookup' || action === 'student_activate') {
       const tenant = await findTenant(body.slug)
       if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
+      if (tenant.is_demo) return json({ error: 'Turned off in the demo.' }, 403)
       const phone = digits(body.phone)
       if (phone.length < 6) return json({ error: 'Enter the phone number registered with your class.' }, 400)
       const { data: student } = await admin.from('tenant_students').select('id, user_id, active, google_user_id, google_due_on')
@@ -230,6 +232,9 @@ Deno.serve(async (req) => {
     const { data: isPlatformAdmin } = await admin.rpc('has_role', { _user_id: callerId, _role: 'admin' })
 
     const institutionId = String(body.institution_id ?? '')
+    // Demo centers refuse every staff action (create/reset/send code/verified register...), whatever the caller's role.
+    const { data: instRow } = await admin.from('institution_customers').select('is_demo').eq('id', institutionId).maybeSingle()
+    if (instRow?.is_demo) return json({ error: 'Turned off in the demo.' }, 403)
 
     // ---------- Signed-in student verifies an email instead of connecting Google ----------
     if (action === 'student_email_code' || action === 'student_email_verify') {

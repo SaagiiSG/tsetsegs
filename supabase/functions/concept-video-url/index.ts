@@ -24,22 +24,9 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   if (!supabaseUrl || !serviceKey) return json({ error: 'Server misconfigured' }, 500)
 
-  // Same check as the concept_videos read rule (0088), run as the caller.
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
   const auth = req.headers.get('Authorization') ?? ''
-  let allowed = false
-  if (anonKey && auth.startsWith('Bearer ')) {
-    try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/rpc/is_staff_or_center_member`, {
-        method: 'POST',
-        headers: { apikey: anonKey, Authorization: auth, 'Content-Type': 'application/json' },
-        body: '{}',
-      })
-      allowed = res.ok && (await res.json()) === true
-    } catch (_err) { /* not allowed */ }
-  }
-
-  if (!allowed) return json({ error: 'Please sign in' }, 401)
+  if (!anonKey || !auth.startsWith('Bearer ')) return json({ error: 'Please sign in' }, 401)
 
   let path = ''
   try {
@@ -49,6 +36,18 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid body' }, 400)
   }
   if (!PATH_RE.test(path) || path.includes('..')) return json({ error: 'Invalid path' }, 400)
+
+  // Same rule as the storage read policy (0088 + demo slice, 0108), run as the caller, for this one file.
+  let allowed = false
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/can_read_concept_video`, {
+      method: 'POST',
+      headers: { apikey: anonKey, Authorization: auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _path: path }),
+    })
+    allowed = res.ok && (await res.json()) === true
+  } catch (_err) { /* not allowed */ }
+  if (!allowed) return json({ error: 'Not allowed' }, 403)
 
   const admin = createClient(supabaseUrl, serviceKey)
   const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, SIGNED_TTL_S)
