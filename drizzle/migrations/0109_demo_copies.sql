@@ -185,10 +185,11 @@ BEGIN
 
   -- Past sprints go in already finished: finishing one by UPDATE fires tenant_sprint_rank_snapshot, which calls
   -- tenant_student_board, which refuses a caller with no login. Their ranks are written below instead.
-  INSERT INTO tenant_sprints (institution_id, name, starts_on, ends_on, status, created_at) VALUES
-    (_institution, 'Sprint 1', today - 35, today - 22, 'finished', t0 - interval '35 days'),
-    (_institution, 'Sprint 2', today - 21, today - 8, 'finished', t0 - interval '21 days'),
-    (_institution, 'Sprint 3', today - 7, today + 7, 'active', t0 - interval '7 days');
+  -- One season of 3 running on its own (0105), as "Start sprints" makes it; Sprint 3 ends long after the copy does.
+  INSERT INTO tenant_sprints (institution_id, name, starts_on, ends_on, status, created_at, season_number, sprint_number, auto_next) VALUES
+    (_institution, 'Sprint 1', today - 35, today - 22, 'finished', t0 - interval '35 days', 1, 1, true),
+    (_institution, 'Sprint 2', today - 21, today - 8, 'finished', t0 - interval '21 days', 1, 2, true),
+    (_institution, 'Sprint 3', today - 7, today + 7, 'active', t0 - interval '7 days', 1, 3, true);
   -- The snapshot's own scoring and promotion rule (0013, 0031), from a starting tier of bronze: Maya, first both times,
   -- goes bronze to silver to gold.
   FOR sp IN SELECT * FROM tenant_sprints WHERE institution_id = _institution AND status = 'finished' ORDER BY starts_on LOOP
@@ -350,6 +351,7 @@ BEGIN
     DELETE FROM tenant_students WHERE institution_id = inst;
     DELETE FROM tenant_classes WHERE institution_id = inst;
     DELETE FROM tenant_sprints WHERE institution_id = inst;
+    DELETE FROM tenant_schedule_templates WHERE institution_id = inst;
     DELETE FROM tenant_members WHERE institution_id = inst;
   END IF;
   DELETE FROM demo_copies WHERE id = _copy;

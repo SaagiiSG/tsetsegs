@@ -47,6 +47,8 @@ Deno.serve(async (req) => {
     const joinTarget = async () => {
       const tenant = await findTenant(body.slug)
       if (!tenant) return { error: json({ error: 'This center portal is not available.' }, 404) }
+      // Demo centers: no code email and no sign-up (covers send_email_code and register_verified).
+      if (tenant.is_demo) return { error: json({ error: 'Turned off in the demo.' }, 403) }
       if (tenant.access_blocked_at) return { error: json({ error: 'This center is paused because of an overdue payment, so new sign-ups are closed. Please contact your center.' }, 403) }
       const { data: cls } = await admin.from('tenant_classes').select('id').eq('institution_id', tenant.id).eq('join_code', String(body.code ?? '').trim()).maybeSingle()
       if (!cls) return { error: json({ error: 'This sign-up link is not valid. Ask your center for a new one.' }, 404) }
@@ -232,7 +234,7 @@ Deno.serve(async (req) => {
     const { data: isPlatformAdmin } = await admin.rpc('has_role', { _user_id: callerId, _role: 'admin' })
 
     const institutionId = String(body.institution_id ?? '')
-    // Demo centers refuse every staff action (create/reset/send code/verified register...), whatever the caller's role.
+    // Demo centers refuse every signed-in action (staff create/reset, a student's email code/verify), whatever the caller's role.
     const { data: instRow } = await admin.from('institution_customers').select('is_demo').eq('id', institutionId).maybeSingle()
     if (instRow?.is_demo) return json({ error: 'Turned off in the demo.' }, 403)
 
