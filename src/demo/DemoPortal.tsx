@@ -43,9 +43,9 @@ export default function DemoPortal({ role }: { role: DemoRole }) {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter basename={`/demo/${role}`}><CenterPortalApp slug={copy.slug} /></BrowserRouter>
           <DemoBar role={role} practiceOnly={copy.practiceOnly} expiresAt={copy.expiresAt} onSwitch={r => window.location.assign(`/demo/${r}/`)} onEnd={end} />
-        </TooltipProvider>
+          <BrowserRouter basename={`/demo/${role}`}><CenterPortalApp slug={copy.slug} /></BrowserRouter>
+</TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
