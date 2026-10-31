@@ -21,7 +21,9 @@ import Educators from "./pages/public/Educators";
 import SoloWelcome from "./pages/public/SoloWelcome";
 import { resolveCenterSlug } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
-import InvestorDemo from './demo/InvestorDemo';
+import DemoPortal from './demo/DemoPortal';
+import DemoStart from './demo/DemoStart';
+import { demoRoleFromPath } from './demo/storageKey';
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
@@ -372,8 +374,10 @@ const CenterJoinRedirect = () => {
 };
 
 const App = () => {
-  if (window.location.pathname === '/demo' || window.location.pathname.startsWith('/demo/')) {
-    return <QueryClientProvider client={queryClient}><ThemeProvider attribute="class" defaultTheme="dark" enableSystem><TooltipProvider><BrowserRouter><InvestorDemo /></BrowserRouter></TooltipProvider></ThemeProvider></QueryClientProvider>;
+  const path = window.location.pathname;
+  if (path === '/demo' || path.startsWith('/demo/')) {
+    const demoRole = demoRoleFromPath(path);
+    return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="dark" enableSystem><DemoStart /></ThemeProvider>;
   }
   const centerSlug = resolveCenterSlug();
   if (centerSlug) {
