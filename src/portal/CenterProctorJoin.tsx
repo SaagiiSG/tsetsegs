@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { useCenter } from './centerContext';
+import { useExamLock } from './examLock';
 
 type ProctorState = { title: string; status: 'lobby' | 'active' | 'finished'; review_mode: string; started_at: string | null; unlocked: boolean; oath: boolean; attempt_status: 'in_progress' | 'completed'; current_module: number };
 const rpc = (name: string, args: object) => supabase.rpc(name as never, args as never);
@@ -39,6 +40,9 @@ export function CenterProctorJoin() {
   const s = state.data;
   const goToTest = !!s && ((s.status === 'active' && s.unlocked && s.oath) || (s.status === 'finished' && s.attempt_status === 'completed'));
   useEffect(() => { if (goToTest && attemptId) navigate(`/student/tests/${attemptId}`, { replace: true }); }, [goToTest, attemptId, navigate]);
+
+  // Locked from the oath screen on (the redirect and waiting room included), until the session ends.
+  useExamLock(!!s && s.unlocked && s.status !== 'finished');
 
   async function run(fn: () => Promise<void>) {
     setBusy(true); setError('');

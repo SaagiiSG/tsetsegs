@@ -27,6 +27,7 @@ import { CenterGoalDialog, CenterRingNudge, useCenterDailyProgress, useCenterGoa
 import { Star, BarChart3, Target, Mountain, Sparkles, ArrowRight, Users } from 'lucide-react';
 import { CenterRingHistoryDialog, useCenterStreak, useCenterRingHistory, SKY_RING, dayKey } from './CenterStreak';
 import { CenterTopBar } from './CenterTopBar';
+import { ExamLockContext, withLock } from './examLock';
 import { StudentRail, NAV } from './StudentRail';
 import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { attemptPoints, runPoints, ringStatus, shouldShowRingNudge } from './studentStats';
@@ -173,6 +174,9 @@ export default function CenterStudentPortal() {
   const me = useMe();
   const gate = useOnboardingGate(me.data);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [lockers, setLockers] = useState<ReadonlySet<string>>(new Set());
+  const setLock = useCallback((id: string, on: boolean) => setLockers(h => withLock(h, id, on)), []);
+  const locked = lockers.size > 0;
   // The shell owns the dock edge so a top dock can push the page content below itself.
   const [dockEdge, setDockEdge] = useState<DockEdge>(() => {
     const v = localStorage.getItem(DOCK_KEY);
@@ -188,18 +192,19 @@ export default function CenterStudentPortal() {
   return (
     <div className="student-theme customer-student-theme min-h-screen overflow-x-clip admin-glow-scope">
       <SkyDepth />
+      <ExamLockContext.Provider value={setLock}>
       <div className="relative z-[1] flex">
-        <div className="hidden lg:block m-4 w-16 shrink-0" aria-hidden />
-        <StudentRail />
+        {!locked && <><div className="hidden lg:block m-4 w-16 shrink-0" aria-hidden />
+        <StudentRail /></>}
 
         <main className="flex-1 min-w-0 p-3 md:p-6 lg:p-8 pb-28 lg:pb-8">
-          <header className={`student-header sticky top-2 z-30 mb-4 ${dockEdge === 'top' ? 'max-lg:mb-[4.5rem]' : ''} grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur lg:flex lg:justify-end`}>
+          {!locked && <header className={`student-header sticky top-2 z-30 mb-4 ${dockEdge === 'top' ? 'max-lg:mb-[4.5rem]' : ''} grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border px-2 py-1.5 backdrop-blur lg:flex lg:justify-end`}>
             <div className="lg:hidden flex min-w-0 items-center gap-2"><CenterLogo center={center} className="h-8 w-8 shrink-0" /><p className="truncate font-semibold">{centerDisplayName(center)}</p></div>
             {me.data ? <CenterTopBar studentId={me.data.student.id} attempts={me.data.attempts} meta={me.data.meta} /> : <div />}
             <div className="flex items-center justify-end gap-1">
               <Button variant="ghost" size="icon" className="student-bell rounded-full" onClick={() => setNotesOpen(true)} aria-label="Announcements"><Bell className="h-5 w-5" /></Button>
             </div>
-          </header>
+          </header>}
           {me.isLoading || gate.loading ? <SkyHomeSkeleton /> : !me.data ? (me.error?.message === 'missing'
             ? <p className="text-sm">Your account isn't linked. Contact your center.</p>
             : <div className="space-y-3"><p className="text-sm">We couldn't load your progress. Check your connection and try again.</p><Button variant="outline" onClick={() => me.refetch()}>Try again</Button></div>) : (
@@ -228,6 +233,7 @@ export default function CenterStudentPortal() {
           )}
         </main>
       </div>
+      </ExamLockContext.Provider>
 
       <Sheet open={notesOpen} onOpenChange={setNotesOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
@@ -236,7 +242,7 @@ export default function CenterStudentPortal() {
         </SheetContent>
       </Sheet>
 
-      <MovableDock edge={dockEdge} setEdge={setDockEdge} />
+      {!locked && <MovableDock edge={dockEdge} setEdge={setDockEdge} />}
     </div>
   );
 }

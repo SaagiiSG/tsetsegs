@@ -16,6 +16,7 @@ import { normaliseChoices } from '@/lib/bluebookReview';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
 import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { useCenter } from './centerContext';
+import { useExamLock } from './examLock';
 import { SkyCardSkeleton } from './SkySkeleton';
 import { moduleSecondsLeft } from './testTimer';
 import { awayStep } from './proctorFocus';
@@ -105,7 +106,23 @@ export function CenterPracticeTest() {
   useEffect(() => { if (state && module && !completed && seconds === 0 && !pendingAdvance.current) void advance(); }, [seconds, completed, state?.current_module]);
   // Proctored and still open: count every time the student leaves the test and tell the server.
   const proctored = !!state?.session && !!module && !completed;
+  useExamLock(!!state?.session && !completed);
+  const alive = useRef(true);
   const violations = useRef(0);
+  // Leaving the page (Back, an in-app link) mid-test counts once more. A reload never unmounts, and the deferred check skips StrictMode's fake remount.
+  const leaving = useRef({ on: false, attemptId });
+  leaving.current = { on: proctored, attemptId };
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      setTimeout(() => {
+        const { on, attemptId: id } = leaving.current;
+        if (alive.current || !on || !id) return;
+        void Promise.resolve(supabase.rpc('tenant_proctor_focus' as never, { _attempt: id, _violations: violations.current + 1 } as never)).catch(() => undefined);
+      }, 0);
+    };
+  }, []);
   useEffect(() => { violations.current = Math.max(violations.current, state?.focus_violations ?? 0); }, [state?.focus_violations]);
   useEffect(() => {
     if (!proctored || !attemptId) return;
