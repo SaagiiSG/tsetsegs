@@ -22,7 +22,6 @@ interface QuestionData {
   id: string;
   question_text: string;
   multiple_choice_options: Record<string, string>;
-  answer: string;
   order_index: number;
 }
 
@@ -75,6 +74,9 @@ export default function LiveSession() {
   const [pointsEarned, setPointsEarned] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
+  // The server holds the answer key: it grades each answer and reveals the right one once time is up.
+  const [checking, setChecking] = useState(false);
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [isRestoring, setIsRestoring] = useState(() => {
     // Synchronously check localStorage so we never flash the join form on refresh
     try {
@@ -87,6 +89,7 @@ export default function LiveSession() {
   });
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const revealRef = useRef<ReturnType<typeof setTimeout>>();
   const questionStartRef = useRef<number>(0);
   const hasAnsweredRef = useRef(false);
 
@@ -96,7 +99,6 @@ export default function LiveSession() {
   const sessionRef = useRef<SessionData | null>(session);
   const participantIdRef = useRef<string | null>(participantId);
   const questionsRef = useRef<QuestionData[]>(questions);
-  const totalPointsRef = useRef(0);
   const answeredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
@@ -104,7 +106,6 @@ export default function LiveSession() {
   useEffect(() => { sessionRef.current = session; }, [session]);
   useEffect(() => { participantIdRef.current = participantId; }, [participantId]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
-  useEffect(() => { totalPointsRef.current = totalPoints; }, [totalPoints]);
   useEffect(() => { answeredRef.current = answeredQuestionIds; }, [answeredQuestionIds]);
 
   // Look up session on mount + restore from localStorage if the user refreshed
@@ -229,6 +230,7 @@ export default function LiveSession() {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setPointsEarned(0);
+    setChecking(false);
 
     // If this device already answered this question (refreshed mid-game), don't let them re-answer
     const alreadyAnswered = q ? answeredRef.current.has(q.id) : false;
@@ -237,6 +239,15 @@ export default function LiveSession() {
     questionStartRef.current = Date.now();
     const timePerQ = sess?.time_per_question || 30;
     setTimeLeft(timePerQ);
+
+    // Ask for the right answer when this phone's time runs out (the server's ran out a moment earlier).
+    clearTimeout(revealRef.current);
+    if (q && joinCode) {
+      revealRef.current = setTimeout(async () => {
+        const { data } = await supabase.rpc("live_session_reveal" as never, { _join_code: joinCode.toUpperCase(), _question: q.id } as never);
+        if (typeof data === "string") setRevealed((prev) => ({ ...prev, [q.id]: data }));
+      }, timePerQ * 1000);
+    }
 
     if (alreadyAnswered) {
       // Show neutral "waiting for next question" state instead of letting them score twice
@@ -265,7 +276,7 @@ export default function LiveSession() {
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, [joinCode]);
 
   // Subscribe to session changes — use refs to avoid stale closures
   useEffect(() => {
@@ -306,10 +317,11 @@ export default function LiveSession() {
     };
   }, [session?.id, startQuestion]);
 
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       clearInterval(timerRef.current);
+      clearTimeout(revealRef.current);
     };
   }, []);
 
@@ -383,22 +395,28 @@ export default function LiveSession() {
   const handleAnswer = async (choice: string) => {
     const sess = sessionRef.current;
     const pid = participantIdRef.current;
-    if (hasAnsweredRef.current || !sess || !pid) return;
+    if (hasAnsweredRef.current || !sess || !pid || !joinCode) return;
     hasAnsweredRef.current = true;
     clearInterval(timerRef.current);
 
-    const currentQ = questionsRef.current[currentIndexRef.current];
+    const index = currentIndexRef.current;
+    const currentQ = questionsRef.current[index];
     if (!currentQ) return;
 
     const timeTaken = Date.now() - questionStartRef.current;
-    const correct = choice === currentQ.answer;
-    const totalTime = sess.time_per_question * 1000;
-    const timeRemaining = Math.max(0, totalTime - timeTaken);
-    const points = correct ? Math.max(100, Math.round(1000 * (timeRemaining / totalTime))) : 0;
+    setChecking(true);
+    // The server grades the answer, records it and adds the points.
+    const { data, error } = await supabase.rpc("live_session_answer" as never, {
+      _join_code: joinCode.toUpperCase(),
+      _participant: pid,
+      _question: currentQ.id,
+      _choice: choice,
+      _time_taken_ms: timeTaken,
+    } as never);
+    if (error) console.error("Error submitting answer:", error);
+    const result = error ? null : (data as unknown as { is_correct: boolean; points: number } | null);
+    const points = result?.points ?? 0;
 
-    setSelectedAnswer(choice);
-    setIsCorrect(correct);
-    setPointsEarned(points);
     setTotalPoints((prev) => prev + points);
     setAnsweredQuestionIds((prev) => {
       const next = new Set(prev);
@@ -406,35 +424,15 @@ export default function LiveSession() {
       answeredRef.current = next;
       return next;
     });
+    // The teacher moved on while this answer was being checked: keep the points, leave the new question alone.
+    if (currentIndexRef.current !== index) return;
+
+    setChecking(false);
+    // Refused (time was up on the server): show it as "Time's up!".
+    setSelectedAnswer(result ? choice : null);
+    setIsCorrect(!!result?.is_correct);
+    setPointsEarned(points);
     setPhase("feedback");
-
-    try {
-      await supabase.from("live_session_answers").insert({
-        session_id: sess.id,
-        participant_id: pid,
-        question_id: currentQ.id,
-        answer: choice,
-        is_correct: correct,
-        time_taken_ms: timeTaken,
-        points_earned: points,
-      });
-
-      // Update participant total — always re-read latest from server first to
-      // avoid clobbering points if the same participant is open on another tab
-      const { data: latest } = await supabase
-        .from("live_session_participants")
-        .select("total_points")
-        .eq("id", pid)
-        .maybeSingle();
-      const serverTotal = latest?.total_points ?? totalPointsRef.current;
-
-      await supabase
-        .from("live_session_participants")
-        .update({ total_points: serverTotal + points })
-        .eq("id", pid);
-    } catch (err) {
-      console.error("Error submitting answer:", err);
-    }
   };
 
   // Error state
@@ -592,6 +590,7 @@ export default function LiveSession() {
               key={key}
               variant="outline"
               className="h-auto min-h-[56px] text-left justify-start p-4 text-base whitespace-normal"
+              disabled={checking}
               onClick={() => handleAnswer(key)}
             >
               <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
@@ -632,9 +631,11 @@ export default function LiveSession() {
               <h2 className="text-2xl font-bold text-destructive">
                 {selectedAnswer ? "Wrong!" : "Time's up!"}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Correct answer: {questions[currentIndex]?.answer}
-              </p>
+              {revealed[questions[currentIndex]?.id] && (
+                <p className="text-sm text-muted-foreground">
+                  Correct answer: {revealed[questions[currentIndex]?.id]}
+                </p>
+              )}
             </>
           )}
           <p className="text-sm text-muted-foreground">
