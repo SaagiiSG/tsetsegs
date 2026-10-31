@@ -13,5 +13,5 @@ test('everything else keeps the default key', () => {
 });
 test('client.ts still uses the demo key (fails if Lovable regenerates the file)', () => {
   const src = readFileSync('src/integrations/supabase/client.ts', 'utf8');
-  expect(src).toContain('...demoAuthOptions(window.location.pathname)');
+  expect(src).toContain('...demoAuthOptions()');
 });
