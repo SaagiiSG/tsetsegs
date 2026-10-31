@@ -13,13 +13,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { phoneDigits } from '@/lib/tenant';
 import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { centerAccounts } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, pct, type CenterAdminData } from './useCenterAdminData';
+import { googleStatus, hasGoogleColumns, signsInWithGoogle, isConnected, formatDue, type GoogleFields } from './studentGoogle';
 import { checkStudentRows, failedRowsText, type ImportRow } from './studentImport';
 import { Empty, Loading, PageHeader, Section, StatRow } from './ui';
 import { PredictionVsReal } from '@/components/shared/PredictionVsReal';
@@ -182,11 +183,11 @@ function AddStudentDialog({ data }: { data: CenterAdminData }) {
   );
 }
 
-function Stat({ icon: Icon, label, value }: { icon: typeof User; label: string; value: number }) {
+function Stat({ icon: Icon, label, value }: { icon: typeof User; label: string; value: number | string }) {
   return (
     <div className="admin-glass-card rounded-xl border p-4 flex items-center gap-3">
       <Icon className="h-5 w-5 text-muted-foreground" />
-      <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-mono text-2xl tabular-nums">{value.toLocaleString()}</p></div>
+      <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-mono text-2xl tabular-nums">{typeof value === 'number' ? value.toLocaleString() : value}</p></div>
     </div>
   );
 }
@@ -202,6 +203,7 @@ export function StudentsPage() {
   const navigate = useNavigate();
   const [q, setQ] = useState(''); const [batch, setBatch] = useState('all'); const [page, setPage] = useState(1);
   const [resetFor, setResetFor] = useState<CenterAdminData['students'][number] | null>(null);
+  const gcols = hasGoogleColumns(data?.students ?? []);
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase(); const digits = phoneDigits(q);
     return (data?.students ?? []).filter(s => (batch === 'all' || (batch === 'none' ? !s.class_id : s.class_id === batch))
@@ -237,7 +239,7 @@ export function StudentsPage() {
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Stat icon={User} label="Total students" value={data.students.length} />
         <Stat icon={UserCheck} label="Signed up" value={active.filter(s => s.user_id).length} />
-        <Stat icon={UserX} label="Not signed up yet" value={active.filter(s => !s.user_id).length} />
+        <Stat icon={UserX} label="Not connected to Google" value={gcols ? active.filter(s => !isConnected(s as GoogleFields)).length : '—'} />
         <Stat icon={PowerOff} label="Access removed" value={data.students.length - active.length} />
       </div>
 
@@ -255,22 +257,26 @@ export function StudentsPage() {
               <TableHead>Name</TableHead>
               <TableHead className="w-10 px-1"><span className="sr-only">Reset password</span></TableHead>
               <TableHead>Phone</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Google</TableHead>
               <TableHead>Batch</TableHead>
               <TableHead>Added</TableHead>
               <TableHead>Account</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {shown.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
+            {shown.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
               : shown.map(s => (
                 <TableRow key={s.id} className="cursor-pointer" onClick={() => navigate(`/admin/students/${s.id}`)}>
                   <TableCell className={`font-medium ${s.active ? '' : 'text-muted-foreground line-through'}`}>{s.name}</TableCell>
                   <TableCell className="px-1" onClick={e => e.stopPropagation()}>
                     <Tooltip><TooltipTrigger asChild><span>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Reset ${s.name}'s password`} disabled={!s.user_id || !s.active} onClick={() => setResetFor(s)}><KeyRound className="h-4 w-4" /></Button>
-                    </span></TooltipTrigger><TooltipContent>{s.user_id && s.active ? 'Reset password' : 'Reset password — not signed up yet'}</TooltipContent></Tooltip>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Reset ${s.name}'s password`} disabled={!s.user_id || !s.active || (gcols && signsInWithGoogle(s as GoogleFields))} onClick={() => setResetFor(s)}><KeyRound className="h-4 w-4" /></Button>
+                    </span></TooltipTrigger><TooltipContent>{gcols && signsInWithGoogle(s as GoogleFields) ? 'Signs in with Google' : s.user_id && s.active ? 'Reset password' : 'Reset password — not signed up yet'}</TooltipContent></Tooltip>
                   </TableCell>
                   <TableCell className="font-mono text-sm">{s.phone}</TableCell>
+                  <TableCell className="text-sm max-w-[200px] truncate">{gcols ? ((s as GoogleFields).email ?? <span className="text-muted-foreground">—</span>) : '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{gcols ? googleStatus(s as GoogleFields) : '—'}</TableCell>
                   <TableCell className="text-sm max-w-[220px] truncate">{className(s.class_id) ?? <span className="text-muted-foreground">No batch</span>}</TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(s.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{accountStatus(s)}</TableCell>
@@ -335,13 +341,32 @@ export function StudentDetailPage() {
     try { await centerAccounts({ action: 'reset_student', institution_id: center.id, student_id: s.id }); toast.success('Password reset'); refresh(); }
     catch (err) { toast.error((err as Error).message); }
   };
+  const gcols = hasGoogleColumns(data.students);
+  const g = s as GoogleFields;
+  const googleCall = async (fn: 'tenant_give_google_time' | 'tenant_switch_to_phone') => {
+    const { data: res, error } = await supabase.rpc(fn as any, { _student: s.id });
+    if (error) return toast.error(error.message);
+    toast.success(fn === 'tenant_give_google_time' ? `Google is now due ${formatDue(String(res))}` : `${s.name} will sign in with their phone`);
+    refresh();
+  };
   const h = history.data;
   const attended = h?.att.filter(a => a.status === 'present' || a.status === 'late').length ?? 0;
   return (
     <div className="space-y-8">
       <Link to="/admin/students" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Student Management</Link>
       <PageHeader title={s.name} description={`${s.phone} · ${!s.active ? 'Access removed' : s.user_id ? 'Signed up' : 'Not signed up yet'}`} actions={<>
-        {s.user_id && <Button variant="outline" size="sm" onClick={resetPw}><RotateCcw className="h-4 w-4" />Reset password</Button>}
+        {gcols && !isConnected(g) && <Button variant="outline" size="sm" onClick={() => googleCall('tenant_give_google_time')}>Give more time</Button>}
+        {gcols && signsInWithGoogle(g) && <AlertDialog>
+          <AlertDialogTrigger asChild><Button variant="outline" size="sm">Switch to phone sign-in</Button></AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Switch {s.name} to phone sign-in?</AlertDialogTitle>
+              <AlertDialogDescription>They will sign in with their phone and password. Their email stays saved.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => googleCall('tenant_switch_to_phone')}>Switch</AlertDialogAction></AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>}
+        {s.user_id && !(gcols && signsInWithGoogle(g)) && <Button variant="outline" size="sm" onClick={resetPw}><RotateCcw className="h-4 w-4" />Reset password</Button>}
         <Button variant={s.active ? 'ghost' : 'outline'} size="sm" className={s.active ? 'text-destructive' : ''} onClick={() => update({ active: !s.active }, s.active ? 'Access removed' : 'Access restored')}>{s.active ? 'Remove access' : 'Restore access'}</Button>
       </>} />
       <div className="flex items-center gap-3"><Label>Batch</Label><ClassSelect value={s.class_id} onChange={v => update({ class_id: v }, 'Batch updated')} classes={data.classes} label="Move to batch" className="w-56" /></div>
