@@ -27,6 +27,9 @@ import { CenterHelpPage } from './CenterHelp';
 type Item = { to: string; label: string; icon: typeof LayoutDashboard };
 type Section = { title: string; glow: string; items: Item[] };
 
+/** Saagii, 30 Oct: no Search Questions on demo sites. */
+const IS_DEMO = typeof window !== 'undefined' && window.location.pathname.startsWith('/demo/');
+
 /** Section glow hues mirror the main admin workspace. */
 const SECTIONS: Section[] = [
   { title: 'Overview', glow: '217 91% 60%', items: [
@@ -40,7 +43,7 @@ const SECTIONS: Section[] = [
     { to: 'students', label: 'Student Management', icon: GraduationCap },
   ] },
   { title: 'Tools', glow: '32 95% 50%', items: [
-    { to: 'questions', label: 'Search Questions', icon: Search },
+    ...(IS_DEMO ? [] : [{ to: 'questions', label: 'Search Questions', icon: Search }]),
     { to: 'sat-schedule', label: 'SAT Schedule', icon: CalendarClock },
     { to: 'sprints', label: 'Sprint Monitor', icon: Trophy },
     { to: 'announcements', label: 'Announcements', icon: Megaphone },
@@ -267,7 +270,7 @@ export default function CenterAdminPortal() {
               <Route path="students" element={<StudentsPage />} />
               <Route path="students/:studentId" element={<StudentDetailPage />} />
               <Route path="registrations" element={<Navigate to="/admin/students" replace />} />
-              <Route path="questions" element={<QuestionsPage />} />
+              <Route path="questions" element={IS_DEMO ? <Navigate to="dashboard" replace /> : <QuestionsPage />} />
               <Route path="sat-schedule" element={<SatSchedulePage />} />
               <Route path="sprints" element={<SprintsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
