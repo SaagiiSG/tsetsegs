@@ -59,9 +59,9 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
       <TabsContent value="history" className="space-y-3 max-w-3xl">
         {history.isLoading ? <SkyListSkeleton /> : history.error ? <Failed onRetry={() => history.refetch()} /> : !history.data?.length ? <p className="text-muted-foreground">Your finished tests will appear here.</p> :
           history.data.map(a => <div key={a.id} className="sky-card flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0"><p className="font-semibold">{a.test_name}{a.session_id && <Badge variant="secondary" className="ml-2 align-middle">Proctored</Badge>}</p><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{a.test_name}</p>{a.session_id && <Badge variant="secondary">Proctored</Badge>}</div><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
               <p className="text-sm">{historyLine(a)}</p></div>
-            <Button variant="outline" onClick={() => navigate(`/student/tests/${a.id}`)}>{a.status === 'completed' ? 'Review' : 'Resume'}</Button>
+            {a.session_id && a.status !== 'completed' ? <p className="text-sm text-muted-foreground">Use your teacher's link</p> : <Button variant="outline" onClick={() => navigate(`/student/tests/${a.id}`)}>{a.status === 'completed' ? 'Review' : 'Resume'}</Button>}
           </div>)}
       </TabsContent>
     </Tabs>

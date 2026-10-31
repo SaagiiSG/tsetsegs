@@ -18,7 +18,7 @@ import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/Refer
 import { useCenter } from './centerContext';
 import { SkyCardSkeleton } from './SkySkeleton';
 import { moduleSecondsLeft } from './testTimer';
-import { countsAsFocusLoss } from './proctorFocus';
+import { awayStep } from './proctorFocus';
 
 type Answer = { value: string; flagged?: boolean };
 // answer, alternate_answers and rationale only arrive once the test is completed.
@@ -102,29 +102,31 @@ export function CenterPracticeTest() {
     } catch { pendingAdvance.current = true; toast.error('Unable to sync the test. Reconnect and try again.'); }
     finally { advancing.current = false; setBusy(false); }
   }
-  useEffect(() => { if (state && !completed && seconds === 0 && !pendingAdvance.current) void advance(); }, [seconds, completed, state?.current_module]);
+  useEffect(() => { if (state && module && !completed && seconds === 0 && !pendingAdvance.current) void advance(); }, [seconds, completed, state?.current_module]);
   // Proctored and still open: count every time the student leaves the test and tell the server.
-  const proctored = !!state?.session && !completed;
+  const proctored = !!state?.session && !!module && !completed;
   const violations = useRef(0);
   useEffect(() => { violations.current = Math.max(violations.current, state?.focus_violations ?? 0); }, [state?.focus_violations]);
   useEffect(() => {
     if (!proctored || !attemptId) return;
-    const lose = (event: 'blur' | 'hidden') => {
-      if (!countsAsFocusLoss(event, document.activeElement?.tagName)) return;
+    let away = false;
+    const step = (event: 'blur' | 'hidden' | 'back') => {
+      const r = awayStep(away, event, document.activeElement?.tagName); away = r.away;
+      if (!r.counted) return;
       violations.current += 1;
       void Promise.resolve(supabase.rpc('tenant_proctor_focus' as never, { _attempt: attemptId, _violations: violations.current } as never)).catch(() => undefined);
     };
-    const onBlur = () => lose('blur');
-    const onVisibility = () => { if (document.hidden) lose('hidden'); };
-    window.addEventListener('blur', onBlur); document.addEventListener('visibilitychange', onVisibility);
-    return () => { window.removeEventListener('blur', onBlur); document.removeEventListener('visibilitychange', onVisibility); };
+    const onBlur = () => step('blur'), onFocus = () => step('back');
+    const onVisibility = () => step(document.hidden ? 'hidden' : 'back');
+    window.addEventListener('blur', onBlur); window.addEventListener('focus', onFocus); document.addEventListener('visibilitychange', onVisibility);
+    return () => { window.removeEventListener('blur', onBlur); window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onVisibility); };
   }, [proctored, attemptId]);
   useEffect(() => {
     const reconnect = () => { if (pendingAdvance.current) void advance(); else if (state && !completed) void save(answersRef.current).catch(() => undefined); };
     window.addEventListener('online', reconnect); return () => window.removeEventListener('online', reconnect);
   }, [state?.id, state?.current_module, completed]);
   // A failed refetch keeps the loaded test on screen; the error shows only without data (or with a broken paper).
-  if (state?.session && !completed && !module) return <div className="sky-card space-y-3"><p role="status">Waiting for your teacher to start the test.</p><Button variant="outline" onClick={() => navigate(-1)}>Back</Button></div>;
+  if (state?.session && !completed && !module) return <div className="sky-card space-y-3" data-popup-hold><p role="status">Waiting for your teacher to start the test. Reopen your teacher's link to enter the room.</p><Button variant="outline" onClick={() => navigate(-1)}>Back</Button></div>;
   if (!state || !module) return !query.error && !state ? <SkyCardSkeleton /> : <div className="sky-card space-y-3"><p role="alert">Could not load this test.</p><Button variant="outline" onClick={() => query.refetch()}>Try again</Button></div>;
   const choices = q ? normaliseChoices(q.multiple_choice_options, q.choice_images) : [];
   return <div className="space-y-5" data-popup-hold={!completed || undefined}>
@@ -134,7 +136,7 @@ export function CenterPracticeTest() {
     {q && <div className="grid lg:grid-cols-[1fr_240px] gap-5"><section className="sky-card min-w-0 space-y-5"><div className="flex items-center justify-between gap-2"><p className="font-mono text-sm">Question {index + 1} of {module.questions.length}</p>{!completed && <Button size="sm" variant={answers[q.id]?.flagged ? 'default' : 'outline'} onClick={() => change(answers[q.id]?.value ?? '', !answers[q.id]?.flagged)}><Flag className="h-4 w-4"/>Review later</Button>}</div>
       {q.passage_text && <div className="border-b pb-5"><MathText text={q.passage_text}/></div>}<MathText text={q.question_text}/><QuestionFigures svg={figures?.get(q.id)?.figure_svg} description={figures?.get(q.id)?.figure_description} url1={q.question_image_url} url2={q.question_image_url_2} className="justify-start" imgClassName="max-h-96 max-w-full object-contain"/>
       {choices.length ? <div className="space-y-3">{choices.map(choice => <Button key={choice.letter} disabled={completed || seconds === 0} variant={answers[q.id]?.value === choice.letter ? 'default' : 'outline'} className="w-full h-auto min-h-12 justify-start text-left whitespace-normal p-4" onClick={() => change(choice.letter)}><span className="font-mono mr-3">{choice.letter}</span><span className="min-w-0"><MathText text={choice.text}/>{choice.image && <img src={choice.image} alt={`Choice ${choice.letter}`} className="max-h-48 max-w-full"/>}</span></Button>)}</div> : <Input aria-label="Your answer" value={answers[q.id]?.value ?? ''} disabled={completed || seconds === 0} onChange={e => change(e.target.value)} placeholder="Your answer"/>}
-      {completed && <div className="border-t pt-4 space-y-2"><p>Your answer: <span className="font-mono">{answers[q.id]?.value?.trim() || 'Omitted'}</span>{q.correct != null && <Badge variant={q.correct ? 'default' : 'destructive'} className="ml-2">{q.correct ? 'Correct' : 'Incorrect'}</Badge>}</p>{q.answer != null && <><p>Correct answer: <span className="font-mono">{[q.answer, ...(Array.isArray(q.alternate_answers) ? q.alternate_answers : [])].filter(Boolean).join(' or ')}</span></p>{q.rationale ? <ExplanationView text={q.rationale}/> : <p className="text-sm text-muted-foreground">No explanation yet.</p>}</>}</div>}
+      {completed && <div className="border-t pt-4 space-y-2"><div>Your answer: <span className="font-mono">{answers[q.id]?.value?.trim() || 'Omitted'}</span>{q.correct != null && <Badge variant={q.correct ? 'default' : 'destructive'} className="ml-2">{q.correct ? 'Correct' : 'Incorrect'}</Badge>}</div>{q.answer != null && <><p>Correct answer: <span className="font-mono">{[q.answer, ...(Array.isArray(q.alternate_answers) ? q.alternate_answers : [])].filter(Boolean).join(' or ')}</span></p>{q.rationale ? <ExplanationView text={q.rationale}/> : <p className="text-sm text-muted-foreground">No explanation yet.</p>}</>}</div>}
       <div className="flex justify-between gap-2"><Button variant="outline" disabled={index === 0} onClick={() => setIndex(i => i - 1)}>Previous</Button><Button disabled={index === module.questions.length - 1} onClick={() => setIndex(i => i + 1)}>Next</Button></div>
     </section><aside className="space-y-4"><div className="grid grid-cols-5 gap-2">{module.questions.map((item, i) => <Button key={item.id} size="icon" variant={index === i ? 'default' : 'outline'} className={`w-full relative ${answers[item.id]?.value && index !== i ? 'bg-foreground/10' : ''}`} onClick={() => setIndex(i)}>{i + 1}{answers[item.id]?.flagged && <Flag className="absolute top-0 right-0 h-2 w-2"/>}</Button>)}</div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={toggleCalculator}><Calculator className="h-4 w-4"/>Calculator</Button><Button variant="outline" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4"/>Reference</Button></div>{!completed && <Button disabled={busy} className="w-full" onClick={() => { if (seconds === 0) void advance(); else setConfirmFor(state.current_module); }}>{busy ? 'Saving…' : last ? 'Finish test' : 'Finish module'}</Button>}</aside></div>}
     <AlertDialog open={!completed && seconds > 0 && confirmFor === state.current_module} onOpenChange={o => { if (!o) setConfirmFor(null); }}>

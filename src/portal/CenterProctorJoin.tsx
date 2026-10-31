@@ -13,7 +13,7 @@ const rpc = (name: string, args: object) => supabase.rpc(name as never, args as 
 const message = (e: unknown) => (e instanceof Error ? e.message : (e as { message?: string } | null)?.message) ?? '';
 
 function Screen({ children }: { children: React.ReactNode }) {
-  return <div className="sky-card max-w-md mx-auto space-y-4">{children}</div>;
+  return <div className="sky-card max-w-md mx-auto space-y-4" data-popup-hold>{children}</div>;
 }
 
 export function CenterProctorJoin() {
@@ -32,7 +32,7 @@ export function CenterProctorJoin() {
     return data as unknown as string;
   } });
   const attemptId = join.data;
-  const state = useQuery({ queryKey: ['center-proctor-state', attemptId], enabled: !!attemptId, retry: false, refetchInterval: 5000, queryFn: async () => {
+  const state = useQuery({ queryKey: ['center-proctor-state', attemptId], enabled: !!attemptId, retry: 2, refetchInterval: 5000, queryFn: async () => {
     const { data, error } = await rpc('tenant_proctor_state', { _attempt: attemptId }); if (error) throw error;
     return data as unknown as ProctorState;
   } });
@@ -53,7 +53,9 @@ export function CenterProctorJoin() {
   const back = <Button variant="outline" className="w-full" onClick={() => navigate('/student/tests')}>Back to practice tests</Button>;
   if (join.isLoading) return <Screen><p className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/>Joining…</p></Screen>;
   if (join.error || !attemptId) return <Screen><p role="alert">{message(join.error) || "This code isn't open"}</p>{back}</Screen>;
-  if (state.error) return <Screen><p role="alert">This session has ended</p>{back}</Screen>;
+  // Only a missing attempt means the session is gone; a failed poll keeps the last state on screen.
+  if (state.error && /not allowed/i.test(message(state.error))) return <Screen><p role="alert">This session has ended</p>{back}</Screen>;
+  if (state.error && !s) return <Screen><p role="alert">Could not load. Check your connection.</p><Button variant="outline" onClick={() => state.refetch()}>Try again</Button></Screen>;
   if (!s || goToTest) return <Screen><p className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/>Loading…</p></Screen>;
   if (s.status === 'finished') return <Screen><p role="alert">This session has ended</p>{back}</Screen>;
 
