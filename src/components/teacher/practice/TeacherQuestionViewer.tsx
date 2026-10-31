@@ -21,6 +21,8 @@ interface TeacherQuestionViewerProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   questionId: string;
+  /** Centers read the International bank; the main site reads `questions`. */
+  table?: 'questions' | 'intl_questions';
   onNext?: () => void;
   onPrev?: () => void;
   currentIndex: number;
@@ -28,7 +30,7 @@ interface TeacherQuestionViewerProps {
 }
 
 export function TeacherQuestionViewer({
-  open, onOpenChange, questionId, onNext, onPrev, currentIndex, totalCount,
+  open, onOpenChange, questionId, table = 'questions', onNext, onPrev, currentIndex, totalCount,
 }: TeacherQuestionViewerProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [fillAnswer, setFillAnswer] = useState('');
@@ -36,10 +38,10 @@ export function TeacherQuestionViewer({
   const calculatorSnapSide = useCalculatorSnap();
 
   const { data: question, isLoading } = useQuery({
-    queryKey: ['teacher-question-detail', questionId],
+    queryKey: ['teacher-question-detail', table, questionId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('questions')
+        .from(table)
         .select('*, category:question_categories(name)')
         .eq('id', questionId)
         .single();

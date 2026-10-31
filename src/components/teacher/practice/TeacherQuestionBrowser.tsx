@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 
 import { TeacherQuestionViewer } from './TeacherQuestionViewer';
 import { QuestionFigures } from '@/components/QuestionFigures';
+import { CB_FILTER, PRACTICE_SETS } from '@/portal/practiceSets';
 
 const MATH_QUESTION_SETS = [
   { value: 'all', label: 'All Questions' },
@@ -18,6 +19,9 @@ const MATH_QUESTION_SETS = [
   { value: '150_hard', label: '150 Hard' },
   { value: 'anp', label: 'New 120 (Aug 3rd)' },
 ];
+
+// Centers browse the International bank with the center practice tabs' sets (CB holds the new 120 there).
+const INTL_MATH_QUESTION_SETS = [{ value: 'all', label: 'All Questions' }, ...PRACTICE_SETS.map(s => ({ value: s.key, label: s.key === 'CB' ? 'CollegeBoard' : `${s.label} Problems` }))];
 
 const ENGLISH_QUESTION_SETS = [
   { value: 'all', label: 'All Questions' },
@@ -30,7 +34,8 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ];
 
-export function TeacherQuestionBrowser() {
+export function TeacherQuestionBrowser({ table = 'questions' }: { table?: 'questions' | 'intl_questions' } = {}) {
+  const intl = table === 'intl_questions';
   const [questionSet, setQuestionSet] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
   const [subject, setSubject] = useState<'math' | 'english'>('math');
@@ -52,10 +57,10 @@ export function TeacherQuestionBrowser() {
   const [categoryId, setCategoryId] = useState('all');
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['teacher-browse-questions', questionSet, difficulty, subject, categoryId, searchQuery],
+    queryKey: ['teacher-browse-questions', table, questionSet, difficulty, subject, categoryId, searchQuery],
     queryFn: async () => {
       let query = supabase
-        .from('questions')
+        .from(table)
         .select('id, question_id, question_text, question_image_url, figure_svg, difficulty_level, question_type, subject, category:question_categories(name)')
         .eq('is_active', true)
         .eq('hide_from_practice', false)
@@ -67,7 +72,9 @@ export function TeacherQuestionBrowser() {
         query = query.or('subject.is.null,subject.eq.math');
       }
 
-      if (questionSet === '68') {
+      if (intl && questionSet !== 'all') {
+        query = questionSet === 'CB' ? query.or(CB_FILTER) : query.eq('question_set', questionSet);
+      } else if (questionSet === '68') {
         query = query.like('question_id', '68%');
       } else if (questionSet === 'cb') {
         query = query.not('original_cb_id', 'is', null);
@@ -141,7 +148,7 @@ export function TeacherQuestionBrowser() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-              {(subject === 'english' ? ENGLISH_QUESTION_SETS : MATH_QUESTION_SETS).map(s => (
+              {(subject === 'english' ? ENGLISH_QUESTION_SETS : intl ? INTL_MATH_QUESTION_SETS : MATH_QUESTION_SETS).map(s => (
                     <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -249,6 +256,7 @@ export function TeacherQuestionBrowser() {
           open={true}
           onOpenChange={(v) => !v && setSelectedQuestionIndex(null)}
           questionId={questions[selectedQuestionIndex]?.id}
+          table={table}
           onNext={selectedQuestionIndex < questions.length - 1 ? () => setSelectedQuestionIndex(selectedQuestionIndex + 1) : undefined}
           onPrev={selectedQuestionIndex > 0 ? () => setSelectedQuestionIndex(selectedQuestionIndex - 1) : undefined}
           currentIndex={selectedQuestionIndex}

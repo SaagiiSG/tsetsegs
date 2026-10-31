@@ -3,7 +3,7 @@ import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
+  Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, LayoutDashboard,
   Search, Pencil, BookOpen, Flame, ChevronRight, LifeBuoy, Settings,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -21,21 +21,19 @@ import { CenterLogo, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, centerDisplayName
 import { allPages, localDate } from './centerApi';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
-import { MathText } from '@/components/MathText';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import CenterStudentCards, { DomainBars } from './CenterStudentCards';
-import { TeacherLive } from './LiveSession';
+import { CenterPracticeHub, type PracticeTab } from './CenterPracticeHub';
 import { CenterHelpPage } from './CenterHelp';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { ClassCarousel } from '@/components/teacher/dashboard/ClassCarousel';
 
-type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
-const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
+type Mode = 'dashboard' | 'analytics' | 'practice';
+const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice'];
 const MODE_GLOW: Record<Mode, string> = {
   dashboard: '217 91% 60%',
   analytics: '262 83% 62%',
   practice: '152 60% 42%',
-  live: '345 75% 55%',
 };
 
 type CenterClass = {
@@ -178,65 +176,6 @@ function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: 
   return <DomainBars stats={data} />;
 }
 
-/** Read-only practice browser over the international question bank. */
-function PracticeBrowser() {
-  const [q, setQ] = useState('');
-  const [subject, setSubject] = useState<'all' | 'math' | 'english'>('all');
-  const [difficulty, setDifficulty] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
-  const { data, isLoading } = useQuery({
-    queryKey: ['center-practice', q, subject, difficulty],
-    queryFn: async () => {
-      let query = supabase.from('intl_questions')
-        .select('id, question_text, subject, subtopic, difficulty_level, question_set')
-        .order('created_at', { ascending: false }).limit(50);
-      if (q.trim()) query = query.ilike('question_text', `%${q.trim()}%`);
-      if (subject !== 'all') query = query.eq('subject', subject);
-      if (difficulty !== 'all') query = query.eq('difficulty_level', difficulty);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search questions…" className="pl-9 border-0 bg-transparent" />
-        </div>
-        <Select value={subject} onValueChange={v => setSubject(v as typeof subject)}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="math">Math</SelectItem><SelectItem value="english">English</SelectItem></SelectContent>
-        </Select>
-        <Select value={difficulty} onValueChange={v => setDifficulty(v as typeof difficulty)}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All levels</SelectItem><SelectItem value="easy">Easy</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="hard">Hard</SelectItem></SelectContent>
-        </Select>
-      </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? (
-        <p className="text-sm text-muted-foreground">No questions match.</p>
-      ) : (
-        <div className="grid gap-3">
-          {data.map(question => (
-            <div key={question.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest}
-              className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-2xl border p-4">
-              <div className="relative space-y-2">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
-                  <span className="capitalize border rounded-full px-2 py-0.5">{question.subject}</span>
-                  {question.subtopic && <span className="border rounded-full px-2 py-0.5">{question.subtopic}</span>}
-                  {question.difficulty_level && <span className="capitalize border rounded-full px-2 py-0.5">{question.difficulty_level}</span>}
-                  {question.question_set && <span className="font-mono">{question.question_set}</span>}
-                </div>
-                <div className="text-sm leading-relaxed"><MathText text={question.question_text ?? ''} /></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CenterTeacherPortal() {
   const { center, role, userId, name, signOut } = useCenter();
   const qc = useQueryClient();
@@ -252,6 +191,7 @@ export default function CenterTeacherPortal() {
   const [renameValue, setRenameValue] = useState('');
   const [inspect, setInspect] = useState<string | null>(null);
   const [liveClassId, setLiveClassId] = useState<string | null>(null);
+  const [practiceTab, setPracticeTab] = useState<PracticeTab>('browse');
   const navigate = useNavigate();
   const location = useLocation();
   const hubId = matchPath('/teacher/class/:id', location.pathname)?.params.id ?? null;
@@ -411,7 +351,6 @@ export default function CenterTeacherPortal() {
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'analytics', label: 'Analytics', icon: TrendingUp },
     { key: 'practice', label: 'Practice', icon: BookOpen },
-    { key: 'live', label: 'Live', icon: Radio },
   ];
 
   // Same look as the main dashboard's carousel: the centred card is sharp, its neighbours sit back.
@@ -499,7 +438,7 @@ export default function CenterTeacherPortal() {
                     onDateChange={setDate}
                     onBack={() => navigate('/teacher')}
                     onInvite={() => setInvite(hubClass)}
-                    onLive={() => { setLiveClassId(hubClass.id); navigate('/teacher'); handleModeChange('live'); }}
+                    onLive={() => { setLiveClassId(hubClass.id); setPracticeTab('live'); navigate('/teacher'); handleModeChange('practice'); }}
                   />
                 )}
                 {!hubClass && mode === 'dashboard' && (
@@ -563,20 +502,15 @@ export default function CenterTeacherPortal() {
                   </div>
                 )}
 
-                {mode === 'practice' && <PracticeBrowser />}
-
-                {mode === 'live' && (
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
-                      <Select value={liveClassId ?? ''} onValueChange={setLiveClassId}>
-                        <SelectTrigger className="h-9 rounded-xl text-sm flex-1 md:max-w-xs border-0 bg-transparent"><SelectValue placeholder="Pick a class" /></SelectTrigger>
-                        <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    {liveClassId
-                      ? <TeacherLive classId={liveClassId} studentCount={allStudents.filter(s => s.class_id === liveClassId).length} />
-                      : <p className="text-sm text-muted-foreground">Pick a class to start a live session.</p>}
-                  </div>
+                {mode === 'practice' && (
+                  <CenterPracticeHub
+                    tab={practiceTab}
+                    onTabChange={setPracticeTab}
+                    classes={classes}
+                    studentCount={id => allStudents.filter(s => s.class_id === id).length}
+                    liveClassId={liveClassId}
+                    onLiveClassChange={setLiveClassId}
+                  />
                 )}
               </motion.div>
             </AnimatePresence>

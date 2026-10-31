@@ -328,6 +328,8 @@ export default function CenterStudentCards({
   const [current, setCurrent] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, skipSnaps: false, duration: 20, align: 'center', containScroll: 'trimSnaps' });
   const queue = useRef(new Map<string, Promise<void>>());
+  // Marks only flag the dashboard's practice history as old (it can be 30k answers); it reloads once, when this page closes.
+  useEffect(() => () => { qc.refetchQueries({ queryKey: ['center-teacher-history', center.id], stale: true }); }, [qc, center.id]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -391,7 +393,7 @@ export default function CenterStudentCards({
         return;
       }
       qc.invalidateQueries({ queryKey: ['center-teacher-att', center.id] });
-      qc.invalidateQueries({ queryKey: ['center-teacher-history', center.id] });
+      qc.invalidateQueries({ queryKey: ['center-teacher-history', center.id], refetchType: 'none' });
     });
     queue.current.set(cell, run);
   };
