@@ -19,6 +19,13 @@ describe('one topic map', () => {
     expect(html).toContain('Topic 1 · Exponents &amp; Radicals');
     expect(html).toContain('1/10 watched');
   });
+  it('area figures carry a caption; padlocks do not', () => {
+    const html = render(unitOf('Exponents & Radicals', 10, ['e1']), 'e2');
+    expect(html.match(/data-caption=/g)).toHaveLength(3);
+    const lockButtons: string[] = html.match(/<button[^>]*disabled[^>]*>[\s\S]*?<\/button>/g) ?? [];
+    expect(lockButtons.length).toBe(8);
+    expect(lockButtons.some(b => b.includes('data-caption'))).toBe(false);
+  });
   it('a one-video topic still shows two figures, after the chest', () => {
     const html = render(unitOf('Radians', 1, []), 'r1');
     expect(html.match(/data-side=/g)).toHaveLength(2);

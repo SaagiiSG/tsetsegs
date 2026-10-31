@@ -19,7 +19,7 @@ export const MORE = { light: '#8C96AB', dark: '#B4BCCB' };
 // As wide as the free side allows (half the map + the bend's lean − half a caption), at most 280px.
 const FIGURE = 'sky-hairline rounded-3xl w-[min(280px,calc(50cqw+3rem-87px))]';
 
-const Figure = ({ figure }: { figure: HairlineSpec }) => <HairlineFigure figure={figure} play className={FIGURE} />;
+const Figure = ({ figure }: { figure: HairlineSpec }) => <HairlineFigure figure={figure} play caption className={FIGURE} />;
 
 /** One topic's map: its title, the winding path of videos, the chest, and hairline figures switching sides at each bend. */
 export function TopicMap({ unit: u, nextVideoId, onOpen }: { unit: TopicUnit<Video>; nextVideoId: string | null; onOpen: (v: Video) => void }) {
