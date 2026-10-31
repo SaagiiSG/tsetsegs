@@ -198,7 +198,7 @@ Each line gives the object, what the pointer does to it, and what the read-out s
 
 ## The builder's calls (Claude's, after the builder check; Saagii can overrule)
 
-- **No near-repeats.** Two concepts may share a shape, but never the same object or the same gesture. Six were swapped for this reason:
+- **No near-repeats.** Two concepts may share a shape, but never the same object or the same gesture. Eight were swapped for this reason:
   - Topic 12's U-rail became completing the square.
   - Topic 16's arch bridge became a half-pipe.
   - Topic 5's gear pair became a vending machine.
