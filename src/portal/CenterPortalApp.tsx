@@ -48,7 +48,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     let cancelled = false;
     (async () => {
       // Finish a claim/link step parked before the Google redirect, once, before deciding who this is.
-      googleFinish.current ??= finishPendingGoogle(center).then((m) => { if (m) toast.error(m); });
+      googleFinish.current ??= finishPendingGoogle(center).then((m) => { if (m) toast.error(m); }, () => { toast.error('Could not finish signing in with Google. Try again.'); });
       await googleFinish.current;
       if (cancelled) return;
       const uid = session.user.id;

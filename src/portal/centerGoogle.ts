@@ -30,12 +30,17 @@ export async function startGoogle(p: PendingGoogle | null, returnPath: string): 
 
 // Finishes a claim/link step after the Google redirect; join is finished by the join page.
 export async function finishPendingGoogle(center: { id: string; slug: string }): Promise<string | null> {
-  const p = takePending(['claim', 'link']);
-  if (!p) return null;
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) return null;
-  const { error } = p.kind === 'claim'
-    ? await supabase.rpc('tenant_claim_with_google' as any, { _slug: center.slug, _phone: p.phone })
-    : await supabase.rpc('tenant_google_link_finish' as any, { _token: (p as { token: string }).token });
-  return error?.message ?? null;
+  try {
+    // Look at the session first so a step is never dropped while nobody is signed in.
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return null;
+    const p = takePending(['claim', 'link']);
+    if (!p) return null;
+    const { error } = p.kind === 'claim'
+      ? await supabase.rpc('tenant_claim_with_google' as any, { _slug: center.slug, _phone: p.phone })
+      : await supabase.rpc('tenant_google_link_finish' as any, { _token: (p as { token: string }).token });
+    return error?.message ?? null;
+  } catch (e) {
+    return (e as Error)?.message || 'Could not finish signing in with Google. Try again.';
+  }
 }

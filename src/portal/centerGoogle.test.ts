@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const rpc = vi.hoisted(() => vi.fn());
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc, auth: { getSession: vi.fn(async () => ({ data: { session: { user: { id: 'u' } } } })) } } }));
+const getSession = vi.hoisted(() => vi.fn());
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc, auth: { getSession } } }));
 vi.mock('@/integrations/lovable', () => ({ lovable: { auth: { signInWithOAuth: vi.fn() } } }));
 
 import { finishPendingGoogle, savePending, takePending } from './centerGoogle';
@@ -16,7 +17,7 @@ const stub = (broken = false) => {
 };
 
 describe('centerGoogle pending step', () => {
-  beforeEach(() => { stub(); rpc.mockReset(); });
+  beforeEach(() => { stub(); rpc.mockReset(); getSession.mockReset(); getSession.mockResolvedValue({ data: { session: { user: { id: 'u' } } } }); });
 
   it('returns a saved step once, then null', () => {
     savePending({ kind: 'claim', phone: '99' });
@@ -45,5 +46,17 @@ describe('centerGoogle pending step', () => {
     savePending({ kind: 'link', token: 't' });
     expect(await finishPendingGoogle({ id: 'i', slug: 's' })).toBeNull();
     expect(rpc).toHaveBeenLastCalledWith('tenant_google_link_finish', { _token: 't' });
+  });
+  it('with no session the step stays stored and no RPC is called', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    savePending({ kind: 'claim', phone: '99' });
+    expect(await finishPendingGoogle({ id: 'i', slug: 's' })).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(takePending()).toEqual({ kind: 'claim', phone: '99' });
+  });
+  it('resolves to a message instead of throwing when the RPC rejects', async () => {
+    rpc.mockRejectedValue(new Error('network down'));
+    savePending({ kind: 'link', token: 't' });
+    expect(await finishPendingGoogle({ id: 'i', slug: 's' })).toBe('network down');
   });
 });
